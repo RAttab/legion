@@ -29,13 +29,27 @@ legion_packed struct sector
     size_t len;
     struct coord coord;
 
-    size_t stars_len;
-    struct star stars[];
+    size_t systems_len;
+    struct system systems[];
+};
+
+legion_packed struct system
+{
+    struct coord coord;
+    size_t star;
+    uint32_t elements[num_elements];
+}
+
+struct system_desc
+{
+    struct system s;
+    size_t planets_len;
+    uint16_t planets[];
 };
 
 
 struct sector *sector_gen(struct coord);
-struct sector * sector_save(struct sector *, const char *path);
+struct sector *sector_save(struct sector *, const char *path);
 
 struct sector *sector_load(const char *path);
 void sector_close(struct sector *);

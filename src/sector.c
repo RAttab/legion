@@ -91,14 +91,14 @@ struct sector *sector_load(const char *path)
         legion_fail_errno("unable to open sector at '%s'", path);
         goto fail_open;
     }
-    
+
     struct stat stat;
     if (fstat(fd, &stat) < 0) {
         goto fail_stat;
     }
     size_t size = stat.st_size;
 
-    
+
     struct sector *sector = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (sector == MAP_FAILED) {
         legion_fail_errno("unable to mmap sector from '%s'", path);
@@ -109,7 +109,7 @@ struct sector *sector_load(const char *path)
   fail_mmap:
 
   fail_stat:
-    
+
     close(fd);
   fail_open:
 
@@ -119,7 +119,7 @@ struct sector *sector_load(const char *path)
 void sector_close(struct sector *sector)
 {
     if (!sector) return;
-    
+
     if (mummap(sector, sector->len) < 0) {
         fail_errno("unable to munmap %llx", coord_to_id(sector->coord));
         fail_abort();
@@ -143,20 +143,28 @@ void gen_sector(struct sector *sector, struct coord coord)
             .x = coord.x + rng_gen_range(rng, 0, coord_sector_max),
             .y = coord.y + rng_gen_range(rng, 0, coord_sector_max),
         };
-        struct star star = star_gen(coord);
+
+        struct system_desc *system = gen_system(coord);
+        sector->systems[i] = system->s;
     }
 }
 
-struct star gen_star(struct coord coord)
+struct system_desc *gen_system(struct coord coord)
 {
-    struct star star = {0};
-
     uint64_t id = coord_to_id(coord);
     struct rng rng = rng_make(id);
-
     size_t planets = rng_gen_range(rng, 1, 16);
-    for (size_t planet = 0; planet < planets; ++planet) {
 
+    size_t len = sizeof(*system) + planets * sizeof(system->planets[0]);
+    struct system_desc *system = calloc(1, len);
+    *system = (struct system) {
+        .coord = coord,
+        .planets_len = planets
+    };
+
+    system->s.star = rng_gen_range(rng, 1, 10);
+
+    for (size_t planet = 0; planet < planets; ++planet) {
         size_t size = rng_gen_range(rng, 1, rng_gen_range(rng, 1, 16));
         size_t diversity = rng_gen_range(rng, 1, rng_gen_range(rng, 1, 16));
 
@@ -164,12 +172,13 @@ struct star gen_star(struct coord coord)
             size_t element = rng_gen_range(rng, 0, rng_gen_range(rng, 0, 16));
             uint16_t quantity = 1 << (size / 2 + element / 4);
 
-            star.elements[element] += quantity;
-            if (star.elements[element] < quantity) {
-                star.elements[element] = UINT16_MAX;
+            system->planets[element] += quantity
+            system->s.elements[element] += quantity;
+            if (system->planets[element] < quantity) {
+                system->planets[element] = UINT16_MAX;
             }
         }
     }
 
-    return star;
+    return system;
 }
