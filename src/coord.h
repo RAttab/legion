@@ -8,6 +8,7 @@
 #include "utils.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // -----------------------------------------------------------------------------
 // coord
@@ -26,22 +27,22 @@ legion_packed struct coord
 
 inline bool coord_null(struct coord coord)
 {
-    return coord.x == 0 && coord.y == 0
+    return coord.x == 0 && coord.y == 0;
 }
 
 inline struct coord coord_area(struct coord coord)
 {
     return (struct coord) {
-        .x = (coord.x >> 22) << 22;
-        .y = (coord.y >> 22) << 22;
+        .x = (coord.x >> 22) << 22,
+        .y = (coord.y >> 22) << 22,
     };
 }
 
 inline struct coord coord_sector(struct coord coord)
 {
     return (struct coord) {
-        .x = (coord.x >> 12) << 12;
-        .y = (coord.y >> 12) << 12;
+        .x = (coord.x >> 12) << 12,
+        .y = (coord.y >> 12) << 12,
     };
 }
 
@@ -54,6 +55,6 @@ inline struct coord id_to_coord(uint64_t id)
 {
     return (struct coord) {
         .x = id >> 32,
-        .y = id & ((uint32_t) -1);
+        .y = id & ((uint32_t) -1),
     };
 }

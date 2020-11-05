@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail -o xtrace
 : ${PREFIX:="."}
 
 declare -a SRC
-SRC=()
+SRC=(ui sector)
 
 declare -a TEST
 TEST=()

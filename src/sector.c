@@ -5,9 +5,13 @@
 
 #include "sector.h"
 
+#include "rng.h"
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 
 // -----------------------------------------------------------------------------
@@ -17,10 +21,68 @@
 static uint64_t stars_max = 1UL << 10;
 
 
+
+// -----------------------------------------------------------------------------
+// gen
+// -----------------------------------------------------------------------------
+
+
+struct system_desc *gen_system(struct coord coord)
+{
+    uint64_t id = coord_to_id(coord);
+    struct rng rng = rng_make(id);
+    size_t planets = rng_gen_range(&rng, 1, 16);
+
+    struct system_desc *system =
+        calloc(1, sizeof(*system) + planets * sizeof(system->planets[0]));
+    *system = (struct system_desc) {
+        .s = (struct system) { .coord = coord },
+        .planets_len = planets
+    };
+
+    system->s.star = rng_gen_range(&rng, 1, 10);
+
+    for (size_t planet = 0; planet < planets; ++planet) {
+        size_t size = rng_gen_range(&rng, 1, rng_gen_range(&rng, 1, 16));
+        size_t diversity = rng_gen_range(&rng, 1, rng_gen_range(&rng, 1, 16));
+
+        for (size_t roll = 0; roll < diversity; ++roll) {
+            size_t element = rng_gen_range(&rng, 0, rng_gen_range(&rng, 0, 16));
+            uint16_t quantity = 1 << (size / 2 + element / 4);
+
+            system->planets[element] += quantity;
+            system->s.elements[element] += quantity;
+            if (system->planets[element] < quantity) {
+                system->planets[element] = UINT16_MAX;
+            }
+        }
+    }
+
+    return system;
+}
+
+void gen_sector(struct sector *sector)
+{
+    uint64_t id = coord_to_id(sector->coord);
+    struct rng rng = rng_make(id);
+
+    size_t stars = rng_gen_range(&rng, 0, rng_gen_range(&rng, 0, stars_max));
+    for (size_t i = 0; i < stars; ++i) {
+
+        struct coord coord = (struct coord) {
+            .x = coord.x + rng_gen_range(&rng, 0, coord_sector_max),
+            .y = coord.y + rng_gen_range(&rng, 0, coord_sector_max),
+        };
+
+        struct system_desc *system = gen_system(coord);
+        sector->systems[i] = system->s;
+    }
+}
+
+
 // -----------------------------------------------------------------------------
 // basics
 // -----------------------------------------------------------------------------
-
 
 static size_t sector_size(size_t stars)
 {
@@ -39,12 +101,14 @@ struct sector *sector_gen(struct coord coord)
     struct sector *sector =
         mmap(0, size, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
     if (sector == MAP_FAILED) {
-        legion_fail_errno("unable to mmap sector %llx", coord_to_id(coord));
+        legion_fail_errno("unable to mmap sector %lx", coord_to_id(coord));
         return NULL;
     }
 
-    sector.len = size;
-    sector.coord = coord;
+    *sector = (struct sector) {
+        .len = size,
+        .coord = coord,
+    };
     gen_sector(sector);
 
     return sector;
@@ -52,18 +116,20 @@ struct sector *sector_gen(struct coord coord)
 
 struct sector *sector_save(struct sector *sector, const char *path)
 {
-    size_t size = sector_size(sector->stars_len);
+    size_t size = sector_size(sector->systems_len);
 
     int fd = open(path, O_RDWR | O_EXCL | O_CREAT, 0660);
     if (fd < 0) {
-        legion_fail_errno("unable to create sector %llx at '%s'", coord_to_id(coord), path);
+        legion_fail_errno("unable to create sector %lx at '%s'",
+                coord_to_id(sector->coord), path);
         goto fail_open;
     }
 
 
     struct sector *saved = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (sector == MAP_FAILED) {
-        legion_fail_errno("unable to mmap sector %llx from '%s'", coord_to_id(coord), path);
+        legion_fail_errno("unable to mmap sector %lx from '%s'",
+                coord_to_id(sector->coord), path);
         goto fail_mmap;
     }
 
@@ -105,7 +171,9 @@ struct sector *sector_load(const char *path)
         goto fail_mmap;
     }
 
-    munmap(saved, size);
+    return sector;
+
+    munmap(sector, size);
   fail_mmap:
 
   fail_stat:
@@ -120,65 +188,8 @@ void sector_close(struct sector *sector)
 {
     if (!sector) return;
 
-    if (mummap(sector, sector->len) < 0) {
-        fail_errno("unable to munmap %llx", coord_to_id(sector->coord));
-        fail_abort();
+    if (munmap(sector, sector->len) < 0) {
+        legion_fail_errno("unable to munmap %lx", coord_to_id(sector->coord));
+        legion_abort();
     }
-}
-
-
-// -----------------------------------------------------------------------------
-// gen
-// -----------------------------------------------------------------------------
-
-void gen_sector(struct sector *sector, struct coord coord)
-{
-    uint64_t id = coord_to_id(sector);
-    struct rng rng = rng_make(id);
-
-    size_t stars = rng_gen_range(rng, 0, rng_gen_range(rng, 0, stars_max));
-    for (size_t i = 0; i < stars; ++i) {
-
-        struct coord coord = (struct coord) {
-            .x = coord.x + rng_gen_range(rng, 0, coord_sector_max),
-            .y = coord.y + rng_gen_range(rng, 0, coord_sector_max),
-        };
-
-        struct system_desc *system = gen_system(coord);
-        sector->systems[i] = system->s;
-    }
-}
-
-struct system_desc *gen_system(struct coord coord)
-{
-    uint64_t id = coord_to_id(coord);
-    struct rng rng = rng_make(id);
-    size_t planets = rng_gen_range(rng, 1, 16);
-
-    size_t len = sizeof(*system) + planets * sizeof(system->planets[0]);
-    struct system_desc *system = calloc(1, len);
-    *system = (struct system) {
-        .coord = coord,
-        .planets_len = planets
-    };
-
-    system->s.star = rng_gen_range(rng, 1, 10);
-
-    for (size_t planet = 0; planet < planets; ++planet) {
-        size_t size = rng_gen_range(rng, 1, rng_gen_range(rng, 1, 16));
-        size_t diversity = rng_gen_range(rng, 1, rng_gen_range(rng, 1, 16));
-
-        for (size_t roll = 0; roll < diversity; ++roll) {
-            size_t element = rng_gen_range(rng, 0, rng_gen_range(rng, 0, 16));
-            uint16_t quantity = 1 << (size / 2 + element / 4);
-
-            system->planets[element] += quantity
-            system->s.elements[element] += quantity;
-            if (system->planets[element] < quantity) {
-                system->planets[element] = UINT16_MAX;
-            }
-        }
-    }
-
-    return system;
 }

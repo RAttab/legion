@@ -13,9 +13,8 @@
 // -----------------------------------------------------------------------------
 
 
-enum { num_elements = 26; }
+enum { num_elements = 26 };
 typedef uint32_t elements_t [num_elements];
-
 
 legion_packed struct star
 {
@@ -23,6 +22,13 @@ legion_packed struct star
     elements_t elements;
 };
 
+
+legion_packed struct system
+{
+    struct coord coord;
+    size_t star;
+    uint32_t elements[num_elements];
+};
 
 legion_packed struct sector
 {
@@ -32,13 +38,6 @@ legion_packed struct sector
     size_t systems_len;
     struct system systems[];
 };
-
-legion_packed struct system
-{
-    struct coord coord;
-    size_t star;
-    uint32_t elements[num_elements];
-}
 
 struct system_desc
 {

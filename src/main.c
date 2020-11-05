@@ -1,9 +1,28 @@
+/* main.c
+   Rémi Attab (remi.attab@gmail.com), 04 Nov 2020
+   FreeBSD-style copyright and disclaimer apply
+*/
+
 #include "SDL.h"
+
+#include <stdbool.h>
 
 SDL_DisplayMode display = {0};
 
-bool process(SDL_Event *event)
+void process(SDL_Event *event)
 {
+    switch (event->type)
+    {
+        
+    case SDL_KEYUP:
+        switch (event->key.keysym.sym)
+        {
+        case SDLK_q:
+            SDL_PushEvent(&(SDL_Event){.type = SDL_QUIT });
+            break;
+        }
+        break;
+    }
 }
 
 void render(SDL_Renderer *renderer)
@@ -47,7 +66,7 @@ int main(int argc, char **argv)
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
-    if (SDL_CreateWindowAndRenderer(dm.w, dm.h, SDL_WINDOW_BORDERLESS, &window, &renderer) != 0) {
+    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_BORDERLESS, &window, &renderer) != 0) {
         SDL_Log("failed to create window: %s", SDL_GetError());
         goto fail_win;
     }
