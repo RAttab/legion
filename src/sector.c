@@ -40,7 +40,7 @@ struct system_desc *gen_system(struct coord coord)
         .planets_len = planets
     };
 
-    system->s.star = rng_gen_range(&rng, 1, 10);
+    system->s.star = 1 << rng_gen_range(&rng, 1, 31);
 
     for (size_t planet = 0; planet < planets; ++planet) {
         size_t size = rng_gen_range(&rng, 1, rng_gen_range(&rng, 1, 16));
@@ -86,7 +86,7 @@ void gen_sector(struct sector *sector)
 
 static size_t sector_size(size_t stars)
 {
-    return sizeof(struct sector) + sizeof(struct star) * stars;
+    return sizeof(struct sector) + sizeof(struct system) * stars;
 }
 
 static size_t sector_size_max()
@@ -99,9 +99,9 @@ struct sector *sector_gen(struct coord coord)
     size_t size = sector_size_max();
 
     struct sector *sector =
-        mmap(0, size, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+        mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
     if (sector == MAP_FAILED) {
-        legion_fail_errno("unable to mmap sector %lx", coord_to_id(coord));
+        SDL_LogErrno("unable to mmap sector %lx", coord_to_id(coord));
         return NULL;
     }
 
@@ -110,6 +110,10 @@ struct sector *sector_gen(struct coord coord)
         .coord = coord,
     };
     gen_sector(sector);
+
+    if (mprotect(sector, size, PROT_READ) < 0) {
+        SDL_LogErrno("unable to mprotect read %lx", coord_to_id(coord));
+    }
 
     return sector;
 }
@@ -120,7 +124,7 @@ struct sector *sector_save(struct sector *sector, const char *path)
 
     int fd = open(path, O_RDWR | O_EXCL | O_CREAT, 0660);
     if (fd < 0) {
-        legion_fail_errno("unable to create sector %lx at '%s'",
+        SDL_LogErrno("unable to create sector %lx at '%s'",
                 coord_to_id(sector->coord), path);
         goto fail_open;
     }
@@ -128,7 +132,7 @@ struct sector *sector_save(struct sector *sector, const char *path)
 
     struct sector *saved = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (sector == MAP_FAILED) {
-        legion_fail_errno("unable to mmap sector %lx from '%s'",
+        SDL_LogErrno("unable to mmap sector %lx from '%s'",
                 coord_to_id(sector->coord), path);
         goto fail_mmap;
     }
@@ -154,7 +158,7 @@ struct sector *sector_load(const char *path)
 {
     int fd = open(path, O_RDWR);
     if (fd < 0) {
-        legion_fail_errno("unable to open sector at '%s'", path);
+        SDL_LogErrno("unable to open sector at '%s'", path);
         goto fail_open;
     }
 
@@ -167,7 +171,7 @@ struct sector *sector_load(const char *path)
 
     struct sector *sector = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (sector == MAP_FAILED) {
-        legion_fail_errno("unable to mmap sector from '%s'", path);
+        SDL_LogErrno("unable to mmap sector from '%s'", path);
         goto fail_mmap;
     }
 
@@ -189,7 +193,7 @@ void sector_close(struct sector *sector)
     if (!sector) return;
 
     if (munmap(sector, sector->len) < 0) {
-        legion_fail_errno("unable to munmap %lx", coord_to_id(sector->coord));
-        legion_abort();
+        SDL_LogErrno("unable to munmap %lx", coord_to_id(sector->coord));
+        abort();
     }
 }

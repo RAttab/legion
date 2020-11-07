@@ -16,18 +16,19 @@
 enum { num_elements = 26 };
 typedef uint32_t elements_t [num_elements];
 
-legion_packed struct star
-{
-    struct coord coord;
-    elements_t elements;
-};
-
 
 legion_packed struct system
 {
     struct coord coord;
-    size_t star;
+    uint32_t star;
     uint32_t elements[num_elements];
+};
+
+struct system_desc
+{
+    struct system s;
+    size_t planets_len;
+    uint16_t planets[];
 };
 
 legion_packed struct sector
@@ -37,13 +38,6 @@ legion_packed struct sector
 
     size_t systems_len;
     struct system systems[];
-};
-
-struct system_desc
-{
-    struct system s;
-    size_t planets_len;
-    uint16_t planets[];
 };
 
 

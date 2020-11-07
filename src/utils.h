@@ -5,11 +5,13 @@
 
 #pragma once
 
-
+#include "SDL.h"
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
 
 
 // -----------------------------------------------------------------------------
@@ -31,24 +33,11 @@
 
 
 // -----------------------------------------------------------------------------
-// err
+// logs
 // -----------------------------------------------------------------------------
 
-void legion_abort() legion_noreturn;
-void legion_exit(int code) legion_noreturn;
-
-void legion_vfail(const char *file, int line, const char *fmt, ...)
-    legion_printf(3, 4);
-
-void legion_vfail_errno(const char *file, int line, const char *fmt, ...)
-    legion_printf(3, 4);
-
-#define legion_fail(...)                                \
-    legion_vfail(__FILE__, __LINE__, __VA_ARGS__)
-
-#define legion_fail_errno(...)                          \
-    legion_vfail_errno(__FILE__, __LINE__, __VA_ARGS__)
-
+#define SDL_LogErrno(fmt, ...) \
+    SDL_Log(fmt ": (%d) %s", __VA_ARGS__, errno, strerror(errno))
 
 // -----------------------------------------------------------------------------
 // vma
@@ -60,4 +49,15 @@ static inline size_t to_vma_len(size_t len)
 {
     if (!(len % page_len)) return len;
     return (len & ~(page_len - 1)) + page_len;
+}
+
+// -----------------------------------------------------------------------------
+// bits
+// -----------------------------------------------------------------------------
+
+inline size_t clz(uint64_t x) { return x ? __builtin_clzll(x) : 64; }
+
+inline uint64_t leading_bit(uint64_t x)
+{
+    return x & (1ULL << (63 - clz(x)));
 }

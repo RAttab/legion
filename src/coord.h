@@ -25,10 +25,19 @@ legion_packed struct coord
 };
 
 
+inline struct coord coord(int64_t x, int64_t y)
+{
+    return (struct coord) {
+        .x = x < 0 ? 0 : (x > UINT32_MAX ? UINT32_MAX : x),
+        .y = y < 0 ? 0 : (y > UINT32_MAX ? UINT32_MAX : y),
+    };
+}
+
 inline bool coord_null(struct coord coord)
 {
     return coord.x == 0 && coord.y == 0;
 }
+
 
 inline struct coord coord_area(struct coord coord)
 {
@@ -57,4 +66,21 @@ inline struct coord id_to_coord(uint64_t id)
         .x = id >> 32,
         .y = id & ((uint32_t) -1),
     };
+}
+
+
+// -----------------------------------------------------------------------------
+// rect
+// -----------------------------------------------------------------------------
+
+struct rect
+{
+    struct coord top, bot;
+};
+
+inline bool rect_contains(const struct rect *r, struct coord coord)
+{
+    return
+        (coord.x >= r->top.x && coord.x < r->bot.x) &&
+        (coord.y >= r->top.y && coord.y < r->bot.y);
 }

@@ -5,9 +5,17 @@
 
 #include "SDL.h"
 
-#include <stdbool.h>
+#include "utils.h"
+#include "sector.h"
+#include "ui.h"
 
 SDL_DisplayMode display = {0};
+
+struct state
+{
+    struct sector *sector;
+    struct ui_core *core;
+};
 
 void process(SDL_Event *event)
 {
@@ -25,18 +33,23 @@ void process(SDL_Event *event)
     }
 }
 
-void render(SDL_Renderer *renderer)
+void render(SDL_Renderer *renderer, struct state *state)
 {
     SDL_RenderClear(renderer);
 
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &(SDL_Rect){0, 0, display.w, display.h});
-
+    ui_core_render(state->core, renderer);
+    
     SDL_RenderPresent(renderer);
 }
 
 void loop(SDL_Renderer *renderer)
 {
+    struct sector *sector = sector_gen(coord(0, 0));
+    struct state state = {
+        .sector = sector,
+        .core = ui_core_init(renderer, sector, (SDL_Rect){0, 0, display.w, display.h}),
+    };
+    
     bool quit = false;
     while (!quit) {
 
@@ -46,7 +59,7 @@ void loop(SDL_Renderer *renderer)
             process(&event);
         }
 
-        render(renderer);
+        render(renderer, &state);
     }
 }
 
