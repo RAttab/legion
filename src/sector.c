@@ -31,7 +31,7 @@ struct system_desc *gen_system(struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
     struct rng rng = rng_make(id);
-    size_t planets = rng_gen_range(&rng, 1, 16);
+    size_t planets = rng_uni(&rng, 1, 16);
 
     struct system_desc *system =
         calloc(1, sizeof(*system) + planets * sizeof(system->planets[0]));
@@ -40,21 +40,18 @@ struct system_desc *gen_system(struct coord coord)
         .planets_len = planets
     };
 
-    system->s.star = 1 << rng_gen_range(&rng, 1, 31);
+    system->s.star = 1 << rng_uni(&rng, 1, 31);
 
     for (size_t planet = 0; planet < planets; ++planet) {
-        size_t size = rng_gen_range(&rng, 1, rng_gen_range(&rng, 1, 16));
-        size_t diversity = rng_gen_range(&rng, 1, rng_gen_range(&rng, 1, 16));
+        size_t size = rng_exp(&rng, 1, 16);
+        size_t diversity = rng_exp(&rng, 1, 16);
 
         for (size_t roll = 0; roll < diversity; ++roll) {
-            size_t element = rng_gen_range(&rng, 0, rng_gen_range(&rng, 0, 16));
+            size_t element = rng_exp(&rng, 1, 16);
             uint16_t quantity = 1 << (size / 2 + element / 4);
-
-            system->planets[element] += quantity;
+            
             system->s.elements[element] += quantity;
-            if (system->planets[element] < quantity) {
-                system->planets[element] = UINT16_MAX;
-            }
+            system->planets[planet][element] += quantity;
         }
     }
 
@@ -66,12 +63,12 @@ void gen_sector(struct sector *sector)
     uint64_t id = coord_to_id(sector->coord);
     struct rng rng = rng_make(id);
 
-    size_t stars = rng_gen_range(&rng, 0, rng_gen_range(&rng, 0, stars_max));
-    for (size_t i = 0; i < stars; ++i) {
+    sector->systems_len = rng_exp(&rng, 0, stars_max);
+    for (size_t i = 0; i < sector->systems_len; ++i) {
 
         struct coord coord = (struct coord) {
-            .x = coord.x + rng_gen_range(&rng, 0, coord_sector_max),
-            .y = coord.y + rng_gen_range(&rng, 0, coord_sector_max),
+            .x = coord.x + rng_uni(&rng, 0, coord_sector_max),
+            .y = coord.y + rng_uni(&rng, 0, coord_sector_max),
         };
 
         struct system_desc *system = gen_system(coord);

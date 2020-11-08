@@ -115,23 +115,26 @@ void ui_core_render(struct ui_core *ui, SDL_Renderer *renderer)
         .bot = core_project_coord(ui, ui->rect.w, ui->rect.h),
     };
 
-    SDL_SetTextureBlendMode(ui->tex, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureBlendMode(ui->tex, SDL_BLENDMODE_ADD);
         
     for (size_t i = 0; i < ui->sector->systems_len; ++i) {
         struct system *system = &ui->sector->systems[i];
         if (!rect_contains(&rect, system->coord)) continue;
 
         SDL_Point pos = core_project_ui(ui, system->coord);
-        struct rgb rgb = spectrum_rgb(32 - leading_bit(system->star), 32);
+        struct rgb rgb =
+            desaturate(
+                    spectrum_rgb(32 - bits_log2(system->star), 32),
+                    .7);
 
-        size_t px = scale_mult(ui->scale, 10);
+        size_t px = scale_mult(ui->scale, 20);
         SDL_Rect src = (SDL_Rect) { .x = 0, .y = 0, .w = 100, .h = 100 };
         SDL_Rect dst = (SDL_Rect) {
             .x = pos.x - px / 2,
             .y = pos.y - px / 2,
             .h = px, .w = px
         };
-        
+
         SDL_SetTextureColorMod(ui->tex, rgb.r, rgb.g, rgb.b);
         SDL_RenderCopy(renderer, ui->tex, &src, &dst);
     }

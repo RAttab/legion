@@ -23,6 +23,7 @@ inline uint64_t rng_max() { return (uint64_t) -1UL; }
 // -----------------------------------------------------------------------------
 
 uint64_t rng_gen(struct rng *rng);
-uint64_t rng_gen_range(struct rng *rng, uint64_t min, uint64_t max);
+uint64_t rng_uni(struct rng *rng, uint64_t min, uint64_t max);
+uint64_t rng_exp(struct rng *rng, uint64_t min, uint64_t max);
 
 bool rng_gen_prob(struct rng *rng, double prob);

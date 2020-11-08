@@ -44,10 +44,17 @@ uint64_t rng_gen(struct rng *rng)
     return rng->x * UINT64_C(2685821657736338717);
 }
 
-uint64_t rng_gen_range(struct rng *rng, uint64_t min, uint64_t max)
+uint64_t rng_uni(struct rng *rng, uint64_t min, uint64_t max)
 {
     assert(max - min != 0);
     return rng_gen(rng) % (max - min) + min;
+}
+
+
+uint64_t rng_exp(struct rng *rng, uint64_t min, uint64_t max)
+{
+    assert(max - min != 0);
+    return rng_uni(rng, min, rng_uni(rng, min+1, max));
 }
 
 bool rng_gen_prob(struct rng *rng, double prob)

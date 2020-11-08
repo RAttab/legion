@@ -28,7 +28,7 @@ struct system_desc
 {
     struct system s;
     size_t planets_len;
-    uint16_t planets[];
+    elements_t planets[];
 };
 
 legion_packed struct sector
