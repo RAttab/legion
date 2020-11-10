@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-set -o errexit -o nounset -o pipefail -o xtrace
+set -o errexit -o nounset -o pipefail # -o xtrace
 
 : ${PREFIX:="."}
 
@@ -8,7 +8,7 @@ declare -a SRC
 SRC=(rng sector render ui)
 
 declare -a TEST
-TEST=()
+TEST=(coord)
 
 CC=${CC:-gcc}
 
@@ -40,15 +40,15 @@ $CC -o "legion" "${PREFIX}/src/main.c" liblegion.a  $(sdl2-config --libs) $CFLAG
 
 for test in "${TEST[@]}"; do
     echo $test
-    $CC -o "test_$test" "${PREFIX}/test/${test}_test.c" liblegion.a $CFLAGS
+    $CC -o "test_$test" "${PREFIX}/test/${test}_test.c" liblegion.a $(sdl2-config --libs) $CFLAGS
     "./test_$test"
 done
 
-for test in "${TEST[@]}"; do
-    valgrind \
-        --leak-check=full \
-        --track-origins=yes \
-        --trace-children=yes \
-        --error-exitcode=1 \
-        "./test_$test"
-done
+# for test in "${TEST[@]}"; do
+#     valgrind \
+#         --leak-check=full \
+#         --track-origins=yes \
+#         --trace-children=yes \
+#         --error-exitcode=1 \
+#         "./test_$test"
+# done

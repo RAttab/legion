@@ -9,139 +9,257 @@
 #include "render.h"
 #include "sector.h"
 
+// -----------------------------------------------------------------------------
+// cursor
+// -----------------------------------------------------------------------------
+
+struct ui_cursor
+{
+    SDL_Point pos;
+    uint8_t button;
+    SDL_Texture *tex;
+};
+
+struct ui_cursor *ui_cursor_init(SDL_Renderer *renderer, SDL_Rect *rect)
+{
+    struct ui_cursor *cursor = calloc(1, sizeof(*cursor));
+    *cursor = (struct ui_cursor) {
+        .pos = (SDL_Point){ .x = rect->w / 2, .y = rect->h / 2 },
+        .button = 0,
+        .tex = NULL,
+    };
+
+    SDL_Surface *surface = SDL_LoadBMP("./res/cursor.bmp");
+    if (surface == NULL) {
+        SDL_Log("unable to load cursor texture: %s", SDL_GetError());
+        goto fail_bmp;
+    }
+
+    cursor->tex = SDL_CreateTextureFromSurface(renderer, surface);
+    if (cursor->tex == NULL) {
+        SDL_Log("unable create cursor texture: %s", SDL_GetError());
+        goto fail_tex;
+    }
+
+    if (SDL_SetRelativeMouseMode(true) < 0) {
+        SDL_Log("unable to set relative mouse mode: %s", SDL_GetError());
+        goto fail_mouse;
+    }
+
+    SDL_SetTextureBlendMode(cursor->tex, SDL_BLENDMODE_ADD);
+    SDL_SetTextureColorMod(cursor->tex, 0xFF, 0xFF, 0xFF);
+
+    return cursor;
+
+  fail_mouse:
+    SDL_DestroyTexture(cursor->tex);
+  fail_tex:
+    SDL_FreeSurface(surface);
+  fail_bmp:
+    free(cursor);
+    return NULL;
+}
+
+static void ui_cursor_free(struct ui_cursor *cursor)
+{
+    SDL_DestroyTexture(cursor->tex);
+    free(cursor);
+}
+
+static void cursor_render(struct ui_cursor *cursor, SDL_Renderer *renderer)
+{
+    SDL_RenderCopy(renderer, cursor->tex,
+            &(SDL_Rect){ .x = 0, .y = 0, .w = 50, .h = 50 },
+            &(SDL_Rect){ .x = cursor->pos.x, .y = cursor->pos.y, .w = 20, .h = 20 });
+}
+
+static void cursor_events(struct ui_cursor *cursor, SDL_Event *event)
+{
+    switch (event->type)
+    {
+    case SDL_MOUSEMOTION: {
+        cursor->pos.x += event->motion.xrel;
+        cursor->pos.y += event->motion.yrel;
+        break;
+    }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        cursor->button = event->button.button;
+        break;
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        cursor->button = 0;
+        break;
+    }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// system
+// -----------------------------------------------------------------------------
+
+/* struct ui_system */
+/* { */
+/*     struct *system system; */
+
+/*     SDL_Rect rect; */
+/*     SDL_Texture *tex; */
+/* }; */
+
+/* struct ui_system *ui_system_init(SDL_Renderer *renderer, SDL_Rect *rect) */
+/* { */
+
+/* } */
+
+/* static void ui_system_free(struct ui_system *system) */
+/* { */
+
+/* } */
+
+
+/* static void system_render(struct ui_system *system, SDL_Renderer *renderer) */
+/* { */
+
+/* } */
+
+/* static void system_events(struct ui_system *system, SDL_Event *event) */
+/* { */
+
+/* } */
+
+
+// -----------------------------------------------------------------------------
+// core
+// -----------------------------------------------------------------------------
 
 struct ui_core
 {
     struct sector *sector;
-    SDL_Rect rect;
-
-    int8_t scale;
     struct coord pos;
+    scale_t scale;
 
+    SDL_Rect rect;
     SDL_Texture* tex;
+
+    struct ui_cursor *cursor;
 };
 
 struct ui_core *
-ui_core_init(SDL_Renderer *renderer, struct sector *sector, SDL_Rect rect)
+ui_core_init(SDL_Renderer *renderer, struct sector *sector, SDL_Rect *rect)
 {
-    struct ui_core *ui = calloc(1, sizeof(*ui));
-    *ui = (struct ui_core) {
+    struct ui_core *core = calloc(1, sizeof(*core));
+    *core = (struct ui_core) {
         .sector = sector,
-        .rect = rect,
-        .scale = 0,
         .pos = (struct coord) {
             .x = sector->coord.x + coord_sector_max / 2,
             .y = sector->coord.y + coord_sector_max / 2,
         },
-        0
+        .scale = scale_init(),
+        .rect = *rect,
+        .tex = NULL,
+        .cursor = ui_cursor_init(renderer, rect),
     };
 
     SDL_Surface *surface = SDL_LoadBMP("./res/core.bmp");
     if (surface == NULL) {
-        SDL_Log("unable to load texture: %s", SDL_GetError());
+        SDL_Log("unable to load core texture: %s", SDL_GetError());
         goto fail_bmp;
     }
 
-    ui->tex = SDL_CreateTextureFromSurface(renderer, surface);
-    if (ui->tex == NULL) {
-        SDL_Log("unable create texture: %s", SDL_GetError());
+    core->tex = SDL_CreateTextureFromSurface(renderer, surface);
+    if (core->tex == NULL) {
+        SDL_Log("unable create core texture: %s", SDL_GetError());
         goto fail_tex;
     }
 
-    return ui;
+    return core;
 
-    SDL_DestroyTexture(ui->tex);
+    SDL_DestroyTexture(core->tex);
   fail_tex:
     SDL_FreeSurface(surface);
   fail_bmp:
-    free(ui);
+    free(core);
     return NULL;
 }
 
-void ui_core_free(struct ui_core *ui)
+void ui_core_free(struct ui_core *core)
 {
-    SDL_DestroyTexture(ui->tex);
-    free(ui);
+    ui_cursor_free(core->cursor);
+
+    SDL_DestroyTexture(core->tex);
+    free(core);
 }
 
-int64_t scale_mult(int8_t scale, int64_t value)
-{
-    if (scale > 0) {
-        return value * (1UL << scale);
-    }
-    if (scale < 0) {
-        return value / -(1UL << scale);
-    }
-    return value;
-}
 
-int64_t scale_div(int8_t scale, int64_t value)
+static void core_render_galaxy(struct ui_core *core, SDL_Renderer *renderer)
 {
-    if (scale > 0) {
-        return value / (1UL << scale);
-    }
-    if (scale < 0) {
-        return value * -(1UL << scale);
-    }
-    return value;
-}
+    struct rect rect = project_rect_coord(
+            core->rect, core->pos, core->scale, core->rect);
 
-struct coord core_project_coord(struct ui_core *ui, int x, int y)
-{
-    int64_t rel_x = scale_mult(ui->scale, x - ui->rect.w / 2);
-    int64_t rel_y = scale_mult(ui->scale, y - ui->rect.h / 2);
-    return coord(
-            rel_x + ui->pos.x,
-            rel_y + ui->pos.y);
-}
-
-SDL_Point core_project_ui(struct ui_core *ui, struct coord coord)
-{
-    int64_t rel_x = scale_div(ui->scale, coord.x - ui->pos.x);
-    int64_t rel_y = scale_div(ui->scale, coord.y - ui->pos.y);
-    return (SDL_Point) {
-        .x = ui->rect.x + rel_x + ui->rect.w / 2,
-        .y = ui->rect.y + rel_y + ui->rect.h / 2,
-    };
-}
-
-void ui_core_render(struct ui_core *ui, SDL_Renderer *renderer)
-{
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &ui->rect);
-    
-    struct rect rect = {
-        .top = core_project_coord(ui, 0, 0),
-        .bot = core_project_coord(ui, ui->rect.w, ui->rect.h),
-    };
-
-    SDL_SetTextureBlendMode(ui->tex, SDL_BLENDMODE_ADD);
-        
-    for (size_t i = 0; i < ui->sector->systems_len; ++i) {
-        struct system *system = &ui->sector->systems[i];
+    for (size_t i = 0; i < core->sector->systems_len; ++i) {
+        struct system *system = &core->sector->systems[i];
         if (!rect_contains(&rect, system->coord)) continue;
 
-        SDL_Point pos = core_project_ui(ui, system->coord);
-        struct rgb rgb =
-            desaturate(
-                    spectrum_rgb(32 - bits_log2(system->star), 32),
-                    .7);
+        SDL_Point pos = project_ui(core->rect, core->pos, core->scale, system->coord);
 
-        size_t px = scale_mult(ui->scale, 20);
-        SDL_Rect src = (SDL_Rect) { .x = 0, .y = 0, .w = 100, .h = 100 };
-        SDL_Rect dst = (SDL_Rect) {
+        size_t px = scale_div(core->scale, 20);
+        SDL_Rect src = { .x = 0, .y = 0, .w = 100, .h = 100 };
+        SDL_Rect dst = {
             .x = pos.x - px / 2,
             .y = pos.y - px / 2,
             .h = px, .w = px
         };
 
-        SDL_SetTextureColorMod(ui->tex, rgb.r, rgb.g, rgb.b);
-        SDL_RenderCopy(renderer, ui->tex, &src, &dst);
+        struct rgb rgb = spectrum_rgb(32 - bits_log2(system->star), 32);
+        rgb = SDL_PointInRect(&core->cursor->pos, &dst) ?
+            desaturate(rgb, .5) : desaturate(rgb, .8);
+
+        SDL_SetTextureBlendMode(core->tex, SDL_BLENDMODE_ADD);
+        SDL_SetTextureColorMod(core->tex, rgb.r, rgb.g, rgb.b);
+        SDL_RenderCopy(renderer, core->tex, &src, &dst);
     }
 }
 
-void ui_core_events(struct ui_core *ui, SDL_Event *event)
+void ui_core_render(struct ui_core *core, SDL_Renderer *renderer)
 {
-    (void) ui;
-    (void) event;
+    SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer, &core->rect);
+
+    core_render_galaxy(core, renderer);
+    cursor_render(core->cursor, renderer);
+}
+
+void ui_core_events(struct ui_core *core, SDL_Event *event)
+{
+    cursor_events(core->cursor, event);
+
+    switch (event->type)
+    {
+
+    case SDL_KEYUP: {
+
+        switch (event->key.keysym.sym)
+        {
+        case SDLK_q:
+            SDL_PushEvent(&(SDL_Event){.type = SDL_QUIT });
+            break;
+        }
+        break;
+    }
+
+    case SDL_MOUSEWHEEL: {
+        core->scale = scale_inc(core->scale, -event->wheel.y);
+        break;
+    }
+
+    case SDL_MOUSEMOTION: {
+        if (core->cursor->button == SDL_BUTTON_LEFT) {
+            core->pos.x -= scale_mult(core->scale, event->motion.xrel);
+            core->pos.y -= scale_mult(core->scale, event->motion.yrel);
+        }
+        break;
+    }
+
+    }
 }

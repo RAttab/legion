@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 
 
 // -----------------------------------------------------------------------------
@@ -57,3 +58,22 @@ static inline size_t to_vma_len(size_t len)
 
 inline size_t bits_clz(uint64_t x) { return x ? __builtin_clzll(x) : 64; }
 inline size_t bits_log2(uint64_t x) { return 63 - bits_clz(x); }
+
+// -----------------------------------------------------------------------------
+// math
+// -----------------------------------------------------------------------------
+
+inline int64_t i64_min(int64_t x, int64_t y)
+{
+    return x <= y ? x : y;
+}
+
+inline int64_t i64_max(int64_t x, int64_t y)
+{
+    return x >= y ? x : y;
+}
+
+inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
+{
+    return i64_min(i64_max(x, min), max);
+}

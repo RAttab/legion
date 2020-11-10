@@ -17,49 +17,28 @@ struct state
     struct ui_core *core;
 };
 
-void process(SDL_Event *event)
-{
-    switch (event->type)
-    {
-        
-    case SDL_KEYUP:
-        switch (event->key.keysym.sym)
-        {
-        case SDLK_q:
-            SDL_PushEvent(&(SDL_Event){.type = SDL_QUIT });
-            break;
-        }
-        break;
-    }
-}
-
-void render(SDL_Renderer *renderer, struct state *state)
-{
-    SDL_RenderClear(renderer);
-
-    ui_core_render(state->core, renderer);
-    
-    SDL_RenderPresent(renderer);
-}
-
 void loop(SDL_Renderer *renderer)
 {
-    struct sector *sector = sector_gen(coord(0, 0));
+    struct sector *sector = sector_gen((struct coord) {0});
     struct state state = {
         .sector = sector,
-        .core = ui_core_init(renderer, sector, (SDL_Rect){0, 0, display.w, display.h}),
+        .core = ui_core_init(
+                renderer, sector,
+                &(SDL_Rect){ .x = 0, .y = 0, .w = display.w, .h = display.h }),
     };
-    
+
     bool quit = false;
     while (!quit) {
 
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) return;
-            process(&event);
+            ui_core_events(state.core, &event);
         }
 
-        render(renderer, &state);
+        SDL_RenderClear(renderer);
+        ui_core_render(state.core, renderer);
+        SDL_RenderPresent(renderer);
     }
 }
 

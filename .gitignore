@@ -1,3 +1,5 @@
 legion
+test_*
+
 *.a
 *.o

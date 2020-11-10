@@ -10,7 +10,7 @@
 struct sector;
 struct ui_core;
 
-struct ui_core *ui_core_init(SDL_Renderer *, struct sector *, SDL_Rect);
+struct ui_core *ui_core_init(SDL_Renderer *, struct sector *, SDL_Rect *);
 void ui_core_free(struct ui_core *);
 
 void ui_core_render(struct ui_core *, SDL_Renderer *);
