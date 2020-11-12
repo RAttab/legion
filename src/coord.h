@@ -16,7 +16,7 @@
 
 static const uint32_t coord_area_max = 1 << 6;
 static const uint32_t coord_sector_max = 1 << 10;
-static const uint32_t coord_star_max = 1 << 16;
+static const uint32_t coord_system_max = 1 << 16;
 
 
 legion_packed struct coord
@@ -29,6 +29,10 @@ inline bool coord_null(struct coord coord)
     return coord.x == 0 && coord.y == 0;
 }
 
+inline bool coord_eq(struct coord rhs, struct coord lhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
 
 inline struct coord coord_area(struct coord coord)
 {
@@ -76,12 +80,13 @@ inline bool rect_contains(const struct rect *r, struct coord coord)
         (coord.y >= r->top.y && coord.y < r->bot.y);
 }
 
+
 // -----------------------------------------------------------------------------
 // scale
 // -----------------------------------------------------------------------------
 
 typedef  uint16_t scale_t;
-enum { scale_base = 128 };
+enum { scale_base = 64 };
 
 inline scale_t scale_init() { return scale_base; }
 inline scale_t scale_inc(scale_t scale, int delta)
@@ -121,7 +126,7 @@ project_coord(SDL_Rect rect, struct coord center, scale_t scale, SDL_Point origi
 }
 
 inline struct rect
-project_rect_coord(SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin)
+project_coord_rect(SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin)
 {
     return (struct rect) {
         .top = project_coord(rect, center, scale,

@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${PREFIX:="."}
 
 declare -a SRC
-SRC=(rng sector render ui)
+SRC=(rng sector render panel ui)
 
 declare -a TEST
 TEST=(coord)
@@ -28,6 +28,9 @@ CFLAGS="$CFLAGS -Wno-strict-aliasing"
 CFLAGS="$CFLAGS -fno-strict-aliasing"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
 
+LIBS="liblegion.a"
+LIBS="$LIBS $(sdl2-config --libs)"
+LIBS="$LIBS -lSDL_ttf"
 
 OBJ=""
 for src in "${SRC[@]}"; do
@@ -36,11 +39,11 @@ for src in "${SRC[@]}"; do
 done
 ar rcs liblegion.a $OBJ
 
-$CC -o "legion" "${PREFIX}/src/main.c" liblegion.a  $(sdl2-config --libs) $CFLAGS
+$CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
 
 for test in "${TEST[@]}"; do
     echo $test
-    $CC -o "test_$test" "${PREFIX}/test/${test}_test.c" liblegion.a $(sdl2-config --libs) $CFLAGS
+    $CC -o "test_$test" "${PREFIX}/test/${test}_test.c" $LIBS $CFLAGS
     "./test_$test"
 done
 

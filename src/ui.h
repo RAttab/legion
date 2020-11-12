@@ -7,8 +7,24 @@
 
 #include "SDL.h"
 
+#include "coord.h"
+
 struct sector;
-struct ui_core;
+
+struct ui_core
+{
+    struct sector *sector;
+    struct coord pos;
+    scale_t scale;
+
+    SDL_Rect rect;
+    SDL_Texture* tex;
+
+    struct ui_cursor *cursor;
+    struct panel * p_coord;
+
+    struct system *selected;
+};
 
 struct ui_core *ui_core_init(SDL_Renderer *, struct sector *, SDL_Rect *);
 void ui_core_free(struct ui_core *);

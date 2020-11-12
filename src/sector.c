@@ -194,3 +194,15 @@ void sector_close(struct sector *sector)
         abort();
     }
 }
+
+
+struct system *sector_lookup(struct sector *sector, struct rect *rect)
+{
+    for (size_t i = 0; i < sector->systems_len; ++i) {
+        struct system *system = &sector->systems[i];
+        if (rect_contains(rect, system->coord)) {
+            return system;
+        }
+    }
+    return NULL;
+}

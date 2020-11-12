@@ -8,6 +8,9 @@
 #include "coord.h"
 #include "render.h"
 #include "sector.h"
+#include "panel.h"
+
+enum { px_star = 20 };
 
 // -----------------------------------------------------------------------------
 // cursor
@@ -95,55 +98,10 @@ static void cursor_events(struct ui_cursor *cursor, SDL_Event *event)
     }
 }
 
-// -----------------------------------------------------------------------------
-// system
-// -----------------------------------------------------------------------------
-
-/* struct ui_system */
-/* { */
-/*     struct *system system; */
-
-/*     SDL_Rect rect; */
-/*     SDL_Texture *tex; */
-/* }; */
-
-/* struct ui_system *ui_system_init(SDL_Renderer *renderer, SDL_Rect *rect) */
-/* { */
-
-/* } */
-
-/* static void ui_system_free(struct ui_system *system) */
-/* { */
-
-/* } */
-
-
-/* static void system_render(struct ui_system *system, SDL_Renderer *renderer) */
-/* { */
-
-/* } */
-
-/* static void system_events(struct ui_system *system, SDL_Event *event) */
-/* { */
-
-/* } */
-
 
 // -----------------------------------------------------------------------------
 // core
 // -----------------------------------------------------------------------------
-
-struct ui_core
-{
-    struct sector *sector;
-    struct coord pos;
-    scale_t scale;
-
-    SDL_Rect rect;
-    SDL_Texture* tex;
-
-    struct ui_cursor *cursor;
-};
 
 struct ui_core *
 ui_core_init(SDL_Renderer *renderer, struct sector *sector, SDL_Rect *rect)
@@ -159,7 +117,10 @@ ui_core_init(SDL_Renderer *renderer, struct sector *sector, SDL_Rect *rect)
         .rect = *rect,
         .tex = NULL,
         .cursor = ui_cursor_init(renderer, rect),
+        .p_coord = NULL,
+        .selected = NULL,
     };
+
 
     SDL_Surface *surface = SDL_LoadBMP("./res/core.bmp");
     if (surface == NULL) {
@@ -172,6 +133,8 @@ ui_core_init(SDL_Renderer *renderer, struct sector *sector, SDL_Rect *rect)
         SDL_Log("unable create core texture: %s", SDL_GetError());
         goto fail_tex;
     }
+
+    core->p_coord = panel_coord_new(renderer, core);
 
     return core;
 
@@ -194,7 +157,7 @@ void ui_core_free(struct ui_core *core)
 
 static void core_render_galaxy(struct ui_core *core, SDL_Renderer *renderer)
 {
-    struct rect rect = project_rect_coord(
+    struct rect rect = project_coord_rect(
             core->rect, core->pos, core->scale, core->rect);
 
     for (size_t i = 0; i < core->sector->systems_len; ++i) {
@@ -203,7 +166,7 @@ static void core_render_galaxy(struct ui_core *core, SDL_Renderer *renderer)
 
         SDL_Point pos = project_ui(core->rect, core->pos, core->scale, system->coord);
 
-        size_t px = scale_div(core->scale, 20);
+        size_t px = scale_div(core->scale, px_star);
         SDL_Rect src = { .x = 0, .y = 0, .w = 100, .h = 100 };
         SDL_Rect dst = {
             .x = pos.x - px / 2,
@@ -228,11 +191,13 @@ void ui_core_render(struct ui_core *core, SDL_Renderer *renderer)
 
     core_render_galaxy(core, renderer);
     cursor_render(core->cursor, renderer);
+    panel_render(core->p_coord, renderer);
 }
 
 void ui_core_events(struct ui_core *core, SDL_Event *event)
 {
     cursor_events(core->cursor, event);
+    panel_event(core->p_coord, event);
 
     switch (event->type)
     {
@@ -259,6 +224,19 @@ void ui_core_events(struct ui_core *core, SDL_Event *event)
             core->pos.y -= scale_mult(core->scale, event->motion.yrel);
         }
         break;
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        SDL_MouseButtonEvent *b = &event->button;
+        if (b->clicks == 1 && b->button == SDL_BUTTON_LEFT) {
+            struct rect rect = project_coord_rect(
+                    core->rect, core->pos, core->scale, (SDL_Rect) {
+                        .x = b->x - px_star / 2,
+                        .y = b->y - px_star / 2,
+                        .w = px_star, .h = px_star,
+                    });
+            core->selected = sector_lookup(core->sector, &rect);
+        }
     }
 
     }
