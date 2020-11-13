@@ -22,8 +22,8 @@
 #define legion_packed       __attribute__((__packed__))
 #define legion_noreturn     __attribute__((noreturn))
 #define legion_printf(x,y)  __attribute__((format(printf, x, y)))
-#define legion_likely(x)    __builtin_expect(x, 1)
-#define legion_unlikely(x)  __builtin_expect(x, 0)
+#define likely(x)    __builtin_expect(x, 1)
+#define unlikely(x)  __builtin_expect(x, 0)
 
 
 // -----------------------------------------------------------------------------
@@ -77,3 +77,29 @@ inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
 {
     return i64_min(i64_max(x, min), max);
 }
+
+// -----------------------------------------------------------------------------
+// sdl
+// -----------------------------------------------------------------------------
+
+#define sdl_fail(p)                                                     \
+    while (false) {                                                     \
+        fprintf(stderr, "sdl-error<%s, %u> %s: %s\n",                   \
+                __FILE__, __LINE__, #p, SDL_GetError());                \
+        abort();                                                        \
+    }
+
+
+#define sdl_err(p)                                                      \
+    ({                                                                  \
+        typeof(p) ret = (p);                                            \
+        if (unlikely(ret < 0)) sdl_fail();                              \
+        ret;                                                            \
+    })
+
+#define sdl_ptr(p)                                                      \
+    ({                                                                  \
+        typeof(p) ret = (p);                                            \
+        if (unlikely(!ret)) sdl_fail();                                 \
+        ret;                                                            \
+    })
