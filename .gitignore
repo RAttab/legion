@@ -3,3 +3,5 @@ test_*
 
 *.a
 *.o
+
+build
