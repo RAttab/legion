@@ -7,6 +7,7 @@
 
 #include "utils.h"
 #include "sector.h"
+#include "font.h"
 #include "ui.h"
 
 SDL_DisplayMode display = {0};
@@ -46,33 +47,21 @@ int main(int argc, char **argv)
 {
     (void) argc; (void) argv;
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
-        SDL_Log("failed to init: %s", SDL_GetError());
-        goto fail_init;
-    }
-
-    if (SDL_GetDesktopDisplayMode(0, &display) != 0) {
-        SDL_Log("failed to get resolution: %s", SDL_GetError());
-        goto fail_dm;
-    }
+    sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
+    sdl_err(SDL_GetDesktopDisplayMode(0, &display));
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
-    if (SDL_CreateWindowAndRenderer(display.w, display.h, SDL_WINDOW_BORDERLESS, &window, &renderer) != 0) {
-        SDL_Log("failed to create window: %s", SDL_GetError());
-        goto fail_win;
-    }
+    sdl_err(SDL_CreateWindowAndRenderer(
+                    display.w, display.h,
+                    SDL_WINDOW_BORDERLESS, &window, &renderer));
+
+    fonts_init(renderer);
 
     loop(renderer);
 
+    fonts_close();
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
-
-    SDL_DestroyWindow(window);
-  fail_win:
-  fail_dm:
-    SDL_Quit();
-  fail_init:
-    return 1;
 }

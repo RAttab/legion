@@ -15,6 +15,7 @@ typedef void (*update_fn) (void *state, struct panel *, int type, void *data);
 struct panel
 {
     SDL_Rect rect;
+    SDL_Rect inner_rect;
     SDL_Texture *tex;
 
     bool redraw;
@@ -26,12 +27,14 @@ struct panel
     update_fn update;
 };
 
-struct panel *panel_new(SDL_Renderer *renderer, SDL_Rect rect);
+struct panel *panel_new(SDL_Renderer *renderer, const SDL_Rect *rect);
 void panel_free(struct panel *);
 
 void panel_invalidate(struct panel *);
 void panel_hide(struct panel *);
 void panel_show(struct panel *);
+
+void panel_add_borders(int width, int height, int *dst_width, int *dst_height);
 
 void panel_update(struct panel *, int type, void *data);
 void panel_render(struct panel *, SDL_Renderer *);

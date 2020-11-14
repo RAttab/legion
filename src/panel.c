@@ -7,25 +7,40 @@
 
 #include "coord.h"
 #include "ui.h"
+#include "font.h"
 
 // -----------------------------------------------------------------------------
 // panel
 // -----------------------------------------------------------------------------
 
-enum { margin = 5, border = 1 };
+enum {
+    margin = 2,
+    border = 1,
+    panel_padding = (margin + border) * 2
+};
 
-struct panel *panel_new(SDL_Renderer *renderer, SDL_Rect rect)
+void panel_add_borders(int width, int height, int *dst_width, int *dst_height)
+{
+    *dst_width = width + panel_padding * 2;
+    *dst_height = height + panel_padding * 2;
+}
+
+struct panel *panel_new(SDL_Renderer *renderer, const SDL_Rect *rect)
 {
     struct panel *panel = calloc(1, sizeof(*panel));
-    panel->rect = rect;
     panel->redraw = true;
     panel->hidden = true;
+    panel->rect = *rect;
+    panel->inner_rect = (SDL_Rect) {
+        .x = panel_padding, .y = panel_padding,
+        .w = rect->w - (panel_padding * 2), .h = rect->h - (panel_padding * 2),
+    };
 
     panel->tex = sdl_ptr(SDL_CreateTexture(
             renderer,
             SDL_PIXELFORMAT_RGBA8888,
             SDL_TEXTUREACCESS_TARGET,
-            rect.w, rect.h));
+            panel->rect.w, panel->rect.h));
 
     return panel;
 }
@@ -74,7 +89,9 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
 
         sdl_err(SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE));
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                            .x = 0, .y = 0, .w = panel->rect.w, .h = panel->rect.h }));
+                            .x = 0, .y = 0,
+                            .w = panel->rect.w,
+                            .h = panel->rect.h }));
 
         sdl_err(SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xCC));
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -83,10 +100,7 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
                             .h = panel->rect.h - border * 2}));
 
         if (panel->render) {
-            panel->render(panel->state, renderer, &(SDL_Rect) {
-                        .x = margin, .y = margin,
-                        .w = panel->rect.w - margin * 2,
-                        .h = panel->rect.h - margin * 2});
+            panel->render(panel->state, renderer, &panel->inner_rect);
         }
 
         sdl_err(SDL_SetRenderTarget(renderer, NULL));
@@ -109,18 +123,11 @@ static void panel_coord_render(void *state_, SDL_Renderer *renderer, SDL_Rect *r
 {
     struct panel_coord_state *state = state_;
 
-    uint16_t x = state->coord.x & (coord_system_max - 1);
-    uint16_t y = state->coord.y & (coord_system_max - 1);
+    char str[coord_str_len+1] = {0};
+    coord_str(state->coord, str, sizeof(str));
 
-    SDL_SetRenderDrawColor(renderer, x & 0xFF, x >> 8, 0x00, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                .x = rect->x, .y = rect->y,
-                .w = rect->w / 2, .h = rect->h});
-
-    SDL_SetRenderDrawColor(renderer, y & 0xFF, y >> 8, 0x00, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                .x = rect->x + rect->w / 2, .y = rect->y,
-                .w = rect->w / 2, .h = rect->h});
+    SDL_Point pos = { .x = rect->x, .y = rect->y };
+    font_render(font_mono6, renderer, str, coord_str_len, pos);
 }
 
 static void panel_coord_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -141,16 +148,18 @@ static void panel_coord_events(void *state_, struct panel *panel, SDL_Event *eve
 
 struct panel *panel_coord_new(SDL_Renderer *renderer, struct ui_core *core)
 {
-    size_t padding = (margin + border) * 2;
-    size_t w = ((12 * 2 + 1) * 10) + padding;
-    size_t h = 16 + padding;
+    size_t inner_w = 0, inner_h = 0;
+    font_text_size(font_mono6, coord_str_len, &inner_w, &inner_h);
 
-    SDL_Rect rect = { .x = core->rect.w - w, .y = 0, .w = w, .h = h };
+    int outer_w = 0, outer_h = 0;
+    panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
 
     struct panel_coord_state *state = calloc(1, sizeof(*state));
     state->core = core;
 
-    struct panel *panel = panel_new(renderer, rect);
+    struct panel *panel = panel_new(renderer, &(SDL_Rect) {
+                .x = core->rect.w - outer_w, .y = 0,
+                .w = outer_w, .h = outer_h });
     panel->hidden = false;
     panel->state = state;
     panel->render = panel_coord_render;

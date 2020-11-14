@@ -83,11 +83,11 @@ inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
 // -----------------------------------------------------------------------------
 
 #define sdl_fail(p)                                                     \
-    while (false) {                                                     \
+    {                                                                   \
         fprintf(stderr, "sdl-error<%s, %u> %s: %s\n",                   \
                 __FILE__, __LINE__, #p, SDL_GetError());                \
         abort();                                                        \
-    }
+    } while(false)
 
 
 #define sdl_err(p)                                                      \

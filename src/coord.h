@@ -63,6 +63,10 @@ inline struct coord id_to_coord(uint64_t id)
     };
 }
 
+enum { coord_str_len = (2+1+2+1+4+1)*2 + 1 };
+
+void coord_str(struct coord coord, char *str, size_t len);
+
 
 // -----------------------------------------------------------------------------
 // rect
@@ -111,43 +115,11 @@ inline int64_t scale_div(scale_t scale, int64_t value)
 // project
 // -----------------------------------------------------------------------------
 
-inline struct coord
-project_coord(SDL_Rect rect, struct coord center, scale_t scale, SDL_Point origin)
-{
-    int64_t x = origin.x, y = origin.y;
+struct coord project_coord(
+        SDL_Rect rect, struct coord center, scale_t scale, SDL_Point origin);
 
-    int64_t rel_x = scale_mult(scale, x - rect.x - rect.w / 2);
-    int64_t rel_y = scale_mult(scale, y - rect.y - rect.h / 2);
+struct rect project_coord_rect(
+        SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin);
 
-    return (struct coord) {
-        .x = i64_clamp(center.x + rel_x, 0, UINT32_MAX),
-        .y = i64_clamp(center.y + rel_y, 0, UINT32_MAX),
-    };
-}
-
-inline struct rect
-project_coord_rect(SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin)
-{
-    return (struct rect) {
-        .top = project_coord(rect, center, scale,
-                (SDL_Point){.x = origin.x, .y = origin.y }),
-
-        .bot = project_coord(rect, center, scale, (SDL_Point){
-                    .x = origin.x + origin.w,
-                    .y = origin.y + origin.h }),
-    };
-};
-
-inline SDL_Point
-project_ui(SDL_Rect rect, struct coord center, scale_t scale, struct coord origin)
-{
-    int64_t x = origin.x, y = origin.y;
-
-    int64_t rel_x = scale_div(scale, x - center.x);
-    int64_t rel_y = scale_div(scale, y - center.y);
-
-    return (SDL_Point) {
-        .x = i64_clamp(rel_x + rect.w / 2 + rect.x, rect.x, rect.x + rect.w),
-        .y = i64_clamp(rel_y + rect.h / 2 + rect.y, rect.y, rect.y + rect.h),
-    };
-}
+SDL_Point project_ui(
+        SDL_Rect rect, struct coord center, scale_t scale, struct coord origin);

@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${PREFIX:="."}
 
 declare -a SRC
-SRC=(rng sector render panel ui)
+SRC=(rng coord sector render font panel ui)
 
 declare -a TEST
 TEST=(coord)
@@ -28,9 +28,12 @@ CFLAGS="$CFLAGS -Wno-strict-aliasing"
 CFLAGS="$CFLAGS -fno-strict-aliasing"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
 
+CFLAGS="$CFLAGS $(pkg-config --cflags freetype2)"
+
 LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
-LIBS="$LIBS -lSDL_ttf"
+LIBS="$LIBS $(pkg-config --libs freetype2)"
+# LIBS="$LIBS -lSDL_ttf"
 
 OBJ=""
 for src in "${SRC[@]}"; do
@@ -40,6 +43,8 @@ done
 ar rcs liblegion.a $OBJ
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
+
+cp -r "${PREFIX}/res" .
 
 for test in "${TEST[@]}"; do
     echo $test
