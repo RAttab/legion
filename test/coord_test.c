@@ -18,7 +18,7 @@ void
 check_project(const struct state *state, SDL_Point ui, struct coord exp)
 {
     struct coord coord = project_coord(state->rect, state->center, state->scale, ui);
-    SDL_Point ret = project_ui(state->rect, state->center, state->scale, coord);
+    SDL_Point ret = project_sdl(state->rect, state->center, state->scale, coord);
 
     fprintf(stderr,
             "project(scale:%d, ui:{%dx%d}, exp:{%ux%u}) -> coord:{%dx%d}, ret:{%ux%u}\n",

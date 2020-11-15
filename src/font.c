@@ -5,6 +5,7 @@
 
 #include "font.h"
 
+#include "core.h"
 
 // -----------------------------------------------------------------------------
 // freetype
@@ -42,8 +43,12 @@ FT_Library ft_library;
 void fonts_init(SDL_Renderer *renderer)
 {
     ft_err(FT_Init_FreeType(&ft_library));
-    font_mono6 = font_open(renderer, "./res/GeneraleStationGX.ttf", 6);
-    font_mono8 = font_open(renderer, "./res/GeneraleStationGX.ttf", 8);
+
+    char path[PATH_MAX];
+    core_path_res("GeneraleStationGX.ttf", path, sizeof(path));
+
+    font_mono6 = font_open(renderer, path, 6);
+    font_mono8 = font_open(renderer, path, 8);
 }
 
 void fonts_close()

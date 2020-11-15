@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
-
+#include <linux/limits.h>
 
 // -----------------------------------------------------------------------------
 // compiler

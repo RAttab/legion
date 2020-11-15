@@ -121,5 +121,5 @@ struct coord project_coord(
 struct rect project_coord_rect(
         SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin);
 
-SDL_Point project_ui(
+SDL_Point project_sdl(
         SDL_Rect rect, struct coord center, scale_t scale, struct coord origin);

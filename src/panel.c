@@ -6,8 +6,10 @@
 #include "panel.h"
 
 #include "coord.h"
-#include "ui.h"
+#include "core.h"
 #include "font.h"
+#include "map.h"
+#include "sector.h"
 
 // -----------------------------------------------------------------------------
 // panel
@@ -25,7 +27,7 @@ void panel_add_borders(int width, int height, int *dst_width, int *dst_height)
     *dst_height = height + panel_padding * 2;
 }
 
-struct panel *panel_new(SDL_Renderer *renderer, const SDL_Rect *rect)
+struct panel *panel_new(const SDL_Rect *rect)
 {
     struct panel *panel = calloc(1, sizeof(*panel));
     panel->redraw = true;
@@ -37,7 +39,7 @@ struct panel *panel_new(SDL_Renderer *renderer, const SDL_Rect *rect)
     };
 
     panel->tex = sdl_ptr(SDL_CreateTexture(
-            renderer,
+            core.renderer,
             SDL_PIXELFORMAT_RGBA8888,
             SDL_TEXTUREACCESS_TARGET,
             panel->rect.w, panel->rect.h));
@@ -47,6 +49,7 @@ struct panel *panel_new(SDL_Renderer *renderer, const SDL_Rect *rect)
 
 void panel_free(struct panel *panel)
 {
+    if (panel->free) panel->free(panel->state);
     SDL_DestroyTexture(panel->tex);
     free(panel);
 }
@@ -73,10 +76,11 @@ void panel_update(struct panel *panel, int type, void *data)
         panel->update(panel->state, panel, type, data);
 }
 
-void panel_event(struct panel *panel, SDL_Event *event)
+bool panel_event(struct panel *panel, SDL_Event *event)
 {
     if (panel->events)
-        panel->events(panel->state, panel, event);
+        return panel->events(panel->state, panel, event);
+    return false;
 }
 
 void panel_render(struct panel *panel, SDL_Renderer *renderer)
@@ -93,7 +97,7 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
                             .w = panel->rect.w,
                             .h = panel->rect.h }));
 
-        sdl_err(SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xCC));
+        sdl_err(SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x88));
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = border, .y = border,
                             .w = panel->rect.w - border * 2,
@@ -115,8 +119,8 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
 
 struct panel_coord_state
 {
-    struct ui_core *core;
     struct coord coord;
+    struct map *map;
 };
 
 static void panel_coord_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
@@ -130,23 +134,26 @@ static void panel_coord_render(void *state_, SDL_Renderer *renderer, SDL_Rect *r
     font_render(font_mono6, renderer, str, coord_str_len, pos);
 }
 
-static void panel_coord_events(void *state_, struct panel *panel, SDL_Event *event)
+static void panel_coord_free(void *state)
+{
+    free(state);
+};
+
+static bool panel_coord_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_coord_state *state = state_;
-    struct ui_core *core = state->core;
+    if (event->type != SDL_MOUSEMOTION) return false;
 
-    if (event->type != SDL_MOUSEMOTION) return;
-
-    struct coord coord = project_coord(core->rect, core->pos, core->scale, (SDL_Point) {
-                .x = event->motion.x, .y = event->motion.y});
-
-    if (coord_eq(coord, state->coord)) return;
+    struct coord coord = map_project_coord(core.ui.map, core.cursor.point);
+    if (coord_eq(coord, state->coord)) return false;
 
     state->coord = coord;
     panel_invalidate(panel);
+
+    return false;
 }
 
-struct panel *panel_coord_new(SDL_Renderer *renderer, struct ui_core *core)
+struct panel *panel_coord_new()
 {
     size_t inner_w = 0, inner_h = 0;
     font_text_size(font_mono6, coord_str_len, &inner_w, &inner_h);
@@ -155,15 +162,16 @@ struct panel *panel_coord_new(SDL_Renderer *renderer, struct ui_core *core)
     panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
 
     struct panel_coord_state *state = calloc(1, sizeof(*state));
-    state->core = core;
+    state->coord = map_project_coord(core.ui.map, core.cursor.point);
 
-    struct panel *panel = panel_new(renderer, &(SDL_Rect) {
-                .x = core->rect.w - outer_w, .y = 0,
+    struct panel *panel = panel_new(&(SDL_Rect) {
+                .x = core.rect.w - outer_w, .y = 0,
                 .w = outer_w, .h = outer_h });
     panel->hidden = false;
     panel->state = state;
     panel->render = panel_coord_render;
     panel->events = panel_coord_events;
+    panel->free = panel_coord_free;
 
     return panel;
 };

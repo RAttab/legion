@@ -9,8 +9,9 @@
 
 struct panel;
 typedef void (*render_fn) (void *state, SDL_Renderer *, SDL_Rect *);
-typedef void (*events_fn) (void *state, struct panel *, SDL_Event *);
+typedef bool (*events_fn) (void *state, struct panel *, SDL_Event *);
 typedef void (*update_fn) (void *state, struct panel *, int type, void *data);
+typedef void (*free_fn) (void *state);
 
 struct panel
 {
@@ -25,9 +26,10 @@ struct panel
     render_fn render;
     events_fn events;
     update_fn update;
+    free_fn free;
 };
 
-struct panel *panel_new(SDL_Renderer *renderer, const SDL_Rect *rect);
+struct panel *panel_new(const SDL_Rect *rect);
 void panel_free(struct panel *);
 
 void panel_invalidate(struct panel *);
@@ -38,11 +40,12 @@ void panel_add_borders(int width, int height, int *dst_width, int *dst_height);
 
 void panel_update(struct panel *, int type, void *data);
 void panel_render(struct panel *, SDL_Renderer *);
-void panel_event(struct panel *, SDL_Event *);
+bool panel_event(struct panel *, SDL_Event *);
+
 
 // -----------------------------------------------------------------------------
 // panel_coord
 // -----------------------------------------------------------------------------
 
-struct ui_core;
-struct panel *panel_coord_new(SDL_Renderer *, struct ui_core *);
+struct map;
+struct panel *panel_coord_new();

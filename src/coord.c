@@ -80,7 +80,7 @@ struct rect project_coord_rect(
     };
 }
 
-SDL_Point project_ui(
+SDL_Point project_sdl(
         SDL_Rect rect, struct coord center, scale_t scale, struct coord origin)
 {
     int64_t x = origin.x, y = origin.y;

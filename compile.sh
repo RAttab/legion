@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${PREFIX:="."}
 
 declare -a SRC
-SRC=(rng coord sector render font panel ui)
+SRC=(rng coord sector color font panel map core)
 
 declare -a TEST
 TEST=(coord)
