@@ -106,8 +106,11 @@ bool map_event(struct map *map, SDL_Event *event)
 
     case SDL_MOUSEMOTION: {
         if (map->panning) {
-            map->pos.x -= scale_mult(map->scale, event->motion.xrel);
-            map->pos.y -= scale_mult(map->scale, event->motion.yrel);
+            int64_t xrel = scale_mult(map->scale, event->motion.xrel);
+            map->pos.x = i64_clamp(map->pos.x - xrel, 0, UINT32_MAX);
+
+            int64_t yrel = scale_mult(map->scale, event->motion.yrel);
+            map->pos.y = i64_clamp(map->pos.y - yrel, 0, UINT32_MAX);
         }
         break;
     }
