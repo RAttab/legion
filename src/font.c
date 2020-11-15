@@ -30,6 +30,7 @@
 // pre-loaded-fonts
 // -----------------------------------------------------------------------------
 
+struct font *font_mono4;
 struct font *font_mono6;
 struct font *font_mono8;
 
@@ -47,7 +48,7 @@ void fonts_init(SDL_Renderer *renderer)
     char path[PATH_MAX];
     core_path_res("GeneraleStationGX.ttf", path, sizeof(path));
 
-    font_mono6 = font_open(renderer, path, 6);
+    font_mono4 = font_open(renderer, path, 4);
     font_mono8 = font_open(renderer, path, 8);
 }
 
@@ -55,7 +56,6 @@ void fonts_close()
 {
     font_close(font_mono8);
 }
-
 
 struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
 {
@@ -70,8 +70,8 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
 
     FT_Size_Metrics *metrics = &face->size->metrics;
     font->glyph_w = metrics->x_ppem;
-    font->glyph_h = metrics->height / 64;
-    font->glyph_baseline = font->glyph_h + (metrics->descender / 64);
+    font->glyph_h = (metrics->ascender - metrics->descender) >> 6;
+    font->glyph_baseline = metrics->ascender >> 6;
 
     size_t tex_w = font->glyph_w * charmap_len;
     font->tex = sdl_ptr(SDL_CreateTexture(renderer,
@@ -93,7 +93,11 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
 
         SDL_Rect dst = {
             .x = (font->glyph_w * i) + slot->bitmap_left,
-            .y = font->glyph_baseline - slot->bitmap_top,
+            // Note: the -1 is required otherwise the bitmap can be off-by one
+            // in height with a max-level descender. The ascender also never
+            // touches the top if not given. Pretty sure it has to do with the
+            // change in coordinate system and what 0 means.
+            .y = font->glyph_baseline - slot->bitmap_top - 1,
             .w = ft_bitmap->width,
             .h = ft_bitmap->rows,
         };

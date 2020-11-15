@@ -25,6 +25,7 @@ struct font
     SDL_Texture *tex;
 };
 
+extern struct font *font_mono4;
 extern struct font *font_mono6;
 extern struct font *font_mono8;
 
