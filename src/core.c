@@ -86,7 +86,7 @@ static void cursor_render(SDL_Renderer *renderer)
 static void ui_init()
 {
     core.ui.map = map_new();
-    core.ui.coord = panel_coord_new();
+    core.ui.coord = panel_pos_new();
 }
 
 static void ui_close()

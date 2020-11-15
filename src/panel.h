@@ -44,8 +44,8 @@ bool panel_event(struct panel *, SDL_Event *);
 
 
 // -----------------------------------------------------------------------------
-// panel_coord
+// panel_pos
 // -----------------------------------------------------------------------------
 
 struct map;
-struct panel *panel_coord_new();
+struct panel *panel_pos_new();
