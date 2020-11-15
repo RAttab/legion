@@ -14,8 +14,8 @@
 // coord
 // -----------------------------------------------------------------------------
 
-static const uint32_t coord_area_max = 1 << 6;
-static const uint32_t coord_sector_max = 1 << 10;
+static const uint32_t coord_area_max = 1 << 8;
+static const uint32_t coord_sector_max = 1 << 8;
 static const uint32_t coord_system_max = 1 << 16;
 
 
@@ -63,7 +63,7 @@ inline struct coord id_to_coord(uint64_t id)
     };
 }
 
-enum { coord_str_len = (2+1+2+1+4+1)*2 + 1 };
+enum { coord_str_len = (2+1+2+1+4)*2 + 1 };
 
 void coord_str(struct coord coord, char *str, size_t len);
 
@@ -89,27 +89,26 @@ inline bool rect_contains(const struct rect *r, struct coord coord)
 // scale
 // -----------------------------------------------------------------------------
 
-typedef  uint16_t scale_t;
-enum { scale_base = 64 };
+typedef int64_t scale_t;
+enum { scale_base = 1 << 8 };
 
 inline scale_t scale_init() { return scale_base; }
-inline scale_t scale_inc(scale_t scale, int delta)
-{
-    scale += delta;
-    return
-        scale == 0 ? 1 :
-        scale == UINT16_MAX ? UINT16_MAX -1 :
-        scale;
-}
+
+scale_t scale_inc(scale_t scale, int dir);
 
 inline int64_t scale_mult(scale_t scale, int64_t value)
 {
     return (value * scale) / scale_base;
 }
+
 inline int64_t scale_div(scale_t scale, int64_t value)
 {
     return (value * scale_base) / scale;
 }
+
+enum { scale_str_len = 1+2+1+2 };
+void scale_str(scale_t, char *str, size_t len);
+
 
 // -----------------------------------------------------------------------------
 // project

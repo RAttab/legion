@@ -15,19 +15,19 @@ struct state
 };
 
 void
-check_project(const struct state *state, SDL_Point ui, struct coord exp)
+check_project(const struct state *state, SDL_Point sdl, struct coord exp)
 {
-    struct coord coord = project_coord(state->rect, state->center, state->scale, ui);
-    SDL_Point ret = project_sdl(state->rect, state->center, state->scale, coord);
+    struct coord coord_out = project_coord(state->rect, state->center, state->scale, sdl);
+    SDL_Point sdl_out = project_sdl(state->rect, state->center, state->scale, coord_out);
 
     fprintf(stderr,
-            "project(scale:%d, ui:{%dx%d}, exp:{%ux%u}) -> coord:{%dx%d}, ret:{%ux%u}\n",
+            "project(scale:%lu, sdl:{%dx%d}, exp:{%xx%x}) -> coord:{%xx%x}, sdl:{%dx%d}\n",
             state->scale,
-            ui.x, ui.y, exp.x, exp.y,
-            coord.x, coord.y, ret.x, ret.y);
+            sdl.x, sdl.y, exp.x, exp.y,
+            coord_out.x, coord_out.y, sdl_out.x, sdl_out.y);
     
-    assert(coord.x == exp.x && coord.y == exp.y);
-    assert(ui.x == ret.x && ui.y == ret.y);
+    assert(coord_out.x == exp.x && coord_out.y == exp.y);
+    assert(sdl.x == sdl_out.x && sdl.y == sdl_out.y);
 }
 
 void test_project()

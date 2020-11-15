@@ -19,7 +19,6 @@ struct map
     struct coord pos;
     scale_t scale;
 
-    SDL_Rect rect;
     SDL_Texture* tex;
 
     bool panning;
@@ -36,18 +35,19 @@ struct map *map_new()
     *map = (struct map) {
         .sector = core.state.sector,
         .pos = (struct coord) {
-            .x = core.state.sector->coord.x + coord_sector_max / 2,
-            .y = core.state.sector->coord.y + coord_sector_max / 2,
+            .x = core.state.sector->coord.x + coord_system_max / 2,
+            .y = core.state.sector->coord.y + coord_system_max / 2,
         },
         .scale = scale_init(),
-        .rect = core.rect,
         .tex = NULL,
         .panning = false,
     };
 
+    map->scale <<= 6;
+
     char path[PATH_MAX];
     core_path_res("map.bmp", path, sizeof(path));
-    
+
     SDL_Surface *bmp = sdl_ptr(SDL_LoadBMP(path));
     map->tex = sdl_ptr(SDL_CreateTextureFromSurface(core.renderer, bmp));
     SDL_FreeSurface(bmp);
@@ -64,19 +64,24 @@ void map_free(struct map *map)
 // coord
 // -----------------------------------------------------------------------------
 
+scale_t map_scale(struct map *map)
+{
+    return map->scale;
+}
+
 struct coord map_project_coord(struct map *map, SDL_Point sdl)
 {
-    return project_coord(map->rect, map->pos, map->scale, sdl);
+    return project_coord(core.rect, map->pos, map->scale, sdl);
 }
 
 struct rect map_project_coord_rect(struct map *map, SDL_Rect sdl)
 {
-    return project_coord_rect(map->rect, map->pos, map->scale, sdl);
+    return project_coord_rect(core.rect, map->pos, map->scale, sdl);
 }
 
 SDL_Point map_project_sdl(struct map *map, struct coord coord)
 {
-    return project_sdl(map->rect, map->pos, map->scale, coord);
+    return project_sdl(core.rect, map->pos, map->scale, coord);
 }
 
 
@@ -128,11 +133,11 @@ bool map_event(struct map *map, SDL_Event *event)
 // render
 // -----------------------------------------------------------------------------
 
-enum { px_star = 20 };
+enum { px_star = 1 << 10 };
 
 static void render_sector(struct map *map, SDL_Renderer *renderer)
 {
-    struct rect rect = map_project_coord_rect(map, map->rect);
+    struct rect rect = map_project_coord_rect(map, core.rect);
 
     for (size_t i = 0; i < core.state.sector->systems_len; ++i) {
         struct system *system = &core.state.sector->systems[i];
@@ -157,7 +162,7 @@ static void render_sector(struct map *map, SDL_Renderer *renderer)
         sdl_err(SDL_RenderCopy(renderer, map->tex, &src, &dst));
     }
 }
-        
+
 void map_render(struct map *map, SDL_Renderer *renderer)
 {
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);

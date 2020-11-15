@@ -119,19 +119,34 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
 
 struct panel_coord_state
 {
-    struct coord coord;
     struct map *map;
+
+    scale_t scale;
+    struct coord coord;
+
+    struct SDL_Point coord_pos;
+    struct SDL_Point scale_pos;
 };
 
 static void panel_coord_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_coord_state *state = state_;
 
-    char str[coord_str_len+1] = {0};
-    coord_str(state->coord, str, sizeof(str));
+    {
+        char str[coord_str_len+1] = {0};
+        coord_str(state->coord, str, sizeof(str));
+        font_render(font_mono6, renderer, str, coord_str_len, (SDL_Point) {
+                    .x = rect->x + state->coord_pos.x,
+                    .y = rect->y + state->coord_pos.y });
+    }
 
-    SDL_Point pos = { .x = rect->x, .y = rect->y };
-    font_render(font_mono6, renderer, str, coord_str_len, pos);
+    {
+        char str[scale_str_len+1] = {0};
+        scale_str(state->scale, str, sizeof(str));
+        font_render(font_mono6, renderer, str, scale_str_len, (SDL_Point) {
+                    .x = rect->x + state->scale_pos.x,
+                    .y = rect->y + state->scale_pos.y });
+    }
 }
 
 static void panel_coord_free(void *state)
@@ -142,27 +157,52 @@ static void panel_coord_free(void *state)
 static bool panel_coord_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_coord_state *state = state_;
-    if (event->type != SDL_MOUSEMOTION) return false;
 
-    struct coord coord = map_project_coord(core.ui.map, core.cursor.point);
-    if (coord_eq(coord, state->coord)) return false;
+    switch (event->type) {
 
-    state->coord = coord;
-    panel_invalidate(panel);
+    case SDL_MOUSEMOTION: {
+        struct coord coord = map_project_coord(core.ui.map, core.cursor.point);
+        if (!coord_eq(coord, state->coord)) {
+            state->coord = coord;
+            panel_invalidate(panel);
+        }
+        break;
+    }
+
+    case SDL_MOUSEWHEEL: {
+        scale_t scale = map_scale(core.ui.map);
+        if (scale != state->scale) {
+            state->scale = scale;
+            panel_invalidate(panel);
+        }
+        break;
+    }
+    }
 
     return false;
 }
 
 struct panel *panel_coord_new()
 {
-    size_t inner_w = 0, inner_h = 0;
-    font_text_size(font_mono6, coord_str_len, &inner_w, &inner_h);
+    enum { spacing = 10 };
+
+    size_t coord_w = 0, coord_h = 0;
+    font_text_size(font_mono6, coord_str_len, &coord_w, &coord_h);
+
+    size_t scale_w = 0, scale_h = 0;
+    font_text_size(font_mono6, scale_str_len, &scale_w, &scale_h);
+
+    size_t inner_w = coord_w + scale_w + spacing;
+    size_t inner_h = i64_max(coord_h, scale_h);
 
     int outer_w = 0, outer_h = 0;
     panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
 
     struct panel_coord_state *state = calloc(1, sizeof(*state));
+    state->scale = map_scale(core.ui.map);
     state->coord = map_project_coord(core.ui.map, core.cursor.point);
+    state->coord_pos = (SDL_Point) { .x = 0, .y = 0 };
+    state->scale_pos = (SDL_Point) { .x = coord_w + spacing, .y = 0 };
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = core.rect.w - outer_w, .y = 0,

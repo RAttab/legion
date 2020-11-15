@@ -17,6 +17,8 @@ struct map;
 struct map *map_new();
 void map_free(struct map *);
 
+scale_t map_scale(struct map *);
+
 struct coord map_project_coord(struct map *, SDL_Point);
 struct rect map_project_coord_rect(struct map *, SDL_Rect);
 SDL_Point map_project_sdl(struct map *, struct coord);

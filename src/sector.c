@@ -67,8 +67,8 @@ void gen_sector(struct sector *sector)
     for (size_t i = 0; i < sector->systems_len; ++i) {
 
         struct coord coord = (struct coord) {
-            .x = coord.x + rng_uni(&rng, 0, coord_sector_max),
-            .y = coord.y + rng_uni(&rng, 0, coord_sector_max),
+            .x = coord.x + rng_uni(&rng, 0, coord_system_max),
+            .y = coord.y + rng_uni(&rng, 0, coord_system_max),
         };
 
         struct system_desc *system = gen_system(coord);
