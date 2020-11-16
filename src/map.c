@@ -22,6 +22,7 @@ struct map
     SDL_Texture* tex;
 
     bool panning;
+    bool panned;
 };
 
 enum { px_star = 1 << 10 };
@@ -43,6 +44,7 @@ struct map *map_new()
         .scale = scale_init(),
         .tex = NULL,
         .panning = false,
+        .panned = false,
     };
 
     map->scale <<= 6;
@@ -97,11 +99,6 @@ bool map_event(struct map *map, SDL_Event *event)
     switch (event->type)
     {
 
-    case SDL_KEYUP: {
-        if (event->key.keysym.sym) core_quit();
-        break;
-    }
-
     case SDL_MOUSEWHEEL: {
         map->scale = scale_inc(map->scale, -event->wheel.y);
         break;
@@ -114,6 +111,8 @@ bool map_event(struct map *map, SDL_Event *event)
 
             int64_t yrel = scale_mult(map->scale, event->motion.yrel);
             map->pos.y = i64_clamp(map->pos.y - yrel, 0, UINT32_MAX);
+
+            map->panned = true;
         }
         break;
     }
@@ -126,18 +125,22 @@ bool map_event(struct map *map, SDL_Event *event)
 
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &event->button;
-        if (b->button == SDL_BUTTON_LEFT) map->panning = false;
+        if (b->button == SDL_BUTTON_LEFT) {
+            if (!map->panned) {
+                SDL_Point point = core.cursor.point;
+                size_t px = scale_div(map->scale, px_star);
+                struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
+                            .x = point.x - px / 2,
+                            .y = point.y - px / 2,
+                            .h = px, .w = px,
+                        });
 
-        if (b->clicks == 1) {
-            SDL_Point point = core.cursor.point;
-            struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
-                        .x = point.x - px_star / 2,
-                        .y = point.y - px_star / 2,
-                        .h = px_star, .w = px_star,
-                    });
+                struct system *selected = sector_lookup(core.state.sector, &rect);
+                core_push_event(selected ? EV_SYSTEM_SELECT : EV_SYSTEM_CLEAR, selected);
+            }
 
-            struct system *selected = sector_lookup(core.state.sector, &rect);
-            core_push_event(selected ? EV_SYSTEM_SELECT : EV_SYSTEM_CLEAR, selected);
+            map->panning = false;
+            map->panned = false;
         }
         break;
     }

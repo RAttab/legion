@@ -102,6 +102,7 @@ static void ui_event(SDL_Event *event)
     if (panel_event(core.ui.pos, event)) return;
     if (panel_event(core.ui.system, event)) return;
     if (map_event(core.ui.map, event)) return;
+    if (event->type == SDL_KEYUP && event->key.keysym.sym == SDLK_q) core_quit();
 }
 
 static void ui_render(SDL_Renderer *renderer)
@@ -157,13 +158,11 @@ void core_path_res(const char *name, char *dst, size_t len)
 
 void core_run()
 {
-
-    bool quit = false;
-    while (!quit) {
+    while (true) {
 
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) { fprintf(stderr, "quit\n"); return; }
+            if (event.type == SDL_QUIT) return;
             cursor_event(&event);
             ui_event(&event);
         }

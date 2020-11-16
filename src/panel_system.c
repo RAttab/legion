@@ -13,6 +13,11 @@ struct panel_system_state
     size_t elem_y;
 };
 
+static inline char num_char(size_t val)
+{
+    return val ? '0' + val : ' ';
+}
+
 enum { val_str_len = 4 };
 static void system_val_str(char *dst, size_t len, size_t val)
 {
@@ -27,9 +32,9 @@ static void system_val_str(char *dst, size_t len, size_t val)
     }
 
     dst[3] = units[unit];
-    dst[2] = '0' + val % 10;
-    dst[1] = '0' + (val / 10) % 10;
-    dst[0] = '0' + (val / 100) % 10;
+    dst[2] = num_char(val % 10);
+    dst[1] = num_char((val / 10) % 10);
+    dst[0] = num_char((val / 100) % 10);
 }
 
 static void panel_system_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
