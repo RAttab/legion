@@ -86,25 +86,29 @@ static void cursor_render(SDL_Renderer *renderer)
 static void ui_init()
 {
     core.ui.map = map_new();
-    core.ui.coord = panel_pos_new();
+    core.ui.pos = panel_pos_new();
+    core.ui.system = panel_system_new();
 }
 
 static void ui_close()
 {
-    panel_free(core.ui.coord);
+    panel_free(core.ui.pos);
+    panel_free(core.ui.system);
     map_free(core.ui.map);
 }
 
 static void ui_event(SDL_Event *event)
 {
+    if (panel_event(core.ui.pos, event)) return;
+    if (panel_event(core.ui.system, event)) return;
     if (map_event(core.ui.map, event)) return;
-    if (panel_event(core.ui.coord, event)) return;
 }
 
 static void ui_render(SDL_Renderer *renderer)
 {
     map_render(core.ui.map, renderer);
-    panel_render(core.ui.coord, renderer);
+    panel_render(core.ui.pos, renderer);
+    panel_render(core.ui.system, renderer);
 }
 
 
@@ -124,6 +128,9 @@ void core_init()
                     core.rect.w, core.rect.h,
                     SDL_WINDOW_BORDERLESS,
                     &core.window, &core.renderer));
+
+    core.event = SDL_RegisterEvents(1);
+    if (core.event == (uint32_t) -1) sdl_fail();
 
     fonts_init(core.renderer);
     state_init();
@@ -156,12 +163,12 @@ void core_run()
 
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) return;
+            if (event.type == SDL_QUIT) { fprintf(stderr, "quit\n"); return; }
             cursor_event(&event);
             ui_event(&event);
         }
 
-        SDL_RenderClear(core.renderer);
+        sdl_err(SDL_RenderClear(core.renderer));
         ui_render(core.renderer);
         cursor_render(core.renderer);
         SDL_RenderPresent(core.renderer);
@@ -170,5 +177,16 @@ void core_run()
 
 void core_quit()
 {
-    SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+    sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
+}
+
+void core_push_event(enum event code, void *data)
+{
+    SDL_Event ev = {0};
+    ev.type = core.event;
+    ev.user.code = code;
+    ev.user.data1 = data;
+    
+    int ret = sdl_err(SDL_PushEvent(&ev));
+    assert(ret > 0);
 }

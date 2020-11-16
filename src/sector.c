@@ -27,7 +27,7 @@ static uint64_t stars_max = 1UL << 10;
 // -----------------------------------------------------------------------------
 
 
-struct system_desc *gen_system(struct coord coord)
+struct system_desc *system_gen(struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
     struct rng rng = rng_make(id);
@@ -71,7 +71,7 @@ void gen_sector(struct sector *sector)
             .y = coord.y + rng_uni(&rng, 0, coord_system_max),
         };
 
-        struct system_desc *system = gen_system(coord);
+        struct system_desc *system = system_gen(coord);
         sector->systems[i] = system->s;
     }
 }

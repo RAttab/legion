@@ -100,15 +100,15 @@ struct coord project_coord(
 }
 
 struct rect project_coord_rect(
-        SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin)
+        SDL_Rect rect, struct coord center, scale_t scale, const SDL_Rect *origin)
 {
     return (struct rect) {
         .top = project_coord(rect, center, scale,
-                (SDL_Point){.x = origin.x, .y = origin.y }),
+                (SDL_Point){.x = origin->x, .y = origin->y }),
 
         .bot = project_coord(rect, center, scale, (SDL_Point){
-                    .x = origin.x + origin.w,
-                    .y = origin.y + origin.h }),
+                    .x = origin->x + origin->w,
+                    .y = origin->y + origin->h }),
     };
 }
 

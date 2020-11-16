@@ -48,3 +48,5 @@ struct sector *sector_load(const char *path);
 void sector_close(struct sector *);
 
 struct system *sector_lookup(struct sector *, struct rect *);
+
+struct system_desc *system_gen(struct coord coord);

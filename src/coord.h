@@ -118,7 +118,7 @@ struct coord project_coord(
         SDL_Rect rect, struct coord center, scale_t scale, SDL_Point origin);
 
 struct rect project_coord_rect(
-        SDL_Rect rect, struct coord center, scale_t scale, SDL_Rect origin);
+        SDL_Rect rect, struct coord center, scale_t scale, const SDL_Rect *origin);
 
 SDL_Point project_sdl(
         SDL_Rect rect, struct coord center, scale_t scale, struct coord origin);

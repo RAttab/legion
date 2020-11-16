@@ -8,6 +8,18 @@
 #include "utils.h"
 
 // -----------------------------------------------------------------------------
+// events
+// -----------------------------------------------------------------------------
+
+enum event
+{
+    EV_SYSTEM_SELECT = 0,
+    EV_SYSTEM_CLEAR,
+
+    EV_MAX,
+};
+
+// -----------------------------------------------------------------------------
 // core
 // -----------------------------------------------------------------------------
 
@@ -21,6 +33,8 @@ struct core
     SDL_Window *window;
     SDL_Renderer *renderer;
 
+    uint32_t event;
+
     struct {
         SDL_Point point;
         SDL_Texture *tex;
@@ -29,7 +43,8 @@ struct core
 
     struct {
         struct map *map;
-        struct panel *coord;
+        struct panel *pos;
+        struct panel *system;
     } ui;
 
     struct {
@@ -47,3 +62,4 @@ void core_path_res(const char *name, char *dst, size_t len);
 void core_run();
 void core_quit();
 
+void core_push_event(enum event, void *data);

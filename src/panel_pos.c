@@ -11,8 +11,6 @@
 
 struct panel_pos_state
 {
-    struct map *map;
-
     scale_t scale;
     struct coord coord;
 
@@ -41,11 +39,6 @@ static void panel_pos_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rec
     }
 }
 
-static void panel_pos_free(void *state)
-{
-    free(state);
-};
-
 static bool panel_pos_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_pos_state *state = state_;
@@ -73,6 +66,11 @@ static bool panel_pos_events(void *state_, struct panel *panel, SDL_Event *event
 
     return false;
 }
+
+static void panel_pos_free(void *state)
+{
+    free(state);
+};
 
 struct panel *panel_pos_new()
 {

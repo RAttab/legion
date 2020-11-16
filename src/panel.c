@@ -70,12 +70,6 @@ void panel_show(struct panel *panel)
     panel->redraw = true;
 }
 
-void panel_update(struct panel *panel, int type, void *data)
-{
-    if (panel->update)
-        panel->update(panel->state, panel, type, data);
-}
-
 bool panel_event(struct panel *panel, SDL_Event *event)
 {
     if (panel->events)
@@ -118,3 +112,4 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
 // -----------------------------------------------------------------------------
 
 #include "panel_pos.c"
+#include "panel_system.c"

@@ -24,6 +24,8 @@ struct map
     bool panning;
 };
 
+enum { px_star = 1 << 10 };
+
 
 // -----------------------------------------------------------------------------
 // basics
@@ -60,6 +62,7 @@ void map_free(struct map *map)
     SDL_DestroyTexture(map->tex);
 }
 
+
 // -----------------------------------------------------------------------------
 // coord
 // -----------------------------------------------------------------------------
@@ -74,7 +77,7 @@ struct coord map_project_coord(struct map *map, SDL_Point sdl)
     return project_coord(core.rect, map->pos, map->scale, sdl);
 }
 
-struct rect map_project_coord_rect(struct map *map, SDL_Rect sdl)
+struct rect map_project_coord_rect(struct map *map, const SDL_Rect *sdl)
 {
     return project_coord_rect(core.rect, map->pos, map->scale, sdl);
 }
@@ -124,6 +127,18 @@ bool map_event(struct map *map, SDL_Event *event)
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &event->button;
         if (b->button == SDL_BUTTON_LEFT) map->panning = false;
+
+        if (b->clicks == 1) {
+            SDL_Point point = core.cursor.point;
+            struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
+                        .x = point.x - px_star / 2,
+                        .y = point.y - px_star / 2,
+                        .h = px_star, .w = px_star,
+                    });
+
+            struct system *selected = sector_lookup(core.state.sector, &rect);
+            core_push_event(selected ? EV_SYSTEM_SELECT : EV_SYSTEM_CLEAR, selected);
+        }
         break;
     }
 
@@ -136,11 +151,9 @@ bool map_event(struct map *map, SDL_Event *event)
 // render
 // -----------------------------------------------------------------------------
 
-enum { px_star = 1 << 10 };
-
 static void render_sector(struct map *map, SDL_Renderer *renderer)
 {
-    struct rect rect = map_project_coord_rect(map, core.rect);
+    struct rect rect = map_project_coord_rect(map, &core.rect);
 
     for (size_t i = 0; i < core.state.sector->systems_len; ++i) {
         struct system *system = &core.state.sector->systems[i];
@@ -157,8 +170,9 @@ static void render_sector(struct map *map, SDL_Renderer *renderer)
         };
 
         struct rgb rgb = spectrum_rgb(32 - bits_log2(system->star), 32);
-        rgb = SDL_PointInRect(&core.cursor.point, &dst) ?
-            desaturate(rgb, .5) : desaturate(rgb, .8);
+        if (!SDL_PointInRect(&core.cursor.point, &dst)) {
+            rgb = desaturate(rgb, .8);
+        }
 
         sdl_err(SDL_SetTextureBlendMode(map->tex, SDL_BLENDMODE_ADD));
         sdl_err(SDL_SetTextureColorMod(map->tex, rgb.r, rgb.g, rgb.b));
