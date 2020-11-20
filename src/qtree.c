@@ -45,15 +45,16 @@ static struct node *node_alloc(const struct node *old, uint32_t x, uint32_t y)
 {
     struct node *node = leaf_alloc();
 
-    size_t shift = 32 -
-        u32_min(u32_clz((x ^ old->x[0]) &&
-                        (x ^ old->x[1]) &&
-                        (x ^ old->x[2]) &&
-                        (x ^ old->x[3])),
-                u32_clz((y ^ old->y[0]) &&
-                        (y ^ old->y[1]) &&
-                        (y ^ old->y[2]) &&
-                        (y ^ old->y[3])));
+    size_t shift = -1;
+    shift = u32_min(shift, u32_clz(x ^ old->x[0]));
+    shift = u32_min(shift, u32_clz(x ^ old->x[1]));
+    shift = u32_min(shift, u32_clz(x ^ old->x[2]));
+    shift = u32_min(shift, u32_clz(x ^ old->x[3]));
+    shift = u32_min(shift, u32_clz(y ^ old->y[0]));
+    shift = u32_min(shift, u32_clz(y ^ old->y[1]));
+    shift = u32_min(shift, u32_clz(y ^ old->y[2]));
+    shift = u32_min(shift, u32_clz(y ^ old->y[3]));
+    shift = 32 - shift;
 
     uint32_t bit = 1U << shift;
     uint32_t bot = bit | (bit - 1);
