@@ -56,12 +56,19 @@ static inline size_t to_vma_len(size_t len)
 // bits
 // -----------------------------------------------------------------------------
 
-inline size_t bits_clz(uint64_t x) { return x ? __builtin_clzll(x) : 64; }
-inline size_t bits_log2(uint64_t x) { return 63 - bits_clz(x); }
+inline size_t u32_clz(uint32_t x) { return x ? __builtin_clz(x) : 32; }
+
+inline size_t u64_clz(uint64_t x) { return x ? __builtin_clzl(x) : 64; }
+inline size_t u64_log2(uint64_t x) { return 63 - u64_clz(x); }
 
 // -----------------------------------------------------------------------------
 // math
 // -----------------------------------------------------------------------------
+
+inline uint32_t u32_min(uint32_t x, uint32_t y)
+{
+    return x <= y ? x : y;
+}
 
 inline int64_t i64_min(int64_t x, int64_t y)
 {
