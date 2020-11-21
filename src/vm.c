@@ -330,7 +330,6 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 
       op_yield: { return 0; }
       op_read: {
-            vm_push(vm_read(1));
             vm->flags |= FLAG_READING;
             return 0;
         }
@@ -417,9 +416,3 @@ void vm_reset(struct vm *vm)
             sizeof(*vm) + sizeof(vm->stack[0]) * vm->specs.stack);
 }
 
-struct vm_code *vm_compile(const char *str, size_t len)
-{
-    (void) str;
-    (void) len;
-    return NULL;
-}

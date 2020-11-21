@@ -24,9 +24,16 @@ enum flags
     FLAG_WRITING = 1 << 7,
 };
 
+struct vm_code_errors
+{
+    size_t line, col;
+    char err[255];
+}
+
 struct vm_code
 {
-    uint32_t key;
+    uint32_t mod;
+    const char *str;
 
     uint8_t len;
     uint8_t prog[];
@@ -81,4 +88,5 @@ inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 
 void vm_reset(struct vm *);
 
+void vm_compile_init();
 struct vm_code *vm_compile(const char *str, size_t len);
