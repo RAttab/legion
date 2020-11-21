@@ -1,33 +1,36 @@
 * Types
 - word: i64
 - len: u16
-- cap: u16
-- ele: atom(A | B | C | ...)
+- type: u8
 - id: u32
-- coord: pack(x:u32, y:u32)
 - slot: u8
-- schema: u64
+- mod: u32
 - key: u64
-- sizeof(atom): u32
+- cap: u8
+- schema: u64
+- coord: pack(x:u32, y:u32)
+- ele: type(A | B | C | ...)
+
+* Constraints
+- max-len: 16 words
 
 * Common
 - io_id -> <id>
 - io_target <id>
 - io_sendw <word>
 - io_send <len> <word>*
-- io_recvw -> <word> # blocks
+- io_recvw <word>
 - io_recv -> <len> <word>* # blocks
+
 - io_cargo <slot> -> pack(<type>, <count>)
-- io_dump <type> # blocks-on(type)
+- io_dump pack(<0|type>, <0|slot>)
 
 * Worker
 - io_dock <id>
 - io_undock
 - io_take pack(<0|type>, <0|slot>)
 - io_put pack(<0|type>, <0|slot>)
-
 - io_harvest <ele>
-- io_deploy <type>
 
 * Printer
 The idea is build layered 3d models like a 3D printer would
@@ -35,11 +38,11 @@ The idea is build layered 3d models like a 3D printer would
 - io_pick <ele>
 - io_target pack(<x>, <y>)
 - io_print # blocks-on(ele)
+- io_program <mod>
 - io_output
-
 - io_schema <schema>
 - io_column pack(<x>,<y>) -> <len> <ele>*
-top of the stack, bottom of the pillar
+  top of the stack, bottom of the pillar
 
 * Lab
 The is to sequence letters (spell words?)
@@ -48,23 +51,28 @@ The key is to be transmitted to the probe and added into the DB
 - io_pick <ele>
 - io_append
 - io_output -> <key> # blocks-until-done
-
 - io_schema <schema>
 - io_row -> <len> <ele>*
-top of the stack is beginning of sequence
+  top of the stack is beginning of sequence
 
 * Comm
-Meant to do protocol processing. 
+Meant to do protocol processing.
 If you miss a message then you miss so developing resilient protocols will be
 important
 
 - io_send <coord> <word>
 - io_recv -> <word>
 
-* Probe
+* Ship
 - io_travel <coord>
+- io_store pack(<0|slot>, <id>)
+
+* Brain
 - io_learn <key> -> <id>
-- io_store <id>
+
+- io_resume pack(<0|id>, <0|type>)
+- io_suspend pack(<0|id>, <0|type>)
+- io_program pack(<0|id>, <0|type>) <mod>
 
 - io_db_test <key> -> io_ok | io_err
 - io_db_put <key> <len> <word>*
@@ -74,4 +82,3 @@ important
 - io_db_stars_nearests <len> -> <len> <coord>*
 - io_db_stars_radius <radius> <cap> -> <len> <coord>*
 - io_db_stars_area <coord:top-left> <coord:bot-right> <cap> -> <len> <coord>*
-
