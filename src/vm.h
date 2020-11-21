@@ -53,7 +53,7 @@ static_assert(sizeof(struct vm) % 8 == 0);
 struct vm *vm_new(uint8_t stack, uint8_t speed);
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 void vm_free(struct vm *);
-size_t vm_len(uint8_t stack, uint8_t speed);
+size_t vm_len(uint8_t stack);
 
 inline uint32_t vm_ip_mod(uint64_t ip);
 
@@ -67,8 +67,8 @@ void vm_io_fault(struct vm *);
 inline bool vm_reading(struct vm *vm) { return vm->flags & FLAG_READING; }
 inline bool vm_writing(struct vm *vm) { return vm->flags & FLAG_WRITING; }
 
-enum { vm_io_cap = 16; }
-typedef int64_t[16] vm_io_buf_t;
+enum { vm_io_cap = 8 };
+typedef int64_t vm_io_buf_t[vm_io_cap];
 
 size_t vm_io_read(struct vm *, int64_t *dst);
 void vm_io_write(struct vm *, size_t len, const int64_t *src);

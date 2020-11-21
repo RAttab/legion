@@ -5,21 +5,22 @@
 
 #include "vm.h"
 
-osize_t vm_len(uint8_t stack, uint8_t speed)
+size_t vm_len(uint8_t stack)
 {
+    stack = 2 + (8 * stack);
     return sizeof(struct vm) + sizeof(((struct vm *) NULL)->stack[0]) * stack;
 }
 
 
-void vm_init(struct vm *, uint8_t stack, uint8_t speed)
+void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
 {
-    vm->specs.stack = stack;
+    vm->specs.stack = 2 + (8 * stack);
     vm->specs.speed = speed;
 }
 
 struct vm *vm_new(uint8_t stack, uint8_t speed)
 {
-    struct vm *vm = calloc(1, vm_len(stack, speed));
+    struct vm *vm = calloc(1, vm_len(stack));
     vm_init(vm, stack, speed);
     return vm;
 }
@@ -114,8 +115,8 @@ uint64_t vm_step(struct vm *vm, struct vm_code *code)
 
 uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 {
-    if (vm->flags & FLAG_SUSPENDED) return;
-    
+    if (vm->flags & FLAG_SUSPENDED) return 0;
+
     static const void *opcodes[] = {
         [OP_PUSH]   = &&op_push,
         [OP_PUSHR]  = &&op_pushr,
@@ -314,7 +315,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 
       op_ret: { vm_jmp(vm_pop()); goto next; }
       op_call: { vm_push(vm->ip); vm_jmp(vm_read(8)); goto next; }
-      op_load: { uint64_t ip = vm_pop(); vm_reset(); return ip; }
+      op_load: { uint64_t ip = vm_pop(); vm_reset(vm); return ip; }
       op_jmp: { vm_jmp(vm_read(8)); goto next; }
       op_jz: {
             uint64_t dest = vm_read(8);
@@ -389,18 +390,17 @@ size_t vm_io_read(struct vm *vm, int64_t *dst)
 {
     size_t words = vm->stack[--vm->sp];
     if (words > vm_io_cap) { vm_io_fault(vm); return 0; }
-    
-    for (size_t i = 0; i < words; ++i) {
-        int64_t word = vm->stack[--vm->sp];
-        if (i < len) dst[i] = word;
-    }
+
+    for (size_t i = 0; i < words; ++i)
+        dst[i] = vm->stack[--vm->sp];
+
     return words;
 }
 
 void vm_io_write(struct vm *vm, size_t len, const int64_t *src)
 {
     assert(len <= vm_io_cap);
-    
+
     // In case of OOM, we want to fill the stack for debugging purposes.
     for (size_t i = 0; i < len; ++i) {
         if (unlikely(vm->sp == vm->specs.stack)) {

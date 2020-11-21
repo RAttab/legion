@@ -54,7 +54,7 @@ inline scale_t scale_inc(scale_t scale, int dir)
     if (scale == 1 && dir < 0) return scale;
     if (scale < (1 << 4)) return scale + dir;
 
-    uint64_t delta = (1 << (bits_log2(scale) - 4));
+    uint64_t delta = (1 << (u64_log2(scale) - 4));
     return dir < 0 ? scale - delta : scale + delta;
 }
 
@@ -64,7 +64,7 @@ void scale_str(scale_t scale, char *str, size_t len)
     assert(len >= scale_str_len);
 
     size_t i = 0;
-    size_t msb = bits_log2(scale);
+    size_t msb = u64_log2(scale);
     uint64_t top = scale < scale_base ? 0 : msb - 8;
     uint64_t bot = scale < scale_base ? (uint64_t)scale :
         (((uint64_t) scale) & ((1 << msb) - 1)) >> (msb - 8);

@@ -172,7 +172,7 @@ static void render_sector(struct map *map, SDL_Renderer *renderer)
             .h = px, .w = px
         };
 
-        struct rgb rgb = spectrum_rgb(32 - bits_log2(system->star), 32);
+        struct rgb rgb = spectrum_rgb(32 - u64_log2(system->star), 32);
         if (!SDL_PointInRect(&core.cursor.point, &dst)) {
             rgb = desaturate(rgb, .8);
         }
