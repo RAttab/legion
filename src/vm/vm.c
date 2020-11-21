@@ -5,11 +5,22 @@
 
 #include "vm.h"
 
-struct vm *vm_new(uint8_t stack, uint8_t speed)
+osize_t vm_len(uint8_t stack, uint8_t speed)
 {
-    struct vm *vm = calloc(1, sizeof(*vm));
+    return sizeof(struct vm) + sizeof(((struct vm *) NULL)->stack[0]) * stack;
+}
+
+
+void vm_init(struct vm *, uint8_t stack, uint8_t speed)
+{
     vm->specs.stack = stack;
     vm->specs.speed = speed;
+}
+
+struct vm *vm_new(uint8_t stack, uint8_t speed)
+{
+    struct vm *vm = calloc(1, vm_len(stack, speed));
+    vm_init(vm, stack, speed);
     return vm;
 }
 
@@ -83,6 +94,7 @@ enum opcodes
 
     OP_RET    = 0x50,
     OP_CALL   = 0x51,
+    OP_LOAD   = 0x52,
     OP_JMP    = 0x58,
     OP_JZ     = 0x59,
     OP_JNZ    = 0x5A,
@@ -102,6 +114,8 @@ uint64_t vm_step(struct vm *vm, struct vm_code *code)
 
 uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 {
+    if (vm->flags & FLAG_SUSPENDED) return;
+    
     static const void *opcodes[] = {
         [OP_PUSH]   = &&op_push,
         [OP_PUSHR]  = &&op_pushr,
@@ -138,6 +152,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 
         [OP_RET]    = &&op_ret,
         [OP_CALL]   = &&op_call,
+        [OP_LOAD]   = &&op_load,
         [OP_JMP]    = &&op_jmp,
         [OP_JZ]     = &&op_jz,
         [OP_JNZ]    = &&op_jnz,
@@ -297,8 +312,9 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
       op_lt: { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1); vm_pop(); goto next; }
       op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1); vm_pop(); goto next; }
 
-      op_call: { vm_push(vm->ip); vm_jmp(vm_read(8)); goto next; }
       op_ret: { vm_jmp(vm_pop()); goto next; }
+      op_call: { vm_push(vm->ip); vm_jmp(vm_read(8)); goto next; }
+      op_load: { uint64_t ip = vm_pop(); vm_reset(); return ip; }
       op_jmp: { vm_jmp(vm_read(8)); goto next; }
       op_jz: {
             uint64_t dest = vm_read(8);
@@ -313,6 +329,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 
       op_yield: { return 0; }
       op_read: {
+            vm_push(vm_read(1));
             vm->flags |= FLAG_READING;
             return 0;
         }
@@ -352,9 +369,27 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 #undef vm_jmp
 }
 
-size_t vm_io_read(struct vm *vm, size_t len, int64_t *dst)
+
+void vm_suspend(struct vm *vm)
+{
+    vm->flags |= FLAG_SUSPENDED;
+}
+
+void vm_resume(struct vm *vm)
+{
+    vm->flags &= ~FLAG_SUSPENDED;
+}
+
+void vm_io_fault(struct vm *vm)
+{
+    vm->flags |= FLAG_SUSPENDED | FLAG_IOF;
+}
+
+size_t vm_io_read(struct vm *vm, int64_t *dst)
 {
     size_t words = vm->stack[--vm->sp];
+    if (words > vm_io_cap) { vm_io_fault(vm); return 0; }
+    
     for (size_t i = 0; i < words; ++i) {
         int64_t word = vm->stack[--vm->sp];
         if (i < len) dst[i] = word;
@@ -362,8 +397,10 @@ size_t vm_io_read(struct vm *vm, size_t len, int64_t *dst)
     return words;
 }
 
-void vm_io_push(struct vm *vm, size_t len, const int64_t *src)
+void vm_io_write(struct vm *vm, size_t len, const int64_t *src)
 {
+    assert(len <= vm_io_cap);
+    
     // In case of OOM, we want to fill the stack for debugging purposes.
     for (size_t i = 0; i < len; ++i) {
         if (unlikely(vm->sp == vm->specs.stack)) {
