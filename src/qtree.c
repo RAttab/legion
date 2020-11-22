@@ -41,38 +41,26 @@ static void node_free(struct node *node)
     free(node);
 }
 
-static struct node *node_alloc(const struct node *old, uint32_t x, uint32_t y)
+static struct node *node_alloc(uint32_t x, uint32_t y, uint32_t pivot)
 {
     struct node *node = leaf_alloc();
 
-    size_t shift = -1;
-    shift = u32_min(shift, u32_clz(x ^ old->x[0]));
-    shift = u32_min(shift, u32_clz(x ^ old->x[1]));
-    shift = u32_min(shift, u32_clz(x ^ old->x[2]));
-    shift = u32_min(shift, u32_clz(x ^ old->x[3]));
-    shift = u32_min(shift, u32_clz(y ^ old->y[0]));
-    shift = u32_min(shift, u32_clz(y ^ old->y[1]));
-    shift = u32_min(shift, u32_clz(y ^ old->y[2]));
-    shift = u32_min(shift, u32_clz(y ^ old->y[3]));
-    shift = 32 - shift;
-
-    uint32_t bit = 1U << shift;
-    uint32_t bot = bit | (bit - 1);
+    uint32_t bot = pivot | (pivot - 1);
     uint32_t prefix_x = x & ~bot;
     uint32_t prefix_y = y & ~bot;
 
     node->x = (uint32_t[]) {
         prefix_x,
         prefix_x | bot,
-        prefix_x | bit,
-        prefix_x | bit | bot,
+        prefix_x | pivot,
+        prefix_x | pivot | bot,
     };
 
     node->y = (uint32_t[]) {
         prefix_y,
         prefix_y | bot,
-        prefix_y | bit,
-        prefix_y | bit | bot,
+        prefix_y | pivot,
+        prefix_y | pivot | bot,
     };
 
     return node;
@@ -99,7 +87,18 @@ static void *leaf_put(
         return NULL;
     }
 
-    struct node *new = node_alloc(node, x, y);
+    size_t shift = -1;
+    shift = u32_min(shift, u32_clz(x ^ leaf->x[0]));
+    shift = u32_min(shift, u32_clz(x ^ leaf->x[1]));
+    shift = u32_min(shift, u32_clz(x ^ leaf->x[2]));
+    shift = u32_min(shift, u32_clz(x ^ leaf->x[3]));
+    shift = u32_min(shift, u32_clz(y ^ leaf->y[0]));
+    shift = u32_min(shift, u32_clz(y ^ leaf->y[1]));
+    shift = u32_min(shift, u32_clz(y ^ leaf->y[2]));
+    shift = u32_min(shift, u32_clz(y ^ leaf->y[3]));
+    shift = 32 - shift;
+
+    struct node *new = node_alloc(x, y, 1U << shift);
     *parent = new;
 
     for (size_t i = 0; i < 4; ++i)
@@ -115,37 +114,32 @@ static void *node_put(
         void *val)
 {
     if (x < node->x[0] || x > node->x[3] || y < node->y[0] || y > node->y[3]) {
-        struct node *new = node_alloc(node, x, y);
+        size_t shift = -1;
+        shift = u32_min(shift, u32_clz(x ^ node->x[2]));
+        shift = u32_min(shift, u32_clz(y ^ node->y[2]));
+        shift = 32 - shift;
+        uint32_t pivot = 1U << shift;
+
+        struct node *new = node_alloc(x, y, pivot);
         *parent = new;
 
-        uint32_t shift = 32 -
-            u32_min(u32_clz(x ^ node->x[0]),
-                    u32_clz(y ^ node->y[0]));
-
-        size_t i = !!(node->x[0] & (1U << shift));
-        size_t j = !!(node->y[0] & (1U << shift));
-        node->val[i * 2 + j] = new;
+        size_t i = !!(node->x[0] & pivot);
+        size_t j = !!(node->y[0] & pivot);
+        node->val[j * 2 + i] = new;
         return node_put(new, parent, x, y, val);
     }
 
-    size_t i = (x > node->x[1] * 2) + (y > node->y[1]);
+    size_t i = x > node->x[1];
+    size_t j = y > node->y[1];
+    size_t index = (j * 2) + i;
 
-    struct node *child = node->val[i];
-    if (!child) node->val[i] = child = as_leaf(leaf_alloc());
-    if (child = is_leaf(child)) 
-        return leaf_put(child, &node->val[i], x, y, val);
-    return node_put(child, &node->val[i], x, y, val);
+    struct node *child = node->val[index];
+    if (!child) node->val[index] = child = as_leaf(leaf_alloc());
+    if (child = is_leaf(child))
+        return leaf_put(child, &node->val[index], x, y, val);
+    return node_put(child, &node->val[index], x, y, val);
 }
 
-static void *node_get(const struct node *node, struct coord key)
-{
-
-}
-
-static void *leaf_get(const struct node *leaf, struct coord key)
-{
-
-}
 
 // -----------------------------------------------------------------------------
 // qtree
@@ -182,20 +176,69 @@ void *qtree_put(struct qtree *qtree, struct coord key, void *val)
     struct node *node = qtree->node;
 
     if (!node) qtree->node = node = as_leaf(leaf_alloc());
-    if (node = is_leaf(node)) 
-        return leaf_put(node, &qtree->node, key.x, key.y, val);
+
+    struct leaf *leaf = node;
+    if (leaf = is_leaf(node))
+        return leaf_put(leaf, &qtree->node, key.x, key.y, val);
     return node_put(node, &qtree->node, key.x, key.y, val);
 }
 
 
 void *qtree_get(const struct qtree *qtree, struct coord key)
 {
+    struct node *node = qtree->node;
+    while (node) {
 
+        struct node *leaf = is_leaf(node);
+        if (leaf) {
+            for (size_t i = 0; i < 4; ++i) {
+                if (leaf->x[i] == key.x && leaf->y[i] == key.y)
+                    return leaf->val[i];
+            }
+            return NULL;
+        }
+
+        if (key.x < node->x[0] || key.x > node->x[3]) return NULL;
+        if (key.y < node->y[0] || key.y > node->y[3]) return NULL;
+
+        size_t i = key.x > node->x[1];
+        size_t j = key.y > node->y[1];
+        node = node->val[j * 2 + i];
+    }
+
+    return NULL;
 }
 
-void *qtree_del(struct qtree *, struct coord)
+// I currently don't shrink the tree as I expect dels and put to be intermingled
+// quite a bit and I don't want needless shrinking and growing. But I can see a
+// world where I could use both behaviours (UI with changing view points) then I
+// could make the behaviour tweakable and support both.
+void *qtree_del(struct qtree *qtree, struct coord key)
 {
+    struct node *node = qtree->node;
+    while (node) {
 
+        struct node *leaf = is_leaf(node);
+        if (leaf) {
+            for (size_t i = 0; i < 4; ++i) {
+                if (leaf->x[i] == key.x && leaf->y[i] == key.y) {
+                    void *old = leaf->val[i];
+                    leaf->x[i] = leaf->y[i] = leaf->val[i] = 0;
+                    return old;
+                }
+            }
+            return NULL;
+        }
+
+        if (key.x < node->x[0] || key.x > node->x[3]) return NULL;
+        if (key.y < node->y[0] || key.y > node->y[3]) return NULL;
+
+        size_t i = key.x > node->x[1];
+        size_t j = key.y > node->y[1];
+        node = node->val[j * 2 + i];
+    }
+
+    return NULL;
 }
 
 struct qtree_it
