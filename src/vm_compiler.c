@@ -102,7 +102,7 @@ struct compiler
         size_t i, len, line;
 
         size_t tok;
-        char tokens[128];
+        char token[128];
     } in;
 
     struct {
@@ -121,47 +121,48 @@ struct compiler
     } lbl;
 };
 
+static bool compiler_eof(struct compiler *comp)
+{
+    return comp->in.i >= comp->in.len;
+}
 
 static char compiler_peek(struct compiler *comp)
 {
-    if (comp->in.i == comp->in.len) return 0;
+    if (compiler_eof(comp)) return 0;
     return comp->in.base[comp->i];
 }
 
 static char compiler_next(struct compiler *comp)
 {
+    if (compiler_eof(comp)) return 0;
     if (comp->in.base[comp->i] == '\n') comp->in.line++;
-    if (comp->in.i == comp->in.len) return 0;
     return comp->in.base[comp->i++];
 }
 
-static char compiler_tokenize(struct compiler *comp)
+static void compiler_skip(struct compiler *comp)
+{
+    for (char c = compiler_next(comp); !c || c == '\n'; c = compiler_next(comp));
+}
+
+static const char *compiler_token(struct compiler *comp, size_t *len)
 {
     comp->in.tok = 0;
+    comp->in.token[0] = 0;
 
-    bool in_token = false;
+    while (true) {
+        while (isspace(compiler_peek(comp))) compiler_next(comp);
+        if (compiler_peek(comp) != '#') break;
+        compiler_skip(comp);
+    }
+
     while (true) {
         char c = compiler_next(comp);
-        if (!c || c == '\n') {
-            comp->in.tokens[comp->in.tok++] = 0;
-            break;
+        if (!c || c == '#' || isspace(c)) {
+            comp->in.token[comp->in.tok++] = 0;
+            *len = comp->in.tok - 1;
+            return comp->in.token;
         }
-
-        if (c == '/' && compiler_peek(comp) == '/') {
-            while (compiler_next(comp) != '\n');
-            return;
-        }
-
-        if (!isspace(c)) {
-            in_token = true;
-            comp->in.tokens[comp->in.tok++] = c;
-            continue;
-        }
-
-        if (in_token) {
-            in_token = false;
-            comp->in.tokens[comp->in.tok++] = 0;
-        }
+        comp->in.token[comp->in.tok++] = c;
     }
 }
 
@@ -230,7 +231,19 @@ static void compiler_label_ref(struct compiler *comp, const char *label)
     compiler_write64(comp, 0);
 }
 
-static void compiler_check(struct compiler *comp)
+static struct compiler *compiler_alloc(const char *in, size_t len)
+{
+    struct compiler *comp = calloc(1, sizeof(*comp));
+    comp->in.base = in;
+    comp->in.len = len;
+
+    comp->out.len = 1 << 16;
+    comp->out.base = calloc(1, comp->out.len);
+
+    return comp;
+}
+
+static struct vm_code *compiler_output(struct compiler *comp, uint64_t mod)
 {
     if (comp->out.i == comp->out.len)
         compiler_err(comp, "program too big");
@@ -238,39 +251,55 @@ static void compiler_check(struct compiler *comp)
     struct htable_bucket *bucket = htable_next(&comp->lvl.want, NULL);
     for (; bucket; bucket = htable_next(&comp->lvl.want, bucket))
         compiler_err(comp, "missing label at '%lu'", bucket->val);
-}
 
-struct vm_code *vm_compile(uint32_t key, const char *str, size_t len)
-{
-    assert(str && len);
+    size_t head_bytes = sizeof(struct vm_code);
+    size_t code_bytes = comp->out.len;
+    size_t str_bytes = comp->in.len + 1;
+    size_t errs_bytes = comp->err.len * sizeof(*errs);
 
-    enum { max_code_len = 1 << 16 };
-    struct vm_code *code = calloc(1, sizeof(*code) + max_code_len);
-    code->mod = key;
+    struct vm_code *code = calloc(1, head_bytes + code_bytes + str_bytes + errs_bytes);
+    code->mod = mod;
 
-    struct ctx ctx = { .in = str, .len = len };
+    memcpy(code + head_bytes, comp->out.base, comp->out.i);
+    code->len = comp->out.len;
 
-    while (true) {
-
-    }
-
-    size_t code_bytes = sizeof(*code) + code->len;
-    size_t str_bytes = len+1;
-    size_t errs_bytes = errs_len*sizeof(*errs);
-
-    code = realloc(code, code_bytes + str_bytes + errs_bytes);
-
-    code->str = code + code_bytes;
-    memcpy(code->str, src, len);
+    code->str = code + (head_bytes + code_bytes);
+    memcpy(code->str, comp->in.str, len);
+    code->str_len = comp->in.len;
     code->str[len] = 0;
-    code->str_len = len;
 
-    code->errs = code + code_bytes + str_bytes;
+    code->errs = code + (head_bytes + code_bytes + str_bytes);
     memcpy(code->errs, errs, errs_bytes);
     code->errs_len = errs_len;
 
-    free(errs);
-    htable_reset(&labels);
+    return code;
+}
 
+static void compiler_free(struct compilre *comp)
+{
+    free(comp->err.list);
+    free(comp->err.list);
+    htable_reset(&comp->lbl.is);
+    htable_reset(&comp->lbl.wants);
+    free(comp);
+}
+
+struct vm_code *vm_compile(uint32_t mod, const char *str, size_t len)
+{
+    assert(str && len);
+
+    struct compiler *comp = compiler_alloc(str, len);
+
+    while (!compiler_eof(comp)) {
+        size_t len = 0;
+        const char *token = compiler_token(comp, &len);
+        if (!len) return;
+        
+        
+
+    }
+
+    struct vm_code *code = compiler_output(comp, mode);
+    compiler_free(comp);
     return code;
 }
