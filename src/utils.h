@@ -86,6 +86,35 @@ inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
 }
 
 // -----------------------------------------------------------------------------
+// vec64
+// -----------------------------------------------------------------------------
+
+struct vec64
+{
+    uint32_t len, cap;
+    uint64_t vals[];
+};
+
+inline void vec64_free(struct vec64 *vec) { free(vec); }
+
+inline struct vec64 *vec64_reserve(size_t size)
+{
+    struct vec64 *vec = calloc(1, sizeof(*vec) + size * sizeof(vec->items[0]));
+    vec->cap = size;
+    return vec;
+}
+
+inline struct vec64 *vec64_append(struct vec64 *vec, uint64_t val)
+{
+    if (unlikely(!vec || vec->len == vec->cap)) {
+        size_t size = vec ? 1 : vec->cap * 2;
+        vec = realloc(vec, sizeof(*vec) + size * sizeof(vec->items[0]));
+    }
+    vec->items[vec->len++] = val;
+    return vec;
+}
+
+// -----------------------------------------------------------------------------
 // sdl
 // -----------------------------------------------------------------------------
 
