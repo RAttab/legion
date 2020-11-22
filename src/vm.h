@@ -24,16 +24,22 @@ enum flags
     FLAG_WRITING = 1 << 7,
 };
 
-struct vm_code_errors
+enum { vm_errors_cap = 32 };
+struct vm_errors
 {
     size_t line, col;
-    char err[255];
+    char err[vm_errors_cap];
 }
 
 struct vm_code
 {
     uint32_t mod;
-    const char *str;
+
+    char *str;
+    size_t str_len;
+
+    struct vm_errors *errs;
+    size_t errs_len;
 
     uint8_t len;
     uint8_t prog[];
@@ -42,17 +48,15 @@ struct vm_code
 struct legion_packed vm
 {
     struct legion_packed {
-        // stack = 2 + size * 8
-        // Basically add a cacheline for each spec increase.
-        uint8_t stack;
+        uint8_t stack; // = 2 + type * 8
         uint8_t speed;
     } specs;
     uint8_t flags;
     uint8_t sp;
     uint32_t cycles;
-    uint64_t ip;
-    int64_t regs[4];
-    int64_t stack[];
+    uint64_t ip;     // ^- sum(*) = 2 u64
+    int64_t regs[4]; // half of the cacheline
+    int64_t stack[]; // 2 u64 left in cacheline
 };
 
 static_assert(sizeof(struct vm) % 8 == 0);

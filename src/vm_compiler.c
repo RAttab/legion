@@ -94,76 +94,183 @@ void vm_compile_init()
     }
 }
 
-struct ctx
-{
-    const char *in;
-    size_t i, len;
 
-    size_t line, col;
+struct compiler
+{
+    struct {
+        const char *base;
+        size_t i, len, line;
+
+        size_t tok;
+        char tokens[128];
+    } in;
+
+    struct {
+        uint8_t *base;
+        size_t i, len;
+    } out;
+
+    struct {
+        size_t len, cap;
+        struct vm_errors *list;
+    } err;
+
+    struct {
+        struct htable is;
+        struct htable wants;
+    } lbl;
 };
 
-static char ctx_peek(struct ctx *ctx)
+
+static char compiler_peek(struct compiler *comp)
 {
-    if (ctx->i == ctx->len) return 0;
-    return ctx->in[i];
+    if (comp->in.i == comp->in.len) return 0;
+    return comp->in.base[comp->i];
 }
 
-static bool ctx_inc(struct ctx *ctx)
+static char compiler_next(struct compiler *comp)
 {
-    if (ctx->i == ctx->len) return false;
-
-    if (ctx->in[ctx->i] != '\n') { ++ctx->col; }
-    else { ctx->line++; ctx->col = 0; }
-
-    ctx->i++;
-    return ctx->i < ctx->len;
+    if (comp->in.base[comp->i] == '\n') comp->in.line++;
+    if (comp->in.i == comp->in.len) return 0;
+    return comp->in.base[comp->i++];
 }
 
-static size_t ctx_token(struct ctx *ctx, char *tok, size_t len)
+static char compiler_tokenize(struct compiler *comp)
 {
-    while (isspace(ctx_peek(ctx)) && ctx_inc(ctx));
+    comp->in.tok = 0;
 
-    size_t j = 0;
-    do {
-        char c = ctx_peek(ctx);
-        if (c && !isspace(c)) tok[j] = tolower(c);
-    } while (++j < len && ctx_inc(ctx));
+    bool in_token = false;
+    while (true) {
+        char c = compiler_next(comp);
+        if (!c || c == '\n') {
+            comp->in.tokens[comp->in.tok++] = 0;
+            break;
+        }
 
-    return j;
+        if (c == '/' && compiler_peek(comp) == '/') {
+            while (compiler_next(comp) != '\n');
+            return;
+        }
+
+        if (!isspace(c)) {
+            in_token = true;
+            comp->in.tokens[comp->in.tok++] = c;
+            continue;
+        }
+
+        if (in_token) {
+            in_token = false;
+            comp->in.tokens[comp->in.tok++] = 0;
+        }
+    }
 }
 
-static void ctx_skip_line(struct ctx *ctx)
+static void compiler_write(struct compiler *comp, uint8_t val)
 {
-    size_t line = ctx->line;
-    while (line == ctx->line) ctx_inc(ctx);
+    if (comp->out.i >= comp->out.len) return;
+    comp->out.base[comp->out.i++] = val;
+}
+
+static void compiler_write64_at(struct compiler *comp, size_t pos, uint8_t val)
+{
+    if (comp->out.i + 8 >= comp->out.len) return;
+    *((uint64_t *) &comp->out.base[pos]) = val;
+}
+
+static void compiler_write64(struct compiler *comp, uint64_t val)
+{
+    compiler_write64_at(comp, comp->out.i, val);
+    comp->out.i += 8;
+}
+
+static void compiler_err(struct compiler *comp, const char *fmt, ...)
+    legion_printf(2, 3)
+{
+    if (comp->err.len == comp->err.cap) {
+        size_t len = comp->err.cap ? comp->err.cap * 2 : 2;
+        comp->err.list = realloc(comp->err.list, len * sizeof(*comp->err.list));
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    (void) vsnprintf(comp->err.list[comp->err.len], vm_errors_cap, fmt, args);
+    va_end(args);
+
+    comp->err.len++;
+}
+
+static void compiler_label_def(struct compiler *comp, const char *label)
+{
+    uint64_t hash = hash_str(label);
+    struct htable_ret ret = htable_put(&comp->lbl.is, hash, comp->out.i);
+    if (!ret.ok) { compiler_err(comp, "refined label: %s", label); return; }
+
+    ret = htable_get(&comp->lbl.wants, hash);
+    if (!ret.ok) return;
+
+    struct vec64 *vec = (void *) ret.val;
+    for (size_t i = 0; i < vec->len; ++i)
+        compiler_write64_at(comp, vec->vals[i], comp->out.i);
+
+    (void) htable_del(&comp->lbl.wants, hash);
+}
+
+static void compiler_label_ref(struct compiler *comp, const char *label)
+{
+    uint64_t hash = hash_str(label);
+
+    struct htable_ret ret = htable_get(&comp->lbl.is, hash);
+    if (ret.ok) { compiler_write64(ret.val); return; }
+
+    ret = htable_get(&comp->lbl.wants, hash);
+    struct vec64 *vec = (void *)ret.val;
+    vec = vec64_append(vec, comp.out.i);
+    htable_put(&comp->lbl.wants, hash, (uint64_t) vec);
+
+    compiler_write64(comp, 0);
+}
+
+static void compiler_check(struct compiler *comp)
+{
+    if (comp->out.i == comp->out.len)
+        compiler_err(comp, "program too big");
+
+    struct htable_bucket *bucket = htable_next(&comp->lvl.want, NULL);
+    for (; bucket; bucket = htable_next(&comp->lvl.want, bucket))
+        compiler_err(comp, "missing label at '%lu'", bucket->val);
 }
 
 struct vm_code *vm_compile(uint32_t key, const char *str, size_t len)
 {
     assert(str && len);
-    
+
     enum { max_code_len = 1 << 16 };
     struct vm_code *code = calloc(1, sizeof(*code) + max_code_len);
     code->mod = key;
 
-    bool err = false;
     struct ctx ctx = { .in = str, .len = len };
 
     while (true) {
-        char tok_op[9] = {0};
-        i += ctx_token(&ctx, tok_op, 8);
-        
-        struct htable_ret ret = htable_get(&oplookup, opkey(tok_op));
-        if (!ret.ok) {
-            fprintf(stderr, "%zu:%zu: invalid opcode: %s\n", ctx->line, ctx->col, tok_op);
-            ctx_skip(ctx);
-            continue;
-        }
 
-        const struct opspec *spec = (const struct opspec *) ret.val;
-        code->prog[
     }
-    
-    
-    return NULL;
+
+    size_t code_bytes = sizeof(*code) + code->len;
+    size_t str_bytes = len+1;
+    size_t errs_bytes = errs_len*sizeof(*errs);
+
+    code = realloc(code, code_bytes + str_bytes + errs_bytes);
+
+    code->str = code + code_bytes;
+    memcpy(code->str, src, len);
+    code->str[len] = 0;
+    code->str_len = len;
+
+    code->errs = code + code_bytes + str_bytes;
+    memcpy(code->errs, errs, errs_bytes);
+    code->errs_len = errs_len;
+
+    free(errs);
+    htable_reset(&labels);
+
+    return code;
 }
