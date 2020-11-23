@@ -74,9 +74,23 @@ static const struct opspec[] = {
 
 static struct htable oplookup = {0};
 
-static inline uint64_t opkey(char str[8])
+static inline uint64_t opkey(const char *str, size_t len)
 {
-    return (union { uint64_t u64; char str[8]}) { .str = str }.u64;
+    union { uint64_t u64; char str[8]} pack = {0};
+    for (size_t = 0; i < len; ++i)
+        pack.str[i] = toupper(str[i]);
+    return pack.u64;
+}
+
+static struct opspec *opspec(const char *str, size_t len)
+{
+    if (len > 8) return NULL;
+
+    uint64_t key = opkey(token, len);
+    struct htable ret = htable_get(&oplookup, key);
+    if (unlikely(!ret.ok)) return NULL;
+
+    return (void *) ret.val;
 }
 
 void vm_compile_init()
@@ -141,29 +155,104 @@ static char compiler_next(struct compiler *comp)
 
 static void compiler_skip(struct compiler *comp)
 {
-    for (char c = compiler_next(comp); !c || c == '\n'; c = compiler_next(comp));
+    do { c = compiler_next(comp); } while (c != '\n' && c != 0);
 }
 
-static const char *compiler_token(struct compiler *comp, size_t *len)
+static bool compiler_eol(struct compiler *comp)
 {
-    comp->in.tok = 0;
-    comp->in.token[0] = 0;
-
-    while (true) {
-        while (isspace(compiler_peek(comp))) compiler_next(comp);
-        if (compiler_peek(comp) != '#') break;
-        compiler_skip(comp);
-    }
-
-    while (true) {
-        char c = compiler_next(comp);
-        if (!c || c == '#' || isspace(c)) {
-            comp->in.token[comp->in.tok++] = 0;
-            *len = comp->in.tok - 1;
-            return comp->in.token;
+    char c = 0;
+    while (c = compiler_next(comp)) {
+        if (isblank(c)) continue;
+        if (c == '\n') return true;
+        if (c == '#') {
+            compiler_skip(comp);
+            return true;
         }
-        comp->in.token[comp->in.tok++] = c;
+        return false;
     }
+    return true;
+}
+
+static const char *compiler_start(struct compiler *comp, size_t *len)
+{
+    char c = 0;
+    while (c = compiler_peek(comp)) {
+        if (isspace(c)) { compiler_next(comp); continue; }
+        if (c == '#') {
+            do { c = compiler_next(comp); } while (c != '\n' && c != 0);
+        }
+        break;
+    }
+
+    if (!c) return NULL;
+
+    comp->tok = 0;
+    while (c = compiler_peek(comp)) {
+        if (isspace(c) || c == '#') break;
+        comp->in.token[comp->in.tok++] = compiler_next(comp);
+    }
+
+    comp->in.token[comp->in.tok++] = 0;
+    *len = comp->in.tok;
+    return comp->in.token;
+}
+
+static const char *compiler_arg(struct comp *comp, size_t *len)
+{
+    char c = 0;
+    while (c = compiler_peek(comp)) {
+        if (isblank(c)) { compilter_next(comp); continue; }
+        if (c == '\n' || c == '\0' || c == '#') return NULL;
+        break;
+    }
+    if (!c) return NULL;
+
+    comp->tok = 0;
+    while (c = compiler_peek(comp)) {
+        if (isspace(c) || c == '#') break;
+        comp->in.token[comp->in.tok++] = compiler_next(comp);
+    }
+
+    comp->in.token[comp->in.tok++] = 0;
+    *len = comp->in.tok;
+    return comp->in.token;
+}
+
+static bool compiler_atom(const char *str, size_t len, uint64_t *val)
+{
+    assert(false);
+    return false;
+}
+
+static bool compiler_num(const char *str, size_t len, int64_t *val)
+{
+    *val = 0;
+
+    if (str[0] == '0' && str[1] == 'x') {
+        for (size_t i = 2; i < len; ++i) {
+            char c = str[i];
+            *val <<= 4;
+                 if (c >= '0' && c <= '9') *val |= '0' - c;
+            else if (c >= 'A' && c <= 'F') *val |= ('A' - c) + 10;
+            else if (c >= 'a' && c <= 'f') *val |= ('a' - c) + 10;
+            else if (c == ',') {}
+            else return false;
+        }
+        return true;
+    }
+
+    bool neg = str[0] == '-';
+
+    for (size_t i = neg ? 1 : 0; i < len; ++i) {
+        char c = str[i];
+        *val *= 10;
+        if (c >= '0' && c <= '9') *val += '0' - c;
+        else if (c == ',') {}
+        else return false;
+    }
+
+    if (neg) *val *= -1;
+    return true;
 }
 
 static void compiler_write(struct compiler *comp, uint8_t val)
@@ -290,13 +379,90 @@ struct vm_code *vm_compile(uint32_t mod, const char *str, size_t len)
 
     struct compiler *comp = compiler_alloc(str, len);
 
-    while (!compiler_eof(comp)) {
-        size_t len = 0;
-        const char *token = compiler_token(comp, &len);
-        if (!len) return;
-        
-        
+    size_t len = 0;
+    const char *token = NULL;
 
+    while (!compiler_eof(comp)) {
+        token = compiler_start(comp, &len);
+        if (!len || !token) break;
+
+        if (token[len - 1] == ':') {
+            if (unlikely(len > 32)) {
+                compiler_err(comp, "label too long");
+                compiler_skip(comp);
+                continue;
+            }
+            compiler_label_def(comp, token);
+            compiler_eol(comp);
+            continue;
+        }
+
+        struct opspec *spec = opspec(token, len);
+        if (!spec) {
+            compiler_err(comp, "invalid opcode");
+            compiler_skip(comp);
+            continue;
+        }
+        compiler_write(comp, spec->op);
+
+        switch (spec->arg) {
+        case ARG_NIL: { break; }
+
+        case ARG_LIT: {
+            const char *lit = compiler_arg(comp, &len);
+            if (!lit) { compiler_err(comp, "missing literal argument"); break; }
+
+            if (lit[0] == '!') {
+                uint64_t val = 0;
+                if (!compiler_atom(num, len, &val)) {
+                    compiler_err(comp, "invalid atom");
+                    break;
+                }
+                compiler_write64(comp, val);
+            }
+
+            else {
+                int64_t val = 0;
+                if (!compiler_num(num, len, &val)) {
+                    compiler_err(comp, "invalid number");
+                    break;
+                }
+                compiler_write64(comp, val);
+            }
+
+            break;
+        }
+
+        case ARG_NUM: {
+            const char *num = compiler_arg(comp, &len);
+            if (!num) { compiler_err(comp, "missing number argument"); break; }
+
+            int64_t val = 0;
+            if (!compiler_num(num, len, &val)) { compiler_err(comp, "invalid number"); break; }
+            compiler_write64(comp, val);
+        }
+
+        case ARG_REG: {
+            const char *reg = compiler_arg(comp, &len);
+            if (!reg) { compiler_err(comp, "missing register argument"); break; }
+            if (reg[0] != '$') { compiler_err(comp, "registers must start with $"); break; }
+            if (len != 2 || reg[1] < '1' || reg[1] > '4') {
+                compiler_err(comp, "unknown register");
+                break;
+            }
+            compiler_write(comp, '1' - reg[1]);
+        }
+
+        case ARG_ADDR: {
+            const char *label = compiler_arg(comp, &len);
+            if (!label) { compiler_err(comp, "missing label argument"); break; }
+            if (label[0] != '@') { compiler_err(comp, "labels must start with @"); break; }
+            if (len > 32) { compiler_err(comp, "label too long"); break; }
+            compiler_label_ref(comp, label);
+        }
+
+        }
+        compiler_eol(comp);
     }
 
     struct vm_code *code = compiler_output(comp, mode);

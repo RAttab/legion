@@ -225,7 +225,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
         goto *label;
 
       op_push: { vm_push(vm_read(8)); goto next; }
-      op_pushr: { vm_push(vm->regs[vm_read(8)]); goto next; }
+      op_pushr: { vm_push(vm->regs[vm_read(1)]); goto next; }
       op_pushf: { vm_push(vm->regs[vm->flags]); goto next; }
 
       op_pop: { vm_pop(); goto next; }
