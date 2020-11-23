@@ -5,6 +5,10 @@
 
 #include <ctype.h>
 
+// -----------------------------------------------------------------------------
+// opspec
+// -----------------------------------------------------------------------------
+
 enum arg
 {
     ARG_NIL,
@@ -108,6 +112,10 @@ void vm_compile_init()
     }
 }
 
+
+// -----------------------------------------------------------------------------
+// compiler
+// -----------------------------------------------------------------------------
 
 struct compiler
 {
@@ -373,6 +381,11 @@ static void compiler_free(struct compilre *comp)
     free(comp);
 }
 
+
+// -----------------------------------------------------------------------------
+// vm_compile
+// -----------------------------------------------------------------------------
+
 struct vm_code *vm_compile(uint32_t mod, const char *str, size_t len)
 {
     assert(str && len);
@@ -462,7 +475,11 @@ struct vm_code *vm_compile(uint32_t mod, const char *str, size_t len)
         }
 
         }
-        compiler_eol(comp);
+
+        if (!compiler_eol(comp)) {
+            compiler_err(comp, "invalid extra arguments");
+            compiler_skip(comp);
+        }
     }
 
     struct vm_code *code = compiler_output(comp, mode);
