@@ -11,17 +11,21 @@
 // code
 // -----------------------------------------------------------------------------
 
+typedef uint32_t ip_t;
+typedef int64_t word_t;
+
 enum flags
 {
-    FLAG_DIV0 = 1 << 0,
-    FLAG_OPF  = 1 << 1,
-    FLAG_MEMF = 1 << 2,
-    FLAG_OOM  = 1 << 3,
-    FLAG_IOF  = 1 << 4,
+    FLAG_IO = 1 << 0,
+    FLAG_SUSPENDED  = 1 << 1,
 
-    FLAG_SUSPENDED  = 1 << 5,
-    FLAG_READING = 1 << 6,
-    FLAG_WRITING = 1 << 7,
+    FLAG_REG_FAULT = 1 << 3,
+    FLAG_STACK_FAULT = 1 << 4,
+    FLAG_CODE_FAULT = 1 << 5,
+    FLAG_MATH_FAULT = 1 << 6,
+    FLAG_IO_FAULT  = 1 << 7,
+
+    FLAG_FAULTS = FLAG_REG_FAULT | FLAG_STACK_FAULT | FLAG_CODE_FAULT | FLAG_MATH_FAULT | FLAG_IO_FAULT,
 };
 
 enum { vm_errors_cap = 32 };
@@ -51,15 +55,18 @@ struct legion_packed vm
         uint8_t stack; // = 2 + type * 8
         uint8_t speed;
     } specs;
-    uint8_t flags;
-    uint8_t sp;
-    uint32_t cycles;
-    uint64_t ip;     // ^- sum(*) = 2 u64
-    int64_t regs[4]; // half of the cacheline
-    int64_t stack[]; // 2 u64 left in cacheline
+    uint8_t flags, sp; // u16 - u32
+    uint32_t tsc; // -> u64
+
+    uint8_t io, ior;
+    uint8_t __pad__[2];
+
+    ip_t ip;
+    word_t regs[4]; // half of the cacheline
+    word_t stack[]; // 2 u64 left in cacheline
 };
 
-static_assert(sizeof(struct vm) % 8 == 0);
+static_assert(sizeof(struct vm) == 6);
 
 struct vm *vm_new(uint8_t stack, uint8_t speed);
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
@@ -68,8 +75,8 @@ size_t vm_len(uint8_t stack);
 
 inline uint32_t vm_ip_mod(uint64_t ip);
 
-uint64_t vm_exec(struct vm *, struct vm_code *, size_t cycles);
-uint64_t vm_step(struct vm *, struct vm_code *);
+ip_t vm_exec(struct vm *, struct vm_code *);
+ip_t vm_step(struct vm *, struct vm_code *);
 
 void vm_suspend(struct vm *);
 void vm_resume(struct vm *);
@@ -79,10 +86,10 @@ inline bool vm_reading(struct vm *vm) { return vm->flags & FLAG_READING; }
 inline bool vm_writing(struct vm *vm) { return vm->flags & FLAG_WRITING; }
 
 enum { vm_io_cap = 8 };
-typedef int64_t vm_io_buf_t[vm_io_cap];
+typedef word_t vm_io_buf_t[vm_io_cap];
 
-size_t vm_io_read(struct vm *, int64_t *dst);
-void vm_io_write(struct vm *, size_t len, const int64_t *src);
+size_t vm_io_read(struct vm *, word_t *dst);
+void vm_io_write(struct vm *, size_t len, const word_t *src);
 
 inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 {

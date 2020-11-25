@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${PREFIX:="."}
 
 declare -a SRC
-SRC=(rng coord htable sector vm color font panel map core)
+SRC=(rng coord htable sector vm color font panel map core game)
 
 declare -a TEST
 TEST=(coord)
@@ -33,7 +33,6 @@ CFLAGS="$CFLAGS $(pkg-config --cflags freetype2)"
 LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
-# LIBS="$LIBS -lSDL_ttf"
 
 OBJ=""
 for src in "${SRC[@]}"; do

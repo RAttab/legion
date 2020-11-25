@@ -17,10 +17,10 @@
 * Common
 - io_id -> <id>
 - io_target <id>
-- io_sendw <word>
-- io_send <len> <word>*
-- io_recvw <word>
-- io_recv -> <len> <word>* # blocks
+- io_send <word>
+- io_sendn <len> <word>*
+- io_recv <word>
+- io_recvn -> <len> <word>* # blocks
 
 - io_cargo <slot> -> pack(<type>, <count>)
 - io_dump pack(<0|type>, <0|slot>)

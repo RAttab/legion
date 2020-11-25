@@ -30,16 +30,16 @@ void vm_free(struct vm *vm)
     free(vm);
 }
 
-inline uint32_t vm_ip_mod(uint64_t ip)
+inline uint32_t vm_ip_mod(ip_t ip)
 {
     return ip >> 32;
 }
 
-static inline uint64_t vm_read_code(struct vm *vm, struct vm_code *code, size_t bytes)
+static inline ip_t vm_read_code(struct vm *vm, struct vm_code *code, size_t bytes)
 {
     uint32_t off = vm->ip & 0xFFFFFFFF;
     if (off+bytes > code->len) {
-        vm->flags |= FLAG_MEMF;
+        vm->flags |= FLAG_CODE_FAULT;
         return 0;
     }
 
@@ -101,21 +101,23 @@ enum opcodes
     OP_JNZ    = 0x5A,
 
     OP_YIELD  = 0x60,
-    OP_READ   = 0x61,
-    OP_WRITE  = 0x62,
+    OP_TSC    = 0x61,
+    OP_IO     = 0x62,
+    OP_IOS    = 0x63,
+    OP_IOR    = 0x64,
 
     OP_PACK   = 0x80,
     OP_UNPACK = 0x81,
 };
 
-uint64_t vm_step(struct vm *vm, struct vm_code *code)
+ip_t vm_step(struct vm *vm, struct vm_code *code)
 {
     return vm_exec(vm, code, 1);
 }
 
-uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
+ip_t vm_exec(struct vm *vm, struct vm_code *code)
 {
-    if (vm->flags & FLAG_SUSPENDED) return 0;
+    if (vm->flags & (FLAG_SUSPENDED | FLAG_FAULTS)) return 0;
 
     static const void *opcodes[] = {
         [OP_PUSH]   = &&op_push,
@@ -159,8 +161,10 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
         [OP_JNZ]    = &&op_jnz,
 
         [OP_YIELD]  = &&op_yield,
-        [OP_READ]   = &&op_read,
-        [OP_WRITE]  = &&op_write,
+        [OP_TSC]    = &&op_tsc,
+        [OP_IO]     = &&op_io,
+        [OP_IOS]    = &&op_ios,
+        [OP_IOR]    = &&op_ior,
 
         [OP_PACK]   = &&op_pack,
         [OP_UNPACK] = &&op_unpack,
@@ -171,7 +175,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 #define vm_ensure(c)                            \
     ({                                          \
         if (unlikely(vm->sp < c)) {             \
-            vm->flags |= FLAG_OOM;              \
+            vm->flags |= FLAG_STACK_FAULT;      \
             return -1;                          \
         }                                       \
         true;                                   \
@@ -180,7 +184,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 #define vm_peek()                               \
     ({                                          \
         if (unlikely(!vm->sp)) {                \
-            vm->flags |= FLAG_OOM;              \
+            vm->flags |= FLAG_STACK_FAULT;      \
             return -1;                          \
         }                                       \
         vm->stack[vm->sp-1];                    \
@@ -189,7 +193,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 #define vm_pop()                                \
     ({                                          \
         if (unlikely(!vm->sp)) {                \
-            vm->flags |= FLAG_OOM;              \
+            vm->flags |= FLAG_STACK_FAULT;      \
             return -1;                          \
         }                                       \
         vm->stack[--vm->sp];                    \
@@ -198,7 +202,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 #define vm_push(val)                                    \
     ({                                                  \
         if (unlikely(vm->sp == vm->specs.stack)) {      \
-            vm->flags |= FLAG_OOM;                      \
+            vm->flags |= FLAG_STACK_FAULT;              \
             return -1;                                  \
         }                                               \
         vm->stack[vm->sp++] = (val);                    \
@@ -207,7 +211,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
 #define vm_read(bytes)                                  \
     ({                                                  \
         uint64_t ret = vm_read_code(vm, code, (bytes)); \
-        if (vm->flags & FLAG_MEMF) return -1;           \
+        if (vm->flags & FLAG_CODE_FAULT) return -1;     \
         ret;                                            \
     })
 
@@ -219,9 +223,10 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
         true;                                           \
     })
 
+    size_t cycles = 1 << vm->spec.speed;
     for (size_t i = 0; i < cycles; ++i) {
         const void *label = opcodes[vm_read(1)];
-        if (unlikely(!label)) { vm->flags |= FLAG_OPF; return 0; }
+        if (unlikely(!label)) { vm->flags |= FLAG_CODE_FAULT; return 0; }
         goto *label;
 
       op_push: { vm_push(vm_read(8)); goto next; }
@@ -234,7 +239,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
       op_dupe: { vm_push(vm_peek()); goto next; }
       op_flip: {
             vm_ensure(2);
-            int64_t tmp = vm_stack(0);
+            word_t tmp = vm_stack(0);
             vm_stack(0) = vm_stack(1);
             vm_stack(1) = tmp;
             goto next;
@@ -293,7 +298,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
       op_div: {
             vm_ensure(2);
             int64_t div = vm_stack(0);
-            if (unlikely(!div)) { vm->flags |= FLAG_DIV0; return -1; }
+            if (unlikely(!div)) { vm->flags |= FLAG_MATH_FAULT; return -1; }
             vm_stack(1) /= div;
             vm_pop();
             goto next;
@@ -301,41 +306,52 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
       op_rem: {
             vm_ensure(2);
             int64_t div = vm_stack(0);
-            if (unlikely(!div)) { vm->flags |= FLAG_DIV0; return -1; }
+            if (unlikely(!div)) { vm->flags |= FLAG_MATH_FAULT; return -1; }
             vm_stack(1) %= div;
             vm_pop();
             goto next;
         }
 
-      op_eq: { vm_ensure(2); vm_stack(1) = vm_stack(0) == vm_stack(1); vm_pop(); goto next; }
-      op_ne: { vm_ensure(2); vm_stack(1) = vm_stack(0) != vm_stack(1); vm_pop(); goto next; }
-      op_gt: { vm_ensure(2); vm_stack(1) = vm_stack(0) > vm_stack(1); vm_pop(); goto next; }
-      op_lt: { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1); vm_pop(); goto next; }
-      op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1); vm_pop(); goto next; }
+      op_eq:  { vm_ensure(2); vm_stack(1) = vm_stack(0) == vm_stack(1); vm_pop(); goto next; }
+      op_ne:  { vm_ensure(2); vm_stack(1) = vm_stack(0) != vm_stack(1); vm_pop(); goto next; }
+      op_gt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) > vm_stack(1);  vm_pop(); goto next; }
+      op_lt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1);  vm_pop(); goto next; }
+      op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1);  vm_pop(); goto next; }
 
       op_ret: { vm_jmp(vm_pop()); goto next; }
       op_call: { vm_push(vm->ip); vm_jmp(vm_read(8)); goto next; }
-      op_load: { uint64_t ip = vm_pop(); vm_reset(vm); return ip; }
-      op_jmp: { vm_jmp(vm_read(8)); goto next; }
+      op_load: { ip_t ip = vm_pop(); vm_reset(vm); return ip; }
+      op_jmp: { vm_jmp(vm_read(4)); goto next; }
       op_jz: {
-            uint64_t dest = vm_read(8);
+            ip_t dest = vm_read(4);
             if (!vm_pop()) vm_jmp(dest);
             goto next;
         }
       op_jnz: {
-            uint64_t dest = vm_read(8);
+            ip_t dest = vm_read(4);
             if (vm_pop()) vm_jmp(dest);
             goto next;
         }
 
       op_yield: { return 0; }
-      op_read: {
-            vm->flags |= FLAG_READING;
+      op_tsc: { vm_push(vm->tsc); }
+
+      op_io:  {
+            vm->ior = -1;
+            vm->io = vm_read(1);
+            vm->flags |= FLAG_IO;
             return 0;
         }
-      op_write: {
-            vm_push(vm_read(1));
-            vm->flags |= FLAG_WRITING;
+      op_ios: {
+            vm->ior = 0;
+            vm->io = vm_pop();
+            vm->flags |= FLAG_IO;
+            return 0;
+        }
+      op_ior: {
+            vm->ior = vm_read(1);
+            vm->io = vm->regs[vm->ior - 1];
+            vm->flags |= FLAG_IO;
             return 0;
         }
 
@@ -355,7 +371,7 @@ uint64_t vm_exec(struct vm *vm, struct vm_code *code, size_t cycles)
         }
 
       next:
-        vm->cycles++;
+        vm->tsc++;
     }
 
     return 0;
@@ -382,32 +398,34 @@ void vm_resume(struct vm *vm)
 
 void vm_io_fault(struct vm *vm)
 {
-    vm->flags |= FLAG_SUSPENDED | FLAG_IOF;
+    vm->flags |= FLAG_IO_FAULT;
 }
 
-size_t vm_io_read(struct vm *vm, int64_t *dst)
+size_t vm_io_read(struct vm *vm, word_t *dst)
 {
-    size_t words = vm->stack[--vm->sp];
-    if (words > vm_io_cap) { vm_io_fault(vm); return 0; }
+    if (vm->io > vm_io_cap) { vm_io_fault(vm); return 0; }
 
-    for (size_t i = 0; i < words; ++i)
+    for (size_t i = 0; i < vm->io; ++i)
         dst[i] = vm->stack[--vm->sp];
 
     return words;
 }
 
-void vm_io_write(struct vm *vm, size_t len, const int64_t *src)
+void vm_io_write(struct vm *vm, size_t len, const word_t *src)
 {
     assert(len <= vm_io_cap);
 
     // In case of OOM, we want to fill the stack for debugging purposes.
     for (size_t i = 0; i < len; ++i) {
         if (unlikely(vm->sp == vm->specs.stack)) {
-            vm->flags |= FLAG_OOM;
+            vm->flags |= FLAG_STACK_FAULT;
             return;
         }
-        vm->stack[vm->sp++] = src[i];
+        vm->stack[vm->sp++] = src[len-i-1];
     }
+
+    if (vm->ior == 0) vm->stack[vm->sp++] = len;
+    else if (vm->ior != -1) vm->reg[vm->ior-1] = len;
 }
 
 void vm_reset(struct vm *vm)

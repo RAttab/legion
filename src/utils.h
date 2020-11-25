@@ -40,6 +40,7 @@
 #define SDL_LogErrno(fmt, ...) \
     SDL_Log(fmt ": (%d) %s", __VA_ARGS__, errno, strerror(errno))
 
+
 // -----------------------------------------------------------------------------
 // vma
 // -----------------------------------------------------------------------------
@@ -51,6 +52,7 @@ static inline size_t to_vma_len(size_t len)
     if (!(len % page_len)) return len;
     return (len & ~(page_len - 1)) + page_len;
 }
+
 
 // -----------------------------------------------------------------------------
 // bits
@@ -83,6 +85,11 @@ inline int64_t i64_max(int64_t x, int64_t y)
 inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
 {
     return i64_min(i64_max(x, min), max);
+}
+
+inline size_t align_cache(size_t sz)
+{
+    return sz ? (((sz - 1) >> 6) << 6) + 1 : 0;
 }
 
 // -----------------------------------------------------------------------------
