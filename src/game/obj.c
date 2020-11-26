@@ -21,7 +21,7 @@ struct obj *obj_alloc(id_t id, struct obj_spec spec)
     size_t len_state = align_cache(state);
     size_t len_total = len_head + len_vm + len_state;
 
-    struct obj *obj = calloc(1, len_total);
+    struct obj *obj = alloc_cache(1, len_total);
     obj->id = id;
     obj->type = id_type(type);
     obj->io.len = 0;

@@ -60,10 +60,7 @@ struct legion_packed obj
     struct vm_code *code;
 
     uint8_t type;
-    struct {
-        uint8_t len:4;
-        uint8_t cap:4;
-    } io;
+    struct { uint8_t len:4; uint8_t cap:4; } io;
     uint8_t docks;
     uint8_t cargos;
 

@@ -20,7 +20,7 @@ void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
 
 struct vm *vm_new(uint8_t stack, uint8_t speed)
 {
-    struct vm *vm = calloc(1, vm_len(stack));
+    struct vm *vm = alloc_cache(vm_len(stack));
     vm_init(vm, stack, speed);
     return vm;
 }
