@@ -357,16 +357,15 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
 
       op_pack: {
             vm_ensure(2);
-            uint64_t msb = vm_stack(0) & -1U;
-            uint64_t lsb = vm_stack(1) << 32;
-            vm_stack(1) = msb | lsb;
+            vm_stack(1) = vm_pack(vm_stack(0), vm_stack(1));
             vm_pop();
             goto next;
         }
       op_unpack: {
-            uint64_t val = vm_pop();
-            vm_stack(0) = val >> 32;
-            vm_push(val & -1U);
+            uint32_t msb = 0, lsb = 0;
+            vm_unpack(vm_pop(), &msb, &lsb);
+            vm_stack(0) lsb;
+            vm_push(msb);
             goto next;
         }
 

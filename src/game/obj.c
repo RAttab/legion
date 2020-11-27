@@ -11,11 +11,11 @@
 // obj
 // -----------------------------------------------------------------------------
 
-struct obj *obj_alloc(id_t id, struct obj_spec spec)
+struct obj *obj_alloc(id_t id, const struct obj_spec *spec)
 {
-    size_t len_io = spec.io * sizeof(word_t);
-    size_t len_docks = spec.docks * sizeof(id_t);
-    size_t len_cargo = spec.cargo * sizeof(union cargo);
+    size_t len_io = spec->io * sizeof(word_t);
+    size_t len_docks = spec->docks * sizeof(id_t);
+    size_t len_cargo = spec->cargo * sizeof(cargo_t);
     size_t len_head = align_cache(sizeof(struct obj) + len_io + len_docks + len_cargo);
     size_t len_vm = vm_len(stack);
     size_t len_state = align_cache(state);
@@ -25,9 +25,9 @@ struct obj *obj_alloc(id_t id, struct obj_spec spec)
     obj->id = id;
     obj->type = id_type(type);
     obj->io.len = 0;
-    obj->io.cap = spec.io;
-    obj->cargos = spec.cargo;
-    obj->docks = spec.docks;
+    obj->io.cap = spec->io;
+    obj->cargos = spec->cargo;
+    obj->docks = spec->docks;
 
     obj->off_docks = sizeof(*obj) + len_io;
     obj->off_cargo = obj->off_docks + len_docks;
@@ -52,7 +52,6 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
     if (!len) return;
 
     switch (buf[0]) {
-
     case io_noop: { return; }
 
     case io_id: {
@@ -106,15 +105,15 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
         size_t slot = buf[1];
         if (slot < 0 || slot >= obj->cargos) { buf[0] = 0; }
         else {
-            union cargo cargo = obj_cargo(obj)[slot];
-            buf[0] = (((uint64_t) cargo.split.item) << 32) | cargo.split.count;
+            cargo_t cargo = obj_cargo(obj)[slot];
+            buf[0] = vm_pack(cargo_item(cargo), cargo_count(cargo));
         }
 
         vm_io_write(obj->vm, 1 buf);
         return;
     }
 
-    case io_dump: {
+    case io_vent: {
         if (!vm_io_check(obj->vm, len, 2)) return;
         size_t slot = buf[1];
         if (slot >= 0 || slot < obj->cargos)
@@ -135,7 +134,7 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
 
     }
 
-    if (!consumed) assert(false && "todo: error out in some way");
+    if (!consumed) vm_io_fault(obj->vm);
 }
 
 void obj_step(struct obj *obj, struct hunk *hunk)
@@ -147,7 +146,5 @@ void obj_step(struct obj *obj, struct hunk *hunk)
         assert(false && "switch code");
     }
 
-    if (vm_writting(vm)) {
-
-    }
+    if (vm_io(vm)) obj_io(obj, hunk);
 }

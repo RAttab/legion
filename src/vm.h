@@ -103,8 +103,7 @@ void vm_suspend(struct vm *);
 void vm_resume(struct vm *);
 void vm_io_fault(struct vm *);
 
-inline bool vm_reading(struct vm *vm) { return vm->flags & FLAG_READING; }
-inline bool vm_writing(struct vm *vm) { return vm->flags & FLAG_WRITING; }
+inline bool vm_io(struct vm *vm) { return vm->flags & FLAG_IO; }
 
 enum { vm_io_cap = 8 };
 typedef word_t vm_io_buf_t[vm_io_cap];
@@ -116,6 +115,17 @@ inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 {
     if (unlikely(len < exp)) { vm_io_fault(vm); return false; }
     return true;
+}
+
+inline word_t vm_pack(uint32_t msb, uint32_t lsb)
+{
+    return (((uint64_t) msb) << 32) | lsb;
+}
+
+inline void vm_unpack(word_t in, uint32_t *msb, uint32_t *lsb)
+{
+    *msb = ((uint64_t) in) >> 32;
+    *lsb = (uint32_t) in;
 }
 
 void vm_reset(struct vm *);

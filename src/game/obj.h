@@ -28,11 +28,13 @@ inline enum otype id_type(id_t id) { return id >> 24; }
 // cargo
 // -----------------------------------------------------------------------------
 
-union legion_packed cargo
-{
-    struct legion_packed { uint8_t item, count; } split;
-    uint16_t packed;
-};
+typedef uint8_t item_t;
+typedef uint16_t cargo_t;
+
+inline cargo_t make_cargo(item_t item, uint8_t count) { return (((cargo_t)item) << 8) | count; }
+inline item_t cargo_item(cargo_t cargo) { return cargo >> 8; }
+inline item_t cargo_count(cargo_t cargo) { return (uint8_t) cargo; }
+
 
 // -----------------------------------------------------------------------------
 // obj_spec
@@ -70,7 +72,7 @@ struct legion_packed obj
     uint8_t off_state;
 }; // u64 * 4;
 
-struct obj *obj_alloc(id_t id, struct obj_spec);
+struct obj *obj_alloc(id_t id, const struct obj_spec *);
 void obj_free(struct obj *);
 
 void obj_step(struct obj *, struct hunk *);
@@ -85,7 +87,7 @@ inline id_t *obj_docks(struct obj *obj)
     return ((void *) obj) + obj->off_docks;
 }
 
-inline union cargo *obj_cargo(struct obj *obj)
+inline cargo_t *obj_cargo(struct obj *obj)
 {
     return ((void *) obj) + obj->off_cargo;
 }

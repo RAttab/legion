@@ -23,10 +23,10 @@
 - io_recvn -> <len> <word>* # blocks
 
 - io_cargo <slot> -> pack(<type>, <count>)
-- io_dump pack(<0|type>, <0|slot>)
+- io_vent pack(<0|type>, <0|slot>)
 
 * Worker
-- io_dock <id>
+- io_dock <id> -> io_ok | io_fail
 - io_undock
 - io_take pack(<0|type>, <0|slot>)
 - io_put pack(<0|type>, <0|slot>)

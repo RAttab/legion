@@ -10,8 +10,9 @@ enum atoms_io
     ATOM_IO_MAX = 0x8FFFFFFF,
     ATOM_IO_MIN = 0x80000000,
 
-    // who knows, might be handy
     io_noop = ATOM_IO_MIN,
+    io_ok,
+    io_fail,
 
     // common
     io_id,
@@ -21,7 +22,7 @@ enum atoms_io
     io_recv,
     io_recvn,
     io_cargo,
-    io_dump,
+    io_vent,
 
     //worker
     io_dock,

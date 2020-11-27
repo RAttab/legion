@@ -12,7 +12,7 @@
 // worker
 // -----------------------------------------------------------------------------
 
-struct worker
+struct legion_packed worker
 {
     id_t dock;
 };
