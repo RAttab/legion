@@ -6,27 +6,26 @@
 #pragma once
 
 #include "utils.h"
+#include "text.h"
+
+// -----------------------------------------------------------------------------
+// types
+// -----------------------------------------------------------------------------
+
+typedef int64_t word_t;
+
+typedef uint32_t ip_t;
+typedef uint16_t mod_t;
+typedef uint16_t off_t;
+
+inline ip_t make_ip(mod_t mod, off_t off) { return (((uint32_t) mod) << 16) | off; }
+inline mod_t ip_mod(ip_t ip) { return ip >> 16; }
+inline ip_t ip_off(ip_t ip) { return (uint16_t) ip; }
+
 
 // -----------------------------------------------------------------------------
 // code
 // -----------------------------------------------------------------------------
-
-typedef uint32_t ip_t;
-typedef int64_t word_t;
-
-enum flags
-{
-    FLAG_IO = 1 << 0,
-    FLAG_SUSPENDED  = 1 << 1,
-
-    FLAG_REG_FAULT = 1 << 3,
-    FLAG_STACK_FAULT = 1 << 4,
-    FLAG_CODE_FAULT = 1 << 5,
-    FLAG_MATH_FAULT = 1 << 6,
-    FLAG_IO_FAULT  = 1 << 7,
-
-    FLAG_FAULTS = FLAG_REG_FAULT | FLAG_STACK_FAULT | FLAG_CODE_FAULT | FLAG_MATH_FAULT | FLAG_IO_FAULT,
-};
 
 enum { vm_errors_cap = 32 };
 struct vm_errors
@@ -47,6 +46,28 @@ struct vm_code
 
     uint8_t len;
     uint8_t prog[];
+};
+
+void vm_compile_init();
+struct vm_code *vm_compile(const char *name, struct text *source);
+
+
+// -----------------------------------------------------------------------------
+// vm
+// -----------------------------------------------------------------------------
+
+enum flags
+{
+    FLAG_IO = 1 << 0,
+    FLAG_SUSPENDED  = 1 << 1,
+
+    FLAG_REG_FAULT = 1 << 3,
+    FLAG_STACK_FAULT = 1 << 4,
+    FLAG_CODE_FAULT = 1 << 5,
+    FLAG_MATH_FAULT = 1 << 6,
+    FLAG_IO_FAULT  = 1 << 7,
+
+    FLAG_FAULTS = FLAG_REG_FAULT | FLAG_STACK_FAULT | FLAG_CODE_FAULT | FLAG_MATH_FAULT | FLAG_IO_FAULT,
 };
 
 struct legion_packed vm
@@ -98,6 +119,3 @@ inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 }
 
 void vm_reset(struct vm *);
-
-void vm_compile_init();
-struct vm_code *vm_compile(const char *str, size_t len);
