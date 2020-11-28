@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${PREFIX:="."}
 
 declare -a SRC
-SRC=(rng coord htable text sector vm color font panel map core game)
+SRC=(utils vm game render)
 
 declare -a TEST
 TEST=(coord)

@@ -106,10 +106,3 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
 
     sdl_err(SDL_RenderCopy(renderer, panel->tex, NULL, &panel->rect));
 }
-
-// -----------------------------------------------------------------------------
-// panels
-// -----------------------------------------------------------------------------
-
-#include "panel_pos.c"
-#include "panel_system.c"

@@ -3,6 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "game/coord.c"
+#include "game/sector.c"
 #include "game/atoms.c"
 #include "game/obj.c"
 #include "game/worker.c"
