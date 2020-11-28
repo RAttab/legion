@@ -1,6 +1,10 @@
 /* atom.c
    Rémi Attab (remi.attab@gmail.com), 28 Nov 2020
    FreeBSD-style copyright and disclaimer apply
+
+   TODO: Realized a little too late that htable resize breaks the entire
+   scheme. Need to write a custom DS to accomodate for string keys. For now we
+   rely on resizes not happening which is good enough for a long while.
 */
 
 #include "atom.h"
