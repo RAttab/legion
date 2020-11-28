@@ -236,8 +236,14 @@ static const char *compiler_arg(struct comp *comp, size_t *len)
 
 static bool compiler_atom(const char *str, size_t len, uint64_t *val)
 {
-    assert(false);
-    return false;
+    if (str[0] != '!') return false;
+    if (len - 1 > vm_atom_cap) return false;
+
+    atom_t atom = {0};
+    memcpy(atom, str + 1, len - 1);
+
+    *val = vm_atom(&atom);
+    return true;
 }
 
 static bool compiler_num(const char *str, size_t len, int64_t *val)
@@ -323,7 +329,7 @@ static void compiler_label_def(struct compiler *comp, const char *label)
 
     struct vec64 *vec = (void *) ret.val;
     for (size_t i = 0; i < vec->len; ++i)
-        compiler_write64_at(comp, vec->vals[i], comp->out.i);
+        compiler_write32_at(comp, make_ip(0, vec->vals[i]), comp->out.i);
 
     (void) htable_del(&comp->lbl.wants, hash);
 }
@@ -333,7 +339,7 @@ static void compiler_label_ref(struct compiler *comp, const char *label)
     uint64_t hash = hash_str(label);
 
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
-    if (ret.ok) { compiler_write32(ret.val); return; }
+    if (ret.ok) { compiler_write32(make_ip(0, ret.val)); return; }
 
     ret = htable_get(&comp->lbl.wants, hash);
     struct vec64 *vec = (void *)ret.val;
@@ -492,11 +498,30 @@ struct vm_code *vm_compile(const char *name, const text *source)
 
         case ARG_MOD: {
             const char *label = compiler_arg(comp, &len);
-            if (!label) { compiler_err(comp, "missing label argument"); break; }
-            if (label[0] != '@') { compiler_err(comp, "labels must start with @"); break; }
-            if (len > 32) { compiler_err(comp, "label too long"); break; }
-            compiler_label_ref(comp, label);
+            if (!label) { compiler_err(comp, "missing dst argument"); break; }
+
+            if (label[0] == '@') {
+                if (len > 32) { compiler_err(comp, "label too long"); break; }
+                compiler_label_ref(comp, label);
+                break;
+            }
+
+            if (label[0] == '!') {
+                uint64_t val = 0;
+                if (!compiler_atom(num, len, &val)) {
+                    compiler_err(comp, "invalid atom");
+                    break;
+                }
+                // todo: check if module actually exists
+                compiler_write32(comp, make_ip(val, 0));
+                break;
+            }
+
+            compiler_err(comp, "call takes either a label or an atom");
+            break;
         }
+
+        default: assert(false && "unknown arg type");
 
         }
 
