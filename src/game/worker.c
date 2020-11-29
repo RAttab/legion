@@ -63,7 +63,6 @@ static void worker_undock(
     }
 }
 
-
 static cargo_t *worker_slot_local(struct obj *obj, size_t slot)
 {
     cargo_t *cargo = obj_cargo(obj);
@@ -129,6 +128,24 @@ static void worker_put(
     *src = 0;
 }
 
+static void worker_harvest(struct obj *obj, struct hunk *hunk, word_t arg)
+{
+    size_t count = hunk_harvest(hunk, buf[1], 1);
+    if (!count) return;
+
+    cargo_t *cargo = obj_cargo(obj);
+    cargo_t *end = cargo + obj->cargos;
+
+    while (cargo != end) {
+        item_t item = cargo_item(*cargo);
+        if (!item) { *cargo = make_cargo(arg, 1); return; }
+        if (item == arg) { *cargo = cargo_inc(*cargo); return; }
+    }
+
+    return;
+}
+
+
 bool worker_io(
         struct obj *obj,
         struct hunk *hunk,
@@ -167,7 +184,7 @@ bool worker_io(
 
     case io_harvest: {
         if (!vm_io_check(obj->vm, len, 2)) return true;
-        assert(false && "todo");
+        worker_harvest(obj, hunk, buf[1]);
         return true;
     }
 

@@ -131,3 +131,10 @@ void hunk_step(struct hunk *hunk)
     for (size_t class = 0; class < hunk_classes; ++class)
         area_step(hunk->areas[class], hunk);
 }
+
+size_t hunk_harvest(struct hunk *hunk, uint8_t type, size_t count)
+{
+    count = i64_min(hunk->elements[type], count);
+    hunk->elements[type] -= count;
+    return count;
+}
