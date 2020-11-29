@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include "common.h"
+
+
 // -----------------------------------------------------------------------------
 // item
 // -----------------------------------------------------------------------------
@@ -47,6 +50,7 @@ enum item
     ITEM_ELE_Y,
     ITEM_ELE_Z,
 
+    // Active
     ITEM_BRAIN = 0x20,
     ITEM_WORKER,
     ITEM_PRINTER,
@@ -54,12 +58,12 @@ enum item
     ITEM_COMM,
     ITEM_SHIP,
 
-    // placeholders for the other shit
+    // Placeholders for the other shit
     ITEM_OTHERS = 0x30,
 };
 
-static_assert(ITEM_ELE_Q == 0x10);
-static_assert(ITEM_ELE_Z == 0x1A);
+static_assert(item_ele_q == 0x10, "expected element value");
+static_assert(item_ele_z == 0x1A, "expected element value");
 
 
 // -----------------------------------------------------------------------------
@@ -98,3 +102,11 @@ inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
     ssize_t count = cargo_count(cargo);
     return (cargo & ~0xFF) | i64_max(0, cargo - val));
 }
+
+
+// -----------------------------------------------------------------------------
+// elements
+// -----------------------------------------------------------------------------
+
+enum { elements_len = item_ele_z - item_ele_a };
+typedef uint32_t elements_t [elements_len];

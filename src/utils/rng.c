@@ -10,11 +10,11 @@
 
    Current implementation is the xorshift64* variant which has better
    statistical properties.
+
+   TODO: Replace with PCG which is even better and allows for customization.
 */
 
 #include "rng.h"
-
-#include <assert.h>
 
 
 // -----------------------------------------------------------------------------

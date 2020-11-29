@@ -5,7 +5,13 @@
 
 #pragma once
 
-#include "utils.h"
+#include "common.h"
+#include "SDL.h"
+
+struct map;
+struct panel;
+struct sector;
+
 
 // -----------------------------------------------------------------------------
 // events
@@ -19,13 +25,10 @@ enum event
     EV_MAX,
 };
 
+
 // -----------------------------------------------------------------------------
 // core
 // -----------------------------------------------------------------------------
-
-struct sector;
-struct map;
-struct panel;
 
 struct core
 {

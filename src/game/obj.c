@@ -5,7 +5,9 @@
 
 #include "obj.h"
 
-#include "worker.h"
+#include "vm/vm.h"
+#include "game/hunk.h"
+#include "game/worker.h"
 
 // -----------------------------------------------------------------------------
 // obj
@@ -122,7 +124,7 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
 
     switch (id_type(obj->id)) {
 
-    case obj_worker: { consumed = worker_io(obj, hunk, state, buf, len); break; }
+    case item_worker: { consumed = worker_io(obj, hunk, state, buf, len); break; }
 
     default: assert(false && "unknown object type");
 

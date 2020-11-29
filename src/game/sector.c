@@ -4,14 +4,12 @@
 */
 
 #include "sector.h"
-
-#include "rng.h"
+#include "utils/rng.h"
 
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 
 // -----------------------------------------------------------------------------

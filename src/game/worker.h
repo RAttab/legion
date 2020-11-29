@@ -5,8 +5,11 @@
 
 #pragma once
 
-#include "obj.h"
-#include "hunk.h"
+#include "common.h"
+
+struct obj;
+struct hunk;
+
 
 // -----------------------------------------------------------------------------
 // worker

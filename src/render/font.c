@@ -4,8 +4,8 @@
 */
 
 #include "font.h"
+#include "render/core.h"
 
-#include "core.h"
 
 // -----------------------------------------------------------------------------
 // freetype

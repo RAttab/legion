@@ -5,15 +5,12 @@
 
 #include "htable.h"
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 
 // -----------------------------------------------------------------------------
 // config
 // -----------------------------------------------------------------------------
 
-enum { probe_window = 8 };
+enum { htable_window = 8 };
 
 
 // -----------------------------------------------------------------------------
@@ -21,7 +18,7 @@ enum { probe_window = 8 };
 // -----------------------------------------------------------------------------
 
 // xorshift - need to compare against fnv-1a
-inline uint64_t hash_key(uint64_t key)
+static inline uint64_t hash_key(uint64_t key)
 {
     // We xor the seed with a randomly chosen number to avoid ending up with a 0
     // state which would be bad.
@@ -52,7 +49,7 @@ static bool table_put(
     assert(key);
     uint64_t hash = hash_key(key);
 
-    for (size_t i = 0; i < probe_window; ++i) {
+    for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &table[(hash + i) % cap];
         if (bucket->key) continue;
 
@@ -103,9 +100,9 @@ struct htable_ret htable_get(struct htable *ht, uint64_t key)
     assert(key);
 
     uint64_t hash = hash_key(key);
-    htable_resize(ht, probe_window);
+    htable_resize(ht, htable_window);
 
-    for (size_t i = 0; i < probe_window; ++i) {
+    for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &ht->table[(hash + i) % ht->cap];
 
         if (!bucket->key) continue;
@@ -124,9 +121,9 @@ struct htable_ret htable_try_put(struct htable *ht, uint64_t key, uint64_t value
     assert(value);
 
     uint64_t hash = hash_key(key);
-    htable_resize(ht, probe_window);
+    htable_resize(ht, htable_window);
 
-    for (size_t i = 0; i < probe_window; ++i) {
+    for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &ht->table[(hash + i) % ht->cap];
 
         if (bucket->key) {
@@ -160,9 +157,9 @@ struct htable_ret htable_xchg(struct htable *ht, uint64_t key, uint64_t value)
     assert(value);
 
     uint64_t hash = hash_key(key);
-    htable_resize(ht, probe_window);
+    htable_resize(ht, htable_window);
 
-    for (size_t i = 0; i < probe_window; ++i) {
+    for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &ht->table[(hash + i) % ht->cap];
         if (bucket->key != key) continue;
 
@@ -179,9 +176,9 @@ struct htable_ret htable_del(struct htable *ht, uint64_t key)
     assert(key);
 
     uint64_t hash = hash_key(key);
-    htable_resize(ht, probe_window);
+    htable_resize(ht, htable_window);
 
-    for (size_t i = 0; i < probe_window; ++i) {
+    for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &ht->table[(hash + i) % ht->cap];
         if (bucket->key != key) continue;
 

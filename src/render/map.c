@@ -5,9 +5,10 @@
 
 #include "map.h"
 
-#include "sector.h"
-#include "color.h"
-#include "core.h"
+#include "game/sector.h"
+#include "render/color.h"
+#include "render/core.h"
+
 
 // -----------------------------------------------------------------------------
 // struct
@@ -154,7 +155,7 @@ bool map_event(struct map *map, SDL_Event *event)
 // render
 // -----------------------------------------------------------------------------
 
-static void render_sector(struct map *map, SDL_Renderer *renderer)
+static void map_render_sector(struct map *map, SDL_Renderer *renderer)
 {
     struct rect rect = map_project_coord_rect(map, &core.rect);
 
@@ -188,5 +189,5 @@ void map_render(struct map *map, SDL_Renderer *renderer)
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &core.rect);
 
-    render_sector(map, renderer);
+    map_render_sector(map, renderer);
 }

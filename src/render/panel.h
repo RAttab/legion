@@ -5,7 +5,11 @@
 
 #pragma once
 
-#include "utils.h"
+#include "common.h"
+
+// -----------------------------------------------------------------------------
+// panel
+// -----------------------------------------------------------------------------
 
 struct panel;
 typedef void (*render_fn) (void *state, SDL_Renderer *, SDL_Rect *);
@@ -45,4 +49,4 @@ bool panel_event(struct panel *, SDL_Event *);
 // -----------------------------------------------------------------------------
 
 struct panel *panel_pos_new();
-struct panel *panel_system_new();
+struct panel *panel_star_new();

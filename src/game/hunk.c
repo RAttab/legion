@@ -4,6 +4,8 @@
 */
 
 #include "hunk.h"
+#include "utils/htable.h"
+#include "game/sector.h"
 
 // -----------------------------------------------------------------------------
 // area
@@ -20,15 +22,15 @@ struct hunk_area
     uint8_t data[];
 };
 
-static_assert(sizeof(struct hunk_area) == 64);
+static_assert(sizeof(struct hunk_area) == cache_line);
 
 static size_t area_append(struct hunk_area **area, size_t class)
 {
-    size_t len = 64 * class;
+    size_t len = cache_line * class;
 
     if (area == NULL) {
         const size_t cap = 8;
-        *area = malloc(sizeof(**area) + len * cap);
+        *area = alloc_cache(sizeof(**area) + len * cap);
         *area->len = len;
         *area->curr = 0;
         *area->cap = cap;
@@ -37,6 +39,7 @@ static size_t area_append(struct hunk_area **area, size_t class)
     if (*area->curr == *area->cap) {
         const size_t cap = *area->cap * 2;
         *area = realloc(*area, sizeof(**area) + *area->len * cap);
+        assert(*area % cache_line == 0); // might have to mmap to maintain alignment.
         *area->cap = cap;
     }
 
@@ -111,9 +114,9 @@ struct obj *hunk_obj(struct hunk *hunk, id_t id)
 
 struct obj *hunk_obj_alloc(struct hunk *hunk, size_t len)
 {
-    size_t class = len / 64;
+    size_t class = len / cache_line;
 
-    assert(len % 64 == 0);
+    assert(len % cache_line == 0);
     assert(class < area_hunk_cap);
 
     size_t off = area_append(&hunk->areas[class], class);
@@ -132,7 +135,7 @@ void hunk_step(struct hunk *hunk)
         area_step(hunk->areas[class], hunk);
 }
 
-size_t hunk_harvest(struct hunk *hunk, uint8_t type, size_t count)
+size_t hunk_harvest(struct hunk *hunk, type_t type, size_t count)
 {
     count = i64_min(hunk->elements[type], count);
     hunk->elements[type] -= count;

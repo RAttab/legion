@@ -3,7 +3,13 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-// included into panels.c
+#include "common.h"
+#include "game/coord.h"
+#include "render/font.h"
+#include "render/map.h"
+#include "render/panel.h"
+#include "SDL.h"
+
 
 // -----------------------------------------------------------------------------
 // panel_pos

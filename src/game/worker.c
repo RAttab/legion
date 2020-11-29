@@ -4,6 +4,8 @@
 */
 
 #include "worker.h"
+#include "game/obj.h"
+#include "game/hunk.h"
 
 // -----------------------------------------------------------------------------
 // worker

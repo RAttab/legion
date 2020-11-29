@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "utils.h"
+#include "common.h"
+#include "SDL.h"
 
 // -----------------------------------------------------------------------------
 // font

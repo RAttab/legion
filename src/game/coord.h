@@ -5,10 +5,8 @@
 
 #pragma once
 
-#include "utils.h"
+#include "common.h"
 
-#include <stdint.h>
-#include <stdbool.h>
 
 // -----------------------------------------------------------------------------
 // coord

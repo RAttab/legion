@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include "utils.h"
-#include "coord.h"
+#include "common.h"
+#include "game/coord.h"
+#include "SDL.h"
 
 // -----------------------------------------------------------------------------
 // map

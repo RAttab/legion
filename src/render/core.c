@@ -5,11 +5,15 @@
 
 #include "core.h"
 
-#include "font.h"
-#include "map.h"
-#include "panel.h"
-#include "sector.h"
+#include "game/coord.h"
+#include "game/sector.h"
+#include "render/font.h"
+#include "render/map.h"
+#include "render/panel.h"
 
+// -----------------------------------------------------------------------------
+// core
+// -----------------------------------------------------------------------------
 
 struct core core = {0};
 

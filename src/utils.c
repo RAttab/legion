@@ -4,6 +4,6 @@
 */
 
 #include "utils/htable.c"
-#include "utils/qtree.c"
+/* #include "utils/qtree.c" */
 #include "utils/rng.c"
 #include "utils/text.c"

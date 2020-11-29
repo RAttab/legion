@@ -5,7 +5,9 @@
 
 #pragma once
 
-#include "../utils.h"
+#include "common.h"
+#include "game/item.h"
+#include "game/coord.h"
 
 
 // -----------------------------------------------------------------------------
@@ -22,4 +24,4 @@ struct obj *hunk_obj(struct hunk *, id_t id);
 
 void hunk_step(struct hunk *);
 
-size_t hunk_harvest(struct hunk *, uint8_t type, size_t count);
+size_t hunk_harvest(struct hunk *, type_t type, size_t count);

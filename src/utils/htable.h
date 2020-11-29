@@ -5,10 +5,7 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-
+#include "common.h"
 
 // -----------------------------------------------------------------------------
 // struct
@@ -44,10 +41,10 @@ struct htable_ret htable_del(struct htable *, uint64_t key);
 struct htable_bucket * htable_next(struct htable *, struct htable_bucket *bucket);
 
 // FNV-1a hash implementation: http://isthe.com/chongo/tech/comp/fnv/
-inline uint64_t hash_str(const char *key)
+inline uint64_t hash_str(const char *key, size_t len)
 {
     uint64_t hash = 0xcbf29ce484222325;
-    for (size_t i = 0; i < strnlen(key, htable_key_max_len); ++i)
+    for (size_t i = 0; i < len; ++i)
         hash = (hash ^ key[i]) * 0x100000001b3;
 
     return hash;

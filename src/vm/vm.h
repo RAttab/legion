@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include "utils.h"
-#include "text.h"
+#include "common.h"
+
+struct text;
 
 // -----------------------------------------------------------------------------
 // types
@@ -61,13 +62,12 @@ enum flags
     FLAG_IO = 1 << 0,
     FLAG_SUSPENDED  = 1 << 1,
 
-    FLAG_REG_FAULT = 1 << 3,
-    FLAG_STACK_FAULT = 1 << 4,
-    FLAG_CODE_FAULT = 1 << 5,
-    FLAG_MATH_FAULT = 1 << 6,
-    FLAG_IO_FAULT  = 1 << 7,
+    FLAG_FAULT_REG = 1 << 3,
+    FLAG_FAULT_STACK = 1 << 4,
+    FLAG_FAULT_CODE = 1 << 5,
+    FLAG_FAULT_MATH = 1 << 6,
+    FLAG_FAULT_IO  = 1 << 7,
 
-    FLAG_FAULTS = FLAG_REG_FAULT | FLAG_STACK_FAULT | FLAG_CODE_FAULT | FLAG_MATH_FAULT | FLAG_IO_FAULT,
 };
 
 struct legion_packed vm
@@ -87,11 +87,12 @@ struct legion_packed vm
     word_t stack[]; // 2 u64 left in cacheline
 };
 
-static_assert(sizeof(struct vm) == 6);
+static_assert(sizeof(struct vm) == 6*8);
 
-struct vm *vm_new(uint8_t stack, uint8_t speed);
-void vm_init(struct vm *, uint8_t stack, uint8_t speed);
+struct vm *vm_alloc(uint8_t stack, uint8_t speed);
 void vm_free(struct vm *);
+
+void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 size_t vm_len(uint8_t stack);
 
 inline uint32_t vm_ip_mod(uint64_t ip);

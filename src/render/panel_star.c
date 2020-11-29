@@ -1,12 +1,24 @@
-/* panel_system.c
+/* panel_star.c
    Rémi Attab (remi.attab@gmail.com), 15 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 */
 
 
-struct panel_system_state
+#include "common.h"
+#include "game/coord.h"
+#include "game/sector.h"
+#include "render/font.h"
+#include "render/panel.h"
+#include "SDL.h"
+
+
+// -----------------------------------------------------------------------------
+// panel star
+// -----------------------------------------------------------------------------
+
+struct panel_star_state
 {
-    struct system *system;
+    struct system *star;
 
     size_t coord_y;
     size_t star_y;
@@ -19,7 +31,7 @@ static inline char num_char(size_t val)
 }
 
 enum { val_str_len = 4 };
-static void system_val_str(char *dst, size_t len, size_t val)
+static void star_val_str(char *dst, size_t len, size_t val)
 {
     assert(len >= val_str_len);
 
@@ -37,14 +49,14 @@ static void system_val_str(char *dst, size_t len, size_t val)
     dst[0] = num_char((val / 100) % 10);
 }
 
-static void panel_system_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
+static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
-    struct panel_system_state *state = state_;
+    struct panel_star_state *state = state_;
     struct font *font = font_mono4;
 
     {
         char str[coord_str_len+1] = {0};
-        coord_str(state->system->coord, str, sizeof(str));
+        coord_str(state->star->coord, str, sizeof(str));
         font_render(font, renderer, str, coord_str_len, (SDL_Point) {
                     .x = rect->x, .y = rect->y + state->coord_y });
     }
@@ -57,7 +69,7 @@ static void panel_system_render(void *state_, SDL_Renderer *renderer, SDL_Rect *
         pos.x += sizeof(star_str) * font->glyph_w;
         
         char val_str[val_str_len];
-        system_val_str(val_str, sizeof(val_str), state->system->star);
+        star_val_str(val_str, sizeof(val_str), state->star->star);
         font_render(font, renderer, val_str, sizeof(val_str), pos);
     }
     
@@ -72,7 +84,7 @@ static void panel_system_render(void *state_, SDL_Renderer *renderer, SDL_Rect *
             pos.x += sizeof(elem_str) * font->glyph_w;
             
             char val_str[val_str_len];
-            system_val_str(val_str, sizeof(val_str), state->system->elements[elem]);
+            star_val_str(val_str, sizeof(val_str), state->star->elements[elem]);
             font_render(font, renderer, val_str, sizeof(val_str), pos);
             pos.x += sizeof(val_str) * font->glyph_w;
 
@@ -86,25 +98,25 @@ static void panel_system_render(void *state_, SDL_Renderer *renderer, SDL_Rect *
 
 }
 
-static bool panel_system_events(void *state_, struct panel *panel, SDL_Event *event)
+static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *event)
 {
-    struct panel_system_state *state = state_;
+    struct panel_star_state *state = state_;
     if (event->type != core.event) return false;
     
     switch (event->user.code) {
 
-    case EV_SYSTEM_SELECT: {
-        struct system *selected = event->user.data1;
-        if (state->system && coord_eq(selected->coord, state->system->coord))
+    case EV_STAR_SELECT: {
+        struct star *selected = event->user.data1;
+        if (state->star && coord_eq(selected->coord, state->star->coord))
             return false;
 
-        state->system = selected;
+        state->star = selected;
         panel_show(panel);
         break;
     }
 
-    case EV_SYSTEM_CLEAR: {
-        state->system = NULL;
+    case EV_STAR_CLEAR: {
+        state->star = NULL;
         panel_hide(panel);
         break;
     }
@@ -114,12 +126,12 @@ static bool panel_system_events(void *state_, struct panel *panel, SDL_Event *ev
     return false;
 }
 
-static void panel_system_free(void *state)
+static void panel_star_free(void *state)
 {
     free(state);
 };
 
-struct panel *panel_system_new()
+struct panel *panel_star_new()
 {
     enum { spacing = 5 };
 
@@ -139,7 +151,7 @@ struct panel *panel_system_new()
     int outer_w = 0, outer_h = 0;
     panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
 
-    struct panel_system_state *state = calloc(1, sizeof(*state));
+    struct panel_star_state *state = calloc(1, sizeof(*state));
     state->coord_y = 0;
     state->star_y = state->coord_y + coord_h + spacing;
     state->elem_y = state->star_y + star_h + spacing;
@@ -150,9 +162,9 @@ struct panel *panel_system_new()
                 .w = outer_w, .h = outer_h });
     panel->hidden = true;
     panel->state = state;
-    panel->render = panel_system_render;
-    panel->events = panel_system_events;
-    panel->free = panel_system_free;
+    panel->render = panel_star_render;
+    panel->events = panel_star_events;
+    panel->free = panel_star_free;
 
     return panel;
 }

@@ -5,12 +5,16 @@
 
 #pragma once
 
-enum atoms_io
+
+// -----------------------------------------------------------------------------
+// atoms_io
+// -----------------------------------------------------------------------------
+
+enum atom_io
 {
-    ATOM_IO_MAX = 0x8FFFFFFF,
     ATOM_IO_MIN = 0x80000000,
 
-    io_noop = ATOM_IO_MIN,
+    io_noop,
     io_ok,
     io_fail,
 
@@ -30,6 +34,7 @@ enum atoms_io
     io_take,
     io_put,
     io_harvest,
+    
+    ATOM_IO_MAX,
+    ATOM_IO_CAP = 0x8FFFFFFF,
 };
-
-const char *atoms_io_str(enum atoms_io);

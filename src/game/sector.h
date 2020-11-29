@@ -5,17 +5,13 @@
 
 #pragma once
 
-#include "coord.h"
-#include "utils.h"
+#include "common.h"
+#include "game/item.h"
+#include "game/coord.h"
 
 // -----------------------------------------------------------------------------
 // sector
 // -----------------------------------------------------------------------------
-
-
-enum { num_elements = 26 };
-typedef uint32_t elements_t [num_elements];
-
 
 legion_packed struct system
 {

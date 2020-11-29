@@ -1,9 +1,11 @@
 /* atom.c
    Rémi Attab (remi.attab@gmail.com), 28 Nov 2020
    FreeBSD-style copyright and disclaimer apply
+
 */
 
-#include "atom.h"
+#include "atoms.h"
+#include "utils/htable.h"
 
 // -----------------------------------------------------------------------------
 // state

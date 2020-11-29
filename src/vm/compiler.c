@@ -3,13 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include <ctype.h>
-
-// -----------------------------------------------------------------------------
-// opspec
-// -----------------------------------------------------------------------------
-
-
+#include "common.h"
+#include "vm/vm.h"
+#include "utils/text.h"
 
 // -----------------------------------------------------------------------------
 // compiler
@@ -215,9 +211,9 @@ static void compiler_err(struct compiler *comp, const char *fmt, ...)
 
 static void compiler_label_def(struct compiler *comp, const char *label)
 {
-    uint64_t hash = hash_str(label);
+    uint64_t hash = hash_str(label, line_cap);
     struct htable_ret ret = htable_put(&comp->lbl.is, hash, comp->out.i);
-    if (!ret.ok) { compiler_err(comp, "refined label: %s", label); return; }
+    if (!ret.ok) { compiler_err(comp, "undefined label: %s", label); return; }
 
     ret = htable_get(&comp->lbl.wants, hash);
     if (!ret.ok) return;
@@ -231,7 +227,7 @@ static void compiler_label_def(struct compiler *comp, const char *label)
 
 static void compiler_label_ref(struct compiler *comp, const char *label)
 {
-    uint64_t hash = hash_str(label);
+    uint64_t hash = hash_str(label, line_cap);
 
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
     if (ret.ok) { compiler_write32(make_ip(0, ret.val)); return; }
