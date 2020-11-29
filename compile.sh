@@ -15,6 +15,7 @@ CC=${CC:-gcc}
 CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE"
 CFLAGS="$CFLAGS -I${PREFIX}/src"
 CFLAGS="$CFLAGS $(sdl2-config --cflags)"
+CFLAGS="$CFLAGS $(pkg-config --cflags freetype2)"
 
 CFLAGS="$CFLAGS -Wall -Wextra"
 CFLAGS="$CFLAGS -Wundef"
@@ -28,18 +29,12 @@ CFLAGS="$CFLAGS -Wno-strict-aliasing"
 CFLAGS="$CFLAGS -fno-strict-aliasing"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
 
-CFLAGS="$CFLAGS $(pkg-config --cflags freetype2)"
-
 LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
 
-OBJ=""
-for src in "${SRC[@]}"; do
-    $CC -c -o "$src.o" "${PREFIX}/src/$src.c" $CFLAGS
-    OBJ="$OBJ $src.o"
-done
-ar rcs liblegion.a $OBJ
+parallel $CC -c -o "{}.o" "${PREFIX}/src/{}.c" $CFLAGS ::: ${SRC[@]}
+ar rcs liblegion.a "{ ${SRC[@]} }.o"
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
 
