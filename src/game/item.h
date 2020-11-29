@@ -51,6 +51,8 @@ enum item
     ITEM_ELE_Y,
     ITEM_ELE_Z,
 
+    // ... moi j'connai mon alphabet ...
+
     // Active
     ITEM_BRAIN = 0x20,
     ITEM_WORKER,
@@ -106,5 +108,5 @@ inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
 // elements
 // -----------------------------------------------------------------------------
 
-enum { elements_len = ITEM_ELE_Z - ITEM_ELE_A };
+enum { elements_len = 26 };
 typedef uint32_t elements_t [elements_len];
