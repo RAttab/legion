@@ -1,10 +1,6 @@
 /* atom.c
    Rémi Attab (remi.attab@gmail.com), 28 Nov 2020
    FreeBSD-style copyright and disclaimer apply
-
-   TODO: Realized a little too late that htable resize breaks the entire
-   scheme. Need to write a custom DS to accomodate for string keys. For now we
-   rely on resizes not happening which is good enough for a long while.
 */
 
 #include "atom.h"
@@ -73,6 +69,30 @@ static void atoms_expand(void)
     atoms.cap = atoms.base + new;
 }
 
+static void atoms_grow_index()
+{
+    size_t cap = atoms.istr.cap * 4;
+    htable_reset(&atoms.istr);
+    htable_reserve(&atoms.istr, cap);
+
+    size_t len = (atoms.cur - atoms.base) / sizeof(*atoms.base);
+    for (size_t i = 0; i < len; ++i) {
+        struct atom_data *data = &atoms.base[i];
+        data->next = 0;
+
+        struct atom_data *prev = NULL;
+        struct atom_data *ret = atom_find(&data->str, &prev);
+        assert(!ret);
+
+        if (prev) prev->next = i;
+        else {
+            uint64_t hash = atom_hash(&data->str);
+            struct htable_ret ret = htable_put(&atoms.istr, hash, i);
+            assert(ret.ok);
+        }
+    }
+}
+
 static struct atom_data *atoms_insert(const atom_t *atom, word_t id)
 {
     atoms_expand();
@@ -84,8 +104,14 @@ static struct atom_data *atoms_insert(const atom_t *atom, word_t id)
     uint64_t hash = atom_hash(atom);
     uint64_t index = atoms.curr - atoms.base;
 
-    ret = htable_put(&atoms.istr, hash, index);
-    assert(ret.ok);
+    ret = htable_try_put(&atoms.istr, hash, index);
+    assert(!ret.value);
+
+    if (!ret.ok) {
+        atoms_grow_index();
+        ret = htable_try_put(&atoms.istr, hash, index);
+        assert(ret.ok);
+    }
 
     htable_put(&atoms.iword, id, index);
     assert(ret.ok);
@@ -109,10 +135,10 @@ static struct atom_data *atoms_chain(
 static struct atom_data *atoms_find(const atom_t *atom, struct atom_data **prev)
 {
     *prev = NULL;
-    
+
     struct htable_ret ret = htable_get(&atoms.istr, atom_hash(atom));
     if (!ret.ok) return NULL;
-    
+
     struct atom_data *ptr = atoms.base + ret.value;
     while (data) {
         if (likely(atom_eq(atom, &data->str))) return data->word;
