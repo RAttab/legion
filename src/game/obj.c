@@ -11,7 +11,7 @@
 // obj
 // -----------------------------------------------------------------------------
 
-struct obj *obj_alloc(id_t id, const struct obj_spec *spec)
+struct obj *obj_alloc(struct hunk *hunk, const struct obj_spec *spec)
 {
     size_t len_io = spec->io * sizeof(word_t);
     size_t len_docks = spec->docks * sizeof(id_t);
@@ -21,9 +21,8 @@ struct obj *obj_alloc(id_t id, const struct obj_spec *spec)
     size_t len_state = align_cache(state);
     size_t len_total = len_head + len_vm + len_state;
 
-    struct obj *obj = alloc_cache(1, len_total);
-    obj->id = id;
-    obj->type = id_type(type);
+    struct obj *obj = hunk_obj_alloc(hunk, len_total);
+    obj->len = len_total;
     obj->io.len = 0;
     obj->io.cap = spec->io;
     obj->cargos = spec->cargo;
@@ -35,11 +34,6 @@ struct obj *obj_alloc(id_t id, const struct obj_spec *spec)
     obj->off_state = len_head + len_state;
 
     return obj;
-}
-
-void obj_free(struct obj *obj)
-{
-    free(obj);
 }
 
 
@@ -126,7 +120,7 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
     void *state = obj_state(obj);
     bool consumed = false;
 
-    switch (obj->type) {
+    switch (id_type(obj->id)) {
 
     case obj_worker: { consumed = worker_io(obj, hunk, state, buf, len); break; }
 

@@ -7,28 +7,17 @@
 
 #include "../utils.h"
 
-#include "objects.h"
-
-// -----------------------------------------------------------------------------
-// id
-// -----------------------------------------------------------------------------
-
-
-enum otype
-{
-
-};
-
 
 // -----------------------------------------------------------------------------
 // hunk
 // -----------------------------------------------------------------------------
 
-struct hunk
-{
-};
+struct hunk;
 
+struct hunk *hunk_alloc(struct coord);
+void hunk_free(struct hunk *);
 
-id_t hunk_id(struct hunk *, enum obj_type);
+struct obj *hunk_obj_alloc(struct hunk *, size_t len);
 struct obj *hunk_obj(struct hunk *, id_t id);
-struct obj *hunk_broadcast(struct hunk *, size_t len, int64_t msg);
+
+void hunk_step(struct hunk *);

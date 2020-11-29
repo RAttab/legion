@@ -61,7 +61,7 @@ struct legion_packed obj
 
     struct vm_code *code;
 
-    uint8_t type;
+    uint8_t len;
     struct { uint8_t len:4; uint8_t cap:4; } io;
     uint8_t docks;
     uint8_t cargos;
@@ -72,8 +72,7 @@ struct legion_packed obj
     uint8_t off_state;
 }; // u64 * 4;
 
-struct obj *obj_alloc(id_t id, const struct obj_spec *);
-void obj_free(struct obj *);
+struct obj *obj_alloc(struct hunk *, const struct obj_spec *);
 
 void obj_step(struct obj *, struct hunk *);
 
