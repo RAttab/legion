@@ -6,41 +6,6 @@
 #pragma once
 
 // -----------------------------------------------------------------------------
-// types
-// -----------------------------------------------------------------------------
-
-enum otype
-{
-    OBJ_WORKER,
-};
-
-// -----------------------------------------------------------------------------
-// id
-// -----------------------------------------------------------------------------
-
-typedef uint32_t id_t;
-
-inline id_t make_id(enum otype type, id_t id) { return type << 24 | id; }
-inline enum otype id_type(id_t id) { return id >> 24; }
-
-
-// -----------------------------------------------------------------------------
-// cargo
-// -----------------------------------------------------------------------------
-
-typedef uint8_t item_t;
-typedef uint16_t cargo_t;
-
-inline cargo_t make_cargo(item_t item, uint8_t count) { return (((cargo_t)item) << 8) | count; }
-inline item_t cargo_item(cargo_t cargo) { return cargo >> 8; }
-inline item_t cargo_count(cargo_t cargo) { return (uint8_t) cargo; }
-inline cargo_t cargo_inc(cargo_t cargo, size_t val)
-{
-    return make_cargo(cargo_item(cargo), cargo_count(cargo) + val);
-}
-
-
-// -----------------------------------------------------------------------------
 // obj_spec
 // -----------------------------------------------------------------------------
 

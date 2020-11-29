@@ -48,7 +48,7 @@ struct vm_code
     uint8_t prog[];
 };
 
-void vm_compile_init();
+void vm_compile_init(void);
 struct vm_code *vm_compile(const char *name, struct text *source);
 
 
@@ -129,3 +129,4 @@ inline void vm_unpack(word_t in, uint32_t *msb, uint32_t *lsb)
 }
 
 void vm_reset(struct vm *);
+

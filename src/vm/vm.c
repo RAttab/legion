@@ -56,60 +56,6 @@ static inline ip_t vm_read_code(struct vm *vm, struct vm_code *code, size_t byte
     return val.u64;
 }
 
-enum opcodes
-{
-    OP_NOOP   = 0x00,
-
-    OP_PUSH   = 0x10,
-    OP_PUSHR  = 0x11,
-    OP_PUSHF  = 0x12,
-    OP_POP    = 0x13,
-    OP_POPR   = 0x14,
-    OP_DUPE   = 0x18,
-    OP_FLIP   = 0x19,
-
-    OP_NOT    = 0x20,
-    OP_AND    = 0x21,
-    OP_OR     = 0x22,
-    OP_XOR    = 0x23,
-    OP_BNOT   = 0x28,
-    OP_BAND   = 0x29,
-    OP_BOR    = 0x2A,
-    OP_BXOR   = 0x2B,
-    OP_BSL    = 0x2C,
-    OP_BSR    = 0x2D,
-
-    OP_NEG    = 0x30,
-    OP_ADD    = 0x31,
-    OP_SUB    = 0x32,
-    OP_MUL    = 0x33,
-    OP_LMUL   = 0x34,
-    OP_DIV    = 0x35,
-    OP_REM    = 0x36,
-
-    OP_EQ     = 0x40,
-    OP_NE     = 0x41,
-    OP_GT     = 0x42,
-    OP_LT     = 0x43,
-    OP_CMP    = 0x44,
-
-    OP_RET    = 0x50,
-    OP_CALL   = 0x51,
-    OP_LOAD   = 0x52,
-    OP_JMP    = 0x58,
-    OP_JZ     = 0x59,
-    OP_JNZ    = 0x5A,
-
-    OP_YIELD  = 0x60,
-    OP_TSC    = 0x61,
-    OP_IO     = 0x62,
-    OP_IOS    = 0x63,
-    OP_IOR    = 0x64,
-
-    OP_PACK   = 0x80,
-    OP_UNPACK = 0x81,
-};
-
 ip_t vm_step(struct vm *vm, struct vm_code *code)
 {
     return vm_exec(vm, code, 1);
