@@ -7,10 +7,9 @@
 
 #include "common.h"
 #include "game/item.h"
+#include "vm/vm.h"
 
 struct hunk;
-struct vm;
-struct vm_code;
 
 // -----------------------------------------------------------------------------
 // obj_spec
@@ -48,7 +47,7 @@ struct legion_packed obj
     uint8_t off_state;
 }; // u64 * 4;
 
-struct obj *obj_alloc(struct hunk *, const struct obj_spec *);
+struct obj *obj_alloc(struct hunk *, item_t type, const struct obj_spec *);
 
 void obj_step(struct obj *, struct hunk *);
 

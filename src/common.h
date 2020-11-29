@@ -37,8 +37,11 @@
 // constants
 // -----------------------------------------------------------------------------
 
-static const size_t cache_line = 64;
-static const size_t page_len = 4096;
+enum { s_cache_line = 64 };
+static const size_t cache_line = s_cache_line;
+
+enum { s_page_len = 64 };
+static const size_t page_len = s_page_len;
 
 
 // -----------------------------------------------------------------------------
@@ -47,6 +50,6 @@ static const size_t page_len = 4096;
 
 inline void *alloc_cache(size_t n)
 {
-    assert(n % cache_line == 0);
-    return memset(aligned_alloc(n, cache_line), 0, n);
+    assert(n % s_cache_line == 0);
+    return memset(aligned_alloc(n, n), 0, n);
 }

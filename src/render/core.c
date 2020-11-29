@@ -5,11 +5,13 @@
 
 #include "core.h"
 
-#include "game/coord.h"
-#include "game/sector.h"
 #include "render/font.h"
 #include "render/map.h"
 #include "render/panel.h"
+#include "game/coord.h"
+#include "game/sector.h"
+#include "utils/log.h"
+
 
 // -----------------------------------------------------------------------------
 // core
@@ -91,7 +93,7 @@ static void ui_init()
 {
     core.ui.map = map_new();
     core.ui.pos = panel_pos_new();
-    core.ui.system = panel_system_new();
+    core.ui.system = panel_star_new();
 }
 
 static void ui_close()

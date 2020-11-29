@@ -4,6 +4,10 @@
 */
 
 #include "op.h"
+#include "utils/htable.h"
+
+#include <ctype.h>
+
 
 // -----------------------------------------------------------------------------
 // op
@@ -66,8 +70,8 @@ static struct htable op_lookup = {0};
 
 static uint64_t op_key(const char *str, size_t len)
 {
-    union { uint64_t u64; char str[8]} pack = {0};
-    for (size_t = 0; i < len; ++i)
+    union { uint64_t u64; char str[op_len]; } pack = {0};
+    for (size_t i = 0; i < len; ++i)
         pack.str[i] = toupper(str[i]);
     return pack.u64;
 }
@@ -76,11 +80,11 @@ struct op_spec *op_spec(const char *str, size_t len)
 {
     if (len > 8) return NULL;
 
-    uint64_t key = op_key(token, len);
-    struct htable ret = htable_get(&op_lookup, key);
+    uint64_t key = op_key(str, len);
+    struct htable_ret ret = htable_get(&op_lookup, key);
     if (unlikely(!ret.ok)) return NULL;
 
-    return (void *) ret.val;
+    return (void *) ret.value;
 }
 
 void vm_compile_init(void)
@@ -89,11 +93,12 @@ void vm_compile_init(void)
     htable_reserve(&op_lookup, opmax);
 
     for (size_t i = 0; i < opmax; ++i) {
-        if (!op_spec[i].op) return;
+        const struct op_spec *spec = &op_specs[i];
+        if (!spec->op) return;
 
-        uint64_t key = op_key(op_spec[i].str);
-        uint64_t val = (uint64_t) (&op_spec[i]);
+        uint64_t key = op_key(spec->str, op_len);
+        uint64_t val = (uint64_t) spec;
         struct htable_ret ret = htable_put(&op_lookup, key, val);
-        assert(ret.ok && !ret.val);
+        assert(ret.ok && !ret.value);
     }
 }

@@ -17,7 +17,7 @@ bool line_empty(struct line *line)
 
 size_t line_len(struct line *line)
 {
-    return strnlen(line, line_cap);
+    return strnlen(line->c, line_cap);
 }
 
 void line_put(struct line *line, size_t index, char c)
@@ -61,7 +61,7 @@ void text_clear(struct text *text)
 
 struct line *text_goto(struct text *text, size_t line)
 {
-    if (line > text->line) return NULL;
+    if (line > text->len) return NULL;
 
     struct line *ptr = text->first;
     for (size_t i = 1; i != line; ++i, ptr = ptr->next);
@@ -77,26 +77,27 @@ struct line *text_insert(struct text *text, struct line *at)
     new->prev = at;
     at->next = new;
 
-    if (at == last) last = new;
-    text->line++;
+    if (at == text->last) text->last = new;
+    text->len++;
     return new;
 }
 
 struct line *text_erase(struct text *text, struct line *at)
 {
-    if (at == first && at == last) {
+    if (at == text->first && at == text->last) {
         memset(at->c, 0, line_cap);
         return at;
     }
 
+    struct line *ret = at->next;
     if (at->prev) at->prev->next = at->next;
     if (at->next) at->next->prev = at->prev;
     if (at == text->first) text->first = at->next;
     if (at == text->last) text->last = at->prev;
-    if (at == text->curr) text->curr = text->first;
 
     free(at);
-    text->line--;
+    text->len--;
+    return ret;
 }
 
 void text_pack(struct text *text, char *dst, size_t len)

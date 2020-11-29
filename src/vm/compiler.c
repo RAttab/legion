@@ -5,7 +5,12 @@
 
 #include "common.h"
 #include "vm/vm.h"
+#include "utils/vec.h"
 #include "utils/text.h"
+
+#include <ctype.h>
+#include <stdarg.h>
+
 
 // -----------------------------------------------------------------------------
 // compiler
@@ -63,13 +68,13 @@ static char compiler_next(struct compiler *comp)
 
 static void compiler_skip(struct compiler *comp)
 {
-    do { c = compiler_next(comp); } while (c != 0);
+    comp->in.line = comp->in.line->next;
 }
 
 static bool compiler_eol(struct compiler *comp)
 {
     char c = 0;
-    while (c = compiler_next(comp)) {
+    while ((c = compiler_next(comp))) {
         if (isblank(c)) continue;
         if (c == '#') {
             compiler_skip(comp);
@@ -83,7 +88,7 @@ static bool compiler_eol(struct compiler *comp)
 static const char *compiler_start(struct compiler *comp, size_t *len)
 {
     char c = 0;
-    while (c = compiler_peek(comp)) {
+    while ((c = compiler_peek(comp))) {
         if (isspace(c)) { compiler_next(comp); continue; }
         if (c == '#') {
             do { c = compiler_next(comp); } while (c != 0);
@@ -93,8 +98,8 @@ static const char *compiler_start(struct compiler *comp, size_t *len)
 
     if (!c) return NULL;
 
-    comp->tok = 0;
-    while (c = compiler_peek(comp)) {
+    comp->in.tok = 0;
+    while ((c = compiler_peek(comp))) {
         if (isspace(c) || c == '#') break;
         comp->in.token[comp->in.tok++] = compiler_next(comp);
     }
@@ -104,18 +109,18 @@ static const char *compiler_start(struct compiler *comp, size_t *len)
     return comp->in.token;
 }
 
-static const char *compiler_arg(struct comp *comp, size_t *len)
+static const char *compiler_arg(struct compiler *comp, size_t *len)
 {
     char c = 0;
-    while (c = compiler_peek(comp)) {
-        if (isblank(c)) { compilter_next(comp); continue; }
+    while ((c = compiler_peek(comp))) {
+        if (isblank(c)) { compiler_next(comp); continue; }
         if (c == 0 || c == '#') return NULL;
         break;
     }
     if (!c) return NULL;
 
-    comp->tok = 0;
-    while (c = compiler_peek(comp)) {
+    comp->in.tok = 0;
+    while ((c = compiler_peek(comp))) {
         if (isspace(c) || c == '#') break;
         comp->in.token[comp->in.tok++] = compiler_next(comp);
     }
@@ -189,12 +194,12 @@ static void compiler_write32(struct compiler *comp, uint32_t val)
 static void compiler_write_word(struct compiler *comp, word_t val)
 {
     if (comp->out.i + sizeof(val) >= comp->out.len) return;
-    *((word_t *) &comp->out.base[pos]) = val;
+    *((word_t *) &comp->out.base[comp->out.i]) = val;
     comp->out.i += sizeof(val);
 }
 
-static void compiler_err(struct compiler *comp, const char *fmt, ...)
-    legion_printf(2, 3)
+static legion_printf(2, 3) void compiler_err(
+        struct compiler *comp, const char *fmt, ...)
 {
     if (comp->err.len == comp->err.cap) {
         size_t len = comp->err.cap ? comp->err.cap * 2 : 2;
@@ -203,7 +208,7 @@ static void compiler_err(struct compiler *comp, const char *fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    (void) vsnprintf(comp->err.list[comp->err.len], vm_errors_cap, fmt, args);
+    (void) vsnprintf(comp->err.list[comp->err.len].err, vm_errors_cap, fmt, args);
     va_end(args);
 
     comp->err.len++;
@@ -218,7 +223,7 @@ static void compiler_label_def(struct compiler *comp, const char *label)
     ret = htable_get(&comp->lbl.wants, hash);
     if (!ret.ok) return;
 
-    struct vec64 *vec = (void *) ret.val;
+    struct vec64 *vec = (void *) ret.value;
     for (size_t i = 0; i < vec->len; ++i)
         compiler_write32_at(comp, make_ip(0, vec->vals[i]), comp->out.i);
 
@@ -230,21 +235,20 @@ static void compiler_label_ref(struct compiler *comp, const char *label)
     uint64_t hash = hash_str(label, line_cap);
 
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
-    if (ret.ok) { compiler_write32(make_ip(0, ret.val)); return; }
+    if (ret.ok) { compiler_write32(comp, make_ip(0, ret.value)); return; }
 
     ret = htable_get(&comp->lbl.wants, hash);
-    struct vec64 *vec = (void *)ret.val;
-    vec = vec64_append(vec, comp.out.i);
+    struct vec64 *vec = (void *)ret.value;
+    vec = vec64_append(vec, comp->out.i);
     htable_put(&comp->lbl.wants, hash, (uint64_t) vec);
 
     compiler_write32(comp, 0);
 }
 
-static struct compiler *compiler_alloc(uint32_t mod, const struct text *in)
+static struct compiler *compiler_alloc(struct text *in)
 {
     struct compiler *comp = calloc(1, sizeof(*comp));
     comp->in.text = in;
-    comp->in.len = len;
 
     comp->out.len = 1 << 16;
     comp->out.base = calloc(1, comp->out.len);
@@ -257,14 +261,14 @@ static struct vm_code *compiler_output(struct compiler *comp, uint64_t mod)
     if (comp->out.i == comp->out.len)
         compiler_err(comp, "program too big");
 
-    struct htable_bucket *bucket = htable_next(&comp->lvl.want, NULL);
-    for (; bucket; bucket = htable_next(&comp->lvl.want, bucket))
-        compiler_err(comp, "missing label at '%lu'", bucket->val);
+    struct htable_bucket *bucket = htable_next(&comp->lbl.wants, NULL);
+    for (; bucket; bucket = htable_next(&comp->lbl.wants, bucket))
+        compiler_err(comp, "missing label at '%lu'", bucket->value);
 
     size_t head_bytes = sizeof(struct vm_code);
     size_t code_bytes = comp->out.len;
     size_t str_bytes = comp->in.text->len * line_cap;
-    size_t errs_bytes = comp->err.len * sizeof(*errs);
+    size_t errs_bytes = comp->err.len * sizeof(*comp->err.list);
 
     struct vm_code *code = calloc(1, head_bytes + code_bytes + str_bytes + errs_bytes);
     code->mod = mod;
@@ -272,20 +276,19 @@ static struct vm_code *compiler_output(struct compiler *comp, uint64_t mod)
     memcpy(code + head_bytes, comp->out.base, comp->out.i);
     code->len = comp->out.len;
 
-    code->str = code + (head_bytes + code_bytes);
+    code->str = ((void *) code) + (head_bytes + code_bytes);
     text_pack(comp->in.text, code->str, str_bytes);
     code->str_len = str_bytes;
 
-    code->errs = code + (head_bytes + code_bytes + str_bytes);
-    memcpy(code->errs, errs, errs_bytes);
-    code->errs_len = errs_len;
+    code->errs = ((void *) code) + (head_bytes + code_bytes + str_bytes);
+    memcpy(code->errs, comp->err.list, errs_bytes);
+    code->errs_len = comp->err.len;
 
     return code;
 }
 
-static void compiler_free(struct compilre *comp)
+static void compiler_free(struct compiler *comp)
 {
-    free(comp->err.list);
     free(comp->err.list);
     htable_reset(&comp->lbl.is);
     htable_reset(&comp->lbl.wants);
@@ -297,12 +300,12 @@ static void compiler_free(struct compilre *comp)
 // vm_compile
 // -----------------------------------------------------------------------------
 
-struct vm_code *vm_compile(const char *name, const text *source)
+struct vm_code *vm_compile(const char *name, struct text *source)
 {
     assert(name && source);
 
     uint32_t mod = 0; // to_atom(name);
-    struct compiler *comp = compiler_alloc(mod, source);
+    struct compiler *comp = compiler_alloc(source);
 
     size_t len = 0;
     const char *token = NULL;
@@ -339,20 +342,20 @@ struct vm_code *vm_compile(const char *name, const text *source)
 
             if (lit[0] == '!') {
                 uint64_t val = 0;
-                if (!compiler_atom(num, len, &val)) {
+                if (!compiler_atom(lit, len, &val)) {
                     compiler_err(comp, "invalid atom");
                     break;
                 }
-                compiler_write64(comp, val);
+                compiler_write_word(comp, val);
             }
 
             else {
                 int64_t val = 0;
-                if (!compiler_num(num, len, &val)) {
+                if (!compiler_num(lit, len, &val)) {
                     compiler_err(comp, "invalid number");
                     break;
                 }
-                compiler_write64(comp, val);
+                compiler_write_word(comp, val);
             }
 
             break;
@@ -399,7 +402,7 @@ struct vm_code *vm_compile(const char *name, const text *source)
 
             if (label[0] == '!') {
                 uint64_t val = 0;
-                if (!compiler_atom(num, len, &val)) {
+                if (!compiler_atom(label, len, &val)) {
                     compiler_err(comp, "invalid atom");
                     break;
                 }
@@ -422,7 +425,7 @@ struct vm_code *vm_compile(const char *name, const text *source)
         }
     }
 
-    struct vm_code *code = compiler_output(comp, mode);
+    struct vm_code *code = compiler_output(comp, mod);
     compiler_free(comp);
     return code;
 }

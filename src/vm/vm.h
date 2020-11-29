@@ -17,9 +17,9 @@ typedef int64_t word_t;
 
 typedef uint32_t ip_t;
 typedef uint16_t mod_t;
-typedef uint16_t off_t;
+typedef uint16_t addr_t;
 
-inline ip_t make_ip(mod_t mod, off_t off) { return (((uint32_t) mod) << 16) | off; }
+inline ip_t make_ip(mod_t mod, addr_t off) { return (((uint32_t) mod) << 16) | off; }
 inline mod_t ip_mod(ip_t ip) { return ip >> 16; }
 inline ip_t ip_off(ip_t ip) { return (uint16_t) ip; }
 
@@ -33,7 +33,7 @@ struct vm_errors
 {
     size_t line, col;
     char err[vm_errors_cap];
-}
+};
 
 struct vm_code
 {
@@ -94,8 +94,6 @@ void vm_free(struct vm *);
 
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 size_t vm_len(uint8_t stack);
-
-inline uint32_t vm_ip_mod(uint64_t ip);
 
 ip_t vm_exec(struct vm *, struct vm_code *);
 ip_t vm_step(struct vm *, struct vm_code *);

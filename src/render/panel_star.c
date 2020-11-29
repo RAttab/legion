@@ -5,10 +5,12 @@
 
 
 #include "common.h"
-#include "game/coord.h"
-#include "game/sector.h"
 #include "render/font.h"
 #include "render/panel.h"
+#include "render/core.h"
+#include "game/coord.h"
+#include "game/sector.h"
+#include "utils/log.h"
 #include "SDL.h"
 
 
@@ -76,8 +78,8 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     {
         SDL_Point pos = { .x = rect->x, .y = rect->y + state->elem_y };
         
-        for (size_t elem = 0; elem < num_elements; ++elem) {
-            if (elem == num_elements - 1) pos.x += font->glyph_w * 7 * 2;
+        for (size_t elem = 0; elem < elements_len; ++elem) {
+            if (elem == elements_len - 1) pos.x += font->glyph_w * 7 * 2;
             
             char elem_str[] = {'A'+elem, ':'};
             font_render(font, renderer, elem_str, sizeof(elem_str), pos);
@@ -106,7 +108,7 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
     switch (event->user.code) {
 
     case EV_STAR_SELECT: {
-        struct star *selected = event->user.data1;
+        struct system *selected = event->user.data1;
         if (state->star && coord_eq(selected->coord, state->star->coord))
             return false;
 

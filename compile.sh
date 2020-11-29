@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-set -o errexit -o nounset -o pipefail # -o xtrace
+set -o errexit -o nounset -o pipefail -o xtrace
 
 : ${PREFIX:="."}
 
@@ -34,7 +34,10 @@ LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
 
 parallel $CC -c -o "{}.o" "${PREFIX}/src/{}.c" $CFLAGS ::: ${SRC[@]}
-ar rcs liblegion.a "{ ${SRC[@]} }.o"
+
+OBJ=""
+for obj in "${SRC[@]}"; do OBJ="$OBJ ${obj}.o"; done
+ar rcs liblegion.a $OBJ
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
 

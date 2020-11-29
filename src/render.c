@@ -9,5 +9,5 @@
 #include "render/map.c"
 #include "render/panel.c"
 #include "render/panel_pos.c"
-#include "render/panel_system.c"
+#include "render/panel_star.c"
 

@@ -14,26 +14,26 @@ enum atom_io
 {
     ATOM_IO_MIN = 0x80000000,
 
-    io_noop,
-    io_ok,
-    io_fail,
+    IO_NOOP,
+    IO_OK,
+    IO_FAIL,
 
-    // common
-    io_id,
-    io_target,
-    io_send,
-    io_sendn,
-    io_recv,
-    io_recvn,
-    io_cargo,
-    io_vent,
+    // Common
+    IO_ID,
+    IO_TARGET,
+    IO_SEND,
+    IO_SENDN,
+    IO_RECV,
+    IO_RECVN,
+    IO_CARGO,
+    IO_VENT,
 
-    //worker
-    io_dock,
-    io_undock,
-    io_take,
-    io_put,
-    io_harvest,
+    // Worker
+    IO_DOCK,
+    IO_UNDOCK,
+    IO_TAKE,
+    IO_PUT,
+    IO_HARVEST,
     
     ATOM_IO_MAX,
     ATOM_IO_CAP = 0x8FFFFFFF,

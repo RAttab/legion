@@ -3,7 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "core.h"
+#include "common.h"
+#include "render/core.h"
 
 int main(int argc, char **argv)
 {

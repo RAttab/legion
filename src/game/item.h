@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/bits.h"
 
 
 // -----------------------------------------------------------------------------
@@ -62,9 +63,6 @@ enum item
     ITEM_OTHERS = 0x30,
 };
 
-static_assert(item_ele_q == 0x10, "expected element value");
-static_assert(item_ele_z == 0x1A, "expected element value");
-
 
 // -----------------------------------------------------------------------------
 // id
@@ -72,7 +70,7 @@ static_assert(item_ele_z == 0x1A, "expected element value");
 
 typedef uint32_t id_t;
 
-inline id_t make_id(type_t type, id_t id) { return type << 24 | id; }
+inline id_t make_id(item_t type, id_t id) { return type << 24 | id; }
 inline item_t id_item(id_t id) { return id >> 24; }
 
 
@@ -85,7 +83,7 @@ typedef uint16_t cargo_t;
 
 inline cargo_t make_cargo(item_t item, uint8_t count)
 {
-    return (((cargo_t)i) << 8) | count;
+    return (((cargo_t) item) << 8) | count;
 }
 
 inline item_t cargo_item(cargo_t cargo) { return cargo >> 8; }
@@ -94,13 +92,13 @@ inline uint8_t cargo_count(cargo_t cargo) { return cargo; }
 inline cargo_t cargo_add(cargo_t cargo, uint8_t val)
 {
     size_t count = cargo_count(cargo);
-    return (cargo & ~0xFF) | i64_min(0xFF, cargo + val));
+    return (cargo & ~0xFF) | i64_min(0xFF, count + val);
 }
 
 inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
 {
     ssize_t count = cargo_count(cargo);
-    return (cargo & ~0xFF) | i64_max(0, cargo - val));
+    return (cargo & ~0xFF) | i64_max(0, count - val);
 }
 
 
@@ -108,5 +106,5 @@ inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
 // elements
 // -----------------------------------------------------------------------------
 
-enum { elements_len = item_ele_z - item_ele_a };
+enum { elements_len = ITEM_ELE_Z - ITEM_ELE_A };
 typedef uint32_t elements_t [elements_len];

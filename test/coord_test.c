@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "coord.h"
+#include "game/coord.h"
 
 #include <assert.h>
 

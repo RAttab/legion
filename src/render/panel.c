@@ -5,9 +5,10 @@
 
 #include "panel.h"
 
-#include "game/coord.h"
 #include "render/core.h"
 #include "render/font.h"
+#include "game/coord.h"
+#include "utils/log.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,8 +21,7 @@ enum {
     panel_padding = (margin + border) * 2
 };
 
-static void panel_add_borders(
-        int width, int height, int *dst_width, int *dst_height)
+void panel_add_borders(int width, int height, int *dst_width, int *dst_height)
 {
     *dst_width = width + panel_padding * 2;
     *dst_height = height + panel_padding * 2;

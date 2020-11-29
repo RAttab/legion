@@ -13,11 +13,11 @@
 // vm_atoms
 // -----------------------------------------------------------------------------
 
-enum { vm_atom_cap = 16; };
+enum { vm_atom_cap = 16 };
 typedef char atom_t[vm_atom_cap];
 
 void vm_atoms_init(void);
 
 word_t vm_atom(const atom_t *);
 bool vm_atoms_set(const atom_t *, word_t id);
-bool vm_atoms_str(word_t, atom_t *dst);
+bool vm_atoms_str(word_t id, atom_t *dst);

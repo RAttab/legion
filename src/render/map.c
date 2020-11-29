@@ -5,9 +5,10 @@
 
 #include "map.h"
 
-#include "game/sector.h"
 #include "render/color.h"
 #include "render/core.h"
+#include "game/sector.h"
+#include "utils/log.h"
 
 
 // -----------------------------------------------------------------------------
@@ -137,7 +138,7 @@ bool map_event(struct map *map, SDL_Event *event)
                         });
 
                 struct system *selected = sector_lookup(core.state.sector, &rect);
-                core_push_event(selected ? EV_SYSTEM_SELECT : EV_SYSTEM_CLEAR, selected);
+                core_push_event(selected ? EV_STAR_SELECT : EV_STAR_CLEAR, selected);
             }
 
             map->panning = false;

@@ -4,10 +4,11 @@
 */
 
 #include "common.h"
-#include "game/coord.h"
 #include "render/font.h"
 #include "render/map.h"
 #include "render/panel.h"
+#include "game/coord.h"
+#include "utils/log.h"
 #include "SDL.h"
 
 

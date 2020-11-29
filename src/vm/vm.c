@@ -4,6 +4,7 @@
 */
 
 #include "vm.h"
+#include "vm/op.h"
 
 // -----------------------------------------------------------------------------
 // flags
@@ -46,11 +47,6 @@ void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
     vm->specs.speed = speed;
 }
 
-inline uint32_t vm_ip_mod(ip_t ip)
-{
-    return ip >> 32;
-}
-
 void vm_suspend(struct vm *vm)
 {
     vm->flags |= FLAG_SUSPENDED;
@@ -73,7 +69,7 @@ size_t vm_io_read(struct vm *vm, word_t *dst)
     for (size_t i = 0; i < vm->io; ++i)
         dst[i] = vm->stack[--vm->sp];
 
-    return words;
+    return vm->io;
 }
 
 void vm_io_write(struct vm *vm, size_t len, const word_t *src)
@@ -90,7 +86,7 @@ void vm_io_write(struct vm *vm, size_t len, const word_t *src)
     }
 
     if (vm->ior == 0) vm->stack[vm->sp++] = len;
-    else if (vm->ior != -1) vm->reg[vm->ior-1] = len;
+    else if (vm->ior != 0xFF) vm->regs[vm->ior-1] = len;
 }
 
 void vm_reset(struct vm *vm)
@@ -127,7 +123,7 @@ static inline ip_t vm_read_code(struct vm *vm, struct vm_code *code, size_t byte
 
 ip_t vm_step(struct vm *vm, struct vm_code *code)
 {
-    return vm_exec(vm, code, 1);
+    return vm_exec(vm, code);
 }
 
 ip_t vm_exec(struct vm *vm, struct vm_code *code)
@@ -185,7 +181,7 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
         [OP_UNPACK] = &&op_unpack,
     };
 
-#define vm_stack(i) vm->stack[vm->sp-1-(i)]
+#define vm_stack(i) vm->stack[vm->sp - 1 - (i)]
 
 #define vm_ensure(c)                            \
     ({                                          \
@@ -232,13 +228,13 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
 
 #define vm_jmp(_dst_)                                   \
     ({                                                  \
-        uint64_t dst = (_dst_);                         \
+        ip_t dst = (_dst_);                             \
         vm->ip = dst;                                   \
-        if (vm_ip_mod(dst) != code->key) return dst;    \
+        if (ip_mod(dst) != code->mod) return dst;       \
         true;                                           \
     })
 
-    size_t cycles = 1 << vm->spec.speed;
+    size_t cycles = 1 << vm->specs.speed;
     for (size_t i = 0; i < cycles; ++i) {
         const void *label = opcodes[vm_read(1)];
         if (unlikely(!label)) { vm->flags |= FLAG_FAULT_CODE; return 0; }
@@ -352,7 +348,7 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
       op_tsc: { vm_push(vm->tsc); }
 
       op_io:  {
-            vm->ior = -1;
+            vm->ior = 0xFF;
             vm->io = vm_read(1);
             vm->flags |= FLAG_IO;
             return 0;
@@ -379,7 +375,7 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
       op_unpack: {
             uint32_t msb = 0, lsb = 0;
             vm_unpack(vm_pop(), &msb, &lsb);
-            vm_stack(0) lsb;
+            vm_stack(0) = lsb;
             vm_push(msb);
             goto next;
         }

@@ -12,6 +12,8 @@
 // op
 // -----------------------------------------------------------------------------
 
+enum { op_len = 8 };
+
 enum op_code
 {
     OP_NOOP   = 0x00,
@@ -79,7 +81,7 @@ enum op_arg
 struct op_spec
 {
     enum op_code op;
-    const char str[8];
+    const char str[op_len];
     enum op_arg arg;
 };
 

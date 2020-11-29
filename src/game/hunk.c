@@ -4,25 +4,26 @@
 */
 
 #include "hunk.h"
-#include "utils/htable.h"
 #include "game/sector.h"
+#include "game/obj.h"
+#include "utils/htable.h"
 
 // -----------------------------------------------------------------------------
 // area
 // -----------------------------------------------------------------------------
 
-enum { hunk_classes = 4; };
+enum { hunk_classes = 8 };
 
 struct hunk_area
 {
     size_t len;
     size_t curr, cap;
-    uint64_t __pad__[8 - 2];
+    uint64_t __pad__[8 - 3];
 
     uint8_t data[];
 };
 
-static_assert(sizeof(struct hunk_area) == cache_line);
+static_assert(sizeof(struct hunk_area) == s_cache_line);
 
 static size_t area_append(struct hunk_area **area, size_t class)
 {
@@ -31,23 +32,25 @@ static size_t area_append(struct hunk_area **area, size_t class)
     if (area == NULL) {
         const size_t cap = 8;
         *area = alloc_cache(sizeof(**area) + len * cap);
-        *area->len = len;
-        *area->curr = 0;
-        *area->cap = cap;
+        (*area)->len = len;
+        (*area)->curr = 0;
+        (*area)->cap = cap;
     }
 
-    if (*area->curr == *area->cap) {
-        const size_t cap = *area->cap * 2;
-        *area = realloc(*area, sizeof(**area) + *area->len * cap);
-        assert(*area % cache_line == 0); // might have to mmap to maintain alignment.
-        *area->cap = cap;
+    if ((*area)->curr == (*area)->cap) {
+        const size_t cap = (*area)->cap * 2;
+        (*area) = realloc(*area, sizeof(**area) + (*area)->len * cap);
+        (*area)->cap = cap;
+
+        // Somewhat likely to trigger so might have to switch to mmap
+        assert(((uintptr_t) *area) % cache_line == 0); 
     }
 
-    assert(*area->curr + *area->len <= *area->cap);
+    assert((*area)->curr + (*area)->len <= (*area)->cap);
 
-    size_t off = *area->curr;
-    memset(*area->data + off, 0, len);
-    *area->curr += len;
+    size_t off = (*area)->curr;
+    memset((*area)->data + off, 0, len);
+    (*area)->curr += len;
     return off;
 }
 
@@ -79,7 +82,7 @@ struct hunk
 
     id_t ids;
     struct htable index;
-    struct hunk_area *areas[hunk_classes]
+    struct hunk_area *areas[hunk_classes];
 };
 
 struct hunk *hunk_alloc(struct coord coord)
@@ -90,6 +93,8 @@ struct hunk *hunk_alloc(struct coord coord)
     struct system_desc *system = system_gen(coord);
     hunk->system = system->s;
     free(system);
+
+    return hunk;
 }
 
 void hunk_free(struct hunk *hunk)
@@ -103,27 +108,27 @@ void hunk_free(struct hunk *hunk)
 
 struct obj *hunk_obj(struct hunk *hunk, id_t id)
 {
-    struct htable_ret ret = htable_get(&hunk->id, id);
+    struct htable_ret ret = htable_get(&hunk->index, id);
     if (!ret.ok) return NULL;
 
     size_t class = ret.value >> 32;
-    size_t off = ret.value & ((1U << 32) - 1);
+    size_t off = ret.value & ((1UL << 32) - 1);
 
     return area_get(hunk->areas[class], off);
 }
 
-struct obj *hunk_obj_alloc(struct hunk *hunk, size_t len)
+struct obj *hunk_obj_alloc(struct hunk *hunk, item_t type, size_t len)
 {
     size_t class = len / cache_line;
 
     assert(len % cache_line == 0);
-    assert(class < area_hunk_cap);
+    assert(class < hunk_classes);
 
     size_t off = area_append(&hunk->areas[class], class);
     struct obj *obj = area_get(hunk->areas[class], off);
     obj->id = make_id(type, hunk->ids++);
     
-    struct htable_ret ret = htable_put(&hunk->id, obj->id, class << 32 | off);
+    struct htable_ret ret = htable_put(&hunk->index, obj->id, class << 32 | off);
     assert(ret.ok);
 
     return obj;
@@ -135,9 +140,11 @@ void hunk_step(struct hunk *hunk)
         area_step(hunk->areas[class], hunk);
 }
 
-size_t hunk_harvest(struct hunk *hunk, type_t type, size_t count)
+size_t hunk_harvest(struct hunk *hunk, item_t type, size_t count)
 {
-    count = i64_min(hunk->elements[type], count);
-    hunk->elements[type] -= count;
+    if (type < ITEM_ELE_A || type > ITEM_ELE_Z) return 0;
+    
+    count = i64_min(hunk->system.elements[type - ITEM_ELE_A], count);
+    hunk->system.elements[type] -= count;
     return count;
 }

@@ -17,7 +17,7 @@ legion_packed struct system
 {
     struct coord coord;
     uint32_t star;
-    uint32_t elements[num_elements];
+    elements_t elements;
 };
 
 struct system_desc

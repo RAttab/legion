@@ -6,6 +6,7 @@
 #include "obj.h"
 
 #include "vm/vm.h"
+#include "game/atoms.h"
 #include "game/hunk.h"
 #include "game/worker.h"
 
@@ -13,17 +14,19 @@
 // obj
 // -----------------------------------------------------------------------------
 
-struct obj *obj_alloc(struct hunk *hunk, const struct obj_spec *spec)
+struct obj *obj_alloc(struct hunk *hunk, item_t type, const struct obj_spec *spec)
 {
     size_t len_io = spec->io * sizeof(word_t);
     size_t len_docks = spec->docks * sizeof(id_t);
     size_t len_cargo = spec->cargo * sizeof(cargo_t);
-    size_t len_head = align_cache(sizeof(struct obj) + len_io + len_docks + len_cargo);
-    size_t len_vm = vm_len(stack);
-    size_t len_state = align_cache(state);
-    size_t len_total = len_head + len_vm + len_state;
+    size_t len_state = spec->state;
+    size_t len_head = align_cache(
+            sizeof(struct obj) + len_io + len_docks + len_cargo + len_state);
+    size_t len_vm = vm_len(spec->stack);
+    size_t len_total = len_head + len_vm;
+    assert(len_total <= 0xFF);
 
-    struct obj *obj = hunk_obj_alloc(hunk, len_total);
+    struct obj *obj = hunk_obj_alloc(hunk, type, len_total);
     obj->len = len_total;
     obj->io.len = 0;
     obj->io.cap = spec->io;
@@ -32,39 +35,39 @@ struct obj *obj_alloc(struct hunk *hunk, const struct obj_spec *spec)
 
     obj->off_docks = sizeof(*obj) + len_io;
     obj->off_cargo = obj->off_docks + len_docks;
+    obj->off_state = obj->off_cargo + len_cargo;
     obj->off_vm = len_head;
-    obj->off_state = len_head + len_state;
 
     return obj;
 }
 
 
-static void obj_io(struct obj *obj, struct hunk *hunk)
+static void obj_process_io(struct obj *obj, struct hunk *hunk)
 {
-    if (!(vm->flags & FLAG_IO)) return;
-
+    struct vm *vm = obj_vm(obj);
+    
     vm_io_buf_t buf;
-    size_t len = vm_io_read(obj->vm, buf);
+    size_t len = vm_io_read(vm, buf);
     if (!len) return;
 
     switch (buf[0]) {
-    case io_noop: { return; }
+    case IO_NOOP: { return; }
 
-    case io_id: {
-        if (!vm_io_check(obj->vm, len, 1)) return;
+    case IO_ID: {
+        if (!vm_io_check(vm, len, 1)) return;
         buf[0] = obj->id;
         vm_io_write(vm, 1, buf);
         return;
     }
 
-    case io_target: {
-        if (!vm_io_check(obj->vm, len, 2)) return;
+    case IO_TARGET: {
+        if (!vm_io_check(vm, len, 2)) return;
         obj->target = buf[1];
         return;
     }
 
-    case io_send: {
-        if (!vm_io_check(obj->vm, len, 2)) return;
+    case IO_SEND: {
+        if (!vm_io_check(vm, len, 2)) return;
 
         struct obj *target = hunk_obj(hunk, obj->target);
         if (!target || target->io.cap < 1) return;
@@ -74,45 +77,45 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
         return;
     }
 
-    case io_sendn: {
+    case IO_SENDN: {
         struct obj *target = hunk_obj(hunk, obj->target);
         if (!target) return;
 
         target->io.len = i64_min(len, target->io.cap);
-        memcpy(target->io, buf, i64_min(len, target->io.len));
+        memcpy(obj_io(target), buf, i64_min(len, target->io.len));
         return;
     }
 
-    case io_recv: {
-        buf[0] = io[0];
-        vm_io_write(obj->vm, !!obj->io.len, buf);
+    case IO_RECV: {
+        buf[0] = obj_io(obj)[0];
+        vm_io_write(vm, !!obj->io.len, buf);
         return;
     }
 
-    case io_recvn: {
-        memcpy(buf, io, obj->io.len);
-        vm_io_write(obj->vm, obj->io.len, buf);
+    case IO_RECVN: {
+        memcpy(buf, obj_io(obj), obj->io.len);
+        vm_io_write(vm, obj->io.len, buf);
         return;
     }
 
-    case io_cargo: {
-        if (!vm_io_check(obj->vm, len, 2)) return;
+    case IO_CARGO: {
+        if (!vm_io_check(vm, len, 2)) return;
 
         size_t slot = buf[1];
-        if (slot < 0 || slot >= obj->cargos) { buf[0] = 0; }
+        if (slot >= obj->cargos) { buf[0] = 0; }
         else {
             cargo_t cargo = obj_cargo(obj)[slot];
             buf[0] = vm_pack(cargo_item(cargo), cargo_count(cargo));
         }
 
-        vm_io_write(obj->vm, 1 buf);
+        vm_io_write(vm, 1, buf);
         return;
     }
 
-    case io_vent: {
-        if (!vm_io_check(obj->vm, len, 2)) return;
+    case IO_VENT: {
+        if (!vm_io_check(vm, len, 2)) return;
         size_t slot = buf[1];
-        if (slot >= 0 || slot < obj->cargos)
+        if (slot < obj->cargos)
             obj_cargo(obj)[slot] = 0;
         return;
     }
@@ -122,15 +125,15 @@ static void obj_io(struct obj *obj, struct hunk *hunk)
     void *state = obj_state(obj);
     bool consumed = false;
 
-    switch (id_type(obj->id)) {
+    switch (id_item(obj->id)) {
 
-    case item_worker: { consumed = worker_io(obj, hunk, state, buf, len); break; }
+    case ITEM_WORKER: { consumed = worker_io(obj, hunk, state, buf, len); break; }
 
     default: assert(false && "unknown object type");
 
     }
 
-    if (!consumed) vm_io_fault(obj->vm);
+    if (!consumed) vm_io_fault(vm);
 }
 
 void obj_step(struct obj *obj, struct hunk *hunk)
@@ -142,5 +145,5 @@ void obj_step(struct obj *obj, struct hunk *hunk)
         assert(false && "switch code");
     }
 
-    if (vm_io(vm)) obj_io(obj, hunk);
+    if (vm_io(vm)) obj_process_io(obj, hunk);
 }

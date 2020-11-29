@@ -184,7 +184,8 @@ struct htable_ret htable_del(struct htable *ht, uint64_t key)
 
         ht->len--;
         free((char *) bucket->key);
-        bucket->key = NULL;
+        bucket->key = 0;
+        bucket->value = 0;
         return (struct htable_ret) { .ok = true, .value = bucket->value };
     }
 

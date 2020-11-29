@@ -13,17 +13,17 @@
 
 enum
 {
-    worker_io = 2,
-    worker_cargo = 2,
+    worker_spec_io = 2,
+    worker_spec_cargo = 2,
 };
 
-struct obj *worker_alloc(id_t id)
+struct obj *worker_alloc(struct hunk * hunk)
 {
-    return obj_alloc(id, obj_worker, &(struct obj_spec) {
-                .state = sizeof(worker),
+    return obj_alloc(hunk, ITEM_WORKER, &(struct obj_spec) {
+                .state = sizeof(struct worker),
                 .stack = 0,
-                .io = worker_io,
-                .cargo = worker_cargo,
+                .io = worker_spec_io,
+                .cargo = worker_spec_cargo,
                 .docks = 0
             });
 }
@@ -33,7 +33,7 @@ static bool worker_dock(
 {
     if (state->dock) return false;
 
-    struct obj *target = hunk_obj(hunk, buf[1]);
+    struct obj *target = hunk_obj(hunk, id);
     if (!target) return false;
 
     id_t *docks = obj_docks(target);
@@ -68,7 +68,7 @@ static void worker_undock(
 static cargo_t *worker_slot_local(struct obj *obj, size_t slot)
 {
     cargo_t *cargo = obj_cargo(obj);
-    if (slot) return slot < obj->cargos ? cargo[slot] : NULL;
+    if (slot) return slot < obj->cargos ? &cargo[slot] : NULL;
 
     cargo_t *end = cargo + obj->cargos;
     while (cargo != end) if (!*cargo) return cargo;
@@ -97,7 +97,7 @@ static void worker_take(
     vm_unpack(arg, &type, &slot);
 
     cargo_t *dst = worker_slot_local(obj, slot);
-    if (!src) return;
+    if (!dst) return;
 
     struct obj *target = hunk_obj(hunk, state->dock);
     assert(target && "docked to unknown id");
@@ -130,9 +130,11 @@ static void worker_put(
     *src = 0;
 }
 
-static void worker_harvest(struct obj *obj, struct hunk *hunk, word_t arg)
+static void worker_harvest(struct obj *obj, struct hunk *hunk, word_t ele)
 {
-    size_t count = hunk_harvest(hunk, buf[1], 1);
+    if (ele < ITEM_ELE_A || ele > ITEM_ELE_Z) return;
+    
+    size_t count = hunk_harvest(hunk, ele, 1);
     if (!count) return;
 
     cargo_t *cargo = obj_cargo(obj);
@@ -140,11 +142,9 @@ static void worker_harvest(struct obj *obj, struct hunk *hunk, word_t arg)
 
     while (cargo != end) {
         item_t item = cargo_item(*cargo);
-        if (!item) { *cargo = make_cargo(arg, 1); return; }
-        if (item == arg) { *cargo = cargo_inc(*cargo); return; }
+        if (!item) { *cargo = make_cargo(ele, 1); return; }
+        if (item == ele) { *cargo = cargo_add(*cargo, 1); return; }
     }
-
-    return;
 }
 
 
@@ -156,36 +156,37 @@ bool worker_io(
         size_t len)
 {
     struct worker *state = state_;
+    struct vm *vm = obj_vm(obj);
 
     switch (buf[0]) {
 
-    case io_dock: {
-        if (!vm_io_check(obj->vm, len, 2)) return true;
-        buf[0] = worker_dock(state, obj, hunk, buf[1]) ? io_ok : io_fail;
-        vm_io_write(obj->vm, 1, buf);
+    case IO_DOCK: {
+        if (!vm_io_check(vm, len, 2)) return true;
+        buf[0] = worker_dock(state, obj, hunk, buf[1]) ? IO_OK : IO_FAIL;
+        vm_io_write(vm, 1, buf);
         return true;
     }
 
-    case io_undock: {
-        if (!vm_io_check(obj->vm, len, 1)) return true;
+    case IO_UNDOCK: {
+        if (!vm_io_check(vm, len, 1)) return true;
         worker_undock(state, obj, hunk);
         return true;
     }
 
-    case io_take: {
-        if (!vm_io_check(obj->vm, len, 2)) return true;
+    case IO_TAKE: {
+        if (!vm_io_check(vm, len, 2)) return true;
         worker_take(state, obj, hunk, buf[1]);
         return true;
     }
 
-    case io_put: {
-        if (!vm_io_check(obj->vm, len, 2)) return true;
+    case IO_PUT: {
+        if (!vm_io_check(vm, len, 2)) return true;
         worker_put(state, obj, hunk, buf[1]);
         return true;
     }
 
-    case io_harvest: {
-        if (!vm_io_check(obj->vm, len, 2)) return true;
+    case IO_HARVEST: {
+        if (!vm_io_check(vm, len, 2)) return true;
         worker_harvest(obj, hunk, buf[1]);
         return true;
     }

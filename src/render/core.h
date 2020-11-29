@@ -19,8 +19,8 @@ struct sector;
 
 enum event
 {
-    EV_SYSTEM_SELECT = 0,
-    EV_SYSTEM_CLEAR,
+    EV_STAR_SELECT = 0,
+    EV_STAR_CLEAR,
 
     EV_MAX,
 };
