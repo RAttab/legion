@@ -25,8 +25,6 @@ CFLAGS="$CFLAGS -Wunreachable-code"
 CFLAGS="$CFLAGS -Wformat=2"
 CFLAGS="$CFLAGS -Wswitch-enum"
 CFLAGS="$CFLAGS -Winit-self"
-CFLAGS="$CFLAGS -Wno-strict-aliasing"
-CFLAGS="$CFLAGS -fno-strict-aliasing"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
 
 LIBS="liblegion.a"
