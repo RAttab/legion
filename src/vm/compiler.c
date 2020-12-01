@@ -34,7 +34,7 @@ struct compiler
 
     struct {
         size_t len, cap;
-        struct vm_errors *list;
+        struct mod_err *list;
     } err;
 
     struct {
@@ -208,7 +208,7 @@ static legion_printf(2, 3) void compiler_err(
 
     va_list args;
     va_start(args, fmt);
-    (void) vsnprintf(comp->err.list[comp->err.len].err, vm_errors_cap, fmt, args);
+    (void) vsnprintf(comp->err.list[comp->err.len].str, mod_err_cap, fmt, args);
     va_end(args);
 
     comp->err.len++;
@@ -256,7 +256,7 @@ static struct compiler *compiler_alloc(struct text *in)
     return comp;
 }
 
-static struct vm_code *compiler_output(struct compiler *comp, uint64_t mod)
+static struct mod *compiler_output(struct compiler *comp)
 {
     if (comp->out.i == comp->out.len)
         compiler_err(comp, "program too big");
@@ -265,26 +265,10 @@ static struct vm_code *compiler_output(struct compiler *comp, uint64_t mod)
     for (; bucket; bucket = htable_next(&comp->lbl.wants, bucket))
         compiler_err(comp, "missing label at '%lu'", bucket->value);
 
-    size_t head_bytes = sizeof(struct vm_code);
-    size_t code_bytes = comp->out.len;
-    size_t str_bytes = comp->in.text->len * line_cap;
-    size_t errs_bytes = comp->err.len * sizeof(*comp->err.list);
-
-    struct vm_code *code = calloc(1, head_bytes + code_bytes + str_bytes + errs_bytes);
-    code->mod = mod;
-
-    memcpy(code + head_bytes, comp->out.base, comp->out.i);
-    code->len = comp->out.len;
-
-    code->str = ((void *) code) + (head_bytes + code_bytes);
-    text_pack(comp->in.text, code->str, str_bytes);
-    code->str_len = str_bytes;
-
-    code->errs = ((void *) code) + (head_bytes + code_bytes + str_bytes);
-    memcpy(code->errs, comp->err.list, errs_bytes);
-    code->errs_len = comp->err.len;
-
-    return code;
+    return mod_alloc(
+            comp->in.text,
+            comp->out.base, comp->out.i,
+            comp->err.list, comp->err.len);
 }
 
 static void compiler_free(struct compiler *comp)
@@ -297,14 +281,12 @@ static void compiler_free(struct compiler *comp)
 
 
 // -----------------------------------------------------------------------------
-// vm_compile
+// mod_compile
 // -----------------------------------------------------------------------------
 
-struct vm_code *vm_compile(const char *name, struct text *source)
+struct mod *mod_compile(struct text *source)
 {
-    assert(name && source);
-
-    uint32_t mod = 0; // to_atom(name);
+    assert(source);
     struct compiler *comp = compiler_alloc(source);
 
     size_t len = 0;
@@ -425,7 +407,7 @@ struct vm_code *vm_compile(const char *name, struct text *source)
         }
     }
 
-    struct vm_code *code = compiler_output(comp, mod);
+    struct mod *mod = compiler_output(comp);
     compiler_free(comp);
-    return code;
+    return mod;
 }

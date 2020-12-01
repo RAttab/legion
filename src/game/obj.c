@@ -6,6 +6,7 @@
 #include "obj.h"
 
 #include "vm/vm.h"
+#include "vm/mod.h"
 #include "game/atoms.h"
 #include "game/hunk.h"
 #include "game/worker.h"
@@ -136,13 +137,24 @@ static void obj_process_io(struct obj *obj, struct hunk *hunk)
     if (!consumed) vm_io_fault(vm);
 }
 
+void obj_load(struct obj *obj, mod_t id)
+{
+    struct vm *vm = obj_vm(obj);
+    vm_reset(vm);
+
+    mod_discard(obj->mod);
+    obj->mod = mods_load(id);
+}
+
 void obj_step(struct obj *obj, struct hunk *hunk)
 {
-    if (!obj->code) return;
+    if (!obj->mod) return;
 
     struct vm *vm = obj_vm(obj);
-    if (vm_exec(vm,  obj->code)) {
-        assert(false && "switch code");
+    ip_t ip = vm_exec(vm,  obj->mod);
+    if (!ip) {
+        mod_discard(obj->mod);
+        obj->mod = mods_load(ip_mod(ip));
     }
 
     if (vm_io(vm)) obj_process_io(obj, hunk);

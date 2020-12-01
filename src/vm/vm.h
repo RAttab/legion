@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+struct mod;
 struct text;
 
 // -----------------------------------------------------------------------------
@@ -25,32 +26,17 @@ inline ip_t ip_off(ip_t ip) { return (uint16_t) ip; }
 
 
 // -----------------------------------------------------------------------------
-// code
+// vm_atoms
 // -----------------------------------------------------------------------------
 
-enum { vm_errors_cap = 32 };
-struct vm_errors
-{
-    size_t line, col;
-    char err[vm_errors_cap];
-};
+enum { vm_atom_cap = 16 };
+typedef char atom_t[vm_atom_cap];
 
-struct vm_code
-{
-    uint32_t mod;
+void vm_atoms_init(void);
 
-    char *str;
-    size_t str_len;
-
-    struct vm_errors *errs;
-    size_t errs_len;
-
-    uint8_t len;
-    uint8_t prog[];
-};
-
-void vm_compile_init(void);
-struct vm_code *vm_compile(const char *name, struct text *source);
+word_t vm_atom(const atom_t *);
+bool vm_atoms_set(const atom_t *, word_t id);
+bool vm_atoms_str(word_t id, atom_t *dst);
 
 
 // -----------------------------------------------------------------------------
@@ -80,7 +66,7 @@ struct legion_packed vm
     uint32_t tsc; // -> u64
 
     uint8_t io, ior;
-    uint8_t __pad__[2];
+    legion_pad(2);
 
     ip_t ip;
     word_t regs[4]; // half of the cacheline
@@ -95,13 +81,12 @@ void vm_free(struct vm *);
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 size_t vm_len(uint8_t stack);
 
-ip_t vm_exec(struct vm *, struct vm_code *);
-ip_t vm_step(struct vm *, struct vm_code *);
+ip_t vm_exec(struct vm *, struct mod *);
 
+void vm_reset(struct vm *);
 void vm_suspend(struct vm *);
 void vm_resume(struct vm *);
 void vm_io_fault(struct vm *);
-
 inline bool vm_io(struct vm *vm) { return vm->flags & FLAG_IO; }
 
 enum { vm_io_cap = 8 };
@@ -109,7 +94,6 @@ typedef word_t vm_io_buf_t[vm_io_cap];
 
 size_t vm_io_read(struct vm *, word_t *dst);
 void vm_io_write(struct vm *, size_t len, const word_t *src);
-
 inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 {
     if (unlikely(len < exp)) { vm_io_fault(vm); return false; }
@@ -120,12 +104,10 @@ inline word_t vm_pack(uint32_t msb, uint32_t lsb)
 {
     return (((uint64_t) msb) << 32) | lsb;
 }
-
 inline void vm_unpack(word_t in, uint32_t *msb, uint32_t *lsb)
 {
     *msb = ((uint64_t) in) >> 32;
     *lsb = (uint32_t) in;
 }
 
-void vm_reset(struct vm *);
 

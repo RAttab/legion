@@ -5,6 +5,7 @@
 
 #include "vm.h"
 #include "vm/op.h"
+#include "vm/mod.h"
 
 // -----------------------------------------------------------------------------
 // flags
@@ -100,10 +101,10 @@ void vm_reset(struct vm *vm)
 // step
 // -----------------------------------------------------------------------------
 
-static inline ip_t vm_read_code(struct vm *vm, struct vm_code *code, size_t bytes)
+static inline ip_t vm_read_code(struct vm *vm, struct mod *mod, size_t bytes)
 {
     uint32_t off = vm->ip & 0xFFFFFFFF;
-    if (off+bytes > code->len) {
+    if (off+bytes > mod->len) {
         vm->flags |= FLAG_FAULT_CODE;
         return 0;
     }
@@ -114,19 +115,14 @@ static inline ip_t vm_read_code(struct vm *vm, struct vm_code *code, size_t byte
     } val;
 
     for (size_t i = 0; i < bytes; ++i) {
-        val.u8[7-i] = code->prog[off + i];
+        val.u8[7-i] = mod->code[off + i];
     }
 
     vm->ip += bytes;
     return val.u64;
 }
 
-ip_t vm_step(struct vm *vm, struct vm_code *code)
-{
-    return vm_exec(vm, code);
-}
-
-ip_t vm_exec(struct vm *vm, struct vm_code *code)
+ip_t vm_exec(struct vm *vm, struct mod *mod)
 {
     if (vm->flags & (FLAG_SUSPENDED | flag_faults)) return 0;
 
@@ -221,7 +217,7 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
 
 #define vm_read(bytes)                                  \
     ({                                                  \
-        uint64_t ret = vm_read_code(vm, code, (bytes)); \
+        uint64_t ret = vm_read_code(vm, mod, (bytes)); \
         if (vm->flags & FLAG_FAULT_CODE) return -1;     \
         ret;                                            \
     })
@@ -230,7 +226,7 @@ ip_t vm_exec(struct vm *vm, struct vm_code *code)
     ({                                                  \
         ip_t dst = (_dst_);                             \
         vm->ip = dst;                                   \
-        if (ip_mod(dst) != code->mod) return dst;       \
+        if (ip_mod(dst) != mod->id) return dst;         \
         true;                                           \
     })
 

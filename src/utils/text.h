@@ -45,5 +45,5 @@ struct line *text_goto(struct text *, size_t line);
 struct line *text_insert(struct text *, struct line *at);
 struct line *text_erase(struct text *, struct line *at);
 
-void text_pack(struct text *, char *dst, size_t len);
+void text_pack(const struct text *, char *dst, size_t len);
 void text_unpack(struct text *, const char *src, size_t len);

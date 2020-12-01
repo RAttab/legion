@@ -34,7 +34,7 @@ struct legion_packed obj
     id_t id;
     id_t target;
 
-    struct vm_code *code;
+    struct mod *mod;
 
     uint8_t len;
     struct { uint8_t len:4; uint8_t cap:4; } io;
@@ -49,6 +49,7 @@ struct legion_packed obj
 
 struct obj *obj_alloc(struct hunk *, item_t type, const struct obj_spec *);
 
+void obj_load(struct obj *, mod_t);
 void obj_step(struct obj *, struct hunk *);
 
 inline word_t *obj_io(struct obj *obj)

@@ -100,12 +100,12 @@ struct line *text_erase(struct text *text, struct line *at)
     return ret;
 }
 
-void text_pack(struct text *text, char *dst, size_t len)
+void text_pack(const struct text *text, char *dst, size_t len)
 {
     const size_t bytes = line_cap + 1;
     assert(len >= text->len * bytes);
 
-    for (struct line *line = text->first; line; line = line->next) {
+    for (const struct line *line = text->first; line; line = line->next) {
         memcpy(dst, line->c, bytes);
         dst += bytes;
     }
