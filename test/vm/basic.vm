@@ -1,0 +1,12 @@
+!basic
+@prog
+push 1
+@in>S:1
+@out>S:1,sp:1,r1:0,s1:1
+
+!base-2
+@prog
+push 1
+popr r1
+@in>S:1
+@out>S:1,sp:0,r1:1

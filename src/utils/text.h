@@ -12,7 +12,7 @@
 // line
 // -----------------------------------------------------------------------------
 
-enum { line_cap = 64 - (8 * 2) - 1 };
+enum { line_cap = s_cache_line - (2*sizeof(struct line *)) - 1 };
 
 struct legion_packed line
 {
@@ -20,6 +20,8 @@ struct legion_packed line
     char c[line_cap];
     char zero;
 };
+
+static_assert(sizeof(struct line) == s_cache_line);
 
 bool line_empty(struct line *);
 size_t line_len(struct line *);
@@ -47,3 +49,6 @@ struct line *text_erase(struct text *, struct line *at);
 
 void text_pack(const struct text *, char *dst, size_t len);
 void text_unpack(struct text *, const char *src, size_t len);
+
+void text_to_str(const struct text *, char *dst, size_t len);
+void text_from_str(struct text *, const char *src, size_t len);

@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-set -o errexit -o nounset -o pipefail -o xtrace
+set -o errexit -o nounset -o pipefail # -o xtrace
 
 : ${PREFIX:="."}
 
@@ -8,7 +8,7 @@ declare -a SRC
 SRC=(utils vm game render)
 
 declare -a TEST
-TEST=(coord)
+TEST=(coord vm)
 
 CC=${CC:-gcc}
 
@@ -38,20 +38,9 @@ for obj in "${SRC[@]}"; do OBJ="$OBJ ${obj}.o"; done
 ar rcs liblegion.a $OBJ
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
-
 cp -r "${PREFIX}/res" .
 
+parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
 for test in "${TEST[@]}"; do
-    echo $test
-    $CC -o "test_$test" "${PREFIX}/test/${test}_test.c" $LIBS $CFLAGS
-    "./test_$test"
+    echo "testing ${test}..."; "./test_$test" "${PREFIX}"
 done
-
-# for test in "${TEST[@]}"; do
-#     valgrind \
-#         --leak-check=full \
-#         --track-origins=yes \
-#         --trace-children=yes \
-#         --error-exitcode=1 \
-#         "./test_$test"
-# done

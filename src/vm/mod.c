@@ -5,6 +5,7 @@
 
 #include "vm/vm.h"
 #include "utils/htable.h"
+#include "utils/bits.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,7 +21,7 @@ struct mod *mod_alloc(
     size_t src_bytes = src->len * line_cap;
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
-    size_t total_bytes = head_bytes + code_bytes + src_bytes + errs_bytes;
+    size_t total_bytes = align_cache(head_bytes + code_bytes + src_bytes + errs_bytes);
 
     struct mod *mod = alloc_cache(total_bytes);
 

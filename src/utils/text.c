@@ -128,3 +128,28 @@ void text_unpack(struct text *text, const char *src, size_t len)
         line = text_insert(text, line);
     }
 }
+
+void text_to_str(const struct text *text, char *dst, size_t len)
+{
+    size_t i = 0;
+    struct line *line = text->first;
+    for (size_t j = 0; line && i < len; ++i, ++j) {
+        if (line->c[j]) { dst[i] = '\n'; j = 0; line = line->next; }
+        else dst[i] = line->c[j];
+    }
+    dst[i] = 0;
+}
+
+void text_from_str(struct text *text, const char *src, size_t len)
+{
+    if (!len) return;
+    text_clear(text);
+    text_init(text);
+
+    struct line *line = text->first;
+    for (size_t i = 0, j = 0; i < len; ++i, ++j) {
+        if (src[i] == '\n') { line = text_insert(text, line); j = 0; }
+        else if (j > line_cap) continue;
+        else line->c[j] = src[i];
+    }
+}

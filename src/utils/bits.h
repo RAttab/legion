@@ -43,5 +43,5 @@ inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
 
 inline size_t align_cache(size_t sz)
 {
-    return sz ? (((sz - 1) >> 6) << 6) + 1 : 0;
+    return sz ? ((((sz - 1) >> 6) + 1) << 6) : 0;
 }
