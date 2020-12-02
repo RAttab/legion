@@ -22,22 +22,25 @@ struct test
     struct vm *in, *exp;
 };
 
-#define check_u64(title, field, x, y)                                   \
-    ({                                                                  \
-        uint64_t lhs = (x);                                             \
-        uint64_t rhs = (y);                                             \
-        bool ok = true;                                                 \
-        if (lhs != rhs) {                                               \
-            fprintf(stderr, "%s.%s: %lx != %lx\n", title, field, lhs, rhs); \
-            ok = false;                                                 \
-        }                                                               \
-        ok;                                                             \
+#define check_u64(title, field, _tval_, _texp_)                 \
+    ({                                                          \
+        uint64_t _val_ = (_tval_);                              \
+        uint64_t _exp_ = (_texp_);                              \
+        bool ok = _val_ == _exp_;                               \
+        if (!ok) {                                              \
+            fprintf(stderr, "%s.%s> val:%lx != exp:%lx\n",      \
+                    title, field, _val_, _exp_);                \
+        }                                                       \
+        ok;                                                     \
     })
 
 bool check(struct test *test)
 {
     fprintf(stderr, "\n[ %s ]=================================\n", test->title);
     fprintf(stderr, "%s\n", test->src);
+
+    assert(test->in);
+    assert(test->exp);
 
     struct text src = {0};
     text_from_str(&src, test->src, strlen(test->src));
@@ -57,12 +60,12 @@ bool check(struct test *test)
     bool ok = true;
     struct vm *exp = test->exp;
     const char *title = test->title;
-    ok = ok && check_u64(title, "flags", vm->flags, exp->flags);
-    ok = ok && check_u64(title, "tsc", vm->tsc, exp->tsc);
-    ok = ok && check_u64(title, "io", vm->io, exp->io);
-    ok = ok && check_u64(title, "ior", vm->ior, exp->ior);
-    ok = ok && check_u64(title, "sp", vm->sp, exp->sp);
-    ok = ok && check_u64(title, "ip", vm->ip, exp->ip);
+    ok = check_u64(title, "flags", vm->flags, exp->flags) && ok;
+    ok = check_u64(title, "tsc", vm->tsc, exp->tsc) && ok;
+    ok = check_u64(title, "io", vm->io, exp->io) && ok;
+    ok = check_u64(title, "ior", vm->ior, exp->ior) && ok;
+    ok = check_u64(title, "sp", vm->sp, exp->sp) && ok;
+    ok = check_u64(title, "ip", vm->ip, exp->ip) && ok;
 
     for (size_t i = 0; i < 4; ++i) {
         char reg[32]; sprintf(reg, "r%zu", i);
@@ -126,7 +129,7 @@ bool check_file(const char *file)
     while (ptr < end) {
         struct test test = {0};
 
-        assert(ptr[0] == '!');
+        while (*ptr != '!') ptr++;
         test.title = ptr + 1;
 
         while (*ptr != '\n') {ptr++; }
@@ -140,7 +143,7 @@ bool check_file(const char *file)
         while (*ptr != '@') { ptr++; }
         *(ptr - 1) = 0;
 
-        while (*ptr != '\n') {
+        while (*ptr != '\n' && ptr < end) {
             struct vm **vm = NULL;
 
             const char in[] = "@in>";
@@ -149,10 +152,10 @@ bool check_file(const char *file)
             else if (!strncmp(ptr, out, sizeof(out)-1)) { vm = &test.exp; ptr += sizeof(out)-1; }
             else assert(false);
 
-            while (*ptr != '@' && *ptr != '\n') { ptr = read_field(ptr, vm); }
+            while (*ptr != '@' && *ptr != '\n' && ptr < end) { ptr = read_field(ptr, vm); }
         }
 
-        ok = ok && check(&test);
+        ok = check(&test) && ok;
     }
 
     munmap(base, len);
