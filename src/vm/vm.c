@@ -99,8 +99,13 @@ void vm_io_write(struct vm *vm, size_t len, const word_t *src)
 void vm_reset(struct vm *vm)
 {
     mod_t mod = ip_mod(vm->ip);
-    memset(vm + sizeof(vm->specs), 0,
-            sizeof(*vm) + sizeof(vm->stack[0]) * vm->specs.stack);
+    uint8_t stack = vm->specs.stack;
+    uint8_t speed = vm->specs.speed;
+
+    memset(vm, 0, sizeof(*vm) + sizeof(vm->stack[0]) * vm->specs.stack);
+
+    vm->specs.stack = stack;
+    vm->specs.speed = speed;
     vm->ip = make_ip(mod, 0);
 }
 

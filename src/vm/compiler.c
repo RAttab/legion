@@ -299,6 +299,7 @@ static void compiler_free(struct compiler *comp)
     free(comp->err.list);
     htable_reset(&comp->lbl.is);
     htable_reset(&comp->lbl.wants);
+    free(comp->out.base);
     free(comp);
 }
 

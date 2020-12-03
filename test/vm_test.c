@@ -77,9 +77,10 @@ bool check(struct test *test)
         ok = ok && check_u64(title, stack, vm->stack[i], exp->stack[i]);
     }
 
+    mod_discard(mod);
+    text_clear(&src);
     free(test->exp);
     free(test->in);
-    mod_share(mod);
     return ok;
 }
 

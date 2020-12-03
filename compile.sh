@@ -4,6 +4,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 
 : ${PREFIX:="."}
 : ${VM_DEBUG:=""}
+: ${VALGRIND:=""}
 
 declare -a SRC
 SRC=(utils vm game render)
@@ -44,5 +45,15 @@ cp -r "${PREFIX}/res" .
 
 parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
 for test in "${TEST[@]}"; do
-    echo "testing ${test}..."; "./test_$test" "${PREFIX}"
+    if [ -z  "${VALGRIND}" ]; then
+        echo "testing ${test}..."; "./test_$test" "${PREFIX}"
+    else
+        echo "valgrind ${test}...";
+        valgrind \
+            --leak-check=full \
+            --track-origins=yes \
+            --trace-children=yes \
+            --error-exitcode=1 \
+            "./test_$test" "${PREFIX}"
+    fi
 done

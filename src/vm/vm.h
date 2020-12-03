@@ -45,6 +45,7 @@ inline bool vm_atoms_eq(const atom_t *lhs, const atom_t *rhs)
     return !memcmp(lhs, rhs, vm_atom_cap);
 }
 
+
 // -----------------------------------------------------------------------------
 // vm
 // -----------------------------------------------------------------------------
@@ -115,5 +116,3 @@ inline void vm_unpack(word_t in, uint32_t *msb, uint32_t *lsb)
     *msb = ((uint64_t) in) >> 32;
     *lsb = (uint32_t) in;
 }
-
-
