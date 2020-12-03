@@ -3,6 +3,7 @@
 set -o errexit -o nounset -o pipefail # -o xtrace
 
 : ${PREFIX:="."}
+: ${VM_DEBUG:=""}
 
 declare -a SRC
 SRC=(utils vm game render)
@@ -26,6 +27,7 @@ CFLAGS="$CFLAGS -Wformat=2"
 CFLAGS="$CFLAGS -Wswitch-enum"
 CFLAGS="$CFLAGS -Winit-self"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
+if [ ! -z "${VM_DEBUG}" ]; then CFLAGS="$CFLAGS -DVM_DEBUG"; fi
 
 LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"

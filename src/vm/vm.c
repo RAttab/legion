@@ -7,6 +7,12 @@
 #include "vm/op.h"
 #include "vm/mod.h"
 
+#ifdef VM_DEBUG
+# define vm_assert(p) assert(p)
+#else
+# define vm_assert(p)
+#endif
+
 // -----------------------------------------------------------------------------
 // flags
 // -----------------------------------------------------------------------------
@@ -103,30 +109,12 @@ void vm_reset(struct vm *vm)
 // step
 // -----------------------------------------------------------------------------
 
-static inline ip_t vm_read_code(struct vm *vm, struct mod *mod, size_t bytes)
-{
-    uint32_t off = vm->ip & 0xFFFFFFFF;
-    if (off+bytes > mod->len) {
-        vm->flags |= FLAG_FAULT_CODE;
-        return 0;
-    }
-
-    union {
-        uint64_t u64;
-        uint8_t u8[8];
-    } val;
-
-    for (size_t i = 0; i < bytes; ++i) {
-        val.u8[7-i] = mod->code[off + i];
-    }
-
-    vm->ip += bytes;
-    return val.u64;
-}
 
 ip_t vm_exec(struct vm *vm, struct mod *mod)
 {
     if (vm->flags & (FLAG_SUSPENDED | flag_faults)) return 0;
+    vm_assert(ip_addr(vm->ip) < mod->len);
+    assert(ip_mod(vm->ip) == mod->id);
 
     static const void *opcodes[] = {
         [OP_PUSH]   = &&op_push,
@@ -180,16 +168,24 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
         [OP_UNPACK] = &&op_unpack,
     };
 
+
+#define vm_arg(arg_type_t)                              \
+    ({                                                  \
+        vm_assert(vm_ip + sizeof(arg_type_t) < vm_end); \
+        arg_type_t arg = *((arg_type_t *) vm_ip);       \
+        vm_ip += sizeof(arg_type_t);                    \
+        arg;                                            \
+    })
+
 #define vm_stack(i) vm->stack[vm->sp - 1 - (i)]
 
 #define vm_ensure(c)                            \
-    ({                                          \
+    do {                                        \
         if (unlikely(vm->sp < c)) {             \
             vm->flags |= FLAG_FAULT_STACK;      \
             return -1;                          \
         }                                       \
-        true;                                   \
-    })
+    } while (false)
 
 #define vm_peek()                               \
     ({                                          \
@@ -197,7 +193,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
             vm->flags |= FLAG_FAULT_STACK;      \
             return -1;                          \
         }                                       \
-        vm->stack[vm->sp-1];                    \
+        vm_stack(0);                            \
     })
 
 #define vm_pop()                                \
@@ -211,40 +207,43 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
 
 #define vm_push(val)                                    \
     ({                                                  \
-        if (unlikely(vm->sp == vm->specs.stack)) {      \
+        if (unlikely(vm->sp >= vm->specs.stack)) {      \
             vm->flags |= FLAG_FAULT_STACK;              \
             return -1;                                  \
         }                                               \
         vm->stack[vm->sp++] = (val);                    \
     })
 
-#define vm_read(bytes)                                  \
-    ({                                                  \
-        uint64_t ret = vm_read_code(vm, mod, (bytes)); \
-        if (vm->flags & FLAG_FAULT_CODE) return -1;     \
-        ret;                                            \
-    })
+#define vm_jmp(_target_)                        \
+    do {                                        \
+        addr_t target = (_target_);             \
+        vm_assert(!ip_mod(target));             \
+        vm->ip = target;                        \
+        true;                                   \
+    } while (false)
 
-#define vm_jmp(_dst_)                                   \
-    ({                                                  \
-        ip_t dst = (_dst_);                             \
-        vm->ip = dst;                                   \
-        if (ip_mod(dst) != mod->id) return dst;         \
-        true;                                           \
-    })
+
+    void *vm_ip = &mod->code[ip_addr(vm->ip)];
+    void *vm_end = mod->code + mod->len;
+    (void) vm_end;
 
     size_t cycles = 1 << vm->specs.speed;
+
     for (size_t i = 0; i < cycles; ++i) {
-        const void *label = opcodes[vm_read(1)];
-        if (unlikely(!label)) { vm->flags |= FLAG_FAULT_CODE; return 0; }
+
+        uint8_t opcode = *((uint8_t *) vm_ip);
+        ++vm_ip;
+
+        const void *label = opcodes[opcode];
+        vm_assert(label);
         goto *label;
 
-      op_push: { vm_push(vm_read(8)); goto next; }
-      op_pushr: { vm_push(vm->regs[vm_read(1)]); goto next; }
+      op_push: { vm_push(vm_arg(word_t)); goto next; }
+      op_pushr: { vm_push(vm->regs[vm_arg(reg_t)]); goto next; }
       op_pushf: { vm_push(vm->regs[vm->flags]); goto next; }
 
       op_pop: { vm_pop(); goto next; }
-      op_popr: { vm->regs[vm_read(1)] = vm_pop(); goto next; }
+      op_popr: { vm->regs[vm_arg(reg_t)] = vm_pop(); goto next; }
 
       op_dupe: { vm_push(vm_peek()); goto next; }
       op_flip: {
@@ -328,20 +327,25 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
       op_lt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1);  vm_pop(); goto next; }
       op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1);  vm_pop(); goto next; }
 
-      op_ret: { vm_jmp(vm_pop()); goto next; }
-      op_call: { vm_push(vm->ip); vm_jmp(vm_read(8)); goto next; }
+      op_ret: {
+            word_t raw = vm_pop();
+            if (raw > ((ip_t)-1)) { vm->flags |= FLAG_FAULT_CODE; return -1; }
+            ip_t ip = raw;
+            if (!ip_mod(ip)) { vm_jmp(ip_addr(ip)); goto next; }
+            return ip;
+        }
+      op_call: {
+            ip_t ip = vm_arg(ip_t);
+            vm_push(vm->ip);
+
+            mod_t mod = ip_mod(ip);
+            if (!mod) { vm_jmp(ip_addr(ip)); goto next; }
+            return make_ip(mod, 0);
+        }
       op_load: { ip_t ip = vm_pop(); vm_reset(vm); return ip; }
-      op_jmp: { vm_jmp(vm_read(4)); goto next; }
-      op_jz: {
-            ip_t dest = vm_read(4);
-            if (!vm_pop()) vm_jmp(dest);
-            goto next;
-        }
-      op_jnz: {
-            ip_t dest = vm_read(4);
-            if (vm_pop()) vm_jmp(dest);
-            goto next;
-        }
+      op_jmp: { vm_jmp(vm_arg(ip_t)); goto next; }
+      op_jz:  { ip_t dst = vm_arg(ip_t); if (!vm_pop()) vm_jmp(dst); goto next; }
+      op_jnz: { ip_t dst = vm_arg(ip_t); if ( vm_pop()) vm_jmp(dst); goto next; }
 
       op_reset: { vm_reset(vm); return 0; }
       op_yield: { return 0; }
@@ -349,7 +353,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
 
       op_io:  {
             vm->ior = 0xFF;
-            vm->io = vm_read(1);
+            vm->io = vm_arg(uint8_t);
             vm->flags |= FLAG_IO;
             return 0;
         }
@@ -360,7 +364,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
             return 0;
         }
       op_ior: {
-            vm->ior = vm_read(1);
+            vm->ior = vm_arg(reg_t);
             vm->io = vm->regs[vm->ior - 1];
             vm->flags |= FLAG_IO;
             return 0;
@@ -386,7 +390,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
 
     return 0;
 
-#undef vm_read
+#undef vm_arg
 #undef vm_stack
 #undef vm_ensure
 #undef vm_peek

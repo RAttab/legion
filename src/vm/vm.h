@@ -10,11 +10,13 @@
 struct mod;
 struct text;
 
+
 // -----------------------------------------------------------------------------
 // types
 // -----------------------------------------------------------------------------
 
 typedef int64_t word_t;
+typedef uint8_t reg_t;
 
 typedef uint32_t ip_t;
 typedef uint16_t mod_t;
@@ -22,7 +24,7 @@ typedef uint16_t addr_t;
 
 inline ip_t make_ip(mod_t mod, addr_t off) { return (((uint32_t) mod) << 16) | off; }
 inline mod_t ip_mod(ip_t ip) { return ip >> 16; }
-inline ip_t ip_off(ip_t ip) { return (uint16_t) ip; }
+inline addr_t ip_addr(ip_t ip) { return (uint16_t) ip; }
 
 
 // -----------------------------------------------------------------------------
