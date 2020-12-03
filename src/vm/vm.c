@@ -92,8 +92,10 @@ void vm_io_write(struct vm *vm, size_t len, const word_t *src)
 
 void vm_reset(struct vm *vm)
 {
+    mod_t mod = ip_mod(vm->ip);
     memset(vm + sizeof(vm->specs), 0,
             sizeof(*vm) + sizeof(vm->stack[0]) * vm->specs.stack);
+    vm->ip = make_ip(mod, 0);
 }
 
 
@@ -168,6 +170,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
         [OP_JNZ]    = &&op_jnz,
 
         [OP_YIELD]  = &&op_yield,
+        [OP_RESET]  = &&op_reset,
         [OP_TSC]    = &&op_tsc,
         [OP_IO]     = &&op_io,
         [OP_IOS]    = &&op_ios,
@@ -340,6 +343,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
             goto next;
         }
 
+      op_reset: { vm_reset(vm); return 0; }
       op_yield: { return 0; }
       op_tsc: { vm_push(vm->tsc); }
 

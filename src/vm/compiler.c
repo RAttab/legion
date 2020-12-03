@@ -132,13 +132,25 @@ static const char *compiler_arg(struct compiler *comp, size_t *len)
 
 static bool compiler_atom(const char *str, size_t len, uint64_t *val)
 {
-    if (str[0] != '!') return false;
+    assert(str[0] == '!');
     if (len - 1 > vm_atom_cap) return false;
 
     atom_t atom = {0};
     memcpy(atom, str + 1, len - 1);
 
     *val = vm_atom(&atom);
+    return true;
+}
+
+static bool compiler_mod(const char *str, size_t len, mod_t *mod)
+{
+    assert(str[0] == '!');
+    if (len - 1 > vm_atom_cap) return false;
+
+    atom_t atom = {0};
+    memcpy(atom, str + 1, len - 1);
+
+    *mod = mods_find(&atom);
     return true;
 }
 
@@ -173,31 +185,6 @@ static bool compiler_num(const char *str, size_t len, int64_t *val)
     return true;
 }
 
-static void compiler_write(struct compiler *comp, uint8_t val)
-{
-    if (comp->out.i >= comp->out.len) return;
-    comp->out.base[comp->out.i++] = val;
-}
-
-static void compiler_write32_at(struct compiler *comp, size_t pos, uint32_t val)
-{
-    if (comp->out.i + sizeof(val) >= comp->out.len) return;
-    *((uint32_t *) &comp->out.base[pos]) = val;
-}
-
-static void compiler_write32(struct compiler *comp, uint32_t val)
-{
-    compiler_write32_at(comp, comp->out.i, val);
-    comp->out.i += sizeof(val);
-}
-
-static void compiler_write_word(struct compiler *comp, word_t val)
-{
-    if (comp->out.i + sizeof(val) >= comp->out.len) return;
-    *((word_t *) &comp->out.base[comp->out.i]) = val;
-    comp->out.i += sizeof(val);
-}
-
 static legion_printf(2, 3) void compiler_err(
         struct compiler *comp, const char *fmt, ...)
 {
@@ -214,6 +201,41 @@ static legion_printf(2, 3) void compiler_err(
     comp->err.len++;
 }
 
+static bool compiler_write_check(struct compiler *comp, size_t pos, size_t len)
+{
+    if (pos + len < comp->out.len) return true;
+    compiler_err(comp, "mod too big");
+    return false;
+}
+
+static void compiler_write(struct compiler *comp, uint8_t val)
+{
+    if (!compiler_write_check(comp, comp->out.i, sizeof(val))) return;
+    comp->out.base[comp->out.i] = val;
+    comp->out.i += sizeof(val);
+}
+
+static void compiler_write_ip_at(struct compiler *comp, size_t pos, ip_t val)
+{
+    if (!compiler_write_check(comp, pos, sizeof(val))) return;
+    *((ip_t *) &comp->out.base[pos]) = val;
+}
+
+static void compiler_write_ip(struct compiler *comp, ip_t val)
+{
+    if (!compiler_write_check(comp, comp->out.i, sizeof(val))) return;
+    *((ip_t *) &comp->out.base[comp->out.i]) = val;
+    comp->out.i += sizeof(val);
+}
+
+static void compiler_write_word(struct compiler *comp, word_t val)
+{
+    if (!compiler_write_check(comp, comp->out.i, sizeof(val))) return;
+    *((word_t *) &comp->out.base[comp->out.i]) = val;
+    comp->out.i += sizeof(val);
+}
+
+
 static void compiler_label_def(struct compiler *comp, const char *label)
 {
     uint64_t hash = hash_str(label, line_cap);
@@ -225,24 +247,25 @@ static void compiler_label_def(struct compiler *comp, const char *label)
 
     struct vec64 *vec = (void *) ret.value;
     for (size_t i = 0; i < vec->len; ++i)
-        compiler_write32_at(comp, make_ip(0, vec->vals[i]), comp->out.i);
+        compiler_write_ip_at(comp, make_ip(0, vec->vals[i]), comp->out.i);
 
     (void) htable_del(&comp->lbl.wants, hash);
 }
 
 static void compiler_label_ref(struct compiler *comp, const char *label)
 {
-    uint64_t hash = hash_str(label, line_cap);
+    assert(label[0] == '@');
+    uint64_t hash = hash_str(label + 1, line_cap);
 
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
-    if (ret.ok) { compiler_write32(comp, make_ip(0, ret.value)); return; }
+    if (ret.ok) { compiler_write_ip(comp, make_ip(0, ret.value)); return; }
 
     ret = htable_get(&comp->lbl.wants, hash);
     struct vec64 *vec = (void *)ret.value;
     vec = vec64_append(vec, comp->out.i);
     htable_put(&comp->lbl.wants, hash, (uint64_t) vec);
 
-    compiler_write32(comp, 0);
+    compiler_write_ip(comp, 0);
 }
 
 static struct compiler *compiler_alloc(struct text *in)
@@ -383,17 +406,17 @@ struct mod *mod_compile(struct text *source)
             }
 
             if (label[0] == '!') {
-                uint64_t val = 0;
-                if (!compiler_atom(label, len, &val)) {
-                    compiler_err(comp, "invalid atom");
+                mod_t mod = 0;
+                if (!compiler_mod(label, len, &mod)) {
+                    compiler_err(comp, "invalid mod");
                     break;
                 }
-                // todo: check if module actually exists
-                compiler_write32(comp, make_ip(val, 0));
+                if (!mod) { compiler_err(comp, "unknown mod"); break; }
+                compiler_write_ip(comp, make_ip(mod, 0));
                 break;
             }
 
-            compiler_err(comp, "call takes either a label or an atom");
+            compiler_err(comp, "CALL requires a mod or an atom");
             break;
         }
 
@@ -406,6 +429,8 @@ struct mod *mod_compile(struct text *source)
             compiler_skip(comp);
         }
     }
+
+    compiler_write(comp, OP_RESET);
 
     struct mod *mod = compiler_output(comp);
     compiler_free(comp);

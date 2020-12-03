@@ -58,11 +58,13 @@ enum op_code
     OP_JZ     = 0x59,
     OP_JNZ    = 0x5A,
 
-    OP_YIELD  = 0x60,
-    OP_TSC    = 0x61,
-    OP_IO     = 0x62,
-    OP_IOS    = 0x63,
-    OP_IOR    = 0x64,
+    OP_RESET  = 0x60,
+    OP_YIELD  = 0x61,
+    OP_TSC    = 0x62,
+
+    OP_IO     = 0x68,
+    OP_IOS    = 0x69,
+    OP_IOR    = 0x6A,
 
     OP_PACK   = 0x80,
     OP_UNPACK = 0x81,

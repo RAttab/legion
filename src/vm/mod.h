@@ -75,5 +75,6 @@ bool mods_name(mod_t, atom_t *dst);
 
 bool mods_del(mod_t);
 bool mods_store(mod_t, struct mod *);
+mod_t mods_find(const atom_t *name);
 struct mod *mods_load(mod_t);
 

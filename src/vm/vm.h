@@ -38,6 +38,10 @@ word_t vm_atom(const atom_t *);
 bool vm_atoms_set(const atom_t *, word_t id);
 bool vm_atoms_str(word_t id, atom_t *dst);
 
+inline bool vm_atoms_eq(const atom_t *lhs, const atom_t *rhs)
+{
+    return !memcmp(lhs, rhs, vm_atom_cap);
+}
 
 // -----------------------------------------------------------------------------
 // vm

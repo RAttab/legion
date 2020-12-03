@@ -117,3 +117,13 @@ struct mod *mods_load(mod_t id)
     struct mods_entry *entry = (void *) ret.value;
     return mod_share(entry->mod);
 }
+
+mod_t mods_find(const atom_t *name)
+{
+    struct htable_bucket *it = htable_next(&mods.index, NULL);
+    for (; it; it = htable_next(&mods.index, it)) {
+        struct mods_entry *entry = (void *) it->value;
+        if (vm_atoms_eq(name, &entry->str)) return entry->id;
+    }
+    return 0;
+}
