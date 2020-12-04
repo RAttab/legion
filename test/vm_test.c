@@ -60,20 +60,20 @@ bool check(struct test *test)
     struct vm *exp = test->exp;
     const char *title = test->title;
     ok = check_u64(title, "flags", vm->flags, exp->flags) && ok;
-    ok = check_u64(title, "tsc", vm->tsc, exp->tsc) && ok;
     ok = check_u64(title, "io", vm->io, exp->io) && ok;
     ok = check_u64(title, "ior", vm->ior, exp->ior) && ok;
     ok = check_u64(title, "sp", vm->sp, exp->sp) && ok;
     ok = check_u64(title, "ip", vm->ip, exp->ip) && ok;
+    // ok = check_u64(title, "tsc", vm->tsc, exp->tsc) && ok;
 
     for (size_t i = 0; i < 4; ++i) {
         char reg[32]; sprintf(reg, "r%zu", i);
-        ok = ok && check_u64(title, reg, vm->regs[i], exp->regs[i]);
+        ok = check_u64(title, reg, vm->regs[i], exp->regs[i]) && ok;
     }
 
     for (size_t i = 0; i < vm->sp; ++i) {
         char stack[32]; sprintf(stack, "s%zu", i);
-        ok = ok && check_u64(title, stack, vm->stack[i], exp->stack[i]);
+        ok = check_u64(title, stack, vm->stack[i], exp->stack[i]) && ok;
     }
 
     if (!ok) {
