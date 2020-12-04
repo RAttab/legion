@@ -62,3 +62,14 @@ inline void *alloc_cache(size_t n)
     assert(n % s_cache_line == 0);
     return memset(aligned_alloc(n, n), 0, n);
 }
+
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
+#define dbg(_fmt_, ...)                                                 \
+    do {                                                                \
+        fprintf(stderr, "%s:%u: " _fmt_ "\n", __FILE__, __LINE__, __VA_ARGS__); \
+    } while (false)
+
