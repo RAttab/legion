@@ -109,6 +109,38 @@ void vm_reset(struct vm *vm)
     vm->ip = make_ip(mod, 0);
 }
 
+size_t vm_dbg(struct vm *vm, char *dst, size_t len)
+{
+    size_t orig = len;
+
+    size_t n = 0;
+    n = snprintf(dst, len, "spec:  { stack:%u, speed:%u }\n",
+            (unsigned) vm->specs.stack, (unsigned) vm->specs.speed);
+    dst += n; len -= n;
+
+    n = snprintf(dst, len, "gen:   { ip=%08x, sp=%02x, flags:%02x, io:{n:%02x, r:%02x}, tsc:%08x }\n",
+            vm->ip, (unsigned) vm->sp, (unsigned) vm->flags,
+            (unsigned) vm->io, (unsigned) vm->ior, vm->tsc);
+    dst += n; len -= n;
+
+    n = snprintf(dst, len, "reg:   [ 0:%016lx 1:%016lx 2:%016lx 3:%016lx ]\n",
+            vm->regs[0], vm->regs[1], vm->regs[2], vm->regs[3]);
+    dst += n; len -= n;
+
+    n = snprintf(dst, len, "stack: [ ");
+    dst += n; len -= n;
+
+    for (size_t i = 0; i < vm->sp; ++i) {
+        n = snprintf(dst, len, "%zu:%016lx ", i, vm->stack[i]);
+        dst += n; len -= n;
+    }
+
+    n = snprintf(dst, len, "]\n");
+    dst += n; len -= n;
+
+    return orig - len;
+}
+
 
 // -----------------------------------------------------------------------------
 // step

@@ -65,6 +65,8 @@ inline size_t mod_len(struct mod *mod)
 inline struct mod *mod_share(struct mod *mod) { return ref_share(mod); }
 inline void mod_discard(struct mod *mod) { ref_discard(mod); }
 
+size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
+
 
 // -----------------------------------------------------------------------------
 // mods
@@ -77,4 +79,3 @@ bool mods_del(mod_t);
 bool mods_store(mod_t, struct mod *);
 mod_t mods_find(const atom_t *name);
 struct mod *mods_load(mod_t);
-

@@ -92,7 +92,7 @@ bool mods_del(mod_t id)
 
     ret = htable_del(&mods.index, id);
     assert(ret.ok);
-    
+
     return true;
 }
 
@@ -126,4 +126,25 @@ mod_t mods_find(const atom_t *name)
         if (vm_atoms_eq(name, &entry->str)) return entry->id;
     }
     return 0;
+}
+
+size_t mod_hexdump(struct mod *mod, char *dst, size_t len)
+{
+    size_t orig = len;
+
+    for (size_t i = 0; i < mod->len; ++i) {
+        if (i % 16 == 0) {
+            if (i) { snprintf(dst, len, "\n"); dst++; len--; }
+            size_t n = snprintf(dst, len, "%02x: ", (unsigned) i);
+            dst += n; len -= n;
+        }
+
+        size_t n = snprintf(dst, len, "%02x ", mod->code[i]);
+        dst += n; len -= n;
+    }
+
+    size_t n = snprintf(dst, len, "\n");
+    dst += n; len -= n;
+
+    return orig - len;
 }

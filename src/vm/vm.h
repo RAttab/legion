@@ -116,3 +116,5 @@ inline void vm_unpack(word_t in, uint32_t *msb, uint32_t *lsb)
     *msb = ((uint64_t) in) >> 32;
     *lsb = (uint32_t) in;
 }
+
+size_t vm_dbg(struct vm *, char *dst, size_t len);

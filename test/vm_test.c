@@ -37,7 +37,6 @@ struct test
 bool check(struct test *test)
 {
     fprintf(stderr, "\n[ %s ]=================================\n", test->title);
-    fprintf(stderr, "%s\n", test->src);
 
     assert(test->in);
     assert(test->exp);
@@ -75,6 +74,21 @@ bool check(struct test *test)
     for (size_t i = 0; i < vm->sp; ++i) {
         char stack[32]; sprintf(stack, "s%zu", i);
         ok = ok && check_u64(title, stack, vm->stack[i], exp->stack[i]);
+    }
+
+    if (!ok) {
+        fprintf(stderr, "\n<src>\n%s\n\n", test->src);
+
+        char buffer[1024] = {0};
+
+        mod_hexdump(mod, buffer, sizeof(buffer));
+        fprintf(stderr, "<bytecode:%lu>\n%s\n", mod->len, buffer);
+
+        vm_dbg(test->in, buffer, sizeof(buffer));
+        fprintf(stderr, "<in>\n%s\n", buffer);
+
+        vm_dbg(test->exp, buffer, sizeof(buffer));
+        fprintf(stderr, "<exp>\n%s\n", buffer);
     }
 
     mod_discard(mod);
