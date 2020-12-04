@@ -62,13 +62,15 @@ static char compiler_next(struct compiler *comp)
         comp->in.line = comp->in.line->next;
         comp->in.row++;
         comp->in.col = 0;
-    }
-    return compiler_eof(comp) ? 0 :compiler_peek(comp);
+    } else comp->in.col++;
+    return compiler_eof(comp) ? 0 : c;
 }
 
 static void compiler_skip(struct compiler *comp)
 {
     comp->in.line = comp->in.line->next;
+    comp->in.col = 0;
+    comp->in.row++;
 }
 
 static bool compiler_eol(struct compiler *comp)
@@ -157,14 +159,15 @@ static bool compiler_mod(const char *str, size_t len, mod_t *mod)
 static bool compiler_num(const char *str, size_t len, int64_t *val)
 {
     *val = 0;
+    if (len < 2) return false;
 
     if (str[0] == '0' && str[1] == 'x') {
         for (size_t i = 2; i < len; ++i) {
             char c = str[i];
             *val <<= 4;
-                 if (c >= '0' && c <= '9') *val |= '0' - c;
-            else if (c >= 'A' && c <= 'F') *val |= ('A' - c) + 10;
-            else if (c >= 'a' && c <= 'f') *val |= ('a' - c) + 10;
+                 if (c >= '0' && c <= '9') *val |= c - '0';
+            else if (c >= 'A' && c <= 'F') *val |= (c - 'A') + 10;
+            else if (c >= 'a' && c <= 'f') *val |= (c - 'a') + 10;
             else if (c == ',') {}
             else return false;
         }
@@ -173,10 +176,10 @@ static bool compiler_num(const char *str, size_t len, int64_t *val)
 
     bool neg = str[0] == '-';
 
-    for (size_t i = neg ? 1 : 0; i < len; ++i) {
+    for (size_t i = neg ? 1 : 0; i < len-1; ++i) {
         char c = str[i];
         *val *= 10;
-        if (c >= '0' && c <= '9') *val += '0' - c;
+        if (c >= '0' && c <= '9') *val += c - '0';
         else if (c == ',') {}
         else return false;
     }
@@ -219,6 +222,7 @@ static void compiler_write_ip_at(struct compiler *comp, size_t pos, ip_t val)
 {
     if (!compiler_write_check(comp, pos, sizeof(val))) return;
     *((ip_t *) &comp->out.base[pos]) = val;
+    comp->out.i += sizeof(val);
 }
 
 static void compiler_write_ip(struct compiler *comp, ip_t val)
@@ -272,6 +276,7 @@ static struct compiler *compiler_alloc(struct text *in)
 {
     struct compiler *comp = calloc(1, sizeof(*comp));
     comp->in.text = in;
+    comp->in.line = in->first;
 
     comp->out.len = 1 << 16;
     comp->out.base = calloc(1, comp->out.len);
@@ -331,13 +336,15 @@ struct mod *mod_compile(struct text *source)
             continue;
         }
 
-        struct op_spec *spec = op_spec(token, len);
+        struct op_spec *spec = op_spec(token, len - 1);
         if (!spec) {
             compiler_err(comp, "invalid opcode");
             compiler_skip(comp);
             continue;
         }
         compiler_write(comp, spec->op);
+
+        dbg("comp: op:%x:%s, arg:%d", spec->op, spec->str, spec->arg);
 
         switch (spec->arg) {
         case ARG_NIL: { break; }
@@ -361,6 +368,7 @@ struct mod *mod_compile(struct text *source)
                     compiler_err(comp, "invalid number");
                     break;
                 }
+                dbg("num: %zu:%s -> %016lx", len, lit, val);
                 compiler_write_word(comp, val);
             }
 

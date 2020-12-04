@@ -96,7 +96,7 @@ void vm_compile_init(void)
 
     for (size_t i = 0; i < opmax; ++i) {
         const struct op_spec *spec = &op_specs[i];
-        if (!spec->op) return;
+        if (i && !spec->op) continue;
 
         uint64_t key = op_key(spec->str, op_len);
         uint64_t val = (uint64_t) spec;

@@ -47,6 +47,7 @@ struct legion_packed mod
 
 static_assert(sizeof(struct mod) == s_cache_line);
 
+void vm_compile_init(void);
 struct mod *mod_compile(struct text *source);
 
 struct mod *mod_alloc(

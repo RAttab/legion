@@ -205,5 +205,6 @@ int main(int argc, char **argv)
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/test/vm", argc > 1 ? argv[1] : ".");
 
+    vm_compile_init();
     return check_dir(path) ? 0 : 1;
 }
