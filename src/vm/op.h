@@ -24,7 +24,7 @@ enum op_code
     OP_POP    = 0x13,
     OP_POPR   = 0x14,
     OP_DUPE   = 0x18,
-    OP_FLIP   = 0x19,
+    OP_SWAP   = 0x19,
 
     OP_NOT    = 0x20,
     OP_AND    = 0x21,

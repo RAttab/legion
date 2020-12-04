@@ -22,7 +22,7 @@ const struct op_spec op_specs[] = {
     [OP_POP]    = { .op = OP_POP,    .str = "POP",    .arg = ARG_NIL },
     [OP_POPR]   = { .op = OP_POPR,   .str = "POPR",   .arg = ARG_REG },
     [OP_DUPE]   = { .op = OP_DUPE,   .str = "DUPE",   .arg = ARG_NIL },
-    [OP_FLIP]   = { .op = OP_FLIP,   .str = "FLIP",   .arg = ARG_NIL },
+    [OP_SWAP]   = { .op = OP_SWAP,   .str = "SWAP",   .arg = ARG_NIL },
 
     [OP_NOT]    = { .op = OP_NOT,    .str = "NOT",    .arg = ARG_NIL },
     [OP_AND]    = { .op = OP_AND,    .str = "AND",    .arg = ARG_NIL },

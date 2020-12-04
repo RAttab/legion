@@ -160,7 +160,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
         [OP_POP]    = &&op_pop,
         [OP_POPR]   = &&op_popr,
         [OP_DUPE]   = &&op_dupe,
-        [OP_FLIP]   = &&op_flip,
+        [OP_SWAP]   = &&op_swap,
 
         [OP_NOT]    = &&op_not,
         [OP_AND]    = &&op_and,
@@ -283,7 +283,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
       op_popr: { vm->regs[vm_arg(reg_t)] = vm_pop(); goto next; }
 
       op_dupe: { vm_push(vm_peek()); goto next; }
-      op_flip: {
+      op_swap: {
             vm_ensure(2);
             word_t tmp = vm_stack(0);
             vm_stack(0) = vm_stack(1);
