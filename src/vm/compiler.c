@@ -68,6 +68,7 @@ static char compiler_next(struct compiler *comp)
 
 static void compiler_skip(struct compiler *comp)
 {
+    if (compiler_eof(comp)) return;
     comp->in.line = comp->in.line->next;
     comp->in.col = 0;
     comp->in.row++;
@@ -75,13 +76,11 @@ static void compiler_skip(struct compiler *comp)
 
 static bool compiler_eol(struct compiler *comp)
 {
-    char c = 0;
-    while ((c = compiler_next(comp))) {
+    while (!compiler_eof(comp)) {
+        char c = compiler_next(comp);
         if (isblank(c)) continue;
-        if (c == '#') {
-            compiler_skip(comp);
-            return true;
-        }
+        if (c == '#') { compiler_skip(comp); return true; }
+        if (!c) return true;
         return false;
     }
     return true;
@@ -90,20 +89,20 @@ static bool compiler_eol(struct compiler *comp)
 static const char *compiler_start(struct compiler *comp, size_t *len)
 {
     char c = 0;
-    while ((c = compiler_peek(comp))) {
-        if (isspace(c)) { compiler_next(comp); continue; }
-        if (c == '#') {
-            do { c = compiler_next(comp); } while (c != 0);
-        }
+    while (!compiler_eof(comp)) {
+        c = compiler_next(comp);
+        if (c == '#') { compiler_skip(comp); continue; }
+        if (isblank(c)) continue;
+        if (!c) continue;
         break;
     }
-
-    if (!c) return NULL;
+    if (compiler_eof(comp)) return NULL;
 
     comp->in.tok = 0;
-    while ((c = compiler_peek(comp))) {
-        if (isspace(c) || c == '#') break;
-        comp->in.token[comp->in.tok++] = compiler_next(comp);
+    while (!compiler_eof(comp)) {
+        if (!c || c == '#' || isspace(c)) break;
+        comp->in.token[comp->in.tok++] = c;
+        c = compiler_next(comp);
     }
 
     comp->in.token[comp->in.tok++] = 0;
@@ -196,10 +195,14 @@ static legion_printf(2, 3) void compiler_err(
         comp->err.list = realloc(comp->err.list, len * sizeof(*comp->err.list));
     }
 
+    struct mod_err *err = &comp->err.list[comp->err.len];
+    err->line = comp->in.row;
+
     va_list args;
     va_start(args, fmt);
-    (void) vsnprintf(comp->err.list[comp->err.len].str, mod_err_cap, fmt, args);
+    (void) vsnprintf(err->str, mod_err_cap, fmt, args);
     va_end(args);
+
 
     comp->err.len++;
 }
@@ -325,7 +328,7 @@ struct mod *mod_compile(struct text *source)
         token = compiler_start(comp, &len);
         if (!len || !token) break;
 
-        if (token[len - 1] == ':') {
+        if (token[len - 2] == ':') {
             if (unlikely(len > 32)) {
                 compiler_err(comp, "label too long");
                 compiler_skip(comp);
@@ -343,8 +346,6 @@ struct mod *mod_compile(struct text *source)
             continue;
         }
         compiler_write(comp, spec->op);
-
-        dbg("comp: op:%x:%s, arg:%d", spec->op, spec->str, spec->arg);
 
         switch (spec->arg) {
         case ARG_NIL: { break; }
@@ -368,7 +369,6 @@ struct mod *mod_compile(struct text *source)
                     compiler_err(comp, "invalid number");
                     break;
                 }
-                dbg("num: %zu:%s -> %016lx", len, lit, val);
                 compiler_write_word(comp, val);
             }
 
@@ -383,17 +383,19 @@ struct mod *mod_compile(struct text *source)
             if (!compiler_num(num, len, &val)) { compiler_err(comp, "invalid length"); break; }
             if (val >= 0x7F) { compiler_err(comp, "length must be less then 128"); break; }
             compiler_write(comp, val);
+            break;
         }
 
         case ARG_REG: {
             const char *reg = compiler_arg(comp, &len);
             if (!reg) { compiler_err(comp, "missing register argument"); break; }
             if (reg[0] != '$') { compiler_err(comp, "registers must start with $"); break; }
-            if (len != 2 || reg[1] < '1' || reg[1] > '4') {
+            if (len != 3 || reg[1] < '1' || reg[1] > '4') {
                 compiler_err(comp, "unknown register");
                 break;
             }
             compiler_write(comp, '1' - reg[1]);
+            break;
         }
 
         case ARG_OFF: {

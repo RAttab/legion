@@ -68,6 +68,8 @@ enum op_code
 
     OP_PACK   = 0x80,
     OP_UNPACK = 0x81,
+
+    OP_MAX_,
 };
 
 enum op_arg

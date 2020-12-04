@@ -148,8 +148,8 @@ void text_from_str(struct text *text, const char *src, size_t len)
 
     struct line *line = text->first;
     for (size_t i = 0, j = 0; i < len; ++i, ++j) {
-        if (src[i] == '\n') { line = text_insert(text, line); j = 0; }
-        else if (j > line_cap) continue;
-        else line->c[j] = src[i];
+        if (src[i] == '\n') { line = text_insert(text, line); j = -1; continue; }
+        if (j > line_cap) continue;
+        line->c[j] = src[i];
     }
 }

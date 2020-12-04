@@ -48,7 +48,7 @@ bool check(struct test *test)
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {
             struct mod_err *err = &mod->errs[i];
-            fprintf(stderr, "%zu:%zu: %s\n", err->line, err->col, err->str);
+            fprintf(stderr, "%zu: %s\n", err->line, err->str);
         }
         return false;
     }

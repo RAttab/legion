@@ -91,10 +91,9 @@ struct op_spec *op_spec(const char *str, size_t len)
 
 void vm_compile_init(void)
 {
-    const size_t opmax = 48;
-    htable_reserve(&op_lookup, opmax);
+    htable_reserve(&op_lookup, OP_MAX_);
 
-    for (size_t i = 0; i < opmax; ++i) {
+    for (size_t i = 0; i < OP_MAX_; ++i) {
         const struct op_spec *spec = &op_specs[i];
         if (i && !spec->op) continue;
 

@@ -18,7 +18,7 @@
 enum { mod_err_cap = line_cap };
 struct mod_err
 {
-    size_t line, col;
+    size_t line;
     char str[mod_err_cap];
 };
 

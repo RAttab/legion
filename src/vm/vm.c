@@ -51,7 +51,7 @@ size_t vm_len(uint8_t stack)
 void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
 {
     vm->specs.stack = 2 + (8 * stack);
-    vm->specs.speed = speed;
+    vm->specs.speed = 1 << speed;
 }
 
 void vm_suspend(struct vm *vm)
@@ -123,7 +123,7 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
             (unsigned) vm->io, (unsigned) vm->ior, vm->tsc);
     dst += n; len -= n;
 
-    n = snprintf(dst, len, "reg:   [ 0:%016lx 1:%016lx 2:%016lx 3:%016lx ]\n",
+    n = snprintf(dst, len, "reg:   [ 1:%016lx 2:%016lx 3:%016lx 4:%016lx ]\n",
             vm->regs[0], vm->regs[1], vm->regs[2], vm->regs[3]);
     dst += n; len -= n;
 
@@ -262,10 +262,9 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
 
     void *vm_ip = &mod->code[ip_addr(vm->ip)];
     void *vm_end = mod->code + mod->len;
-    (void) vm_end;
+    (void) vm_end; // not used if VM_DEBUG is not defined.
 
-    size_t cycles = 1 << vm->specs.speed;
-
+    size_t cycles = vm->specs.speed;
     for (size_t i = 0; i < cycles; ++i) {
 
         uint8_t opcode = *((uint8_t *) vm_ip);
