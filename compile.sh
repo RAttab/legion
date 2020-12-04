@@ -44,16 +44,18 @@ $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
 cp -r "${PREFIX}/res" .
 
 parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
+
+if [ -z  "${VALGRIND}" ]; then
+    parallel "./test_{}" "${PREFIX}" ::: ${TEST[@]}
+else
+    parallel valgrind \
+        --leak-check=full \
+        --track-origins=yes \
+        --trace-children=yes \
+        --error-exitcode=1 \
+        "./test_{}" "${PREFIX}" ::: ${TEST[@]}
+fi
+
+
 for test in "${TEST[@]}"; do
-    if [ -z  "${VALGRIND}" ]; then
-        echo "testing ${test}..."; "./test_$test" "${PREFIX}"
-    else
-        echo "valgrind ${test}...";
-        valgrind \
-            --leak-check=full \
-            --track-origins=yes \
-            --trace-children=yes \
-            --error-exitcode=1 \
-            "./test_$test" "${PREFIX}"
-    fi
 done
