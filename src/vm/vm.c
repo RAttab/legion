@@ -147,7 +147,7 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
 // -----------------------------------------------------------------------------
 
 
-ip_t vm_exec(struct vm *vm, struct mod *mod)
+ip_t vm_exec(struct vm *vm, const struct mod *mod)
 {
     if (vm->flags & (FLAG_SUSPENDED | flag_faults)) return 0;
     vm_assert(ip_addr(vm->ip) < mod->len);
@@ -206,13 +206,12 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
     };
 
 
-#define vm_arg(arg_type_t)                              \
-    ({                                                  \
-        vm_assert(vm_ip + sizeof(arg_type_t) < vm_end); \
-        arg_type_t arg = *((arg_type_t *) vm_ip);       \
-        vm_ip += sizeof(arg_type_t);                    \
-        vm->ip += sizeof(arg_type_t);                   \
-        arg;                                            \
+#define vm_arg(arg_type_t)                                              \
+    ({                                                                  \
+        vm_assert(vm->ip + sizeof(arg_type_t) <= mod->len);             \
+        arg_type_t arg = *((const arg_type_t *) (mod->code + vm->ip));  \
+        vm->ip += sizeof(arg_type_t);                                   \
+        arg;                                                            \
     })
 
 #define vm_stack(i) vm->stack[vm->sp - 1 - (i)]
@@ -261,16 +260,10 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
     } while (false)
 
 
-    void *vm_ip = &mod->code[ip_addr(vm->ip)];
-    void *vm_end = mod->code + mod->len;
-    (void) vm_end; // not used if VM_DEBUG is not defined.
-
     size_t cycles = vm->specs.speed;
     for (size_t i = 0; i < cycles; ++i) {
 
-        uint8_t opcode = *((uint8_t *) vm_ip);
-        vm_ip++; vm->ip++;
-
+        uint8_t opcode = mod->code[vm->ip++];
         const void *label = opcodes[opcode];
         vm_assert(label);
         goto *label;

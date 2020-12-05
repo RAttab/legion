@@ -20,6 +20,7 @@ struct test
     const char *title;
     const char *src;
     struct vm *in, *exp;
+    ip_t exp_ret;
 };
 
 #define check_u64(title, field, _tval_, _texp_)                 \
@@ -61,7 +62,7 @@ bool check(struct test *test)
     }
 
     struct vm *vm = test->in;
-    vm_exec(vm, mod);
+    ip_t ret = vm_exec(vm, mod);
 
     bool ok = true;
     struct vm *exp = test->exp;
@@ -70,8 +71,9 @@ bool check(struct test *test)
     ok = check_u64(title, "io", vm->io, exp->io) && ok;
     ok = check_u64(title, "ior", vm->ior, exp->ior) && ok;
     ok = check_u64(title, "sp", vm->sp, exp->sp) && ok;
+    ok = check_u64(title, "ret", ret, test->exp_ret) && ok;
     ok = (!exp->ip || check_u64(title, "ip", vm->ip, exp->ip)) && ok;
-    // ok = check_u64(title, "tsc", vm->tsc, exp->tsc) && ok;
+    ok = (!exp->tsc || check_u64(title, "tsc", vm->tsc, exp->tsc)) && ok;
 
     for (size_t i = 0; i < 4; ++i) {
         char reg[32]; sprintf(reg, "r%zu", i);
@@ -92,10 +94,10 @@ bool check(struct test *test)
         fprintf(stderr, "<bytecode:%lu>\n%s\n", mod->len, buffer);
 
         vm_dbg(test->in, buffer, sizeof(buffer));
-        fprintf(stderr, "<ret>\n%s\n", buffer);
+        fprintf(stderr, "<ret>\n%sret:   %x\n\n", buffer, ret);
 
         vm_dbg(test->exp, buffer, sizeof(buffer));
-        fprintf(stderr, "<exp>\n%s\n", buffer);
+        fprintf(stderr, "<exp>\n%sret:   %x\n\n", buffer, test->exp_ret);
     }
 
     mod_discard(mod);
@@ -105,7 +107,7 @@ bool check(struct test *test)
     return ok;
 }
 
-char *read_field(char *ptr, struct vm **vm)
+char *read_field(char *ptr, struct test *test, struct vm **vm)
 {
     const char *field = ptr;
     while (*ptr != ':') ptr++;
@@ -126,6 +128,7 @@ char *read_field(char *ptr, struct vm **vm)
     if (!strcmp(field, "sp")) { (*vm)->sp = word; goto end; }
     if (!strcmp(field, "ior")) { (*vm)->ior = word; goto end; }
     if (!strcmp(field, "io")) { (*vm)->io = word; goto end; }
+    if (!strcmp(field, "ret")) { test->exp_ret = word; goto end; }
     if (*field == 'r') { (*vm)->regs[*(field + 1) - '1'] = word; goto end; }
     if (*field == 's') { (*vm)->stack[*(field + 1) - '0'] = word; goto end; }
     dbg("unknown field: %s -> %ld", field, word);
@@ -180,7 +183,8 @@ bool check_file(const char *file)
             else if (!strncmp(ptr, out, sizeof(out)-1)) { vm = &test.exp; ptr += sizeof(out)-1; }
             else assert(false);
 
-            while (*ptr != '&' && *ptr != '\n' && ptr < end) { ptr = read_field(ptr, vm); }
+            while (*ptr != '&' && *ptr != '\n' && ptr < end)
+                ptr = read_field(ptr, &test, vm);
         }
 
         ok = check(&test) && ok;

@@ -345,7 +345,7 @@ yield
 &in>S:1
 &out>S:1,sp:1,s0:5
 
-!basic-call
+!basic-ret
 &prog
 call @fn
 yield
@@ -353,4 +353,3 @@ fn:
 ret
 &in>S:1
 &out>S:1,sp:0
-

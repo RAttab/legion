@@ -87,7 +87,7 @@ void vm_free(struct vm *);
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 size_t vm_len(uint8_t stack);
 
-ip_t vm_exec(struct vm *, struct mod *);
+ip_t vm_exec(struct vm *, const struct mod *);
 
 void vm_reset(struct vm *);
 void vm_suspend(struct vm *);
