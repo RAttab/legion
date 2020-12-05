@@ -76,6 +76,8 @@ static void compiler_skip(struct compiler *comp)
 
 static bool compiler_eol(struct compiler *comp)
 {
+    if (!compiler_peek(comp)) return true;
+
     while (!compiler_eof(comp)) {
         char c = compiler_next(comp);
         if (isblank(c)) continue;
@@ -102,6 +104,8 @@ static const char *compiler_start(struct compiler *comp, size_t *len)
     while (!compiler_eof(comp)) {
         if (!c || c == '#' || isspace(c)) break;
         comp->in.token[comp->in.tok++] = c;
+
+        if (!compiler_peek(comp)) break;
         c = compiler_next(comp);
     }
 
@@ -163,7 +167,9 @@ static bool compiler_num(const char *str, size_t len, int64_t *val)
     if (str[0] == '0' && str[1] == 'x') {
         for (size_t i = 2; i < len; ++i) {
             char c = str[i];
+            if (!c) break;
             *val <<= 4;
+
                  if (c >= '0' && c <= '9') *val |= c - '0';
             else if (c >= 'A' && c <= 'F') *val |= (c - 'A') + 10;
             else if (c >= 'a' && c <= 'f') *val |= (c - 'a') + 10;

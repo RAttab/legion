@@ -85,7 +85,7 @@ bool check(struct test *test)
         fprintf(stderr, "<bytecode:%lu>\n%s\n", mod->len, buffer);
 
         vm_dbg(test->in, buffer, sizeof(buffer));
-        fprintf(stderr, "<in>\n%s\n", buffer);
+        fprintf(stderr, "<ret>\n%s\n", buffer);
 
         vm_dbg(test->exp, buffer, sizeof(buffer));
         fprintf(stderr, "<exp>\n%s\n", buffer);
@@ -110,7 +110,8 @@ char *read_field(char *ptr, struct vm **vm)
 
     word_t word = strtol(str, NULL, 16);
 
-    if (!strcmp(field, "S")) { *vm = vm_alloc(word, 1); goto end; }
+    if (!strcmp(field, "S")) { *vm = vm_alloc(word, 4); goto end; }
+    if (!strcmp(field, "C")) { (*vm)->specs.speed = 1 << word; goto end; }
     if (!strcmp(field, "flags")) { (*vm)->flags = word; goto end; }
     if (!strcmp(field, "tsc")) { (*vm)->tsc = word; goto end; }
     if (!strcmp(field, "ip")) { (*vm)->ip = word; goto end; }
@@ -119,6 +120,7 @@ char *read_field(char *ptr, struct vm **vm)
     if (!strcmp(field, "io")) { (*vm)->io = word; goto end; }
     if (*field == 'r') { (*vm)->regs[*(field + 1) - '1'] = word; goto end; }
     if (*field == 's') { (*vm)->stack[*(field + 1) - '0'] = word; goto end; }
+    dbg("unknown field: %s -> %ld", field, word);
     assert(false);
 
   end:

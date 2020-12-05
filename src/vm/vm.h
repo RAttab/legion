@@ -60,7 +60,6 @@ enum flags
     FLAG_FAULT_CODE = 1 << 5,
     FLAG_FAULT_MATH = 1 << 6,
     FLAG_FAULT_IO  = 1 << 7,
-
 };
 
 struct legion_packed vm

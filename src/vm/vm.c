@@ -276,7 +276,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
 
       op_push: { vm_push(vm_arg(word_t)); goto next; }
       op_pushr: { vm_push(vm->regs[vm_arg(reg_t)]); goto next; }
-      op_pushf: { vm_push(vm->regs[vm->flags]); goto next; }
+      op_pushf: { vm_push(vm->flags); goto next; }
 
       op_pop: { vm_pop(); goto next; }
       op_popr: { vm->regs[vm_arg(reg_t)] = vm_pop(); goto next; }

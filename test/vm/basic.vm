@@ -1,14 +1,71 @@
-!basic
+!basic-preempt
+@prog
+push 1
+push 2
+yield
+@in>S:1,C:0
+@out>S:1,sp:1,s0:1
+
+!basic-push
 @prog
 push 1
 yield
 @in>S:1
 @out>S:1,sp:1,r1:0,s0:1
 
-!base-2
+!basic-pushr
+@prog
+pushr $1
+yield
+@in>S:1,r1:12
+@out>S:1,sp:1,r1:12,s0:12
+
+!basic-pushf
+@prog
+pushf
+yield
+@in>S:1,flags:1
+@out>S:1,flags:1,sp:1,s0:1
+
+!basic-pop
+@prog
+push 1
+pop
+yield
+@in>S:1
+@out>S:1,sp:0
+
+!basic-popr
 @prog
 push 1
 popr $1
 yield
 @in>S:1
 @out>S:1,sp:0,r1:1
+
+!basic-dupe
+@prog
+push 1
+dupe
+yield
+@in>S:1
+@out>S:1,sp:2,s0:1,s1:1
+
+!basic-swap
+@prog
+push 1
+push 2
+swap
+yield
+@in>S:1
+@out>S:1,sp:2,s0:2,s1:1
+
+!basic-not
+@prog
+push 0x123456789aBcDeF0
+not
+push 0
+not
+yield
+@in>S:1
+@out>S:1,sp:2,s0:0,s1:1
