@@ -143,13 +143,11 @@ struct htable_ret htable_try_put(struct htable *ht, uint64_t key, uint64_t value
 struct htable_ret htable_put(struct htable *ht, uint64_t key, uint64_t value)
 {
     struct htable_ret ret = htable_try_put(ht, key, value);
-    if (ret.ok && !ret.value) return ret;
+    if (ret.ok || ret.value) return ret;
 
     htable_resize(ht, ht->cap * 2);
     return htable_put(ht, key, value);
 }
-
-
 
 struct htable_ret htable_xchg(struct htable *ht, uint64_t key, uint64_t value)
 {
