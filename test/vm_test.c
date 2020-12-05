@@ -36,7 +36,14 @@ struct test
 
 bool check(struct test *test)
 {
-    fprintf(stderr, "\n[ %s ]=================================\n", test->title);
+    {
+        char title[80];
+        memset(title, '=', sizeof(title));
+        title[sizeof(title) - 1] = 0;
+        size_t len = snprintf(title, sizeof(title), "[ %s ]", test->title);
+        title[len] = '=';
+        fprintf(stderr, "%s\n", title);
+    }
 
     assert(test->in);
     assert(test->exp);
@@ -108,7 +115,8 @@ char *read_field(char *ptr, struct vm **vm)
     while (*ptr != ',' && *ptr != '\n') ptr++;
     *ptr = 0; ptr++;
 
-    word_t word = strtol(str, NULL, 16);
+    word_t word = (str[0] == '0' && str[1] == 'x') ?
+        (word_t) strtoul(str, NULL, 16) : strtol(str, NULL, 10);
 
     if (!strcmp(field, "S")) { *vm = vm_alloc(word, 4); goto end; }
     if (!strcmp(field, "C")) { (*vm)->specs.speed = 1 << word; goto end; }

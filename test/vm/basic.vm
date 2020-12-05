@@ -69,3 +69,110 @@ not
 yield
 @in>S:1
 @out>S:1,sp:2,s0:0,s1:1
+
+!basic-and
+@prog
+push 1
+push 1
+and
+push 1
+push 0
+and
+push 0
+push 1
+and
+push 0
+push 0
+and
+yield
+@in>S:2
+@out>S:2,sp:4,s0:1,s1:0,s2:0,s3:0
+
+!basic-or
+@prog
+push 1
+push 1
+or
+push 1
+push 0
+or
+push 0
+push 1
+or
+push 0
+push 0
+or
+yield
+@in>S:2
+@out>S:2,sp:4,s0:1,s1:1,s2:1,s3:0
+
+!basic-xor
+@prog
+push 1
+push 1
+xor
+push 1
+push 0
+xor
+push 0
+push 1
+xor
+push 0
+push 0
+xor
+yield
+@in>S:2
+@out>S:2,sp:4,s0:0,s1:1,s2:1,s3:0
+
+!basic-bnot
+@prog
+push 0xFF00FF00FF00FF00
+bnot
+yield
+@in>S:1
+@out>S:1,sp:1,s0:0x00ff00ff00ff00ff
+
+!basic-band
+@prog
+push 0xFF00FF00FF00FF00
+push 0xF0F0F0F0F0F0F0F0
+band
+yield
+@in>S:1
+@out>S:1,sp:1,s0:0xf000f000f000f000
+
+!basic-bor
+@prog
+push 0xFF00FF00FF00FF00
+push 0xF0F0F0F0F0F0F0F0
+bor
+yield
+@in>S:1
+@out>S:1,sp:1,s0:0xfff0fff0fff0fff0
+
+!basic-bxor
+@prog
+push 0xFF00FF00FF00FF00
+push 0xF0F0F0F0F0F0F0F0
+bxor
+yield
+@in>S:1
+@out>S:1,sp:1,s0:0x0ff00ff00ff00ff0
+
+!basic-bsl
+@prog
+push 0xFF00FF00FF00FF00
+push 4
+bsl
+yield
+@in>S:1
+@out>S:1,sp:1,s0:0xf00ff00ff00ff000
+
+!basic-bsr
+@prog
+push 0xFF00FF00FF00FF00
+push 4
+bsr
+yield
+@in>S:1
+@out>S:1,sp:1,s0:0x0ff00ff00ff00ff0
