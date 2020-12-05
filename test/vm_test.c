@@ -70,7 +70,7 @@ bool check(struct test *test)
     ok = check_u64(title, "io", vm->io, exp->io) && ok;
     ok = check_u64(title, "ior", vm->ior, exp->ior) && ok;
     ok = check_u64(title, "sp", vm->sp, exp->sp) && ok;
-    ok = check_u64(title, "ip", vm->ip, exp->ip) && ok;
+    ok = (!exp->ip || check_u64(title, "ip", vm->ip, exp->ip)) && ok;
     // ok = check_u64(title, "tsc", vm->tsc, exp->tsc) && ok;
 
     for (size_t i = 0; i < 4; ++i) {
@@ -154,30 +154,33 @@ bool check_file(const char *file)
     while (ptr < end) {
         struct test test = {0};
 
+        while (*ptr == '#')
+            while (*ptr != '\n') { ptr++; }
+
         while (*ptr != '!') ptr++;
         test.title = ptr + 1;
 
         while (*ptr != '\n') {ptr++; }
         *ptr = 0; ptr++;
 
-        const char prog[] = "@prog\n";
+        const char prog[] = "&prog\n";
         assert(!strncmp(ptr, prog, sizeof(prog)-1));
         ptr += sizeof(prog)-1;
         test.src = ptr;
 
-        while (*ptr != '@') { ptr++; }
+        while (*ptr != '&') { ptr++; }
         *(ptr - 1) = 0;
 
         while (*ptr != '\n' && ptr < end) {
             struct vm **vm = NULL;
 
-            const char in[] = "@in>";
-            const char out[] = "@out>";
+            const char in[] = "&in>";
+            const char out[] = "&out>";
             if (!strncmp(ptr, in, sizeof(in)-1)) { vm = &test.in; ptr += sizeof(in)-1; }
             else if (!strncmp(ptr, out, sizeof(out)-1)) { vm = &test.exp; ptr += sizeof(out)-1; }
             else assert(false);
 
-            while (*ptr != '@' && *ptr != '\n' && ptr < end) { ptr = read_field(ptr, vm); }
+            while (*ptr != '&' && *ptr != '\n' && ptr < end) { ptr = read_field(ptr, vm); }
         }
 
         ok = check(&test) && ok;

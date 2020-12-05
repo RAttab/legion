@@ -231,7 +231,6 @@ static void compiler_write_ip_at(struct compiler *comp, size_t pos, ip_t val)
 {
     if (!compiler_write_check(comp, pos, sizeof(val))) return;
     *((ip_t *) &comp->out.base[pos]) = val;
-    comp->out.i += sizeof(val);
 }
 
 static void compiler_write_ip(struct compiler *comp, ip_t val)
@@ -249,9 +248,10 @@ static void compiler_write_word(struct compiler *comp, word_t val)
 }
 
 
-static void compiler_label_def(struct compiler *comp, const char *label)
+static void compiler_label_def(
+        struct compiler *comp, const char *label, size_t len)
 {
-    uint64_t hash = hash_str(label, line_cap);
+    uint64_t hash = hash_str(label, len - 2); // remove :\0
     struct htable_ret ret = htable_put(&comp->lbl.is, hash, comp->out.i);
     if (!ret.ok) { compiler_err(comp, "undefined label: %s", label); return; }
 
@@ -265,10 +265,11 @@ static void compiler_label_def(struct compiler *comp, const char *label)
     (void) htable_del(&comp->lbl.wants, hash);
 }
 
-static void compiler_label_ref(struct compiler *comp, const char *label)
+static void compiler_label_ref(
+        struct compiler *comp, const char *label, size_t len)
 {
     assert(label[0] == '@');
-    uint64_t hash = hash_str(label + 1, line_cap);
+    uint64_t hash = hash_str(label + 1, len - 2); // remove @ and \0
 
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
     if (ret.ok) { compiler_write_ip(comp, make_ip(0, ret.value)); return; }
@@ -340,7 +341,7 @@ struct mod *mod_compile(struct text *source)
                 compiler_skip(comp);
                 continue;
             }
-            compiler_label_def(comp, token);
+            compiler_label_def(comp, token, len);
             compiler_eol(comp);
             continue;
         }
@@ -409,7 +410,7 @@ struct mod *mod_compile(struct text *source)
             if (!label) { compiler_err(comp, "missing label argument"); break; }
             if (label[0] != '@') { compiler_err(comp, "labels must start with @"); break; }
             if (len > 32) { compiler_err(comp, "label too long"); break; }
-            compiler_label_ref(comp, label);
+            compiler_label_ref(comp, label, len);
         }
 
         case ARG_MOD: {
@@ -418,7 +419,7 @@ struct mod *mod_compile(struct text *source)
 
             if (label[0] == '@') {
                 if (len > 32) { compiler_err(comp, "label too long"); break; }
-                compiler_label_ref(comp, label);
+                compiler_label_ref(comp, label, len);
                 break;
             }
 

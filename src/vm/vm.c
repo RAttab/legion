@@ -211,6 +211,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
         vm_assert(vm_ip + sizeof(arg_type_t) < vm_end); \
         arg_type_t arg = *((arg_type_t *) vm_ip);       \
         vm_ip += sizeof(arg_type_t);                    \
+        vm->ip += sizeof(arg_type_t);                   \
         arg;                                            \
     })
 
@@ -268,7 +269,7 @@ ip_t vm_exec(struct vm *vm, struct mod *mod)
     for (size_t i = 0; i < cycles; ++i) {
 
         uint8_t opcode = *((uint8_t *) vm_ip);
-        ++vm_ip;
+        vm_ip++; vm->ip++;
 
         const void *label = opcodes[opcode];
         vm_assert(label);

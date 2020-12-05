@@ -1,77 +1,88 @@
+############################################################
+# Systemy tests
+
 !basic-preempt
-@prog
+&prog
 push 1
 push 2
 yield
-@in>S:1,C:0
-@out>S:1,sp:1,s0:1
+&in>S:1,C:0
+&out>S:1,sp:1,s0:1
+
+
+############################################################
+# push/pop
 
 !basic-push
-@prog
+&prog
 push 1
 yield
-@in>S:1
-@out>S:1,sp:1,r1:0,s0:1
+&in>S:1
+&out>S:1,sp:1,r1:0,s0:1
 
 !basic-pushr
-@prog
+&prog
 pushr $1
 yield
-@in>S:1,r1:12
-@out>S:1,sp:1,r1:12,s0:12
+&in>S:1,r1:12
+&out>S:1,sp:1,r1:12,s0:12
 
 !basic-pushf
-@prog
+&prog
 pushf
 yield
-@in>S:1,flags:1
-@out>S:1,flags:1,sp:1,s0:1
+&in>S:1,flags:1
+&out>S:1,flags:1,sp:1,s0:1
 
 !basic-pop
-@prog
+&prog
 push 1
 pop
 yield
-@in>S:1
-@out>S:1,sp:0
+&in>S:1
+&out>S:1,sp:0
 
 !basic-popr
-@prog
+&prog
 push 1
 popr $1
 yield
-@in>S:1
-@out>S:1,sp:0,r1:1
+&in>S:1
+&out>S:1,sp:0,r1:1
 
 !basic-dupe
-@prog
+&prog
 push 1
 dupe
 yield
-@in>S:1
-@out>S:1,sp:2,s0:1,s1:1
+&in>S:1
+&out>S:1,sp:2,s0:1,s1:1
 
 !basic-swap
-@prog
+&prog
 push 1
 push 2
 swap
 yield
-@in>S:1
-@out>S:1,sp:2,s0:2,s1:1
+&in>S:1
+&out>S:1,sp:2,s0:2,s1:1
+
+
+############################################################
+# boolean
 
 !basic-not
-@prog
+&prog
 push 0x123456789aBcDeF0
 not
 push 0
 not
 yield
-@in>S:1
-@out>S:1,sp:2,s0:0,s1:1
+&in>S:1
+&out>S:1,sp:2,s0:0,s1:1
 
 !basic-and
-@prog
+&prog
 push 1
 push 1
 and
@@ -85,11 +96,11 @@ push 0
 push 0
 and
 yield
-@in>S:2
-@out>S:2,sp:4,s0:1,s1:0,s2:0,s3:0
+&in>S:2
+&out>S:2,sp:4,s0:1,s1:0,s2:0,s3:0
 
 !basic-or
-@prog
+&prog
 push 1
 push 1
 or
@@ -103,11 +114,11 @@ push 0
 push 0
 or
 yield
-@in>S:2
-@out>S:2,sp:4,s0:1,s1:1,s2:1,s3:0
+&in>S:2
+&out>S:2,sp:4,s0:1,s1:1,s2:1,s3:0
 
 !basic-xor
-@prog
+&prog
 push 1
 push 1
 xor
@@ -121,58 +132,225 @@ push 0
 push 0
 xor
 yield
-@in>S:2
-@out>S:2,sp:4,s0:0,s1:1,s2:1,s3:0
+&in>S:2
+&out>S:2,sp:4,s0:0,s1:1,s2:1,s3:0
+
+
+############################################################
+# binary
 
 !basic-bnot
-@prog
+&prog
 push 0xFF00FF00FF00FF00
 bnot
 yield
-@in>S:1
-@out>S:1,sp:1,s0:0x00ff00ff00ff00ff
+&in>S:1
+&out>S:1,sp:1,s0:0x00ff00ff00ff00ff
 
 !basic-band
-@prog
+&prog
 push 0xFF00FF00FF00FF00
 push 0xF0F0F0F0F0F0F0F0
 band
 yield
-@in>S:1
-@out>S:1,sp:1,s0:0xf000f000f000f000
+&in>S:1
+&out>S:1,sp:1,s0:0xf000f000f000f000
 
 !basic-bor
-@prog
+&prog
 push 0xFF00FF00FF00FF00
 push 0xF0F0F0F0F0F0F0F0
 bor
 yield
-@in>S:1
-@out>S:1,sp:1,s0:0xfff0fff0fff0fff0
+&in>S:1
+&out>S:1,sp:1,s0:0xfff0fff0fff0fff0
 
 !basic-bxor
-@prog
+&prog
 push 0xFF00FF00FF00FF00
 push 0xF0F0F0F0F0F0F0F0
 bxor
 yield
-@in>S:1
-@out>S:1,sp:1,s0:0x0ff00ff00ff00ff0
+&in>S:1
+&out>S:1,sp:1,s0:0x0ff00ff00ff00ff0
 
 !basic-bsl
-@prog
+&prog
 push 0xFF00FF00FF00FF00
 push 4
 bsl
 yield
-@in>S:1
-@out>S:1,sp:1,s0:0xf00ff00ff00ff000
+&in>S:1
+&out>S:1,sp:1,s0:0xf00ff00ff00ff000
 
 !basic-bsr
-@prog
+&prog
 push 0xFF00FF00FF00FF00
 push 4
 bsr
 yield
-@in>S:1
-@out>S:1,sp:1,s0:0x0ff00ff00ff00ff0
+&in>S:1
+&out>S:1,sp:1,s0:0x0ff00ff00ff00ff0
+
+
+############################################################
+# math
+
+!basic-neg
+&prog
+push -1
+neg
+push 1
+neg
+yield
+&in>S:1
+&out>S:1,sp:2,s0:1,s1:-1
+
+!basic-add
+&prog
+push 1
+push 1
+add
+yield
+&in>S:1
+&out>S:1,sp:1,s0:2
+
+!basic-sub
+&prog
+push 3
+push 2
+sub
+yield
+&in>S:1
+&out>S:1,sp:1,s0:1
+
+!basic-mul
+&prog
+push 2
+push 3
+mul
+yield
+&in>S:1
+&out>S:1,sp:1,s0:6
+
+!basic-lmul
+&prog
+push 0x7FFFFFFFFFFFFFFF
+push 0xF
+lmul
+yield
+&in>S:1
+&out>S:1,sp:2,s0:0x7FFFFFFFFFFFFFF1,s1:0x7
+
+!basic-div
+&prog
+push 6
+push 3
+div
+yield
+&in>S:1
+&out>S:1,sp:1,s0:2
+
+!basic-rem
+&prog
+push 5
+push 3
+rem
+yield
+&in>S:1
+&out>S:1,sp:1,s0:2
+
+
+############################################################
+# comp
+
+!basic-eq
+&prog
+push 1
+push 1
+eq
+push 1
+push 2
+eq
+yield
+&in>S:1
+&out>S:1,sp:2,s0:1,s1:0
+
+!basic-ne
+&prog
+push 1
+push 1
+ne
+push 1
+push 2
+ne
+yield
+&in>S:1
+&out>S:1,sp:2,s0:0,s1:1
+
+!basic-gt
+&prog
+push 1
+push 1
+gt
+push 1
+push 2
+gt
+push 2
+push 1
+gt
+yield
+&in>S:2
+&out>S:2,sp:3,s0:0,s1:1,s2:0
+
+!basic-lt
+&prog
+push 1
+push 1
+lt
+push 1
+push 2
+lt
+push 2
+push 1
+lt
+yield
+&in>S:2
+&out>S:2,sp:3,s0:0,s1:0,s2:1
+
+!basic-cmp
+&prog
+push 1
+push 1
+cmp
+push 1
+push 3
+cmp
+push 3
+push 1
+cmp
+yield
+&in>S:2
+&out>S:2,sp:3,s0:0,s1:2,s2:-2
+
+
+############################################################
+# jmp
+
+!basic-call
+&prog
+call @fn
+fn:
+yield
+&in>S:1
+&out>S:1,sp:1,s0:5
+
+!basic-call
+&prog
+call @fn
+yield
+fn:
+ret
+&in>S:1
+&out>S:1,sp:0
+
