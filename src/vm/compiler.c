@@ -269,8 +269,8 @@ static void compiler_label_ref(
         struct compiler *comp, const char *label, size_t len)
 {
     assert(label[0] == '@');
-    uint64_t hash = hash_str(label + 1, len - 2); // remove @ and \0
 
+    uint64_t hash = hash_str(label + 1, len - 2); // remove @ and \0
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
     if (ret.ok) { compiler_write_ip(comp, make_ip(0, ret.value)); return; }
 
@@ -411,6 +411,7 @@ struct mod *mod_compile(struct text *source)
             if (label[0] != '@') { compiler_err(comp, "labels must start with @"); break; }
             if (len > 32) { compiler_err(comp, "label too long"); break; }
             compiler_label_ref(comp, label, len);
+            break;
         }
 
         case ARG_MOD: {

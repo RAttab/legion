@@ -353,3 +353,44 @@ fn:
 ret
 &in>S:1
 &out>S:1,sp:0
+
+!basic-jmp
+&prog
+jmp @out
+push 0xffffffff
+out:
+yield
+&in>S:1
+&out>S:1,sp:0
+
+!basic-jz
+&prog
+push 1
+jz @fail
+
+push 0
+jz @ok
+jmp @fail
+
+fail:
+push 0xffffffff
+ok:
+yield
+&in>S:1
+&out>S:1,sp:0
+
+!basic-jnz
+&prog
+push 0
+jnz @fail
+
+push 1
+jnz @ok
+jmp @fail
+
+fail:
+push 0xffffffff
+ok:
+yield
+&in>S:1
+&out>S:1,sp:0
