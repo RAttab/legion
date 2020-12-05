@@ -17,7 +17,7 @@
 
 struct test
 {
-    const char *title;
+    atom_t title;
     const char *src;
     struct vm *in, *exp;
     ip_t exp_ret;
@@ -53,6 +53,10 @@ bool check(struct test *test)
     text_from_str(&src, test->src, strlen(test->src));
     struct mod *mod = mod_compile(&src);
 
+    mod_t key = mods_register(&test->title);
+    assert(mods_store(key, mod));
+    test->in->ip = make_ip(key, 0);
+
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {
             struct mod_err *err = &mod->errs[i];
@@ -63,6 +67,7 @@ bool check(struct test *test)
 
     struct vm *vm = test->in;
     ip_t ret = vm_exec(vm, mod);
+
 
     bool ok = true;
     struct vm *exp = test->exp;
@@ -91,7 +96,7 @@ bool check(struct test *test)
         char buffer[1024] = {0};
 
         mod_hexdump(mod, buffer, sizeof(buffer));
-        fprintf(stderr, "<bytecode:%lu>\n%s\n", mod->len, buffer);
+        fprintf(stderr, "<bytecode:%x:%lu>\n%s\n", (unsigned) mod->id, mod->len, buffer);
 
         vm_dbg(test->in, buffer, sizeof(buffer));
         fprintf(stderr, "<ret>\n%sret:   %x\n\n", buffer, ret);
@@ -161,9 +166,9 @@ bool check_file(const char *file)
             while (*ptr != '\n') { ptr++; }
 
         while (*ptr != '!') ptr++;
-        test.title = ptr + 1;
-
+        const char *title = ptr + 1;
         while (*ptr != '\n') {ptr++; }
+        memcpy(test.title, title, ptr - title);
         *ptr = 0; ptr++;
 
         const char prog[] = "&prog\n";
@@ -223,5 +228,8 @@ int main(int argc, char **argv)
     snprintf(path, sizeof(path), "%s/test/vm", argc > 1 ? argv[1] : ".");
 
     vm_compile_init();
-    return check_dir(path) ? 0 : 1;
+    bool ok = check_dir(path);
+    mods_free();
+
+    return ok ? 0 : 1;
 }

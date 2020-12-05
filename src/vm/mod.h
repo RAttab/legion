@@ -75,6 +75,7 @@ size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
 
 mod_t mods_register(const atom_t *name);
 bool mods_name(mod_t, atom_t *dst);
+void mods_free();
 
 bool mods_del(mod_t);
 bool mods_store(mod_t, struct mod *);

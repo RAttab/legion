@@ -206,10 +206,11 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
     };
 
 
-#define vm_arg(arg_type_t)                                              \
+#define vm_code(arg_type_t)                                             \
     ({                                                                  \
-        vm_assert(vm->ip + sizeof(arg_type_t) <= mod->len);             \
-        arg_type_t arg = *((const arg_type_t *) (mod->code + vm->ip));  \
+        addr_t off = ip_addr(vm->ip);                                   \
+        vm_assert(off + sizeof(arg_type_t) <= mod->len);                \
+        arg_type_t arg = *((const arg_type_t *) (mod->code + off));     \
         vm->ip += sizeof(arg_type_t);                                   \
         arg;                                                            \
     })
@@ -254,26 +255,24 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 #define vm_jmp(_target_)                        \
     do {                                        \
         addr_t target = (_target_);             \
-        vm_assert(!ip_mod(target));             \
-        vm->ip = target;                        \
-        true;                                   \
+        vm->ip = make_ip(mod->id, target);      \
     } while (false)
 
 
     size_t cycles = vm->specs.speed;
     for (size_t i = 0; i < cycles; ++i) {
 
-        uint8_t opcode = mod->code[vm->ip++];
+        uint8_t opcode = vm_code(uint8_t);
         const void *label = opcodes[opcode];
         vm_assert(label);
         goto *label;
 
-      op_push: { vm_push(vm_arg(word_t)); goto next; }
-      op_pushr: { vm_push(vm->regs[vm_arg(reg_t)]); goto next; }
+      op_push: { vm_push(vm_code(word_t)); goto next; }
+      op_pushr: { vm_push(vm->regs[vm_code(reg_t)]); goto next; }
       op_pushf: { vm_push(vm->flags); goto next; }
 
       op_pop: { vm_pop(); goto next; }
-      op_popr: { vm->regs[vm_arg(reg_t)] = vm_pop(); goto next; }
+      op_popr: { vm->regs[vm_code(reg_t)] = vm_pop(); goto next; }
 
       op_dupe: { vm_push(vm_peek()); goto next; }
       op_swap: {
@@ -361,21 +360,21 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             word_t raw = vm_pop();
             if (raw > ((ip_t)-1)) { vm->flags |= FLAG_FAULT_CODE; return -1; }
             ip_t ip = raw;
-            if (!ip_mod(ip)) { vm_jmp(ip_addr(ip)); goto next; }
+            if (ip_mod(ip) == mod->id) { vm_jmp(ip_addr(ip)); goto next; }
             return ip;
         }
       op_call: {
-            ip_t ip = vm_arg(ip_t);
+            ip_t ip = vm_code(ip_t);
             vm_push(vm->ip);
 
-            mod_t mod = ip_mod(ip);
-            if (!mod) { vm_jmp(ip_addr(ip)); goto next; }
-            return make_ip(mod, 0);
+            if (!ip_mod(ip)) { vm_jmp(ip_addr(ip)); goto next; }
+            vm_assert(!ip_addr(ip));
+            return ip;
         }
       op_load: { ip_t ip = vm_pop(); vm_reset(vm); return ip; }
-      op_jmp: { vm_jmp(vm_arg(ip_t)); goto next; }
-      op_jz:  { ip_t dst = vm_arg(ip_t); if (!vm_pop()) vm_jmp(dst); goto next; }
-      op_jnz: { ip_t dst = vm_arg(ip_t); if ( vm_pop()) vm_jmp(dst); goto next; }
+      op_jmp: { vm_jmp(vm_code(ip_t)); goto next; }
+      op_jz:  { ip_t dst = vm_code(ip_t); if (!vm_pop()) vm_jmp(dst); goto next; }
+      op_jnz: { ip_t dst = vm_code(ip_t); if ( vm_pop()) vm_jmp(dst); goto next; }
 
       op_reset: { vm_reset(vm); return 0; }
       op_yield: { return 0; }
@@ -383,7 +382,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
       op_io:  {
             vm->ior = 0xFF;
-            vm->io = vm_arg(uint8_t);
+            vm->io = vm_code(uint8_t);
             vm->flags |= FLAG_IO;
             return 0;
         }
@@ -394,7 +393,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             return 0;
         }
       op_ior: {
-            vm->ior = vm_arg(reg_t);
+            vm->ior = vm_code(reg_t);
             vm->io = vm->regs[vm->ior - 1];
             vm->flags |= FLAG_IO;
             return 0;
@@ -420,7 +419,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
     return 0;
 
-#undef vm_arg
+#undef vm_code
 #undef vm_stack
 #undef vm_ensure
 #undef vm_peek

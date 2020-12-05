@@ -40,6 +40,27 @@ struct mod *mod_alloc(
     return mod;
 }
 
+size_t mod_hexdump(struct mod *mod, char *dst, size_t len)
+{
+    size_t orig = len;
+
+    for (size_t i = 0; i < mod->len; ++i) {
+        if (i % 16 == 0) {
+            if (i) { snprintf(dst, len, "\n"); dst++; len--; }
+            size_t n = snprintf(dst, len, "[%02x] ", (unsigned) i);
+            dst += n; len -= n;
+        }
+
+        size_t n = snprintf(dst, len, "%02x ", mod->code[i]);
+        dst += n; len -= n;
+    }
+
+    size_t n = snprintf(dst, len, "\n");
+    dst += n; len -= n;
+
+    return orig - len;
+}
+
 
 // -----------------------------------------------------------------------------
 // mods
@@ -58,6 +79,17 @@ static struct
     struct htable index;
 } mods;
 
+
+void mods_free()
+{
+    struct htable_bucket *it = htable_next(&mods.index, NULL);
+    for (; it; it = htable_next(&mods.index, it)) {
+        struct mods_entry *entry = (void *) it->value;
+        mod_discard(entry->mod);
+        free(entry);
+    }
+    htable_reset(&mods.index);
+}
 
 mod_t mods_register(const atom_t *name)
 {
@@ -126,25 +158,4 @@ mod_t mods_find(const atom_t *name)
         if (vm_atoms_eq(name, &entry->str)) return entry->id;
     }
     return 0;
-}
-
-size_t mod_hexdump(struct mod *mod, char *dst, size_t len)
-{
-    size_t orig = len;
-
-    for (size_t i = 0; i < mod->len; ++i) {
-        if (i % 16 == 0) {
-            if (i) { snprintf(dst, len, "\n"); dst++; len--; }
-            size_t n = snprintf(dst, len, "[%02x] ", (unsigned) i);
-            dst += n; len -= n;
-        }
-
-        size_t n = snprintf(dst, len, "%02x ", mod->code[i]);
-        dst += n; len -= n;
-    }
-
-    size_t n = snprintf(dst, len, "\n");
-    dst += n; len -= n;
-
-    return orig - len;
 }
