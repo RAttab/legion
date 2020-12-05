@@ -55,7 +55,3 @@ else
         --error-exitcode=1 \
         "./test_{}" "${PREFIX}" ::: ${TEST[@]}
 fi
-
-
-for test in "${TEST[@]}"; do
-done

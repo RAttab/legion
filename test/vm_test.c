@@ -117,7 +117,7 @@ char *read_field(char *ptr, struct vm **vm)
     if (!strcmp(field, "sp")) { (*vm)->sp = word; goto end; }
     if (!strcmp(field, "ior")) { (*vm)->ior = word; goto end; }
     if (!strcmp(field, "io")) { (*vm)->io = word; goto end; }
-    if (*field == 'r') { (*vm)->regs[*(field + 1) - '0'] = word; goto end; }
+    if (*field == 'r') { (*vm)->regs[*(field + 1) - '1'] = word; goto end; }
     if (*field == 's') { (*vm)->stack[*(field + 1) - '0'] = word; goto end; }
     assert(false);
 
