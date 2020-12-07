@@ -395,6 +395,17 @@ yield
 &in>S:1
 &out>S:1,sp:0
 
+!basic-back-ref
+&prog
+jmp @next
+back:
+push 1
+yield
+next:
+jmp @back
+&in>S:1
+&out>S:1,sp:1,s0:1
+
 
 ############################################################
 # io
