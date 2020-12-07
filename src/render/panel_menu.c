@@ -4,9 +4,7 @@
 */
 
 #include "panel.h"
-
-#include "utils/sdl.h"
-#include "utils/text.h"
+#include "render/ui.h"
 
 // -----------------------------------------------------------------------------
 // panel menu
@@ -14,66 +12,28 @@
 
 struct panel_menu_state
 {
-    size_t font_w, font_h;
-
-    struct {
-        SDL_Rect rect;
-        bool hover;
-        bool selected;
-    } mods;
+    struct ui_toggle mods;
 };
 
 static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_menu_state *state = state_;
-    font_reset(font_mono6);
 
-    if (state->mods.hover) {
-        sdl_err(SDL_SetRenderDrawColor(renderer, 0x18, 0x18, 0x18, SDL_ALPHA_OPAQUE));
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                            .x = rect->x, .y = rect->y,
-                            .w = state->mods.rect.w, .h = state->mods.rect.h}));
-    }
-
-    const char *prefix = state->mods.selected ? "- modules" : "+ modules";
-    font_render(font_mono6, renderer, prefix, 9, (SDL_Point) { rect->x, rect->y });
+    SDL_Point pos = { .x = rect->x, .y = rect->y };
+    ui_toggle_render(&state->mods, renderer, pos, font_mono6);
 }
 
 static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_menu_state *state = state_;
 
-    switch (event->type) {
-
-    case SDL_MOUSEMOTION: {
-        SDL_Point point = panel_relative_point(panel, &core.cursor.point);
-        if (!sdl_rect_contains(&state->mods.rect, &point)) {
-            if (state->mods.hover) {
-                state->mods.hover = false;
-                panel_invalidate(panel);
-            }
-            break;
-        }
-
-        if (!state->mods.hover) {
-            state->mods.hover = true;
-            panel_invalidate(panel);
-        }
-        break;
+    enum ui_toggle_ret ret = ui_toggle_events(&state->mods, event);
+    if (ret & ui_toggle_invalidate) panel_invalidate(panel);
+    if (ret & ui_toggle_flip) {
+        enum event ev = state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR;
+        core_push_event(ev, NULL);
     }
-
-    case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point point = panel_relative_point(panel, &core.cursor.point);
-        if (!sdl_rect_contains(&state->mods.rect, &point)) break;
-
-        state->mods.selected = !state->mods.selected;
-        core_push_event(state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR, NULL);
-        panel_invalidate(panel);
-        return true;
-    }
-
-    }
-    return false;
+    return !!(ret & ui_toggle_consume);
 }
 
 static void panel_menu_free(void *state)
@@ -84,21 +44,22 @@ static void panel_menu_free(void *state)
 
 struct panel *panel_menu_new(void)
 {
-    size_t font_w = 0, font_h = 0;
-    font_text_size(font_mono6, 1, &font_w, &font_h);
+    struct font *font = font_mono6;
+    size_t font_w = font->glyph_w, font_h = font->glyph_h;
 
     int outer_w = 0, outer_h = 0;
     panel_add_borders(font_w, font_h, &outer_w, &outer_h);
 
     struct panel_menu_state *state = calloc(1, sizeof(*state));
-    state->font_w = font_w;
-    state->font_h = font_h;
-    state->mods.rect = (SDL_Rect) {
-        .x = 0, .y = 0, .w = font_w * 10, .h = font_h };
+    {
+        const char str[] = "mods";
+        SDL_Rect rect = {.x = panel_padding, .y = panel_padding };
+        ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);
+        ui_toggle_init(&state->mods, &rect, str, sizeof(str));
+    }
 
-    struct panel *panel = panel_new(&(SDL_Rect) {
-                .x = 0, .y = 0, .w = core.rect.w, .h = outer_h });
-
+    SDL_Rect rect = { .x = 0, .y = 0, .w = core.rect.w, .h = outer_h };
+    struct panel *panel = panel_new(&rect);
     panel->hidden = false;
     panel->state = state;
     panel->render = panel_menu_render;

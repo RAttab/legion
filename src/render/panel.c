@@ -15,16 +15,10 @@
 // panel
 // -----------------------------------------------------------------------------
 
-enum {
-    margin = 2,
-    border = 1,
-    panel_padding = (margin + border) * 2
-};
-
 void panel_add_borders(int width, int height, int *dst_width, int *dst_height)
 {
-    *dst_width = width + panel_padding;
-    *dst_height = height + panel_padding;
+    *dst_width = width + panel_total_padding;
+    *dst_height = height + panel_total_padding;
 }
 
 struct panel *panel_new(const SDL_Rect *rect)
@@ -34,8 +28,10 @@ struct panel *panel_new(const SDL_Rect *rect)
     panel->hidden = true;
     panel->rect = *rect;
     panel->inner_rect = (SDL_Rect) {
-        .x = margin + border, .y = margin + border,
-        .w = rect->w - panel_padding, .h = rect->h - panel_padding,
+        .x = panel_padding,
+        .y = panel_padding,
+        .w = rect->w - panel_total_padding,
+        .h = rect->h - panel_total_padding,
     };
 
     panel->tex = sdl_ptr(SDL_CreateTexture(
@@ -99,11 +95,12 @@ void panel_render(struct panel *panel, SDL_Renderer *renderer)
                             .w = panel->rect.w,
                             .h = panel->rect.h }));
 
-        sdl_err(SDL_SetRenderDrawColor(renderer, 0x10, 0x10, 0x10, 0x88));
+        const uint8_t gray = 0x10;
+        sdl_err(SDL_SetRenderDrawColor(renderer, gray, gray, gray, 0x88));
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                            .x = border, .y = border,
-                            .w = panel->rect.w - border * 2,
-                            .h = panel->rect.h - border * 2}));
+                            .x = panel_border, .y = panel_border,
+                            .w = panel->rect.w - panel_border * 2,
+                            .h = panel->rect.h - panel_border * 2}));
 
         if (panel->render) {
             panel->render(panel->state, renderer, &panel->inner_rect);

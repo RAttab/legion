@@ -11,6 +11,14 @@
 // panel
 // -----------------------------------------------------------------------------
 
+enum {
+    panel_margin = 2,
+    panel_border = 1,
+    panel_padding = panel_border + panel_margin,
+    panel_total_padding = panel_padding * 2,
+};
+
+
 struct panel;
 typedef void (*render_fn) (void *state, SDL_Renderer *, SDL_Rect *);
 typedef bool (*events_fn) (void *state, struct panel *, SDL_Event *);
