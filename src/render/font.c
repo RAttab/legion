@@ -49,6 +49,7 @@ void fonts_init(SDL_Renderer *renderer)
     core_path_res("GeneraleStationGX.ttf", path, sizeof(path));
 
     font_mono4 = font_open(renderer, path, 4);
+    font_mono6 = font_open(renderer, path, 6);
     font_mono8 = font_open(renderer, path, 8);
 }
 
@@ -88,7 +89,7 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
         size_t pixels = ft_bitmap->rows * ft_bitmap->width;
         uint32_t sdl_bitmap[pixels];
         for (size_t px = 0; px < pixels; ++px) {
-            sdl_bitmap[px] = 0xFF000000 | (ft_bitmap->buffer[px] * 0x00010101);
+            sdl_bitmap[px] = ft_bitmap->buffer[px] * 0x01010101;
         }
 
         SDL_Rect dst = {
@@ -108,6 +109,7 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
         size_t pitch = dst.w * sizeof(sdl_bitmap[0]);
         sdl_err(SDL_UpdateTexture(font->tex, &dst, sdl_bitmap, pitch));
     }
+    font_reset(font);
 
     FT_Done_Face(face);
     return font;
@@ -123,13 +125,13 @@ void font_reset(struct font *font)
 {
     sdl_err(SDL_SetTextureAlphaMod(font->tex, 0xFF));
     sdl_err(SDL_SetTextureColorMod(font->tex, 0xFF, 0xFF, 0xFF));
-    sdl_err(SDL_SetTextureBlendMode(font->tex, SDL_BLENDMODE_ADD));
+    sdl_err(SDL_SetTextureBlendMode(font->tex, SDL_BLENDMODE_BLEND));
 }
 
 void font_text_size(struct font *font, size_t len, size_t *w, size_t *h)
 {
-    *w = font->glyph_w * len;
-    *h = font->glyph_h;
+    if (w) *w = font->glyph_w * len;
+    if (h) *h = font->glyph_h;
 }
 
 void font_render(
