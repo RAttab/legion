@@ -5,6 +5,8 @@
 
 #include "panel.h"
 #include "render/ui.h"
+#include "render/font.h"
+
 
 // -----------------------------------------------------------------------------
 // panel menu
@@ -15,12 +17,14 @@ struct panel_menu_state
     struct ui_toggle mods;
 };
 
+static struct font *panel_menu_font(void) { return font_mono6; }
+
 static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_menu_state *state = state_;
 
     SDL_Point pos = { .x = rect->x, .y = rect->y };
-    ui_toggle_render(&state->mods, renderer, pos, font_mono6);
+    ui_toggle_render(&state->mods, renderer, pos, panel_menu_font());
 }
 
 static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -42,9 +46,14 @@ static void panel_menu_free(void *state)
 };
 
 
+size_t panel_menu_height(void)
+{
+    return panel_menu_font()->glyph_h + panel_total_padding;
+}
+
 struct panel *panel_menu_new(void)
 {
-    struct font *font = font_mono6;
+    struct font *font = panel_menu_font();
     size_t font_w = font->glyph_w, font_h = font->glyph_h;
 
     int outer_w = 0, outer_h = 0;

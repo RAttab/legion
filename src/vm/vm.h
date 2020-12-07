@@ -45,6 +45,11 @@ inline bool vm_atoms_eq(const atom_t *lhs, const atom_t *rhs)
     return !memcmp(lhs, rhs, vm_atom_cap);
 }
 
+inline int vm_atoms_cmp(const atom_t *lhs, const atom_t *rhs)
+{
+    return memcmp(lhs, rhs, vm_atom_cap);
+}
+
 
 // -----------------------------------------------------------------------------
 // vm

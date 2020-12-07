@@ -81,3 +81,11 @@ bool mods_del(mod_t);
 bool mods_store(mod_t, struct mod *);
 mod_t mods_find(const atom_t *name);
 struct mod *mods_load(mod_t);
+
+struct mods_item { mod_t id; atom_t str; };
+struct mods
+{
+    size_t len;
+    struct mods_item items[];
+};
+struct mods *mods_list(void);

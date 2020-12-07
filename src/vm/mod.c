@@ -159,3 +159,27 @@ mod_t mods_find(const atom_t *name)
     }
     return 0;
 }
+
+static int mods_item_cmp(const void *lhs_, const void *rhs_)
+{
+    const struct mods_item *lhs = lhs_;
+    const struct mods_item *rhs = rhs_;
+    return vm_atoms_cmp(&lhs->str, &rhs->str);
+}
+
+struct mods *mods_list(void)
+{
+    struct mods *ret = calloc(1,
+            sizeof(*ret) + mods.index.len * sizeof(ret->items[0]));
+    ret->len = mods.index.len;
+
+    struct htable_bucket *it = htable_next(&mods.index, NULL);
+    for (size_t i = 0; it; it = htable_next(&mods.index, it), i++) {
+        struct mods_entry *entry = (void *) it->value;
+        ret->items[i].id = entry->id;
+        memcpy(ret->items[i].str, entry->str, vm_atom_cap);
+    }
+
+    qsort(ret->items, ret->len, sizeof(ret->items[0]), mods_item_cmp);
+    return ret;
+}
