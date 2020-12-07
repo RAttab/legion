@@ -394,3 +394,37 @@ ok:
 yield
 &in>S:1
 &out>S:1,sp:0
+
+
+############################################################
+# io
+
+!basic-io
+&prog
+push 1
+push !io_target
+io 2
+yield
+&in>S:1
+&out>S:1,flags:0x1,io:2,ior:0xff,sp:2,s0:1,s1:0x80000005
+
+!basic-ios
+&prog
+push 1
+push !io_target
+push 2
+ios
+yield
+&in>S:1
+&out>S:1,flags:0x1,io:2,ior:0,sp:2,s0:1,s1:0x80000005
+
+!basic-ior
+&prog
+push 1
+push !io_target
+push 2
+popr $1
+ior $1
+yield
+&in>S:1
+&out>S:1,flags:0x1,io:2,ior:1,r1:2,sp:2,s0:1,s1:0x80000005

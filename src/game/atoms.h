@@ -38,3 +38,5 @@ enum atom_io
     ATOM_IO_MAX,
     ATOM_IO_CAP = 0x8FFFFFFF,
 };
+
+void atoms_io_register(void);

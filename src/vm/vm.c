@@ -393,7 +393,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             return 0;
         }
       op_ior: {
-            vm->ior = vm_code(reg_t);
+            vm->ior = vm_code(reg_t) + 1;
             vm->io = vm->regs[vm->ior - 1];
             vm->flags |= FLAG_IO;
             return 0;

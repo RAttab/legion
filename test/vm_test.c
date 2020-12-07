@@ -6,6 +6,7 @@
 #include "common.h"
 #include "vm/vm.h"
 #include "vm/mod.h"
+#include "game/atoms.h"
 #include "utils/text.h"
 #include "utils/log.h"
 
@@ -227,7 +228,10 @@ int main(int argc, char **argv)
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/test/vm", argc > 1 ? argv[1] : ".");
 
+    vm_atoms_init();
+    atoms_io_register();
     vm_compile_init();
+
     bool ok = check_dir(path);
     mods_free();
 

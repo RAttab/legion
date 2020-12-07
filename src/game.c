@@ -4,6 +4,7 @@
 */
 
 #include "game/coord.c"
+#include "game/atoms.c"
 #include "game/sector.c"
 #include "game/hunk.c"
 #include "game/obj.c"

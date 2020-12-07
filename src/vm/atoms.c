@@ -2,6 +2,8 @@
    Rémi Attab (remi.attab@gmail.com), 28 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 
+   \todo entire implementation is a convoluted work-around for not having str
+   hash table. Need to improve
 */
 
 #include "vm/vm.h"
@@ -51,7 +53,7 @@ void vm_atoms_init(void)
 {
     const size_t items = 1 << 10;
     atoms.base = alloc_cache(items * sizeof(*atoms.base));
-    atoms.curr = atoms.base;
+    atoms.curr = atoms.base + 1; // htable can't index 0
     atoms.cap = atoms.base + items;
     atoms.id = 1;
 
@@ -124,7 +126,7 @@ static struct atom_data *atoms_insert(const atom_t *atom, word_t id)
     memcpy(data->str, atom, vm_atom_cap);
 
     uint64_t hash = atom_hash(atom);
-    uint64_t index = (data - atoms.base) / sizeof(*data);
+    uint64_t index = data - atoms.base;
 
     struct htable_ret ret = htable_try_put(&atoms.istr, hash, index);
     assert(!ret.value);
@@ -152,7 +154,7 @@ static struct atom_data *atoms_chain(
     data->word = id;
     memcpy(data->str, atom, vm_atom_cap);
 
-    uint64_t index = (data - atoms.base) / sizeof(*data);
+    uint64_t index = data - atoms.base;
     prev->next = index;
 
     struct htable_ret ret = htable_put(&atoms.iword, id, index);
