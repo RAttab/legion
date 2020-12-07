@@ -408,7 +408,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
       op_unpack: {
             uint32_t msb = 0, lsb = 0;
             vm_unpack(vm_pop(), &msb, &lsb);
-            vm_stack(0) = lsb;
+            vm_push(lsb);
             vm_push(msb);
             goto next;
         }

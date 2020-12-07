@@ -428,3 +428,24 @@ ior $1
 yield
 &in>S:1
 &out>S:1,flags:0x1,io:2,ior:1,r1:2,sp:2,s0:1,s1:0x80000005
+
+
+############################################################
+# misc
+
+!basic-pack
+&prog
+push 1
+push 2
+pack
+yield
+&in>S:1
+&out>S:1,sp:1,s0:0x200000001
+
+!basic-unpack
+&prog
+push 0x200000001
+unpack
+yield
+&in>S:1
+&out>S:1,sp:2,s0:1,s1:2

@@ -92,9 +92,8 @@ bool check(struct test *test)
     }
 
     if (!ok) {
-        fprintf(stderr, "\n<src>\n%s\n\n", test->src);
-
         char buffer[1024] = {0};
+        fprintf(stderr, "\n<src>\n%s\n\n", test->src);
 
         mod_hexdump(mod, buffer, sizeof(buffer));
         fprintf(stderr, "<bytecode:%x:%lu>\n%s\n", (unsigned) mod->id, mod->len, buffer);
