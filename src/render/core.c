@@ -92,12 +92,14 @@ static void cursor_render(SDL_Renderer *renderer)
 static void ui_init()
 {
     core.ui.map = map_new();
+    core.ui.menu = panel_menu_new();
     core.ui.pos = panel_pos_new();
     core.ui.system = panel_star_new();
 }
 
 static void ui_close()
 {
+    panel_free(core.ui.menu);
     panel_free(core.ui.pos);
     panel_free(core.ui.system);
     map_free(core.ui.map);
@@ -105,6 +107,7 @@ static void ui_close()
 
 static void ui_event(SDL_Event *event)
 {
+    if (panel_event(core.ui.menu, event)) return;
     if (panel_event(core.ui.pos, event)) return;
     if (panel_event(core.ui.system, event)) return;
     if (map_event(core.ui.map, event)) return;
@@ -114,6 +117,7 @@ static void ui_event(SDL_Event *event)
 static void ui_render(SDL_Renderer *renderer)
 {
     map_render(core.ui.map, renderer);
+    panel_render(core.ui.menu, renderer);
     panel_render(core.ui.pos, renderer);
     panel_render(core.ui.system, renderer);
 }

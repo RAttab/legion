@@ -55,6 +55,7 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
 {
     struct panel_star_state *state = state_;
     struct font *font = font_mono4;
+    font_reset(font);
 
     {
         char str[coord_str_len+1] = {0};
@@ -133,7 +134,7 @@ static void panel_star_free(void *state)
     free(state);
 };
 
-struct panel *panel_star_new()
+struct panel *panel_star_new(void)
 {
     enum { spacing = 5 };
 

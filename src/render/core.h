@@ -22,6 +22,9 @@ enum event
     EV_STAR_SELECT = 0,
     EV_STAR_CLEAR,
 
+    EV_MODS_SELECT,
+    EV_MODS_CLEAR,
+
     EV_MAX,
 };
 
@@ -46,6 +49,7 @@ struct core
 
     struct {
         struct map *map;
+        struct panel *menu;
         struct panel *pos;
         struct panel *system;
     } ui;

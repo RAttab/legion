@@ -39,6 +39,7 @@ void panel_hide(struct panel *);
 void panel_show(struct panel *);
 
 void panel_add_borders(int width, int height, int *dst_width, int *dst_height);
+SDL_Point panel_relative_point(struct panel *, const SDL_Point *);
 
 void panel_render(struct panel *, SDL_Renderer *);
 bool panel_event(struct panel *, SDL_Event *);
@@ -48,5 +49,6 @@ bool panel_event(struct panel *, SDL_Event *);
 // panels
 // -----------------------------------------------------------------------------
 
-struct panel *panel_pos_new();
-struct panel *panel_star_new();
+struct panel *panel_menu_new(void);
+struct panel *panel_pos_new(void);
+struct panel *panel_star_new(void);
