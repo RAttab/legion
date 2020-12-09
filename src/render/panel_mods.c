@@ -21,7 +21,7 @@ struct panel_mods_item
 
 struct panel_mods_state
 {
-    size_t toggle_h;
+    int toggle_h;
     struct SDL_Rect rect;
 
     struct mods *mods;
@@ -115,6 +115,7 @@ struct panel *panel_mods_new(void)
     state->rect = (SDL_Rect) {
         .x = 0, .y = menu_h + panel_padding,
         .w = inner_w, .h = inner_h };
+    ui_toggle_size(font, vm_atom_cap, NULL, &state->toggle_h);
 
     SDL_Rect rect = { .x = 0, .y = menu_h, .w = outer_w, .h = outer_h };
     struct panel *panel = panel_new(&rect);

@@ -13,8 +13,8 @@
 
 void ui_toggle_size(struct font *font, size_t str_len, int *width, int *height)
 {
-    *width = font->glyph_w * (str_len + 2);
-    *height = font->glyph_h;
+    if (width) *width = font->glyph_w * (str_len + 2);
+    if (height) *height = font->glyph_h;
 }
 
 void ui_toggle_init(
