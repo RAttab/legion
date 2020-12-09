@@ -89,3 +89,5 @@ struct mods
     struct mods_item items[];
 };
 struct mods *mods_list(void);
+
+void mods_preload(void);

@@ -6,6 +6,7 @@
 #include "vm/vm.h"
 #include "utils/htable.h"
 #include "utils/bits.h"
+#include "utils/log.h"
 
 
 // -----------------------------------------------------------------------------
@@ -182,4 +183,83 @@ struct mods *mods_list(void)
 
     qsort(ret->items, ret->len, sizeof(ret->items[0]), mods_item_cmp);
     return ret;
+}
+
+
+// -----------------------------------------------------------------------------
+// persist
+// -----------------------------------------------------------------------------
+
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
+
+static void mods_load_path(const char *path)
+{
+    dbg("compiling: %s", path);
+
+    struct mod *mod= NULL;
+    {
+        int fd = open(path, O_RDONLY);
+        if (fd < 0) fail_errno("file not found: %s", path);
+
+        struct stat stat = {0};
+        if (fstat(fd, &stat) < 0) fail_errno("failed to stat: %s", path);
+
+        size_t len = stat.st_size;
+        char *base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+        if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
+
+        struct text src = {0};
+        text_from_str(&src, base, strnlen(base, len));
+
+        mod = mod_compile(&src);
+        if (mod->errs_len) {
+            for (size_t i = 0; i < mod->errs_len; ++i) {
+                struct mod_err *err = &mod->errs[i];
+                dbg("%s:%zu: %s\n", path, err->line, err->str);
+            }
+            return;
+        }
+
+        text_clear(&src);
+        munmap(base, len);
+        close(fd);
+    }
+
+    size_t dot = 0, slash = 0;
+    for (size_t i = 0; path[i]; ++i) {
+        if (path[i] == '/') slash = i;
+        if (path[i] == '.') dot = i;
+    }
+    assert(slash < dot);
+
+    atom_t name = {0};
+    memcpy(name, path + slash + 1, dot - slash - 1);
+
+    mod_t id = mods_register(&name);
+    assert(mods_store(id, mod));
+
+    mod_discard(mod);
+}
+
+void mods_preload(void)
+{
+    const char *path = "res/mods";
+
+    DIR *dir = opendir(path);
+    if (!dir) fail_errno("can't open dir: %s", path);
+
+    struct dirent *entry = NULL;
+    while ((entry = readdir(dir))) {
+        if (entry->d_name[0] == '.') continue;
+
+        char file[PATH_MAX];
+        snprintf(file, sizeof(file), "%s/%s", path, entry->d_name);
+
+        mods_load_path(file);
+    }
+    closedir(dir);
 }

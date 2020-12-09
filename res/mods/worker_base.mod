@@ -64,7 +64,7 @@ popr $1
 worker-full:
 pushr $4
 push !io_dock
-io
+io 2
 
 # dump our cargo
 push 1

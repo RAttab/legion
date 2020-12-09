@@ -10,6 +10,8 @@
 #include "render/panel.h"
 #include "game/coord.h"
 #include "game/sector.h"
+#include "game/atoms.h"
+#include "vm/mod.h"
 #include "utils/log.h"
 
 
@@ -46,7 +48,7 @@ static void cursor_init()
 
     char path[PATH_MAX];
     core_path_res("cursor.bmp", path, sizeof(path));
-    
+
     SDL_Surface *surface = sdl_ptr(SDL_LoadBMP(path));
     core.cursor.tex = sdl_ptr(SDL_CreateTextureFromSurface(core.renderer, surface));
     SDL_FreeSurface(surface);
@@ -133,12 +135,17 @@ static void ui_render(SDL_Renderer *renderer)
 
 void core_init()
 {
+    vm_atoms_init();
+    atoms_register();
+    vm_compile_init();
+    mods_preload();
+
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
     SDL_DisplayMode display = {0};
     sdl_err(SDL_GetDesktopDisplayMode(0, &display));
     core.rect = (SDL_Rect) { .x = 0, .y = 0, .w = display.w, .h = display.h };
-    
+
     sdl_err(SDL_CreateWindowAndRenderer(
                     core.rect.w, core.rect.h,
                     SDL_WINDOW_BORDERLESS,
@@ -159,10 +166,12 @@ void core_close()
     cursor_close();
     state_close();
     fonts_close();
-    
+
     SDL_DestroyRenderer(core.renderer);
     SDL_DestroyWindow(core.window);
     SDL_Quit();
+
+    mods_free();
 }
 
 void core_path_res(const char *name, char *dst, size_t len)
@@ -199,7 +208,7 @@ void core_push_event(enum event code, void *data)
     ev.type = core.event;
     ev.user.code = code;
     ev.user.data1 = data;
-    
+
     int ret = sdl_err(SDL_PushEvent(&ev));
     assert(ret > 0);
 }
