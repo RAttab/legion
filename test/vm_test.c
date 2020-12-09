@@ -228,7 +228,7 @@ int main(int argc, char **argv)
     snprintf(path, sizeof(path), "%s/test/vm", argc > 1 ? argv[1] : ".");
 
     vm_atoms_init();
-    atoms_io_register();
+    atoms_register();
     vm_compile_init();
 
     bool ok = check_dir(path);

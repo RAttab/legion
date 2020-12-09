@@ -7,12 +7,13 @@
 
 #include "atoms.h"
 #include "vm/vm.h"
+#include "game/item.h"
 
 // -----------------------------------------------------------------------------
 // atoms_io
 // -----------------------------------------------------------------------------
 
-static void atoms_io_reg(enum atom_io val, const char *str, size_t len)
+static void atoms_reg(unsigned val, const char *str, size_t len)
 {
     assert(len <= vm_atom_cap);
 
@@ -25,26 +26,63 @@ static void atoms_io_reg(enum atom_io val, const char *str, size_t len)
     assert(vm_atoms_set(&atom, val));
 }
 
-void atoms_io_register(void)
+void atoms_register(void)
 {
-#define atom_reg(atom) atoms_io_reg(atom, #atom, sizeof(#atom))
-    atom_reg(IO_NOOP);
-    atom_reg(IO_OK);
-    atom_reg(IO_FAIL);
+#define reg_ele(atom) atoms_reg(ITEM_ ## atom, #atom, sizeof(#atom))
+    reg_ele(ELE_A);
+    reg_ele(ELE_B);
+    reg_ele(ELE_C);
+    reg_ele(ELE_D);
+    reg_ele(ELE_E);
+    reg_ele(ELE_F);
+    reg_ele(ELE_G);
+    reg_ele(ELE_H);
+    reg_ele(ELE_I);
+    reg_ele(ELE_J);
+    reg_ele(ELE_K);
+    reg_ele(ELE_L);
+    reg_ele(ELE_M);
+    reg_ele(ELE_N);
+    reg_ele(ELE_O);
+    reg_ele(ELE_P);
 
-    atom_reg(IO_ID);
-    atom_reg(IO_TARGET);
-    atom_reg(IO_SEND);
-    atom_reg(IO_SENDN);
-    atom_reg(IO_RECV);
-    atom_reg(IO_RECVN);
-    atom_reg(IO_CARGO);
-    atom_reg(IO_VENT);
+    reg_ele(ELE_Q);
+    reg_ele(ELE_R);
+    reg_ele(ELE_S);
+    reg_ele(ELE_T);
+    reg_ele(ELE_U);
+    reg_ele(ELE_V);
+    reg_ele(ELE_W);
+    reg_ele(ELE_X);
+    reg_ele(ELE_Y);
+    reg_ele(ELE_Z);
+#undef reg_ele
 
-    atom_reg(IO_DOCK);
-    atom_reg(IO_UNDOCK);
-    atom_reg(IO_TAKE);
-    atom_reg(IO_PUT);
-    atom_reg(IO_HARVEST);
-#undef atom_reg
+#define reg_atom(atom) atoms_reg(atom, #atom, sizeof(#atom))
+    reg_atom(ITEM_BRAIN);
+    reg_atom(ITEM_WORKER);
+    reg_atom(ITEM_PRINTER);
+    reg_atom(ITEM_LAB);
+    reg_atom(ITEM_COMM);
+    reg_atom(ITEM_SHIP);
+
+    reg_atom(IO_NOOP);
+    reg_atom(IO_OK);
+    reg_atom(IO_FAIL);
+
+    reg_atom(IO_ID);
+    reg_atom(IO_TARGET);
+    reg_atom(IO_SEND);
+    reg_atom(IO_SENDN);
+    reg_atom(IO_RECV);
+    reg_atom(IO_RECVN);
+    reg_atom(IO_CARGO);
+    reg_atom(IO_VENT);
+
+    reg_atom(IO_DOCK);
+    reg_atom(IO_UNDOCK);
+    reg_atom(IO_TAKE);
+    reg_atom(IO_PUT);
+    reg_atom(IO_HARVEST);
+#undef reg_atom
 }
