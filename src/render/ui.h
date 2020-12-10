@@ -27,7 +27,7 @@ struct ui_toggle
 {
     struct SDL_Rect rect;
 
-    char str[line_cap];
+    char str[text_line_cap];
     size_t str_len;
 
     bool hover, selected;

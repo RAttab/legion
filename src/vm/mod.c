@@ -19,7 +19,7 @@ struct mod *mod_alloc(
         const struct mod_err *errs, size_t errs_len)
 {
     size_t head_bytes = sizeof(struct mod);
-    size_t src_bytes = src->len * (line_cap + 1);
+    size_t src_bytes = src->len * (text_line_cap + 1);
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
     size_t total_bytes = align_cache(head_bytes + code_bytes + src_bytes + errs_bytes);

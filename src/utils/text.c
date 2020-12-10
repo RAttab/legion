@@ -17,12 +17,12 @@ bool line_empty(struct line *line)
 
 size_t line_len(struct line *line)
 {
-    return strnlen(line->c, line_cap);
+    return strnlen(line->c, text_line_cap);
 }
 
 void line_put(struct line *line, size_t index, char c)
 {
-    assert(index < line_cap);
+    assert(index < text_line_cap);
 
     for (size_t i = 0; i < index; ++i)
         if (!line->c[index]) line->c[index] = ' ';
@@ -31,9 +31,9 @@ void line_put(struct line *line, size_t index, char c)
 
 void line_del(struct line *line, size_t index)
 {
-    assert(index < line_cap);
-    memmove(&line->c[index], &line->c[index+1], line_cap - index - 1);
-    line->c[line_cap-1] = 0;
+    assert(index < text_line_cap);
+    memmove(&line->c[index], &line->c[index+1], text_line_cap - index - 1);
+    line->c[text_line_cap-1] = 0;
 }
 
 
@@ -85,7 +85,7 @@ struct line *text_insert(struct text *text, struct line *at)
 struct line *text_erase(struct text *text, struct line *at)
 {
     if (at == text->first && at == text->last) {
-        memset(at->c, 0, line_cap);
+        memset(at->c, 0, text_line_cap);
         return at;
     }
 
@@ -102,7 +102,7 @@ struct line *text_erase(struct text *text, struct line *at)
 
 void text_pack(const struct text *text, char *dst, size_t len)
 {
-    const size_t bytes = line_cap + 1;
+    const size_t bytes = text_line_cap + 1;
     assert(len >= text->len * bytes);
 
     for (const struct line *line = text->first; line; line = line->next) {
@@ -113,7 +113,7 @@ void text_pack(const struct text *text, char *dst, size_t len)
 
 void text_unpack(struct text *text, const char *src, size_t len)
 {
-    const size_t bytes = line_cap + 1;
+    const size_t bytes = text_line_cap + 1;
     assert(len % bytes == 0);
     if (!len) return;
 
@@ -149,7 +149,7 @@ void text_from_str(struct text *text, const char *src, size_t len)
     struct line *line = text->first;
     for (size_t i = 0, j = 0; i < len; ++i, ++j) {
         if (src[i] == '\n') { line = text_insert(text, line); j = -1; continue; }
-        if (j > line_cap) continue;
+        if (j > text_line_cap) continue;
         line->c[j] = src[i];
     }
 }

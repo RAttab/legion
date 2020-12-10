@@ -15,7 +15,7 @@
 // err
 // -----------------------------------------------------------------------------
 
-enum { mod_err_cap = line_cap };
+enum { mod_err_cap = text_line_cap };
 struct mod_err
 {
     size_t line;

@@ -12,12 +12,12 @@
 // line
 // -----------------------------------------------------------------------------
 
-enum { line_cap = s_cache_line - (2*sizeof(struct line *)) - 1 };
+enum { text_line_cap = s_cache_line - (2*sizeof(struct line *)) - 1 };
 
 struct legion_packed line
 {
     struct line *next, *prev;
-    char c[line_cap];
+    char c[text_line_cap];
     char zero;
 };
 
