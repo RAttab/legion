@@ -30,6 +30,7 @@ inline void *ref_share(void *ptr)
 
 inline void ref_discard(void *ptr)
 {
+    if (!ptr) return;
     size_t val = atomic_fetch_sub((ref_t *) ptr, 1);
     if (val == 1) free(ptr);
 }
