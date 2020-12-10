@@ -26,8 +26,8 @@ enum event
     EV_MODS_UPDATE,
     EV_MODS_CLEAR,
 
-    EV_MOD_SELECT,
-    EV_MOD_CLEAR,
+    EV_CODE_SELECT,
+    EV_CODE_CLEAR,
 
     EV_MAX,
 };
@@ -55,6 +55,7 @@ struct core
         struct map *map;
         struct panel *menu;
         struct panel *mods;
+        struct panel *code;
         struct panel *pos;
         struct panel *system;
     } ui;

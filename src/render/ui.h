@@ -30,7 +30,9 @@ struct ui_toggle
     char str[text_line_cap];
     size_t str_len;
 
-    bool hover, selected;
+    bool hover;
+    bool selected;
+    bool disabled;
 };
 
 void ui_toggle_size(struct font *, size_t str_len, int *width, int *height);

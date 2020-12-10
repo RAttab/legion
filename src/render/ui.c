@@ -38,7 +38,7 @@ void ui_toggle_render(
 {
     font_reset(font);
 
-    if (toggle->hover) {
+    if (toggle->hover && !toggle->disabled) {
         const uint8_t gray = 0x18;
         sdl_err(SDL_SetRenderDrawColor(renderer, gray, gray, gray, SDL_ALPHA_OPAQUE));
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -48,6 +48,12 @@ void ui_toggle_render(
 
     size_t font_w = font->glyph_w;
     const char *prefix = toggle->selected ? "- " : "+ ";
+
+    if (toggle->disabled) {
+        const uint8_t gray = 0x55;
+        sdl_err(SDL_SetTextureColorMod(font->tex, gray, gray, gray));
+    }
+
     font_render(font, renderer, prefix, 2, pos);
 
     pos.x += font_w * 2;
@@ -78,6 +84,7 @@ enum ui_toggle_ret ui_toggle_events(struct ui_toggle *toggle, SDL_Event *event)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&toggle->rect, &point)) return ui_toggle_nil;
+        if (toggle->disabled) return ui_toggle_consume;
 
         toggle->selected = !toggle->selected;
         return ui_toggle_flip | ui_toggle_consume | ui_toggle_invalidate;

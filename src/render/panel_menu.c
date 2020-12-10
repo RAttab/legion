@@ -15,6 +15,7 @@
 struct panel_menu_state
 {
     struct ui_toggle mods;
+    struct ui_toggle code;
 };
 
 static struct font *panel_menu_font(void) { return font_mono6; }
@@ -22,22 +23,59 @@ static struct font *panel_menu_font(void) { return font_mono6; }
 static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_menu_state *state = state_;
+    struct font *font = panel_menu_font();
 
     SDL_Point pos = { .x = rect->x, .y = rect->y };
-    ui_toggle_render(&state->mods, renderer, pos, panel_menu_font());
+    ui_toggle_render(&state->mods, renderer, pos, font);
+
+    pos.x += panel_mods_width();
+    ui_toggle_render(&state->code, renderer, pos, font);
 }
 
 static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_menu_state *state = state_;
 
-    enum ui_toggle_ret ret = ui_toggle_events(&state->mods, event);
-    if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-    if (ret & ui_toggle_flip) {
-        enum event ev = state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR;
-        core_push_event(ev, NULL);
+    if (event->type == core.event) {
+        switch (event->user.code) {
+        case EV_CODE_SELECT: {
+            state->code.disabled = false;
+            state->code.selected = true;
+            panel_invalidate(panel);
+            break;
+        }
+        case EV_CODE_CLEAR: {
+            state->code.disabled = true;
+            state->code.selected = false;
+            panel_invalidate(panel);
+            break;
+        }
+        default: { return false; }
+        }
     }
-    return !!(ret & ui_toggle_consume);
+
+    {
+        enum ui_toggle_ret ret = ui_toggle_events(&state->mods, event);
+        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
+        if (ret & ui_toggle_flip) {
+            enum event ev = state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR;
+            core_push_event(ev, NULL);
+        }
+        if (ret & ui_toggle_consume) return true;
+    }
+
+    {
+        enum ui_toggle_ret ret = ui_toggle_events(&state->code, event);
+        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
+        if (ret & ui_toggle_flip) {
+            assert(!state->code.selected);
+            state->code.disabled = true;
+            core_push_event(EV_CODE_CLEAR, NULL);
+        }
+        if (ret & ui_toggle_consume) return true;
+    }
+
+    return false;
 }
 
 static void panel_menu_free(void *state)
@@ -60,11 +98,20 @@ struct panel *panel_menu_new(void)
     panel_add_borders(font_w, font_h, &outer_w, &outer_h);
 
     struct panel_menu_state *state = calloc(1, sizeof(*state));
+
     {
         const char str[] = "mods";
         SDL_Rect rect = {.x = panel_padding, .y = panel_padding };
         ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);
         ui_toggle_init(&state->mods, &rect, str, sizeof(str));
+    }
+
+    {
+        const char str[] = "code";
+        SDL_Rect rect = {.x = panel_mods_width(), .y = panel_padding };
+        ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);
+        ui_toggle_init(&state->code, &rect, str, sizeof(str));
+        state->code.disabled = true;
     }
 
     SDL_Rect rect = { .x = 0, .y = 0, .w = core.rect.w, .h = outer_h };

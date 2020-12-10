@@ -221,7 +221,6 @@ static void mods_load_path(const char *path)
                 struct mod_err *err = &mod->errs[i];
                 dbg("%s:%zu: %s\n", path, err->line, err->str);
             }
-            return;
         }
 
         text_clear(&src);

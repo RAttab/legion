@@ -30,6 +30,15 @@ struct panel_mods_state
 
 static struct font *panel_mods_font(void) { return font_mono6; }
 
+size_t panel_mods_width(void)
+{
+    int width = 0;
+    struct font *font  = panel_mods_font();
+    ui_toggle_size(font, vm_atom_cap, &width, NULL);
+    return width;
+
+}
+
 static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_mods_state *state = state_;
@@ -73,6 +82,14 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
             return true;
         }
         case EV_MODS_CLEAR: { panel_hide(panel); return true; }
+
+        case EV_CODE_CLEAR: {
+            for (size_t i = 0; i < state->mods->len; ++i)
+                state->toggles[i].selected = false;
+            panel_invalidate(panel);
+            return false;
+        }
+
         default: { return false; }
         }
     }
@@ -83,9 +100,13 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
         enum ui_toggle_ret ret = ui_toggle_events(&state->toggles[i], event);
         if (ret & ui_toggle_invalidate) panel_invalidate(panel);
         if (ret & ui_toggle_flip) {
-            enum event ev = state->toggles[i].selected ? EV_MOD_SELECT : EV_MOD_CLEAR;
+            enum event ev = state->toggles[i].selected ? EV_CODE_SELECT : EV_CODE_CLEAR;
             uint64_t data = state->mods->items[i].id;
             core_push_event(ev, (void *) data);
+
+            for (size_t j = 0; j < state->mods->len; ++j) {
+                if (j != i) state->toggles[j].selected = false;
+            }
         }
         if (ret & ui_toggle_consume) return true;
     }
@@ -105,7 +126,7 @@ struct panel *panel_mods_new(void)
     size_t menu_h = panel_menu_height();
 
     struct font *font = panel_mods_font();
-    size_t inner_w = font->glyph_w * vm_atom_cap;
+    size_t inner_w = panel_mods_width();
     size_t inner_h = core.rect.h - menu_h - panel_total_padding;
 
     int outer_w = 0, outer_h = 0;
