@@ -28,7 +28,7 @@ struct panel_code_state
     size_t line_cap;
 };
 
-static struct font *panel_code_font(void) { return font_mono6; }
+static struct font *panel_code_font(void) { return font_mono8; }
 
 static void panel_code_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {

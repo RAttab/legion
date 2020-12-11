@@ -18,7 +18,7 @@ struct panel_menu_state
     struct ui_toggle code;
 };
 
-static struct font *panel_menu_font(void) { return font_mono6; }
+static struct font *panel_menu_font(void) { return font_mono8; }
 
 static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {

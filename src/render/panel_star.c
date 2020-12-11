@@ -27,6 +27,9 @@ struct panel_star_state
     size_t elem_y;
 };
 
+static struct font *panel_star_font(void) { return font_mono6; }
+
+
 static inline char num_char(size_t val)
 {
     return val ? '0' + val : ' ';
@@ -54,7 +57,7 @@ static void star_val_str(char *dst, size_t len, size_t val)
 static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_star_state *state = state_;
-    struct font *font = font_mono4;
+    struct font *font = panel_star_font();
     font_reset(font);
 
     {
@@ -138,14 +141,16 @@ struct panel *panel_star_new(void)
 {
     enum { spacing = 5 };
 
+    struct font *font = panel_star_font();
+
     size_t coord_w = 0, coord_h = 0;
-    font_text_size(font_mono4, coord_str_len, &coord_w, &coord_h);
+    font_text_size(font, coord_str_len, &coord_w, &coord_h);
 
     size_t star_w = 0, star_h = 0;
-    font_text_size(font_mono4, 4+1+4, &star_w, &star_h);
+    font_text_size(font, 4+1+4, &star_w, &star_h);
     
     size_t elem_w = 0, elem_h = 0;
-    font_text_size(font_mono4, (1+1+4)*5+4, &elem_w, &elem_h);
+    font_text_size(font, (1+1+4)*5+4, &elem_w, &elem_h);
     elem_h *= 6;
 
     size_t inner_w = i64_max(coord_w, i64_max(star_w, elem_w));

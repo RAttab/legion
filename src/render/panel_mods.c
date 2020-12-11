@@ -28,7 +28,7 @@ struct panel_mods_state
     struct ui_toggle *toggles;
 };
 
-static struct font *panel_mods_font(void) { return font_mono6; }
+static struct font *panel_mods_font(void) { return font_mono8; }
 
 size_t panel_mods_width(void)
 {
