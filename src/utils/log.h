@@ -20,7 +20,7 @@
 
 #define fail_errno(fmt, ...)                                            \
     {                                                                   \
-        fprintf(stderr, "fail<%s, %u> " fmt ": %s\n",                   \
+        fprintf(stderr, "fail<%s:%u> " fmt ": %s\n",                    \
                 __FILE__, __LINE__, __VA_ARGS__, strerror(errno));      \
         abort();                                                        \
     } while(false)
@@ -31,7 +31,7 @@
 
 #define sdl_fail(p)                                                     \
     {                                                                   \
-        fprintf(stderr, "sdl-fail<%s, %u> %s: %s\n",                    \
+        fprintf(stderr, "sdl-fail<%s:%u> %s: %s\n",                     \
                 __FILE__, __LINE__, #p, SDL_GetError());                \
         abort();                                                        \
     } while(false)

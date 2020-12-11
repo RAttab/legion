@@ -21,6 +21,11 @@ inline size_t u64_log2(uint64_t x) { return 63 - u64_clz(x); }
 // math
 // -----------------------------------------------------------------------------
 
+inline int64_t i64_ceil_div(int64_t x, int64_t d)
+{
+    return (x - 1) / d + 1;
+}
+
 inline uint32_t u32_min(uint32_t x, uint32_t y)
 {
     return x <= y ? x : y;
@@ -32,6 +37,16 @@ inline int64_t i64_min(int64_t x, int64_t y)
 }
 
 inline int64_t i64_max(int64_t x, int64_t y)
+{
+    return x >= y ? x : y;
+}
+
+inline uint64_t u64_min(uint64_t x, uint64_t y)
+{
+    return x <= y ? x : y;
+}
+
+inline uint64_t u64_max(uint64_t x, uint64_t y)
 {
     return x >= y ? x : y;
 }
