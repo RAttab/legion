@@ -44,6 +44,7 @@ struct core
     SDL_Renderer *renderer;
 
     uint32_t event;
+    uint64_t ticks;
 
     struct {
         SDL_Point point;

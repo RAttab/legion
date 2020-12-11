@@ -13,6 +13,7 @@
 #include "game/atoms.h"
 #include "vm/mod.h"
 #include "utils/log.h"
+#include "utils/time.h"
 
 
 // -----------------------------------------------------------------------------
@@ -185,8 +186,11 @@ void core_path_res(const char *name, char *dst, size_t len)
 
 void core_run()
 {
-    while (true) {
+    enum { fps_cap = 60 };
+    ts_t sleep = ts_sec / fps_cap;
 
+    ts_t ts = ts_now();
+    while (true) {
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) return;
@@ -198,6 +202,8 @@ void core_run()
         ui_render(core.renderer);
         cursor_render(core.renderer);
         SDL_RenderPresent(core.renderer);
+
+        ts = ts_sleep_until(ts + sleep);
     }
 }
 
