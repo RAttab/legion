@@ -19,6 +19,8 @@ struct hunk;
 struct hunk *hunk_alloc(struct coord);
 void hunk_free(struct hunk *);
 
+struct star *hunk_star(struct hunk *);
+
 struct obj *hunk_obj_alloc(struct hunk *, item_t type, size_t len);
 struct obj *hunk_obj(struct hunk *, id_t id);
 

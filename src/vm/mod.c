@@ -219,7 +219,7 @@ static void mods_load_path(const char *path)
         if (mod->errs_len) {
             for (size_t i = 0; i < mod->errs_len; ++i) {
                 struct mod_err *err = &mod->errs[i];
-                dbg("%s:%zu: %s\n", path, err->line, err->str);
+                dbg("%s:%zu: %s", path, err->line, err->str);
             }
         }
 

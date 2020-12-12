@@ -12,9 +12,22 @@
 // coord
 // -----------------------------------------------------------------------------
 
-static const uint32_t coord_area_max = 1 << 8;
-static const uint32_t coord_sector_max = 1 << 8;
-static const uint32_t coord_system_max = 1 << 16;
+enum
+{
+    coord_top_bits = 8,
+    coord_top_size = 1 << coord_top_bits,
+    coord_top_mask = coord_top_size - 1,
+
+    coord_area_bits = 8,
+    coord_area_size = 1 << coord_area_bits,
+    coord_area_mask = coord_area_size - 1,
+
+    coord_sector_bits = 16,
+    coord_sector_size = 1 << coord_sector_bits,
+    coord_sector_mask = coord_sector_size - 1,
+};
+
+static_assert(coord_top_bits + coord_area_bits + coord_sector_bits == 32);
 
 
 legion_packed struct coord
@@ -34,17 +47,19 @@ inline bool coord_eq(struct coord rhs, struct coord lhs)
 
 inline struct coord coord_area(struct coord coord)
 {
+    const size_t bits = coord_sector_bits + coord_area_bits;
     return (struct coord) {
-        .x = (coord.x >> 22) << 22,
-        .y = (coord.y >> 22) << 22,
+        .x = (coord.x >> bits) << bits,
+        .y = (coord.y >> bits) << bits,
     };
 }
 
 inline struct coord coord_sector(struct coord coord)
 {
+    const size_t bits = coord_sector_bits;
     return (struct coord) {
-        .x = (coord.x >> 12) << 12,
-        .y = (coord.y >> 12) << 12,
+        .x = (coord.x >> bits) << bits,
+        .y = (coord.y >> bits) << bits,
     };
 }
 

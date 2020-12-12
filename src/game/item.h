@@ -65,6 +65,23 @@ enum item
     ITEM_OTHERS = 0x30,
 };
 
+// -----------------------------------------------------------------------------
+// ele
+// -----------------------------------------------------------------------------
+
+enum ele
+{
+    ele_natural_first = item_ele_a,
+    ele_natural_last = item_ele_p,
+    ele_natural_len = (item_natural_last + 1) - ele_natural_first,
+
+    ele_synth_min = item_ele_q,
+    ele_synth_max = item_ele_z
+    ele_synth_len = (item_synth_last + 1) - ele_synth_first,
+};
+
+static_assert(ele_natural_len + ele_syn_len == 26);
+
 
 // -----------------------------------------------------------------------------
 // id

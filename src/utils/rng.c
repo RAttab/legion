@@ -57,7 +57,12 @@ uint64_t rng_exp(struct rng *rng, uint64_t min, uint64_t max)
     return rng_uni(rng, min, rng_uni(rng, min+1, max));
 }
 
-bool rng_gen_prob(struct rng *rng, double prob)
+uint64_t rng_norm(struct rng *rng, uint64_t min, uint64_t max)
+{
+    return (rng_gen(rng, min, max) + rng_gen(rng, min, max)) / 2;
+}
+
+bool rng_prob(struct rng *rng, double prob)
 {
     return rng_gen(rng) <= (uint64_t) (prob * rng_max());
 }

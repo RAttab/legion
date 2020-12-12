@@ -18,7 +18,7 @@ struct hunk_area
 {
     size_t len;
     size_t curr, cap;
-    uint64_t __pad__[8 - 3];
+    legion_pad(8 * (8 - 3));
 
     uint8_t data[];
 };
@@ -78,7 +78,7 @@ static void area_step(struct hunk_area *area, struct hunk *hunk)
 
 struct hunk
 {
-    struct system system;
+    struct star star;
 
     id_t ids;
     struct htable index;
@@ -104,6 +104,11 @@ void hunk_free(struct hunk *hunk)
 
     htable_reset(&hunk->index);
     free(hunk);
+}
+
+struct star *hunk_star(struct hunk *hunk)
+{
+    return &hunk->star;
 }
 
 struct obj *hunk_obj(struct hunk *hunk, id_t id)
