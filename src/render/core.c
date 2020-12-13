@@ -9,7 +9,7 @@
 #include "render/map.h"
 #include "render/panel.h"
 #include "game/coord.h"
-#include "game/sector.h"
+#include "game/galaxy.h"
 #include "game/atoms.h"
 #include "vm/mod.h"
 #include "utils/log.h"
@@ -29,7 +29,7 @@ struct core core = {0};
 
 static void state_init()
 {
-    core.state.sector = sector_gen((struct coord) {0});
+    core.state.sector = sector_gen((struct coord) { .x = 0x0101, .y = 0x0101 });
 }
 
 static void state_close() {}
@@ -99,7 +99,7 @@ static void ui_init()
     core.ui.mods = panel_mods_new();
     core.ui.code = panel_code_new();
     core.ui.pos = panel_pos_new();
-    core.ui.system = panel_star_new();
+    core.ui.star = panel_star_new();
 }
 
 static void ui_close()
@@ -109,7 +109,7 @@ static void ui_close()
     panel_free(core.ui.mods);
     panel_free(core.ui.code);
     panel_free(core.ui.pos);
-    panel_free(core.ui.system);
+    panel_free(core.ui.star);
 }
 
 static void ui_event(SDL_Event *event)
@@ -118,7 +118,7 @@ static void ui_event(SDL_Event *event)
     if (panel_event(core.ui.mods, event)) return;
     if (panel_event(core.ui.code, event)) return;
     if (panel_event(core.ui.pos, event)) return;
-    if (panel_event(core.ui.system, event)) return;
+    if (panel_event(core.ui.star, event)) return;
     if (map_event(core.ui.map, event)) return;
     if (event->type == SDL_KEYUP && event->key.keysym.sym == SDLK_q) core_quit();
 }
@@ -130,7 +130,7 @@ static void ui_render(SDL_Renderer *renderer)
     panel_render(core.ui.mods, renderer);
     panel_render(core.ui.code, renderer);
     panel_render(core.ui.pos, renderer);
-    panel_render(core.ui.system, renderer);
+    panel_render(core.ui.star, renderer);
 }
 
 

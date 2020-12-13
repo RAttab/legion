@@ -5,7 +5,7 @@
 
 #include "game/coord.c"
 #include "game/atoms.c"
-#include "game/sector.c"
+#include "game/galaxy.c"
 #include "game/hunk.c"
 #include "game/obj.c"
 #include "game/worker.c"

@@ -13,8 +13,7 @@
 
 void star_gen(struct star *star, struct coord coord)
 {
-    uint64_t id = coord_to_id(coord);
-    struct rng rng = rng_make(id);
+    struct rng rng = rng_make(coord_to_id(coord));
 
     star->coord = coord;
     star->state = star_untouched;
@@ -26,8 +25,9 @@ void star_gen(struct star *star, struct coord coord)
     for (size_t planet = 0; planet < planets; ++planet) {
         size_t size = rng_uni(&rng, 1, 16);
         for (size_t roll = 0; roll < size; ++roll) {
-            size_t ele = rng_exp(&rng, ele_natural_min, ele_natural_max + 1);
-            star->elements[ele] = u16_saturate_add(star_elements[ele], 1U << size);
+            size_t elem = rng_exp(&rng, elem_natural_first, elem_natural_last + 1);
+            star->elements[elem] =
+                u16_saturate_add(star->elements[elem], 1U << size);
         }
     }
 }
@@ -40,9 +40,7 @@ void star_gen(struct star *star, struct coord coord)
 struct sector *sector_gen(struct coord coord)
 {
     coord = coord_sector(coord);
-
-    uint64_t id = coord_to_id(coord);
-    struct rng rng = rng_make(id);
+    struct rng rng = rng_make(coord_to_id(coord));
 
     size_t stars = rng_uni(&rng, 1, 1U << 10);
 
@@ -52,14 +50,23 @@ struct sector *sector_gen(struct coord coord)
     sector->stars_len = stars;
 
     for (size_t i = 0; i < stars; ++i) {
+        struct star *star = &sector->stars[i];
         uint64_t value = rng_step(&rng);
 
-        struct coord star = {
+        struct coord star_coord = {
             .x = value & coord_sector_mask,
             .y = (value >> coord_sector_bits) & coord_sector_mask,
         };
-        star_gen(&sector->stars[i], star,
+
+        // \todo index with qtree to check for proximity.
+        struct htable_ret ret =
+            htable_put(&sector->index, coord_to_id(star_coord), (uint64_t) star);
+        if (!ret.ok) continue;
+
+        star_gen(star, star_coord);
     }
+
+    return sector;
 }
 
 
@@ -67,11 +74,15 @@ struct hunk *sector_hunk(struct sector *sector, struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
 
-    struct hunk *hunk = sector_hunk_get(&sector->hunks, id);
-    if (likely(hunk)) return hunk;
+    struct hunk *hunk = sector_hunk_get(sector, coord);
+    if (likely(hunk != NULL)) return hunk;
 
-    hunk = hunk_alloc(coord);
-    struct htable_ret ret = htable_put(&sector->hunks, id, (uint64_t) hunk);
+    struct htable_ret ret = htable_get(&sector->index, id);
+    struct star *star = (void *) ret.value;
+    assert(ret.ok);
+
+    hunk = hunk_alloc(star);
+    ret = htable_put(&sector->hunks, id, (uint64_t) hunk);
     assert(ret.ok);
 
     return hunk;
@@ -89,4 +100,13 @@ void sector_step(struct sector *sector)
     struct htable_bucket *bucket = htable_next(&sector->hunks, NULL);
     for (; bucket; bucket = htable_next(&sector->hunks, bucket))
         hunk_step((void *) bucket->value);
+}
+
+const struct star *sector_star(struct sector *sector, const struct rect *rect)
+{
+    for (size_t i = 0; i < sector->stars_len; ++i) {
+        struct star *star = &sector->stars[i];
+        if (rect_contains(rect, star->coord)) return star;
+    }
+    return NULL;
 }

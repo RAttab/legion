@@ -29,33 +29,33 @@ static void atoms_reg(unsigned val, const char *str, size_t len)
 void atoms_register(void)
 {
 #define reg_ele(atom) atoms_reg(ITEM_ ## atom, #atom, sizeof(#atom))
-    reg_ele(ELE_A);
-    reg_ele(ELE_B);
-    reg_ele(ELE_C);
-    reg_ele(ELE_D);
-    reg_ele(ELE_E);
-    reg_ele(ELE_F);
-    reg_ele(ELE_G);
-    reg_ele(ELE_H);
-    reg_ele(ELE_I);
-    reg_ele(ELE_J);
-    reg_ele(ELE_K);
-    reg_ele(ELE_L);
-    reg_ele(ELE_M);
-    reg_ele(ELE_N);
-    reg_ele(ELE_O);
-    reg_ele(ELE_P);
+    reg_ele(ELEM_A);
+    reg_ele(ELEM_B);
+    reg_ele(ELEM_C);
+    reg_ele(ELEM_D);
+    reg_ele(ELEM_E);
+    reg_ele(ELEM_F);
+    reg_ele(ELEM_G);
+    reg_ele(ELEM_H);
+    reg_ele(ELEM_I);
+    reg_ele(ELEM_J);
+    reg_ele(ELEM_K);
+    reg_ele(ELEM_L);
+    reg_ele(ELEM_M);
+    reg_ele(ELEM_N);
+    reg_ele(ELEM_O);
+    reg_ele(ELEM_P);
 
-    reg_ele(ELE_Q);
-    reg_ele(ELE_R);
-    reg_ele(ELE_S);
-    reg_ele(ELE_T);
-    reg_ele(ELE_U);
-    reg_ele(ELE_V);
-    reg_ele(ELE_W);
-    reg_ele(ELE_X);
-    reg_ele(ELE_Y);
-    reg_ele(ELE_Z);
+    reg_ele(ELEM_Q);
+    reg_ele(ELEM_R);
+    reg_ele(ELEM_S);
+    reg_ele(ELEM_T);
+    reg_ele(ELEM_U);
+    reg_ele(ELEM_V);
+    reg_ele(ELEM_W);
+    reg_ele(ELEM_X);
+    reg_ele(ELEM_Y);
+    reg_ele(ELEM_Z);
 #undef reg_ele
 
 #define reg_atom(atom) atoms_reg(atom, #atom, sizeof(#atom))

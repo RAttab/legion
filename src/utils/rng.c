@@ -36,7 +36,7 @@ struct rng rng_make(uint64_t seed)
 // gen
 // -----------------------------------------------------------------------------
 
-uint64_t rng_gen(struct rng *rng)
+uint64_t rng_step(struct rng *rng)
 {
     rng->x ^= rng->x >> 12;
     rng->x ^= rng->x << 25;
@@ -44,10 +44,15 @@ uint64_t rng_gen(struct rng *rng)
     return rng->x * UINT64_C(2685821657736338717);
 }
 
+bool rng_prob(struct rng *rng, double prob)
+{
+    return rng_step(rng) <= (uint64_t) (prob * rng_max());
+}
+
 uint64_t rng_uni(struct rng *rng, uint64_t min, uint64_t max)
 {
     assert(max - min != 0);
-    return rng_gen(rng) % (max - min) + min;
+    return rng_step(rng) % (max - min) + min;
 }
 
 
@@ -59,10 +64,5 @@ uint64_t rng_exp(struct rng *rng, uint64_t min, uint64_t max)
 
 uint64_t rng_norm(struct rng *rng, uint64_t min, uint64_t max)
 {
-    return (rng_gen(rng, min, max) + rng_gen(rng, min, max)) / 2;
-}
-
-bool rng_prob(struct rng *rng, double prob)
-{
-    return rng_gen(rng) <= (uint64_t) (prob * rng_max());
+    return (rng_uni(rng, min, max) + rng_uni(rng, min, max)) / 2;
 }

@@ -23,13 +23,13 @@ enum star_state
     star_barren,
 };
 
-struct star legion_packed
+struct legion_packed star
 {
     struct coord coord;
     enum star_state state;
 
     uint32_t power;
-    uint16_t elements[ELE_NATURAL_LEN];
+    uint16_t elements[elem_natural_len];
 
     legion_pad(16);
 };
@@ -46,6 +46,7 @@ struct sector
 {
     struct coord coord;
     struct htable hunks;
+    struct htable index;
 
     size_t stars_len;
     struct star stars[];
@@ -55,5 +56,7 @@ struct sector *sector_gen(struct coord coord);
 
 struct hunk *sector_hunk(struct sector *, struct coord coord);
 struct hunk *sector_hunk_get(struct sector *, struct coord coord);
+
+const struct star *sector_star(struct sector *, const struct rect *);
 
 void sector_step(struct sector *);

@@ -22,34 +22,34 @@ enum item
     ITEM_NIL = 0x00,
 
     // Natural
-    ITEM_ELE_A = 0x01,
-    ITEM_ELE_B,
-    ITEM_ELE_C,
-    ITEM_ELE_D,
-    ITEM_ELE_E,
-    ITEM_ELE_F,
-    ITEM_ELE_G,
-    ITEM_ELE_H,
-    ITEM_ELE_I,
-    ITEM_ELE_J,
-    ITEM_ELE_K,
-    ITEM_ELE_L,
-    ITEM_ELE_M,
-    ITEM_ELE_N,
-    ITEM_ELE_O,
-    ITEM_ELE_P,
+    ITEM_ELEM_A = 0x01,
+    ITEM_ELEM_B,
+    ITEM_ELEM_C,
+    ITEM_ELEM_D,
+    ITEM_ELEM_E,
+    ITEM_ELEM_F,
+    ITEM_ELEM_G,
+    ITEM_ELEM_H,
+    ITEM_ELEM_I,
+    ITEM_ELEM_J,
+    ITEM_ELEM_K,
+    ITEM_ELEM_L,
+    ITEM_ELEM_M,
+    ITEM_ELEM_N,
+    ITEM_ELEM_O,
+    ITEM_ELEM_P,
 
     // Synth
-    ITEM_ELE_Q,
-    ITEM_ELE_R,
-    ITEM_ELE_S,
-    ITEM_ELE_T,
-    ITEM_ELE_U,
-    ITEM_ELE_V,
-    ITEM_ELE_W,
-    ITEM_ELE_X,
-    ITEM_ELE_Y,
-    ITEM_ELE_Z,
+    ITEM_ELEM_Q,
+    ITEM_ELEM_R,
+    ITEM_ELEM_S,
+    ITEM_ELEM_T,
+    ITEM_ELEM_U,
+    ITEM_ELEM_V,
+    ITEM_ELEM_W,
+    ITEM_ELEM_X,
+    ITEM_ELEM_Y,
+    ITEM_ELEM_Z,
 
     // ... moi j'connai mon alphabet ...
 
@@ -71,16 +71,16 @@ enum item
 
 enum ele
 {
-    ele_natural_first = item_ele_a,
-    ele_natural_last = item_ele_p,
-    ele_natural_len = (item_natural_last + 1) - ele_natural_first,
+    elem_natural_first = ITEM_ELEM_A,
+    elem_natural_last = ITEM_ELEM_P,
+    elem_natural_len = (elem_natural_last + 1) - elem_natural_first,
 
-    ele_synth_min = item_ele_q,
-    ele_synth_max = item_ele_z
-    ele_synth_len = (item_synth_last + 1) - ele_synth_first,
+    elem_synth_first = ITEM_ELEM_Q,
+    elem_synth_last = ITEM_ELEM_Z,
+    elem_synth_len = (elem_synth_last + 1) - elem_synth_first,
 };
 
-static_assert(ele_natural_len + ele_syn_len == 26);
+static_assert(elem_natural_len + elem_synth_len == 26);
 
 
 // -----------------------------------------------------------------------------

@@ -132,7 +132,7 @@ static void worker_put(
 
 static void worker_harvest(struct obj *obj, struct hunk *hunk, word_t ele)
 {
-    if (ele < ITEM_ELE_A || ele > ITEM_ELE_Z) return;
+    if (ele < elem_natural_first || ele > elem_natural_last) return;
     
     size_t count = hunk_harvest(hunk, ele, 1);
     if (!count) return;

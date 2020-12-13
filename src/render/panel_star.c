@@ -9,7 +9,7 @@
 #include "render/panel.h"
 #include "render/core.h"
 #include "game/coord.h"
-#include "game/sector.h"
+#include "game/galaxy.h"
 #include "utils/log.h"
 #include "SDL.h"
 
@@ -20,7 +20,7 @@
 
 struct panel_star_state
 {
-    struct system *star;
+    const struct star *star;
 
     size_t coord_y;
     size_t star_y;
@@ -30,17 +30,12 @@ struct panel_star_state
 static struct font *panel_star_font(void) { return font_mono6; }
 
 
-static inline char num_char(size_t val)
-{
-    return val ? '0' + val : ' ';
-}
-
 enum { val_str_len = 4 };
 static void star_val_str(char *dst, size_t len, size_t val)
 {
     assert(len >= val_str_len);
 
-    static const char units[] = " kmgt";
+    static const char units[] = "ukmgt";
 
     size_t unit = 0;
     while (val > 1000) {
@@ -49,9 +44,9 @@ static void star_val_str(char *dst, size_t len, size_t val)
     }
 
     dst[3] = units[unit];
-    dst[2] = num_char(val % 10);
-    dst[1] = num_char((val / 10) % 10);
-    dst[0] = num_char((val / 100) % 10);
+    dst[2] = '0' + (val % 10);
+    dst[1] = '0' + ((val / 10) % 10);
+    dst[0] = '0' + ((val / 100) % 10);
 }
 
 static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
@@ -68,22 +63,22 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     }
 
     {
-        static const char star_str[] = {'s', 't', 'a', 'r', ':'};
+        static const char star_str[] = "power:"; // \0 will act as the space
         SDL_Point pos = { .x = rect->x, .y = rect->y + state->star_y };
         
         font_render(font, renderer, star_str, sizeof(star_str), pos);
         pos.x += sizeof(star_str) * font->glyph_w;
         
         char val_str[val_str_len];
-        star_val_str(val_str, sizeof(val_str), state->star->star);
+        star_val_str(val_str, sizeof(val_str), state->star->power);
         font_render(font, renderer, val_str, sizeof(val_str), pos);
     }
     
     {
         SDL_Point pos = { .x = rect->x, .y = rect->y + state->elem_y };
         
-        for (size_t elem = 0; elem < elements_len; ++elem) {
-            if (elem == elements_len - 1) pos.x += font->glyph_w * 7 * 2;
+        for (size_t elem = 0; elem < elem_natural_len; ++elem) {
+            if (elem == elem_natural_len - 1) pos.x += font->glyph_w * 7 * 2;
             
             char elem_str[] = {'A'+elem, ':'};
             font_render(font, renderer, elem_str, sizeof(elem_str), pos);
@@ -112,11 +107,11 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
     switch (event->user.code) {
 
     case EV_STAR_SELECT: {
-        struct system *selected = event->user.data1;
-        if (state->star && coord_eq(selected->coord, state->star->coord))
+        const struct star *star = event->user.data1;
+        if (state->star && coord_eq(star->coord, state->star->coord))
             return false;
 
-        state->star = selected;
+        state->star = star;
         panel_show(panel);
         break;
     }

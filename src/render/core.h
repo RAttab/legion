@@ -58,7 +58,7 @@ struct core
         struct panel *mods;
         struct panel *code;
         struct panel *pos;
-        struct panel *system;
+        struct panel *star;
     } ui;
 
     struct {

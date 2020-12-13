@@ -4,7 +4,7 @@
 */
 
 #include "hunk.h"
-#include "game/sector.h"
+#include "game/galaxy.h"
 #include "game/obj.h"
 #include "utils/htable.h"
 
@@ -85,15 +85,11 @@ struct hunk
     struct hunk_area *areas[hunk_classes];
 };
 
-struct hunk *hunk_alloc(struct coord coord)
+struct hunk *hunk_alloc(const struct star *star)
 {
     struct hunk *hunk = calloc(1, sizeof(*hunk));
     hunk->ids = 1;
-
-    struct system_desc *system = system_gen(coord);
-    hunk->system = system->s;
-    free(system);
-
+    hunk->star = *star;
     return hunk;
 }
 
@@ -147,9 +143,10 @@ void hunk_step(struct hunk *hunk)
 
 size_t hunk_harvest(struct hunk *hunk, item_t type, size_t count)
 {
-    if (type < ITEM_ELE_A || type > ITEM_ELE_Z) return 0;
+    if (type < elem_natural_first || type > elem_natural_last) return 0;
     
-    count = i64_min(hunk->system.elements[type - ITEM_ELE_A], count);
-    hunk->system.elements[type] -= count;
+    size_t index = type - elem_natural_first;
+    count = i64_min(hunk->star.elements[index], count);
+    hunk->star.elements[index] -= count;
     return count;
 }

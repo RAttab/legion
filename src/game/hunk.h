@@ -16,7 +16,7 @@
 
 struct hunk;
 
-struct hunk *hunk_alloc(struct coord);
+struct hunk *hunk_alloc(const struct star *);
 void hunk_free(struct hunk *);
 
 struct star *hunk_star(struct hunk *);

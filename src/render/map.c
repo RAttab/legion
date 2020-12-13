@@ -7,7 +7,7 @@
 
 #include "render/color.h"
 #include "render/core.h"
-#include "game/sector.h"
+#include "game/galaxy.h"
 #include "utils/log.h"
 
 
@@ -17,7 +17,6 @@
 
 struct map
 {
-    struct sector *sector;
     struct coord pos;
     scale_t scale;
 
@@ -38,10 +37,9 @@ struct map *map_new()
 {
     struct map *map = calloc(1, sizeof(*map));
     *map = (struct map) {
-        .sector = core.state.sector,
         .pos = (struct coord) {
-            .x = core.state.sector->coord.x + coord_system_max / 2,
-            .y = core.state.sector->coord.y + coord_system_max / 2,
+            .x = core.state.sector->coord.x + coord_sector_size / 2,
+            .y = core.state.sector->coord.y + coord_sector_size / 2,
         },
         .scale = scale_init(),
         .tex = NULL,
@@ -137,8 +135,8 @@ bool map_event(struct map *map, SDL_Event *event)
                             .h = px, .w = px,
                         });
 
-                struct system *selected = sector_lookup(core.state.sector, &rect);
-                core_push_event(selected ? EV_STAR_SELECT : EV_STAR_CLEAR, selected);
+                const struct star *star = sector_star(core.state.sector, &rect);
+                core_push_event(star ? EV_STAR_SELECT : EV_STAR_CLEAR, (void *) star);
             }
 
             map->panning = false;
@@ -160,11 +158,11 @@ static void map_render_sector(struct map *map, SDL_Renderer *renderer)
 {
     struct rect rect = map_project_coord_rect(map, &core.rect);
 
-    for (size_t i = 0; i < core.state.sector->systems_len; ++i) {
-        struct system *system = &core.state.sector->systems[i];
-        if (!rect_contains(&rect, system->coord)) continue;
+    for (size_t i = 0; i < core.state.sector->stars_len; ++i) {
+        struct star *star = &core.state.sector->stars[i];
+        if (!rect_contains(&rect, star->coord)) continue;
 
-        SDL_Point pos = map_project_sdl(map, system->coord);
+        SDL_Point pos = map_project_sdl(map, star->coord);
 
         size_t px = scale_div(map->scale, px_star);
         SDL_Rect src = { .x = 0, .y = 0, .w = 100, .h = 100 };
@@ -174,7 +172,7 @@ static void map_render_sector(struct map *map, SDL_Renderer *renderer)
             .h = px, .w = px
         };
 
-        struct rgb rgb = spectrum_rgb(32 - u64_log2(system->star), 32);
+        struct rgb rgb = spectrum_rgb(32 - u64_log2(star->power), 32);
         if (!SDL_PointInRect(&core.cursor.point, &dst)) {
             rgb = desaturate(rgb, .8);
         }
