@@ -33,10 +33,9 @@ static struct font *panel_mods_font(void) { return font_mono8; }
 size_t panel_mods_width(void)
 {
     int width = 0;
-    struct font *font  = panel_mods_font();
+    struct font *font = panel_mods_font();
     ui_toggle_size(font, vm_atom_cap, &width, NULL);
     return width;
-
 }
 
 static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)

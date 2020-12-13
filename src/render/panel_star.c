@@ -29,11 +29,25 @@ struct panel_star_state
 
 static struct font *panel_star_font(void) { return font_mono6; }
 
+enum {
+    panel_star_val_len = 4,
+    panel_star_elems_cols = 5,
+    panel_star_elems_lines = elem_natural_len / panel_star_elems_cols + 1,
+};
 
-enum { val_str_len = 4 };
+size_t panel_star_width(void)
+{
+    size_t glyphs =
+        (2 + panel_star_val_len) * panel_star_elems_cols + // values
+        (panel_star_elems_cols - 1); // spacing
+
+    return glyphs * panel_star_font()->glyph_w;
+}
+
+
 static void star_val_str(char *dst, size_t len, size_t val)
 {
-    assert(len >= val_str_len);
+    assert(len >= panel_star_val_len);
 
     static const char units[] = "ukMG?";
 
@@ -71,7 +85,7 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
         pos.x += sizeof(star_str) * font->glyph_w;
 
 
-        char val_str[val_str_len];
+        char val_str[panel_star_val_len];
         star_val_str(val_str, sizeof(val_str), state->star->power);
 
         uint8_t gray = 0x11 * (u64_log2(state->star->power) / 2);
@@ -93,7 +107,7 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
 
             uint16_t value = state->star->elements[elem];
 
-            char val_str[val_str_len];
+            char val_str[panel_star_val_len];
             star_val_str(val_str, sizeof(val_str), value);
 
             uint8_t gray = 0x11 * u64_log2(value);
@@ -102,7 +116,7 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
             if (value) font_render(font, renderer, val_str, sizeof(val_str), pos);
             pos.x += sizeof(val_str) * font->glyph_w;
 
-            if (elem % 5 == 4) {
+            if (elem % panel_star_elems_cols == panel_star_elems_cols - 1) {
                 pos.x = rect->x;
                 pos.y += font->glyph_h;
             }
@@ -152,30 +166,23 @@ struct panel *panel_star_new(void)
 
     struct font *font = panel_star_font();
 
-    size_t coord_w = 0, coord_h = 0;
-    font_text_size(font, coord_str_len, &coord_w, &coord_h);
-
-    size_t star_w = 0, star_h = 0;
-    font_text_size(font, 4+1+4, &star_w, &star_h);
-
-    size_t elem_w = 0, elem_h = 0;
-    font_text_size(font, (1+1+4)*5+4, &elem_w, &elem_h);
-    elem_h *= elem_natural_len / 5 + 1;
-
-    size_t inner_w = i64_max(coord_w, i64_max(star_w, elem_w));
-    size_t inner_h = coord_h + spacing + star_h + spacing + elem_h;
+    size_t inner_w = panel_star_width();
+    size_t inner_h =
+        (font->glyph_h + spacing) + // coord
+        (font->glyph_h + spacing) + // power
+        (panel_star_elems_lines * font->glyph_h + spacing); // elems
 
     int outer_w = 0, outer_h = 0;
     panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
 
     struct panel_star_state *state = calloc(1, sizeof(*state));
     state->coord_y = 0;
-    state->star_y = state->coord_y + coord_h + spacing;
-    state->elem_y = state->star_y + star_h + spacing;
+    state->star_y = state->coord_y + font->glyph_h + spacing;
+    state->elem_y = state->star_y + font->glyph_h + spacing;
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = core.rect.w - outer_w,
-                .y = core.rect.h - outer_h,
+                .y = panel_menu_height(),
                 .w = outer_w, .h = outer_h });
     panel->hidden = true;
     panel->state = state;
