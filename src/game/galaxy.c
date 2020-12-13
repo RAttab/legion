@@ -23,9 +23,9 @@ void star_gen(struct star *star, struct coord coord)
 
     size_t planets = rng_norm(&rng, 1, 16);
     for (size_t planet = 0; planet < planets; ++planet) {
-        size_t size = rng_uni(&rng, 1, 16);
+        size_t size = rng_norm(&rng, 1, 16);
         for (size_t roll = 0; roll < size; ++roll) {
-            size_t elem = rng_exp(&rng, elem_natural_first, elem_natural_last + 1);
+            size_t elem = rng_exp(&rng, 0, elem_natural_len);
             star->elements[elem] =
                 u16_saturate_add(star->elements[elem], 1U << size);
         }

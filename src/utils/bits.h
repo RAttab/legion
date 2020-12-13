@@ -14,7 +14,7 @@
 inline size_t u32_clz(uint32_t x) { return x ? __builtin_clz(x) : 32; }
 
 inline size_t u64_clz(uint64_t x) { return x ? __builtin_clzl(x) : 64; }
-inline size_t u64_log2(uint64_t x) { return 63 - u64_clz(x); }
+inline size_t u64_log2(uint64_t x) { return x ? 63 - u64_clz(x) : 0; }
 
 
 // -----------------------------------------------------------------------------

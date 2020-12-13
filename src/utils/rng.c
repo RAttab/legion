@@ -59,7 +59,7 @@ uint64_t rng_uni(struct rng *rng, uint64_t min, uint64_t max)
 uint64_t rng_exp(struct rng *rng, uint64_t min, uint64_t max)
 {
     assert(max - min != 0);
-    return rng_uni(rng, min, rng_uni(rng, min+1, max));
+    return rng_uni(rng, min, rng_uni(rng, min+1, max+1));
 }
 
 uint64_t rng_norm(struct rng *rng, uint64_t min, uint64_t max)
