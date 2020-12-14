@@ -39,3 +39,14 @@ inline struct vec64 *vec64_append(struct vec64 *vec, uint64_t val)
     vec->vals[vec->len++] = val;
     return vec;
 }
+
+inline struct vec64 *vec64_sort(struct vec64 *vec)
+{
+    // gcc extension
+    int cmp(const void *l, const void *r) {
+        uint64_t lhs = *((uint64_t *) l);
+        uint64_t rhs = *((uint64_t *) r);
+        return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
+    }
+    qsort(vec->vals, vec->len, sizeof(vec->vals[0]), cmp);
+}
