@@ -76,3 +76,12 @@ inline void *obj_state(struct obj *obj)
 {
     return ((void *) obj) + obj->off_state;
 }
+
+
+// -----------------------------------------------------------------------------
+// worker
+// -----------------------------------------------------------------------------
+
+struct legion_packed worker { id_t dock; };
+struct obj *worker_alloc(struct hunk *);
+bool worker_io(struct obj *, struct hunk *, void *state, int64_t *buf, size_t len);

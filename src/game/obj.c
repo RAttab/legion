@@ -9,7 +9,6 @@
 #include "vm/mod.h"
 #include "game/atoms.h"
 #include "game/hunk.h"
-#include "game/worker.h"
 
 // -----------------------------------------------------------------------------
 // obj

@@ -3,7 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "worker.h"
 #include "game/obj.h"
 #include "game/hunk.h"
 
