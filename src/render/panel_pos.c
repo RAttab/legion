@@ -108,7 +108,7 @@ struct panel *panel_pos_new(void)
     state->scale_pos = (SDL_Point) { .x = coord_w + spacing, .y = 0 };
 
     struct panel *panel = panel_new(&(SDL_Rect) {
-                .x = core.rect.w - outer_w,
+                .x = (core.rect.w / 2)  - (outer_w / 2),
                 .y = core.rect.h - outer_h,
                 .w = outer_w, .h = outer_h });
     panel->hidden = false;
