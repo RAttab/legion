@@ -19,8 +19,7 @@ struct sector;
 
 enum event
 {
-    EV_STAR_SELECT = 0,
-    EV_STAR_CLEAR,
+    EV_NIL = 0,
 
     EV_MODS_SELECT,
     EV_MODS_UPDATE,
@@ -28,6 +27,13 @@ enum event
 
     EV_CODE_SELECT,
     EV_CODE_CLEAR,
+
+    EV_STAR_SELECT,
+    EV_STAR_UPDATE,
+    EV_STAR_CLEAR,
+
+    EV_OBJ_SELECT,
+    EV_OBJ_CLEAR,
 
     EV_MAX,
 };

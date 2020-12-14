@@ -91,6 +91,7 @@ typedef uint32_t id_t;
 
 inline id_t make_id(item_t type, id_t id) { return type << 24 | id; }
 inline item_t id_item(id_t id) { return id >> 24; }
+inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
 
 // -----------------------------------------------------------------------------

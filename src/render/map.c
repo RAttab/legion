@@ -136,7 +136,7 @@ bool map_event(struct map *map, SDL_Event *event)
                         });
 
                 const struct star *star = sector_star(core.state.sector, &rect);
-                core_push_event(star ? EV_STAR_SELECT : EV_STAR_CLEAR, (void *) star);
+                if (star) core_push_event(EV_STAR_SELECT, (void *) star);
             }
 
             map->panning = false;

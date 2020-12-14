@@ -25,15 +25,19 @@ struct panel_pos_state
     struct SDL_Point scale_pos;
 };
 
+static struct font *panel_pos_font(void) { return font_mono6; }
+
+
 static void panel_pos_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_pos_state *state = state_;
-    font_reset(font_mono6);
+    struct font *font = panel_pos_font();
+    font_reset(font);
 
     {
         char str[coord_str_len+1] = {0};
         coord_str(state->coord, str, sizeof(str));
-        font_render(font_mono6, renderer, str, coord_str_len, (SDL_Point) {
+        font_render(font, renderer, str, coord_str_len, (SDL_Point) {
                     .x = rect->x + state->coord_pos.x,
                     .y = rect->y + state->coord_pos.y });
     }
@@ -41,7 +45,7 @@ static void panel_pos_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rec
     {
         char str[scale_str_len+1] = {0};
         scale_str(state->scale, str, sizeof(str));
-        font_render(font_mono6, renderer, str, scale_str_len, (SDL_Point) {
+        font_render(font, renderer, str, scale_str_len, (SDL_Point) {
                     .x = rect->x + state->scale_pos.x,
                     .y = rect->y + state->scale_pos.y });
     }
@@ -83,12 +87,13 @@ static void panel_pos_free(void *state)
 struct panel *panel_pos_new(void)
 {
     enum { spacing = 10 };
+    struct font *font = panel_pos_font();
 
     size_t coord_w = 0, coord_h = 0;
-    font_text_size(font_mono6, coord_str_len, &coord_w, &coord_h);
+    font_text_size(font, coord_str_len, &coord_w, &coord_h);
 
     size_t scale_w = 0, scale_h = 0;
-    font_text_size(font_mono6, scale_str_len, &scale_w, &scale_h);
+    font_text_size(font, scale_str_len, &scale_w, &scale_h);
 
     size_t inner_w = coord_w + scale_w + spacing;
     size_t inner_h = i64_max(coord_h, scale_h);

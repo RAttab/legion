@@ -42,6 +42,7 @@ static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
 {
     struct panel_mods_state *state = state_;
     struct font *font = panel_mods_font();
+    font_reset(font);
 
     SDL_Point pos = { .x = rect->x, .y = rect->y };
     for (size_t i = 0; i < state->mods->len; ++i) {

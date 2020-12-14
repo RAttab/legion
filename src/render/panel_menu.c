@@ -25,6 +25,7 @@ static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
 {
     struct panel_menu_state *state = state_;
     struct font *font = panel_menu_font();
+    font_reset(font);
 
     SDL_Point pos = { .x = rect->x, .y = rect->y };
     ui_toggle_render(&state->mods, renderer, pos, font);
