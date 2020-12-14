@@ -25,5 +25,6 @@ struct obj *hunk_obj_alloc(struct hunk *, item_t type, size_t len);
 struct obj *hunk_obj(struct hunk *, id_t id);
 
 void hunk_step(struct hunk *);
-
 size_t hunk_harvest(struct hunk *, item_t type, size_t count);
+
+struct vec64 *hunk_list(struct hunk *);
