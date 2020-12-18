@@ -34,33 +34,40 @@ enum
 
 static const char p_mods_str[] = "mods:";
 
+static void panel_mods_render_count(
+        struct panel_mods_state *state, SDL_Renderer *renderer)
+{
+    struct layout_entry *layout = layout_entry(state->layout, p_mods_count);
+    SDL_Point pos = layout_entry_pos(layout);
+
+    font_render(layout->font, renderer, p_mods_str, sizeof(p_mods_str),
+            layout_entry_pos(layout));
+
+    char val[p_mods_val_len];
+    str_utoa(state->mods->len, val, sizeof(val));
+    pos.x = state->layout->bbox.w - (layout->item.w * sizeof(val));
+    font_render(layout->font, renderer, val, sizeof(val), pos);
+}
+
+static void panel_mods_render_list(
+        struct panel_mods_state *state, SDL_Renderer *renderer)
+{
+    struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
+
+    size_t rows = u64_min(state->mods->len, layout->rows);
+    for (size_t i = 0; i < rows; ++i) {
+        SDL_Point pos = layout_entry_index_pos(layout, i, 0);
+        ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
+    }
+}
+
 static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_mods_state *state = state_;
     (void) rect;
 
-    {
-        struct layout_entry *layout = layout_entry(state->layout, p_mods_count);
-        SDL_Point pos = layout_entry_pos(layout);
-
-        font_render(layout->font, renderer, p_mods_str, sizeof(p_mods_str),
-                layout_entry_pos(layout));
-
-        char val[p_mods_val_len];
-        str_utoa(state->mods->len, val, sizeof(val));
-        pos.x = state->layout->bbox.w - (layout->item.w * sizeof(val));
-        font_render(layout->font, renderer, val, sizeof(val), pos);
-    }
-
-    {
-        struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
-
-        size_t rows = u64_min(state->mods->len, layout->rows);
-        for (size_t i = 0; i < rows; ++i) {
-            SDL_Point pos = layout_entry_index_pos(layout, i, 0);
-            ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
-        }
-    }
+    panel_mods_render_count(state, renderer);
+    panel_mods_render_list(state, renderer);
 }
 
 static void panel_mods_update(struct panel_mods_state *state)
@@ -129,6 +136,7 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
 static void panel_mods_free(void *state_)
 {
     struct panel_mods_state *state = state_;
+    layout_free(state->layout);
     free(state->toggles);
     free(state->mods);
     free(state);

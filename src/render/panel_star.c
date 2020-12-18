@@ -256,6 +256,7 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
 static void panel_star_free(void *state_)
 {
     struct panel_star_state *state = state_;
+    layout_free(state->layout);
     vec64_free(state->objs);
     free(state->toggles);
     free(state);
