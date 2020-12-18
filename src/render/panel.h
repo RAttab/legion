@@ -61,12 +61,7 @@ struct panel *panel_menu_new(void);
 size_t panel_menu_height(void);
 
 struct panel *panel_mods_new(void);
-size_t panel_mods_width(void);
-
 struct panel *panel_code_new(void);
 struct panel *panel_pos_new(void);
-
 struct panel *panel_star_new(void);
-size_t panel_star_width(void);
-
 struct panel *panel_obj_new(void);

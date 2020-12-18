@@ -45,7 +45,7 @@ void layout_text(struct layout *, int key, struct font *, size_t cols, size_t ro
 void layout_list(struct layout *, int key, size_t rows, int width, int height);
 void layout_grid(struct layout *, int key, size_t rows, size_t cols, int size);
 
-void layout_finish(struct layout *, SDL_Point abs, SDL_Point rel);
+void layout_finish(struct layout *, SDL_Point rel);
 
 struct layout_entry *layout_entry(struct layout *, int key);
 SDL_Rect layout_abs(struct layout *, int key);

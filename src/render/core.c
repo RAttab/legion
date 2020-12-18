@@ -95,12 +95,12 @@ static void cursor_render(SDL_Renderer *renderer)
 static void ui_init()
 {
     core.ui.map = map_new();
-    core.ui.menu = panel_menu_new();
     core.ui.mods = panel_mods_new();
     core.ui.code = panel_code_new();
-    core.ui.pos = panel_pos_new();
     core.ui.star = panel_star_new();
     core.ui.obj = panel_obj_new();
+    core.ui.menu = panel_menu_new();
+    core.ui.pos = panel_pos_new();
 }
 
 static void ui_close()

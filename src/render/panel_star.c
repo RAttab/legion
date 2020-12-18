@@ -23,43 +23,48 @@
 
 struct panel_star_state
 {
+    struct layout *layout;
     const struct star *star;
-    size_t coord_y;
-    size_t star_y;
-    size_t elem_y;
 
-    struct {
-        struct vec64 *list;
-        struct ui_toggle *toggles;
-
-        SDL_Rect abs;
-        size_t rel_y;
-        int toggle_h;
-    } objs;
+    struct vec64 *objs;
+    struct ui_toggle *toggles;
 };
+
+enum
+{
+    p_star_coord = 0,
+    p_star_coord_sep,
+    p_star_power,
+    p_star_power_sep,
+    p_star_elems,
+    p_star_elems_sep,
+    p_star_objs,
+    p_star_objs_list,
+    p_star_len,
+};
+
+enum
+{
+    p_star_val_len = 4,
+
+    p_star_elem_len = 2 + p_star_val_len + 1,
+    p_star_elems_cols = 5,
+    p_star_elems_rows = 4,
+
+    p_star_objs_len = 8,
+};
+static_assert(elem_natural_len <= p_star_elems_cols * p_star_elems_rows);
+
+static const char p_star_power_str[] = "power:";
+static const char p_star_objs_str[] = "objects:";
 
 static struct font *panel_star_font_big(void) { return font_mono8; }
 static struct font *panel_star_font_small(void) { return font_mono6; }
 
-enum {
-    panel_star_val_len = 4,
-    panel_star_elems_cols = 5,
-    panel_star_elems_lines = elem_natural_len / panel_star_elems_cols + 1,
-};
-
-size_t panel_star_width(void)
-{
-    size_t glyphs =
-        (2 + panel_star_val_len) * panel_star_elems_cols + // values
-        (panel_star_elems_cols - 1); // spacing
-
-    return glyphs * panel_star_font_small()->glyph_w;
-}
-
 
 static void star_val_str(char *dst, size_t len, size_t val)
 {
-    assert(len >= panel_star_val_len);
+    assert(len >= p_star_val_len);
 
     static const char units[] = "ukMG?";
 
@@ -81,149 +86,117 @@ static void star_val_str(char *dst, size_t len, size_t val)
 }
 
 static void panel_star_render_coord(
-        struct panel_star_state *state, SDL_Renderer *renderer, SDL_Rect *rect)
+        struct panel_star_state *state, SDL_Renderer *renderer)
 {
-    struct font *font = panel_star_font_big();
-    font_reset(font);
+    struct layout_entry *layout = layout_entry(state->layout, p_star_coord);
 
-    char str[coord_str_len+1] = {0};
+    char str[coord_str_len] = {0};
     coord_str(state->star->coord, str, sizeof(str));
-    font_render(font, renderer, str, coord_str_len, (SDL_Point) {
-                .x = rect->x, .y = rect->y + state->coord_y });
+    font_render(layout->font, renderer, str, coord_str_len, layout_entry_pos(layout));
 }
 
 static void panel_star_render_power(
-        struct panel_star_state *state, SDL_Renderer *renderer, SDL_Rect *rect)
+        struct panel_star_state *state, SDL_Renderer *renderer)
 {
-    struct font *font = panel_star_font_small();
-    font_reset(font);
+    struct layout_entry *layout = layout_entry(state->layout, p_star_power);
 
-    static const char star_str[] = "power:"; // \0 will act as the space
-    SDL_Point pos = { .x = rect->x, .y = rect->y + state->star_y };
+    font_render(layout->font, renderer, p_star_power_str, sizeof(p_star_power_str),
+            layout_entry_pos(layout));
 
-    sdl_err(SDL_SetTextureColorMod(font->tex, 0xFF, 0xFF, 0xFF));
-    font_render(font, renderer, star_str, sizeof(star_str), pos);
-    pos.x += sizeof(star_str) * font->glyph_w;
-
-
-    char val_str[panel_star_val_len];
+    char val_str[p_star_val_len] = {0};
     star_val_str(val_str, sizeof(val_str), state->star->power);
 
     uint8_t gray = 0x11 * (u64_log2(state->star->power) / 2);
-    sdl_err(SDL_SetTextureColorMod(font->tex, gray, gray, gray));
-
-    font_render(font, renderer, val_str, sizeof(val_str), pos);
+    sdl_err(SDL_SetTextureColorMod(layout->font->tex, gray, gray, gray));
+    font_render(layout->font, renderer, val_str, sizeof(val_str),
+            layout_entry_index_pos(layout, 0, sizeof(p_star_power_str)));
 }
 
 static void panel_star_render_elems(
-        struct panel_star_state *state, SDL_Renderer *renderer, SDL_Rect *rect)
+        struct panel_star_state *state, SDL_Renderer *renderer)
 {
-    struct font *font = panel_star_font_small();
-    font_reset(font);
-
-    SDL_Point pos = { .x = rect->x, .y = rect->y + state->elem_y };
+    struct layout_entry *layout = layout_entry(state->layout, p_star_elems);
 
     for (size_t elem = 0; elem < elem_natural_len; ++elem) {
-        if (elem == elem_natural_len - 1) pos.x += font->glyph_w * 7 * 2;
+        size_t row = elem / p_star_elems_cols;
+        size_t col = elem % p_star_elems_cols;
+        if (elem == elem_natural_len - 1) col = 2;
+        SDL_Point pos = layout_entry_index_pos(layout, row, col * p_star_elem_len);
 
         char elem_str[] = {'A'+elem, ':'};
-        sdl_err(SDL_SetTextureColorMod(font->tex, 0xFF, 0xFF, 0xFF));
-        font_render(font, renderer, elem_str, sizeof(elem_str), pos);
-        pos.x += sizeof(elem_str) * font->glyph_w;
+        sdl_err(SDL_SetTextureColorMod(layout->font->tex, 0xFF, 0xFF, 0xFF));
+        font_render(layout->font, renderer, elem_str, sizeof(elem_str), pos);
+        pos.x += sizeof(elem_str) * layout->item.w;
 
         uint16_t value = state->star->elements[elem];
 
-        char val_str[panel_star_val_len];
+        char val_str[p_star_val_len] = {0};
         star_val_str(val_str, sizeof(val_str), value);
 
-        uint8_t gray = 0x11 * u64_log2(value);
-        sdl_err(SDL_SetTextureColorMod(font->tex, gray, gray, gray));
-
-        if (value) font_render(font, renderer, val_str, sizeof(val_str), pos);
-        pos.x += sizeof(val_str) * font->glyph_w;
-
-        if (elem % panel_star_elems_cols == panel_star_elems_cols - 1) {
-            pos.x = rect->x;
-            pos.y += font->glyph_h;
+        if (value) {
+            uint8_t gray = 0x11 * u64_log2(value);
+            sdl_err(SDL_SetTextureColorMod(layout->font->tex, gray, gray, gray));
+            font_render(layout->font, renderer, val_str, sizeof(val_str), pos);
         }
-        else pos.x += font->glyph_w;
     }
 }
 
 static void panel_star_render_list(
-        struct panel_star_state *state, SDL_Renderer *renderer, SDL_Rect *rect)
+        struct panel_star_state *state, SDL_Renderer *renderer)
 {
-    struct font *font = panel_star_font_small();
-    font_reset(font);
-
-    SDL_Point pos = { .x = rect->x, .y = state->objs.rel_y };
-
     {
-        static const char list_str[] = "objects:";
-        font_render(font, renderer, list_str, sizeof(list_str), pos);
+        struct layout_entry *layout = layout_entry(state->layout, p_star_objs);
+        SDL_Point pos = layout_entry_pos(layout);
 
-        char val_str[8];
-        size_t n = str_utoa(state->objs.list->len, val_str, sizeof(val_str));
-        pos.x = rect->w - (n * font->glyph_w);
-        font_render(font, renderer, val_str, sizeof(val_str), pos);
 
-        pos.x  = rect->x;
-        pos.y += font->glyph_h;
+        font_render(layout->font, renderer, p_star_objs_str, sizeof(p_star_objs_str),
+                layout_entry_pos(layout));
+
+        char val[p_star_objs_len];
+        str_utoa(state->objs->len, val, sizeof(val));
+        pos.x = state->layout->bbox.w - (layout->item.w * sizeof(val));
+        font_render(layout->font, renderer, val, sizeof(val), pos);
     }
 
-    for (size_t i = 0; i < state->objs.list->len; ++i) {
-        ui_toggle_render(&state->objs.toggles[i], renderer, pos, font);
-        pos.y += state->objs.toggle_h;
+    {
+        struct layout_entry *layout = layout_entry(state->layout, p_star_objs_list);
+
+        size_t rows = u64_min(state->objs->len, layout->rows);
+        for (size_t i = 0; i < rows; ++i) {
+            SDL_Point pos = layout_entry_index_pos(layout, i, 0);
+            ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
+        }
     }
 }
 
 static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
+    (void) rect;
+
     struct panel_star_state *state = state_;
-    panel_star_render_coord(state, renderer, rect);
-    panel_star_render_power(state, renderer, rect);
-    panel_star_render_elems(state, renderer, rect);
-    panel_star_render_list(state, renderer, rect);
-}
-
-static void panel_star_str_id(id_t id, char *dst, size_t len)
-{
-    switch(id_item(id)) {
-    case ITEM_BRAIN: { dst[0] = 'b'; break; }
-    case ITEM_WORKER: { dst[0] = 'w'; break; }
-    case ITEM_PRINTER: { dst[0] = 'p'; break; }
-    case ITEM_LAB: { dst[0] = 'l'; break; }
-    case ITEM_COMM: { dst[0] = 'c'; break; }
-    case ITEM_SHIP: { dst[0] = 's'; break; }
-    default: { assert(false); }
-    }
-
-    id = id_bot(id);
-    assert(id);
-
-    for (size_t j = len - 1; id; j--) {
-        uint8_t v = id & 0xF;
-        dst[j] = v < 10 ? '0' + v : 'A' + v;
-        id >>= 4;
-    }
+    panel_star_render_coord(state, renderer);
+    panel_star_render_power(state, renderer);
+    panel_star_render_elems(state, renderer);
+    panel_star_render_list(state, renderer);
 }
 
 static void panel_star_update(struct panel_star_state *state)
 {
     struct hunk *hunk = sector_hunk(core.state.sector, state->star->coord);
 
-    free(state->objs.list);
-    state->objs.list = hunk_list(hunk);
+    free(state->objs);
+    state->objs = hunk_list(hunk);
 
-    struct SDL_Rect rect = state->objs.abs;
-    rect.h = state->objs.toggle_h;
+    struct layout_entry *layout = layout_entry(state->layout, p_star_objs_list);
+    struct SDL_Rect rect = layout_abs(state->layout, p_star_objs_list);
+    rect.h = layout->item.h;
 
-    for (size_t i = 0; i < state->objs.list->len; ++i) {
-        char str[8];
-        panel_star_str_id(state->objs.list->vals[i], str, sizeof(str));
+    for (size_t i = 0; i < state->objs->len; ++i) {
+        char str[id_str_len];
+        id_str(state->objs->vals[i], sizeof(str), str);
+        ui_toggle_init(&state->toggles[i], &rect, str, sizeof(str));
 
-        ui_toggle_init(&state->objs.toggles[i], &rect, str, sizeof(str));
-        rect.y += state->objs.toggle_h;
+        rect.y += layout->item.h;
     }
 }
 
@@ -263,19 +236,19 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
 
     if (panel->hidden) return false;
 
-    for (size_t i = 0; i < state->objs.list->len; ++i) {
-        struct ui_toggle *toggle = &state->objs.toggles[i];
+    for (size_t i = 0; i < state->objs->len; ++i) {
+        struct ui_toggle *toggle = &state->toggles[i];
 
         enum ui_toggle_ret ret = ui_toggle_events(toggle, event);
         if (ret & ui_toggle_invalidate) panel_invalidate(panel);
         if (ret & ui_toggle_flip) {
             enum event ev = toggle->selected ? EV_OBJ_SELECT : EV_OBJ_CLEAR;
-            id_t obj = state->objs.list->vals[i];
+            id_t obj = state->objs->vals[i];
             uint64_t coord = coord_to_id(state->star->coord);
             core_push_event(ev, obj, coord);
 
-            for (size_t j = 0; j < state->objs.list->len; ++j) {
-                if (j != i) state->objs.toggles[j].selected = false;
+            for (size_t j = 0; j < state->objs->len; ++j) {
+                if (j != i) state->toggles[j].selected = false;
             }
         }
         if (ret & ui_toggle_consume) return true;
@@ -286,46 +259,47 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
 static void panel_star_free(void *state_)
 {
     struct panel_star_state *state = state_;
-    vec64_free(state->objs.list);
-    free(state->objs.toggles);
+    vec64_free(state->objs);
+    free(state->toggles);
     free(state);
 };
 
 struct panel *panel_star_new(void)
 {
-    enum { spacing = 5 };
-
-    struct font *font_big = panel_star_font_big();
-    struct font *font_small = panel_star_font_small();
-
+    struct font *font_b = panel_star_font_big();
+    struct font *font_s = panel_star_font_small();
     size_t menu_h = panel_menu_height();
-    size_t inner_w = panel_star_width();
-    size_t inner_h = core.rect.h - menu_h - panel_total_padding;
 
-    int outer_w = 0, outer_h = 0;
-    panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
+    struct layout *layout = layout_alloc(p_star_len,
+            core.rect.w, core.rect.h - menu_h - panel_total_padding);
+
+    layout_text(layout, p_star_coord, font_b, coord_str_len, 1);
+    layout_sep(layout, p_star_coord_sep);
+
+    layout_text(layout, p_star_power, font_s, sizeof(p_star_power_str) + p_star_val_len, 1);
+    layout_sep(layout, p_star_power_sep);
+
+    layout_text(layout, p_star_elems, font_s, p_star_elem_len * p_star_elems_cols, p_star_elems_rows);
+    layout_sep(layout, p_star_elems_sep);
+
+    layout_text(layout, p_star_objs, font_s, sizeof(p_star_objs) + p_star_objs_len, 1);
+    layout_text(layout, p_star_objs_list, font_s, id_str_len + 2, layout_inf);
+
+    layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
+    layout->pos = (SDL_Point) {
+        .x = core.rect.w - layout->bbox.w - panel_padding,
+        .y = menu_h + panel_padding
+    };
 
     struct panel_star_state *state = calloc(1, sizeof(*state));
-    state->coord_y = 0;
-    state->star_y = state->coord_y + font_big->glyph_h + spacing;
-    state->elem_y = state->star_y + font_small->glyph_h + spacing;
+    state->layout = layout;
+    state->objs = vec64_reserve(0);
 
-    struct SDL_Rect rect = {
-        .x = core.rect.w - outer_w,
-        .y = panel_menu_height(),
-        .w = outer_w, .h = outer_h };
-
-    state->objs.list = vec64_reserve(0);
-    state->objs.rel_y = state->elem_y +
-        (panel_star_elems_lines * font_small->glyph_h) + spacing;
-    state->objs.abs = (SDL_Rect) {
-        .x = rect.x + panel_padding,
-        .y = rect.y + state->objs.rel_y + font_small->glyph_h + panel_padding,
-        .w = inner_w,
-        .h = inner_h - state->objs.rel_y };
-    ui_toggle_size(font_small, vm_atom_cap, NULL, &state->objs.toggle_h);
-
-    struct panel *panel = panel_new(&rect);
+    struct panel *panel = panel_new(&(SDL_Rect) {
+                .x = layout->pos.x - panel_padding,
+                .y = layout->pos.y - panel_padding,
+                .w = layout->bbox.w + panel_total_padding,
+                .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_star_render;

@@ -29,6 +29,7 @@ struct panel_obj_state
 enum
 {
     p_obj_id = 0,
+    p_obj_id_sep,
     p_obj_target,
     p_obj_target_sep,
     p_obj_cargo,
@@ -74,7 +75,7 @@ static void panel_obj_render_target(struct panel_obj_state *state, SDL_Renderer 
     char str[id_str_len];
     id_str(state->obj->target, sizeof(str), str);
     font_render(layout->font, renderer, str, sizeof(str),
-            layout_entry_index_pos(layout, 1, sizeof(p_obj_target)));
+            layout_entry_index_pos(layout, 0, sizeof(p_obj_target)));
 }
 
 static void panel_obj_render_cargo(struct panel_obj_state *state, SDL_Renderer *renderer)
@@ -225,7 +226,8 @@ struct panel *panel_obj_new(void)
     struct layout *layout = layout_alloc(p_obj_len,
             core.rect.w, core.rect.h - menu_h - panel_total_padding);
 
-    layout_text(layout, p_obj_id, font_b, 2+6, 1);
+    layout_text(layout, p_obj_id, font_b, id_str_len, 1);
+    layout_sep(layout, p_obj_id_sep);
 
     layout_text(layout, p_obj_target, font_s, sizeof(p_obj_target_str) + id_str_len, 1);
     layout_sep(layout, p_obj_target_sep);
@@ -238,21 +240,21 @@ struct panel *panel_obj_new(void)
     layout_text(layout, p_obj_docks_list, font_s, 3 + id_str_len, p_obj_docks_max);
     layout_sep(layout, p_obj_docks_sep);
 
-    int outer_w = 0, outer_h = 0;
-    panel_add_borders(layout->bbox.w, layout->bbox.h, &outer_w, &outer_h);
 
-    SDL_Point rel = { .x = panel_padding, .y = panel_padding };
-    SDL_Point abs = {
-        .x = core.rect.w - panel_star_width() - outer_w + panel_padding,
+    layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
+    layout->pos = (SDL_Point) {
+        .x = core.rect.w - core.ui.star->rect.w - layout->bbox.w - panel_padding,
         .y = menu_h + panel_padding
     };
-    layout_finish(layout, abs, rel);
 
     struct panel_obj_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
     struct panel *panel = panel_new(&(SDL_Rect) {
-                .x = abs.x, .y = abs.y, .w = outer_w, .h = outer_h });
+                .x = layout->pos.x - panel_padding,
+                .y = layout->pos.y - panel_padding,
+                .w = layout->bbox.w + panel_total_padding,
+                .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_obj_render;

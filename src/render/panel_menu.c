@@ -30,10 +30,10 @@ static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     SDL_Point pos = { .x = rect->x, .y = rect->y };
     ui_toggle_render(&state->mods, renderer, pos, font);
 
-    pos.x += panel_mods_width();
+    pos.x += core.ui.mods->rect.w;
     ui_toggle_render(&state->code, renderer, pos, font);
 
-    pos.x = rect->w - panel_star_width();
+    pos.x = rect->w - core.ui.star->rect.w;
     ui_toggle_render(&state->star, renderer, pos, font);
 }
 
@@ -140,7 +140,7 @@ struct panel *panel_menu_new(void)
     {
         const char str[] = "code";
         SDL_Rect rect = {
-            .x = panel_padding + panel_mods_width(),
+            .x = panel_padding + core.ui.mods->rect.w,
             .y = panel_padding
         };
         ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);
@@ -151,7 +151,7 @@ struct panel *panel_menu_new(void)
     {
         const char str[] = "star";
         SDL_Rect rect = {
-            .x = core.rect.w - panel_star_width() - panel_padding,
+            .x = core.rect.w - core.ui.mods->rect.w,
             .y = panel_padding
         };
         ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);

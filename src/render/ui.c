@@ -65,7 +65,7 @@ void layout_rect(struct layout *layout, int key, int width, int height)
 void layout_text(
         struct layout *layout, int key, struct font *font, size_t cols, size_t rows)
 {
-    assert(font && cols > 0 && rows > 0);
+    assert(font);
 
     struct layout_entry *entry = layout_entry(layout, key);
     entry->font = font;
@@ -77,7 +77,7 @@ void layout_text(
 
 void layout_list(struct layout *layout, int key, size_t rows, int width, int height)
 {
-    assert(rows > 0 && width > 0 && height > 0);
+    assert(width > 0 && height > 0);
 
     struct layout_entry *entry = layout_entry(layout, key);
     entry->cols = 1;
@@ -88,7 +88,7 @@ void layout_list(struct layout *layout, int key, size_t rows, int width, int hei
 
 void layout_grid(struct layout *layout, int key, size_t rows, size_t cols, int size)
 {
-    assert(rows > 0 && cols > 0 && size > 0);
+    assert(size > 0);
 
     struct layout_entry *entry = layout_entry(layout, key);
     entry->cols = cols;
@@ -97,16 +97,16 @@ void layout_grid(struct layout *layout, int key, size_t rows, size_t cols, int s
     layout_update(layout, entry);
 }
 
-void layout_finish(struct layout *layout, SDL_Point abs, SDL_Point rel)
+void layout_finish(struct layout *layout, SDL_Point rel)
 {
     int y = rel.y;
     for (size_t i = 0; i < layout->len; ++i) {
         struct layout_entry *entry = &layout->entries[i];
 
         if (entry->cols == layout_inf)
-            entry->cols = layout->bbox.w / entry->item.w;
+            entry->cols = layout->bounds.w / entry->item.w;
         if (entry->rows == layout_inf) {
-            entry->rows = (layout->bbox.h - y) / entry->item.h;
+            entry->rows = (layout->bounds.h - y) / entry->item.h;
             layout->bbox.h = 0; // can only allow a single inf rows.
         }
 
@@ -121,7 +121,6 @@ void layout_finish(struct layout *layout, SDL_Point abs, SDL_Point rel)
     }
 
     layout->bbox.h = y;
-    layout->pos = abs;
 }
 
 
@@ -168,7 +167,7 @@ SDL_Point layout_entry_index_pos(struct layout_entry *entry, size_t row, size_t 
 
     return (SDL_Point) {
         .x = entry->rect.x + col * entry->item.w,
-        .y = entry->rect.y + col * entry->item.h,
+        .y = entry->rect.y + row * entry->item.h,
     };
 }
 

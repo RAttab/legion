@@ -128,8 +128,9 @@ struct panel *panel_code_new(void)
     state->line_cap = inner_w / font->glyph_h;
 
     struct panel *panel = panel_new(&(SDL_Rect) {
-        .x = panel_mods_width() + panel_total_padding, .y = menu_h,
-        .w = outer_w, .h = outer_h });
+                .x = core.ui.mods->rect.w,
+                .y = menu_h,
+                .w = outer_w, .h = outer_h });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_code_render;
