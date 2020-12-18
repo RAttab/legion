@@ -100,6 +100,7 @@ static void ui_init()
     core.ui.code = panel_code_new();
     core.ui.pos = panel_pos_new();
     core.ui.star = panel_star_new();
+    core.ui.obj = panel_obj_new();
 }
 
 static void ui_close()
@@ -110,6 +111,7 @@ static void ui_close()
     panel_free(core.ui.code);
     panel_free(core.ui.pos);
     panel_free(core.ui.star);
+    panel_free(core.ui.obj);
 }
 
 static void ui_event(SDL_Event *event)
@@ -119,6 +121,7 @@ static void ui_event(SDL_Event *event)
     if (panel_event(core.ui.code, event)) return;
     if (panel_event(core.ui.pos, event)) return;
     if (panel_event(core.ui.star, event)) return;
+    if (panel_event(core.ui.obj, event)) return;
     if (map_event(core.ui.map, event)) return;
     if (event->type == SDL_KEYUP && event->key.keysym.sym == SDLK_q) core_quit();
 }
@@ -131,6 +134,7 @@ static void ui_render(SDL_Renderer *renderer)
     panel_render(core.ui.code, renderer);
     panel_render(core.ui.pos, renderer);
     panel_render(core.ui.star, renderer);
+    panel_render(core.ui.obj, renderer);
 }
 
 
@@ -212,12 +216,13 @@ void core_quit()
     sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
 }
 
-void core_push_event(enum event code, void *data)
+void core_push_event(enum event code, uint64_t d0, uint64_t d1)
 {
     SDL_Event ev = {0};
     ev.type = core.event;
     ev.user.code = code;
-    ev.user.data1 = data;
+    ev.user.data1 = (void *) d0;
+    ev.user.data2 = (void *) d1;
 
     int ret = sdl_err(SDL_PushEvent(&ev));
     assert(ret > 0);

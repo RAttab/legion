@@ -102,7 +102,7 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
         if (ret & ui_toggle_flip) {
             enum event ev = state->toggles[i].selected ? EV_CODE_SELECT : EV_CODE_CLEAR;
             uint64_t data = state->mods->items[i].id;
-            core_push_event(ev, (void *) data);
+            core_push_event(ev, data, 0);
 
             for (size_t j = 0; j < state->mods->len; ++j) {
                 if (j != i) state->toggles[j].selected = false;

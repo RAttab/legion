@@ -33,6 +33,7 @@ enum event
     EV_STAR_CLEAR,
 
     EV_OBJ_SELECT,
+    EV_OBJ_UPDATE,
     EV_OBJ_CLEAR,
 
     EV_MAX,
@@ -65,6 +66,7 @@ struct core
         struct panel *code;
         struct panel *pos;
         struct panel *star;
+        struct panel *obj;
     } ui;
 
     struct {
@@ -82,4 +84,4 @@ void core_path_res(const char *name, char *dst, size_t len);
 void core_run();
 void core_quit();
 
-void core_push_event(enum event, void *data);
+void core_push_event(enum event, uint64_t d0, uint64_t d1);

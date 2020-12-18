@@ -68,3 +68,5 @@ struct panel *panel_pos_new(void);
 
 struct panel *panel_star_new(void);
 size_t panel_star_width(void);
+
+struct panel *panel_obj_new(void);

@@ -31,6 +31,11 @@ inline uint32_t u32_min(uint32_t x, uint32_t y)
     return x <= y ? x : y;
 }
 
+inline uint32_t u32_max(uint32_t x, uint32_t y)
+{
+    return x >= y ? x : y;
+}
+
 inline int64_t i64_min(int64_t x, int64_t y)
 {
     return x <= y ? x : y;

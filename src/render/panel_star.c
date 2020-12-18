@@ -230,33 +230,35 @@ static void panel_star_update(struct panel_star_state *state)
 static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_star_state *state = state_;
-    if (event->type != core.event) return false;
 
-    switch (event->user.code) {
+    if (event->type == core.event) {
+        switch (event->user.code) {
 
-    case EV_STAR_SELECT: {
-        const struct star *star = event->user.data1;
-        if (state->star && coord_eq(star->coord, state->star->coord))
-            return false;
+        case EV_STAR_SELECT: {
+            const struct star *star = event->user.data1;
+            if (state->star && coord_eq(star->coord, state->star->coord))
+                return false;
 
-        state->star = star;
-        panel_star_update(state);
-        panel_show(panel);
-        break;
-    }
+            state->star = star;
+            panel_star_update(state);
+            panel_show(panel);
+            break;
+        }
 
-    case EV_STAR_UPDATE: {
-        panel_star_update(state);
-        panel_invalidate(panel);
-        break;
-    }
+        case EV_STAR_UPDATE: {
+            panel_star_update(state);
+            panel_invalidate(panel);
+            break;
+        }
 
-    case EV_STAR_CLEAR: {
-        state->star = NULL;
-        panel_hide(panel);
-        break;
-    }
+        case EV_STAR_CLEAR: {
+            state->star = NULL;
+            panel_hide(panel);
+            break;
+        }
 
+        default: { return false; }
+        }
     }
 
     if (panel->hidden) return false;
@@ -268,7 +270,9 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
         if (ret & ui_toggle_invalidate) panel_invalidate(panel);
         if (ret & ui_toggle_flip) {
             enum event ev = toggle->selected ? EV_OBJ_SELECT : EV_OBJ_CLEAR;
-            core_push_event(ev, (void *) state->objs.list->vals[i]);
+            id_t obj = state->objs.list->vals[i];
+            uint64_t coord = coord_to_id(state->star->coord);
+            core_push_event(ev, obj, coord);
 
             for (size_t j = 0; j < state->objs.list->len; ++j) {
                 if (j != i) state->objs.toggles[j].selected = false;
@@ -279,8 +283,11 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
     return false;
 }
 
-static void panel_star_free(void *state)
+static void panel_star_free(void *state_)
 {
+    struct panel_star_state *state = state_;
+    vec64_free(state->objs.list);
+    free(state->objs.toggles);
     free(state);
 };
 

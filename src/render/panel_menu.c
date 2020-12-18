@@ -79,7 +79,7 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
         if (ret & ui_toggle_invalidate) panel_invalidate(panel);
         if (ret & ui_toggle_flip) {
             enum event ev = state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR;
-            core_push_event(ev, NULL);
+            core_push_event(ev, 0, 0);
         }
         if (ret & ui_toggle_consume) return true;
     }
@@ -90,7 +90,7 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
         if (ret & ui_toggle_flip) {
             assert(!state->code.selected);
             state->code.disabled = true;
-            core_push_event(EV_CODE_CLEAR, NULL);
+            core_push_event(EV_CODE_CLEAR, 0, 0);
         }
         if (ret & ui_toggle_consume) return true;
     }
@@ -101,7 +101,7 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
         if (ret & ui_toggle_flip) {
             assert(!state->star.selected);
             state->star.disabled = true;
-            core_push_event(EV_STAR_CLEAR, NULL);
+            core_push_event(EV_STAR_CLEAR, 0, 0);
         }
         if (ret & ui_toggle_consume) return true;
     }

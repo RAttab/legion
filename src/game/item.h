@@ -93,6 +93,30 @@ inline id_t make_id(item_t type, id_t id) { return type << 24 | id; }
 inline item_t id_item(id_t id) { return id >> 24; }
 inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
+enum { id_str_len = 2+6 };
+inline void id_str(id_t id, size_t len, char *dst)
+{
+    assert(len >= id_str_len);
+
+    switch(id_item(id)) {
+    case ITEM_BRAIN: { dst[0] = 'b'; break; }
+    case ITEM_WORKER: { dst[0] = 'w'; break; }
+    case ITEM_PRINTER: { dst[0] = 'p'; break; }
+    case ITEM_LAB: { dst[0] = 'l'; break; }
+    case ITEM_COMM: { dst[0] = 'c'; break; }
+    case ITEM_SHIP: { dst[0] = 's'; break; }
+    default: { assert(false); }
+    }
+
+    id = id_bot(id);
+    assert(id);
+
+    for (size_t i = 0; i < 6; i++, id >>=4) {
+        const uint8_t v = id & 0xF;
+        dst[i] = v < 10 ? '0' + v : 'A' + v;
+    }
+}
+
 
 // -----------------------------------------------------------------------------
 // cargo
