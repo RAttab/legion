@@ -29,6 +29,7 @@ struct font
 extern struct font *font_mono4;
 extern struct font *font_mono6;
 extern struct font *font_mono8;
+extern struct font *font_mono10;
 
 
 void fonts_init(SDL_Renderer *);

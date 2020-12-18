@@ -12,42 +12,54 @@
 // panel mods
 // -----------------------------------------------------------------------------
 
-struct panel_mods_item
-{
-    mod_t id;
-    atom_t str;
-    struct ui_toggle ui;
-};
-
 struct panel_mods_state
 {
-    int toggle_h;
-    struct SDL_Rect rect;
-
+    struct layout *layout;
     struct mods *mods;
     struct ui_toggle *toggles;
 };
 
-static struct font *panel_mods_font(void) { return font_mono8; }
-
-size_t panel_mods_width(void)
+enum
 {
-    int width = 0;
-    struct font *font = panel_mods_font();
-    ui_toggle_size(font, vm_atom_cap, &width, NULL);
-    return width;
-}
+    p_mods_count = 0,
+    p_mods_count_sep,
+    p_mods_list,
+    p_mods_len,
+};
+
+enum
+{
+    p_mods_val_len = 8,
+};
+
+static const char p_mods_str[] = "mods:";
 
 static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     struct panel_mods_state *state = state_;
-    struct font *font = panel_mods_font();
-    font_reset(font);
+    (void) rect;
 
-    SDL_Point pos = { .x = rect->x, .y = rect->y };
-    for (size_t i = 0; i < state->mods->len; ++i) {
-        ui_toggle_render(&state->toggles[i], renderer, pos, font);
-        pos.y += state->toggle_h;
+    {
+        struct layout_entry *layout = layout_entry(state->layout, p_mods_count);
+        SDL_Point pos = layout_entry_pos(layout);
+
+        font_render(layout->font, renderer, p_mods_str, sizeof(p_mods_str),
+                layout_entry_pos(layout));
+
+        char val[p_mods_val_len];
+        str_utoa(state->mods->len, val, sizeof(val));
+        pos.x = state->layout->bbox.w - (layout->item.w * sizeof(val));
+        font_render(layout->font, renderer, val, sizeof(val), pos);
+    }
+
+    {
+        struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
+
+        size_t rows = u64_min(state->mods->len, layout->rows);
+        for (size_t i = 0; i < rows; ++i) {
+            SDL_Point pos = layout_entry_index_pos(layout, i, 0);
+            ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
+        }
     }
 }
 
@@ -59,13 +71,14 @@ static void panel_mods_update(struct panel_mods_state *state)
     free(state->toggles);
     state->toggles = calloc(state->mods->len, sizeof(*state->toggles));
 
-    struct SDL_Rect rect = state->rect;
-    rect.h = state->toggle_h;
+    struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
+    struct SDL_Rect rect = layout_abs(state->layout, p_mods_list);
+    rect.h = layout->item.h;
 
     for (size_t i = 0; i < state->mods->len; ++i) {
         struct mods_item *item = &state->mods->items[i];
         ui_toggle_init(&state->toggles[i], &rect, item->str, vm_atom_cap);
-        rect.y += state->toggle_h;
+        rect.y += layout->item.h;
     }
 }
 
@@ -123,23 +136,27 @@ static void panel_mods_free(void *state_)
 
 struct panel *panel_mods_new(void)
 {
+    struct font *font = font_mono8;
     size_t menu_h = panel_menu_height();
 
-    struct font *font = panel_mods_font();
-    size_t inner_w = panel_mods_width();
-    size_t inner_h = core.rect.h - menu_h - panel_total_padding;
+    struct layout *layout = layout_alloc(p_mods_len,
+            core.rect.w, core.rect.h - menu_h - panel_total_padding);
 
-    int outer_w = 0, outer_h = 0;
-    panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
+    layout_text(layout, p_mods_count, font, sizeof(p_mods_str) + p_mods_val_len, 1);
+    layout_sep(layout, p_mods_count_sep);
+    layout_text(layout, p_mods_list, font, vm_atom_cap+2, layout_inf);
+
+    layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
+    layout->pos = (SDL_Point) { .x = panel_padding, .y = menu_h + panel_padding };
 
     struct panel_mods_state *state = calloc(1, sizeof(*state));
-    state->rect = (SDL_Rect) {
-        .x = 0, .y = menu_h + panel_padding,
-        .w = inner_w, .h = inner_h };
-    ui_toggle_size(font, vm_atom_cap, NULL, &state->toggle_h);
+    state->layout = layout;
 
-    SDL_Rect rect = { .x = 0, .y = menu_h, .w = outer_w, .h = outer_h };
-    struct panel *panel = panel_new(&rect);
+    struct panel *panel = panel_new(&(SDL_Rect) {
+                .x = layout->pos.x - panel_padding,
+                .y = layout->pos.y - panel_padding,
+                .w = layout->bbox.w + panel_total_padding,
+                .h = core.rect.h - menu_h });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_mods_render;

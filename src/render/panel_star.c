@@ -58,8 +58,6 @@ static_assert(elem_natural_len <= p_star_elems_cols * p_star_elems_rows);
 static const char p_star_power_str[] = "power:";
 static const char p_star_objs_str[] = "objects:";
 
-static struct font *panel_star_font_big(void) { return font_mono8; }
-static struct font *panel_star_font_small(void) { return font_mono6; }
 
 
 static void star_val_str(char *dst, size_t len, size_t val)
@@ -147,7 +145,6 @@ static void panel_star_render_list(
     {
         struct layout_entry *layout = layout_entry(state->layout, p_star_objs);
         SDL_Point pos = layout_entry_pos(layout);
-
 
         font_render(layout->font, renderer, p_star_objs_str, sizeof(p_star_objs_str),
                 layout_entry_pos(layout));
@@ -266,8 +263,8 @@ static void panel_star_free(void *state_)
 
 struct panel *panel_star_new(void)
 {
-    struct font *font_b = panel_star_font_big();
-    struct font *font_s = panel_star_font_small();
+    struct font *font_b = font_mono10;
+    struct font *font_s = font_mono8;
     size_t menu_h = panel_menu_height();
 
     struct layout *layout = layout_alloc(p_star_len,
@@ -299,7 +296,7 @@ struct panel *panel_star_new(void)
                 .x = layout->pos.x - panel_padding,
                 .y = layout->pos.y - panel_padding,
                 .w = layout->bbox.w + panel_total_padding,
-                .h = layout->bbox.h + panel_total_padding });
+                .h = core.rect.h - menu_h });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_star_render;

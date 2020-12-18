@@ -34,6 +34,7 @@
 struct font *font_mono4;
 struct font *font_mono6;
 struct font *font_mono8;
+struct font *font_mono10;
 
 
 // -----------------------------------------------------------------------------
@@ -52,6 +53,7 @@ void fonts_init(SDL_Renderer *renderer)
     font_mono4 = font_open(renderer, path, 4);
     font_mono6 = font_open(renderer, path, 6);
     font_mono8 = font_open(renderer, path, 8);
+    font_mono10 = font_open(renderer, path, 10);
 }
 
 void fonts_close()

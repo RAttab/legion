@@ -48,7 +48,7 @@ void layout_sep(struct layout *layout, int key)
     struct layout_entry *entry = layout_entry(layout, key);
     entry->cols = layout_inf;
     entry->rows = 1;
-    entry->item = (struct layout_dim) { .w = 1, .h = 5 };
+    entry->item = (struct layout_dim) { .w = 1, .h = 10 };
     layout_update(layout, entry);
 }
 

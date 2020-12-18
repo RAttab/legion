@@ -53,9 +53,6 @@ static const char p_obj_cargo_str[] = "cargo:";
 static const char p_obj_docks_str[] = "docks:";
 
 
-static struct font *panel_obj_font_big(void) { return font_mono8; }
-static struct font *panel_obj_font_small(void) { return font_mono6; }
-
 static void panel_obj_render_id(struct panel_obj_state *state, SDL_Renderer *renderer)
 {
     struct layout_entry *layout = layout_entry(state->layout, p_obj_id);
@@ -219,8 +216,8 @@ static void panel_obj_free(void *state_)
 
 struct panel *panel_obj_new(void)
 {
-    struct font *font_b = panel_obj_font_big();
-    struct font *font_s = panel_obj_font_small();
+    struct font *font_b = font_mono10;
+    struct font *font_s = font_mono8;
     size_t menu_h = panel_menu_height();
 
     struct layout *layout = layout_alloc(p_obj_len,
@@ -254,7 +251,7 @@ struct panel *panel_obj_new(void)
                 .x = layout->pos.x - panel_padding,
                 .y = layout->pos.y - panel_padding,
                 .w = layout->bbox.w + panel_total_padding,
-                .h = layout->bbox.h + panel_total_padding });
+                .h = core.rect.h - menu_h });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_obj_render;
