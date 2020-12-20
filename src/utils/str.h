@@ -15,3 +15,9 @@
 // -----------------------------------------------------------------------------
 
 size_t str_utoa(uint64_t val, char *dst, size_t len);
+
+inline char str_hexchar(uint8_t val)
+{
+    val &= 0xF;
+    return val < 0xA ? '0' + val : 'A' + (val - 0xA);
+}
