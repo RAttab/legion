@@ -58,8 +58,6 @@ static_assert(elem_natural_len <= p_star_elems_cols * p_star_elems_rows);
 static const char p_star_power_str[] = "power:";
 static const char p_star_objs_str[] = "objects:";
 
-
-
 static void star_val_str(char *dst, size_t len, size_t val)
 {
     assert(len >= p_star_val_len);
@@ -183,6 +181,9 @@ static void panel_star_update(struct panel_star_state *state)
 
     free(state->objs);
     state->objs = hunk_list(hunk);
+
+    free(state->toggles);
+    state->toggles = calloc(state->objs->len, sizeof(*state->toggles));
 
     struct layout_entry *layout = layout_entry(state->layout, p_star_objs_list);
     struct SDL_Rect rect = layout_abs(state->layout, p_star_objs_list);

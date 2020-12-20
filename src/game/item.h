@@ -96,6 +96,7 @@ inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 enum { id_str_len = 2+6 };
 inline void id_str(id_t id, size_t len, char *dst)
 {
+    assert(id);
     assert(len >= id_str_len);
 
     switch(id_item(id)) {
@@ -105,7 +106,7 @@ inline void id_str(id_t id, size_t len, char *dst)
     case ITEM_LAB: { dst[0] = 'l'; break; }
     case ITEM_COMM: { dst[0] = 'c'; break; }
     case ITEM_SHIP: { dst[0] = 's'; break; }
-    default: { assert(false); }
+    default: { assert(false && "unsuported item in id_str"); }
     }
 
     id = id_bot(id);
@@ -113,7 +114,7 @@ inline void id_str(id_t id, size_t len, char *dst)
 
     for (size_t i = 0; i < 6; i++, id >>=4) {
         const uint8_t v = id & 0xF;
-        dst[i] = v < 10 ? '0' + v : 'A' + v;
+        dst[6-i] = v < 10 ? '0' + v : 'A' + v;
     }
 }
 

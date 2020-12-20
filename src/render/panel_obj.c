@@ -45,6 +45,7 @@ enum
 {
     p_obj_cargo_cols = 5,
     p_obj_cargo_rows = 2,
+    p_obj_cargo_size = 25,
     p_obj_docks_max = 5,
 };
 
@@ -69,20 +70,25 @@ static void panel_obj_render_target(struct panel_obj_state *state, SDL_Renderer 
             p_obj_target_str, sizeof(p_obj_target_str),
             layout_entry_pos(layout));
 
-    char str[id_str_len];
-    id_str(state->obj->target, sizeof(str), str);
-    font_render(layout->font, renderer, str, sizeof(str),
-            layout_entry_index_pos(layout, 0, sizeof(p_obj_target)));
+    if (state->obj->target) {
+        char str[id_str_len];
+        id_str(state->obj->target, sizeof(str), str);
+        font_render(layout->font, renderer, str, sizeof(str),
+                layout_entry_index_pos(layout, 0, sizeof(p_obj_target)));
+    }
 }
 
 static void panel_obj_render_cargo(struct panel_obj_state *state, SDL_Renderer *renderer)
 {
-    struct layout_entry *layout = layout_entry(state->layout, p_obj_cargo);
-    font_render(
-            layout->font, renderer,
-            p_obj_cargo_str, sizeof(p_obj_cargo_str),
-            layout_entry_pos(layout));
+    {
+        struct layout_entry *layout = layout_entry(state->layout, p_obj_cargo);
+        font_render(
+                layout->font, renderer,
+                p_obj_cargo_str, sizeof(p_obj_cargo_str),
+                layout_entry_pos(layout));
+    }
 
+    struct layout_entry *layout = layout_entry(state->layout, p_obj_cargo_grid);
 
     size_t len = state->obj->cargos;
     assert(len < layout->rows * layout->cols);
@@ -230,7 +236,7 @@ struct panel *panel_obj_new(void)
     layout_sep(layout, p_obj_target_sep);
 
     layout_text(layout, p_obj_cargo, font_s, sizeof(p_obj_cargo_str), 1);
-    layout_grid(layout, p_obj_cargo_grid, p_obj_cargo_cols, p_obj_cargo_rows, 25);
+    layout_grid(layout, p_obj_cargo_grid, p_obj_cargo_rows, p_obj_cargo_cols, p_obj_cargo_size);
     layout_sep(layout, p_obj_cargo_sep);
 
     layout_text(layout, p_obj_docks, font_s, sizeof(p_obj_docks_str), 1);
