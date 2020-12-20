@@ -237,6 +237,13 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
             break;
         }
 
+        case EV_OBJ_CLEAR: {
+            for (size_t j = 0; j < vec64_len(state->objs); ++j)
+                state->toggles[j].selected = false;
+            panel_invalidate(panel);
+            break;
+        }
+
         default: { return false; }
         }
     }

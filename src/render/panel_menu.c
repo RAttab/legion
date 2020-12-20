@@ -17,6 +17,7 @@ struct panel_menu_state
     struct ui_toggle mods;
     struct ui_toggle code;
     struct ui_toggle star;
+    struct ui_toggle obj;
 };
 
 static struct font *panel_menu_font(void) { return font_mono8; }
@@ -35,6 +36,9 @@ static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
 
     pos.x = rect->w - core.ui.star->rect.w;
     ui_toggle_render(&state->star, renderer, pos, font);
+
+    pos.x -= core.ui.obj->rect.w;
+    ui_toggle_render(&state->obj, renderer, pos, font);
 }
 
 static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -66,6 +70,19 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
         case EV_STAR_CLEAR: {
             state->star.disabled = true;
             state->star.selected = false;
+            panel_invalidate(panel);
+            break;
+        }
+
+        case EV_OBJ_SELECT: {
+            state->obj.disabled = false;
+            state->obj.selected = true;
+            panel_invalidate(panel);
+            break;
+        }
+        case EV_OBJ_CLEAR: {
+            state->obj.disabled = true;
+            state->obj.selected = false;
             panel_invalidate(panel);
             break;
         }
@@ -102,6 +119,17 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
             assert(!state->star.selected);
             state->star.disabled = true;
             core_push_event(EV_STAR_CLEAR, 0, 0);
+        }
+        if (ret & ui_toggle_consume) return true;
+    }
+
+    {
+        enum ui_toggle_ret ret = ui_toggle_events(&state->obj, event);
+        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
+        if (ret & ui_toggle_flip) {
+            assert(!state->obj.selected);
+            state->obj.disabled = true;
+            core_push_event(EV_OBJ_CLEAR, 0, 0);
         }
         if (ret & ui_toggle_consume) return true;
     }
@@ -151,12 +179,23 @@ struct panel *panel_menu_new(void)
     {
         const char str[] = "star";
         SDL_Rect rect = {
-            .x = core.rect.w - core.ui.mods->rect.w,
+            .x = core.rect.w - core.ui.star->rect.w + panel_padding,
             .y = panel_padding
         };
         ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);
         ui_toggle_init(&state->star, &rect, str, sizeof(str));
         state->star.disabled = true;
+    }
+
+    {
+        const char str[] = "object";
+        SDL_Rect rect = {
+            .x = core.rect.w - core.ui.obj->rect.w - core.ui.star->rect.w + panel_padding,
+            .y = panel_padding
+        };
+        ui_toggle_size(font, sizeof(str), &rect.w, &rect.h);
+        ui_toggle_init(&state->obj, &rect, str, sizeof(str));
+        state->obj.disabled = true;
     }
 
     SDL_Rect rect = { .x = 0, .y = 0, .w = core.rect.w, .h = outer_h };
