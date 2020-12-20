@@ -120,5 +120,8 @@ void sector_preload(struct sector *sector)
     struct star *star = &sector->stars[i];
 
     struct hunk *hunk = sector_hunk_alloc(sector, star->coord);
-    for (size_t i = 0; i < 5; ++i) worker_alloc(hunk);
+    for (size_t i = 0; i < 5; ++i) {
+        struct obj *obj = worker_alloc(hunk);
+        obj_load(obj, 1);
+    }
 }
