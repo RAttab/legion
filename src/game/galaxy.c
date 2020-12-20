@@ -5,6 +5,7 @@
 
 #include "galaxy.h"
 #include "game/hunk.h"
+#include "game/obj.h"
 #include "utils/rng.h"
 
 // -----------------------------------------------------------------------------
@@ -70,11 +71,11 @@ struct sector *sector_gen(struct coord coord)
 }
 
 
-struct hunk *sector_hunk(struct sector *sector, struct coord coord)
+struct hunk *sector_hunk_alloc(struct sector *sector, struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
 
-    struct hunk *hunk = sector_hunk_get(sector, coord);
+    struct hunk *hunk = sector_hunk(sector, coord);
     if (likely(hunk != NULL)) return hunk;
 
     struct htable_ret ret = htable_get(&sector->index, id);
@@ -85,10 +86,11 @@ struct hunk *sector_hunk(struct sector *sector, struct coord coord)
     ret = htable_put(&sector->hunks, id, (uint64_t) hunk);
     assert(ret.ok);
 
+    star->state = star_active;
     return hunk;
 }
 
-struct hunk *sector_hunk_get(struct sector *sector, struct coord coord)
+struct hunk *sector_hunk(struct sector *sector, struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
     struct htable_ret ret = htable_get(&sector->hunks, id);
@@ -109,4 +111,14 @@ const struct star *sector_star(struct sector *sector, const struct rect *rect)
         if (rect_contains(rect, star->coord)) return star;
     }
     return NULL;
+}
+
+void sector_preload(struct sector *sector)
+{
+    struct rng rng = rng_make(coord_to_id(sector->coord));
+    size_t i = rng_uni(&rng, 0, sector->stars_len);
+    struct star *star = &sector->stars[i];
+
+    struct hunk *hunk = sector_hunk_alloc(sector, star->coord);
+    for (size_t i = 0; i < 5; ++i) worker_alloc(hunk);
 }

@@ -30,9 +30,9 @@ static size_t hunk_arena_append(struct hunk_arena **arena, size_t index)
 {
     size_t len = cache_line * index;
 
-    if (arena == NULL) {
-        const size_t cap = 8;
-        *arena = alloc_cache(sizeof(**arena) + len * cap);
+    if (*arena == NULL) {
+        const size_t cap = 8 * len;
+        *arena = alloc_cache(sizeof(**arena) + cap);
         (*arena)->len = len;
         (*arena)->curr = 0;
         (*arena)->cap = cap;

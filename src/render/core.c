@@ -30,6 +30,7 @@ struct core core = {0};
 static void state_init()
 {
     core.state.sector = sector_gen((struct coord) { .x = 0x0101, .y = 0x0101 });
+    sector_preload(core.state.sector);
 }
 
 static void state_close() {}

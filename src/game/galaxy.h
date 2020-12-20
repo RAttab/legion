@@ -53,9 +53,10 @@ struct sector
 };
 
 struct sector *sector_gen(struct coord coord);
+void sector_preload(struct sector *);
 
 struct hunk *sector_hunk(struct sector *, struct coord coord);
-struct hunk *sector_hunk_get(struct sector *, struct coord coord);
+struct hunk *sector_hunk_alloc(struct sector *, struct coord coord);
 
 const struct star *sector_star(struct sector *, const struct rect *);
 

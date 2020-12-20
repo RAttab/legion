@@ -21,6 +21,8 @@ struct map
     scale_t scale;
 
     SDL_Texture* tex;
+    SDL_Rect tex_star;
+    SDL_Rect tex_active;
 
     bool panning;
     bool panned;
@@ -55,6 +57,9 @@ struct map *map_new()
     SDL_Surface *bmp = sdl_ptr(SDL_LoadBMP(path));
     map->tex = sdl_ptr(SDL_CreateTextureFromSurface(core.renderer, bmp));
     SDL_FreeSurface(bmp);
+
+    map->tex_star = (SDL_Rect) { .x = 0, .y = 0, .w = 100, .h = 100 };
+    map->tex_active = (SDL_Rect) { .x = 100, .y = 0, .w = 100, .h = 100 };
 
     return map;
 }
@@ -165,7 +170,6 @@ static void map_render_sector(struct map *map, SDL_Renderer *renderer)
         SDL_Point pos = map_project_sdl(map, star->coord);
 
         size_t px = scale_div(map->scale, px_star);
-        SDL_Rect src = { .x = 0, .y = 0, .w = 100, .h = 100 };
         SDL_Rect dst = {
             .x = pos.x - px / 2,
             .y = pos.y - px / 2,
@@ -177,9 +181,21 @@ static void map_render_sector(struct map *map, SDL_Renderer *renderer)
             rgb = desaturate(rgb, .8);
         }
 
+        sdl_err(SDL_SetTextureAlphaMod(map->tex, 0xFF));
         sdl_err(SDL_SetTextureBlendMode(map->tex, SDL_BLENDMODE_ADD));
         sdl_err(SDL_SetTextureColorMod(map->tex, rgb.r, rgb.g, rgb.b));
-        sdl_err(SDL_RenderCopy(renderer, map->tex, &src, &dst));
+        sdl_err(SDL_RenderCopy(renderer, map->tex, &map->tex_star, &dst));
+
+        if (star->state == star_active) {
+            dst = (SDL_Rect) {
+                .x = pos.x - px / 2,
+                .y = pos.y - px,
+                .h = px / 2, .w = px,
+            };
+            sdl_err(SDL_SetTextureAlphaMod(map->tex, 0x88));
+            sdl_err(SDL_SetTextureColorMod(map->tex, 0x88, 0xFF, 0x88));
+            sdl_err(SDL_RenderCopy(renderer, map->tex, &map->tex_active, &dst));
+        }
     }
 }
 
