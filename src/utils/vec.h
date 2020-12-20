@@ -19,6 +19,8 @@ struct vec64
 };
 
 inline void vec64_free(struct vec64 *vec) { free(vec); }
+inline size_t vec64_len(struct vec64 *vec) { return vec ? vec->len : 0; }
+inline size_t vec64_cap(struct vec64 *vec) { return vec ? vec->cap : 0; }
 
 inline struct vec64 *vec64_reserve(size_t size)
 {

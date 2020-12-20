@@ -24,7 +24,7 @@
 struct panel_star_state
 {
     struct layout *layout;
-    const struct star *star;
+    struct star star;
 
     struct vec64 *objs;
     struct ui_toggle *toggles;
@@ -87,7 +87,7 @@ static void panel_star_render_coord(
     struct layout_entry *layout = layout_entry(state->layout, p_star_coord);
 
     char str[coord_str_len] = {0};
-    coord_str(state->star->coord, str, sizeof(str));
+    coord_str(state->star.coord, str, sizeof(str));
     font_render(layout->font, renderer, str, coord_str_len, layout_entry_pos(layout));
 }
 
@@ -100,9 +100,9 @@ static void panel_star_render_power(
             layout_entry_pos(layout));
 
     char val_str[p_star_val_len] = {0};
-    star_val_str(val_str, sizeof(val_str), state->star->power);
+    star_val_str(val_str, sizeof(val_str), state->star.power);
 
-    uint8_t gray = 0x11 * (u64_log2(state->star->power) / 2);
+    uint8_t gray = 0x11 * (u64_log2(state->star.power) / 2);
     sdl_err(SDL_SetTextureColorMod(layout->font->tex, gray, gray, gray));
     font_render(layout->font, renderer, val_str, sizeof(val_str),
             layout_entry_index_pos(layout, 0, sizeof(p_star_power_str)));
@@ -124,7 +124,7 @@ static void panel_star_render_elems(
         font_render(layout->font, renderer, elem_str, sizeof(elem_str), pos);
         pos.x += sizeof(elem_str) * layout->item.w;
 
-        uint16_t value = state->star->elements[elem];
+        uint16_t value = state->star.elements[elem];
 
         char val_str[p_star_val_len] = {0};
         star_val_str(val_str, sizeof(val_str), value);
@@ -148,7 +148,7 @@ static void panel_star_render_list(
                 layout_entry_pos(layout));
 
         char val[p_star_objs_len];
-        str_utoa(state->objs->len, val, sizeof(val));
+        str_utoa(vec64_len(state->objs), val, sizeof(val));
         pos.x = state->layout->bbox.w - (layout->item.w * sizeof(val));
         font_render(layout->font, renderer, val, sizeof(val), pos);
     }
@@ -156,7 +156,7 @@ static void panel_star_render_list(
     {
         struct layout_entry *layout = layout_entry(state->layout, p_star_objs_list);
 
-        size_t rows = u64_min(state->objs->len, layout->rows);
+        size_t rows = u64_min(vec64_len(state->objs), layout->rows);
         for (size_t i = 0; i < rows; ++i) {
             SDL_Point pos = layout_entry_index_pos(layout, i, 0);
             ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
@@ -175,21 +175,31 @@ static void panel_star_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     panel_star_render_list(state, renderer);
 }
 
+static void panel_star_reset(struct panel_star_state *state)
+{
+    free(state->toggles);
+    state->toggles = NULL;
+
+    vec64_free(state->objs);
+    state->objs = NULL;
+}
+
 static void panel_star_update(struct panel_star_state *state)
 {
-    struct hunk *hunk = sector_hunk(core.state.sector, state->star->coord);
+    panel_star_reset(state);
 
-    free(state->objs);
+    struct hunk *hunk = sector_hunk(core.state.sector, state->star.coord);
+    if (!hunk) return;
+
     state->objs = hunk_list(hunk);
-
-    free(state->toggles);
-    state->toggles = calloc(state->objs->len, sizeof(*state->toggles));
+    state->toggles = calloc(vec64_len(state->objs), sizeof(*state->toggles));
+    memcpy(&state->star, hunk_star(hunk), sizeof(state->star));
 
     struct layout_entry *layout = layout_entry(state->layout, p_star_objs_list);
     struct SDL_Rect rect = layout_abs(state->layout, p_star_objs_list);
     rect.h = layout->item.h;
 
-    for (size_t i = 0; i < state->objs->len; ++i) {
+    for (size_t i = 0; i < vec64_len(state->objs); ++i) {
         char str[id_str_len];
         id_str(state->objs->vals[i], sizeof(str), str);
         ui_toggle_init(&state->toggles[i], &rect, str, sizeof(str));
@@ -207,10 +217,8 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
 
         case EV_STAR_SELECT: {
             const struct star *star = event->user.data1;
-            if (state->star && coord_eq(star->coord, state->star->coord))
-                return false;
-
-            state->star = star;
+            if (coord_eq(star->coord, state->star.coord)) return false;
+            memcpy(&state->star, star, sizeof(*star));
             panel_star_update(state);
             panel_show(panel);
             break;
@@ -223,7 +231,8 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
         }
 
         case EV_STAR_CLEAR: {
-            state->star = NULL;
+            state->star = (struct star) {0};
+            panel_star_reset(state);
             panel_hide(panel);
             break;
         }
@@ -234,7 +243,7 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
 
     if (panel->hidden) return false;
 
-    for (size_t i = 0; i < state->objs->len; ++i) {
+    for (size_t i = 0; i < vec64_len(state->objs); ++i) {
         struct ui_toggle *toggle = &state->toggles[i];
 
         enum ui_toggle_ret ret = ui_toggle_events(toggle, event);
@@ -242,10 +251,10 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
         if (ret & ui_toggle_flip) {
             enum event ev = toggle->selected ? EV_OBJ_SELECT : EV_OBJ_CLEAR;
             id_t obj = state->objs->vals[i];
-            uint64_t coord = coord_to_id(state->star->coord);
+            uint64_t coord = coord_to_id(state->star.coord);
             core_push_event(ev, obj, coord);
 
-            for (size_t j = 0; j < state->objs->len; ++j) {
+            for (size_t j = 0; j < vec64_len(state->objs); ++j) {
                 if (j != i) state->toggles[j].selected = false;
             }
         }
@@ -258,8 +267,7 @@ static void panel_star_free(void *state_)
 {
     struct panel_star_state *state = state_;
     layout_free(state->layout);
-    vec64_free(state->objs);
-    free(state->toggles);
+    panel_star_reset(state);
     free(state);
 };
 
@@ -292,7 +300,6 @@ struct panel *panel_star_new(void)
 
     struct panel_star_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
-    state->objs = vec64_reserve(0);
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = layout->pos.x - panel_padding,
