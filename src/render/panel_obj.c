@@ -46,7 +46,9 @@ enum
     p_obj_vm_flags,
     p_obj_vm_io,
     p_obj_vm_ipsp,
+    p_obj_vm_regs_sep,
     p_obj_vm_regs,
+    p_obj_vm_stack_sep,
     p_obj_vm_stack,
     p_obj_len,
 };
@@ -348,7 +350,8 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     {
         struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_stack);
 
-        for (size_t i = 0; i < vm->sp; ++i) {
+        size_t rows = u64_min(vm->sp, layout->rows);
+        for (size_t i = 0; i < rows; ++i) {
             size_t sp = vm->sp - i - 1;
 
             char index[p_obj_vm_stack_prefix_len] = {
@@ -466,7 +469,9 @@ struct panel *panel_obj_new(void)
     layout_text(layout, p_obj_vm_flags, font, p_obj_vm_flags_len, 1);
     layout_text(layout, p_obj_vm_io, font, p_obj_vm_io_len, 1);
     layout_text(layout, p_obj_vm_ipsp, font, p_obj_vm_ipsp_len, 1);
+    layout_sep(layout, p_obj_vm_regs_sep);
     layout_text(layout, p_obj_vm_regs, font, p_obj_vm_reg_len + p_obj_vm_u64_len, p_obj_vm_reg_rows);
+    layout_sep(layout, p_obj_vm_stack_sep);
     layout_text(layout, p_obj_vm_stack, font, p_obj_vm_stack_len, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });

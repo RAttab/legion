@@ -76,7 +76,7 @@ inline struct coord id_to_coord(uint64_t id)
     };
 }
 
-enum { coord_str_len = (2+1+2+1+4)*2 + 1 };
+enum { coord_str_len = (2+1+2+1+4)*2 + 3 };
 
 void coord_str(struct coord coord, char *str, size_t len);
 

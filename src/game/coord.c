@@ -27,7 +27,9 @@ void coord_str(struct coord coord, char *str, size_t len)
     str[i++] = str_hexchar(coord.x >> 8);
     str[i++] = str_hexchar(coord.x >> 4);
     str[i++] = str_hexchar(coord.x >> 0);
+    str[i++] = ' ';
     str[i++] = 'x';
+    str[i++] = ' ';
     str[i++] = str_hexchar(coord.y >> 28);
     str[i++] = str_hexchar(coord.y >> 24);
     str[i++] = '.';
