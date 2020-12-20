@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/str.h"
 #include "utils/bits.h"
 
 
@@ -112,10 +113,8 @@ inline void id_str(id_t id, size_t len, char *dst)
     id = id_bot(id);
     assert(id);
 
-    for (size_t i = 0; i < 6; i++, id >>=4) {
-        const uint8_t v = id & 0xF;
-        dst[6-i] = v < 10 ? '0' + v : 'A' + v;
-    }
+    for (size_t i = 0; i < 6; i++, id >>=4)
+        dst[6-i] = str_hexchar(id);
 }
 
 

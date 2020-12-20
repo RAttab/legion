@@ -4,6 +4,7 @@
 */
 
 #include "coord.h"
+#include "utils/str.h"
 #include "utils/bits.h"
 
 
@@ -11,37 +12,32 @@
 // coord
 // -----------------------------------------------------------------------------
 
-static inline char hexchar(uint64_t v, size_t shift, size_t mask) {
-    v = (v >> shift) & ((1 << mask) - 1);
-    return v < 10 ? '0' + v : (v - 10) + 'a';
-}
-
 void coord_str(struct coord coord, char *str, size_t len)
 {
     assert(len >= coord_str_len);
 
     size_t i = 0;
-    str[i++] = hexchar(coord.x, 28, 4);
-    str[i++] = hexchar(coord.x, 24, 4);
+    str[i++] = str_hexchar(coord.x >> 28);
+    str[i++] = str_hexchar(coord.x >> 24);
     str[i++] = '.';
-    str[i++] = hexchar(coord.x, 20, 4);
-    str[i++] = hexchar(coord.x, 16, 4);
+    str[i++] = str_hexchar(coord.x >> 20);
+    str[i++] = str_hexchar(coord.x >> 16);
     str[i++] = '.';
-    str[i++] = hexchar(coord.x, 12, 4);
-    str[i++] = hexchar(coord.x, 8, 4);
-    str[i++] = hexchar(coord.x, 4, 4);
-    str[i++] = hexchar(coord.x, 0, 4);
+    str[i++] = str_hexchar(coord.x >> 12);
+    str[i++] = str_hexchar(coord.x >> 8);
+    str[i++] = str_hexchar(coord.x >> 4);
+    str[i++] = str_hexchar(coord.x >> 0);
     str[i++] = 'x';
-    str[i++] = hexchar(coord.y, 28, 4);
-    str[i++] = hexchar(coord.y, 24, 4);
+    str[i++] = str_hexchar(coord.y >> 28);
+    str[i++] = str_hexchar(coord.y >> 24);
     str[i++] = '.';
-    str[i++] = hexchar(coord.y, 20, 4);
-    str[i++] = hexchar(coord.y, 16, 4);
+    str[i++] = str_hexchar(coord.y >> 20);
+    str[i++] = str_hexchar(coord.y >> 16);
     str[i++] = '.';
-    str[i++] = hexchar(coord.y, 12, 4);
-    str[i++] = hexchar(coord.y, 8, 4);
-    str[i++] = hexchar(coord.y, 4, 4);
-    str[i++] = hexchar(coord.y, 0, 4);
+    str[i++] = str_hexchar(coord.y >> 12);
+    str[i++] = str_hexchar(coord.y >> 8);
+    str[i++] = str_hexchar(coord.y >> 4);
+    str[i++] = str_hexchar(coord.y >> 0);
 
     assert(i == coord_str_len);
 }
@@ -71,11 +67,11 @@ void scale_str(scale_t scale, char *str, size_t len)
         (((uint64_t) scale) & ((1 << msb) - 1)) >> (msb - 8);
 
     str[i++] = 'x';
-    str[i++] = hexchar(top, 4, 4);
-    str[i++] = hexchar(top, 0, 4);
+    str[i++] = str_hexchar(top >> 4);
+    str[i++] = str_hexchar(top >> 0);
     str[i++] = '.';
-    str[i++] = hexchar(bot, 4, 4);
-    str[i++] = hexchar(bot, 0, 4);
+    str[i++] = str_hexchar(bot >> 4);
+    str[i++] = str_hexchar(bot >> 0);
 
     assert(i == scale_str_len);
 }
