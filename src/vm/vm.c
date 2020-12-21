@@ -71,6 +71,7 @@ void vm_io_fault(struct vm *vm)
 
 size_t vm_io_read(struct vm *vm, word_t *dst)
 {
+    vm->flags &= ~FLAG_IO;
     if (vm->io > vm_io_cap) { vm_io_fault(vm); return 0; }
 
     for (size_t i = 0; i < vm->io; ++i)
@@ -149,7 +150,9 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
 
 ip_t vm_exec(struct vm *vm, const struct mod *mod)
 {
-    if (vm->flags & (FLAG_SUSPENDED | flag_faults)) return 0;
+    if (vm->flags & flag_faults) return VM_FAULT;
+    if (vm->flags & FLAG_SUSPENDED) return 0;
+
     vm_assert(ip_addr(vm->ip) < mod->len);
     assert(ip_mod(vm->ip) == mod->id);
 
@@ -221,7 +224,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
     do {                                        \
         if (unlikely(vm->sp < c)) {             \
             vm->flags |= FLAG_FAULT_STACK;      \
-            return -1;                          \
+            return VM_FAULT;                    \
         }                                       \
     } while (false)
 
@@ -229,7 +232,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
     ({                                          \
         if (unlikely(!vm->sp)) {                \
             vm->flags |= FLAG_FAULT_STACK;      \
-            return -1;                          \
+            return VM_FAULT;                    \
         }                                       \
         vm_stack(0);                            \
     })
@@ -238,7 +241,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
     ({                                          \
         if (unlikely(!vm->sp)) {                \
             vm->flags |= FLAG_FAULT_STACK;      \
-            return -1;                          \
+            return VM_FAULT;                    \
         }                                       \
         vm->stack[--vm->sp];                    \
     })
@@ -247,7 +250,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
     ({                                                  \
         if (unlikely(vm->sp >= vm->specs.stack)) {      \
             vm->flags |= FLAG_FAULT_STACK;              \
-            return -1;                                  \
+            return VM_FAULT;                            \
         }                                               \
         vm->stack[vm->sp++] = (val);                    \
     })
@@ -336,7 +339,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
       op_div: {
             vm_ensure(2);
             int64_t div = vm_stack(0);
-            if (unlikely(!div)) { vm->flags |= FLAG_FAULT_MATH; return -1; }
+            if (unlikely(!div)) { vm->flags |= FLAG_FAULT_MATH; return VM_FAULT; }
             vm_stack(1) /= div;
             vm_pop();
             goto next;
@@ -344,7 +347,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
       op_rem: {
             vm_ensure(2);
             int64_t div = vm_stack(0);
-            if (unlikely(!div)) { vm->flags |= FLAG_FAULT_MATH; return -1; }
+            if (unlikely(!div)) { vm->flags |= FLAG_FAULT_MATH; return VM_FAULT; }
             vm_stack(1) %= div;
             vm_pop();
             goto next;
@@ -358,7 +361,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
       op_ret: {
             word_t raw = vm_pop();
-            if (raw > ((ip_t)-1)) { vm->flags |= FLAG_FAULT_CODE; return -1; }
+            if (raw > ((ip_t)-1)) { vm->flags |= FLAG_FAULT_CODE; return VM_FAULT; }
             ip_t ip = raw;
             if (ip_mod(ip) == mod->id) { vm_jmp(ip_addr(ip)); goto next; }
             return ip;

@@ -260,24 +260,25 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
             const char *val = NULL;
             const size_t val_len = 3;
 
+            struct rgb color = {0};
+            const struct rgb gray = { .r = 0x33, .g = 0x33, .b = 0x33 };
+            const struct rgb red = { .r = 0xCC, .g = 0x00, .b = 0x00 };
+            const struct rgb blue = { .r = 0x00, .g = 0x00, .b = 0xCC };
+
             switch (flag) {
-            case FLAG_IO: { val = "IO"; break; }
-            case FLAG_SUSPENDED: { val = "SU"; break; }
-            case FLAG_FAULT_REG: { val = "FR"; break; }
-            case FLAG_FAULT_STACK: { val = "FS"; break; }
-            case FLAG_FAULT_CODE: { val = "FC"; break; }
-            case FLAG_FAULT_MATH: { val = "FM"; break; }
-            case FLAG_FAULT_IO: { val = "FI"; break; }
+            case FLAG_IO:          { val = "IO"; color = blue; break; }
+            case FLAG_SUSPENDED:   { val = "SU"; color = blue; break; }
+            case FLAG_FAULT_REG:   { val = "FR"; color = red; break; }
+            case FLAG_FAULT_STACK: { val = "FS"; color = red; break; }
+            case FLAG_FAULT_CODE:  { val = "FC"; color = red; break; }
+            case FLAG_FAULT_MATH:  { val = "FM"; color = red; break; }
+            case FLAG_FAULT_IO:    { val = "FI"; color = red; break; }
             default: { val = "  "; break; }
             }
 
-            if (vm->flags & flag)
-                sdl_err(SDL_SetTextureColorMod(layout->font->tex, 0xCC, 0x00, 0x00));
-            else {
-                uint8_t gray = 0x33;
-                sdl_err(SDL_SetTextureColorMod(layout->font->tex, gray, gray, gray));
-            }
+            if (!(vm->flags & flag)) color = gray;
 
+            sdl_err(SDL_SetTextureColorMod(layout->font->tex, color.r, color.g, color.b));
             font_render(layout->font, renderer, val, val_len,
                     layout_entry_index_pos(layout, 0, col));
             col += val_len;

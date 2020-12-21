@@ -154,6 +154,7 @@ void obj_step(struct obj *obj, struct hunk *hunk)
 
     struct vm *vm = obj_vm(obj);
     ip_t ip = vm_exec(vm,  obj->mod);
+    if (ip == VM_FAULT) return;
     if (ip) {
         mod_discard(obj->mod);
         obj->mod = mods_load(ip_mod(ip));
