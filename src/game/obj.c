@@ -47,7 +47,7 @@ struct obj *obj_alloc(struct hunk *hunk, item_t type, const struct obj_spec *spe
 static void obj_process_io(struct obj *obj, struct hunk *hunk)
 {
     struct vm *vm = obj_vm(obj);
-    
+
     vm_io_buf_t buf;
     size_t len = vm_io_read(vm, buf);
     if (!len) return;

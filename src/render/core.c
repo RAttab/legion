@@ -31,7 +31,7 @@ static void state_init()
 {
     enum { state_freq = 10 };
     core.state.sleep = ts_sec / state_freq;
-    core.state.next = 0;
+    core.state.next = ts_now();
 
     core.state.sector = sector_gen((struct coord) { .x = 0x0101, .y = 0x0101 });
     sector_preload(core.state.sector);

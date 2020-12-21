@@ -401,7 +401,7 @@ struct mod *mod_compile(struct text *source)
                 compiler_err(comp, "unknown register");
                 break;
             }
-            compiler_write(comp, '1' - reg[1]);
+            compiler_write(comp, reg[1] - '1');
             break;
         }
 

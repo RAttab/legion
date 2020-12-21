@@ -5,8 +5,8 @@
 # Read our assigned printer and save it $4
 push !io_recv
 push 1
-ios
 popr $4
+ior $4
 
 # Start by mining element a
 push !ele_a
@@ -20,7 +20,6 @@ start:
 push 0
 push !io_cargo
 io 2
-pop
 popr $2
 
 # harvest our current element

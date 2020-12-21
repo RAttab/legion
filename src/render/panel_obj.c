@@ -339,7 +339,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
         struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_regs);
 
         for (size_t i = 0; i < p_obj_vm_reg_rows; ++i) {
-            char reg[p_obj_vm_reg_len] = { 'r', '1'+i, ':', 0};
+            char reg[p_obj_vm_reg_len] = { '$', '1'+i, ':', 0};
             font_render(layout->font, renderer, reg, sizeof(reg),
                     layout_entry_index_pos(layout, i, 0));
 
