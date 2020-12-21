@@ -188,6 +188,7 @@ void ui_toggle_init(
         const char * str, size_t str_len)
 {
     toggle->rect = *rect;
+    toggle->hover = sdl_rect_contains(rect, &core.cursor.point);
 
     assert(str_len < sizeof(toggle->str) - 1);
     memcpy(toggle->str, str, str_len);

@@ -11,7 +11,7 @@
 // sdl
 // -----------------------------------------------------------------------------
 
-inline bool sdl_rect_contains(SDL_Rect *rect, SDL_Point *point)
+inline bool sdl_rect_contains(const SDL_Rect *rect, const SDL_Point *point)
 {
     int x = point->x - rect->x;
     int y = point->y - rect->y;

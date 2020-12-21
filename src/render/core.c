@@ -29,11 +29,32 @@ struct core core = {0};
 
 static void state_init()
 {
+    enum { state_freq = 10 };
+    core.state.sleep = ts_sec / state_freq;
+    core.state.next = 0;
+
     core.state.sector = sector_gen((struct coord) { .x = 0x0101, .y = 0x0101 });
     sector_preload(core.state.sector);
 }
 
 static void state_close() {}
+
+static void state_step(ts_t now)
+{
+    if (now < core.state.next) return;
+
+    sector_step(core.state.sector);
+    core_push_event(EV_STATE_UPDATE, 0, 0);
+
+    core.state.next += core.state.sleep;
+    core.state.time++;
+
+    if (core.state.next <= now) {
+        core.state.next = now + core.state.sleep;
+        dbg("sim.late> now:%lu, next:%lu, sleep:%lu, ticks:%lu",
+                now, core.state.next, core.state.sleep, core.ticks);
+    }
+}
 
 
 // -----------------------------------------------------------------------------
@@ -208,7 +229,9 @@ void core_run()
         cursor_render(core.renderer);
         SDL_RenderPresent(core.renderer);
 
+        state_step(ts);
         ts = ts_sleep_until(ts + sleep);
+        core.ticks++;
     }
 }
 

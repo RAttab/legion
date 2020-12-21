@@ -26,6 +26,7 @@ struct panel_star_state
     struct layout *layout;
     struct star star;
 
+    id_t selected;
     struct vec64 *objs;
     struct ui_toggle *toggles;
 };
@@ -202,7 +203,10 @@ static void panel_star_update(struct panel_star_state *state)
     for (size_t i = 0; i < vec64_len(state->objs); ++i) {
         char str[id_str_len];
         id_str(state->objs->vals[i], sizeof(str), str);
-        ui_toggle_init(&state->toggles[i], &rect, str, sizeof(str));
+
+        struct ui_toggle *toggle = &state->toggles[i];
+        ui_toggle_init(toggle, &rect, str, sizeof(str));
+        toggle->selected = state->objs->vals[i] == state->selected;
 
         rect.y += layout->item.h;
     }
@@ -224,7 +228,8 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
             break;
         }
 
-        case EV_STAR_UPDATE: {
+        case EV_STATE_UPDATE: {
+            if (panel->hidden) return false;
             panel_star_update(state);
             panel_invalidate(panel);
             break;
@@ -256,11 +261,12 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
         enum ui_toggle_ret ret = ui_toggle_events(toggle, event);
         if (ret & ui_toggle_invalidate) panel_invalidate(panel);
         if (ret & ui_toggle_flip) {
-            enum event ev = toggle->selected ? EV_OBJ_SELECT : EV_OBJ_CLEAR;
             id_t obj = state->objs->vals[i];
-            uint64_t coord = coord_to_id(state->star.coord);
-            core_push_event(ev, obj, coord);
 
+            enum event ev = toggle->selected ? EV_OBJ_SELECT : EV_OBJ_CLEAR;
+            core_push_event(ev, obj, coord_to_id(state->star.coord));
+
+            state->selected = toggle->selected ? obj : 0;
             for (size_t j = 0; j < vec64_len(state->objs); ++j) {
                 if (j != i) state->toggles[j].selected = false;
             }

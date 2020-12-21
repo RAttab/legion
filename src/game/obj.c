@@ -143,6 +143,7 @@ void obj_load(struct obj *obj, mod_t id)
 
     mod_discard(obj->mod);
     obj->mod = mods_load(id);
+    vm->ip = make_ip(id, 0);
 }
 
 void obj_step(struct obj *obj, struct hunk *hunk)
@@ -151,7 +152,7 @@ void obj_step(struct obj *obj, struct hunk *hunk)
 
     struct vm *vm = obj_vm(obj);
     ip_t ip = vm_exec(vm,  obj->mod);
-    if (!ip) {
+    if (ip) {
         mod_discard(obj->mod);
         obj->mod = mods_load(ip_mod(ip));
     }

@@ -406,7 +406,8 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
             break;
         }
 
-        case EV_OBJ_UPDATE: {
+        case EV_STATE_UPDATE: {
+            if (panel->hidden) return false;
             panel_obj_update(state);
             panel_invalidate(panel);
             break;

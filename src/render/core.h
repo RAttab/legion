@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/time.h"
 #include "SDL.h"
 
 struct map;
@@ -21,19 +22,18 @@ enum event
 {
     EV_NIL = 0,
 
+    EV_STATE_UPDATE,
+
     EV_MODS_SELECT,
-    EV_MODS_UPDATE,
     EV_MODS_CLEAR,
 
     EV_CODE_SELECT,
     EV_CODE_CLEAR,
 
     EV_STAR_SELECT,
-    EV_STAR_UPDATE,
     EV_STAR_CLEAR,
 
     EV_OBJ_SELECT,
-    EV_OBJ_UPDATE,
     EV_OBJ_CLEAR,
 
     EV_MAX,
@@ -70,6 +70,8 @@ struct core
     } ui;
 
     struct {
+        ts_t next, sleep;
+        uint64_t time;
         struct sector *sector;
     } state;
 };

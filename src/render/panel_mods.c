@@ -15,6 +15,8 @@
 struct panel_mods_state
 {
     struct layout *layout;
+
+    mod_t selected;
     struct mods *mods;
     struct ui_toggle *toggles;
 };
@@ -84,7 +86,11 @@ static void panel_mods_update(struct panel_mods_state *state)
 
     for (size_t i = 0; i < state->mods->len; ++i) {
         struct mods_item *item = &state->mods->items[i];
-        ui_toggle_init(&state->toggles[i], &rect, item->str, vm_atom_cap);
+        struct ui_toggle *toggle = &state->toggles[i];
+
+        ui_toggle_init(toggle, &rect, item->str, vm_atom_cap);
+        toggle->selected = state->mods->items[i].id == state->selected;
+
         rect.y += layout->item.h;
     }
 }
@@ -95,12 +101,19 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
 
     if (event->type == core.event) {
         switch (event->user.code) {
-        case EV_MODS_SELECT: // FALLTHROUGH
-        case EV_MODS_UPDATE: {
+        case EV_MODS_SELECT: {
             panel_mods_update(state);
             panel_show(panel);
             return true;
         }
+
+        case EV_STATE_UPDATE: {
+            if (panel->hidden) return false;
+            panel_mods_update(state);
+            panel_invalidate(panel);
+            return true;
+        }
+
         case EV_MODS_CLEAR: { panel_hide(panel); return true; }
 
         case EV_CODE_CLEAR: {
@@ -117,13 +130,17 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
     if (panel->hidden) return false;
 
     for (size_t i = 0; i < state->mods->len; ++i) {
-        enum ui_toggle_ret ret = ui_toggle_events(&state->toggles[i], event);
+        struct ui_toggle *toggle = &state->toggles[i];
+        enum ui_toggle_ret ret = ui_toggle_events(toggle, event);
+
         if (ret & ui_toggle_invalidate) panel_invalidate(panel);
         if (ret & ui_toggle_flip) {
-            enum event ev = state->toggles[i].selected ? EV_CODE_SELECT : EV_CODE_CLEAR;
-            uint64_t data = state->mods->items[i].id;
-            core_push_event(ev, data, 0);
+            mod_t mod = state->mods->items[i].id;
 
+            enum event ev = toggle->selected ? EV_CODE_SELECT : EV_CODE_CLEAR;
+            core_push_event(ev, mod, 0);
+
+            state->selected = toggle->selected ? mod : 0;
             for (size_t j = 0; j < state->mods->len; ++j) {
                 if (j != i) state->toggles[j].selected = false;
             }
