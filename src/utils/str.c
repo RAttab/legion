@@ -17,3 +17,11 @@ size_t str_utoa(uint64_t val, char *dst, size_t len)
         dst[len-i-1] = '0' + (val % 10);
     return i;
 }
+
+size_t str_utox(uint64_t val, char *dst, size_t len)
+{
+    size_t i = 0;
+    for (; i < len; ++i, val >>= 4)
+        dst[len-i-1] = str_hexchar(val);
+    return i;
+}

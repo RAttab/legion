@@ -50,8 +50,8 @@ size_t vm_len(uint8_t stack)
 
 void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
 {
-    vm->specs.stack = 2 + (8 * stack);
-    vm->specs.speed = 1 << speed;
+    vm->specs.stack = 2 + (8 * stack); // add one cache line per spec increment.
+    vm->specs.speed = 1 << (speed + 1);
 }
 
 void vm_suspend(struct vm *vm)

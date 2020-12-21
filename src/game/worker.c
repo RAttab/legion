@@ -21,6 +21,7 @@ struct obj *worker_alloc(struct hunk * hunk)
     return obj_alloc(hunk, ITEM_WORKER, &(struct obj_spec) {
                 .state = sizeof(struct worker),
                 .stack = 0,
+                .speed = 1,
                 .io = worker_spec_io,
                 .cargo = worker_spec_cargo,
                 .docks = 0

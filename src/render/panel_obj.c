@@ -81,7 +81,7 @@ enum
     p_obj_vm_flags_len = (
             sizeof(p_obj_vm_flags_str) + p_obj_vm_flag_len * 8), // 'IO SU FR FS ...'
 
-    p_obj_vm_spec_len = p_obj_vm_u8_len,
+    p_obj_vm_spec_len = 3,
     p_obj_vm_specs_len = p_obj_vm_spec_len * 2 + 1, // '01/02'
 
     p_obj_vm_io_len = (
@@ -224,10 +224,12 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
 
         font_render(layout->font, renderer, p_obj_vm_str, sizeof(p_obj_vm_str), pos);
 
+        const size_t len = p_obj_vm_spec_len;
+
         char val[p_obj_vm_specs_len];
-        str_utoa(vm->specs.stack, val, 2);
-        val[2] = '/';
-        str_utoa(vm->specs.speed, val + 3, 2);
+        str_utoa(vm->specs.stack, val, len);
+        val[len] = '/';
+        str_utoa(vm->specs.speed, val + len + 1, len);
 
         pos.x = state->layout->bbox.w - (layout->item.w * sizeof(val));
         font_render(layout->font, renderer, val, sizeof(val), pos);
@@ -239,7 +241,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
                 layout_entry_pos(layout));
 
         char val[p_obj_vm_u32_len];
-        str_utoa(vm->specs.stack, val, sizeof(val));
+        str_utox(vm->tsc, val, sizeof(val));
         font_render(layout->font, renderer, val, sizeof(val),
                 layout_entry_index_pos(layout, 0, sizeof(p_obj_vm_tsc_str)));
     }
@@ -291,7 +293,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
         col += sizeof(p_obj_vm_io_str);
 
         char io[p_obj_vm_u8_len];
-        str_utoa(vm->io, io, sizeof(io));
+        str_utox(vm->io, io, sizeof(io));
         font_render(layout->font, renderer, io, sizeof(io),
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(io) + 1;
@@ -301,7 +303,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
         col += sizeof(p_obj_vm_ior_str);
 
         char ior[p_obj_vm_u8_len];
-        str_utoa(vm->ior, ior, sizeof(ior));
+        str_utox(vm->ior, ior, sizeof(ior));
         font_render(layout->font, renderer, ior, sizeof(ior),
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(ior) + 1;
@@ -316,7 +318,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
         col += sizeof(p_obj_vm_ip_str);
 
         char ip[p_obj_vm_u32_len];
-        str_utoa(vm->ip, ip, sizeof(ip));
+        str_utox(vm->ip, ip, sizeof(ip));
         font_render(layout->font, renderer, ip, sizeof(ip),
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(ip) + 1;
@@ -326,7 +328,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
         col += sizeof(p_obj_vm_sp_str);
 
         char sp[p_obj_vm_u8_len];
-        str_utoa(vm->sp, sp, sizeof(sp));
+        str_utox(vm->sp, sp, sizeof(sp));
         font_render(layout->font, renderer, sp, sizeof(sp),
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(sp) + 1;
@@ -341,7 +343,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
                     layout_entry_index_pos(layout, i, 0));
 
             char val[p_obj_vm_u64_len];
-            str_utoa(vm->regs[i], val, sizeof(val));
+            str_utox(vm->regs[i], val, sizeof(val));
             font_render(layout->font, renderer, val, sizeof(val),
                     layout_entry_index_pos(layout, i, sizeof(reg)));
         }
@@ -360,7 +362,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
                     layout_entry_index_pos(layout, i, 0));
 
             char val[p_obj_vm_u64_len];
-            str_utoa(vm->stack[sp], val, sizeof(val));
+            str_utox(vm->stack[sp], val, sizeof(val));
             font_render(layout->font, renderer, val, sizeof(val),
                     layout_entry_index_pos(layout, i, sizeof(index)));
         }

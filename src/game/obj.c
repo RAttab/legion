@@ -38,6 +38,8 @@ struct obj *obj_alloc(struct hunk *hunk, item_t type, const struct obj_spec *spe
     obj->off_state = obj->off_cargo + len_cargo;
     obj->off_vm = len_head;
 
+    vm_init(obj_vm(obj), spec->stack, spec->speed);
+
     return obj;
 }
 

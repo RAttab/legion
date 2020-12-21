@@ -19,6 +19,7 @@ struct obj_spec
 {
     uint8_t state;
     uint8_t stack;
+    uint8_t speed;
     uint8_t io;
     uint8_t cargo;
     uint8_t docks;
