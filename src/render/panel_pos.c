@@ -136,6 +136,5 @@ struct panel *panel_pos_new(void)
     panel->render = panel_pos_render;
     panel->events = panel_pos_events;
     panel->free = panel_pos_free;
-
     return panel;
 };

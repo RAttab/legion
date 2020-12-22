@@ -307,18 +307,16 @@ struct panel *panel_star_new(void)
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) {
-        .x = core.rect.w - layout->bbox.w - panel_padding,
-        .y = menu_h + panel_padding
-    };
+        .x = core.rect.w - layout->bbox.w - panel_total_padding,
+        .y = menu_h };
 
     struct panel_star_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
     struct panel *panel = panel_new(&(SDL_Rect) {
-                .x = layout->pos.x - panel_padding,
-                .y = layout->pos.y - panel_padding,
+                .x = layout->pos.x, .y = layout->pos.y,
                 .w = layout->bbox.w + panel_total_padding,
-                .h = core.rect.h - menu_h });
+                .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_star_render;

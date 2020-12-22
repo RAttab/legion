@@ -205,6 +205,5 @@ struct panel *panel_menu_new(void)
     panel->render = panel_menu_render;
     panel->events = panel_menu_events;
     panel->free = panel_menu_free;
-
     return panel;
 }
