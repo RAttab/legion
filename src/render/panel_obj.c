@@ -20,11 +20,13 @@
 
 struct panel_obj_state
 {
+    struct layout *layout;
+    struct ui_scroll scroll;
+
     id_t id;
     atom_t mod;
     struct coord star;
     struct obj *obj;
-    struct layout *layout;
 };
 
 enum
@@ -97,6 +99,7 @@ enum
 
     p_obj_vm_stack_prefix_len = 5, // 'sXX: '
     p_obj_vm_stack_len = p_obj_vm_stack_prefix_len + p_obj_vm_u64_len,
+    p_obj_vm_stack_total_len = p_obj_vm_stack_len + ui_scroll_layout_cols,
 };
 
 
@@ -353,20 +356,25 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     {
         struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_stack);
 
-        size_t rows = u64_min(vm->sp, layout->rows);
-        for (size_t i = 0; i < rows; ++i) {
+        const size_t first = state->scroll.first;
+        const size_t rows = u64_min(vm->sp, state->scroll.visible);
+
+        for (size_t i = first; i < first + rows; ++i) {
             size_t sp = vm->sp - i - 1;
 
             char index[p_obj_vm_stack_prefix_len] = {
                 's', str_hexchar(sp >> 4), str_hexchar(sp), ':', 0 };
             font_render(layout->font, renderer, index, sizeof(index),
-                    layout_entry_index_pos(layout, i, 0));
+                    layout_entry_index_pos(layout, i - first, 0));
 
             char val[p_obj_vm_u64_len];
             str_utox(vm->stack[sp], val, sizeof(val));
             font_render(layout->font, renderer, val, sizeof(val),
-                    layout_entry_index_pos(layout, i, sizeof(index)));
+                    layout_entry_index_pos(layout, i - first, sizeof(index)));
         }
+
+        ui_scroll_render(&state->scroll, renderer,
+            layout_entry_index_pos(layout, 0, p_obj_vm_stack_len));
     }
 }
 
@@ -389,9 +397,10 @@ static void panel_obj_update(struct panel_obj_state *state)
 
     struct hunk *hunk = sector_hunk(core.state.sector, state->star);
     state->obj = hunk_obj(hunk, state->id);
-    if (state->obj->mod) mods_name(state->obj->mod->id, &state->mod);
-
     assert(state->obj);
+
+    if (state->obj->mod) mods_name(state->obj->mod->id, &state->mod);
+    ui_scroll_update(&state->scroll, obj_vm(state->obj)->sp);
 }
 
 static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -429,6 +438,13 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
     }
 
     if (panel->hidden) return false;
+
+    {
+        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
+        if (ret & ui_scroll_consume) return true;
+    }
+
     return false;
 }
 
@@ -476,7 +492,7 @@ struct panel *panel_obj_new(void)
     layout_sep(layout, p_obj_vm_regs_sep);
     layout_text(layout, p_obj_vm_regs, font, p_obj_vm_reg_len + p_obj_vm_u64_len, p_obj_vm_reg_rows);
     layout_sep(layout, p_obj_vm_stack_sep);
-    layout_text(layout, p_obj_vm_stack, font, p_obj_vm_stack_len, layout_inf);
+    layout_text(layout, p_obj_vm_stack, font, layout_inf, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) {
@@ -486,6 +502,13 @@ struct panel *panel_obj_new(void)
 
     struct panel_obj_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
+
+    {
+        SDL_Rect events = layout_abs(layout, p_obj_vm_stack);
+        SDL_Rect bar = layout_abs_index(layout, p_obj_vm_stack, layout_inf, p_obj_vm_stack_len);
+        ui_scroll_init(&state->scroll, &bar, &events, 0,
+                layout_entry(layout, p_obj_vm_stack)->rows);
+    }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = layout->pos.x,

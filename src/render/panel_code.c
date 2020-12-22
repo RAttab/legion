@@ -65,12 +65,12 @@ static void panel_code_render_text(
 
     struct line *line = state->text.first;
 
-    size_t row = 0;
-    for (; line && row < state->scroll.first; ++row) line = line->next;
-    size_t rows = u64_min(state->text.len - row, layout->rows);
+    const size_t first = state->scroll.first;
+    const size_t rows = u64_min(state->text.len, state->scroll.visible);
+    for (size_t i = 0; line && i < first; ++i) line = line->next;
 
-    for (size_t i = 0; line && i < rows; ++i, line = line->next) {
-        SDL_Point pos = layout_entry_index_pos(layout, i, 0);
+    for (size_t i = first; line && i < first + rows; ++i, line = line->next) {
+        SDL_Point pos = layout_entry_index_pos(layout, i - first, 0);
 
         if (err != err_end && err->line == i) {
             sdl_err(SDL_SetRenderDrawColor(renderer, 0xCC, 0x00, 0x00, 0x55));
@@ -83,7 +83,7 @@ static void panel_code_render_text(
         sdl_err(SDL_SetTextureColorMod(layout->font->tex, 0x00, 0x33, 0xCC));
 
         char count[p_code_count] = {0};
-        str_utoa(i + row, count, sizeof(count));
+        str_utoa(i, count, sizeof(count));
         font_render(layout->font, renderer, count, sizeof(count), pos);
         pos.x += layout->item.w * sizeof(count);
 

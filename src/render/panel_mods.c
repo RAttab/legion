@@ -60,11 +60,12 @@ static void panel_mods_render_list(
 {
     struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
 
-    size_t row = state->scroll.first;
-    size_t rows = u64_min(state->mods->len - row, layout->rows);
-    for (size_t i = 0; i < rows; ++i) {
-        SDL_Point pos = layout_entry_index_pos(layout, i + row, 0);
-        ui_toggle_render(&state->toggles[i + row], renderer, pos, layout->font);
+    const size_t first = state->scroll.first;
+    const size_t rows = u64_min(state->mods->len, state->scroll.visible);
+
+    for (size_t i = first; i < first + rows; ++i) {
+        SDL_Point pos = layout_entry_index_pos(layout, i - first, 0);
+        ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
     }
 
     ui_scroll_render(&state->scroll, renderer,

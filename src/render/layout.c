@@ -104,7 +104,7 @@ void layout_finish(struct layout *layout, SDL_Point rel)
         struct layout_entry *entry = &layout->entries[i];
 
         if (entry->cols == layout_inf)
-            entry->cols = layout->bounds.w / entry->item.w;
+            entry->cols = layout->bbox.w / entry->item.w;
         if (entry->rows == layout_inf) {
             entry->rows = (layout->bounds.h - y) / entry->item.h;
             layout->bbox.h = 0; // can only allow a single inf rows.

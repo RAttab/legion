@@ -24,6 +24,8 @@
 struct panel_star_state
 {
     struct layout *layout;
+    struct ui_scroll scroll;
+
     struct star star;
 
     id_t selected;
@@ -53,6 +55,9 @@ enum
     p_star_elems_rows = 4,
 
     p_star_objs_len = 8,
+
+    p_star_objs_list_len = id_str_len + ui_toggle_layout_cols,
+    p_star_objs_list_total_len = p_star_objs_list_len + ui_scroll_layout_cols,
 };
 static_assert(elem_natural_len <= p_star_elems_cols * p_star_elems_rows);
 
@@ -157,11 +162,16 @@ static void panel_star_render_list(
     {
         struct layout_entry *layout = layout_entry(state->layout, p_star_objs_list);
 
-        size_t rows = u64_min(vec64_len(state->objs), layout->rows);
-        for (size_t i = 0; i < rows; ++i) {
-            SDL_Point pos = layout_entry_index_pos(layout, i, 0);
+        const size_t first = state->scroll.first;
+        const size_t rows = u64_min(vec64_len(state->objs), state->scroll.visible);
+
+        for (size_t i = first; i < first + rows; ++i) {
+            SDL_Point pos = layout_entry_index_pos(layout, i - first, 0);
             ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
         }
+
+        ui_scroll_render(&state->scroll, renderer,
+            layout_entry_index_pos(layout, 0, p_star_objs_list_len));
     }
 }
 
@@ -210,6 +220,8 @@ static void panel_star_update(struct panel_star_state *state)
 
         rect.y += layout->item.h;
     }
+
+    ui_scroll_update(&state->scroll, state->objs->len);
 }
 
 static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -254,6 +266,12 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
     }
 
     if (panel->hidden) return false;
+
+    {
+        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
+        if (ret & ui_scroll_consume) return true;
+    }
 
     for (size_t i = 0; i < vec64_len(state->objs); ++i) {
         struct ui_toggle *toggle = &state->toggles[i];
@@ -303,7 +321,7 @@ struct panel *panel_star_new(void)
     layout_sep(layout, p_star_elems_sep);
 
     layout_text(layout, p_star_objs, font_s, sizeof(p_star_objs) + p_star_objs_len, 1);
-    layout_text(layout, p_star_objs_list, font_s, id_str_len + 2, layout_inf);
+    layout_text(layout, p_star_objs_list, font_s, layout_inf, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) {
@@ -312,6 +330,13 @@ struct panel *panel_star_new(void)
 
     struct panel_star_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
+
+    {
+        SDL_Rect events = layout_abs(layout, p_star_objs_list);
+        SDL_Rect bar = layout_abs_index(layout, p_star_objs_list, layout_inf, p_star_objs_list_len);
+        ui_scroll_init(&state->scroll, &bar, &events, 0,
+                layout_entry(layout, p_star_objs_list)->rows);
+    }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = layout->pos.x, .y = layout->pos.y,
