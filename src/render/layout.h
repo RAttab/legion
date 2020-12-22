@@ -38,7 +38,7 @@ struct layout
 struct layout *layout_alloc(size_t entries, int max_width, int max_height);
 void layout_free(struct layout *);
 
-enum { layout_inf = 0 };
+static const size_t layout_inf = -1;
 void layout_sep(struct layout *, int key);
 void layout_rect(struct layout *, int key, int width, int height);
 void layout_text(struct layout *, int key, struct font *, size_t cols, size_t rows);
