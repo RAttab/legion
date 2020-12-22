@@ -96,3 +96,119 @@ enum ui_toggle_ret ui_toggle_events(struct ui_toggle *toggle, SDL_Event *event)
     }
 
 }
+
+
+// -----------------------------------------------------------------------------
+// scroll
+// -----------------------------------------------------------------------------
+
+void ui_scroll_init(
+        struct ui_scroll *scroll,
+        const SDL_Rect *active,
+        const SDL_Rect *render,
+        size_t total, size_t visible)
+{
+    *scroll = (struct ui_scroll) {
+        .events = *active,
+        .render = (SDL_Rect) {
+            .x = active->x + render->x,
+            .y = active->y + render->y,
+            .w = render->w, .h = render->h,
+        },
+
+        .total = total,
+        .first = 0,
+        .visible = visible,
+
+        .drag = {0},
+    };
+}
+
+void ui_scroll_update(struct ui_scroll *scroll, size_t total)
+{
+    scroll->first = 0;
+    scroll->total = total;
+}
+
+static SDL_Rect ui_scroll_bar(struct ui_scroll *scroll, SDL_Point pos)
+{
+    return (SDL_Rect) {
+        .x = pos.x,
+        .y = (scroll->render.h * scroll->first) / scroll->total + pos.y,
+        .w = scroll->render.w,
+        .h = (scroll->render.h * scroll->visible) / scroll->total,
+    };
+}
+
+void ui_scroll_render(
+        struct ui_scroll *scroll, SDL_Renderer *renderer, SDL_Point pos)
+{
+    if (scroll->visible >= scroll->total) return;
+
+    const uint8_t gray = 0xCC;
+    sdl_err(SDL_SetRenderDrawColor(renderer, gray, gray, gray, 0xFF));
+
+    SDL_Rect bar = ui_scroll_bar(scroll, pos);
+    sdl_err(SDL_RenderFillRect(renderer, &bar));
+}
+
+enum ui_scroll_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
+{
+    switch (event->type) {
+
+    case SDL_MOUSEWHEEL: {
+        if (!sdl_rect_contains(&scroll->events, &core.cursor.point))
+            return ui_scroll_nil;
+
+        ssize_t first = (ssize_t) scroll->first - event->wheel.y;
+        if (first < 0) return ui_scroll_consume;
+        if (first + scroll->visible > scroll->total) return ui_scroll_consume;
+        if (!event->wheel.y) return ui_scroll_consume;
+
+        scroll->first = (size_t) first;
+        return ui_scroll_moved | ui_scroll_invalidate | ui_scroll_consume;
+    }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        SDL_Rect bar = ui_scroll_bar(scroll,
+                (SDL_Point) { .x = scroll->render.x, .y = scroll->render.y });
+
+        dbg("scroll.event> cursor:{%d, %d}, bar:{%d, %d, %d, %d}, render:{%d, %d, %d, %d}, active:{%d, %d, %d, %d}",
+                core.cursor.point.x, core.cursor.point.y,
+                bar.x, bar.y, bar.w, bar.h,
+                scroll->render.x, scroll->render.y,
+                scroll->render.w, scroll->render.h,
+                scroll->events.x, scroll->events.y,
+                scroll->events.w, scroll->events.h);
+        if (!sdl_rect_contains(&bar, &core.cursor.point))
+            return ui_scroll_nil;
+
+        scroll->drag.y = core.cursor.point.y;
+        scroll->drag.top = bar.y - scroll->render.y;
+        return ui_scroll_consume;
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        if (!scroll->drag.y) return ui_scroll_nil;
+        scroll->drag.y = 0;
+        return ui_scroll_consume;
+    }
+
+    case SDL_MOUSEMOTION: {
+        if (!scroll->drag.y) return ui_scroll_nil;
+
+        int delta = core.cursor.point.y - scroll->drag.y;
+        int top = scroll->drag.top + delta;
+        ssize_t first = (top * scroll->total) / scroll->render.h;
+
+        if (first < 0) return ui_scroll_consume;
+        if ((size_t) first + scroll->visible > scroll->total) return ui_scroll_consume;
+        if ((size_t) first == scroll->first) return ui_scroll_consume;
+
+        scroll->first = (size_t) first;
+        return ui_scroll_moved | ui_scroll_invalidate | ui_scroll_consume;
+    }
+
+    default: { return ui_scroll_nil; }
+    }
+}

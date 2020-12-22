@@ -156,7 +156,8 @@ SDL_Rect layout_entry_index(struct layout_entry *entry, size_t row, size_t col)
     return (SDL_Rect) {
         .x = entry->rect.x + col * entry->item.w,
         .y = entry->rect.y + row * entry->item.h,
-        .w = entry->item.w, .h = entry->item.h,
+        .w = entry->item.w * (col == layout_inf ? entry->cols : 1),
+        .h = entry->item.h * (row == layout_inf ? entry->rows : 1),
     };
 }
 

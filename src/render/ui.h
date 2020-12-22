@@ -41,3 +41,41 @@ void ui_toggle_init(
 
 void ui_toggle_render(struct ui_toggle *, SDL_Renderer *, SDL_Point, struct font *);
 enum ui_toggle_ret ui_toggle_events(struct ui_toggle *, SDL_Event *);
+
+
+// -----------------------------------------------------------------------------
+// scroll
+// -----------------------------------------------------------------------------
+
+enum ui_scroll_ret
+{
+    ui_scroll_nil = 0,
+    ui_scroll_moved = 1 << 0,
+    ui_scroll_consume = 1 << 1,
+    ui_scroll_invalidate = 1 << 2,
+};
+
+struct ui_scroll
+{
+    struct SDL_Rect render;
+    struct SDL_Rect events;
+
+    size_t total;
+    size_t first;
+    size_t visible;
+
+    struct {
+        int y;
+        int top;
+    } drag;
+};
+
+void ui_scroll_init(
+        struct ui_scroll *,
+        const SDL_Rect *active,
+        const SDL_Rect *render,
+        size_t total, size_t visible);
+
+void ui_scroll_update(struct ui_scroll *, size_t total);
+void ui_scroll_render(struct ui_scroll *, SDL_Renderer *, SDL_Point);
+enum ui_scroll_ret ui_scroll_events(struct ui_scroll *, SDL_Event *);

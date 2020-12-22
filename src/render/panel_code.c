@@ -17,10 +17,11 @@
 struct panel_code_state
 {
     struct layout *layout;
+    struct ui_scroll scroll;
+
     atom_t name;
     struct text text;
     struct mod *mod;
-    size_t line_cap;
 };
 
 enum
@@ -35,7 +36,11 @@ enum
 {
     p_code_count = 3,
     p_code_sep = 2,
-    p_code_prefix = p_code_count + p_code_sep,
+
+    p_code_prefix_len = p_code_count + p_code_sep,
+    p_code_text_len = p_code_prefix_len + text_line_cap,
+    p_code_scroll_len = 1,
+    p_code_text_total_len = p_code_text_len + p_code_scroll_len,
 };
 
 static const char p_code_mod_str[] = "mod:";
@@ -61,7 +66,10 @@ static void panel_code_render_text(
 
     struct line *line = state->text.first;
 
-    size_t rows = u64_min(state->text.len, layout->rows);
+    size_t row = 0;
+    for (; line && row < state->scroll.first; ++row) line = line->next;
+    size_t rows = u64_min(state->text.len - row, layout->rows);
+
     for (size_t i = 0; line && i < rows; ++i, line = line->next) {
         SDL_Point pos = layout_entry_index_pos(layout, i, 0);
 
@@ -76,11 +84,11 @@ static void panel_code_render_text(
         sdl_err(SDL_SetTextureColorMod(layout->font->tex, 0x00, 0x33, 0xCC));
 
         char count[p_code_count] = {0};
-        str_utoa(i, count, sizeof(count));
+        str_utoa(i + row, count, sizeof(count));
         font_render(layout->font, renderer, count, sizeof(count), pos);
         pos.x += layout->item.w * sizeof(count);
 
-        char sep[] = ": ";
+        char sep[] = ":";
         font_render(layout->font, renderer, sep, sizeof(sep), pos);
         pos.x += layout->item.w * sizeof(sep);
 
@@ -89,6 +97,9 @@ static void panel_code_render_text(
         sdl_err(SDL_SetTextureColorMod(layout->font->tex, gray, gray, gray));
         font_render(layout->font, renderer, line->c, len, pos);
     }
+
+    ui_scroll_render(&state->scroll, renderer,
+            layout_entry_index_pos(layout, 0, p_code_text_len));
 }
 
 static void panel_code_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
@@ -113,6 +124,8 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
             assert(state->mod);
 
             text_unpack(&state->text, state->mod->src, state->mod->src_len);
+            ui_scroll_update(&state->scroll, state->text.len);
+
             panel_show(panel);
             return false;
         }
@@ -130,6 +143,13 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
     }
 
     if (panel->hidden) return false;
+
+    {
+        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
+        if (ret & ui_scroll_consume) return true;
+    }
+
     return false;
 }
 
@@ -152,7 +172,8 @@ struct panel *panel_code_new(void)
 
     layout_text(layout, p_code_mod, font, sizeof(p_code_mod_str) + vm_atom_cap, 1);
     layout_sep(layout, p_code_mod_sep);
-    layout_text(layout, p_code_text, font, p_code_prefix + text_line_cap, layout_inf);
+
+    layout_text(layout, p_code_text, font, p_code_text_total_len, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) {
@@ -162,6 +183,13 @@ struct panel *panel_code_new(void)
 
     struct panel_code_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
+
+    {
+        struct layout_entry *entry = layout_entry(layout, p_code_text);
+        SDL_Rect active = layout_abs(layout, p_code_text);
+        SDL_Rect render = layout_entry_index(entry, layout_inf, p_code_text_len);
+        ui_scroll_init(&state->scroll, &active, &render, 0, entry->rows);
+    }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = layout->pos.x - panel_padding,
