@@ -48,7 +48,9 @@ void layout_grid(struct layout *, int key, size_t rows, size_t cols, int size);
 void layout_finish(struct layout *, SDL_Point rel);
 
 struct layout_entry *layout_entry(struct layout *, int key);
+
 SDL_Rect layout_abs(struct layout *, int key);
+SDL_Rect layout_abs_index(struct layout *, int key, size_t row, size_t col);
 
 SDL_Point layout_entry_pos(struct layout_entry *);
 SDL_Rect layout_entry_index(struct layout_entry *, size_t row, size_t col);

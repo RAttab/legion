@@ -57,7 +57,7 @@ enum ui_scroll_ret
 
 struct ui_scroll
 {
-    struct SDL_Rect render;
+    struct SDL_Rect bar;
     struct SDL_Rect events;
 
     size_t total;
@@ -72,8 +72,8 @@ struct ui_scroll
 
 void ui_scroll_init(
         struct ui_scroll *,
-        const SDL_Rect *active,
-        const SDL_Rect *render,
+        const SDL_Rect *bar_abs,
+        const SDL_Rect *events_abs,
         size_t total, size_t visible);
 
 void ui_scroll_update(struct ui_scroll *, size_t total);

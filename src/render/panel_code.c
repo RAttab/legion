@@ -176,31 +176,26 @@ struct panel *panel_code_new(void)
     layout_text(layout, p_code_text, font, p_code_text_total_len, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
-    layout->pos = (SDL_Point) {
-        .x = core.ui.mods->rect.w + panel_padding,
-        .y = menu_h + panel_padding
-    };
+    layout->pos = (SDL_Point) { .x = core.ui.mods->rect.w, .y = menu_h };
 
     struct panel_code_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
     {
-        struct layout_entry *entry = layout_entry(layout, p_code_text);
-        SDL_Rect active = layout_abs(layout, p_code_text);
-        SDL_Rect render = layout_entry_index(entry, layout_inf, p_code_text_len);
-        ui_scroll_init(&state->scroll, &active, &render, 0, entry->rows);
+        SDL_Rect events = layout_abs(layout, p_code_text);
+        SDL_Rect bar = layout_abs_index(layout, p_code_text, layout_inf, p_code_text_len);
+        ui_scroll_init(&state->scroll, &bar, &events, 0,
+                layout_entry(layout, p_code_text)->rows);
     }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
-                .x = layout->pos.x - panel_padding,
-                .y = layout->pos.y - panel_padding,
+                .x = layout->pos.x, .y = layout->pos.y,
                 .w = layout->bbox.w + panel_total_padding,
-                .h = core.rect.h - menu_h });
+                .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
     panel->render = panel_code_render;
     panel->events = panel_code_events;
     panel->free = panel_code_free;
-
     return panel;
 }

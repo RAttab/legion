@@ -104,17 +104,13 @@ enum ui_toggle_ret ui_toggle_events(struct ui_toggle *toggle, SDL_Event *event)
 
 void ui_scroll_init(
         struct ui_scroll *scroll,
-        const SDL_Rect *active,
-        const SDL_Rect *render,
+        const SDL_Rect *bar_abs,
+        const SDL_Rect *events_abs,
         size_t total, size_t visible)
 {
     *scroll = (struct ui_scroll) {
-        .events = *active,
-        .render = (SDL_Rect) {
-            .x = active->x + render->x,
-            .y = active->y + render->y,
-            .w = render->w, .h = render->h,
-        },
+        .bar = *bar_abs,
+        .events = *events_abs,
 
         .total = total,
         .first = 0,
@@ -134,9 +130,9 @@ static SDL_Rect ui_scroll_bar(struct ui_scroll *scroll, SDL_Point pos)
 {
     return (SDL_Rect) {
         .x = pos.x,
-        .y = (scroll->render.h * scroll->first) / scroll->total + pos.y,
-        .w = scroll->render.w,
-        .h = (scroll->render.h * scroll->visible) / scroll->total,
+        .y = (scroll->bar.h * scroll->first) / scroll->total + pos.y,
+        .w = scroll->bar.w,
+        .h = (scroll->bar.h * scroll->visible) / scroll->total,
     };
 }
 
@@ -171,26 +167,19 @@ enum ui_scroll_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
 
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Rect bar = ui_scroll_bar(scroll,
-                (SDL_Point) { .x = scroll->render.x, .y = scroll->render.y });
+                (SDL_Point) { .x = scroll->bar.x, .y = scroll->bar.y });
 
-        dbg("scroll.event> cursor:{%d, %d}, bar:{%d, %d, %d, %d}, render:{%d, %d, %d, %d}, active:{%d, %d, %d, %d}",
-                core.cursor.point.x, core.cursor.point.y,
-                bar.x, bar.y, bar.w, bar.h,
-                scroll->render.x, scroll->render.y,
-                scroll->render.w, scroll->render.h,
-                scroll->events.x, scroll->events.y,
-                scroll->events.w, scroll->events.h);
         if (!sdl_rect_contains(&bar, &core.cursor.point))
             return ui_scroll_nil;
 
         scroll->drag.y = core.cursor.point.y;
-        scroll->drag.top = bar.y - scroll->render.y;
+        scroll->drag.top = bar.y - scroll->bar.y;
         return ui_scroll_consume;
     }
 
     case SDL_MOUSEBUTTONUP: {
         if (!scroll->drag.y) return ui_scroll_nil;
-        scroll->drag.y = 0;
+        memset(&scroll->drag, 0, sizeof(scroll->drag));
         return ui_scroll_consume;
     }
 
@@ -199,7 +188,7 @@ enum ui_scroll_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
 
         int delta = core.cursor.point.y - scroll->drag.y;
         int top = scroll->drag.top + delta;
-        ssize_t first = (top * scroll->total) / scroll->render.h;
+        ssize_t first = (top * scroll->total) / scroll->bar.h;
 
         if (first < 0) return ui_scroll_consume;
         if ((size_t) first + scroll->visible > scroll->total) return ui_scroll_consume;

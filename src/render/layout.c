@@ -99,7 +99,7 @@ void layout_grid(struct layout *layout, int key, size_t rows, size_t cols, int s
 
 void layout_finish(struct layout *layout, SDL_Point rel)
 {
-    int y = rel.y;
+    int y = 0;
     for (size_t i = 0; i < layout->len; ++i) {
         struct layout_entry *entry = &layout->entries[i];
 
@@ -111,7 +111,7 @@ void layout_finish(struct layout *layout, SDL_Point rel)
         }
 
         entry->rect = (SDL_Rect) {
-            .x = rel.x, .y = y,
+            .x = rel.x, .y = y + rel.y,
             .w = entry->item.w * entry->cols,
             .h = entry->item.h * entry->rows,
         };
@@ -140,6 +140,15 @@ SDL_Rect layout_abs(struct layout *layout, int key)
         .y = layout->pos.y + entry->rect.y,
         .w = entry->rect.w, .h = entry->rect.h,
     };
+}
+
+SDL_Rect layout_abs_index(struct layout *layout, int key, size_t row, size_t col)
+{
+    struct layout_entry *entry = layout_entry(layout, key);
+    SDL_Rect rect = layout_entry_index(entry, row, col);
+    rect.x += layout->pos.x;
+    rect.y += layout->pos.y;
+    return rect;
 }
 
 
