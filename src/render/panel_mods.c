@@ -15,6 +15,7 @@
 struct panel_mods_state
 {
     struct layout *layout;
+    struct ui_scroll scroll;
 
     mod_t selected;
     struct mods *mods;
@@ -32,6 +33,9 @@ enum
 enum
 {
     p_mods_val_len = 8,
+
+    p_mods_list_len = vm_atom_cap + ui_toggle_layout_cols,
+    p_mods_list_total_len = p_mods_list_len + ui_scroll_layout_cols,
 };
 
 static const char p_mods_str[] = "mods:";
@@ -56,11 +60,15 @@ static void panel_mods_render_list(
 {
     struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
 
-    size_t rows = u64_min(state->mods->len, layout->rows);
+    size_t row = state->scroll.first;
+    size_t rows = u64_min(state->mods->len - row, layout->rows);
     for (size_t i = 0; i < rows; ++i) {
-        SDL_Point pos = layout_entry_index_pos(layout, i, 0);
-        ui_toggle_render(&state->toggles[i], renderer, pos, layout->font);
+        SDL_Point pos = layout_entry_index_pos(layout, i + row, 0);
+        ui_toggle_render(&state->toggles[i + row], renderer, pos, layout->font);
     }
+
+    ui_scroll_render(&state->scroll, renderer,
+            layout_entry_index_pos(layout, 0, p_mods_list_len));
 }
 
 static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
@@ -93,6 +101,8 @@ static void panel_mods_update(struct panel_mods_state *state)
 
         rect.y += layout->item.h;
     }
+
+    ui_scroll_update(&state->scroll, state->mods->len);
 }
 
 static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -128,6 +138,12 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
     }
 
     if (panel->hidden) return false;
+
+    {
+        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
+        if (ret & ui_scroll_consume) return true;
+    }
 
     for (size_t i = 0; i < state->mods->len; ++i) {
         struct ui_toggle *toggle = &state->toggles[i];
@@ -169,13 +185,20 @@ struct panel *panel_mods_new(void)
 
     layout_text(layout, p_mods_count, font, sizeof(p_mods_str) + p_mods_val_len, 1);
     layout_sep(layout, p_mods_count_sep);
-    layout_text(layout, p_mods_list, font, vm_atom_cap+2, layout_inf);
+    layout_text(layout, p_mods_list, font, p_mods_list_total_len, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) { .x = 0, .y = menu_h };
 
     struct panel_mods_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
+
+    {
+        SDL_Rect events = layout_abs(layout, p_mods_list);
+        SDL_Rect bar = layout_abs_index(layout, p_mods_list, layout_inf, p_mods_list_len);
+        ui_scroll_init(&state->scroll, &bar, &events, 0,
+                layout_entry(layout, p_mods_list)->rows);
+    }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
                 .x = layout->pos.x, .y = layout->pos.y,

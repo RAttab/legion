@@ -128,6 +128,13 @@ void ui_scroll_update(struct ui_scroll *scroll, size_t total)
 
 static SDL_Rect ui_scroll_bar(struct ui_scroll *scroll, SDL_Point pos)
 {
+    if (!scroll->total) {
+        return (SDL_Rect) {
+            .x = pos.x, .y = pos.y,
+            .w = scroll->bar.w, .h = scroll->bar.h
+        };
+    }
+
     return (SDL_Rect) {
         .x = pos.x,
         .y = (scroll->bar.h * scroll->first) / scroll->total + pos.y,

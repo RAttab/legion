@@ -39,8 +39,7 @@ enum
 
     p_code_prefix_len = p_code_count + p_code_sep,
     p_code_text_len = p_code_prefix_len + text_line_cap,
-    p_code_scroll_len = 1,
-    p_code_text_total_len = p_code_text_len + p_code_scroll_len,
+    p_code_text_total_len = p_code_text_len + ui_scroll_layout_cols,
 };
 
 static const char p_code_mod_str[] = "mod:";

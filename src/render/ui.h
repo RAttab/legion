@@ -15,6 +15,8 @@
 // toggle
 // -----------------------------------------------------------------------------
 
+enum { ui_toggle_layout_cols = 2 };
+
 enum ui_toggle_ret
 {
     ui_toggle_nil = 0,
@@ -46,6 +48,8 @@ enum ui_toggle_ret ui_toggle_events(struct ui_toggle *, SDL_Event *);
 // -----------------------------------------------------------------------------
 // scroll
 // -----------------------------------------------------------------------------
+
+enum { ui_scroll_layout_cols = 1 };
 
 enum ui_scroll_ret
 {
