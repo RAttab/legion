@@ -22,6 +22,12 @@ struct panel_code_state
     atom_t name;
     struct text text;
     struct mod *mod;
+
+    struct {
+        bool blink;
+        size_t row, col;
+        struct line *line;
+    } carret;
 };
 
 enum
@@ -38,7 +44,8 @@ enum
     p_code_sep = 2,
 
     p_code_prefix_len = p_code_count + p_code_sep,
-    p_code_text_len = p_code_prefix_len + text_line_cap,
+    // + 1 -> need a trailing space for the carret.
+    p_code_text_len = p_code_prefix_len + text_line_cap + 1,
     p_code_text_total_len = p_code_text_len + ui_scroll_layout_cols,
 };
 
@@ -97,6 +104,13 @@ static void panel_code_render_text(
         font_render(layout->font, renderer, line->c, len, pos);
     }
 
+    if (state->carret.blink) {
+        sdl_err(SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF));
+        SDL_Rect rect = layout_entry_index(
+                layout, state->carret.row, state->carret.col + p_code_prefix_len);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
+    }
+
     ui_scroll_render(&state->scroll, renderer,
             layout_entry_index_pos(layout, 0, p_code_text_len));
 }
@@ -108,6 +122,100 @@ static void panel_code_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
 
     panel_code_render_mod(state, renderer);
     panel_code_render_text(state, renderer);
+}
+
+
+static bool panel_code_carret_move(struct panel_code_state *state, int hori, int vert)
+{
+    if (hori > 0) {
+        if (state->carret.col < line_len(state->carret.line)) state->carret.col++;
+        else {
+            if (!state->carret.line->next) return false;
+            state->carret.line = state->carret.line->next;
+            state->carret.col = 0;
+            if (state->carret.row == state->scroll.visible-1) state->scroll.first++;
+            else state->carret.row++;
+        }
+        return true;
+    }
+
+    if (hori < 0) {
+        if (state->carret.col > 0) state->carret.col--;
+        else {
+            if (!state->carret.line->prev) return false;
+            state->carret.line = state->carret.line->prev;
+            state->carret.col = line_len(state->carret.line);
+            if (!state->carret.row) state->scroll.first--;
+            else state->carret.row--;
+        }
+        return true;
+    }
+
+    if (vert) {
+        if (vert > 0) {
+            if (!state->carret.line->next) return false;
+            if (state->carret.row == state->scroll.visible-1) state->scroll.first++;
+            else state->carret.row++;
+            state->carret.line = state->carret.line->next;
+        }
+
+        if (vert < 0) {
+            if (!state->carret.line->prev) return false;
+            if (!state->carret.row) state->scroll.first--;
+            else state->carret.row--;
+            state->carret.line = state->carret.line->prev;
+        }
+        state->carret.col = u64_min(state->carret.col, line_len(state->carret.line));
+        return true;
+    }
+
+    return false;
+}
+
+static void panel_code_carret_scroll(
+        struct panel_code_state *state, size_t old, size_t new)
+{
+    assert(old != new);
+
+    if (old < new) {
+        size_t delta = new - old;
+        for (size_t i = 0; i < delta; ++i) {
+            if (state->carret.row) state->carret.row--;
+            else state->carret.line = state->carret.line->next;
+            assert(state->carret.line);
+        }
+    }
+    else {
+        size_t delta = old - new;
+        for (size_t i = 0; i < delta; ++i) {
+            if (state->carret.row < state->scroll.visible-1) state->carret.row++;
+            else state->carret.line = state->carret.line->prev;
+            assert(state->carret.line);
+        }
+    }
+    state->carret.col = u64_min(state->carret.col, line_len(state->carret.line));
+}
+
+static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *event)
+{
+    switch (event->type) {
+
+    case SDL_KEYDOWN: {
+        switch (event->key.keysym.sym) {
+
+        case SDLK_UP: { return panel_code_carret_move(state, 0, -1); }
+        case SDLK_DOWN: { return panel_code_carret_move(state, 0, 1); }
+        case SDLK_LEFT: { return panel_code_carret_move(state, -1, 0); }
+        case SDLK_RIGHT: { return panel_code_carret_move(state, 1, 0); }
+
+        default: { return false; }
+
+        }
+    }
+
+    default: { return false; }
+
+    }
 }
 
 static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *event)
@@ -123,6 +231,8 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
             assert(state->mod);
 
             text_unpack(&state->text, state->mod->src, state->mod->src_len);
+            state->carret.line = state->text.first;
+            state->carret.row = state->carret.col = 0;
             ui_scroll_update(&state->scroll, state->text.len);
 
             panel_show(panel);
@@ -137,6 +247,15 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
             return false;
         }
 
+        case EV_STATE_UPDATE: {
+            bool blink = (core.ticks / 20) % 2;
+            if (state->carret.blink != blink) {
+                state->carret.blink = blink;
+                panel_invalidate(panel);
+            }
+            return false;
+        }
+
         default: { return false; }
         }
     }
@@ -144,9 +263,16 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
     if (panel->hidden) return false;
 
     {
+        size_t old = state->scroll.first;
         enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_scroll_moved) panel_code_carret_scroll(state, old, state->scroll.first);
         if (ret & ui_scroll_invalidate) panel_invalidate(panel);
         if (ret & ui_scroll_consume) return true;
+    }
+
+    if (panel_code_events_text(state, event)) {
+        panel_invalidate(panel);
+        return true;
     }
 
     return false;
