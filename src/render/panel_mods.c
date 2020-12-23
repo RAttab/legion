@@ -122,7 +122,7 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
             if (panel->hidden) return false;
             panel_mods_update(state);
             panel_invalidate(panel);
-            return true;
+            return false;
         }
 
         case EV_MODS_CLEAR: { panel_hide(panel); return true; }

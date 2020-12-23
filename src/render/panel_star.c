@@ -237,28 +237,28 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
             memcpy(&state->star, star, sizeof(*star));
             panel_star_update(state);
             panel_show(panel);
-            break;
-        }
-
-        case EV_STATE_UPDATE: {
-            if (panel->hidden) return false;
-            panel_star_update(state);
-            panel_invalidate(panel);
-            break;
+            return true;
         }
 
         case EV_STAR_CLEAR: {
             state->star = (struct star) {0};
             panel_star_reset(state);
             panel_hide(panel);
-            break;
+            return true;
+        }
+
+        case EV_STATE_UPDATE: {
+            if (panel->hidden) return false;
+            panel_star_update(state);
+            panel_invalidate(panel);
+            return false;
         }
 
         case EV_OBJ_CLEAR: {
             for (size_t j = 0; j < vec64_len(state->objs); ++j)
                 state->toggles[j].selected = false;
             panel_invalidate(panel);
-            break;
+            return false;
         }
 
         default: { return false; }
