@@ -196,9 +196,46 @@ static void panel_code_carret_scroll(
     state->carret.col = u64_min(state->carret.col, line_len(state->carret.line));
 }
 
+static bool panel_code_carret_click(struct panel_code_state *state)
+{
+    SDL_Rect abs = layout_abs(state->layout, p_code_text);
+    if (!sdl_rect_contains(&abs, &core.cursor.point)) return false;
+
+    struct layout_entry *layout = layout_entry(state->layout, p_code_text);
+
+    SDL_Point rel = {
+        .x = core.cursor.point.x - abs.x,
+        .y = core.cursor.point.y - abs.y,
+    };
+    assert(rel.x < abs.w && rel.y < abs.h);
+
+    size_t row = 0, col = 0;
+    layout_entry_point(layout, rel, &row, &col);
+    col = col > p_code_prefix_len ? col - p_code_prefix_len : 0;
+
+    while (state->carret.row > row) {
+        state->carret.line = state->carret.line->prev;
+        state->carret.row--;
+    }
+
+    while (state->carret.row < row) {
+        if (!state->carret.line->next) {
+            state->carret.col = line_len(state->carret.line);
+            return true;
+        }
+        state->carret.line = state->carret.line->next;
+        state->carret.row++;
+    }
+
+    state->carret.col = u64_min(col, line_len(state->carret.line));
+    return true;
+}
+
 static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *event)
 {
     switch (event->type) {
+
+    case SDL_MOUSEBUTTONDOWN: { return panel_code_carret_click(state); }
 
     case SDL_KEYDOWN: {
         switch (event->key.keysym.sym) {

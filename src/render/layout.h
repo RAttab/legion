@@ -55,3 +55,5 @@ SDL_Rect layout_abs_index(struct layout *, int key, size_t row, size_t col);
 SDL_Point layout_entry_pos(struct layout_entry *);
 SDL_Rect layout_entry_index(struct layout_entry *, size_t row, size_t col);
 SDL_Point layout_entry_index_pos(struct layout_entry *, size_t row, size_t col);
+
+void layout_entry_point(struct layout_entry *, SDL_Point pos, size_t *row, size_t *col);

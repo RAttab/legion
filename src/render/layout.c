@@ -181,3 +181,15 @@ SDL_Point layout_entry_index_pos(struct layout_entry *entry, size_t row, size_t 
     };
 }
 
+void layout_entry_point(
+        struct layout_entry *entry, SDL_Point pos, size_t *row, size_t *col)
+{
+    assert(pos.x < entry->rect.w);
+    assert(pos.y < entry->rect.h);
+
+    *col = pos.x / entry->item.w;
+    *row = pos.y / entry->item.h;
+
+    assert(*col < entry->cols);
+    assert(*row < entry->rows);
+}
