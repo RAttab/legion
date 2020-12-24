@@ -23,7 +23,7 @@ size_t line_len(struct line *line)
 
 struct line_ret line_insert(struct text *text, struct line *line, size_t index, char c)
 {
-    assert(index < text_line_cap);
+    assert(index <= text_line_cap);
 
     if (c == '\n') {
         struct line *new = text_insert(text, line);
@@ -41,7 +41,7 @@ struct line_ret line_insert(struct text *text, struct line *line, size_t index, 
 
 struct line_ret line_delete(struct text *text, struct line *line, size_t index)
 {
-    assert(index < text_line_cap);
+    assert(index <= text_line_cap);
 
     if (line->c[index]) {
         memmove(line->c + index, line->c + index + 1, text_line_cap - index);
@@ -62,7 +62,7 @@ struct line_ret line_delete(struct text *text, struct line *line, size_t index)
 
 struct line_ret line_backspace(struct text *text, struct line *line, size_t index)
 {
-    assert(index < text_line_cap);
+    assert(index <= text_line_cap);
 
     if (index) {
         memmove(line->c + index - 1, line->c + index, text_line_cap - index);
