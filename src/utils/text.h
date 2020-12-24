@@ -8,6 +8,8 @@
 #include "common.h"
 
 
+struct text;
+
 // -----------------------------------------------------------------------------
 // line
 // -----------------------------------------------------------------------------
@@ -26,8 +28,15 @@ static_assert(sizeof(struct line) == s_cache_line);
 bool line_empty(struct line *);
 size_t line_len(struct line *);
 
-void line_put(struct line *, size_t index, char c);
-void line_del(struct line *, size_t index);
+struct line_ret
+{
+    size_t index;
+    struct line *line;
+};
+
+struct line_ret line_insert(struct text *, struct line *, size_t index, char c);
+struct line_ret line_delete(struct text *, struct line *, size_t index);
+struct line_ret line_backspace(struct text *, struct line *, size_t index);
 
 
 // -----------------------------------------------------------------------------

@@ -124,6 +124,40 @@ static void panel_code_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     panel_code_render_text(state, renderer);
 }
 
+static bool panel_code_carret_click(struct panel_code_state *state)
+{
+    SDL_Rect abs = layout_abs(state->layout, p_code_text);
+    if (!sdl_rect_contains(&abs, &core.cursor.point)) return false;
+
+    struct layout_entry *layout = layout_entry(state->layout, p_code_text);
+
+    SDL_Point rel = {
+        .x = core.cursor.point.x - abs.x,
+        .y = core.cursor.point.y - abs.y,
+    };
+    assert(rel.x < abs.w && rel.y < abs.h);
+
+    size_t row = 0, col = 0;
+    layout_entry_point(layout, rel, &row, &col);
+    col = col > p_code_prefix_len ? col - p_code_prefix_len : 0;
+
+    while (state->carret.row > row) {
+        state->carret.line = state->carret.line->prev;
+        state->carret.row--;
+    }
+
+    while (state->carret.row < row) {
+        if (!state->carret.line->next) {
+            state->carret.col = line_len(state->carret.line);
+            return true;
+        }
+        state->carret.line = state->carret.line->next;
+        state->carret.row++;
+    }
+
+    state->carret.col = u64_min(col, line_len(state->carret.line));
+    return true;
+}
 
 static bool panel_code_carret_move(struct panel_code_state *state, int hori, int vert)
 {
@@ -196,38 +230,56 @@ static void panel_code_carret_scroll(
     state->carret.col = u64_min(state->carret.col, line_len(state->carret.line));
 }
 
-static bool panel_code_carret_click(struct panel_code_state *state)
+static bool panel_code_carret_ins(
+        struct panel_code_state *state, char key, uint16_t mod)
 {
-    SDL_Rect abs = layout_abs(state->layout, p_code_text);
-    if (!sdl_rect_contains(&abs, &core.cursor.point)) return false;
+    if (mod & KMOD_SHIFT) key = str_keycode_shift(key);
 
-    struct layout_entry *layout = layout_entry(state->layout, p_code_text);
+    struct line_ret ret =
+        line_insert(&state->text, state->carret.line, state->carret.col, key);
+    if (!ret.line) return true;
 
-    SDL_Point rel = {
-        .x = core.cursor.point.x - abs.x,
-        .y = core.cursor.point.y - abs.y,
-    };
-    assert(rel.x < abs.w && rel.y < abs.h);
+    state->carret.col = ret.index;
+    if (ret.line == state->carret.line) return true;
 
-    size_t row = 0, col = 0;
-    layout_entry_point(layout, rel, &row, &col);
-    col = col > p_code_prefix_len ? col - p_code_prefix_len : 0;
+    state->carret.line = ret.line;
+    state->scroll.total = state->text.len;
 
-    while (state->carret.row > row) {
-        state->carret.line = state->carret.line->prev;
-        state->carret.row--;
-    }
+    if (state->carret.row == state->scroll.visible - 1) state->scroll.first++;
+    else state->carret.row++;
 
-    while (state->carret.row < row) {
-        if (!state->carret.line->next) {
-            state->carret.col = line_len(state->carret.line);
-            return true;
-        }
-        state->carret.line = state->carret.line->next;
-        state->carret.row++;
-    }
+    return true;
+}
 
-    state->carret.col = u64_min(col, line_len(state->carret.line));
+static bool panel_code_carret_delete(struct panel_code_state *state)
+{
+    struct line_ret ret =
+        line_delete(&state->text, state->carret.line, state->carret.col);
+    if (!ret.line) return true;
+
+    state->carret.col = ret.index;
+    if (ret.line == state->carret.line) return true;
+
+    state->carret.line = ret.line;
+    state->scroll.total = state->text.len;
+    return true;
+}
+
+static bool panel_code_carret_backspace(struct panel_code_state *state)
+{
+    struct line_ret ret =
+        line_backspace(&state->text, state->carret.line, state->carret.col);
+    if (!ret.line) return true;
+
+    state->carret.col = ret.index;
+    if (ret.line == state->carret.line) return true;
+
+    state->carret.line = ret.line;
+    state->scroll.total = state->text.len;
+
+    if (!state->carret.row) state->scroll.first--;
+    else state->carret.row--;
+
     return true;
 }
 
@@ -238,20 +290,28 @@ static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *ev
     case SDL_MOUSEBUTTONDOWN: { return panel_code_carret_click(state); }
 
     case SDL_KEYDOWN: {
-        switch (event->key.keysym.sym) {
+        uint16_t mod = event->key.keysym.mod;
+        SDL_Keycode keysym = event->key.keysym.sym;
+        switch (keysym) {
 
         case SDLK_UP: { return panel_code_carret_move(state, 0, -1); }
         case SDLK_DOWN: { return panel_code_carret_move(state, 0, 1); }
         case SDLK_LEFT: { return panel_code_carret_move(state, -1, 0); }
         case SDLK_RIGHT: { return panel_code_carret_move(state, 1, 0); }
 
-        default: { return false; }
+        // from 32 to 176 on the ascii table. The uppercase letters are not
+        // mapped by SDL so they're just skipped
+        case ' '...'~': { return panel_code_carret_ins(state, keysym, mod); }
+        case SDLK_RETURN: { return panel_code_carret_ins(state, '\n', mod); }
 
+        case SDLK_DELETE: { return panel_code_carret_delete(state); }
+        case SDLK_BACKSPACE: { return panel_code_carret_backspace(state); }
+
+        default: { return false; }
         }
     }
 
     default: { return false; }
-
     }
 }
 

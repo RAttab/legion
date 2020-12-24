@@ -138,6 +138,12 @@ static void ui_close()
 
 static void ui_event(SDL_Event *event)
 {
+    if (event->type == SDL_KEYDOWN) {
+        if (event->key.keysym.sym == SDLK_q)
+            if (event->key.keysym.mod & KMOD_CTRL)
+                core_quit();
+    }
+
     if (panel_event(core.ui.menu, event)) return;
     if (panel_event(core.ui.mods, event)) return;
     if (panel_event(core.ui.code, event)) return;
@@ -145,7 +151,6 @@ static void ui_event(SDL_Event *event)
     if (panel_event(core.ui.star, event)) return;
     if (panel_event(core.ui.obj, event)) return;
     if (map_event(core.ui.map, event)) return;
-    if (event->type == SDL_KEYUP && event->key.keysym.sym == SDLK_q) core_quit();
 }
 
 static void ui_render(SDL_Renderer *renderer)
