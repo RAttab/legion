@@ -41,6 +41,11 @@ struct compiler
         struct htable is;
         struct htable wants;
     } lbl;
+
+    struct {
+        size_t len, cap;
+        struct mod_index *list;
+    } index;
 };
 
 static bool compiler_eof(struct compiler *comp)
@@ -213,6 +218,24 @@ static legion_printf(2, 3) void compiler_err(
     comp->err.len++;
 }
 
+static void compiler_index(struct compiler *comp, size_t line, size_t byte)
+{
+    if (comp->index.len == comp->index.cap) {
+        comp->index.cap = comp->index.cap ? comp->index.cap * 2 : 16;
+        comp->index.list = realloc(comp->index.list, comp->index.cap * sizeof(*comp->index.list));
+    }
+
+    struct mod_index *index = &comp->index.list[comp->index.len];
+
+    if (comp->index.len) {
+        struct mod_index *prev = index-1;
+        assert(prev->line < line && prev->byte < byte);
+    }
+
+    *index = (struct mod_index) { .line = line, .byte = byte };
+    comp->index.len++;
+}
+
 static bool compiler_write_check(struct compiler *comp, size_t pos, size_t len)
 {
     if (pos + len < comp->out.len) return true;
@@ -263,6 +286,7 @@ static void compiler_label_def(
         compiler_write_ip_at(comp, make_ip(0, vec->vals[i]), comp->out.i);
 
     (void) htable_del(&comp->lbl.wants, hash);
+    vec64_free(vec);
 }
 
 static void compiler_label_ref(
@@ -275,9 +299,14 @@ static void compiler_label_ref(
     if (ret.ok) { compiler_write_ip(comp, make_ip(0, ret.value)); return; }
 
     ret = htable_get(&comp->lbl.wants, hash);
-    struct vec64 *vec = (void *)ret.value;
+
+    struct vec64 *vec = (void *) ret.value;
     vec = vec64_append(vec, comp->out.i);
-    htable_put(&comp->lbl.wants, hash, (uint64_t) vec);
+
+    ret = ret.ok ?
+        htable_xchg(&comp->lbl.wants, hash, (uint64_t) vec) :
+        htable_put(&comp->lbl.wants, hash, (uint64_t) vec);
+    assert(ret.ok);
 
     compiler_write_ip(comp, 0);
 }
@@ -300,20 +329,31 @@ static struct mod *compiler_output(struct compiler *comp)
         compiler_err(comp, "program too big");
 
     struct htable_bucket *bucket = htable_next(&comp->lbl.wants, NULL);
-    for (; bucket; bucket = htable_next(&comp->lbl.wants, bucket))
-        compiler_err(comp, "missing label at '%lu'", bucket->value);
+    for (; bucket; bucket = htable_next(&comp->lbl.wants, bucket)) {
+        struct vec64 *vec = (void *) bucket->value;
+        for (size_t i = 0; i < vec->len; ++i)
+            compiler_err(comp, "missing label at '%lu'", vec->vals[i]);
+    }
 
     return mod_alloc(
             comp->in.text,
             comp->out.base, comp->out.i,
-            comp->err.list, comp->err.len);
+            comp->err.list, comp->err.len,
+            comp->index.list, comp->index.len);
 }
 
 static void compiler_free(struct compiler *comp)
 {
+    free(comp->index.list);
     free(comp->err.list);
-    htable_reset(&comp->lbl.is);
+
+    struct htable_bucket *bucket = htable_next(&comp->lbl.wants, NULL);
+    for (; bucket; bucket = htable_next(&comp->lbl.wants, bucket))
+        vec64_free((void *) bucket->value);
+
     htable_reset(&comp->lbl.wants);
+    htable_reset(&comp->lbl.is);
+
     free(comp->out.base);
     free(comp);
 }
@@ -345,6 +385,8 @@ struct mod *mod_compile(struct text *source)
             compiler_eol(comp);
             continue;
         }
+
+        compiler_index(comp, comp->in.row, comp->out.i);
 
         struct op_spec *spec = op_spec(token, len - 1);
         if (!spec) {
@@ -449,6 +491,7 @@ struct mod *mod_compile(struct text *source)
         }
     }
 
+    compiler_index(comp, comp->in.row, comp->out.i);
     compiler_write(comp, OP_RESET);
 
     struct mod *mod = compiler_output(comp);

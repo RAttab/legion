@@ -31,12 +31,11 @@ inline struct vec64 *vec64_reserve(size_t size)
 
 inline struct vec64 *vec64_append(struct vec64 *vec, uint64_t val)
 {
-    if (unlikely(!vec || vec->len == vec->cap)) {
-        bool nil = !vec;
-        size_t cap = nil ? 1 : vec->cap * 2;
+    if (unlikely(!vec)) vec = vec64_reserve(1);
+    if (unlikely(vec->len == vec->cap)) {
+        size_t cap = vec->cap * 2;
         vec = realloc(vec, sizeof(*vec) + cap * sizeof(vec->vals[0]));
         vec->cap = cap;
-        if (nil) vec->len = 0;
     }
     vec->vals[vec->len++] = val;
     return vec;

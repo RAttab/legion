@@ -16,13 +16,16 @@
 struct mod *mod_alloc(
         const struct text *src,
         const uint8_t *code, size_t code_len,
-        const struct mod_err *errs, size_t errs_len)
+        const struct mod_err *errs, size_t errs_len,
+        const struct mod_index *index, size_t index_len)
 {
     size_t head_bytes = sizeof(struct mod);
     size_t src_bytes = src->len * (text_line_cap + 1);
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
-    size_t total_bytes = align_cache(head_bytes + code_bytes + src_bytes + errs_bytes);
+    size_t index_bytes = (index_len + 1) * sizeof(*index);
+    size_t total_bytes = align_cache(
+            head_bytes + code_bytes + src_bytes + errs_bytes + index_bytes);
 
     struct mod *mod = alloc_cache(total_bytes);
     ref_init(mod);
@@ -38,7 +41,65 @@ struct mod *mod_alloc(
     memcpy(mod->errs, errs, errs_bytes);
     mod->errs_len = errs_len;
 
+    mod->index = ((void *) mod->errs) + errs_bytes;
+    memcpy(mod->index, index, index_bytes);
+    mod->index[index_len] = (struct mod_index) { .line = src->len, .byte = code_len };
+    mod->index_len = index_len;
+
     return mod;
+}
+
+size_t mod_line(struct mod *mod, ip_t ip)
+{
+    addr_t byte = ip_addr(ip);
+    assert(byte < mod->len);
+
+    for (size_t i = 0; i < mod->index_len; ++i) {
+        if (byte < mod->index[i+1].byte)
+            return mod->index[i].line;
+    }
+    assert(false);
+}
+
+addr_t mod_byte(struct mod *mod, size_t line)
+{
+    assert(line < mod->src_len);
+
+    for (size_t i = 0; i < mod->index_len; ++i) {
+        if (line < mod->index[i+1].line)
+            return mod->index[i].byte;
+    }
+    assert(false);
+}
+
+size_t mod_dump(struct mod *mod, char *dst, size_t len)
+{
+    size_t orig = len;
+
+    for (size_t i = 0; i < mod->index_len; ++i) {
+        struct mod_index *curr = &mod->index[i];
+        struct mod_index *next = curr + 1;
+
+        size_t n = snprintf(dst, len, "[%04u:%02x] %02x ",
+                curr->line, curr->byte, mod->code[curr->byte]);
+        dst += n; len -= n;
+
+        void *arg = mod->code + curr->byte + 1;
+
+        size_t arg_len = next->byte - (curr->byte + 1);
+        switch (arg_len) {
+        case 0: { n = snprintf(dst, len, "\n"); break; }
+        case 1: { n = snprintf(dst, len, "%02x\n", (unsigned) *((uint8_t *) arg)); break; }
+        case 2: { n = snprintf(dst, len, "%04x\n", (unsigned) *((uint16_t *) arg)); break; }
+        case 4: { n = snprintf(dst, len, "%08x\n", *((uint32_t *) arg)); break; }
+        case 8: { n = snprintf(dst, len, "%016lx\n", *((uint64_t *) arg)); break; }
+        default: { assert(false); }
+        }
+
+        dst += n; len -= n;
+    }
+
+    return orig - len;
 }
 
 size_t mod_hexdump(struct mod *mod, char *dst, size_t len)

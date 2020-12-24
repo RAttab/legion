@@ -95,8 +95,8 @@ bool check(struct test *test)
         char buffer[1024] = {0};
         fprintf(stderr, "\n<src>\n%s\n\n", test->src);
 
-        mod_hexdump(mod, buffer, sizeof(buffer));
-        fprintf(stderr, "<bytecode:%x:%lu>\n%s\n", (unsigned) mod->id, mod->len, buffer);
+        mod_dump(mod, buffer, sizeof(buffer));
+        fprintf(stderr, "<bytecode:%x:%u>\n%s\n", (unsigned) mod->id, mod->len, buffer);
 
         vm_dbg(test->in, buffer, sizeof(buffer));
         fprintf(stderr, "<ret>\n%sret:   %x\n\n", buffer, ret);

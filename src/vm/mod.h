@@ -12,7 +12,7 @@
 
 
 // -----------------------------------------------------------------------------
-// err
+// mod
 // -----------------------------------------------------------------------------
 
 enum { mod_err_cap = text_line_cap };
@@ -22,10 +22,11 @@ struct mod_err
     char str[mod_err_cap];
 };
 
-
-// -----------------------------------------------------------------------------
-// mod
-// -----------------------------------------------------------------------------
+struct legion_packed mod_index
+{
+    uint16_t line;
+    addr_t byte;
+};
 
 struct legion_packed mod
 {
@@ -34,13 +35,14 @@ struct legion_packed mod
     mod_t id;
     legion_pad(8 - sizeof(mod_t));
 
+    uint32_t len;
+    uint32_t src_len;
+    uint32_t errs_len;
+    uint32_t index_len;
+
     char *src;
-    size_t src_len;
-
     struct mod_err *errs;
-    size_t errs_len;
-
-    size_t len;
+    struct mod_index *index;
     legion_pad(8);
     uint8_t code[];
 };
@@ -53,20 +55,26 @@ struct mod *mod_compile(struct text *source);
 struct mod *mod_alloc(
         const struct text *src,
         const uint8_t *code, size_t code_len,
-        const struct mod_err *errs, size_t errs_len);
+        const struct mod_err *errs, size_t errs_len,
+        const struct mod_index *index, size_t index_len);
 
 inline size_t mod_len(struct mod *mod)
 {
     return sizeof(*mod) +
         mod->len * sizeof(*mod->code) +
         mod->src_len * sizeof(*mod->src) +
-        mod->errs_len * sizeof(*mod->errs);
+        mod->errs_len * sizeof(*mod->errs) +
+        (mod->index_len + 1) * sizeof(*mod->index);
 }
 
 inline struct mod *mod_share(struct mod *mod) { return ref_share(mod); }
 inline void mod_discard(struct mod *mod) { ref_discard(mod); }
 
+size_t mod_dump(struct mod *mod, char *dst, size_t len);
 size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
+
+size_t mod_line(struct mod *mod, ip_t ip);
+addr_t mod_byte(struct mod *mod, size_t line);
 
 
 // -----------------------------------------------------------------------------

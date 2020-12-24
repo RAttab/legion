@@ -45,7 +45,7 @@ cp -r "${PREFIX}/res" .
 
 parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
 
-if [ -z  "${VALGRIND}" ]; then
+if [ -z "${VALGRIND}" ]; then
     parallel "./test_{}" "${PREFIX}" ::: ${TEST[@]}
 else
     parallel valgrind \
