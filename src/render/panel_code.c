@@ -11,7 +11,7 @@
 
 
 // -----------------------------------------------------------------------------
-// panel_editor
+// state
 // -----------------------------------------------------------------------------
 
 struct panel_code_state
@@ -50,6 +50,11 @@ enum
 };
 
 static const char p_code_mod_str[] = "mod:";
+
+
+// -----------------------------------------------------------------------------
+// render
+// -----------------------------------------------------------------------------
 
 static void panel_code_render_mod(
         struct panel_code_state *state, SDL_Renderer *renderer)
@@ -123,6 +128,10 @@ static void panel_code_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     panel_code_render_mod(state, renderer);
     panel_code_render_text(state, renderer);
 }
+
+// -----------------------------------------------------------------------------
+// carret
+// -----------------------------------------------------------------------------
 
 static bool panel_code_carret_click(struct panel_code_state *state)
 {
@@ -318,6 +327,11 @@ static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *ev
     }
 }
 
+
+// -----------------------------------------------------------------------------
+// events
+// -----------------------------------------------------------------------------
+
 static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *event)
 {
     struct panel_code_state *state = state_;
@@ -377,6 +391,11 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
 
     return false;
 }
+
+
+// -----------------------------------------------------------------------------
+// basics
+// -----------------------------------------------------------------------------
 
 static void panel_code_free(void *state_)
 {
