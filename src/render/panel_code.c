@@ -307,6 +307,9 @@ static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *ev
         case SDLK_DELETE: { return panel_code_carret_delete(state); }
         case SDLK_BACKSPACE: { return panel_code_carret_backspace(state); }
 
+        case SDLK_HOME: { state->carret.col = 0; return true; }
+        case SDLK_END: { state->carret.col = line_len(state->carret.line); return true; }
+
         default: { return false; }
         }
     }
