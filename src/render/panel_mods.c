@@ -129,6 +129,7 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
 
         case EV_CODE_CLEAR: {
             if (panel->hidden) return false;
+            state->selected = 0;
             for (size_t i = 0; i < state->mods->len; ++i)
                 state->toggles[i].selected = false;
             panel_invalidate(panel);
@@ -142,17 +143,17 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
     if (panel->hidden) return false;
 
     {
-        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
-        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
-        if (ret & ui_scroll_consume) return true;
+        enum ui_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     for (size_t i = 0; i < state->mods->len; ++i) {
         struct ui_toggle *toggle = &state->toggles[i];
-        enum ui_toggle_ret ret = ui_toggle_events(toggle, event);
+        enum ui_ret ret = ui_toggle_events(toggle, event);
 
-        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-        if (ret & ui_toggle_flip) {
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_action) {
             mod_t mod = state->mods->items[i].id;
 
             enum event ev = toggle->selected ? EV_CODE_SELECT : EV_CODE_CLEAR;
@@ -163,7 +164,7 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
                 if (j != i) state->toggles[j].selected = false;
             }
         }
-        if (ret & ui_toggle_consume) return true;
+        if (ret & ui_consume) return true;
     }
     return false;
 }

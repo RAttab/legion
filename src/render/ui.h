@@ -29,14 +29,6 @@ enum ui_ret
 
 enum { ui_toggle_layout_cols = 2 };
 
-enum ui_toggle_ret
-{
-    ui_toggle_nil = 0,
-    ui_toggle_flip = 1 << 0,
-    ui_toggle_consume = 1 << 1,
-    ui_toggle_invalidate = 1 << 2,
-};
-
 struct ui_toggle
 {
     struct SDL_Rect rect;
@@ -54,7 +46,7 @@ void ui_toggle_init(
         struct ui_toggle *, const struct SDL_Rect *, const char *str, size_t len);
 
 void ui_toggle_render(struct ui_toggle *, SDL_Renderer *, SDL_Point, struct font *);
-enum ui_toggle_ret ui_toggle_events(struct ui_toggle *, SDL_Event *);
+enum ui_ret ui_toggle_events(struct ui_toggle *, SDL_Event *);
 
 
 // -----------------------------------------------------------------------------
@@ -62,14 +54,6 @@ enum ui_toggle_ret ui_toggle_events(struct ui_toggle *, SDL_Event *);
 // -----------------------------------------------------------------------------
 
 enum { ui_scroll_layout_cols = 1 };
-
-enum ui_scroll_ret
-{
-    ui_scroll_nil = 0,
-    ui_scroll_moved = 1 << 0,
-    ui_scroll_consume = 1 << 1,
-    ui_scroll_invalidate = 1 << 2,
-};
 
 struct ui_scroll
 {
@@ -94,7 +78,7 @@ void ui_scroll_init(
 
 void ui_scroll_update(struct ui_scroll *, size_t total);
 void ui_scroll_render(struct ui_scroll *, SDL_Renderer *, SDL_Point);
-enum ui_scroll_ret ui_scroll_events(struct ui_scroll *, SDL_Event *);
+enum ui_ret ui_scroll_events(struct ui_scroll *, SDL_Event *);
 
 
 // -----------------------------------------------------------------------------

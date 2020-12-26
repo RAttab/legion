@@ -453,8 +453,8 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
     {
         enum ui_ret ret = ui_click_events(&state->click.mod, event);
         if (ret & ui_action) core_push_event(EV_CODE_SELECT, state->obj->mod->id, 0);
-        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
-        if (ret & ui_scroll_consume) return true;
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     {
@@ -464,14 +464,14 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
             const struct mod *mod = state->obj->mod;
             core_push_event(EV_CODE_SELECT, mod->id, vm->ip);
         }
-        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
-        if (ret & ui_scroll_consume) return true;
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     {
-        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
-        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
-        if (ret & ui_scroll_consume) return true;
+        enum ui_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     return false;

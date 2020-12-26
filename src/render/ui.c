@@ -62,7 +62,7 @@ void ui_toggle_render(
     font_render(font, renderer, toggle->str, toggle->str_len, pos);
 }
 
-enum ui_toggle_ret ui_toggle_events(struct ui_toggle *toggle, SDL_Event *event)
+enum ui_ret ui_toggle_events(struct ui_toggle *toggle, SDL_Event *event)
 {
     switch (event->type) {
 
@@ -71,28 +71,28 @@ enum ui_toggle_ret ui_toggle_events(struct ui_toggle *toggle, SDL_Event *event)
         if (!sdl_rect_contains(&toggle->rect, &point)) {
             if (toggle->hover) {
                 toggle->hover = false;
-                return ui_toggle_invalidate;
+                return ui_invalidate;
             }
-            return ui_toggle_nil;
+            return ui_nil;
         }
 
         if (!toggle->hover) {
             toggle->hover = true;
-            return ui_toggle_invalidate;
+            return ui_invalidate;
         }
-        return ui_toggle_nil;
+        return ui_nil;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
-        if (!sdl_rect_contains(&toggle->rect, &point)) return ui_toggle_nil;
-        if (toggle->disabled) return ui_toggle_consume;
+        if (!sdl_rect_contains(&toggle->rect, &point)) return ui_nil;
+        if (toggle->disabled) return ui_consume;
 
         toggle->selected = !toggle->selected;
-        return ui_toggle_flip | ui_toggle_consume | ui_toggle_invalidate;
+        return ui_action | ui_consume | ui_invalidate;
     }
 
-    default: { return ui_toggle_nil; }
+    default: { return ui_nil; }
     }
 
 }
@@ -155,21 +155,21 @@ void ui_scroll_render(
     sdl_err(SDL_RenderFillRect(renderer, &bar));
 }
 
-enum ui_scroll_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
+enum ui_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
 {
     switch (event->type) {
 
     case SDL_MOUSEWHEEL: {
         if (!sdl_rect_contains(&scroll->events, &core.cursor.point))
-            return ui_scroll_nil;
+            return ui_nil;
 
         ssize_t first = (ssize_t) scroll->first - event->wheel.y;
-        if (first < 0) return ui_scroll_consume;
-        if (first + scroll->visible > scroll->total) return ui_scroll_consume;
-        if (!event->wheel.y) return ui_scroll_consume;
+        if (first < 0) return ui_consume;
+        if (first + scroll->visible > scroll->total) return ui_consume;
+        if (!event->wheel.y) return ui_consume;
 
         scroll->first = (size_t) first;
-        return ui_scroll_moved | ui_scroll_invalidate | ui_scroll_consume;
+        return ui_action | ui_invalidate | ui_consume;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
@@ -177,35 +177,35 @@ enum ui_scroll_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
                 (SDL_Point) { .x = scroll->bar.x, .y = scroll->bar.y });
 
         if (!sdl_rect_contains(&bar, &core.cursor.point))
-            return ui_scroll_nil;
+            return ui_nil;
 
         scroll->drag.y = core.cursor.point.y;
         scroll->drag.top = bar.y - scroll->bar.y;
-        return ui_scroll_consume;
+        return ui_consume;
     }
 
     case SDL_MOUSEBUTTONUP: {
-        if (!scroll->drag.y) return ui_scroll_nil;
+        if (!scroll->drag.y) return ui_nil;
         memset(&scroll->drag, 0, sizeof(scroll->drag));
-        return ui_scroll_consume;
+        return ui_consume;
     }
 
     case SDL_MOUSEMOTION: {
-        if (!scroll->drag.y) return ui_scroll_nil;
+        if (!scroll->drag.y) return ui_nil;
 
         int delta = core.cursor.point.y - scroll->drag.y;
         int top = scroll->drag.top + delta;
         ssize_t first = (top * scroll->total) / scroll->bar.h;
 
-        if (first < 0) return ui_scroll_consume;
-        if ((size_t) first + scroll->visible > scroll->total) return ui_scroll_consume;
-        if ((size_t) first == scroll->first) return ui_scroll_consume;
+        if (first < 0) return ui_consume;
+        if ((size_t) first + scroll->visible > scroll->total) return ui_consume;
+        if ((size_t) first == scroll->first) return ui_consume;
 
         scroll->first = (size_t) first;
-        return ui_scroll_moved | ui_scroll_invalidate | ui_scroll_consume;
+        return ui_action | ui_invalidate | ui_consume;
     }
 
-    default: { return ui_scroll_nil; }
+    default: { return ui_nil; }
     }
 }
 

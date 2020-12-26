@@ -268,17 +268,16 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
     if (panel->hidden) return false;
 
     {
-        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
-        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
-        if (ret & ui_scroll_consume) return true;
+        enum ui_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     for (size_t i = 0; i < vec64_len(state->objs); ++i) {
         struct ui_toggle *toggle = &state->toggles[i];
 
-        enum ui_toggle_ret ret = ui_toggle_events(toggle, event);
-        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-        if (ret & ui_toggle_flip) {
+        enum ui_ret ret = ui_toggle_events(toggle, event);
+        if (ret & ui_action) {
             id_t obj = state->objs->vals[i];
 
             enum event ev = toggle->selected ? EV_OBJ_SELECT : EV_OBJ_CLEAR;
@@ -289,7 +288,8 @@ static bool panel_star_events(void *state_, struct panel *panel, SDL_Event *even
                 if (j != i) state->toggles[j].selected = false;
             }
         }
-        if (ret & ui_toggle_consume) return true;
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
     return false;
 }

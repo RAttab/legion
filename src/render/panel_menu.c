@@ -92,46 +92,44 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
     }
 
     {
-        enum ui_toggle_ret ret = ui_toggle_events(&state->mods, event);
-        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-        if (ret & ui_toggle_flip) {
-            enum event ev = state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR;
-            core_push_event(ev, 0, 0);
-        }
-        if (ret & ui_toggle_consume) return true;
+        enum ui_ret ret = ui_toggle_events(&state->mods, event);
+        if (ret & ui_action)
+            core_push_event(state->mods.selected ? EV_MODS_SELECT : EV_MODS_CLEAR, 0, 0);
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     {
-        enum ui_toggle_ret ret = ui_toggle_events(&state->code, event);
-        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-        if (ret & ui_toggle_flip) {
+        enum ui_ret ret = ui_toggle_events(&state->code, event);
+        if (ret & ui_action) {
             assert(!state->code.selected);
             state->code.disabled = true;
             core_push_event(EV_CODE_CLEAR, 0, 0);
         }
-        if (ret & ui_toggle_consume) return true;
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     {
-        enum ui_toggle_ret ret = ui_toggle_events(&state->star, event);
-        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-        if (ret & ui_toggle_flip) {
+        enum ui_ret ret = ui_toggle_events(&state->star, event);
+        if (ret & ui_action) {
             assert(!state->star.selected);
             state->star.disabled = true;
             core_push_event(EV_STAR_CLEAR, 0, 0);
         }
-        if (ret & ui_toggle_consume) return true;
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     {
-        enum ui_toggle_ret ret = ui_toggle_events(&state->obj, event);
-        if (ret & ui_toggle_invalidate) panel_invalidate(panel);
-        if (ret & ui_toggle_flip) {
+        enum ui_ret ret = ui_toggle_events(&state->obj, event);
+        if (ret & ui_action) {
             assert(!state->obj.selected);
             state->obj.disabled = true;
             core_push_event(EV_OBJ_CLEAR, 0, 0);
         }
-        if (ret & ui_toggle_consume) return true;
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     return false;

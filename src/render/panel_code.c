@@ -384,10 +384,10 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
 
     {
         size_t old = state->scroll.first;
-        enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
-        if (ret & ui_scroll_moved) panel_code_carret_scroll(state, old, state->scroll.first);
-        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
-        if (ret & ui_scroll_consume) return true;
+        enum ui_ret ret = ui_scroll_events(&state->scroll, event);
+        if (ret & ui_action) panel_code_carret_scroll(state, old, state->scroll.first);
+        if (ret & ui_invalidate) panel_invalidate(panel);
+        if (ret & ui_consume) return true;
     }
 
     if (panel_code_events_text(state, event)) {
