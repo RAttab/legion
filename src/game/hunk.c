@@ -124,6 +124,8 @@ struct star *hunk_star(struct hunk *hunk)
 
 struct obj *hunk_obj(struct hunk *hunk, id_t id)
 {
+    if (!id) return NULL;
+
     struct htable_ret ret = htable_get(&hunk->index, id);
     if (!ret.ok) return NULL;
 

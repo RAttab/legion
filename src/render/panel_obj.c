@@ -277,6 +277,7 @@ static void pobj_render_vm(struct pobj_state *state, SDL_Renderer *renderer)
             switch (flag) {
             case FLAG_IO:          { val = "IO"; color = blue; break; }
             case FLAG_SUSPENDED:   { val = "SU"; color = blue; break; }
+            case FLAG_FAULT_USER:  { val = "FU"; color = red; break; }
             case FLAG_FAULT_REG:   { val = "FR"; color = red; break; }
             case FLAG_FAULT_STACK: { val = "FS"; color = red; break; }
             case FLAG_FAULT_CODE:  { val = "FC"; color = red; break; }

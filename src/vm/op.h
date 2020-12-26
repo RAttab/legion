@@ -61,6 +61,7 @@ enum op_code
     OP_RESET  = 0x60,
     OP_YIELD  = 0x61,
     OP_TSC    = 0x62,
+    OP_FAULT  = 0x63,
 
     OP_IO     = 0x68,
     OP_IOS    = 0x69,

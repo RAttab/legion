@@ -59,6 +59,7 @@ const struct op_spec op_specs[] = {
     [OP_RESET]  = { .op = OP_RESET,  .str = "RESET",  .arg = ARG_NIL },
     [OP_YIELD]  = { .op = OP_YIELD,  .str = "YIELD",  .arg = ARG_NIL },
     [OP_TSC]    = { .op = OP_TSC,    .str = "TSC",    .arg = ARG_NIL },
+    [OP_FAULT]  = { .op = OP_FAULT,  .str = "FAULT",  .arg = ARG_NIL },
 
     [OP_IO]     = { .op = OP_IO,     .str = "IO",     .arg = ARG_LEN },
     [OP_IOS]    = { .op = OP_IOS,    .str = "IOS",    .arg = ARG_NIL },

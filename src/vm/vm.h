@@ -57,14 +57,14 @@ inline int vm_atoms_cmp(const atom_t *lhs, const atom_t *rhs)
 
 enum flags
 {
-    FLAG_IO = 1 << 0,
-    FLAG_SUSPENDED  = 1 << 1,
-
-    FLAG_FAULT_REG = 1 << 3,
+    FLAG_IO          = 1 << 0,
+    FLAG_SUSPENDED   = 1 << 1,
+    FLAG_FAULT_USER  = 1 << 2,
+    FLAG_FAULT_REG   = 1 << 3,
     FLAG_FAULT_STACK = 1 << 4,
-    FLAG_FAULT_CODE = 1 << 5,
-    FLAG_FAULT_MATH = 1 << 6,
-    FLAG_FAULT_IO  = 1 << 7,
+    FLAG_FAULT_CODE  = 1 << 5,
+    FLAG_FAULT_MATH  = 1 << 6,
+    FLAG_FAULT_IO    = 1 << 7,
 };
 
 struct legion_packed vm

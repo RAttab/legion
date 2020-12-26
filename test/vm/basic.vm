@@ -444,6 +444,12 @@ yield
 ############################################################
 # misc
 
+!basic-fault
+&prog
+fault
+&in>S:1
+&out>S:1,flags:0x4,ret:0xFFFFFFFF
+
 !basic-pack
 &prog
 push 1

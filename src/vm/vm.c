@@ -18,6 +18,7 @@
 // -----------------------------------------------------------------------------
 
 static uint8_t flag_faults =
+    FLAG_FAULT_USER |
     FLAG_FAULT_REG |
     FLAG_FAULT_STACK |
     FLAG_FAULT_CODE |
@@ -200,6 +201,8 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
         [OP_YIELD]  = &&op_yield,
         [OP_RESET]  = &&op_reset,
         [OP_TSC]    = &&op_tsc,
+        [OP_FAULT]  = &&op_fault,
+
         [OP_IO]     = &&op_io,
         [OP_IOS]    = &&op_ios,
         [OP_IOR]    = &&op_ior,
@@ -382,6 +385,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
       op_reset: { vm_reset(vm); return 0; }
       op_yield: { return 0; }
       op_tsc: { vm_push(vm->tsc); }
+      op_fault: { vm->flags |= FLAG_FAULT_USER; return VM_FAULT; }
 
       op_io:  {
             vm->ior = 0xFF;
