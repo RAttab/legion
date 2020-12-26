@@ -33,6 +33,7 @@ push !io_cargo
 io 2
 
 # keep only the count and make a copy
+unpack
 pop
 dupe
 popr $3
@@ -64,6 +65,11 @@ worker-full:
 pushr $4
 push !io_dock
 io 2
+push !io_ok
+eq
+jnz @docked
+fault
+docked:
 
 # dump our cargo
 push 1
