@@ -10,6 +10,18 @@
 
 #include "SDL.h"
 
+// -----------------------------------------------------------------------------
+// misc
+// -----------------------------------------------------------------------------
+
+enum ui_ret
+{
+    ui_nil = 0,
+    ui_action = 1 << 0,
+    ui_consume = 1 << 1,
+    ui_invalidate = 1 << 2,
+};
+
 
 // -----------------------------------------------------------------------------
 // toggle
@@ -83,3 +95,20 @@ void ui_scroll_init(
 void ui_scroll_update(struct ui_scroll *, size_t total);
 void ui_scroll_render(struct ui_scroll *, SDL_Renderer *, SDL_Point);
 enum ui_scroll_ret ui_scroll_events(struct ui_scroll *, SDL_Event *);
+
+
+// -----------------------------------------------------------------------------
+// click
+// -----------------------------------------------------------------------------
+
+struct ui_click
+{
+    struct SDL_Rect rect;
+
+    bool hover;
+    bool disabled;
+};
+
+void ui_click_init(struct ui_click *, SDL_Rect);
+void ui_click_render(struct ui_click *, SDL_Renderer *, SDL_Point);
+enum ui_ret ui_click_events(struct ui_click *, SDL_Event *);

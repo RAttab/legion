@@ -151,6 +151,15 @@ SDL_Rect layout_abs_index(struct layout *layout, int key, size_t row, size_t col
     return rect;
 }
 
+SDL_Rect layout_abs_rect(
+        struct layout *layout, int key, size_t row, size_t col, size_t w, size_t h)
+{
+    struct layout_entry *entry = layout_entry(layout, key);
+    SDL_Rect rect = layout_entry_rect(entry, row, col, w, h);
+    rect.x += layout->pos.x;
+    rect.y += layout->pos.y;
+    return rect;
+}
 
 SDL_Point layout_entry_pos(struct layout_entry *entry)
 {
@@ -192,4 +201,18 @@ void layout_entry_point(
 
     assert(*col < entry->cols);
     assert(*row < entry->rows);
+}
+
+SDL_Rect layout_entry_rect(
+        struct layout_entry *entry, size_t row, size_t col, size_t w, size_t h)
+{
+    assert(row + h <= entry->rows);
+    assert(col + w <= entry->cols);
+
+    return (SDL_Rect) {
+        .x = entry->rect.x + col * entry->item.w,
+        .y = entry->rect.y + row * entry->item.h,
+        .w = w * entry->item.w,
+        .h = h * entry->item.h,
+    };
 }

@@ -27,6 +27,11 @@ struct panel_obj_state
     atom_t mod;
     struct coord star;
     struct obj *obj;
+
+    struct {
+        struct ui_click mod;
+        struct ui_click ip;
+    } click;
 };
 
 enum
@@ -212,8 +217,9 @@ static void panel_obj_render_mod(struct panel_obj_state *state, SDL_Renderer *re
             layout_entry_pos(layout));
 
     if (state->obj->mod) {
-        font_render(layout->font, renderer, state->mod, sizeof(state->mod),
-                layout_entry_index_pos(layout, 0, sizeof(p_obj_mod_str)));
+        SDL_Point pos = layout_entry_index_pos(layout, 0, sizeof(p_obj_mod_str));
+        ui_click_render(&state->click.mod, renderer, pos);
+        font_render(layout->font, renderer, state->mod, sizeof(state->mod), pos);
     }
 }
 
@@ -323,6 +329,8 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
 
         char ip[p_obj_vm_u32_len];
         str_utox(vm->ip, ip, sizeof(ip));
+        ui_click_render(&state->click.ip, renderer,
+                layout_entry_index_pos(layout, 0, col));
         font_render(layout->font, renderer, ip, sizeof(ip),
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(ip) + 1;
@@ -399,7 +407,10 @@ static void panel_obj_update(struct panel_obj_state *state)
     state->obj = hunk_obj(hunk, state->id);
     assert(state->obj);
 
+    state->click.ip.disabled = !state->obj->mod;
+    state->click.mod.disabled = !state->obj->mod;
     if (state->obj->mod) mods_name(state->obj->mod->id, &state->mod);
+
     ui_scroll_update(&state->scroll, obj_vm(state->obj)->sp);
 }
 
@@ -438,6 +449,24 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
     }
 
     if (panel->hidden) return false;
+
+    {
+        enum ui_ret ret = ui_click_events(&state->click.mod, event);
+        if (ret & ui_action) core_push_event(EV_CODE_SELECT, state->obj->mod->id, 0);
+        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
+        if (ret & ui_scroll_consume) return true;
+    }
+
+    {
+        enum ui_ret ret = ui_click_events(&state->click.ip, event);
+        if (ret & ui_action) {
+            const struct vm *vm = obj_vm(state->obj);
+            const struct mod *mod = state->obj->mod;
+            core_push_event(EV_CODE_SELECT, mod->id, vm->ip);
+        }
+        if (ret & ui_scroll_invalidate) panel_invalidate(panel);
+        if (ret & ui_scroll_consume) return true;
+    }
 
     {
         enum ui_scroll_ret ret = ui_scroll_events(&state->scroll, event);
@@ -503,9 +532,15 @@ struct panel *panel_obj_new(void)
     struct panel_obj_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
+    ui_click_init(&state->click.mod, layout_abs_rect(
+                    layout, p_obj_mod, 0, sizeof(p_obj_mod_str), vm_atom_cap, 1));
+    ui_click_init(&state->click.ip, layout_abs_rect(
+                    layout, p_obj_vm_ipsp, 0, sizeof(p_obj_vm_ip_str), p_obj_vm_u32_len, 1));
+
     {
         SDL_Rect events = layout_abs(layout, p_obj_vm_stack);
-        SDL_Rect bar = layout_abs_index(layout, p_obj_vm_stack, layout_inf, p_obj_vm_stack_len);
+        SDL_Rect bar = layout_abs_index(
+                layout, p_obj_vm_stack, layout_inf, p_obj_vm_stack_len);
         ui_scroll_init(&state->scroll, &bar, &events, 0,
                 layout_entry(layout, p_obj_vm_stack)->rows);
     }

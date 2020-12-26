@@ -128,6 +128,7 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
         case EV_MODS_CLEAR: { panel_hide(panel); return true; }
 
         case EV_CODE_CLEAR: {
+            if (panel->hidden) return false;
             for (size_t i = 0; i < state->mods->len; ++i)
                 state->toggles[i].selected = false;
             panel_invalidate(panel);

@@ -208,3 +208,60 @@ enum ui_scroll_ret ui_scroll_events(struct ui_scroll *scroll, SDL_Event *event)
     default: { return ui_scroll_nil; }
     }
 }
+
+
+// -----------------------------------------------------------------------------
+// click
+// -----------------------------------------------------------------------------
+
+void ui_click_init(struct ui_click *click, SDL_Rect rect)
+{
+    *click = (struct ui_click) {
+        .rect = rect,
+        .hover = false,
+        .disabled = false,
+    };
+}
+
+void ui_click_render(struct ui_click *click, SDL_Renderer *renderer, SDL_Point pos)
+{
+    if (click->disabled || !click->hover) return;
+
+    const uint8_t gray = 0x18;
+    sdl_err(SDL_SetRenderDrawColor(renderer, gray, gray, gray, SDL_ALPHA_OPAQUE));
+    sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                        .x = pos.x, .y = pos.y,
+                        .w = click->rect.w, .h = click->rect.h}));
+}
+
+enum ui_ret ui_click_events(struct ui_click *click, SDL_Event *event)
+{
+    switch (event->type) {
+
+    case SDL_MOUSEMOTION: {
+        SDL_Point point = core.cursor.point;
+        if (!sdl_rect_contains(&click->rect, &point)) {
+            if (click->hover) {
+                click->hover = false;
+                return ui_invalidate;
+            }
+            return ui_nil;
+        }
+
+        if (!click->hover) {
+            click->hover = true;
+            return ui_invalidate;
+        }
+        return ui_nil;
+    }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        SDL_Point point = core.cursor.point;
+        if (!sdl_rect_contains(&click->rect, &point)) return ui_nil;
+        if (click->disabled) return ui_consume;
+        return ui_action | ui_consume | ui_invalidate;
+    }
+
+    default: { return ui_nil; }
+    }
+}

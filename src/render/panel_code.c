@@ -349,6 +349,12 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
             state->carret.row = state->carret.col = 0;
             ui_scroll_update(&state->scroll, state->text.len);
 
+            ip_t ip = (uintptr_t) event->user.data2;
+            size_t line = mod_line(state->mod, ip);
+            for (size_t i = 0; i < line; ++i)
+                state->carret.line = state->carret.line->next;
+            state->scroll.first = line;
+
             panel_show(panel);
             return false;
         }
