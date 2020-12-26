@@ -1,4 +1,4 @@
-/* panel_mods.c
+/* pmods.c
    Rémi Attab (remi.attab@gmail.com), 07 Dec 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -12,7 +12,7 @@
 // panel mods
 // -----------------------------------------------------------------------------
 
-struct panel_mods_state
+struct pmods_state
 {
     struct layout *layout;
     struct ui_scroll scroll;
@@ -40,8 +40,8 @@ enum
 
 static const char p_mods_str[] = "mods:";
 
-static void panel_mods_render_count(
-        struct panel_mods_state *state, SDL_Renderer *renderer)
+static void pmods_render_count(
+        struct pmods_state *state, SDL_Renderer *renderer)
 {
     struct layout_entry *layout = layout_entry(state->layout, p_mods_count);
     SDL_Point pos = layout_entry_pos(layout);
@@ -55,8 +55,8 @@ static void panel_mods_render_count(
     font_render(layout->font, renderer, val, sizeof(val), pos);
 }
 
-static void panel_mods_render_list(
-        struct panel_mods_state *state, SDL_Renderer *renderer)
+static void pmods_render_list(
+        struct pmods_state *state, SDL_Renderer *renderer)
 {
     struct layout_entry *layout = layout_entry(state->layout, p_mods_list);
 
@@ -72,16 +72,16 @@ static void panel_mods_render_list(
             layout_entry_index_pos(layout, 0, p_mods_list_len));
 }
 
-static void panel_mods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
+static void pmods_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
-    struct panel_mods_state *state = state_;
+    struct pmods_state *state = state_;
     (void) rect;
 
-    panel_mods_render_count(state, renderer);
-    panel_mods_render_list(state, renderer);
+    pmods_render_count(state, renderer);
+    pmods_render_list(state, renderer);
 }
 
-static void panel_mods_update(struct panel_mods_state *state)
+static void pmods_update(struct pmods_state *state)
 {
     free(state->mods);
     state->mods = mods_list();
@@ -106,21 +106,21 @@ static void panel_mods_update(struct panel_mods_state *state)
     ui_scroll_update(&state->scroll, state->mods->len);
 }
 
-static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *event)
+static bool pmods_events(void *state_, struct panel *panel, SDL_Event *event)
 {
-    struct panel_mods_state *state = state_;
+    struct pmods_state *state = state_;
 
     if (event->type == core.event) {
         switch (event->user.code) {
         case EV_MODS_SELECT: {
-            panel_mods_update(state);
+            pmods_update(state);
             panel_show(panel);
             return true;
         }
 
         case EV_STATE_UPDATE: {
             if (panel->hidden) return false;
-            panel_mods_update(state);
+            pmods_update(state);
             panel_invalidate(panel);
             return false;
         }
@@ -169,9 +169,9 @@ static bool panel_mods_events(void *state_, struct panel *panel, SDL_Event *even
     return false;
 }
 
-static void panel_mods_free(void *state_)
+static void pmods_free(void *state_)
 {
-    struct panel_mods_state *state = state_;
+    struct pmods_state *state = state_;
     layout_free(state->layout);
     free(state->toggles);
     free(state->mods);
@@ -193,7 +193,7 @@ struct panel *panel_mods_new(void)
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) { .x = 0, .y = menu_h };
 
-    struct panel_mods_state *state = calloc(1, sizeof(*state));
+    struct pmods_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
     {
@@ -209,8 +209,8 @@ struct panel *panel_mods_new(void)
                 .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
-    panel->render = panel_mods_render;
-    panel->events = panel_mods_events;
-    panel->free = panel_mods_free;
+    panel->render = pmods_render;
+    panel->events = pmods_events;
+    panel->free = pmods_free;
     return panel;
 }

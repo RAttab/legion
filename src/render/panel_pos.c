@@ -1,4 +1,4 @@
-/* panel_pos.c
+/* ppos.c
    Rémi Attab (remi.attab@gmail.com), 15 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -13,10 +13,10 @@
 
 
 // -----------------------------------------------------------------------------
-// panel_pos
+// ppos
 // -----------------------------------------------------------------------------
 
-struct panel_pos_state
+struct ppos_state
 {
     uint64_t time;
     scale_t scale;
@@ -27,13 +27,13 @@ struct panel_pos_state
     struct SDL_Point scale_pos;
 };
 
-static struct font *panel_pos_font(void) { return font_mono6; }
+static struct font *ppos_font(void) { return font_mono6; }
 
 
-static void panel_pos_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
+static void ppos_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
-    struct panel_pos_state *state = state_;
-    struct font *font = panel_pos_font();
+    struct ppos_state *state = state_;
+    struct font *font = ppos_font();
     font_reset(font);
 
     {
@@ -61,9 +61,9 @@ static void panel_pos_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rec
     }
 }
 
-static bool panel_pos_events(void *state_, struct panel *panel, SDL_Event *event)
+static bool ppos_events(void *state_, struct panel *panel, SDL_Event *event)
 {
-    struct panel_pos_state *state = state_;
+    struct ppos_state *state = state_;
 
     if (event->type == core.event) {
         if (event->user.code == EV_STATE_UPDATE) panel_invalidate(panel);
@@ -94,7 +94,7 @@ static bool panel_pos_events(void *state_, struct panel *panel, SDL_Event *event
     return false;
 }
 
-static void panel_pos_free(void *state)
+static void ppos_free(void *state)
 {
     free(state);
 };
@@ -102,7 +102,7 @@ static void panel_pos_free(void *state)
 struct panel *panel_pos_new(void)
 {
     enum { spacing = 10 };
-    struct font *font = panel_pos_font();
+    struct font *font = ppos_font();
 
     size_t time_w = 0, time_h = 0;
     font_text_size(font, 8, &time_w, &time_h);
@@ -119,7 +119,7 @@ struct panel *panel_pos_new(void)
     int outer_w = 0, outer_h = 0;
     panel_add_borders(inner_w, inner_h, &outer_w, &outer_h);
 
-    struct panel_pos_state *state = calloc(1, sizeof(*state));
+    struct ppos_state *state = calloc(1, sizeof(*state));
     state->time = core.state.time;
     state->scale = map_scale(core.ui.map);
     state->coord = map_project_coord(core.ui.map, core.cursor.point);
@@ -133,8 +133,8 @@ struct panel *panel_pos_new(void)
                 .w = outer_w, .h = outer_h });
     panel->hidden = false;
     panel->state = state;
-    panel->render = panel_pos_render;
-    panel->events = panel_pos_events;
-    panel->free = panel_pos_free;
+    panel->render = ppos_render;
+    panel->events = ppos_events;
+    panel->free = ppos_free;
     return panel;
 };

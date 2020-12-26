@@ -14,7 +14,7 @@
 // state
 // -----------------------------------------------------------------------------
 
-struct panel_code_state
+struct pcode_state
 {
     struct layout *layout;
     struct ui_scroll scroll;
@@ -32,45 +32,45 @@ struct panel_code_state
 
 enum
 {
-    p_code_mod = 0,
-    p_code_mod_sep,
-    p_code_text,
-    p_code_len,
+    pcode_mod = 0,
+    pcode_mod_sep,
+    pcode_text,
+    pcode_len,
 };
 
 enum
 {
-    p_code_count = 3,
-    p_code_sep = 2,
+    pcode_count = 3,
+    pcode_sep = 2,
 
-    p_code_prefix_len = p_code_count + p_code_sep,
+    pcode_prefix_len = pcode_count + pcode_sep,
     // + 1 -> need a trailing space for the carret.
-    p_code_text_len = p_code_prefix_len + text_line_cap + 1,
-    p_code_text_total_len = p_code_text_len + ui_scroll_layout_cols,
+    pcode_text_len = pcode_prefix_len + text_line_cap + 1,
+    pcode_text_total_len = pcode_text_len + ui_scroll_layout_cols,
 };
 
-static const char p_code_mod_str[] = "mod:";
+static const char pcode_mod_str[] = "mod:";
 
 
 // -----------------------------------------------------------------------------
 // render
 // -----------------------------------------------------------------------------
 
-static void panel_code_render_mod(
-        struct panel_code_state *state, SDL_Renderer *renderer)
+static void pcode_render_mod(
+        struct pcode_state *state, SDL_Renderer *renderer)
 {
-    struct layout_entry *layout = layout_entry(state->layout, p_code_mod);
+    struct layout_entry *layout = layout_entry(state->layout, pcode_mod);
 
-    font_render(layout->font, renderer, p_code_mod_str, sizeof(p_code_mod_str),
+    font_render(layout->font, renderer, pcode_mod_str, sizeof(pcode_mod_str),
             layout_entry_pos(layout));
     font_render(layout->font, renderer, state->name, vm_atom_cap,
-            layout_entry_index_pos(layout, 0, sizeof(p_code_mod_str)));
+            layout_entry_index_pos(layout, 0, sizeof(pcode_mod_str)));
 }
 
-static void panel_code_render_text(
-        struct panel_code_state *state, SDL_Renderer *renderer)
+static void pcode_render_text(
+        struct pcode_state *state, SDL_Renderer *renderer)
 {
-    struct layout_entry *layout = layout_entry(state->layout, p_code_text);
+    struct layout_entry *layout = layout_entry(state->layout, pcode_text);
 
     struct mod_err *err = state->mod->errs;
     struct mod_err *err_end = err + state->mod->errs_len;
@@ -94,7 +94,7 @@ static void panel_code_render_text(
 
         sdl_err(SDL_SetTextureColorMod(layout->font->tex, 0x00, 0x33, 0xCC));
 
-        char count[p_code_count] = {0};
+        char count[pcode_count] = {0};
         str_utoa(i, count, sizeof(count));
         font_render(layout->font, renderer, count, sizeof(count), pos);
         pos.x += layout->item.w * sizeof(count);
@@ -112,33 +112,33 @@ static void panel_code_render_text(
     if (state->carret.blink) {
         sdl_err(SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF));
         SDL_Rect rect = layout_entry_index(
-                layout, state->carret.row, state->carret.col + p_code_prefix_len);
+                layout, state->carret.row, state->carret.col + pcode_prefix_len);
         sdl_err(SDL_RenderFillRect(renderer, &rect));
     }
 
     ui_scroll_render(&state->scroll, renderer,
-            layout_entry_index_pos(layout, 0, p_code_text_len));
+            layout_entry_index_pos(layout, 0, pcode_text_len));
 }
 
-static void panel_code_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
+static void pcode_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
-    struct panel_code_state *state = state_;
+    struct pcode_state *state = state_;
     (void) rect;
 
-    panel_code_render_mod(state, renderer);
-    panel_code_render_text(state, renderer);
+    pcode_render_mod(state, renderer);
+    pcode_render_text(state, renderer);
 }
 
 // -----------------------------------------------------------------------------
 // carret
 // -----------------------------------------------------------------------------
 
-static bool panel_code_carret_click(struct panel_code_state *state)
+static bool pcode_carret_click(struct pcode_state *state)
 {
-    SDL_Rect abs = layout_abs(state->layout, p_code_text);
+    SDL_Rect abs = layout_abs(state->layout, pcode_text);
     if (!sdl_rect_contains(&abs, &core.cursor.point)) return false;
 
-    struct layout_entry *layout = layout_entry(state->layout, p_code_text);
+    struct layout_entry *layout = layout_entry(state->layout, pcode_text);
 
     SDL_Point rel = {
         .x = core.cursor.point.x - abs.x,
@@ -148,7 +148,7 @@ static bool panel_code_carret_click(struct panel_code_state *state)
 
     size_t row = 0, col = 0;
     layout_entry_point(layout, rel, &row, &col);
-    col = col > p_code_prefix_len ? col - p_code_prefix_len : 0;
+    col = col > pcode_prefix_len ? col - pcode_prefix_len : 0;
 
     while (state->carret.row > row) {
         state->carret.line = state->carret.line->prev;
@@ -168,7 +168,7 @@ static bool panel_code_carret_click(struct panel_code_state *state)
     return true;
 }
 
-static bool panel_code_carret_move(struct panel_code_state *state, int hori, int vert)
+static bool pcode_carret_move(struct pcode_state *state, int hori, int vert)
 {
     if (hori > 0) {
         if (state->carret.col < line_len(state->carret.line)) state->carret.col++;
@@ -215,8 +215,8 @@ static bool panel_code_carret_move(struct panel_code_state *state, int hori, int
     return false;
 }
 
-static void panel_code_carret_scroll(
-        struct panel_code_state *state, size_t old, size_t new)
+static void pcode_carret_scroll(
+        struct pcode_state *state, size_t old, size_t new)
 {
     assert(old != new);
 
@@ -239,8 +239,8 @@ static void panel_code_carret_scroll(
     state->carret.col = u64_min(state->carret.col, line_len(state->carret.line));
 }
 
-static bool panel_code_carret_ins(
-        struct panel_code_state *state, char key, uint16_t mod)
+static bool pcode_carret_ins(
+        struct pcode_state *state, char key, uint16_t mod)
 {
     if (mod & KMOD_SHIFT) key = str_keycode_shift(key);
 
@@ -260,7 +260,7 @@ static bool panel_code_carret_ins(
     return true;
 }
 
-static bool panel_code_carret_delete(struct panel_code_state *state)
+static bool pcode_carret_delete(struct pcode_state *state)
 {
     struct line_ret ret =
         line_delete(&state->text, state->carret.line, state->carret.col);
@@ -274,7 +274,7 @@ static bool panel_code_carret_delete(struct panel_code_state *state)
     return true;
 }
 
-static bool panel_code_carret_backspace(struct panel_code_state *state)
+static bool pcode_carret_backspace(struct pcode_state *state)
 {
     struct line_ret ret =
         line_backspace(&state->text, state->carret.line, state->carret.col);
@@ -292,29 +292,29 @@ static bool panel_code_carret_backspace(struct panel_code_state *state)
     return true;
 }
 
-static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *event)
+static bool pcode_events_text(struct pcode_state *state, SDL_Event *event)
 {
     switch (event->type) {
 
-    case SDL_MOUSEBUTTONDOWN: { return panel_code_carret_click(state); }
+    case SDL_MOUSEBUTTONDOWN: { return pcode_carret_click(state); }
 
     case SDL_KEYDOWN: {
         uint16_t mod = event->key.keysym.mod;
         SDL_Keycode keysym = event->key.keysym.sym;
         switch (keysym) {
 
-        case SDLK_UP: { return panel_code_carret_move(state, 0, -1); }
-        case SDLK_DOWN: { return panel_code_carret_move(state, 0, 1); }
-        case SDLK_LEFT: { return panel_code_carret_move(state, -1, 0); }
-        case SDLK_RIGHT: { return panel_code_carret_move(state, 1, 0); }
+        case SDLK_UP: { return pcode_carret_move(state, 0, -1); }
+        case SDLK_DOWN: { return pcode_carret_move(state, 0, 1); }
+        case SDLK_LEFT: { return pcode_carret_move(state, -1, 0); }
+        case SDLK_RIGHT: { return pcode_carret_move(state, 1, 0); }
 
         // from 32 to 176 on the ascii table. The uppercase letters are not
         // mapped by SDL so they're just skipped
-        case ' '...'~': { return panel_code_carret_ins(state, keysym, mod); }
-        case SDLK_RETURN: { return panel_code_carret_ins(state, '\n', mod); }
+        case ' '...'~': { return pcode_carret_ins(state, keysym, mod); }
+        case SDLK_RETURN: { return pcode_carret_ins(state, '\n', mod); }
 
-        case SDLK_DELETE: { return panel_code_carret_delete(state); }
-        case SDLK_BACKSPACE: { return panel_code_carret_backspace(state); }
+        case SDLK_DELETE: { return pcode_carret_delete(state); }
+        case SDLK_BACKSPACE: { return pcode_carret_backspace(state); }
 
         case SDLK_HOME: { state->carret.col = 0; return true; }
         case SDLK_END: { state->carret.col = line_len(state->carret.line); return true; }
@@ -332,9 +332,9 @@ static bool panel_code_events_text(struct panel_code_state *state, SDL_Event *ev
 // events
 // -----------------------------------------------------------------------------
 
-static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *event)
+static bool pcode_events(void *state_, struct panel *panel, SDL_Event *event)
 {
-    struct panel_code_state *state = state_;
+    struct pcode_state *state = state_;
 
     if (event->type == core.event) {
         switch (event->user.code) {
@@ -385,12 +385,12 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
     {
         size_t old = state->scroll.first;
         enum ui_ret ret = ui_scroll_events(&state->scroll, event);
-        if (ret & ui_action) panel_code_carret_scroll(state, old, state->scroll.first);
+        if (ret & ui_action) pcode_carret_scroll(state, old, state->scroll.first);
         if (ret & ui_invalidate) panel_invalidate(panel);
         if (ret & ui_consume) return true;
     }
 
-    if (panel_code_events_text(state, event)) {
+    if (pcode_events_text(state, event)) {
         panel_invalidate(panel);
         return true;
     }
@@ -403,9 +403,9 @@ static bool panel_code_events(void *state_, struct panel *panel, SDL_Event *even
 // basics
 // -----------------------------------------------------------------------------
 
-static void panel_code_free(void *state_)
+static void pcode_free(void *state_)
 {
-    struct panel_code_state *state = state_;
+    struct pcode_state *state = state_;
     layout_free(state->layout);
     text_clear(&state->text);
     mod_discard(state->mod);
@@ -417,25 +417,25 @@ struct panel *panel_code_new(void)
     struct font *font = font_mono8;
     size_t menu_h = panel_menu_height();
 
-    struct layout *layout = layout_alloc(p_code_len,
+    struct layout *layout = layout_alloc(pcode_len,
             core.rect.w, core.rect.h - menu_h - panel_total_padding);
 
-    layout_text(layout, p_code_mod, font, sizeof(p_code_mod_str) + vm_atom_cap, 1);
-    layout_sep(layout, p_code_mod_sep);
+    layout_text(layout, pcode_mod, font, sizeof(pcode_mod_str) + vm_atom_cap, 1);
+    layout_sep(layout, pcode_mod_sep);
 
-    layout_text(layout, p_code_text, font, p_code_text_total_len, layout_inf);
+    layout_text(layout, pcode_text, font, pcode_text_total_len, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) { .x = core.ui.mods->rect.w, .y = menu_h };
 
-    struct panel_code_state *state = calloc(1, sizeof(*state));
+    struct pcode_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
     {
-        SDL_Rect events = layout_abs(layout, p_code_text);
-        SDL_Rect bar = layout_abs_index(layout, p_code_text, layout_inf, p_code_text_len);
+        SDL_Rect events = layout_abs(layout, pcode_text);
+        SDL_Rect bar = layout_abs_index(layout, pcode_text, layout_inf, pcode_text_len);
         ui_scroll_init(&state->scroll, &bar, &events, 0,
-                layout_entry(layout, p_code_text)->rows);
+                layout_entry(layout, pcode_text)->rows);
     }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
@@ -444,8 +444,8 @@ struct panel *panel_code_new(void)
                 .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
-    panel->render = panel_code_render;
-    panel->events = panel_code_events;
-    panel->free = panel_code_free;
+    panel->render = pcode_render;
+    panel->events = pcode_events;
+    panel->free = pcode_free;
     return panel;
 }

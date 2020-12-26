@@ -1,4 +1,4 @@
-/* panel_obj.c
+/* pobj.c
    Rémi Attab (remi.attab@gmail.com), 15 Dec 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -18,7 +18,7 @@
 // panel obj
 // -----------------------------------------------------------------------------
 
-struct panel_obj_state
+struct pobj_state
 {
     struct layout *layout;
     struct ui_scroll scroll;
@@ -36,113 +36,113 @@ struct panel_obj_state
 
 enum
 {
-    p_obj_id = 0,
-    p_obj_id_sep,
-    p_obj_target,
-    p_obj_target_sep,
-    p_obj_cargo,
-    p_obj_cargo_grid,
-    p_obj_cargo_sep,
-    p_obj_docks,
-    p_obj_docks_list,
-    p_obj_docks_sep,
-    p_obj_mod,
-    p_obj_mod_sep,
-    p_obj_vm,
-    p_obj_vm_tsc,
-    p_obj_vm_flags,
-    p_obj_vm_io,
-    p_obj_vm_ipsp,
-    p_obj_vm_regs_sep,
-    p_obj_vm_regs,
-    p_obj_vm_stack_sep,
-    p_obj_vm_stack,
-    p_obj_len,
+    pobj_id = 0,
+    pobj_id_sep,
+    pobj_target,
+    pobj_target_sep,
+    pobj_cargo,
+    pobj_cargo_grid,
+    pobj_cargo_sep,
+    pobj_docks,
+    pobj_docks_list,
+    pobj_docks_sep,
+    pobj_mod,
+    pobj_mod_sep,
+    pobj_vm,
+    pobj_vm_tsc,
+    pobj_vm_flags,
+    pobj_vm_io,
+    pobj_vm_ipsp,
+    pobj_vm_regs_sep,
+    pobj_vm_regs,
+    pobj_vm_stack_sep,
+    pobj_vm_stack,
+    pobj_len,
 };
 
-static const char p_obj_target_str[] = "target:";
-static const char p_obj_cargo_str[] = "cargo:";
-static const char p_obj_docks_str[] = "docks:";
-static const char p_obj_mod_str[] = "mod:";
+static const char pobj_target_str[] = "target:";
+static const char pobj_cargo_str[] = "cargo:";
+static const char pobj_docks_str[] = "docks:";
+static const char pobj_mod_str[] = "mod:";
 
-static const char p_obj_vm_str[] = "vm:";
-static const char p_obj_vm_tsc_str[] = "tsc:";
-static const char p_obj_vm_flags_str[] = "flags:";
-static const char p_obj_vm_io_str[] = "io:";
-static const char p_obj_vm_ior_str[] = "ior:";
-static const char p_obj_vm_ip_str[] = "ip:";
-static const char p_obj_vm_sp_str[] = "sp:";
+static const char pobj_vm_str[] = "vm:";
+static const char pobj_vm_tsc_str[] = "tsc:";
+static const char pobj_vm_flags_str[] = "flags:";
+static const char pobj_vm_io_str[] = "io:";
+static const char pobj_vm_ior_str[] = "ior:";
+static const char pobj_vm_ip_str[] = "ip:";
+static const char pobj_vm_sp_str[] = "sp:";
 
 enum
 {
-    p_obj_cargo_cols = 5,
-    p_obj_cargo_rows = 2,
-    p_obj_cargo_size = 25,
-    p_obj_docks_max = 5,
+    pobj_cargo_cols = 5,
+    pobj_cargo_rows = 2,
+    pobj_cargo_size = 25,
+    pobj_docks_max = 5,
 
-    p_obj_vm_u64_len = 16,
-    p_obj_vm_u32_len = 8,
-    p_obj_vm_u8_len = 2,
+    pobj_vm_u64_len = 16,
+    pobj_vm_u32_len = 8,
+    pobj_vm_u8_len = 2,
 
-    p_obj_vm_flag_len = 3,
-    p_obj_vm_flags_len = (
-            sizeof(p_obj_vm_flags_str) + p_obj_vm_flag_len * 8), // 'IO SU FR FS ...'
+    pobj_vm_flag_len = 3,
+    pobj_vm_flags_len = (
+            sizeof(pobj_vm_flags_str) + pobj_vm_flag_len * 8), // 'IO SU FR FS ...'
 
-    p_obj_vm_spec_len = 3,
-    p_obj_vm_specs_len = p_obj_vm_spec_len * 2 + 1, // '01/02'
+    pobj_vm_spec_len = 3,
+    pobj_vm_specs_len = pobj_vm_spec_len * 2 + 1, // '01/02'
 
-    p_obj_vm_io_len = (
-            sizeof(p_obj_vm_io_str) + p_obj_vm_u8_len + 1 +
-            sizeof(p_obj_vm_ior_str) + p_obj_vm_u8_len),
+    pobj_vm_io_len = (
+            sizeof(pobj_vm_io_str) + pobj_vm_u8_len + 1 +
+            sizeof(pobj_vm_ior_str) + pobj_vm_u8_len),
 
-    p_obj_vm_ipsp_len = (
-            sizeof(p_obj_vm_ip_str) + p_obj_vm_u32_len + 1 +
-            sizeof(p_obj_vm_sp_str) + p_obj_vm_u8_len),
+    pobj_vm_ipsp_len = (
+            sizeof(pobj_vm_ip_str) + pobj_vm_u32_len + 1 +
+            sizeof(pobj_vm_sp_str) + pobj_vm_u8_len),
 
-    p_obj_vm_reg_len = 4, // 'rX: '
-    p_obj_vm_reg_rows = 4,
+    pobj_vm_reg_len = 4, // 'rX: '
+    pobj_vm_reg_rows = 4,
 
-    p_obj_vm_stack_prefix_len = 5, // 'sXX: '
-    p_obj_vm_stack_len = p_obj_vm_stack_prefix_len + p_obj_vm_u64_len,
-    p_obj_vm_stack_total_len = p_obj_vm_stack_len + ui_scroll_layout_cols,
+    pobj_vm_stack_prefix_len = 5, // 'sXX: '
+    pobj_vm_stack_len = pobj_vm_stack_prefix_len + pobj_vm_u64_len,
+    pobj_vm_stack_total_len = pobj_vm_stack_len + ui_scroll_layout_cols,
 };
 
 
-static void panel_obj_render_id(struct panel_obj_state *state, SDL_Renderer *renderer)
+static void pobj_render_id(struct pobj_state *state, SDL_Renderer *renderer)
 {
-    struct layout_entry *layout = layout_entry(state->layout, p_obj_id);
+    struct layout_entry *layout = layout_entry(state->layout, pobj_id);
     char str[id_str_len];
     id_str(state->id, sizeof(str), str);
     font_render(layout->font, renderer, str, sizeof(str), layout_entry_pos(layout));
 }
 
-static void panel_obj_render_target(struct panel_obj_state *state, SDL_Renderer *renderer)
+static void pobj_render_target(struct pobj_state *state, SDL_Renderer *renderer)
 {
-    struct layout_entry *layout = layout_entry(state->layout, p_obj_target);
+    struct layout_entry *layout = layout_entry(state->layout, pobj_target);
     font_render(
             layout->font, renderer,
-            p_obj_target_str, sizeof(p_obj_target_str),
+            pobj_target_str, sizeof(pobj_target_str),
             layout_entry_pos(layout));
 
     if (state->obj->target) {
         char str[id_str_len];
         id_str(state->obj->target, sizeof(str), str);
         font_render(layout->font, renderer, str, sizeof(str),
-                layout_entry_index_pos(layout, 0, sizeof(p_obj_target)));
+                layout_entry_index_pos(layout, 0, sizeof(pobj_target)));
     }
 }
 
-static void panel_obj_render_cargo(struct panel_obj_state *state, SDL_Renderer *renderer)
+static void pobj_render_cargo(struct pobj_state *state, SDL_Renderer *renderer)
 {
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_cargo);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_cargo);
         font_render(
                 layout->font, renderer,
-                p_obj_cargo_str, sizeof(p_obj_cargo_str),
+                pobj_cargo_str, sizeof(pobj_cargo_str),
                 layout_entry_pos(layout));
     }
 
-    struct layout_entry *layout = layout_entry(state->layout, p_obj_cargo_grid);
+    struct layout_entry *layout = layout_entry(state->layout, pobj_cargo_grid);
 
     size_t len = state->obj->cargos;
     assert(len < layout->rows * layout->cols);
@@ -171,17 +171,17 @@ static void panel_obj_render_cargo(struct panel_obj_state *state, SDL_Renderer *
     }
 }
 
-static void panel_obj_render_docks(struct panel_obj_state *state, SDL_Renderer *renderer)
+static void pobj_render_docks(struct pobj_state *state, SDL_Renderer *renderer)
 {
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_docks);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_docks);
         font_render(
                 layout->font, renderer,
-                p_obj_docks_str, sizeof(p_obj_docks_str),
+                pobj_docks_str, sizeof(pobj_docks_str),
                 layout_entry_pos(layout));
     }
 
-    struct layout_entry *layout = layout_entry(state->layout, p_obj_docks_list);
+    struct layout_entry *layout = layout_entry(state->layout, pobj_docks_list);
 
     size_t len = state->obj->docks;
     assert(len < layout->rows);
@@ -210,32 +210,32 @@ static void panel_obj_render_docks(struct panel_obj_state *state, SDL_Renderer *
     }
 }
 
-static void panel_obj_render_mod(struct panel_obj_state *state, SDL_Renderer *renderer)
+static void pobj_render_mod(struct pobj_state *state, SDL_Renderer *renderer)
 {
-    struct layout_entry *layout = layout_entry(state->layout, p_obj_mod);
-    font_render(layout->font, renderer, p_obj_mod_str, sizeof(p_obj_mod_str),
+    struct layout_entry *layout = layout_entry(state->layout, pobj_mod);
+    font_render(layout->font, renderer, pobj_mod_str, sizeof(pobj_mod_str),
             layout_entry_pos(layout));
 
     if (state->obj->mod) {
-        SDL_Point pos = layout_entry_index_pos(layout, 0, sizeof(p_obj_mod_str));
+        SDL_Point pos = layout_entry_index_pos(layout, 0, sizeof(pobj_mod_str));
         ui_click_render(&state->click.mod, renderer, pos);
         font_render(layout->font, renderer, state->mod, sizeof(state->mod), pos);
     }
 }
 
-static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *renderer)
+static void pobj_render_vm(struct pobj_state *state, SDL_Renderer *renderer)
 {
     const struct vm *vm = obj_vm(state->obj);
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm);
         SDL_Point pos = layout_entry_pos(layout);
 
-        font_render(layout->font, renderer, p_obj_vm_str, sizeof(p_obj_vm_str), pos);
+        font_render(layout->font, renderer, pobj_vm_str, sizeof(pobj_vm_str), pos);
 
-        const size_t len = p_obj_vm_spec_len;
+        const size_t len = pobj_vm_spec_len;
 
-        char val[p_obj_vm_specs_len];
+        char val[pobj_vm_specs_len];
         str_utoa(vm->specs.stack, val, len);
         val[len] = '/';
         str_utoa(vm->specs.speed, val + len + 1, len);
@@ -245,23 +245,23 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     }
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_tsc);
-        font_render(layout->font, renderer, p_obj_vm_tsc_str, sizeof(p_obj_vm_tsc_str),
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm_tsc);
+        font_render(layout->font, renderer, pobj_vm_tsc_str, sizeof(pobj_vm_tsc_str),
                 layout_entry_pos(layout));
 
-        char val[p_obj_vm_u32_len];
+        char val[pobj_vm_u32_len];
         str_utox(vm->tsc, val, sizeof(val));
         font_render(layout->font, renderer, val, sizeof(val),
-                layout_entry_index_pos(layout, 0, sizeof(p_obj_vm_tsc_str)));
+                layout_entry_index_pos(layout, 0, sizeof(pobj_vm_tsc_str)));
     }
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_flags);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm_flags);
         size_t col = 0;
 
-        font_render(layout->font, renderer, p_obj_vm_flags_str, sizeof(p_obj_vm_flags_str),
+        font_render(layout->font, renderer, pobj_vm_flags_str, sizeof(pobj_vm_flags_str),
                 layout_entry_index_pos(layout, 0, col));
-        col += sizeof(p_obj_vm_flags_str);
+        col += sizeof(pobj_vm_flags_str);
 
         for (size_t i = 0; i < 8; ++i) {
             enum flags flag = 1 << i;
@@ -295,24 +295,24 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     }
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_io);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm_io);
         size_t col = 0;
 
-        font_render(layout->font, renderer, p_obj_vm_io_str, sizeof(p_obj_vm_io_str),
+        font_render(layout->font, renderer, pobj_vm_io_str, sizeof(pobj_vm_io_str),
                 layout_entry_index_pos(layout, 0, col));
-        col += sizeof(p_obj_vm_io_str);
+        col += sizeof(pobj_vm_io_str);
 
-        char io[p_obj_vm_u8_len];
+        char io[pobj_vm_u8_len];
         str_utox(vm->io, io, sizeof(io));
         font_render(layout->font, renderer, io, sizeof(io),
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(io) + 1;
 
-        font_render(layout->font, renderer, p_obj_vm_ior_str, sizeof(p_obj_vm_ior_str),
+        font_render(layout->font, renderer, pobj_vm_ior_str, sizeof(pobj_vm_ior_str),
                 layout_entry_index_pos(layout, 0, col));
-        col += sizeof(p_obj_vm_ior_str);
+        col += sizeof(pobj_vm_ior_str);
 
-        char ior[p_obj_vm_u8_len];
+        char ior[pobj_vm_u8_len];
         str_utox(vm->ior, ior, sizeof(ior));
         font_render(layout->font, renderer, ior, sizeof(ior),
                 layout_entry_index_pos(layout, 0, col));
@@ -320,14 +320,14 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     }
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_ipsp);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm_ipsp);
         size_t col = 0;
 
-        font_render(layout->font, renderer, p_obj_vm_ip_str, sizeof(p_obj_vm_ip_str),
+        font_render(layout->font, renderer, pobj_vm_ip_str, sizeof(pobj_vm_ip_str),
                 layout_entry_index_pos(layout, 0, col));
-        col += sizeof(p_obj_vm_ip_str);
+        col += sizeof(pobj_vm_ip_str);
 
-        char ip[p_obj_vm_u32_len];
+        char ip[pobj_vm_u32_len];
         str_utox(vm->ip, ip, sizeof(ip));
         ui_click_render(&state->click.ip, renderer,
                 layout_entry_index_pos(layout, 0, col));
@@ -335,11 +335,11 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
                 layout_entry_index_pos(layout, 0, col));
         col += sizeof(ip) + 1;
 
-        font_render(layout->font, renderer, p_obj_vm_sp_str, sizeof(p_obj_vm_sp_str),
+        font_render(layout->font, renderer, pobj_vm_sp_str, sizeof(pobj_vm_sp_str),
                 layout_entry_index_pos(layout, 0, col));
-        col += sizeof(p_obj_vm_sp_str);
+        col += sizeof(pobj_vm_sp_str);
 
-        char sp[p_obj_vm_u8_len];
+        char sp[pobj_vm_u8_len];
         str_utox(vm->sp, sp, sizeof(sp));
         font_render(layout->font, renderer, sp, sizeof(sp),
                 layout_entry_index_pos(layout, 0, col));
@@ -347,14 +347,14 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     }
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_regs);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm_regs);
 
-        for (size_t i = 0; i < p_obj_vm_reg_rows; ++i) {
-            char reg[p_obj_vm_reg_len] = { '$', '1'+i, ':', 0};
+        for (size_t i = 0; i < pobj_vm_reg_rows; ++i) {
+            char reg[pobj_vm_reg_len] = { '$', '1'+i, ':', 0};
             font_render(layout->font, renderer, reg, sizeof(reg),
                     layout_entry_index_pos(layout, i, 0));
 
-            char val[p_obj_vm_u64_len];
+            char val[pobj_vm_u64_len];
             str_utox(vm->regs[i], val, sizeof(val));
             font_render(layout->font, renderer, val, sizeof(val),
                     layout_entry_index_pos(layout, i, sizeof(reg)));
@@ -362,7 +362,7 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
     }
 
     {
-        struct layout_entry *layout = layout_entry(state->layout, p_obj_vm_stack);
+        struct layout_entry *layout = layout_entry(state->layout, pobj_vm_stack);
 
         const size_t first = state->scroll.first;
         const size_t rows = u64_min(vm->sp, state->scroll.visible);
@@ -370,36 +370,36 @@ static void panel_obj_render_vm(struct panel_obj_state *state, SDL_Renderer *ren
         for (size_t i = first; i < first + rows; ++i) {
             size_t sp = vm->sp - i - 1;
 
-            char index[p_obj_vm_stack_prefix_len] = {
+            char index[pobj_vm_stack_prefix_len] = {
                 's', str_hexchar(sp >> 4), str_hexchar(sp), ':', 0 };
             font_render(layout->font, renderer, index, sizeof(index),
                     layout_entry_index_pos(layout, i - first, 0));
 
-            char val[p_obj_vm_u64_len];
+            char val[pobj_vm_u64_len];
             str_utox(vm->stack[sp], val, sizeof(val));
             font_render(layout->font, renderer, val, sizeof(val),
                     layout_entry_index_pos(layout, i - first, sizeof(index)));
         }
 
         ui_scroll_render(&state->scroll, renderer,
-            layout_entry_index_pos(layout, 0, p_obj_vm_stack_len));
+            layout_entry_index_pos(layout, 0, pobj_vm_stack_len));
     }
 }
 
-static void panel_obj_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
+static void pobj_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
     (void) rect;
 
-    struct panel_obj_state *state = state_;
-    panel_obj_render_id(state, renderer);
-    panel_obj_render_target(state, renderer);
-    panel_obj_render_cargo(state, renderer);
-    panel_obj_render_docks(state, renderer);
-    panel_obj_render_mod(state, renderer);
-    panel_obj_render_vm(state, renderer);
+    struct pobj_state *state = state_;
+    pobj_render_id(state, renderer);
+    pobj_render_target(state, renderer);
+    pobj_render_cargo(state, renderer);
+    pobj_render_docks(state, renderer);
+    pobj_render_mod(state, renderer);
+    pobj_render_vm(state, renderer);
 }
 
-static void panel_obj_update(struct panel_obj_state *state)
+static void pobj_update(struct pobj_state *state)
 {
     assert(state->id && !coord_null(state->star));
 
@@ -414,9 +414,9 @@ static void panel_obj_update(struct panel_obj_state *state)
     ui_scroll_update(&state->scroll, obj_vm(state->obj)->sp);
 }
 
-static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event)
+static bool pobj_events(void *state_, struct panel *panel, SDL_Event *event)
 {
-    struct panel_obj_state *state = state_;
+    struct pobj_state *state = state_;
 
     if (event->type == core.event) {
         switch (event->user.code) {
@@ -424,7 +424,7 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
         case EV_OBJ_SELECT: {
             state->id = (uint64_t) event->user.data1;
             state->star = id_to_coord((uint64_t) event->user.data2);
-            panel_obj_update(state);
+            pobj_update(state);
             panel_show(panel);
             return true;
         }
@@ -439,7 +439,7 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
 
         case EV_STATE_UPDATE: {
             if (panel->hidden) return false;
-            panel_obj_update(state);
+            pobj_update(state);
             panel_invalidate(panel);
             return false;
         }
@@ -478,9 +478,9 @@ static bool panel_obj_events(void *state_, struct panel *panel, SDL_Event *event
 }
 
 
-static void panel_obj_free(void *state_)
+static void pobj_free(void *state_)
 {
-    struct panel_obj_state *state = state_;
+    struct pobj_state *state = state_;
     layout_free(state->layout);
     free(state);
 };
@@ -491,37 +491,37 @@ struct panel *panel_obj_new(void)
     struct font *font = font_mono8;
     size_t menu_h = panel_menu_height();
 
-    struct layout *layout = layout_alloc(p_obj_len,
+    struct layout *layout = layout_alloc(pobj_len,
             core.rect.w, core.rect.h - menu_h - panel_total_padding);
 
-    layout_text(layout, p_obj_id, font_head, id_str_len, 1);
-    layout_sep(layout, p_obj_id_sep);
+    layout_text(layout, pobj_id, font_head, id_str_len, 1);
+    layout_sep(layout, pobj_id_sep);
 
-    layout_text(layout, p_obj_target, font, sizeof(p_obj_target_str) + id_str_len, 1);
-    layout_sep(layout, p_obj_target_sep);
+    layout_text(layout, pobj_target, font, sizeof(pobj_target_str) + id_str_len, 1);
+    layout_sep(layout, pobj_target_sep);
 
-    layout_text(layout, p_obj_cargo, font, sizeof(p_obj_cargo_str), 1);
-    layout_grid(layout, p_obj_cargo_grid, p_obj_cargo_rows, p_obj_cargo_cols, p_obj_cargo_size);
-    layout_sep(layout, p_obj_cargo_sep);
+    layout_text(layout, pobj_cargo, font, sizeof(pobj_cargo_str), 1);
+    layout_grid(layout, pobj_cargo_grid, pobj_cargo_rows, pobj_cargo_cols, pobj_cargo_size);
+    layout_sep(layout, pobj_cargo_sep);
 
-    layout_text(layout, p_obj_docks, font, sizeof(p_obj_docks_str), 1);
-    layout_text(layout, p_obj_docks_list, font, 3 + id_str_len, p_obj_docks_max);
-    layout_sep(layout, p_obj_docks_sep);
+    layout_text(layout, pobj_docks, font, sizeof(pobj_docks_str), 1);
+    layout_text(layout, pobj_docks_list, font, 3 + id_str_len, pobj_docks_max);
+    layout_sep(layout, pobj_docks_sep);
 
-    layout_text(layout, p_obj_docks, font, sizeof(p_obj_docks_str), 1);
+    layout_text(layout, pobj_docks, font, sizeof(pobj_docks_str), 1);
 
-    layout_text(layout, p_obj_mod, font, sizeof(p_obj_mod_str) + vm_atom_cap, 1);
-    layout_sep(layout, p_obj_mod_sep);
+    layout_text(layout, pobj_mod, font, sizeof(pobj_mod_str) + vm_atom_cap, 1);
+    layout_sep(layout, pobj_mod_sep);
 
-    layout_text(layout, p_obj_vm, font, sizeof(p_obj_vm_str) + p_obj_vm_specs_len, 1);
-    layout_text(layout, p_obj_vm_tsc, font, sizeof(p_obj_vm_tsc_str) + p_obj_vm_u32_len, 1);
-    layout_text(layout, p_obj_vm_flags, font, p_obj_vm_flags_len, 1);
-    layout_text(layout, p_obj_vm_io, font, p_obj_vm_io_len, 1);
-    layout_text(layout, p_obj_vm_ipsp, font, p_obj_vm_ipsp_len, 1);
-    layout_sep(layout, p_obj_vm_regs_sep);
-    layout_text(layout, p_obj_vm_regs, font, p_obj_vm_reg_len + p_obj_vm_u64_len, p_obj_vm_reg_rows);
-    layout_sep(layout, p_obj_vm_stack_sep);
-    layout_text(layout, p_obj_vm_stack, font, layout_inf, layout_inf);
+    layout_text(layout, pobj_vm, font, sizeof(pobj_vm_str) + pobj_vm_specs_len, 1);
+    layout_text(layout, pobj_vm_tsc, font, sizeof(pobj_vm_tsc_str) + pobj_vm_u32_len, 1);
+    layout_text(layout, pobj_vm_flags, font, pobj_vm_flags_len, 1);
+    layout_text(layout, pobj_vm_io, font, pobj_vm_io_len, 1);
+    layout_text(layout, pobj_vm_ipsp, font, pobj_vm_ipsp_len, 1);
+    layout_sep(layout, pobj_vm_regs_sep);
+    layout_text(layout, pobj_vm_regs, font, pobj_vm_reg_len + pobj_vm_u64_len, pobj_vm_reg_rows);
+    layout_sep(layout, pobj_vm_stack_sep);
+    layout_text(layout, pobj_vm_stack, font, layout_inf, layout_inf);
 
     layout_finish(layout, (SDL_Point) { .x = panel_padding, .y = panel_padding });
     layout->pos = (SDL_Point) {
@@ -529,20 +529,20 @@ struct panel *panel_obj_new(void)
         .y = menu_h
     };
 
-    struct panel_obj_state *state = calloc(1, sizeof(*state));
+    struct pobj_state *state = calloc(1, sizeof(*state));
     state->layout = layout;
 
     ui_click_init(&state->click.mod, layout_abs_rect(
-                    layout, p_obj_mod, 0, sizeof(p_obj_mod_str), vm_atom_cap, 1));
+                    layout, pobj_mod, 0, sizeof(pobj_mod_str), vm_atom_cap, 1));
     ui_click_init(&state->click.ip, layout_abs_rect(
-                    layout, p_obj_vm_ipsp, 0, sizeof(p_obj_vm_ip_str), p_obj_vm_u32_len, 1));
+                    layout, pobj_vm_ipsp, 0, sizeof(pobj_vm_ip_str), pobj_vm_u32_len, 1));
 
     {
-        SDL_Rect events = layout_abs(layout, p_obj_vm_stack);
+        SDL_Rect events = layout_abs(layout, pobj_vm_stack);
         SDL_Rect bar = layout_abs_index(
-                layout, p_obj_vm_stack, layout_inf, p_obj_vm_stack_len);
+                layout, pobj_vm_stack, layout_inf, pobj_vm_stack_len);
         ui_scroll_init(&state->scroll, &bar, &events, 0,
-                layout_entry(layout, p_obj_vm_stack)->rows);
+                layout_entry(layout, pobj_vm_stack)->rows);
     }
 
     struct panel *panel = panel_new(&(SDL_Rect) {
@@ -552,8 +552,8 @@ struct panel *panel_obj_new(void)
                 .h = layout->bbox.h + panel_total_padding });
     panel->hidden = true;
     panel->state = state;
-    panel->render = panel_obj_render;
-    panel->events = panel_obj_events;
-    panel->free = panel_obj_free;
+    panel->render = pobj_render;
+    panel->events = pobj_events;
+    panel->free = pobj_free;
     return panel;
 }

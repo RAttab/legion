@@ -1,4 +1,4 @@
-/* panel_menu.c
+/* pmenu.c
    Rémi Attab (remi.attab@gmail.com), 07 Dec 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -12,7 +12,7 @@
 // panel menu
 // -----------------------------------------------------------------------------
 
-struct panel_menu_state
+struct pmenu_state
 {
     struct ui_toggle mods;
     struct ui_toggle code;
@@ -20,12 +20,12 @@ struct panel_menu_state
     struct ui_toggle obj;
 };
 
-static struct font *panel_menu_font(void) { return font_mono8; }
+static struct font *pmenu_font(void) { return font_mono8; }
 
-static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
+static void pmenu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *rect)
 {
-    struct panel_menu_state *state = state_;
-    struct font *font = panel_menu_font();
+    struct pmenu_state *state = state_;
+    struct font *font = pmenu_font();
     font_reset(font);
 
     SDL_Point pos = { .x = rect->x, .y = rect->y };
@@ -41,9 +41,9 @@ static void panel_menu_render(void *state_, SDL_Renderer *renderer, SDL_Rect *re
     ui_toggle_render(&state->obj, renderer, pos, font);
 }
 
-static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *event)
+static bool pmenu_events(void *state_, struct panel *panel, SDL_Event *event)
 {
-    struct panel_menu_state *state = state_;
+    struct pmenu_state *state = state_;
 
     if (event->type == core.event) {
         switch (event->user.code) {
@@ -135,7 +135,7 @@ static bool panel_menu_events(void *state_, struct panel *panel, SDL_Event *even
     return false;
 }
 
-static void panel_menu_free(void *state)
+static void pmenu_free(void *state)
 {
     free(state);
 };
@@ -143,18 +143,18 @@ static void panel_menu_free(void *state)
 
 size_t panel_menu_height(void)
 {
-    return panel_menu_font()->glyph_h + panel_total_padding;
+    return pmenu_font()->glyph_h + panel_total_padding;
 }
 
 struct panel *panel_menu_new(void)
 {
-    struct font *font = panel_menu_font();
+    struct font *font = pmenu_font();
     size_t font_w = font->glyph_w, font_h = font->glyph_h;
 
     int outer_w = 0, outer_h = 0;
     panel_add_borders(font_w, font_h, &outer_w, &outer_h);
 
-    struct panel_menu_state *state = calloc(1, sizeof(*state));
+    struct pmenu_state *state = calloc(1, sizeof(*state));
 
     {
         const char str[] = "mods";
@@ -200,8 +200,8 @@ struct panel *panel_menu_new(void)
     struct panel *panel = panel_new(&rect);
     panel->hidden = false;
     panel->state = state;
-    panel->render = panel_menu_render;
-    panel->events = panel_menu_events;
-    panel->free = panel_menu_free;
+    panel->render = pmenu_render;
+    panel->events = pmenu_events;
+    panel->free = pmenu_free;
     return panel;
 }
