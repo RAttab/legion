@@ -51,6 +51,7 @@ static bool pmenu_events(void *state_, struct panel *panel, SDL_Event *event)
         case EV_CODE_SELECT: {
             state->code.disabled = false;
             state->code.selected = true;
+            state->mods.selected = true;
             panel_invalidate(panel);
             break;
         }

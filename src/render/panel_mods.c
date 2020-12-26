@@ -127,6 +127,13 @@ static bool pmods_events(void *state_, struct panel *panel, SDL_Event *event)
 
         case EV_MODS_CLEAR: { panel_hide(panel); return true; }
 
+        case EV_CODE_SELECT: {
+            panel_show(panel);
+            state->selected = (uintptr_t) event->user.data1;
+            pmods_update(state);
+            return false;
+        }
+
         case EV_CODE_CLEAR: {
             if (panel->hidden) return false;
             state->selected = 0;
