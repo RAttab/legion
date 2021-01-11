@@ -29,6 +29,16 @@ void *qtree_get(struct qtree *, struct coord);
 void *qtree_del(struct qtree *, struct coord);
 void *qtree_put(struct qtree *, struct coord, void *);
 
-struct qtree_it;
+struct qtree_it
+{
+    struct qtree *qtree;
+    struct rect rect;
+
+    struct qtree_kv kv;
+
+    size_t len;
+    struct qtree_node *path[32];
+};
+
 struct qtree_it *qtree_it(struct qtree *, struct rect);
 struct qtree_kv *qtree_next(struct qtree_it *);

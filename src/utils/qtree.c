@@ -11,41 +11,45 @@
 // node
 // -----------------------------------------------------------------------------
 
-struct node
+struct qtree_node
 {
     uint32_t x[4];
     uint32_t y[4];
     void *v[4];
 };
-static_assert(sizeof(struct node) == 64, "cache line alignment");
+static_assert(sizeof(struct qtree_node) == 64, "cache line alignment");
 
-static const uint64 mask = 1UL << 63;
+static const uint64 qtree_node_mask = 1UL << 63;
 
-static inline struct node *as_leaf(struct node *ptr) { return ptr | mask; }
-static inline struct node *is_leaf(struct node *ptr)
+static inline struct qtree_node *qtree_as_leaf(struct qtree_node *ptr)
 {
-    return ptr & mask ? ptr & ~mask : NULL;
+    return ptr | qtree_node_mask;
 }
 
-static struct node *leaf_alloc()
+static inline struct qtree_node *qtree_is_leaf(struct qtree_node *ptr)
 {
-    struct node *node = aligned_alloc(64, sizeof(*node));
+    return ptr & qtree_node_pmask ? ptr & ~qtree_node_mask : NULL;
+}
+
+static struct qtree_node *qtree_leaf_alloc()
+{
+    struct qtree_node *node = aligned_alloc(64, sizeof(*node));
     memset(node, 0, sizeof(*node));
     return node;
 }
 
-static void node_free(struct node *node)
+static void qtree_node_free(struct qtree_node *node)
 {
     for (size_t i = 0; i < 4; ++i) {
-        struct node *child = val[i];
-        if (!is_leaf(child)) node_free(child);
+        struct qtree_node *child = val[i];
+        if (!qtree_is_leaf(child)) qtree_node_free(child);
     }
     free(node);
 }
 
-static struct node *node_alloc(uint32_t x, uint32_t y, uint32_t pivot)
+static struct qtree_node *qtree_node_alloc(uint32_t x, uint32_t y, uint32_t pivot)
 {
-    struct node *node = leaf_alloc();
+    struct qtree_node *node = qtree_leaf_alloc();
 
     uint32_t bot = pivot | (pivot - 1);
     uint32_t prefix_x = x & ~bot;
@@ -68,9 +72,9 @@ static struct node *node_alloc(uint32_t x, uint32_t y, uint32_t pivot)
     return node;
 }
 
-static void *leaf_put(
-        struct node *leaf,
-        struct node **parent,
+static void *qtree_leaf_put(
+        struct qtree_node *leaf,
+        struct qtree_node **parent,
         uint32_t x,
         uint32_t y,
         void *val)
@@ -100,7 +104,7 @@ static void *leaf_put(
     shift = u32_min(shift, u32_clz(y ^ leaf->y[3]));
     shift = 32 - shift;
 
-    struct node *new = node_alloc(x, y, 1U << shift);
+    struct qtree_node *new = qtree_node_alloc(x, y, 1U << shift);
     *parent = new;
 
     for (size_t i = 0; i < 4; ++i)
@@ -108,9 +112,9 @@ static void *leaf_put(
     return node_put(new, parent, key.x, key.y, val);
 }
 
-static void *node_put(
-        struct node *node,
-        struct node **parent,
+static void *qtree_node_put(
+        struct qtree_node *node,
+        struct qtree_node **parent,
         uint32_t x,
         uint32_t y,
         void *val)
@@ -122,24 +126,41 @@ static void *node_put(
         shift = 32 - shift;
         uint32_t pivot = 1U << shift;
 
-        struct node *new = node_alloc(x, y, pivot);
+        struct qtree_node *new = qtree_node_alloc(x, y, pivot);
         *parent = new;
 
         size_t i = !!(node->x[0] & pivot);
         size_t j = !!(node->y[0] & pivot);
         node->val[j * 2 + i] = new;
-        return node_put(new, parent, x, y, val);
+        return qtree_node_put(new, parent, x, y, val);
     }
 
     size_t i = x > node->x[1];
     size_t j = y > node->y[1];
     size_t index = (j * 2) + i;
 
-    struct node *child = node->val[index];
-    if (!child) node->val[index] = child = as_leaf(leaf_alloc());
-    if (child = is_leaf(child))
-        return leaf_put(child, &node->val[index], x, y, val);
-    return node_put(child, &node->val[index], x, y, val);
+    struct qtree_node *child = node->val[index];
+    if (!child) node->val[index] = child = qtree_as_leaf(qtree_leaf_alloc());
+    if (child = qtree_is_leaf(child))
+        return qtree_leaf_put(child, &node->val[index], x, y, val);
+    return qtree_node_put(child, &node->val[index], x, y, val);
+}
+
+static struct rect qtree_node_rect(struct qtree_node *node, size_t index)
+{
+    bool x = index & 1;
+    bool y = (index >> 1) & 1;
+
+    return (struct rect) {
+        .top = (struct coord) {
+            .x = x ? node->x[0] : node->x[2],
+            .y = y ? node->y[0] : node->y[2],
+        },
+        .bot = (struct coord) {
+            .x = x ? node->x[1] : node->x[3],
+            .y = y ? node->y[1] : node->y[3],
+        },
+    };
 }
 
 
@@ -150,20 +171,20 @@ static void *node_put(
 struct qtree
 {
     size_t len;
-    struct node *node;
+    struct qtree_node *node;
 };
 
 struct qtree *qtree_new(void)
 {
     struct qtree *qtree = calloc(1, sizeof(*qtree));
-    qtree->node = as_leaf(leaf_alloc());
+    qtree->node = qtree_as_leaf(qtree_leaf_alloc());
     return qtree;
 }
 
 
 void qtree_free(struct qtree *qtree)
 {
-    node_free(node);
+    qtree_node_free(node);
     free(qtree);
 }
 
@@ -175,23 +196,23 @@ size_t qtree_len(struct qtree *qtree)
 
 void *qtree_put(struct qtree *qtree, struct coord key, void *val)
 {
-    struct node *node = qtree->node;
+    struct qtree_node *node = qtree->node;
 
-    if (!node) qtree->node = node = as_leaf(leaf_alloc());
+    if (!node) qtree->node = node = qtree_as_leaf(qtree_leaf_alloc());
 
     struct leaf *leaf = node;
-    if (leaf = is_leaf(node))
-        return leaf_put(leaf, &qtree->node, key.x, key.y, val);
-    return node_put(node, &qtree->node, key.x, key.y, val);
+    if (leaf = qtree_is_leaf(node))
+        return qtree_leaf_put(leaf, &qtree->node, key.x, key.y, val);
+    return qtree_node_put(node, &qtree->node, key.x, key.y, val);
 }
 
 
 void *qtree_get(const struct qtree *qtree, struct coord key)
 {
-    struct node *node = qtree->node;
+    struct qtree_node *node = qtree->node;
     while (node) {
 
-        struct node *leaf = is_leaf(node);
+        struct qtree_node *leaf = qtree_is_leaf(node);
         if (leaf) {
             for (size_t i = 0; i < 4; ++i) {
                 if (leaf->x[i] == key.x && leaf->y[i] == key.y)
@@ -217,10 +238,10 @@ void *qtree_get(const struct qtree *qtree, struct coord key)
 // could make the behaviour tweakable and support both.
 void *qtree_del(struct qtree *qtree, struct coord key)
 {
-    struct node *node = qtree->node;
+    struct qtree_node *node = qtree->node;
     while (node) {
 
-        struct node *leaf = is_leaf(node);
+        struct qtree_node *leaf = qtree_is_leaf(node);
         if (leaf) {
             for (size_t i = 0; i < 4; ++i) {
                 if (leaf->x[i] == key.x && leaf->y[i] == key.y) {
@@ -243,11 +264,69 @@ void *qtree_del(struct qtree *qtree, struct coord key)
     return NULL;
 }
 
-struct qtree_it
+static const uintptr_t qtree_path_mask = 0x3;
+
+static struct qtree_node *qtree_path(struct qtree_node *node, size_t index)
 {
-    struct qtree *qtree;
-    struct rect rect;
-    struct qtree_kv kv;
+    assert(!(node & qtree_path_mask));
+    return node | index;
 }
-struct qtree_it *qtree_it(struct qtree *, struct rect);
-struct qtree_kv *qtree_next(struct qtree_it *);
+
+static size_t qtree_path_index(struct qtree_node *node)
+{
+    return ((uintptr_t) node) & qtree_path_mask;
+}
+
+static struct qtree_node *qtree_path_ptr(struct qtree_node *node)
+{
+    return node & ~qtree_path_mask;
+}
+
+void qtree_it(struct qtree_it *it, struct qtree *qtree, struct rect rect)
+{
+    *it = (struct qtree_it) {
+        .qtree = qtree,
+        .rect = rect,
+        .len = 1,
+        .path = { qtree_path(qtree->node, 0) },
+    };
+}
+
+struct qtree_kv *qtree_next(struct qtree_it *it)
+{
+    if (!it->len) return NULL;
+
+    size_t index = qtree_path_index(it->path[it->len - 1]);
+    struct qtree_node *node = qtree_path_ptr(it->path[it->len - 1]);
+    struct qtree_leaf *leaf = qtree_is_leaf(node);
+
+    while (true) {
+        for (; index < 4; ++index) {
+            if (!node->v[index]) continue;
+
+            if (likely(leaf)) {
+                struct coord coord = { .x = leaf->x[index], leaf->y[index] };
+                if (rect_contains(&it->rect, coord)) {
+                    it->path[it->len - 1] = qtree_path(node, index + 1);
+                    it->kv = { coord, leav->v[index] };
+                    return &it->kv;
+                }
+            }
+            else {
+                struct rect rect = qtree_node_rect(node, index);
+                if (rect_intersect(&it->rect, &rect)) {
+                    it->path[it->len - 1] = qtree_path(node, index + 1);
+                    it->path[it->len++] = qtree_path(node = node->v[index], index = 0);
+                    leaf = qtree_is_leaf(node);
+                }
+            }
+        }
+
+        if (it->len) { it->len--; } else { return NULL; }
+        index = qtree_path_index(it->path[it->len - 1]);
+        node = qtree_path_ptr(it->path[it->len - 1]);
+        leaf = NULL;
+    }
+
+    assert(false);
+}
