@@ -5,3 +5,4 @@ test_*
 *.o
 
 build
+res/icons
