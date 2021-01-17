@@ -102,7 +102,7 @@ inline bool rect_intersect(const struct rect *lhs, struct rect *rhs)
 {
     return
         (lhs->top.x >= rhs->bot.x && lhs->bot.x < rhs->top.x) ||
-        (lhs->top.y >= rhs->bot.y && lhs->bot.y < rhs->top.y)
+        (lhs->top.y >= rhs->bot.y && lhs->bot.y < rhs->top.y);
 }
 
 
