@@ -77,7 +77,6 @@ enum
 {
     pobj_cargo_cols = 5,
     pobj_cargo_rows = 2,
-    pobj_cargo_size = 25,
     pobj_docks_max = 5,
 
     pobj_vm_u64_len = 16,
@@ -147,27 +146,30 @@ static void pobj_render_cargo(struct pobj_state *state, SDL_Renderer *renderer)
     size_t len = state->obj->cargos;
     assert(len < layout->rows * layout->cols);
 
+    struct font *font = font_mono6;
+    font_reset(font);
+
+    struct sprites *sprites = sprites_items;
+    sprites_reset(sprites);
+
     for (size_t i = 0; i < len; ++i) {
-        cargo_t cargo = obj_cargo(state->obj)[i];
         SDL_Rect rect = layout_entry_index(layout, i / layout->cols, i % layout->cols);
 
-        { // border
-            uint8_t gray = 0x55;
-            sdl_err(SDL_SetRenderDrawColor(renderer, gray, gray, gray, 0xAA));
-            sdl_err(SDL_RenderFillRect(renderer, &rect));
-        }
+        sdl_err(SDL_SetTextureColorMod(sprites->tex, 0xCC, 0xCC, 0xCC));
+        sprites_render(sprites, renderer, 0, &rect);
 
-        { // background
-            uint8_t gray = 0x33;
-            sdl_err(SDL_SetRenderDrawColor(renderer, gray, gray, gray, 0xAA));
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = rect.x + 1, .y = rect.y + 1,
-                                .w = rect.w - 2, .h = rect.h - 2 }));
-        }
+        cargo_t cargo = obj_cargo(state->obj)[i];
+        if (!cargo) continue;
 
-        if (cargo) {
-            // todo: draw icon and count.
-        }
+        sdl_err(SDL_SetTextureColorMod(sprites->tex, 0xFF, 0xFF, 0xFF));
+        sprites_render(sprites, renderer, cargo_item(cargo), &rect);
+
+        char count[3] = {0};
+        str_utoa(cargo_count(cargo), count, 3);
+        sdl_err(SDL_SetTextureColorMod(font->tex, 0xCC, 0xCC, 0xCC));
+        font_render(font, renderer, count, sizeof(count), (SDL_Point) {
+                    .x = rect.x + rect.w - (font->glyph_w * sizeof(count)),
+                    .y = rect.y + rect.h - font->glyph_h });
     }
 }
 
@@ -501,8 +503,9 @@ struct panel *panel_obj_new(void)
     layout_text(layout, pobj_target, font, sizeof(pobj_target_str) + id_str_len, 1);
     layout_sep(layout, pobj_target_sep);
 
+    struct sprites *sprites = sprites_items;
     layout_text(layout, pobj_cargo, font, sizeof(pobj_cargo_str), 1);
-    layout_grid(layout, pobj_cargo_grid, pobj_cargo_rows, pobj_cargo_cols, pobj_cargo_size);
+    layout_grid(layout, pobj_cargo_grid, pobj_cargo_rows, pobj_cargo_cols, sprites->w);
     layout_sep(layout, pobj_cargo_sep);
 
     layout_text(layout, pobj_docks, font, sizeof(pobj_docks_str), 1);

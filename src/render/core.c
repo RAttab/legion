@@ -6,6 +6,7 @@
 #include "core.h"
 
 #include "render/font.h"
+#include "render/sprites.h"
 #include "render/map.h"
 #include "render/panel.h"
 #include "game/coord.h"
@@ -100,13 +101,13 @@ static void cursor_event(SDL_Event *event)
 
 static void cursor_render(SDL_Renderer *renderer)
 {
-    SDL_RenderCopy(renderer, core.cursor.tex,
-            &(SDL_Rect){ .x = 0, .y = 0, .w = 50, .h = 50 },
-            &(SDL_Rect){
-                .x = core.cursor.point.x,
-                .y = core.cursor.point.y,
-                .w = core.cursor.size,
-                .h = core.cursor.size });
+    sdl_err(SDL_RenderCopy(renderer, core.cursor.tex,
+                    &(SDL_Rect){ .x = 0, .y = 0, .w = 50, .h = 50 },
+                    &(SDL_Rect){
+                        .x = core.cursor.point.x,
+                        .y = core.cursor.point.y,
+                        .w = core.cursor.size,
+                        .h = core.cursor.size }));
 }
 
 
@@ -191,6 +192,7 @@ void core_init()
     if (core.event == (uint32_t) -1) sdl_fail();
 
     fonts_init(core.renderer);
+    sprites_init(core.renderer);
     state_init();
     cursor_init();
     ui_init();

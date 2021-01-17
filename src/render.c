@@ -6,6 +6,7 @@
 #include "render/color.c"
 #include "render/core.c"
 #include "render/font.c"
+#include "render/sprites.c"
 #include "render/ui.c"
 #include "render/layout.c"
 #include "render/map.c"
