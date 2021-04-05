@@ -34,6 +34,13 @@ enum atom_io
     IO_TAKE,
     IO_PUT,
     IO_HARVEST,
+
+    // Printer
+    IO_PICK,
+    IO_MOVE,
+    IO_PRINT,
+    IO_PROGRAM,
+    IO_OUTPUT,
     
     ATOM_IO_MAX,
     ATOM_IO_CAP = 0x8FFFFFFF,

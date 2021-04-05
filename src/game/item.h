@@ -64,6 +64,8 @@ enum item
 
     // Placeholders for the other shit
     ITEM_OTHERS = 0x30,
+
+    ITEM_MAX,
 };
 
 // -----------------------------------------------------------------------------

@@ -149,11 +149,7 @@ static void worker_harvest(struct obj *obj, struct hunk *hunk, word_t ele)
 
 
 bool worker_io(
-        struct obj *obj,
-        struct hunk *hunk,
-        void *state_,
-        int64_t *buf,
-        size_t len)
+        struct obj *obj, struct hunk *hunk, void *state_, int64_t *buf, size_t len)
 {
     struct worker *state = state_;
     struct vm *vm = obj_vm(obj);

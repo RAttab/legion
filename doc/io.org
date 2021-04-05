@@ -36,10 +36,11 @@
 The idea is build layered 3d models like a 3D printer would
 
 - io_pick <ele>
-- io_target pack(<x>, <y>)
+- io_move pack(<x>, <y>)
 - io_print # blocks-on(ele)
 - io_program <mod>
 - io_output
+
 - io_schema <schema>
 - io_column pack(<x>,<y>) -> <len> <ele>*
   top of the stack, bottom of the pillar

@@ -86,3 +86,21 @@ inline void *obj_state(struct obj *obj)
 struct legion_packed worker { id_t dock; };
 struct obj *worker_alloc(struct hunk *);
 bool worker_io(struct obj *, struct hunk *, void *state, int64_t *buf, size_t len);
+
+
+// -----------------------------------------------------------------------------
+// printer
+// -----------------------------------------------------------------------------
+
+struct legion_packed printer
+{
+    item_t matrix[3][3][3];
+    item_t pick;
+    uint8_t x, y;
+    mod_t mod;
+};
+
+static_assert(sizeof(struct printer) == 32); // fits within the leftover of obj
+
+struct obj *printer_alloc(struct hunk *);
+bool printer_io(struct obj *, struct hunk *, void *state, int64_t *buf, size_t len);
