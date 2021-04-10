@@ -94,7 +94,7 @@ bool worker_io(struct obj *, struct hunk *, void *state, int64_t *buf, size_t le
 
 struct legion_packed printer
 {
-    item_t matrix[3][3][3];
+    schema_t schema;
     item_t pick;
     uint8_t x, y;
     mod_t mod;

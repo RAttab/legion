@@ -5,6 +5,7 @@
 
 #include "game/obj.h"
 #include "game/hunk.h"
+#include "db/db.h"
 
 
 // -----------------------------------------------------------------------------
@@ -58,7 +59,7 @@ static void printer_print(struct printer *state, struct obj *obj)
     uint8_t y = state->y;
 
     uint8_t z = 0;
-    while (z < 3 && state->matrix[x][y][z]) z++;
+    while (z < 3 && *schema_idx(state->schema, x, y, z)) z++;
     if (z == 3) return;
 
     cargo_t *it = obj_cargo(obj);
@@ -71,7 +72,7 @@ static void printer_print(struct printer *state, struct obj *obj)
     } while(++it < end);
     if (it == end) return;
 
-    state->matrix[x][y][z] = obj->pick;
+    *schema_idx(state->schema, x, y, z) = obj->pick;
 }
 
 static void printer_program(struct printer *state, struct obj *obj, word_t arg)
@@ -82,10 +83,13 @@ static void printer_program(struct printer *state, struct obj *obj, word_t arg)
     state->mod = mod;
 }
 
-static word_t printer_output(
-        struct printer *state, struct obj *obj, struct hunk *hunk, word_t arg)
+static void printer_output(
+        struct printer *state, struct obj *obj, struct hunk *hunk)
 {
+    item_t item = db_items_from_schema(state->schema);
+    memset(state->schema, 0 sizeof(schema_len));
 
+    if (item == ITEM_NIL) return;
 }
 
 bool printer_io(
@@ -121,9 +125,8 @@ bool printer_io(
     }
 
     case IO_OUTPUT: {
-        if (!vm_io_check(vm, len, 2)) return true;
-        buf[0] = printer_print(state, obj, hunk, arg[1]);
-        vm_io_write(vm, 1, buf);
+        if (!vm_io_check(vm, len, 1)) return true;
+        printer_output(state, obj, hunk);
         return true;
     }
 

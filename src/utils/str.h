@@ -23,4 +23,13 @@ inline char str_hexchar(uint8_t val)
     return val < 0xA ? '0' + val : 'A' + (val - 0xA);
 }
 
+inline uint8_t str_charhex(char val)
+{
+    if (val >= '0' && val <= '9') return val - '0';
+    if (val >= 'A' && val <= 'F') return val - 'A';
+    if (val >= 'a' && val <= 'f') return val - 'a';
+    return 0xFF;
+}
+
 char str_keycode_shift(unsigned char c);
+

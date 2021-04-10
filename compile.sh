@@ -7,7 +7,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${VALGRIND:=""}
 
 declare -a SRC
-SRC=(utils vm game render)
+SRC=(render game vm db utils)
 
 declare -a TEST
 TEST=(coord vm)

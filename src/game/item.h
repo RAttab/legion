@@ -1,4 +1,4 @@
-/* items.h
+/* item.h
    Rémi Attab (remi.attab@gmail.com), 29 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -24,33 +24,33 @@ enum item
 
     // Natural
     ITEM_ELEM_A = 0x01,
-    ITEM_ELEM_B,
-    ITEM_ELEM_C,
-    ITEM_ELEM_D,
-    ITEM_ELEM_E,
-    ITEM_ELEM_F,
-    ITEM_ELEM_G,
-    ITEM_ELEM_H,
-    ITEM_ELEM_I,
-    ITEM_ELEM_J,
-    ITEM_ELEM_K,
-    ITEM_ELEM_L,
-    ITEM_ELEM_M,
-    ITEM_ELEM_N,
-    ITEM_ELEM_O,
-    ITEM_ELEM_P,
+    ITEM_ELEM_B = 0x02,
+    ITEM_ELEM_C = 0x03,
+    ITEM_ELEM_D = 0x04,
+    ITEM_ELEM_E = 0x05,
+    ITEM_ELEM_F = 0x06,
+    ITEM_ELEM_G = 0x07,
+    ITEM_ELEM_H = 0x08,
+    ITEM_ELEM_I = 0x09,
+    ITEM_ELEM_J = 0x0A,
+    ITEM_ELEM_K = 0x0B,
+    ITEM_ELEM_L = 0x0C,
+    ITEM_ELEM_M = 0x0D,
+    ITEM_ELEM_N = 0x0E,
+    ITEM_ELEM_O = 0x0F,
+    ITEM_ELEM_P = 0x10,
 
     // Synth
-    ITEM_ELEM_Q,
-    ITEM_ELEM_R,
-    ITEM_ELEM_S,
-    ITEM_ELEM_T,
-    ITEM_ELEM_U,
-    ITEM_ELEM_V,
-    ITEM_ELEM_W,
-    ITEM_ELEM_X,
-    ITEM_ELEM_Y,
-    ITEM_ELEM_Z,
+    ITEM_ELEM_Q = 0x11,
+    ITEM_ELEM_R = 0x12,
+    ITEM_ELEM_S = 0x13,
+    ITEM_ELEM_T = 0x14,
+    ITEM_ELEM_U = 0x15,
+    ITEM_ELEM_V = 0x16,
+    ITEM_ELEM_W = 0x17,
+    ITEM_ELEM_X = 0x18,
+    ITEM_ELEM_Y = 0x19,
+    ITEM_ELEM_Z = 0x1A,
 
     // ... moi j'connai mon alphabet ...
 
@@ -154,3 +154,25 @@ inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
 
 enum { elements_len = 26 };
 typedef uint32_t elements_t [elements_len];
+
+
+// -----------------------------------------------------------------------------
+// schema
+// -----------------------------------------------------------------------------
+
+enum { schema_len = 3*3*3 };
+typedef item_t schema_t[schema_len];
+
+inline item_t *schema_idx(schema_t schema, size_t x, size_t y, size_t z)
+{
+    return &schema[x + y*3 + z*3*3];
+}
+
+inline uint64_t schema_hash(const schema_t schema)
+{
+    uint64_t hash = 0xcbf29ce484222325;
+    for (size_t i = 0; i < schema_len; ++i)
+        hash = (hash ^ schema[i]) * 0x100000001b3;
+    return hash;
+}
+
