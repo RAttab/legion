@@ -23,6 +23,7 @@ enum item
     ITEM_NIL = 0x00,
 
     // Natural
+    ITEM_NATURAL_FIRST = 0x01,
     ITEM_ELEM_A = 0x01,
     ITEM_ELEM_B = 0x02,
     ITEM_ELEM_C = 0x03,
@@ -41,6 +42,7 @@ enum item
     ITEM_ELEM_P = 0x10,
 
     // Synth
+    ITEM_SYNTH_FIRST = 0x11,
     ITEM_ELEM_Q = 0x11,
     ITEM_ELEM_R = 0x12,
     ITEM_ELEM_S = 0x13,
@@ -52,38 +54,39 @@ enum item
     ITEM_ELEM_Y = 0x19,
     ITEM_ELEM_Z = 0x1A,
 
+    ITEM_ELEM_LAST,
+
     // ... moi j'connai mon alphabet ...
 
-    // Active
-    ITEM_BRAIN = 0x20,
+    // Passives
+    ITEM_PASSIVE_FIRST = 0x20,
+    ITEM_BLAH = 0x20,
+    ITEM_PASSIVE_LAST,
+
+    // Actives
+    ITEM_ACTIVE_FIRST = 0xD0,
+    ITEM_CORE = 0xD0,
     ITEM_WORKER,
     ITEM_PRINTER,
-    ITEM_LAB,
-    ITEM_COMM,
-    ITEM_SHIP,
-
-    // Placeholders for the other shit
-    ITEM_OTHERS = 0x30,
+    ITEM_MINER,
+    ITEM_ACTIVE_LAST,
 
     ITEM_MAX,
 };
 
 // -----------------------------------------------------------------------------
-// ele
+// useful
 // -----------------------------------------------------------------------------
 
-enum ele
+enum items_utils
 {
-    elem_natural_first = ITEM_ELEM_A,
-    elem_natural_last = ITEM_ELEM_P,
-    elem_natural_len = (elem_natural_last + 1) - elem_natural_first,
-
-    elem_synth_first = ITEM_ELEM_Q,
-    elem_synth_last = ITEM_ELEM_Z,
-    elem_synth_len = (elem_synth_last + 1) - elem_synth_first,
+    ITEMS_NATURAL_LEN = ITEM_SYNTH_FIRST - ITEM_NATURAL_FIRST,
+    ITEMS_SYNTH_LEN = ITEM_ELEM_LAST - ITEM_SYNTH_FIRST,
+    ITEMS_PASSIVE_LEN = ITEM_PASSIVE_LAST - ITEM_PASSIVE_FIRST,
+    ITEMS_ACTIVE_LEN = ITEM_ACTIVE_LAST - ITEM_ACTIVE_FIRST,
 };
 
-static_assert(elem_natural_len + elem_synth_len == 26);
+static_assert(ITEMS_NATURAL_LEN + ITEMS_SYNTH_LEN == 26);
 
 
 // -----------------------------------------------------------------------------
@@ -175,4 +178,3 @@ inline uint64_t schema_hash(const schema_t schema)
         hash = (hash ^ schema[i]) * 0x100000001b3;
     return hash;
 }
-
