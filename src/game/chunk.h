@@ -27,9 +27,11 @@ void *chunk_get(struct chunk *, id_t);
 void chunk_create(struct chunk *, item_t);
 
 void chunk_io_reset(struct chunk *, id_t);
-bool chunk_io_output(struct chunk *, id_t, item_t);
-bool chunk_io_ask(struct chunk *, id_t, item_t);
+
+bool chunk_io_produce(struct chunk *, id_t, item_t);
+bool chunk_io_request(struct chunk *, id_t, item_t);
 item_t chunk_io_consume(struct chunk *, id_t);
+
 void chunk_io_give(struct chunk *, id_t, item_t);
 item_t chunk_io_take(struct chunk *, id_t);
 bool chunk_io_pair(struct chunk *, item_t *item, id_t *src, id_t *dst);

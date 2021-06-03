@@ -145,7 +145,7 @@ static void class_io_reset(struct class *class, id_t id)
     class->input[index] = {0};
 }
 
-static bool class_io_output(struct class *class, id_t id, item_t item)
+static bool class_io_produce(struct class *class, id_t id, item_t item)
 {
     size_t index = id_bot(id);
     if (!class || index < class->len) return false;
@@ -278,9 +278,9 @@ void chunk_io_reset(struct chunk *chunk, id_t id)
     class_io_reset(chunk_class(chunk, id_item(id)), id);
 }
 
-bool chunk_io_output(struct chunk *chunk, id_t id, item_t item)
+bool chunk_io_produce(struct chunk *chunk, id_t id, item_t item)
 {
-    if (!class_io_output(chunk_class(chunk, id_item(id)), id, item))
+    if (!class_io_produce(chunk_class(chunk, id_item(id)), id, item))
         return false;
 
     struct ring32 *provided = NULL;
@@ -300,9 +300,9 @@ bool chunk_io_output(struct chunk *chunk, id_t id, item_t item)
     }
 }
 
-void chunk_io_ask(struct chunk *chunk, id_t id, item_t item)
+void chunk_io_request(struct chunk *chunk, id_t id, item_t item)
 {
-    class_io_ask(chunk_class(chunk, id_item(id)), id, item);
+    class_io_request(chunk_class(chunk, id_item(id)), id, item);
     ring32_push(chunk->requested, id);
 }
 

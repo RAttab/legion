@@ -35,7 +35,7 @@ static void miner_step_eof(struct miner *miner, struct chunk *chunk)
 static void miner_step_input(struct miner *miner, struct chunk *chunk, item_t item)
 {
     if (!miner->blocked) {
-        chunk_io_ask(chunk, miner->id, item);
+        chunk_io_request(chunk, miner->id, item);
         miner->blocked = true;
         return;
     }
@@ -54,7 +54,7 @@ static void miner_step_output(struct miner *miner, struct chunk *chunk, item_t i
         if (!chunk_harvest(chunk, item)) return;
     }
 
-    miner->blocked = !chunk_io_output(chunk, miner->id, item);
+    miner->blocked = !chunk_io_produce(chunk, miner->id, item);
     if (!miner->blocked) prog_next(&miner->it);
 }
 
