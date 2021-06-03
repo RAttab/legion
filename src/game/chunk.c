@@ -7,6 +7,7 @@
 
 #include "game/galaxy.h"
 #include "game/config.h"
+#include "utils/vec.h"
 #include "utils/ring.h"
 #include "utils/htable.h"
 
@@ -50,7 +51,7 @@ struct class
     item_t *out;
     struct input *in;
 };
-static_assert(sizeof(class) <= cache_line);
+static_assert(sizeof(struct class) <= s_cache_line);
 
 
 static struct class *class_alloc(item_t type)
@@ -60,8 +61,6 @@ static struct class *class_alloc(item_t type)
     struct class *class = calloc(1, sizeof(*class));
     *class = (struct class) {
         .type = type,
-        .ids = 1,
-
         .size = config->size,
         .init = config->init,
         .step = config->step,
@@ -74,9 +73,17 @@ static struct class *class_alloc(item_t type)
 static void class_free(struct class *class)
 {
     if (!class) return;
-    free(class->vma);
+    free(class->arena);
     free(class->in);
     free(class->out);
+}
+
+static void class_list(struct class *class, struct vec64 *ids)
+{
+    if (!class) return;
+
+    for (size_t i = 0; i < class->len; ++i)
+        vec64_append(ids, make_id(class->type, i));
 }
 
 static void *class_get(struct class *class, id_t id)
@@ -106,12 +113,12 @@ static void class_grow(struct class *class)
         return;
     }
 
-    clsas->cap *= 2;
+    class->cap *= 2;
     class->arena = reallocarray(class->arena, class->cap, class->size);
     class->in = reallocarray(class->arena, class->cap, sizeof(class->in[0]));
     class->out = reallocarray(class->out, class->cap, sizeof(class->out[0]));
 
-    size_t added = class->cap - class-len;
+    size_t added = class->cap - class->len;
     memset(class->arena + class->len, 0, added * class->size);
     memset(class->in + class->len, 0, added * sizeof(class->in[0]));
     memset(class->out + class->len, 0, added * sizeof(class->out[0]));
@@ -141,8 +148,8 @@ static void class_io_reset(struct class *class, id_t id)
     size_t index = id_bot(id);
     if (!class || index < class->len) return;
 
-    class->output[index] = 0;
-    class->input[index] = {0};
+    class->out[index] = 0;
+    class->in[index] = (struct input) {0};
 }
 
 static bool class_io_produce(struct class *class, id_t id, item_t item)
@@ -150,7 +157,7 @@ static bool class_io_produce(struct class *class, id_t id, item_t item)
     size_t index = id_bot(id);
     if (!class || index < class->len) return false;
 
-    item_t *output  = class->output[index];
+    item_t *output = &class->out[index];
     if (*output != ITEM_NIL) return false;
     *output = item;
     return true;
@@ -161,7 +168,7 @@ static void class_io_request(struct class *class, id_t id, item_t item)
     size_t index = id_bot(id);
     if (!class || index < class->len) return;
 
-    struct input *input = &class->input[index];
+    struct input *input = &class->in[index];
     assert(input->state == input_nil);
     input->item = item;
     input->state = input_requested;
@@ -170,10 +177,13 @@ static void class_io_request(struct class *class, id_t id, item_t item)
 static item_t class_io_consume(struct class *class, id_t id)
 {
     size_t index = id_bot(id);
-    if (!class || index < class->len) return;
+    if (!class || index < class->len) return ITEM_NIL;
 
-    item_t item = class->input[index];
-    class->input = ITEM_NIL;
+    struct input *input = &class->in[index];
+    if (input->state != input_received) return ITEM_NIL;
+
+    item_t item = input->item;
+    input->item = ITEM_NIL;
     return item;
 }
 
@@ -182,7 +192,7 @@ static void class_io_give(struct class *class, id_t id, item_t item)
     size_t index = id_bot(id);
     if (!class || index < class->len) return;
 
-    struct input *input = &class->input[index];
+    struct input *input = &class->in[index];
     assert(input->state == input_assigned);
     assert(input->item == item);
     input->state = input_received;
@@ -191,10 +201,10 @@ static void class_io_give(struct class *class, id_t id, item_t item)
 static item_t class_io_take(struct class *class, id_t id)
 {
     size_t index = id_bot(id);
-    if (!class || index < class->len) return;
+    if (!class || index < class->len) return ITEM_NIL;
 
-    item_t item = class->output[index];
-    class->output = ITEM_NIL;
+    item_t item = class->out[index];
+    class->out[index] = ITEM_NIL;
     return item;
 }
 
@@ -202,7 +212,7 @@ static struct input *class_io_input(struct class *class, id_t id)
 {
     size_t index = id_bot(id);
     if (!class || index < class->len) return NULL;
-    return &class->input[index];
+    return &class->in[index];
 }
 
 
@@ -242,9 +252,13 @@ struct star *chunk_star(struct chunk *chunk)
 
 bool chunk_harvest(struct chunk *chunk, item_t item)
 {
-    assert(item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST);
+    assert(item >= ITEM_NATURAL_FIRST && item < ITEM_SYNTH_FIRST);
 
+    uint16_t *elem = &chunk->star.elements[item];
+    if (!*elem) return false;
 
+    (*elem)--;
+    return true;
 }
 
 struct class *chunk_class(struct chunk *chunk, item_t item)
@@ -253,9 +267,23 @@ struct class *chunk_class(struct chunk *chunk, item_t item)
     return chunk->class[item - ITEM_ACTIVE_FIRST];
 }
 
+struct vec64* chunk_list(struct chunk *chunk)
+{
+    size_t len = 0;
+    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
+        if (chunk->class[i]) len += chunk->class[i]->len;
+    }
+
+    struct vec64 *ids = vec64_reserve(len);
+    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
+        class_list(chunk->class[i], ids);
+
+    return ids;
+}
+
 void *chunk_get(struct chunk *chunk, id_t id)
 {
-    class_get(chunk_class(chunk, id_item(item)), id);
+    return class_get(chunk_class(chunk, id), id);
 }
 
 void chunk_create(struct chunk *chunk, item_t item)
@@ -270,7 +298,7 @@ void chunk_create(struct chunk *chunk, item_t item)
 void chunk_step(struct chunk *chunk)
 {
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
-        class_step(chunk->class[i]);
+        class_step(chunk->class[i], chunk);
 }
 
 void chunk_io_reset(struct chunk *chunk, id_t id)
@@ -286,18 +314,20 @@ bool chunk_io_produce(struct chunk *chunk, id_t id, item_t item)
     struct ring32 *provided = NULL;
     struct htable_ret hret = htable_get(&chunk->provided, item);
 
-    if (likely(hret.ok)) provided = (struct ring32 *) ret.value;
+    if (likely(hret.ok)) provided = (struct ring32 *) hret.value;
     else {
-        provided = ring32_reserve(1);
-        hret = htable_put(&chunk->provided, provided);
+        struct ring32 *provided = ring32_reserve(1);
+        hret = htable_put(&chunk->provided, item, (uint64_t) provided);
         assert(hret.ok);
     }
 
     struct ring32 *rret = ring32_push(provided, id);
     if (unlikely(rret != provided)) {
-        hret = htable_xchg(&chunk->provided, item, rret);
+        hret = htable_xchg(&chunk->provided, item, (uint64_t) rret);
         assert(hret.ok);
     }
+
+    return true;
 }
 
 void chunk_io_request(struct chunk *chunk, id_t id, item_t item)
@@ -325,7 +355,7 @@ bool chunk_io_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
 {
     *dst = ring32_pop(chunk->requested);
 
-    struct input *input = class_io_input(&chunk_class(chunk, id_item(*dst)), id);
+    struct input *input = class_io_input(chunk_class(chunk, id_item(*dst)), *dst);
     assert(input);
 
     struct htable_ret hret = htable_get(&chunk->provided, *item);

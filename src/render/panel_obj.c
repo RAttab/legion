@@ -8,8 +8,7 @@
 #include "render/panel.h"
 #include "render/core.h"
 #include "game/item.h"
-#include "game/hunk.h"
-#include "game/obj.h"
+#include "game/chunk.h"
 #include "utils/log.h"
 #include "SDL.h"
 
@@ -406,8 +405,8 @@ static void pobj_update(struct pobj_state *state)
 {
     assert(state->id && !coord_null(state->star));
 
-    struct hunk *hunk = sector_hunk(core.state.sector, state->star);
-    state->obj = hunk_obj(hunk, state->id);
+    struct chunk *chunk = sector_chunk(core.state.sector, state->star);
+    state->obj = chunk_get(chunk, state->id);
     assert(state->obj);
 
     state->click.ip.disabled = !state->obj->mod;

@@ -10,7 +10,7 @@
 #include "game/coord.h"
 #include "utils/htable.h"
 
-struct hunk;
+struct chunk;
 
 // -----------------------------------------------------------------------------
 // star
@@ -29,7 +29,7 @@ struct legion_packed star
     enum star_state state;
 
     uint32_t power;
-    uint16_t elements[elem_natural_len];
+    uint16_t elements[ITEMS_NATURAL_LEN];
 
     legion_pad(16);
 };
@@ -45,7 +45,7 @@ void star_gen(struct star *star, struct coord coord);
 struct sector
 {
     struct coord coord;
-    struct htable hunks;
+    struct htable chunks;
     struct htable index;
 
     size_t stars_len;
@@ -55,8 +55,8 @@ struct sector
 struct sector *sector_gen(struct coord coord);
 void sector_preload(struct sector *);
 
-struct hunk *sector_hunk(struct sector *, struct coord coord);
-struct hunk *sector_hunk_alloc(struct sector *, struct coord coord);
+struct chunk *sector_chunk(struct sector *, struct coord coord);
+struct chunk *sector_chunk_alloc(struct sector *, struct coord coord);
 
 const struct star *sector_star(struct sector *, const struct rect *);
 

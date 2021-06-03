@@ -13,7 +13,6 @@
 #include "game/galaxy.h"
 #include "game/atoms.h"
 #include "vm/mod.h"
-#include "db/db.h"
 #include "utils/log.h"
 #include "utils/time.h"
 
@@ -37,7 +36,6 @@ static void state_init()
 
     core.state.sector = sector_gen((struct coord) { .x = 0x0101, .y = 0x0101 });
     sector_preload(core.state.sector);
-    db_items_load();
 }
 
 static void state_close() {}

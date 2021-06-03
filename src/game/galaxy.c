@@ -4,8 +4,7 @@
 */
 
 #include "galaxy.h"
-#include "game/hunk.h"
-#include "game/obj.h"
+#include "game/chunk.h"
 #include "utils/rng.h"
 
 // -----------------------------------------------------------------------------
@@ -26,7 +25,7 @@ void star_gen(struct star *star, struct coord coord)
     for (size_t planet = 0; planet < planets; ++planet) {
         size_t size = rng_norm(&rng, 1, 16);
         for (size_t roll = 0; roll < size; ++roll) {
-            size_t elem = rng_exp(&rng, 0, elem_natural_len);
+            size_t elem = rng_exp(&rng, 0, ITEMS_NATURAL_LEN);
             star->elements[elem] =
                 u16_saturate_add(star->elements[elem], 1U << size);
         }
@@ -71,37 +70,37 @@ struct sector *sector_gen(struct coord coord)
 }
 
 
-struct hunk *sector_hunk_alloc(struct sector *sector, struct coord coord)
+struct chunk *sector_chunk_alloc(struct sector *sector, struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
 
-    struct hunk *hunk = sector_hunk(sector, coord);
-    if (likely(hunk != NULL)) return hunk;
+    struct chunk *chunk = sector_chunk(sector, coord);
+    if (likely(chunk != NULL)) return chunk;
 
     struct htable_ret ret = htable_get(&sector->index, id);
     struct star *star = (void *) ret.value;
     assert(ret.ok);
 
-    hunk = hunk_alloc(star);
-    ret = htable_put(&sector->hunks, id, (uint64_t) hunk);
+    chunk = chunk_alloc(star);
+    ret = htable_put(&sector->chunks, id, (uint64_t) chunk);
     assert(ret.ok);
 
     star->state = star_active;
-    return hunk;
+    return chunk;
 }
 
-struct hunk *sector_hunk(struct sector *sector, struct coord coord)
+struct chunk *sector_chunk(struct sector *sector, struct coord coord)
 {
     uint64_t id = coord_to_id(coord);
-    struct htable_ret ret = htable_get(&sector->hunks, id);
+    struct htable_ret ret = htable_get(&sector->chunks, id);
     return ret.ok ? (void *) ret.value : NULL;
 }
 
 void sector_step(struct sector *sector)
 {
-    struct htable_bucket *bucket = htable_next(&sector->hunks, NULL);
-    for (; bucket; bucket = htable_next(&sector->hunks, bucket))
-        hunk_step((void *) bucket->value);
+    struct htable_bucket *bucket = htable_next(&sector->chunks, NULL);
+    for (; bucket; bucket = htable_next(&sector->chunks, bucket))
+        chunk_step((void *) bucket->value);
 }
 
 const struct star *sector_star(struct sector *sector, const struct rect *rect)
@@ -119,9 +118,6 @@ void sector_preload(struct sector *sector)
     size_t i = rng_uni(&rng, 0, sector->stars_len);
     struct star *star = &sector->stars[i];
 
-    struct hunk *hunk = sector_hunk_alloc(sector, star->coord);
-    for (size_t i = 0; i < 5; ++i) {
-        struct obj *obj = worker_alloc(hunk);
-        obj_load(obj, 1);
-    }
+    struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
+    chunk_create(chunk, ITEM_MINER);
 }

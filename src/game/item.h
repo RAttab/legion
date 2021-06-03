@@ -107,12 +107,11 @@ inline void id_str(id_t id, size_t len, char *dst)
     assert(len >= id_str_len);
 
     switch(id_item(id)) {
-    case ITEM_BRAIN: { dst[0] = 'b'; break; }
+    case ITEM_CORE: { dst[0] = 'c'; break; }
     case ITEM_WORKER: { dst[0] = 'w'; break; }
     case ITEM_PRINTER: { dst[0] = 'p'; break; }
-    case ITEM_LAB: { dst[0] = 'l'; break; }
-    case ITEM_COMM: { dst[0] = 'c'; break; }
-    case ITEM_SHIP: { dst[0] = 's'; break; }
+    case ITEM_MINER: { dst[0] = 'm'; break; }
+    case ITEM_DEPLOYER: { dst[0] = 'd'; break; }
     default: { assert(false && "unsuported item in id_str"); }
     }
 

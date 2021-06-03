@@ -59,30 +59,17 @@ void atoms_register(void)
 #undef reg_ele
 
 #define reg_atom(atom) atoms_reg(atom, #atom, sizeof(#atom))
-    reg_atom(ITEM_BRAIN);
+    reg_atom(ITEM_CORE);
     reg_atom(ITEM_WORKER);
     reg_atom(ITEM_PRINTER);
-    reg_atom(ITEM_LAB);
-    reg_atom(ITEM_COMM);
-    reg_atom(ITEM_SHIP);
+    reg_atom(ITEM_MINER);
+    reg_atom(ITEM_DEPLOYER);
 
     reg_atom(IO_NOOP);
     reg_atom(IO_OK);
     reg_atom(IO_FAIL);
 
-    reg_atom(IO_ID);
-    reg_atom(IO_TARGET);
-    reg_atom(IO_SEND);
-    reg_atom(IO_SENDN);
-    reg_atom(IO_RECV);
-    reg_atom(IO_RECVN);
-    reg_atom(IO_CARGO);
-    reg_atom(IO_VENT);
-
-    reg_atom(IO_DOCK);
-    reg_atom(IO_UNDOCK);
-    reg_atom(IO_TAKE);
-    reg_atom(IO_PUT);
-    reg_atom(IO_HARVEST);
+    reg_atom(IO_RESET);
+    reg_atom(IO_PROG);
 #undef reg_atom
 }

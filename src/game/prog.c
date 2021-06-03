@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "program.h"
+#include "prog.h"
 
 
 #include "render/core.h"
@@ -40,17 +40,17 @@ struct prog_it prog_begin(const struct prog *prog)
 }
 
 
-struct prog_ret prog_peek(struct prog_it *it)
+struct prog_ret prog_peek(const struct prog_it *it)
 {
     struct prog_ret ret = { .state = prog_eof };
 
-    if (it->index < prog->inputs) {
+    if (it->index < it->prog->inputs) {
         ret.state = prog_input;
-        ret.item = prog->tape[it->index];
+        ret.item = it->prog->tape[it->index];
     }
-    else if (it->index < prog->inputs + prog->outputs) {
+    else if (it->index < it->prog->inputs + it->prog->outputs) {
         ret.state = prog_output;
-        ret.item = prog->tape[it->index];
+        ret.item = it->prog->tape[it->index];
     }
 
     return ret;
@@ -60,7 +60,7 @@ struct prog_ret prog_peek(struct prog_it *it)
 struct prog_ret prog_next(struct prog_it *it)
 {
     struct prog_ret ret = prog_peek(it);
-    if (ret.state != prog_eof) index++;
+    if (ret.state != prog_eof) it->index++;
     return ret;
 }
 
@@ -83,7 +83,7 @@ const struct prog *prog_fetch(prog_id_t prog)
 }
 
 
-static char *prog_hex(const char *it, const char *end, uint8_t *ret)
+static const char *prog_hex(const char *it, const char *end, uint8_t *ret)
 {
     uint8_t val = 0;
 
@@ -103,7 +103,7 @@ static char *prog_hex(const char *it, const char *end, uint8_t *ret)
 }
 
 
-static char *prog_expect(const char *it, const char *end, char exp)
+static const char *prog_expect(const char *it, const char *end, char exp)
 {
     assert(it < end);
     assert(*it == exp);
@@ -119,7 +119,7 @@ static struct prog *prog_read(const char *it, const char *end)
     size_t line_len = end - it;
     assert(line_len % 3 == 0);
 
-    size_t tape_len = len / 3 - 2;
+    size_t tape_len = line_len / 3 - 2;
     assert(tape_len >= 1);
 
     struct prog *prog = calloc(1, sizeof(*prog) + tape_len * sizeof(prog->tape[0]));
@@ -160,7 +160,7 @@ static struct prog *prog_read(const char *it, const char *end)
 
   out:
     assert(state != prog_eof);
-    assert(prog->inputs + prog_outputs > 0);
+    assert(prog->inputs + prog->outputs > 0);
     return prog;
 }
 
@@ -169,6 +169,9 @@ void prog_load()
 {
     char path[PATH_MAX] = {0};
     core_path_res("progs.db", path, sizeof(path));
+
+    int fd = open(path, O_RDONLY);
+    if (fd == -1) fail_errno("failed to open: %s", path);
 
     struct stat stat = {0};
     if (fstat(fd, &stat) < 0) fail_errno("failed to stat: %s", path);

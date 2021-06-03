@@ -11,7 +11,7 @@
 #include "game/item.h"
 #include "game/coord.h"
 #include "game/galaxy.h"
-#include "game/hunk.h"
+#include "game/chunk.h"
 #include "utils/log.h"
 #include "utils/vec.h"
 #include "SDL.h"
@@ -59,7 +59,7 @@ enum
     pstar_objs_list_len = id_str_len + ui_toggle_layout_cols,
     pstar_objs_list_total_len = pstar_objs_list_len + ui_scroll_layout_cols,
 };
-static_assert(elem_natural_len <= pstar_elems_cols * pstar_elems_rows);
+static_assert(ITEMS_NATURAL_LEN <= pstar_elems_cols * pstar_elems_rows);
 
 static const char pstar_power_str[] = "power:";
 static const char pstar_objs_str[] = "objects:";
@@ -119,10 +119,10 @@ static void pstar_render_elems(
 {
     struct layout_entry *layout = layout_entry(state->layout, pstar_elems);
 
-    for (size_t elem = 0; elem < elem_natural_len; ++elem) {
+    for (size_t elem = 0; elem < ITEMS_NATURAL_LEN; ++elem) {
         size_t row = elem / pstar_elems_cols;
         size_t col = elem % pstar_elems_cols;
-        if (elem == elem_natural_len - 1) col = 2;
+        if (elem == ITEMS_NATURAL_LEN - 1) col = 2;
         SDL_Point pos = layout_entry_index_pos(layout, row, col * pstar_elem_len);
 
         char elem_str[] = {'A'+elem, ':'};
@@ -199,12 +199,12 @@ static void pstar_update(struct pstar_state *state)
 {
     pstar_reset(state);
 
-    struct hunk *hunk = sector_hunk(core.state.sector, state->star.coord);
-    if (!hunk) return;
+    struct chunk *chunk = sector_chunk(core.state.sector, state->star.coord);
+    if (!chunk) return;
 
-    state->objs = hunk_list(hunk);
+    state->objs = chunk_list(chunk);
     state->toggles = calloc(vec64_len(state->objs), sizeof(*state->toggles));
-    memcpy(&state->star, hunk_star(hunk), sizeof(state->star));
+    memcpy(&state->star, chunk_star(chunk), sizeof(state->star));
 
     struct layout_entry *layout = layout_entry(state->layout, pstar_objs_list);
     struct SDL_Rect rect = layout_abs(state->layout, pstar_objs_list);

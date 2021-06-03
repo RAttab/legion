@@ -3,7 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "miner.h"
+#include "game/atoms.h"
+#include "game/item.h"
+#include "game/chunk.h"
+#include "game/config.h"
 
 // -----------------------------------------------------------------------------
 // miner
@@ -26,10 +29,10 @@ static void miner_init(void *state, id_t id, struct chunk *chunk)
     *miner = (struct miner) { .id = id, 0 };
 }
 
-static void miner_step_eof(struct miner *miner, struct chunk *chunk)
+static void miner_step_eof(struct miner *miner)
 {
     if (miner->loops != UINT32_MAX) miner->loops--;
-    if (miner->loops) miner->it = prog_begin(prog);
+    if (miner->loops) miner->it = prog_begin(miner->prog);
 }
 
 static void miner_step_input(struct miner *miner, struct chunk *chunk, item_t item)
@@ -45,7 +48,7 @@ static void miner_step_input(struct miner *miner, struct chunk *chunk, item_t it
 
     assert(consumed == item);
     miner->blocked = false;
-    prog_next(miner->it);
+    prog_next(&miner->it);
 }
 
 static void miner_step_output(struct miner *miner, struct chunk *chunk, item_t item)
@@ -65,7 +68,7 @@ static void miner_step(void *state, struct chunk *chunk)
 
     struct prog_ret ret = prog_peek(&miner->it);
     switch (ret.state) {
-    case prog_eof: { miner_step_eof(miner, chunk); return; }
+    case prog_eof: { miner_step_eof(miner); return; }
     case prog_input: { miner_step_input(miner, chunk, ret.item); return; }
     case prog_output: { miner_step_output(miner, chunk, ret.item); return; }
     default: { assert(false); }
@@ -74,7 +77,7 @@ static void miner_step(void *state, struct chunk *chunk)
 
 static void miner_reset(struct miner *miner, struct chunk *chunk)
 {
-    chunk_reset(chunk, miner->id);
+    chunk_io_reset(chunk, miner->id);
     miner->blocked = false;
     miner->loops = 0;
     miner->prog = NULL;
@@ -84,12 +87,12 @@ static void miner_reset(struct miner *miner, struct chunk *chunk)
 static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
 {
     uint32_t id, loops;
-    vm_unpack(&arg, &id, &num);
+    vm_unpack(arg, &id, &loops);
 
     if (!loops) loops = UINT32_MAX;
     if (id != (prog_id_t) id) return;
 
-    struct prog *prog = prog_fetch(id);
+    const struct prog *prog = prog_fetch(id);
     if (!prog) return;
 
     miner_reset(miner, chunk);
@@ -101,6 +104,7 @@ static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
 static void miner_cmd(
         void *state, struct chunk *chunk, id_t src, enum atom_io cmd, word_t arg)
 {
+    (void) src;
     struct miner *miner = state;
 
     switch (cmd) {
@@ -112,11 +116,11 @@ static void miner_cmd(
 
 const struct item_config *miner_config(void)
 {
-    static struct item_config {
+    static const struct item_config config = {
         .size = sizeof(struct miner),
-        .cmd = miner_cmd,
         .init = miner_init,
-        .step = miner_step;
-    } config;
+        .step = miner_step,
+        .cmd = miner_cmd,
+    };
     return &config;
 }
