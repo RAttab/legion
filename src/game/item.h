@@ -65,10 +65,11 @@ enum item
 
     // Actives
     ITEM_ACTIVE_FIRST = 0xD0,
-    ITEM_CORE = 0xD0,
-    ITEM_WORKER,
-    ITEM_PRINTER,
-    ITEM_MINER,
+    ITEM_CORE     = 0xD0,
+    ITEM_WORKER   = 0xD1,
+    ITEM_PRINTER  = 0xD2,
+    ITEM_MINER    = 0xD3,
+    ITEM_DEPLOYER = 0xD4,
     ITEM_ACTIVE_LAST,
 
     ITEM_MAX,
@@ -148,33 +149,4 @@ inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
 {
     ssize_t count = cargo_count(cargo);
     return (cargo & ~0xFF) | i64_max(0, count - val);
-}
-
-
-// -----------------------------------------------------------------------------
-// elements
-// -----------------------------------------------------------------------------
-
-enum { elements_len = 26 };
-typedef uint32_t elements_t [elements_len];
-
-
-// -----------------------------------------------------------------------------
-// schema
-// -----------------------------------------------------------------------------
-
-enum { schema_len = 3*3*3 };
-typedef item_t schema_t[schema_len];
-
-inline item_t *schema_idx(schema_t schema, size_t x, size_t y, size_t z)
-{
-    return &schema[x + y*3 + z*3*3];
-}
-
-inline uint64_t schema_hash(const schema_t schema)
-{
-    uint64_t hash = 0xcbf29ce484222325;
-    for (size_t i = 0; i < schema_len; ++i)
-        hash = (hash ^ schema[i]) * 0x100000001b3;
-    return hash;
 }

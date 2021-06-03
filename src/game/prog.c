@@ -31,6 +31,7 @@ struct prog
 
 
 prog_id_t prog_id(const struct prog *prog) { return prog->id; }
+item_t prog_host(const struct prog *prog) { return prog->host; }
 
 
 struct prog_it prog_begin(const struct prog *prog)
@@ -39,19 +40,27 @@ struct prog_it prog_begin(const struct prog *prog)
 }
 
 
-struct prog_ret prog_next(struct prog_it *it)
+struct prog_ret prog_peek(struct prog_it *it)
 {
     struct prog_ret ret = { .state = prog_eof };
 
     if (it->index < prog->inputs) {
         ret.state = prog_input;
-        ret.item = prog->tape[it->index++];
+        ret.item = prog->tape[it->index];
     }
     else if (it->index < prog->inputs + prog->outputs) {
         ret.state = prog_output;
-        ret.item = prog->tape[it->index++];
+        ret.item = prog->tape[it->index];
     }
 
+    return ret;
+}
+
+
+struct prog_ret prog_next(struct prog_it *it)
+{
+    struct prog_ret ret = prog_peek(it);
+    if (ret.state != prog_eof) index++;
     return ret;
 }
 
@@ -176,11 +185,14 @@ void prog_load()
         const char *line = it;
         while (*it != '\n' && it < end) it++;
 
-        struct prog *prog = prog_read(line, it);
-        assert(prog);
+        if (it != line) {
+            struct prog *prog = prog_read(line, it);
+            assert(prog);
 
-        struct htable_ret ret = htable_put(&progs.index, prog->id, (uint64_t) prog);
-        assert(ret.ok);
+            struct htable_ret ret = htable_put(&progs.index, prog->id, (uint64_t) prog);
+            assert(ret.ok);
+        }
+        it++;
     }
 
     munmap(base, len);

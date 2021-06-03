@@ -18,29 +18,8 @@ enum atom_io
     IO_OK,
     IO_FAIL,
 
-    // Common
-    IO_ID,
-    IO_TARGET,
-    IO_SEND,
-    IO_SENDN,
-    IO_RECV,
-    IO_RECVN,
-    IO_CARGO,
-    IO_VENT,
-
-    // Worker
-    IO_DOCK,
-    IO_UNDOCK,
-    IO_TAKE,
-    IO_PUT,
-    IO_HARVEST,
-
-    // Printer
-    IO_PICK,
-    IO_MOVE,
-    IO_PRINT,
-    IO_PROGRAM,
-    IO_OUTPUT,
+    IO_RESET,
+    IO_PROG,
     
     ATOM_IO_MAX,
     ATOM_IO_CAP = 0x8FFFFFFF,

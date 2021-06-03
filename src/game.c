@@ -6,6 +6,8 @@
 #include "game/coord.c"
 #include "game/atoms.c"
 #include "game/galaxy.c"
-#include "game/hunk.c"
-#include "game/obj.c"
-#include "game/worker.c"
+#include "game/prog.c"
+#include "game/chunk.c"
+#include "game/config.c"
+
+#include "game/miner.c"

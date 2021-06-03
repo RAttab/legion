@@ -6,6 +6,7 @@
 #include "chunk.h"
 
 #include "game/galaxy.h"
+#include "game/config.h"
 #include "utils/ring.h"
 #include "utils/htable.h"
 
@@ -36,12 +37,14 @@ struct class
     item_t type;
     uint8_t size;
     uint8_t create;
-    legion_pad(1);
+    legion_pad(2);
 
     uint16_t len, cap;
+    legion_pad(4);
 
     init_fn_t init;
     step_fn_t step;
+    cmd_fn_t cmd;
 
     void *arena;
     item_t *out;
@@ -52,16 +55,17 @@ static_assert(sizeof(class) <= cache_line);
 
 static struct class *class_alloc(item_t type)
 {
-    struct item_config config = item_config(type);
+    const struct item_config *config = item_config(type);
 
     struct class *class = calloc(1, sizeof(*class));
     *class = (struct class) {
         .type = type,
         .ids = 1,
 
-        .size = config.size,
-        .init = config.init,
-        .step = config.step,
+        .size = config->size,
+        .init = config->init,
+        .step = config->step,
+        .cmd = config->cmd,
     };
 
     return class;
@@ -141,7 +145,7 @@ static void class_io_reset(struct class *class, id_t id)
     class->input[index] = {0};
 }
 
-static bool class_io_provide(struct class *class, id_t id, item_t item)
+static bool class_io_output(struct class *class, id_t id, item_t item)
 {
     size_t index = id_bot(id);
     if (!class || index < class->len) return false;
@@ -161,6 +165,16 @@ static void class_io_request(struct class *class, id_t id, item_t item)
     assert(input->state == input_nil);
     input->item = item;
     input->state = input_requested;
+}
+
+static item_t class_io_consume(struct class *class, id_t id)
+{
+    size_t index = id_bot(id);
+    if (!class || index < class->len) return;
+
+    item_t item = class->input[index];
+    class->input = ITEM_NIL;
+    return item;
 }
 
 static void class_io_give(struct class *class, id_t id, item_t item)
@@ -226,6 +240,13 @@ struct star *chunk_star(struct chunk *chunk)
     return &chunk->star;
 }
 
+bool chunk_harvest(struct chunk *chunk, item_t item)
+{
+    assert(item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST);
+
+
+}
+
 struct class *chunk_class(struct chunk *chunk, item_t item)
 {
     assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
@@ -283,6 +304,11 @@ void chunk_io_ask(struct chunk *chunk, id_t id, item_t item)
 {
     class_io_ask(chunk_class(chunk, id_item(id)), id, item);
     ring32_push(chunk->requested, id);
+}
+
+item_t chunk_io_consume(struct chunk *chunk, id_t id)
+{
+    return class_io_consume(chunk_class(chunk, id_item(id)), id);
 }
 
 void chunk_io_give(struct chunk *chunk, id_t id, item_t item)
