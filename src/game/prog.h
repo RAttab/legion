@@ -11,15 +11,9 @@
 // prog
 // -----------------------------------------------------------------------------
 
-typedef uint8_t prog_id_t;
-
 struct prog;
 
-struct prog_it
-{
-    const struct prog *prog;
-    uint16_t index;
-};
+typedef uint8_t prog_id_t;
 
 enum prog_state
 {
@@ -39,6 +33,4 @@ const struct prog *prog_fetch(prog_id_t prog);
 
 prog_id_t prog_id(const struct prog *);
 item_t prog_host(const struct prog *);
-struct prog_it prog_begin(const struct prog *);
-struct prog_ret prog_peek(const struct prog_it *it);
-struct prog_ret prog_next(struct prog_it *it);
+struct prog_ret prog_at(const struct prog *, uint16_t index);

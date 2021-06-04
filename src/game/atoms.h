@@ -18,9 +18,12 @@ enum atom_io
     IO_OK,
     IO_FAIL,
 
+    IO_PING,
+    IO_PONG,
+
     IO_RESET,
     IO_PROG,
-    
+
     ATOM_IO_MAX,
     ATOM_IO_CAP = 0x8FFFFFFF,
 };

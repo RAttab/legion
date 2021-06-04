@@ -33,34 +33,19 @@ struct prog
 prog_id_t prog_id(const struct prog *prog) { return prog->id; }
 item_t prog_host(const struct prog *prog) { return prog->host; }
 
-
-struct prog_it prog_begin(const struct prog *prog)
-{
-    return (struct prog_it) { .prog = prog, .index = 0 };
-}
-
-
-struct prog_ret prog_peek(const struct prog_it *it)
+struct prog_ret prog_at(const struct prog *prog, uint16_t index)
 {
     struct prog_ret ret = { .state = prog_eof };
 
-    if (it->index < it->prog->inputs) {
+    if (index < prog->inputs) {
         ret.state = prog_input;
-        ret.item = it->prog->tape[it->index];
+        ret.item = prog->tape[index];
     }
-    else if (it->index < it->prog->inputs + it->prog->outputs) {
+    else if (index < prog->inputs + prog->outputs) {
         ret.state = prog_output;
-        ret.item = it->prog->tape[it->index];
+        ret.item = prog->tape[index];
     }
 
-    return ret;
-}
-
-
-struct prog_ret prog_next(struct prog_it *it)
-{
-    struct prog_ret ret = prog_peek(it);
-    if (ret.state != prog_eof) it->index++;
     return ret;
 }
 

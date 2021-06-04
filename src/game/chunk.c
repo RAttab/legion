@@ -143,6 +143,18 @@ static void class_step(struct class *class, struct chunk *chunk)
     }
 }
 
+static bool class_cmd(
+        struct class *class, struct chunk *chunk,
+        enum atom_io cmd, id_t src, id_t dst, word_t arg)
+{
+    void *state = class_get(class, dst);
+    if (!state) return false;
+
+    class->cmd(state, chunk, cmd, src, arg);
+    return true;
+}
+
+
 static void class_io_reset(struct class *class, id_t id)
 {
     size_t index = id_bot(id);
@@ -253,11 +265,9 @@ struct star *chunk_star(struct chunk *chunk)
 bool chunk_harvest(struct chunk *chunk, item_t item)
 {
     assert(item >= ITEM_NATURAL_FIRST && item < ITEM_SYNTH_FIRST);
+    if (!chunk->star.elements[item]) return false;
 
-    uint16_t *elem = &chunk->star.elements[item];
-    if (!*elem) return false;
-
-    (*elem)--;
+    chunk->star.elements[item]--;
     return true;
 }
 
@@ -299,6 +309,11 @@ void chunk_step(struct chunk *chunk)
 {
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
         class_step(chunk->class[i], chunk);
+}
+
+bool chunk_cmd(struct chunk *chunk, enum atom_io cmd, id_t src, id_t dst, word_t arg)
+{
+    return class_cmd(chunk_class(chunk, id_item(dst)), chunk, cmd, src, dst, arg);
 }
 
 void chunk_io_reset(struct chunk *chunk, id_t id)

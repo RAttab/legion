@@ -19,7 +19,7 @@ struct miner
     uint32_t loops;
 
     const struct prog *prog;
-    struct prog_it it;
+    uint16_t index;
 };
 
 static void miner_init(void *state, id_t id, struct chunk *chunk)
@@ -32,7 +32,7 @@ static void miner_init(void *state, id_t id, struct chunk *chunk)
 static void miner_step_eof(struct miner *miner)
 {
     if (miner->loops != UINT32_MAX) miner->loops--;
-    if (miner->loops) miner->it = prog_begin(miner->prog);
+    if (miner->loops) miner->index = 0;
 }
 
 static void miner_step_input(struct miner *miner, struct chunk *chunk, item_t item)
@@ -48,7 +48,7 @@ static void miner_step_input(struct miner *miner, struct chunk *chunk, item_t it
 
     assert(consumed == item);
     miner->blocked = false;
-    prog_next(&miner->it);
+    miner->index++;
 }
 
 static void miner_step_output(struct miner *miner, struct chunk *chunk, item_t item)
@@ -58,7 +58,7 @@ static void miner_step_output(struct miner *miner, struct chunk *chunk, item_t i
     }
 
     miner->blocked = !chunk_io_produce(chunk, miner->id, item);
-    if (!miner->blocked) prog_next(&miner->it);
+    if (!miner->blocked) miner->index++;
 }
 
 static void miner_step(void *state, struct chunk *chunk)
@@ -66,7 +66,7 @@ static void miner_step(void *state, struct chunk *chunk)
     struct miner *miner = state;
     if (!miner->prog) return;
 
-    struct prog_ret ret = prog_peek(&miner->it);
+    struct prog_ret ret = prog_at(miner->prog, miner->index);
     switch (ret.state) {
     case prog_eof: { miner_step_eof(miner); return; }
     case prog_input: { miner_step_input(miner, chunk, ret.item); return; }
@@ -78,10 +78,13 @@ static void miner_step(void *state, struct chunk *chunk)
 static void miner_reset(struct miner *miner, struct chunk *chunk)
 {
     chunk_io_reset(chunk, miner->id);
-    miner->blocked = false;
-    miner->loops = 0;
-    miner->prog = NULL;
-    miner->it = (struct prog_it) {0};
+    *miner = (struct miner) {
+        .id = miner->id,
+        .blocked = false,
+        .loops = 0,
+        .prog = NULL,
+        .index = 0,
+    };
 }
 
 static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
@@ -98,20 +101,18 @@ static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
     miner_reset(miner, chunk);
     miner->loops = loops;
     miner->prog = prog;
-    miner->it = prog_begin(prog);
 }
 
 static void miner_cmd(
-        void *state, struct chunk *chunk, id_t src, enum atom_io cmd, word_t arg)
+        void *state, struct chunk *chunk, enum atom_io cmd, id_t src, word_t arg)
 {
     (void) src;
     struct miner *miner = state;
 
-    switch (cmd) {
-    case IO_PROG: { miner_prog(miner, chunk, arg); return; }
-    case IO_RESET: { miner_reset(miner, chunk); return; }
-    default: { return; }
-    }
+    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, miner->id, src, 0); return; }
+    if (cmd == IO_PROG) { miner_prog(miner, chunk, arg); return; }
+    if (cmd == IO_RESET) { miner_prog(miner, chunk, arg); return; }
+    return;
 }
 
 const struct item_config *miner_config(void)
