@@ -21,7 +21,7 @@ struct legion_packed printer
     id_t id;
     uint16_t loops;
     uint8_t blocked; // bool would take 4 bits.
-    prog_id_t index;
+    prog_it_t index;
     const struct prog *prog;
 };
 
@@ -108,7 +108,7 @@ static void printer_cmd_prog(struct printer *printer, struct chunk *chunk, word_
     if (id != (prog_id_t) id) return;
 
     const struct prog *prog = prog_fetch(id);
-    if (!prog || prog_host(id) != ITEM_PRINTER) return;
+    if (!prog || prog_host(prog) != ITEM_PRINTER) return;
 
     printer_cmd_reset(printer, chunk);
     printer->loops = loops;
