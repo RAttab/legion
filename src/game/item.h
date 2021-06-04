@@ -65,11 +65,16 @@ enum item
 
     // Actives
     ITEM_ACTIVE_FIRST = 0xD0,
-    ITEM_CORE     = 0xD0,
-    ITEM_WORKER   = 0xD1,
-    ITEM_PRINTER  = 0xD2,
-    ITEM_MINER    = 0xD3,
-    ITEM_DEPLOYER = 0xD4,
+    ITEM_WORKER   = 0xD0,
+    ITEM_PRINTER  = 0xD1,
+    ITEM_MINER    = 0xD2,
+    ITEM_DEPLOYER = 0xD3,
+    ITEM_CORE_S   = 0xE0,
+    ITEM_CORE_M   = 0xE1,
+    ITEM_CORE_L   = 0xE2,
+    ITEM_DB_S     = 0xE8,
+    ITEM_DB_M     = 0xE9,
+    ITEM_DB_L     = 0xEA,
     ITEM_ACTIVE_LAST,
 
     ITEM_MAX,
@@ -107,11 +112,21 @@ inline void id_str(id_t id, size_t len, char *dst)
     assert(len >= id_str_len);
 
     switch(id_item(id)) {
-    case ITEM_CORE: { dst[0] = 'c'; break; }
     case ITEM_WORKER: { dst[0] = 'w'; break; }
     case ITEM_PRINTER: { dst[0] = 'p'; break; }
     case ITEM_MINER: { dst[0] = 'm'; break; }
     case ITEM_DEPLOYER: { dst[0] = 'd'; break; }
+
+    case ITEM_CORE_S:
+    case ITEM_CORE_M:
+    case ITEM_CORE_L:
+    { dst[0] = 'C'; break; }
+
+    case ITEM_DB_S:
+    case ITEM_DB_M:
+    case ITEM_DB_L:
+    { dst[0] = 'D'; break; }
+
     default: { assert(false && "unsuported item in id_str"); }
     }
 

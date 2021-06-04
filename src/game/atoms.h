@@ -24,6 +24,10 @@ enum atom_io
     IO_RESET,
     IO_PROG,
 
+    IO_GET,
+    IO_SET,
+    IO_VAL,
+
     ATOM_IO_MAX,
     ATOM_IO_CAP = 0x8FFFFFFF,
 };

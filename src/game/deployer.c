@@ -101,7 +101,7 @@ static void deployer_cmd_reset(struct deployer *deployer, struct chunk *chunk)
 static void deployer_cmd_prog(
         struct deployer *deployer, struct chunk *chunk, size_t len, const word_t *args)
 {
-    assert(len >= 1);
+    if (len < 1) return;
 
     uint32_t id, loops;
     vm_unpack(args[0], &id, &loops);

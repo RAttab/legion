@@ -102,7 +102,7 @@ static void printer_cmd_reset(struct printer *printer, struct chunk *chunk)
 static void printer_cmd_prog(
         struct printer *printer, struct chunk *chunk, size_t len, const word_t *args)
 {
-    assert(len >= 1);
+    if (len < 1) return;
 
     uint32_t id, loops;
     vm_unpack(args[0], &id, &loops);
