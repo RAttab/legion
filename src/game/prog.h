@@ -13,8 +13,8 @@
 
 struct prog;
 
-typedef uint8_t prog_id_t;
 typedef uint8_t prog_it_t;
+typedef uint16_t prog_id_t;
 
 enum prog_state
 {

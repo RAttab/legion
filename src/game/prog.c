@@ -23,7 +23,7 @@
 
 struct prog
 {
-    uint8_t id;
+    prog_id_t id;
     item_t host;
     uint8_t inputs, outputs;
     item_t tape[];
@@ -67,26 +67,39 @@ const struct prog *prog_fetch(prog_id_t prog)
     return (const struct prog *) ret.value;
 }
 
-
-static const char *prog_hex(const char *it, const char *end, uint8_t *ret)
+static const char *prog_hex(
+        const char *it, const char *end, uint64_t *ret, size_t bytes)
 {
-    uint8_t val = 0;
+    size_t len = bytes * 2;
+    assert(it + len < end);
+    assert(len >= 2 && len <= 16);
 
-    assert(it < end);
-    val = str_charhex(*it);
-    assert(val != 0xFF);
-    *ret = val << 4;
-    it++;
-
-    assert(it < end);
-    val = str_charhex(*it);
-    assert(val != 0xFF);
-    *ret |= val;
-    it++;
+    *ret = 0;
+    do {
+        uint8_t val = str_charhex(*it);
+        assert(val != 0xFF);
+        *ret = val << 4;
+        it++;
+    } while (--len);
 
     return it;
 }
 
+static const char *prog_hex16(const char *it, const char *end, uint16_t *ret)
+{
+    uint64_t value = 0;
+    it = prog_hex(it, end, &value, sizeof(*ret));
+    *ret = value;
+    return it;
+}
+
+static const char *prog_hex8(const char *it, const char *end, uint8_t *ret)
+{
+    uint64_t value = 0;
+    it = prog_hex(it, end, &value, sizeof(*ret));
+    *ret = value;
+    return it;
+}
 
 static const char *prog_expect(const char *it, const char *end, char exp)
 {
@@ -96,9 +109,9 @@ static const char *prog_expect(const char *it, const char *end, char exp)
 }
 
 
-// 00:00<00,00,00,00>00,00.
-// 00:00<00,00,00,00.
-// 00:00>00,00,00,00.
+// 0000:00<00,00,00,00>00,00.
+// 0000:00<00,00,00,00.
+// 0000:00>00,00,00,00.
 static struct prog *prog_read(const char *it, const char *end)
 {
     size_t line_len = end - it;
@@ -109,9 +122,9 @@ static struct prog *prog_read(const char *it, const char *end)
 
     struct prog *prog = calloc(1, sizeof(*prog) + tape_len * sizeof(prog->tape[0]));
 
-    it = prog_hex(it, end, &prog->id);
+    it = prog_hex16(it, end, &prog->id);
     it = prog_expect(it, end, ':');
-    it = prog_hex(it, end, &prog->host);
+    it = prog_hex8(it, end, &prog->host);
 
     size_t index = 0;
     enum prog_state state = prog_eof;
@@ -139,7 +152,7 @@ static struct prog *prog_read(const char *it, const char *end)
         default: { assert(false); }
         }
 
-        it = prog_hex(it, end, &prog->tape[index]);
+        it = prog_hex8(it, end, &prog->tape[index]);
         index++;
     }
 
