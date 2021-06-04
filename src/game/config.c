@@ -17,6 +17,9 @@ const struct item_config *item_config(item_t item)
     case ITEM_MINER: return miner_config();
     case ITEM_DEPLOYER: return deployer_config();
 
+    case ITEM_BRAIN_S:
+    case ITEM_BRAIN_M:
+    case ITEM_BRAIN_L: return brain_config(item);
     case ITEM_DB_S:
     case ITEM_DB_M:
     case ITEM_DB_L: return db_config(item);

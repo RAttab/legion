@@ -10,13 +10,11 @@
 // atoms_io
 // -----------------------------------------------------------------------------
 
-enum atom_io
+enum legion_packed atom_io
 {
-    ATOM_IO_MIN = 0x80000000,
+    ATOM_IO_MIN = 1 << 31,
 
-    IO_NOOP,
-    IO_OK,
-    IO_FAIL,
+    IO_NIL = ATOM_IO_MIN,
 
     IO_PING,
     IO_PONG,
@@ -28,8 +26,10 @@ enum atom_io
     IO_SET,
     IO_VAL,
 
+    IO_SEND,
+    IO_RECV,
+
     ATOM_IO_MAX,
-    ATOM_IO_CAP = 0x8FFFFFFF,
 };
 
 void atoms_register(void);

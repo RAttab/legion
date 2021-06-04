@@ -69,9 +69,9 @@ enum item
     ITEM_PRINTER  = 0xD1,
     ITEM_MINER    = 0xD2,
     ITEM_DEPLOYER = 0xD3,
-    ITEM_CORE_S   = 0xE0,
-    ITEM_CORE_M   = 0xE1,
-    ITEM_CORE_L   = 0xE2,
+    ITEM_BRAIN_S  = 0xE0,
+    ITEM_BRAIN_M  = 0xE1,
+    ITEM_BRAIN_L  = 0xE2,
     ITEM_DB_S     = 0xE8,
     ITEM_DB_M     = 0xE9,
     ITEM_DB_L     = 0xEA,
@@ -117,15 +117,12 @@ inline void id_str(id_t id, size_t len, char *dst)
     case ITEM_MINER: { dst[0] = 'm'; break; }
     case ITEM_DEPLOYER: { dst[0] = 'd'; break; }
 
-    case ITEM_CORE_S:
-    case ITEM_CORE_M:
-    case ITEM_CORE_L:
-    { dst[0] = 'C'; break; }
-
+    case ITEM_BRAIN_S:
+    case ITEM_BRAIN_M:
+    case ITEM_BRAIN_L: { dst[0] = 'B'; break; }
     case ITEM_DB_S:
     case ITEM_DB_M:
-    case ITEM_DB_L:
-    { dst[0] = 'D'; break; }
+    case ITEM_DB_L: { dst[0] = 'D'; break; }
 
     default: { assert(false && "unsuported item in id_str"); }
     }

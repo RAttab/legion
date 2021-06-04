@@ -14,4 +14,5 @@
 #include "game/printer.c"
 #include "game/miner.c"
 #include "game/deployer.c"
+#include "game/brain.c"
 #include "game/db.c"

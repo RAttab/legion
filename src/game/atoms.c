@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include "atoms.h"
-#include "vm/vm.h"
+#include "game/atoms.h"
 #include "game/item.h"
+#include "vm/vm.h"
+
 
 // -----------------------------------------------------------------------------
-// atoms_io
+// atoms
 // -----------------------------------------------------------------------------
 
 static void atoms_reg(unsigned val, const char *str, size_t len)
@@ -64,18 +65,26 @@ void atoms_register(void)
     reg_atom(ITEM_MINER);
     reg_atom(ITEM_DEPLOYER);
 
-    reg_atom(ITEM_CORE_S);
-    reg_atom(ITEM_CORE_M);
-    reg_atom(ITEM_CORE_L);
+    reg_atom(ITEM_BRAIN_S);
+    reg_atom(ITEM_BRAIN_M);
+    reg_atom(ITEM_BRAIN_L);
     reg_atom(ITEM_DB_S);
     reg_atom(ITEM_DB_M);
     reg_atom(ITEM_DB_L);
 
-    reg_atom(IO_NOOP);
-    reg_atom(IO_OK);
-    reg_atom(IO_FAIL);
+    reg_atom(IO_NIL);
+
+    reg_atom(IO_PING);
+    reg_atom(IO_PONG);
 
     reg_atom(IO_RESET);
     reg_atom(IO_PROG);
+
+    reg_atom(IO_GET);
+    reg_atom(IO_SET);
+    reg_atom(IO_VAL);
+
+    reg_atom(IO_SEND);
+    reg_atom(IO_RECV);
 #undef reg_atom
 }

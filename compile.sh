@@ -25,7 +25,7 @@ CFLAGS="$CFLAGS -Wcast-align"
 CFLAGS="$CFLAGS -Wwrite-strings"
 CFLAGS="$CFLAGS -Wunreachable-code"
 CFLAGS="$CFLAGS -Wformat=2"
-CFLAGS="$CFLAGS -Wswitch-enum"
+# CFLAGS="$CFLAGS -Wswitch-enum" // while often useful, it limits what you can do with enums
 CFLAGS="$CFLAGS -Winit-self"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
 CFLAGS="$CFLAGS -Wno-address-of-packed-member" # very annoying
