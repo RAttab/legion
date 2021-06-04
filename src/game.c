@@ -11,4 +11,5 @@
 #include "game/config.c"
 
 #include "game/worker.c"
+#include "game/printer.c"
 #include "game/miner.c"

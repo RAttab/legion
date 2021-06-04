@@ -111,7 +111,7 @@ static void miner_cmd_prog(struct miner *miner, struct chunk *chunk, word_t arg)
     if (id != (prog_id_t) id) return;
 
     const struct prog *prog = prog_fetch(id);
-    if (!prog) return;
+    if (!prog || prog_host(id) != ITEM_MINER) return;
 
     miner_cmd_reset(miner, chunk);
     miner->loops = loops;
