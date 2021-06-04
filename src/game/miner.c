@@ -12,15 +12,18 @@
 // miner
 // -----------------------------------------------------------------------------
 
-struct miner
+static const uint16_t miner_loop_inf = UINT16_MAX;
+
+struct legion_packed miner
 {
     id_t id;
-    bool blocked;
-    uint32_t loops;
-
+    uint16_t loops;
+    uint8_t blocked; // bool would take 4 bits.
+    prog_it_t index;
     const struct prog *prog;
-    uint16_t index;
 };
+
+static_assert(sizeof(struct miner) == 16);
 
 static void miner_init(void *state, id_t id, struct chunk *chunk)
 {
@@ -31,7 +34,7 @@ static void miner_init(void *state, id_t id, struct chunk *chunk)
 
 static void miner_step_eof(struct miner *miner)
 {
-    if (miner->loops != UINT32_MAX) miner->loops--;
+    if (miner->loops != miner_loop_inf) miner->loops--;
     if (miner->loops) miner->index = 0;
 }
 
@@ -92,7 +95,7 @@ static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
     uint32_t id, loops;
     vm_unpack(arg, &id, &loops);
 
-    if (!loops) loops = UINT32_MAX;
+    if (!loops) loops = miner_loop_inf;
     if (id != (prog_id_t) id) return;
 
     const struct prog *prog = prog_fetch(id);

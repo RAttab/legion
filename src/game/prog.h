@@ -14,6 +14,7 @@
 struct prog;
 
 typedef uint8_t prog_id_t;
+typedef uint8_t prog_it_t;
 
 enum prog_state
 {
@@ -33,4 +34,4 @@ const struct prog *prog_fetch(prog_id_t prog);
 
 prog_id_t prog_id(const struct prog *);
 item_t prog_host(const struct prog *);
-struct prog_ret prog_at(const struct prog *, uint16_t index);
+struct prog_ret prog_at(const struct prog *, prog_it_t index);

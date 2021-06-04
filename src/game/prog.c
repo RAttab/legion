@@ -33,7 +33,7 @@ struct prog
 prog_id_t prog_id(const struct prog *prog) { return prog->id; }
 item_t prog_host(const struct prog *prog) { return prog->host; }
 
-struct prog_ret prog_at(const struct prog *prog, uint16_t index)
+struct prog_ret prog_at(const struct prog *prog, prog_it_t index)
 {
     struct prog_ret ret = { .state = prog_eof };
 
