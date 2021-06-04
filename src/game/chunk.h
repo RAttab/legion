@@ -31,7 +31,9 @@ void *chunk_get(struct chunk *, id_t);
 void chunk_create(struct chunk *, item_t);
 
 void chunk_step(struct chunk *);
-bool chunk_cmd(struct chunk *, enum atom_io cmd, id_t src, id_t dst, word_t arg);
+bool chunk_cmd(
+        struct chunk *,
+        enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args);
 
 void chunk_io_reset(struct chunk *, id_t);
 

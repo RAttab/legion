@@ -79,12 +79,13 @@ static void worker_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void worker_cmd(
-        void *state, struct chunk *chunk, enum atom_io cmd, id_t src, word_t arg)
+        void *state, struct chunk *chunk,
+        enum atom_io cmd, id_t src, size_t len, const word_t *args)
 {
     struct worker *worker = state;
-    (void) src, (void) arg;
+    (void) src, (void) len, (void) args;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, worker->id, src, 0); return; }
+    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, worker->id, src, 0, NULL); return; }
     return;
 }
 

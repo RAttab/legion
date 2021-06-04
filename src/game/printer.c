@@ -99,10 +99,13 @@ static void printer_cmd_reset(struct printer *printer, struct chunk *chunk)
     };
 }
 
-static void printer_cmd_prog(struct printer *printer, struct chunk *chunk, word_t arg)
+static void printer_cmd_prog(
+        struct printer *printer, struct chunk *chunk, size_t len, const word_t *args)
 {
+    assert(len >= 1);
+
     uint32_t id, loops;
-    vm_unpack(arg, &id, &loops);
+    vm_unpack(args[0], &id, &loops);
 
     if (!loops) loops = printer_loop_inf;
     if (id != (prog_id_t) id) return;
@@ -116,14 +119,15 @@ static void printer_cmd_prog(struct printer *printer, struct chunk *chunk, word_
 }
 
 static void printer_cmd(
-        void *state, struct chunk *chunk, enum atom_io cmd, id_t src, word_t arg)
+        void *state, struct chunk *chunk,
+        enum atom_io cmd, id_t src, size_t len, const word_t *args)
 {
     struct printer *printer = state;
     (void) src;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, printer->id, src, 0); return; }
-    if (cmd == IO_PROG) { printer_cmd_prog(printer, chunk, arg); return; }
-    if (cmd == IO_RESET) { printer_cmd_prog(printer, chunk, arg); return; }
+    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, printer->id, src, 0, NULL); return; }
+    if (cmd == IO_PROG) { printer_cmd_prog(printer, chunk, len, args); return; }
+    if (cmd == IO_RESET) { printer_cmd_reset(printer, chunk); return; }
     return;
 }
 

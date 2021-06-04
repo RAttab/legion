@@ -59,11 +59,17 @@ void atoms_register(void)
 #undef reg_ele
 
 #define reg_atom(atom) atoms_reg(atom, #atom, sizeof(#atom))
-    reg_atom(ITEM_CORE);
     reg_atom(ITEM_WORKER);
     reg_atom(ITEM_PRINTER);
     reg_atom(ITEM_MINER);
     reg_atom(ITEM_DEPLOYER);
+
+    reg_atom(ITEM_CORE_S);
+    reg_atom(ITEM_CORE_M);
+    reg_atom(ITEM_CORE_L);
+    reg_atom(ITEM_DB_S);
+    reg_atom(ITEM_DB_M);
+    reg_atom(ITEM_DB_L);
 
     reg_atom(IO_NOOP);
     reg_atom(IO_OK);

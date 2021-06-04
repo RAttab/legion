@@ -102,10 +102,13 @@ static void miner_cmd_reset(struct miner *miner, struct chunk *chunk)
     };
 }
 
-static void miner_cmd_prog(struct miner *miner, struct chunk *chunk, word_t arg)
+static void miner_cmd_prog(
+        struct miner *miner, struct chunk *chunk, size_t len, const word_t *args)
 {
+    assert(len >= 1);
+
     uint32_t id, loops;
-    vm_unpack(arg, &id, &loops);
+    vm_unpack(args[0], &id, &loops);
 
     if (!loops) loops = miner_loop_inf;
     if (id != (prog_id_t) id) return;
@@ -119,14 +122,15 @@ static void miner_cmd_prog(struct miner *miner, struct chunk *chunk, word_t arg)
 }
 
 static void miner_cmd(
-        void *state, struct chunk *chunk, enum atom_io cmd, id_t src, word_t arg)
+        void *state, struct chunk *chunk,
+        enum atom_io cmd, id_t src, size_t len, const word_t *args)
 {
     struct miner *miner = state;
     (void) src;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, miner->id, src, 0); return; }
-    if (cmd == IO_PROG) { miner_cmd_prog(miner, chunk, arg); return; }
-    if (cmd == IO_RESET) { miner_cmd_prog(miner, chunk, arg); return; }
+    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, miner->id, src, 0, NULL); return; }
+    if (cmd == IO_PROG) { miner_cmd_prog(miner, chunk, len, args); return; }
+    if (cmd == IO_RESET) { miner_cmd_reset(miner, chunk); return; }
     return;
 }
 

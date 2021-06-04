@@ -18,7 +18,9 @@ struct chunk;
 
 typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
 typedef void (*step_fn_t) (void *state, struct chunk *);
-typedef void (*cmd_fn_t) (void *state, struct chunk *, enum atom_io cmd, id_t src, word_t arg);
+typedef void (*cmd_fn_t) (
+        void *state, struct chunk *,
+        enum atom_io cmd, id_t src, size_t len, const word_t *args);
 
 struct item_config
 {

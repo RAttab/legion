@@ -98,10 +98,13 @@ static void deployer_cmd_reset(struct deployer *deployer, struct chunk *chunk)
     };
 }
 
-static void deployer_cmd_prog(struct deployer *deployer, struct chunk *chunk, word_t arg)
+static void deployer_cmd_prog(
+        struct deployer *deployer, struct chunk *chunk, size_t len, const word_t *args)
 {
+    assert(len >= 1);
+
     uint32_t id, loops;
-    vm_unpack(arg, &id, &loops);
+    vm_unpack(args[0], &id, &loops);
 
     if (!loops) loops = deployer_loop_inf;
     if (id != (prog_id_t) id) return;
@@ -115,14 +118,15 @@ static void deployer_cmd_prog(struct deployer *deployer, struct chunk *chunk, wo
 }
 
 static void deployer_cmd(
-        void *state, struct chunk *chunk, enum atom_io cmd, id_t src, word_t arg)
+        void *state, struct chunk *chunk,
+        enum atom_io cmd, id_t src, size_t len, const word_t *args)
 {
     struct deployer *deployer = state;
     (void) src;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, deployer->id, src, 0); return; }
-    if (cmd == IO_PROG) { deployer_cmd_prog(deployer, chunk, arg); return; }
-    if (cmd == IO_RESET) { deployer_cmd_prog(deployer, chunk, arg); return; }
+    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, deployer->id, src, 0, NULL); return; }
+    if (cmd == IO_PROG) { deployer_cmd_prog(deployer, chunk, len, args); return; }
+    if (cmd == IO_RESET) { deployer_cmd_reset(deployer, chunk); return; }
     return;
 }
 
@@ -141,4 +145,3 @@ const struct item_config *deployer_config(void)
     };
     return &config;
 }
-

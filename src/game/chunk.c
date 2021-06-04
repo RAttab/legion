@@ -127,6 +127,7 @@ static void class_grow(struct class *class)
 static void class_step(struct class *class, struct chunk *chunk)
 {
     if (!class) return;
+    if (!class->step) return;
 
     void *end = class->arena + class->len * class->size;
     for (void *it = class->arena; it < end; it += class->size)
@@ -145,12 +146,12 @@ static void class_step(struct class *class, struct chunk *chunk)
 
 static bool class_cmd(
         struct class *class, struct chunk *chunk,
-        enum atom_io cmd, id_t src, id_t dst, word_t arg)
+        enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args)
 {
     void *state = class_get(class, dst);
     if (!state) return false;
 
-    class->cmd(state, chunk, cmd, src, arg);
+    class->cmd(state, chunk, cmd, src, len, args);
     return true;
 }
 
@@ -311,9 +312,12 @@ void chunk_step(struct chunk *chunk)
         class_step(chunk->class[i], chunk);
 }
 
-bool chunk_cmd(struct chunk *chunk, enum atom_io cmd, id_t src, id_t dst, word_t arg)
+bool chunk_cmd(
+        struct chunk *chunk,
+        enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args)
 {
-    return class_cmd(chunk_class(chunk, id_item(dst)), chunk, cmd, src, dst, arg);
+    struct class *class = chunk_class(chunk, id_item(dst));
+    return class_cmd(class, chunk, cmd, src, dst, len, args);
 }
 
 void chunk_io_reset(struct chunk *chunk, id_t id)
