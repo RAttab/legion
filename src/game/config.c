@@ -15,6 +15,7 @@ const struct item_config *item_config(item_t item)
     case ITEM_WORKER: return worker_config();
     case ITEM_PRINTER: return printer_config();
     case ITEM_MINER: return miner_config();
+    case ITEM_DEPLOYER: return deployer_config();
     default: return NULL;
     }
 }

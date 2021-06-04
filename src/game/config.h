@@ -38,4 +38,5 @@ const struct item_config *item_config(item_t);
 const struct item_config *worker_config(void);
 const struct item_config *printer_config(void);
 const struct item_config *miner_config(void);
+const struct item_config *deployer_config(void);
 

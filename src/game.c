@@ -13,3 +13,4 @@
 #include "game/worker.c"
 #include "game/printer.c"
 #include "game/miner.c"
+#include "game/deployer.c"
