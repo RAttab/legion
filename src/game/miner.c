@@ -3,6 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "common.h"
 #include "game/atoms.h"
 #include "game/item.h"
 #include "game/chunk.h"
@@ -27,10 +28,16 @@ static_assert(sizeof(struct miner) == 16);
 
 static void miner_init(void *state, id_t id, struct chunk *chunk)
 {
-    (void) id; (void) chunk;
     struct miner *miner = state;
-    *miner = (struct miner) { .id = id, 0 };
+    (void) chunk;
+
+    *miner = (struct miner) { .id = id };
 }
+
+
+// -----------------------------------------------------------------------------
+// step
+// -----------------------------------------------------------------------------
 
 static void miner_step_eof(struct miner *miner)
 {
@@ -78,7 +85,12 @@ static void miner_step(void *state, struct chunk *chunk)
     }
 }
 
-static void miner_reset(struct miner *miner, struct chunk *chunk)
+
+// -----------------------------------------------------------------------------
+// cmd
+// -----------------------------------------------------------------------------
+
+static void miner_cmd_reset(struct miner *miner, struct chunk *chunk)
 {
     chunk_io_reset(chunk, miner->id);
     *miner = (struct miner) {
@@ -90,7 +102,7 @@ static void miner_reset(struct miner *miner, struct chunk *chunk)
     };
 }
 
-static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
+static void miner_cmd_prog(struct miner *miner, struct chunk *chunk, word_t arg)
 {
     uint32_t id, loops;
     vm_unpack(arg, &id, &loops);
@@ -101,7 +113,7 @@ static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
     const struct prog *prog = prog_fetch(id);
     if (!prog) return;
 
-    miner_reset(miner, chunk);
+    miner_cmd_reset(miner, chunk);
     miner->loops = loops;
     miner->prog = prog;
 }
@@ -109,14 +121,19 @@ static void miner_prog(struct miner *miner, struct chunk *chunk, word_t arg)
 static void miner_cmd(
         void *state, struct chunk *chunk, enum atom_io cmd, id_t src, word_t arg)
 {
-    (void) src;
     struct miner *miner = state;
+    (void) src;
 
     if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, miner->id, src, 0); return; }
-    if (cmd == IO_PROG) { miner_prog(miner, chunk, arg); return; }
-    if (cmd == IO_RESET) { miner_prog(miner, chunk, arg); return; }
+    if (cmd == IO_PROG) { miner_cmd_prog(miner, chunk, arg); return; }
+    if (cmd == IO_RESET) { miner_cmd_prog(miner, chunk, arg); return; }
     return;
 }
+
+
+// -----------------------------------------------------------------------------
+// config
+// -----------------------------------------------------------------------------
 
 const struct item_config *miner_config(void)
 {

@@ -12,6 +12,7 @@
 const struct item_config *item_config(item_t item)
 {
     switch (item) {
+    case ITEM_WORKER: return worker_config();
     case ITEM_MINER: return miner_config();
     default: return NULL;
     }

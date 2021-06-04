@@ -10,4 +10,5 @@
 #include "game/chunk.c"
 #include "game/config.c"
 
+#include "game/worker.c"
 #include "game/miner.c"

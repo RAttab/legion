@@ -28,6 +28,7 @@ CFLAGS="$CFLAGS -Wformat=2"
 CFLAGS="$CFLAGS -Wswitch-enum"
 CFLAGS="$CFLAGS -Winit-self"
 CFLAGS="$CFLAGS -Wno-implicit-fallthrough"
+CFLAGS="$CFLAGS -Wno-address-of-packed-member" # very annoying
 if [ ! -z "${VM_DEBUG}" ]; then CFLAGS="$CFLAGS -DVM_DEBUG"; fi
 
 LIBS="liblegion.a"

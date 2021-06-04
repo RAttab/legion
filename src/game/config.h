@@ -35,5 +35,6 @@ const struct item_config *item_config(item_t);
 // impl
 // -----------------------------------------------------------------------------
 
+const struct item_config *worker_config(void);
 const struct item_config *miner_config(void);
 
