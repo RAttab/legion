@@ -8,11 +8,9 @@
 #include "game/galaxy.c"
 #include "game/prog.c"
 #include "game/chunk.c"
-#include "game/config.c"
+#include "game/active.c"
 
+#include "game/progable.c"
 #include "game/worker.c"
-#include "game/printer.c"
-#include "game/miner.c"
-#include "game/deployer.c"
 #include "game/brain.c"
 #include "game/db.c"

@@ -7,7 +7,7 @@
 #include "game/atoms.h"
 #include "game/item.h"
 #include "game/chunk.h"
-#include "game/config.h"
+#include "game/active.h"
 
 
 // -----------------------------------------------------------------------------

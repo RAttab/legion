@@ -6,7 +6,7 @@
 #include "chunk.h"
 
 #include "game/galaxy.h"
-#include "game/config.h"
+#include "game/active.h"
 #include "utils/vec.h"
 #include "utils/ring.h"
 #include "utils/htable.h"

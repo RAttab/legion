@@ -1,5 +1,5 @@
-/* config.h
-   Rémi Attab (remi.attab@gmail.com), 03 Jun 2021
+/* active.h
+   Rémi Attab (remi.attab@gmail.com), 06 Jun 2021
    FreeBSD-style copyright and disclaimer apply
 */
 
@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "game/item.h"
+#include "game/prog.h"
 #include "vm/vm.h"
 
 struct chunk;
@@ -32,15 +33,31 @@ struct item_config
 
 const struct item_config *item_config(item_t);
 
+// -----------------------------------------------------------------------------
+// progable
+// -----------------------------------------------------------------------------
+
+enum legion_packed progable_state
+{
+    progable_nil = 0,
+    progable_blocked,
+    progable_error,
+};
+
+struct legion_packed progable
+{
+    id_t id;
+    uint16_t loops;
+    enum progable_state state;
+
+    prog_it_t index;
+    const struct prog *prog;
+};
+static_assert(sizeof(struct progable) == 16);
+
+static const uint16_t progable_loops_inf = UINT16_MAX;
+
 
 // -----------------------------------------------------------------------------
-// impl
+// else
 // -----------------------------------------------------------------------------
-
-const struct item_config *worker_config(void);
-const struct item_config *printer_config(void);
-const struct item_config *miner_config(void);
-const struct item_config *deployer_config(void);
-const struct item_config *brain_config(item_t);
-const struct item_config *db_config(item_t);
-
