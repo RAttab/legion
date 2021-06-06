@@ -51,20 +51,20 @@ static void worker_step(void *state, struct chunk *chunk)
     switch (worker->state) {
 
     case worker_idle: {
-        if (chunk_io_pair(chunk, &worker->item, &worker->src, &worker->dst))
+        if (chunk_ports_pair(chunk, &worker->item, &worker->src, &worker->dst))
             worker->state = worker_paired;
         return;
     }
 
     case worker_paired: {
-        item_t item = chunk_io_take(chunk, worker->src);
+        item_t item = chunk_ports_take(chunk, worker->src);
         assert(item == worker->item);
         worker->state = worker_loaded;
         return;
     }
 
     case worker_loaded: {
-        chunk_io_give(chunk, worker->dst, worker->item);
+        chunk_ports_give(chunk, worker->dst, worker->item);
         worker->state = worker_idle;
         return;
     }

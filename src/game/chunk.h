@@ -35,12 +35,12 @@ bool chunk_cmd(
         struct chunk *,
         enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args);
 
-void chunk_io_reset(struct chunk *, id_t);
+void chunk_ports_reset(struct chunk *, id_t);
 
-bool chunk_io_produce(struct chunk *, id_t, item_t);
-void chunk_io_request(struct chunk *, id_t, item_t);
-item_t chunk_io_consume(struct chunk *, id_t);
+bool chunk_ports_produce(struct chunk *, id_t, item_t);
+void chunk_ports_request(struct chunk *, id_t, item_t);
+item_t chunk_ports_consume(struct chunk *, id_t);
 
-void chunk_io_give(struct chunk *, id_t, item_t);
-item_t chunk_io_take(struct chunk *, id_t);
-bool chunk_io_pair(struct chunk *, item_t *item, id_t *src, id_t *dst);
+void chunk_ports_give(struct chunk *, id_t, item_t);
+item_t chunk_ports_take(struct chunk *, id_t);
+bool chunk_ports_pair(struct chunk *, item_t *item, id_t *src, id_t *dst);

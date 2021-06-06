@@ -37,12 +37,12 @@ static void progable_step_input(
         struct progable *progable, struct chunk *chunk, item_t item)
 {
     if (progable->state != progable_blocked) {
-        chunk_io_request(chunk, progable->id, item);
+        chunk_ports_request(chunk, progable->id, item);
         progable->state = progable_blocked;
         return;
     }
 
-    item_t consumed = chunk_io_consume(chunk, progable->id);
+    item_t consumed = chunk_ports_consume(chunk, progable->id);
     if (consumed == ITEM_NIL) return;
 
     assert(consumed == item);
@@ -66,7 +66,7 @@ static void progable_step_output(
         chunk_create(chunk, item);
         progable->index++;
     }
-    else if (chunk_io_produce(chunk, progable->id, item)) {
+    else if (chunk_ports_produce(chunk, progable->id, item)) {
         progable->state = progable_nil;
         progable->index++;
     }
@@ -94,7 +94,7 @@ static void progable_step(void *state, struct chunk *chunk)
 
 static void progable_cmd_reset(struct progable *progable, struct chunk *chunk)
 {
-    chunk_io_reset(chunk, progable->id);
+    chunk_ports_reset(chunk, progable->id);
     *progable = (struct progable) {
         .id = progable->id,
         .state = progable_nil,

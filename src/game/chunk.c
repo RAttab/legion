@@ -19,19 +19,24 @@
 typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
 typedef void (*step_fn_t) (void *state, struct chunk *);
 
-enum input_state
+enum ports_state
 {
-    input_nil = 0,
-    input_requested,
-    input_assigned,
-    input_received,
+    ports_nil = 0,
+    ports_requested,
+    ports_assigned,
+    ports_received,
 };
 
-struct legion_packed input
+struct legion_packed ports
 {
-    uint8_t state;
-    item_t item;
+    item_t in;
+    uint8_t in_state;
+    item_t out;
+    legion_pad(1);
 };
+
+static_assert(sizeof(struct ports) == 4);
+
 
 struct class
 {
@@ -48,8 +53,9 @@ struct class
     cmd_fn_t cmd;
 
     void *arena;
-    item_t *out;
-    struct input *in;
+    struct ports *ports;
+
+    legion_pad(8);
 };
 static_assert(sizeof(struct class) <= s_cache_line);
 
@@ -74,8 +80,7 @@ static void class_free(struct class *class)
 {
     if (!class) return;
     free(class->arena);
-    free(class->in);
-    free(class->out);
+    free(class->ports);
 }
 
 static void class_list(struct class *class, struct vec64 *ids)
@@ -107,21 +112,25 @@ static void class_grow(struct class *class)
 
     if (!class->len) {
         class->cap = 1;
+
         class->arena = calloc(class->cap, class->size);
-        class->in = calloc(class->cap, sizeof(class->in[0]));
-        class->out = calloc(class->cap, sizeof(class->out[0]));
+        class->ports = calloc(class->cap, sizeof(class->ports[0]));
+
+        assert((uintptr_t) class->arena % s_cache_line == 0);
+        assert((uintptr_t) class->ports % s_cache_line == 0);
         return;
     }
 
     class->cap *= 2;
     class->arena = reallocarray(class->arena, class->cap, class->size);
-    class->in = reallocarray(class->arena, class->cap, sizeof(class->in[0]));
-    class->out = reallocarray(class->out, class->cap, sizeof(class->out[0]));
+    class->ports = reallocarray(class->arena, class->cap, sizeof(class->ports[0]));
 
     size_t added = class->cap - class->len;
     memset(class->arena + class->len, 0, added * class->size);
-    memset(class->in + class->len, 0, added * sizeof(class->in[0]));
-    memset(class->out + class->len, 0, added * sizeof(class->out[0]));
+    memset(class->ports + class->len, 0, added * sizeof(class->ports[0]));
+
+    assert((uintptr_t) class->arena % s_cache_line == 0);
+    assert((uintptr_t) class->ports % s_cache_line == 0);
 }
 
 static void class_step(struct class *class, struct chunk *chunk)
@@ -155,77 +164,11 @@ static bool class_cmd(
     return true;
 }
 
-
-static void class_io_reset(struct class *class, id_t id)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return;
-
-    class->out[index] = 0;
-    class->in[index] = (struct input) {0};
-}
-
-static bool class_io_produce(struct class *class, id_t id, item_t item)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return false;
-
-    item_t *output = &class->out[index];
-    if (*output != ITEM_NIL) return false;
-    *output = item;
-    return true;
-}
-
-static void class_io_request(struct class *class, id_t id, item_t item)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return;
-
-    struct input *input = &class->in[index];
-    assert(input->state == input_nil);
-    input->item = item;
-    input->state = input_requested;
-}
-
-static item_t class_io_consume(struct class *class, id_t id)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return ITEM_NIL;
-
-    struct input *input = &class->in[index];
-    if (input->state != input_received) return ITEM_NIL;
-
-    item_t item = input->item;
-    input->item = ITEM_NIL;
-    return item;
-}
-
-static void class_io_give(struct class *class, id_t id, item_t item)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return;
-
-    struct input *input = &class->in[index];
-    assert(input->state == input_assigned);
-    assert(input->item == item);
-    input->state = input_received;
-}
-
-static item_t class_io_take(struct class *class, id_t id)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return ITEM_NIL;
-
-    item_t item = class->out[index];
-    class->out[index] = ITEM_NIL;
-    return item;
-}
-
-static struct input *class_io_input(struct class *class, id_t id)
+static struct ports *class_ports(struct class *class, id_t id)
 {
     size_t index = id_bot(id);
     if (!class || index < class->len) return NULL;
-    return &class->in[index];
+    return &class->ports[index];
 }
 
 
@@ -320,15 +263,21 @@ bool chunk_cmd(
     return class_cmd(class, chunk, cmd, src, dst, len, args);
 }
 
-void chunk_io_reset(struct chunk *chunk, id_t id)
+void chunk_ports_reset(struct chunk *chunk, id_t id)
 {
-    class_io_reset(chunk_class(chunk, id_item(id)), id);
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    if (!ports) return;
+
+    *ports = (struct ports) {0};
 }
 
-bool chunk_io_produce(struct chunk *chunk, id_t id, item_t item)
+bool chunk_ports_produce(struct chunk *chunk, id_t id, item_t item)
 {
-    if (!class_io_produce(chunk_class(chunk, id_item(id)), id, item))
-        return false;
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    if (!ports) return false;
+
+    if (ports->out != ITEM_NIL) return false;
+    ports->out = item;
 
     struct ring32 *provided = NULL;
     struct htable_ret hret = htable_get(&chunk->provided, item);
@@ -349,33 +298,56 @@ bool chunk_io_produce(struct chunk *chunk, id_t id, item_t item)
     return true;
 }
 
-void chunk_io_request(struct chunk *chunk, id_t id, item_t item)
+void chunk_ports_request(struct chunk *chunk, id_t id, item_t item)
 {
-    class_io_request(chunk_class(chunk, id_item(id)), id, item);
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    if (!ports) return;
+
+    assert(ports->in_state == ports_nil);
+    ports->in = item;
+    ports->in_state = ports_requested;
+
     ring32_push(chunk->requested, id);
 }
 
-item_t chunk_io_consume(struct chunk *chunk, id_t id)
+item_t chunk_ports_consume(struct chunk *chunk, id_t id)
 {
-    return class_io_consume(chunk_class(chunk, id_item(id)), id);
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    if (!ports) return ITEM_NIL;
+
+    if (ports->in_state != ports_received) return ITEM_NIL;
+    item_t ret = ports->in;
+    ports->in = ITEM_NIL;
+    return ret;
 }
 
-void chunk_io_give(struct chunk *chunk, id_t id, item_t item)
+void chunk_ports_give(struct chunk *chunk, id_t id, item_t item)
 {
-    class_io_give(chunk_class(chunk, id_item(id)), id, item);
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    if (!ports) return;
+
+    assert(ports->in_state == ports_assigned);
+    ports->in_state = ports_received;
+    ports->in = item;
 }
 
-item_t chunk_io_take(struct chunk *chunk, id_t id)
+item_t chunk_ports_take(struct chunk *chunk, id_t id)
 {
-    return class_io_take(chunk_class(chunk, id_item(id)), id);
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    if (!ports) return ITEM_NIL;
+
+    item_t ret = ports->out;
+    ports->out = ITEM_NIL;
+    return ret;
 }
 
-bool chunk_io_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
+bool chunk_ports_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
 {
     *dst = ring32_pop(chunk->requested);
 
-    struct input *input = class_io_input(chunk_class(chunk, id_item(*dst)), *dst);
-    assert(input);
+    struct ports *ports = class_ports(chunk_class(chunk, id_item(*dst)), *dst);
+    assert(ports);
+    *item = ports->in;
 
     struct htable_ret hret = htable_get(&chunk->provided, *item);
     if (!hret.ok) goto nomatch;
@@ -384,8 +356,7 @@ bool chunk_io_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
     if (ring32_empty(provided)) goto nomatch;
 
     *src = ring32_pop(provided);
-    *item = input->item;
-    input->state = input_assigned;
+    ports->in_state = ports_assigned;
     return true;
 
   nomatch:
