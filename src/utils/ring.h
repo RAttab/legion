@@ -47,7 +47,7 @@ inline uint32_t ring32_pop(struct ring32 *ring)
     return val;
 }
 
-inline struct ring32 *ring32_push(struct ring32 *ring, uint32_t val)
+static struct ring32 *ring32_push(struct ring32 *ring, uint32_t val)
 {
     if (unlikely(ring32_len(ring) == ring->cap)) {
         struct ring32 *new = ring32_reserve(ring->cap * 2);
