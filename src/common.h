@@ -42,6 +42,24 @@
 #define legion_concat(x, y) legion_concat_impl(x, y)
 #define legion_pad(n) uint8_t legion_concat(_pad_, __COUNTER__) [n]
 
+#define legion_assert_type_eq(x, y)                             \
+    static_assert(                                              \
+            _Generic((x), typeof(y): true, default: false),     \
+            "type mismatch: " #x " != " #y )
+
+#define legion_max(x, y) ({                                             \
+            legion_assert_type_eq(x, y);                                \
+            typeof(x) __x = (x);                                        \
+            typeof(y) __y = (y);                                        \
+            __x >= __y ? __x : __y;                                     \
+        })
+
+#define legion_min(x, y) ({                                             \
+            legion_assert_type_eq(x, y);                                \
+            typeof(x) __x = (x);                                        \
+            typeof(y) __y = (y);                                        \
+            __x <= __y ? __x : __y;                                     \
+        })
 
 // -----------------------------------------------------------------------------
 // constants
