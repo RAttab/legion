@@ -155,12 +155,13 @@ void font_text_size(struct font *font, size_t len, size_t *w, size_t *h)
 }
 
 void font_render(
-        struct font *font,
-        SDL_Renderer *renderer,
-        const char *str,
-        size_t len,
-        SDL_Point pos)
+        struct font *font, SDL_Renderer *renderer,
+        struct rgba color, SDL_Point pos,
+        const char *str, size_t len)
 {
+    sdl_err(SDL_SetTextureColorMod(font->tex, color.r, color.g, color.b));
+    sdl_err(SDL_SetTextureAlphaMod(font->tex, color.a));
+
     SDL_Rect src = { .x = 0, .y = 0, .w = font->glyph_w, .h = font->glyph_h };
     SDL_Rect dst = { .x = pos.x, .y = pos.y, .w = font->glyph_w, .h = font->glyph_h };
 

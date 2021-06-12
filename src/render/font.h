@@ -40,4 +40,7 @@ void font_close(struct font *);
 
 void font_reset(struct font *);
 void font_text_size(struct font *, size_t len, size_t *w, size_t *h);
-void font_render(struct font *, SDL_Renderer *, const char *str, size_t len, SDL_Point);
+void font_render(
+        struct font *, SDL_Renderer *,
+        SDL_Point, struct rgba,
+        const char *str, size_t len);
