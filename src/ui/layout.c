@@ -59,3 +59,17 @@ void layout_sep_y(struct layout *layout, int16_t px)
     layout->pos.y += px;
     layout->next_y = layout->pos.y;
 }
+
+void layout_mid(struct layout *layout, const struct widget *widget)
+{
+    int16_t x = layout->top.x + (layout->dim.w/2 - widget->dim.w/2);
+    assert(layout->pos.x < x);
+    layout->pos.x = x;
+}
+
+void layout_right(struct layout *layout, const struct widget *widget)
+{
+    int16_t x = layout->top.x + (layout->dim.w - widget->dim.w);
+    assert(layout->pos.x < x);
+    layout->pos.x = x;
+}

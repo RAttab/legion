@@ -27,30 +27,34 @@ static panel *panel_alloc(struct pos pos, struct dim dim)
                     dim.h - (panel_margin.h * 2)));
 
     panel->state = panel_visible;
-
-    struct font *font = font_mono4;
-    panel->close = button_const(font, "X");
-    panel->title = label_var(font, (panel->w.dim.w / font->glyph_w) - 3);
     return panel;
+}
+
+struct panel *panel_slim(struct pos pos, struct dim pos)
+{
+    return panel_alloc(pos, dim);
 }
 
 struct panel *panel_const(struct pos pos, struct dim dim, const char *str)
 {
     struct panel *panel = panel_alloc(pos, dim);
-    panel->title = label_const(str);
+
+    struct font *font = font_mono6;
+    panel->title = label_const(font, str);
+    panel->close = button_const(font, "X");
+
     return panel;
 }
 
 struct panel *panel_var(struct pos pos, struct dim pos, size_t len)
 {
     struct panel *panel = panel_alloc(pos, dim);
-    panel->title = label_var(len);
-    return panel;
-}
 
-struct panel *panel_set(struct panel *panel, const char *str, size_t len)
-{
-    label_set(panel->title, str, len);
+    struct font *font = font_mono6;
+    panel->title = label_var(font, len);
+    panel->close = button_const(font, "X");
+
+    return panel;
 }
 
 enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
@@ -71,7 +75,7 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
         // fallthrough
     }
     case SDL_MOUSEMOTION: {
-        if (button_event(panel->close, ev) == ui_consume) {
+        if (panel->close && button_event(panel->close, ev) == ui_consume) {
             if (panel->close->state == button_pressed) panel->state = panel_hidden;
             return ui_consume;
         }
@@ -89,26 +93,35 @@ struct layout panel_render(struct panel *panel, SDL_Renderer *renderer)
     struct SDL_Rect rect = widget_rect(&button->w);
     sdl_err(SDL_RenderSetClipRect(renderer, &rect));
 
-    rgba_render(make_gray_a(0x11, 0x88), renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &rect));
+    if (panel->title || panel->close) {
+        rgba_render(make_gray_a(0x11, 0x88), renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    rgba_render(make_gray(0x22), renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                        .x = rect.x, .y = rect.y,
-                        .w = rect.w, .h = panel->title->font->glyph_h }));
+        rgba_render(make_gray(0x22), renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                            .x = rect.x, .y = rect.y,
+                            .w = rect.w, .h = panel->title->font->glyph_h }));
 
-    rgba_render(make_gray(0x22), renderer);
-    sdl_err(SDL_RenderDrawRect(renderer, &rect));
+        rgba_render(make_gray(0x22), renderer);
+        sdl_err(SDL_RenderDrawRect(renderer, &rect));
+    }
 
     struct layout layout = panel->layout;
-    button_render(panel->close, &layout, renderer);
-    layout_ysep(&layout, 4);
 
-    panel->title->fg = panel->focus ? rgba_white() : rgba_gray(88);
-    label_render(panel->title, &layout, renderer);
+    if (panel->title) {
+        panel->title->fg = panel->focus ? rgba_white() : rgba_gray(88);
+        label_render(panel->title, &layout, renderer);
+    }
 
-    layout_next_row(&layout);
-    layout_sep_y(&layout, 4);
+    if (panel->close) {
+        layout_right(&layout, &panel->close->w);
+        button_render(panel->close, &layout, renderer);
+    }
+
+    if (panel->title || panel->close) {
+        layout_next_row(&layout);
+        layout_sep_y(&layout, 4);
+    }
 
     return layout;
 }

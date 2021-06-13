@@ -36,6 +36,12 @@ inline struct pos make_pos(int16_t x, int16_t y)
     return (struct pos) { .x = x, .y = y };
 }
 
+inline struct pos make_pos_from_rect(SDL_Rect rect)
+{
+    return make_pos(rect.x, rect.y);
+}
+
+
 inline bool pos_is_nil(struct pos pos) { return !pos.x && !pos.y; }
 
 
@@ -48,6 +54,11 @@ struct dim { int16_t w, h };
 inline struct dim make_dim(int16_t w, int16_t h)
 {
     return (struct dim) { .w = w, .h = h };
+}
+
+inline struct dim make_dim_from_rect(SDL_Rect rect)
+{
+    return make_dim(rect.w, rect.h);
 }
 
 inline bool dim_is_nil(struct dim dim) { return !dim.w && !dim.h; }
@@ -94,11 +105,13 @@ struct layout
 enum { layout_inf = -1 };
 
 struct layout make_layout(struct pos, struct dim);
-void layout_add(struct layout *layout, struct widget *widget);
+void layout_add(struct layout *, struct widget *);
 
-void layout_next_row(struct layout *layout);
-void layout_sep_x(struct layout *layout, int16_t px);
-void layout_sep_y(struct layout *layout, int16_t px);
+void layout_next_row(struct layout *);
+void layout_sep_x(struct layout *, int16_t px);
+void layout_sep_y(struct layout *, int16_t px);
+void layout_mid(struct layout *, const struct widget *);
+void layout_right(struct layout *, const struct widget *);
 
 inline bool layout_is_nil(struct layout *layout)
 {
@@ -272,9 +285,9 @@ struct panel
     struct button *close;
 };
 
+struct panel *panel_slim(struct pos, struct dim);
 struct panel *panel_const(struct pos, struct dim, const char *str);
 struct panel *panel_var(struct pos, struct dim, size_t len);
-struct panel *panel_set(struct panel *, const char *str, size_t len);
 
 enum ui_ret panel_event(struct panel *, const SDL_Event *);
 struct layout panel_render(struct panel *, SDL_Renderer *);
