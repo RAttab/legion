@@ -225,6 +225,32 @@ void toggle_render(struct toggle *, struct layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// scroll
+// -----------------------------------------------------------------------------
+
+struct scroll
+{
+    struct widget w;
+
+    size_t first, total, visible;
+    struct { int16_t y, top; } drag;
+};
+
+struct scroll *scroll_new(struct dim dim, size_t total, size_t visible);
+void scroll_move(struct scroll *, ssize_t inc);
+void scroll_update(struct scroll *, size_t total);
+
+enum ui_ret scroll_event(struct scroll *, const SDL_Event *);
+struct layout scroll_render(struct scroll *, struct layout *, SDL_Renderer *);
+
+inline size_t scroll_first(const struct scroll *scroll) { return scroll->first; }
+inline size_t scroll_last(const struct scroll *scroll)
+{
+    return legion_min(scroll->total, scroll->first + scroll->visible);
+}
+
+
+// -----------------------------------------------------------------------------
 // panel
 // -----------------------------------------------------------------------------
 
