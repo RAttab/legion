@@ -12,7 +12,7 @@
 // coord
 // -----------------------------------------------------------------------------
 
-void coord_str(struct coord coord, char *str, size_t len)
+size_t coord_str(struct coord coord, char *str, size_t len)
 {
     assert(len >= coord_str_len);
 
@@ -42,6 +42,7 @@ void coord_str(struct coord coord, char *str, size_t len)
     str[i++] = str_hexchar(coord.y >> 0);
 
     assert(i == coord_str_len);
+    return coord_str_len;
 }
 
 // -----------------------------------------------------------------------------
@@ -58,7 +59,7 @@ inline scale_t scale_inc(scale_t scale, int dir)
 }
 
 
-void scale_str(scale_t scale, char *str, size_t len)
+size_t scale_str(scale_t scale, char *str, size_t len)
 {
     assert(len >= scale_str_len);
 
@@ -76,6 +77,7 @@ void scale_str(scale_t scale, char *str, size_t len)
     str[i++] = str_hexchar(bot >> 0);
 
     assert(i == scale_str_len);
+    return scale_str_len;
 }
 
 

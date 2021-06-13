@@ -78,7 +78,7 @@ inline struct coord id_to_coord(uint64_t id)
 
 enum { coord_str_len = (2+1+2+1+4)*2 + 3 };
 
-void coord_str(struct coord coord, char *str, size_t len);
+size_t coord_str(struct coord coord, char *str, size_t len);
 
 
 // -----------------------------------------------------------------------------
@@ -128,7 +128,7 @@ inline int64_t scale_div(scale_t scale, int64_t value)
 }
 
 enum { scale_str_len = 1+2+1+2 };
-void scale_str(scale_t, char *str, size_t len);
+size_t scale_str(scale_t, char *str, size_t len);
 
 
 // -----------------------------------------------------------------------------
