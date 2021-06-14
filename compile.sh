@@ -8,7 +8,7 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${NK_REPO:="git@github.com:immediate-mode-ui/nuklear"}
 
 declare -a SRC
-SRC=(render game vm utils)
+SRC=(ui render game vm utils)
 
 declare -a TEST
 TEST=(coord vm)

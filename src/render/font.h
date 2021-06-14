@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "ui/ui.h"
 #include "SDL.h"
 
 // -----------------------------------------------------------------------------

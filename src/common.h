@@ -48,14 +48,12 @@
             "type mismatch: " #x " != " #y )
 
 #define legion_max(x, y) ({                                             \
-            legion_assert_type_eq(x, y);                                \
             typeof(x) __x = (x);                                        \
             typeof(y) __y = (y);                                        \
             __x >= __y ? __x : __y;                                     \
         })
 
 #define legion_min(x, y) ({                                             \
-            legion_assert_type_eq(x, y);                                \
             typeof(x) __x = (x);                                        \
             typeof(y) __y = (y);                                        \
             __x <= __y ? __x : __y;                                     \

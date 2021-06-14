@@ -8,7 +8,7 @@
 #include "render/font.h"
 #include "render/sprites.h"
 #include "render/map.h"
-#include "render/panel.h"
+#include "render/gui.h"
 #include "game/coord.h"
 #include "game/galaxy.h"
 #include "game/atoms.h"
@@ -118,23 +118,12 @@ static void cursor_render(SDL_Renderer *renderer)
 static void ui_init()
 {
     core.ui.map = map_new();
-    core.ui.mods = panel_mods_new();
-    core.ui.code = panel_code_new();
-    core.ui.star = panel_star_new();
-    core.ui.obj = panel_obj_new();
-    core.ui.menu = panel_menu_new();
-    core.ui.pos = panel_pos_new();
+    core.ui.topbar = ui_topbar_new();
 }
 
 static void ui_close()
 {
     map_free(core.ui.map);
-    panel_free(core.ui.menu);
-    panel_free(core.ui.mods);
-    panel_free(core.ui.code);
-    panel_free(core.ui.pos);
-    panel_free(core.ui.star);
-    panel_free(core.ui.obj);
 }
 
 static void ui_event(SDL_Event *event)
@@ -145,24 +134,14 @@ static void ui_event(SDL_Event *event)
                 core_quit();
     }
 
-    if (panel_event(core.ui.menu, event)) return;
-    if (panel_event(core.ui.mods, event)) return;
-    if (panel_event(core.ui.code, event)) return;
-    if (panel_event(core.ui.pos, event)) return;
-    if (panel_event(core.ui.star, event)) return;
-    if (panel_event(core.ui.obj, event)) return;
+    if (ui_topbar_event(core.ui.topbar, event)) return;
     if (map_event(core.ui.map, event)) return;
 }
 
 static void ui_render(SDL_Renderer *renderer)
 {
     map_render(core.ui.map, renderer);
-    panel_render(core.ui.menu, renderer);
-    panel_render(core.ui.mods, renderer);
-    panel_render(core.ui.code, renderer);
-    panel_render(core.ui.pos, renderer);
-    panel_render(core.ui.star, renderer);
-    panel_render(core.ui.obj, renderer);
+    ui_topbar_render(core.ui.topbar, renderer);
 }
 
 

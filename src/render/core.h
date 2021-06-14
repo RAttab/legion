@@ -10,7 +10,7 @@
 #include "SDL.h"
 
 struct map;
-struct panel;
+struct ui_topbar;
 struct sector;
 
 
@@ -61,12 +61,7 @@ struct core
 
     struct {
         struct map *map;
-        struct panel *menu;
-        struct panel *mods;
-        struct panel *code;
-        struct panel *pos;
-        struct panel *star;
-        struct panel *obj;
+        struct ui_topbar *topbar;
     } ui;
 
     struct {

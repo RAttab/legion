@@ -4,7 +4,10 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
+#include "ui/ui.h"
+#include "render/core.h"
+#include "render/font.h"
+#include "utils//sdl.h"
 
 
 // -----------------------------------------------------------------------------
@@ -43,18 +46,18 @@ struct button *button_var(struct font *font, size_t len)
     return button;
 }
 
-struct button *button_set(struct button *button, const char *str, size_t len)
+void button_set(struct button *button, const char *str, size_t len)
 {
     assert((void *)(button + 1) == (void *)button->str);
     assert(len <= button->len);
-    memcpy(button->str, str, len);
+    memcpy(button + 1, str, len);
 }
 
 enum ui_ret button_event(struct button *button, const SDL_Event *ev)
 {
     struct SDL_Rect rect = widget_rect(&button->w);
 
-    switch (event->type) {
+    switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
         SDL_Point point = core.cursor.point;
@@ -88,7 +91,10 @@ void button_render(
     case button_pressed: { rgba_render(rgba_gray(0x44), renderer); break; }
     default: { assert(false); }
     }
-    sdl_err(SDL_RenderFillRect(renderer, &wdidget_rect(&button->w)));
+    
+    SDL_Rect rect = widget_rect(&button->w);
+    sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    font_render(button->font, layout->renderer, button->fg, button->w.pos, str, len);
+    SDL_Point point = pos_as_point(button->w.pos);
+    font_render(button->font, renderer, point, button->fg, button->str, button->len);
 }

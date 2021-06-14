@@ -156,7 +156,7 @@ void font_text_size(struct font *font, size_t len, size_t *w, size_t *h)
 
 void font_render(
         struct font *font, SDL_Renderer *renderer,
-        struct rgba color, SDL_Point pos,
+        SDL_Point pos, struct rgba color,
         const char *str, size_t len)
 {
     sdl_err(SDL_SetTextureColorMod(font->tex, color.r, color.g, color.b));

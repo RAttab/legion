@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
+#include "ui/ui.h"
 
 
 // -----------------------------------------------------------------------------
@@ -17,16 +17,16 @@ struct layout layout_new(struct pos pos, struct dim dim)
         .top = make_pos(pos.x, pos.y),
         .dim = make_dim(dim.w, dim.h),
         .pad = make_dim(0, 0),
-        .pos = make_pos(dim.x, dim.y),
-        .next_y = dim.y,
+        .pos = make_pos(pos.x, pos.y),
+        .next_y = pos.y,
     };
 }
 
 void layout_add(struct layout *layout, struct widget *widget)
 {
-    if (wdiget->dim.h == layout_inf)
+    if (widget->dim.h == layout_inf)
         widget->dim.h = layout->dim.h - (layout->pos.y - layout->top.y);
-    if (wdiget->dim.w == layout_inf)
+    if (widget->dim.w == layout_inf)
         widget->dim.w = layout->dim.w - (layout->pos.x - layout->top.x);
 
     assert(layout->pos.x + widget->dim.w < layout->top.x + layout->dim.w);

@@ -4,7 +4,8 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
+#include "ui/ui.h"
+#include "render/font.h"
 
 
 // -----------------------------------------------------------------------------
@@ -43,18 +44,18 @@ struct toggle *toggle_var(struct font *font, size_t len)
     return toggle;
 }
 
-struct toggle *toggle_set(struct toggle *toggle, const char *str, size_t len)
+void toggle_set(struct toggle *toggle, const char *str, size_t len)
 {
     assert((void *)(toggle + 1) == (void *)toggle->str);
     assert(len <= toggle->len);
-    memcpy(toggle->str, str, len);
+    memcpy(toggle + 1, str, len);
 }
 
 enum ui_ret toggle_event(struct toggle *toggle, const SDL_Event *ev)
 {
     struct SDL_Rect rect = widget_rect(&toggle->w);
 
-    switch (event->type) {
+    switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
         SDL_Point point = core.cursor.point;
@@ -88,7 +89,10 @@ void toggle_render(
     case toggle_selected: { rgba_render(rgba_gray(0x66), renderer); break; }
     default: { assert(false); }
     }
-    sdl_err(SDL_RenderFillRect(renderer, &wdidget_rect(&toggle->w)));
+    
+    SDL_Rect rect = widget_rect(&toggle->w);
+    sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    font_render(toggle->font, layout->renderer, toggle->fg, toggle->w.pos, str, len);
+    SDL_Point point = pos_as_point(toggle->w.pos);
+    font_render(toggle->font, renderer, point, toggle->fg, toggle->str, toggle->len);
 }

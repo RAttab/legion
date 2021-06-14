@@ -3,15 +3,17 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "common.h"
+#include "render/gui.h"
+#include "ui/ui.h"
+
+
 // -----------------------------------------------------------------------------
 // topbar
 // -----------------------------------------------------------------------------
 
-struct topbar
+struct ui_topbar
 {
-    scale_t scale;
-    struct coord coord;
-
     struct panel *panel;
     struct button *mods;
     struct label *coord;
@@ -24,27 +26,32 @@ enum
     topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + scale_str_len+1,
 };
 
-void topbar_init(struct topbar *topbar)
+struct ui_topbar *ui_topbar_new(void)
 {
     struct font *font = font_mono6;
-    topbar->panel = panel_slim(make_pos(0, 0), make_dim(core.rect.w, 12));
-    topbar->mods = buttom_const(font, "M");
-    topbar->coord = label_var(font, topbar_coord_len);
-    topbar->close = button_const(font, "X");
+    struct ui_topbar *topbar = calloc(1, sizeof(*topbar));
+    *topbar = (struct ui_topbar) {
+        .panel = panel_slim(make_pos(0, 0), make_dim(core.rect.w, 12)),
+        .mods = button_const(font, "mods"),
+        .coord = label_var(font, topbar_coord_len),
+        .close = button_const(font, "x"),
+    };
+
+    return topbar;
 }
 
-enum ui_ret topbar_events(struct topbar *topbar, SDL_Event *ev)
+enum ui_ret ui_topbar_event(struct ui_topbar *topbar, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
-    if (ret = panel_events(topbar->panel, ev)) return ret;
+    if ((ret = panel_event(topbar->panel, ev))) return ret;
 
 
-    if (ret = button_events(panel->mods, ev)) {
+    if ((ret = button_event(topbar->mods, ev))) {
         // \todo show mods panel.
         return ret;
     }
 
-    if (ret = button_events(panel->close, ev)) {
+    if ((ret = button_event(topbar->close, ev))) {
         sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
         return ret;
     }
@@ -53,7 +60,7 @@ enum ui_ret topbar_events(struct topbar *topbar, SDL_Event *ev)
 }
 
 static void topbar_render_coord(
-        struct topbar *topbar, struct layout *layout, SDL_Renderer *renderer)
+        struct ui_topbar *topbar, struct layout *layout, SDL_Renderer *renderer)
 {
     char buffer[topbar_coord_len] = {0};
 
@@ -70,13 +77,13 @@ static void topbar_render_coord(
     scale_t scale = map_scale(core.ui.map);
     it += scale_str(scale, it, end - it);
 
-    label_set(topbar->coord, buffer);
+    label_set(topbar->coord, buffer, sizeof(buffer));
     label_render(topbar->coord, layout, renderer);
 }
 
-void topbar_render(struct topbar *topbar, SDL_Renderer *renderer)
+void ui_topbar_render(struct ui_topbar *topbar, SDL_Renderer *renderer)
 {
-    struct layout layout = panel->render(topbar->panel, renderer);
+    struct layout layout = panel_render(topbar->panel, renderer);
 
     button_render(topbar->mods, &layout, renderer);
 

@@ -4,7 +4,8 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
+#include "ui/ui.h"
+#include "render/font.h"
 
 
 // -----------------------------------------------------------------------------
@@ -43,11 +44,11 @@ struct label *label_var(struct font *font, size_t len)
     return label;
 }
 
-struct label *label_set(struct label *label, const char *str, size_t len)
+void label_set(struct label *label, const char *str, size_t len)
 {
     assert((void *)(label + 1) == (void *)label->str);
     assert(len <= label->len);
-    memcpy(label->str, str, len);
+    memcpy(label + 1, str, len);
 }
 
 void label_render(
@@ -56,6 +57,9 @@ void label_render(
     layout_add(layout, &label->w);
 
     rgba_render(label->bg, renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &wdidget_rect(&label->w)));
-    font_render(label->font, layout->renderer, label->fg, label->w.pos, str, len);
+    SDL_Rect rect = widget_rect(&label->w);
+    sdl_err(SDL_RenderFillRect(renderer, &rect));
+
+    SDL_Point point = pos_as_point(label->w.pos);
+    font_render(label->font, renderer, point, label->fg, label->str, label->len);
 }

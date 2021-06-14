@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/log.h"
 
 #include "SDL.h"
 
@@ -29,7 +30,7 @@ enum ui_ret
 // pos
 // -----------------------------------------------------------------------------
 
-struct pos { int16_t x, y };
+struct pos { int16_t x, y; };
 
 inline struct pos make_pos(int16_t x, int16_t y)
 {
@@ -41,6 +42,10 @@ inline struct pos make_pos_from_rect(SDL_Rect rect)
     return make_pos(rect.x, rect.y);
 }
 
+inline SDL_Point pos_as_point(struct pos pos)
+{
+    return (SDL_Point) { .x = pos.x, .y = pos.y };
+}
 
 inline bool pos_is_nil(struct pos pos) { return !pos.x && !pos.y; }
 
@@ -49,7 +54,7 @@ inline bool pos_is_nil(struct pos pos) { return !pos.x && !pos.y; }
 // dim
 // -----------------------------------------------------------------------------
 
-struct dim { int16_t w, h };
+struct dim { int16_t w, h; };
 
 inline struct dim make_dim(int16_t w, int16_t h)
 {
@@ -68,7 +73,7 @@ inline bool dim_is_nil(struct dim dim) { return !dim.w && !dim.h; }
 // rgba
 // -----------------------------------------------------------------------------
 
-struct rgba { uint8_t r, g, b, a};
+struct rgba { uint8_t r, g, b, a; };
 inline struct rgba make_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     return (struct rgba) { .r = r, .g = g, .b = b, .a = a };
@@ -76,7 +81,7 @@ inline struct rgba make_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 
 inline struct rgba rgba_nil(void)       { return make_rgba(0x00, 0x00, 0x00, 0x00); }
 inline struct rgba rgba_gray_a(uint8_t v, uint8_t a) { return make_rgba(v, v, v, a); }
-inline struct rgba rgba_gray(uint8_t v) { return make_rgba_a(v, 0xFF); }
+inline struct rgba rgba_gray(uint8_t v) { return rgba_gray_a(v, 0xFF); }
 inline struct rgba rgba_white(void )    { return rgba_gray(0xFF); }
 inline struct rgba rgba_red(void)       { return make_rgba(0xCC, 0x00, 0x00, 0xFF); }
 inline struct rgba rgba_green(void)     { return make_rgba(0x00, 0xCC, 0x00, 0xFF); }
@@ -86,37 +91,6 @@ inline void rgba_render(struct rgba c, SDL_Renderer *renderer)
 {
     sdl_err(SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a));
 };
-
-
-// -----------------------------------------------------------------------------
-// layout
-// -----------------------------------------------------------------------------
-
-struct layout
-{
-    struct pos top;
-    struct dim dim;
-    struct dim pad;
-
-    struct pos pos;
-    int16_t next_y;
-};
-
-enum { layout_inf = -1 };
-
-struct layout make_layout(struct pos, struct dim);
-void layout_add(struct layout *, struct widget *);
-
-void layout_next_row(struct layout *);
-void layout_sep_x(struct layout *, int16_t px);
-void layout_sep_y(struct layout *, int16_t px);
-void layout_mid(struct layout *, const struct widget *);
-void layout_right(struct layout *, const struct widget *);
-
-inline bool layout_is_nil(struct layout *layout)
-{
-    return pos_is_nil(layout->top) && dim_is_nil(layout->dim);
-}
 
 
 // -----------------------------------------------------------------------------
@@ -146,6 +120,37 @@ inline struct SDL_Rect widget_rect(const struct widget *widget)
 
 
 // -----------------------------------------------------------------------------
+// layout
+// -----------------------------------------------------------------------------
+
+struct layout
+{
+    struct pos top;
+    struct dim dim;
+    struct dim pad;
+
+    struct pos pos;
+    int16_t next_y;
+};
+
+enum { layout_inf = -1 };
+
+struct layout layout_new(struct pos, struct dim);
+void layout_add(struct layout *, struct widget *);
+
+void layout_next_row(struct layout *);
+void layout_sep_x(struct layout *, int16_t px);
+void layout_sep_y(struct layout *, int16_t px);
+void layout_mid(struct layout *, const struct widget *);
+void layout_right(struct layout *, const struct widget *);
+
+inline bool layout_is_nil(struct layout *layout)
+{
+    return pos_is_nil(layout->top) && dim_is_nil(layout->dim);
+}
+
+
+// -----------------------------------------------------------------------------
 // label
 // -----------------------------------------------------------------------------
 
@@ -164,7 +169,7 @@ enum { label_cap = 128 };
 
 struct label *label_const(struct font *, const char *str);
 struct label *label_var(struct font *, size_t len);
-struct label *label_set(struct label *, const char *str, size_t len);
+void label_set(struct label *, const char *str, size_t len);
 
 void label_render(struct label *, struct layout *, SDL_Renderer *);
 
@@ -197,7 +202,7 @@ enum { button_cap = 128 };
 
 struct button *button_const(struct font *, const char *str);
 struct button *button_var(struct font *, size_t len);
-struct button *button_set(struct button *, const char *str, size_t len);
+void button_set(struct button *, const char *str, size_t len);
 
 enum ui_ret button_event(struct button *, const SDL_Event *);
 void button_render(struct button *, struct layout *, SDL_Renderer *);
@@ -231,7 +236,7 @@ enum { toggle_cap = 128 };
 
 struct toggle *toggle_const(struct font *, const char *str);
 struct toggle *toggle_var(struct font *, size_t len);
-struct toggle *toggle_set(struct toggle *, const char *str, size_t len);
+void toggle_set(struct toggle *, const char *str, size_t len);
 
 enum ui_ret toggle_event(struct toggle *, const SDL_Event *);
 void toggle_render(struct toggle *, struct layout *, SDL_Renderer *);
