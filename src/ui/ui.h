@@ -90,6 +90,7 @@ inline struct rgba rgba_blue(void)      { return make_rgba(0x00, 0x00, 0xCC, 0xF
 inline void rgba_render(struct rgba c, SDL_Renderer *renderer)
 {
     sdl_err(SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a));
+    sdl_err(SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND));
 };
 
 
@@ -191,6 +192,7 @@ struct button
 
     struct font *font;
     struct rgba fg;
+    struct dim pad;
 
     enum button_state state;
 

@@ -26,12 +26,13 @@ enum
     topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + scale_str_len+1,
 };
 
+
 struct ui_topbar *ui_topbar_new(void)
 {
     struct font *font = font_mono6;
     struct ui_topbar *topbar = calloc(1, sizeof(*topbar));
     *topbar = (struct ui_topbar) {
-        .panel = panel_slim(make_pos(0, 0), make_dim(core.rect.w, 12)),
+        .panel = panel_slim(make_pos(0, 0), make_dim(core.rect.w, 24)),
         .mods = button_const(font, "mods"),
         .coord = label_var(font, topbar_coord_len),
         .close = button_const(font, "x"),
@@ -40,23 +41,22 @@ struct ui_topbar *ui_topbar_new(void)
     return topbar;
 }
 
-enum ui_ret ui_topbar_event(struct ui_topbar *topbar, SDL_Event *ev)
+bool ui_topbar_event(struct ui_topbar *topbar, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
-    if ((ret = panel_event(topbar->panel, ev))) return ret;
-
+    if ((ret = panel_event(topbar->panel, ev))) return ret == ui_consume;
 
     if ((ret = button_event(topbar->mods, ev))) {
         // \todo show mods panel.
-        return ret;
+        return true;
     }
 
     if ((ret = button_event(topbar->close, ev))) {
         sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
-        return ret;
+        return true;
     }
 
-    return ui_nil;
+    return false;
 }
 
 static void topbar_render_coord(
@@ -67,15 +67,16 @@ static void topbar_render_coord(
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
-    it += str_utoa(core.state.time, it, end - it);
-    *it = ' '; it++;
+    it += str_utoa(core.state.time, it, topbar_ticks_len);
+    *it = ' '; it++; assert(it < end);
 
     struct coord coord = map_project_coord(core.ui.map, core.cursor.point);
     it += coord_str(coord, it, end - it);
-    *it = ' '; it++;
+    *it = ' '; it++; assert(it < end);
 
     scale_t scale = map_scale(core.ui.map);
     it += scale_str(scale, it, end - it);
+    assert(it <= end);
 
     label_set(topbar->coord, buffer, sizeof(buffer));
     label_render(topbar->coord, layout, renderer);

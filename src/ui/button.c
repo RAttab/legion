@@ -19,10 +19,14 @@ struct button *button_const(struct font *font, const char *str)
     size_t len = strnlen(str, button_cap);
     struct button *button = calloc(1, sizeof(*button));
 
+    struct dim pad = make_dim(6, 2);
     *button = (struct button) {
-        .w = make_widget(len * font->glyph_w, font->glyph_h),
+        .w = make_widget(
+                font->glyph_w * len + pad.w*2,
+                font->glyph_h + pad.h*2),
         .font = font,
         .fg = rgba_white(),
+        .pad = pad,
         .state = button_idle,
         .len = len,
         .str = str,
@@ -76,6 +80,13 @@ enum ui_ret button_event(struct button *button, const SDL_Event *ev)
         return ui_consume;
     }
 
+    case SDL_MOUSEBUTTONUP: {
+        SDL_Point point = core.cursor.point;
+        button->state = sdl_rect_contains(&rect, &point) ?
+            button_hover : button_idle;
+        return ui_nil;
+    }
+
     default: { return ui_nil; }
     }
 }
@@ -86,15 +97,18 @@ void button_render(
     layout_add(layout, &button->w);
 
     switch (button->state) {
-    case button_idle: { rgba_render(rgba_gray(0x88), renderer); break; }
-    case button_hover: { rgba_render(rgba_gray(0xAA), renderer); break; }
-    case button_pressed: { rgba_render(rgba_gray(0x44), renderer); break; }
+    case button_idle: { rgba_render(rgba_gray(0x22), renderer); break; }
+    case button_hover: { rgba_render(rgba_gray(0x33), renderer); break; }
+    case button_pressed: { rgba_render(rgba_gray(0x11), renderer); break; }
     default: { assert(false); }
     }
-    
+
     SDL_Rect rect = widget_rect(&button->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    SDL_Point point = pos_as_point(button->w.pos);
+    SDL_Point point = {
+        .x = button->w.pos.x + button->pad.w,
+        .y = button->w.pos.y + button->pad.h
+    };
     font_render(button->font, renderer, point, button->fg, button->str, button->len);
 }

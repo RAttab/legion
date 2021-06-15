@@ -16,5 +16,5 @@
 
 struct ui_topbar;
 struct ui_topbar *ui_topbar_new(void);
-enum ui_ret ui_topbar_event(struct ui_topbar *, SDL_Event *);
+bool ui_topbar_event(struct ui_topbar *, SDL_Event *);
 void ui_topbar_render(struct ui_topbar *, SDL_Renderer *);

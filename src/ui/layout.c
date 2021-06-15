@@ -29,8 +29,8 @@ void layout_add(struct layout *layout, struct widget *widget)
     if (widget->dim.w == layout_inf)
         widget->dim.w = layout->dim.w - (layout->pos.x - layout->top.x);
 
-    assert(layout->pos.x + widget->dim.w < layout->top.x + layout->dim.w);
-    assert(layout->pos.y + widget->dim.h < layout->top.y + layout->dim.h);
+    assert(layout->pos.x + widget->dim.w <= layout->top.x + layout->dim.w);
+    assert(layout->pos.y + widget->dim.h <= layout->top.y + layout->dim.h);
 
     widget->pos = layout->pos;
     layout->pos.x += widget->dim.w + layout->pad.w;
@@ -69,7 +69,7 @@ void layout_mid(struct layout *layout, const struct widget *widget)
 
 void layout_right(struct layout *layout, const struct widget *widget)
 {
-    int16_t x = layout->top.x + (layout->dim.w - widget->dim.w);
+    int16_t x = layout->top.x + (layout->dim.w - layout->pad.w - widget->dim.w);
     assert(layout->pos.x < x);
     layout->pos.x = x;
 }

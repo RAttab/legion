@@ -1,0 +1,9 @@
+{
+   sdl_iris
+   Memcheck:Leak
+   match-leak-kinds: all
+   fun:*
+   ...
+   obj:/usr/lib/dri/iris_dri.so
+   ...
+}

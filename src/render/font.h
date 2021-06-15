@@ -39,7 +39,6 @@ void fonts_close();
 struct font *font_open(SDL_Renderer *, const char *ttf, size_t px);
 void font_close(struct font *);
 
-void font_reset(struct font *);
 void font_text_size(struct font *, size_t len, size_t *w, size_t *h);
 void font_render(
         struct font *, SDL_Renderer *,

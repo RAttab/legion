@@ -92,12 +92,11 @@ struct layout panel_render(struct panel *panel, SDL_Renderer *renderer)
     if (panel->state == panel_hidden) return (struct layout) {0};
 
     struct SDL_Rect rect = widget_rect(&panel->w);
-    sdl_err(SDL_RenderSetClipRect(renderer, &rect));
+
+    rgba_render(rgba_gray_a(0x11, 0x88), renderer);
+    sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     if (panel->title || panel->close) {
-        rgba_render(rgba_gray_a(0x11, 0x88), renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
-
         rgba_render(rgba_gray(0x22), renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = rect.x, .y = rect.y,

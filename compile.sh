@@ -37,28 +37,9 @@ LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
 
-OBJ=""
-
-
-## Nuklear
-
-if [ ! -f "./nuklear.o" ]; then
-    if [ ! -d "./nuklear" ]; then git clone --depth=1 "$NK_REPO" -- nuklear; fi
-    ( cd "./nuklear/src"; ./paq.sh )
-    NK_CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE"
-    NK_CFLAGS="$NK_CFLAGS -I${PREFIX}/src"
-    NK_CFLAGS="$NK_CFLAGS -I${PREFIX}/build/nuklear"
-    NK_CFLAGS="$NK_CFLAGS -Wno-unused-function"
-    NK_CFLAGS="$NK_CFLAGS -Wno-unused-parameter"
-    NK_CFLAGS="$NK_CFLAGS -Wno-maybe-uninitialized"
-    $CC -c -o "nuklear.o"  "${PREFIX}/src/nk.c" $NK_CFLAGS
-    OBJ="$OBJ nuklear.o"
-fi
-
-
-## Legion
-
 parallel $CC -c -o "{}.o" "${PREFIX}/src/{}.c" $CFLAGS ::: ${SRC[@]}
+
+OBJ=""
 for obj in "${SRC[@]}"; do OBJ="$OBJ ${obj}.o"; done
 ar rcs liblegion.a $OBJ
 
@@ -75,5 +56,6 @@ else
         --track-origins=yes \
         --trace-children=yes \
         --error-exitcode=1 \
+        --suppressions="${PREFIX}/legion.supp" \
         "./test_{}" "${PREFIX}" ::: ${TEST[@]}
 fi

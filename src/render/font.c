@@ -129,7 +129,6 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
         size_t pitch = dst.w * sizeof(sdl_bitmap[0]);
         sdl_err(SDL_UpdateTexture(font->tex, &dst, sdl_bitmap, pitch));
     }
-    font_reset(font);
 
     FT_Done_Face(face);
     return font;
@@ -139,13 +138,6 @@ void font_close(struct font *font)
 {
     SDL_DestroyTexture(font->tex);
     free(font);
-}
-
-void font_reset(struct font *font)
-{
-    sdl_err(SDL_SetTextureAlphaMod(font->tex, 0xFF));
-    sdl_err(SDL_SetTextureColorMod(font->tex, 0xFF, 0xFF, 0xFF));
-    sdl_err(SDL_SetTextureBlendMode(font->tex, SDL_BLENDMODE_BLEND));
 }
 
 void font_text_size(struct font *font, size_t len, size_t *w, size_t *h)
@@ -161,6 +153,7 @@ void font_render(
 {
     sdl_err(SDL_SetTextureColorMod(font->tex, color.r, color.g, color.b));
     sdl_err(SDL_SetTextureAlphaMod(font->tex, color.a));
+    sdl_err(SDL_SetTextureBlendMode(font->tex, SDL_BLENDMODE_BLEND));
 
     SDL_Rect src = { .x = 0, .y = 0, .w = font->glyph_w, .h = font->glyph_h };
     SDL_Rect dst = { .x = pos.x, .y = pos.y, .w = font->glyph_w, .h = font->glyph_h };
