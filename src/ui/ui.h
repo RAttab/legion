@@ -170,8 +170,8 @@ enum { label_cap = 128 };
 
 struct label *label_const(struct font *, const char *str);
 struct label *label_var(struct font *, size_t len);
+void label_free(struct label *);
 void label_set(struct label *, const char *str, size_t len);
-
 void label_render(struct label *, struct layout *, SDL_Renderer *);
 
 
@@ -204,6 +204,7 @@ enum { button_cap = 128 };
 
 struct button *button_const(struct font *, const char *str);
 struct button *button_var(struct font *, size_t len);
+void button_free(struct button *);
 void button_set(struct button *, const char *str, size_t len);
 
 enum ui_ret button_event(struct button *, const SDL_Event *);
@@ -238,6 +239,7 @@ enum { toggle_cap = 128 };
 
 struct toggle *toggle_const(struct font *, const char *str);
 struct toggle *toggle_var(struct font *, size_t len);
+void toggle_free(struct toggle *);
 void toggle_set(struct toggle *, const char *str, size_t len);
 
 enum ui_ret toggle_event(struct toggle *, const SDL_Event *);
@@ -257,6 +259,8 @@ struct scroll
 };
 
 struct scroll *scroll_new(struct dim dim, size_t total, size_t visible);
+void scroll_free(struct scroll *);
+
 void scroll_move(struct scroll *, ssize_t inc);
 void scroll_update(struct scroll *, size_t total);
 
@@ -295,6 +299,7 @@ struct panel
 struct panel *panel_slim(struct pos, struct dim);
 struct panel *panel_const(struct pos, struct dim, const char *str);
 struct panel *panel_var(struct pos, struct dim, size_t len);
+void panel_free(struct panel *);
 
 enum ui_ret panel_event(struct panel *, const SDL_Event *);
 struct layout panel_render(struct panel *, SDL_Renderer *);

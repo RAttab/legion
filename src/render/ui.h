@@ -16,5 +16,19 @@
 
 struct ui_topbar;
 struct ui_topbar *ui_topbar_new(void);
+void ui_topbar_free(struct ui_topbar *);
+int16_t ui_topbar_height(const struct ui_topbar *);
 bool ui_topbar_event(struct ui_topbar *, SDL_Event *);
 void ui_topbar_render(struct ui_topbar *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// mods
+// -----------------------------------------------------------------------------
+
+
+struct ui_mods;
+struct ui_mods *ui_mods_new(void);
+void ui_mods_free(struct ui_mods *);
+bool ui_mods_event(struct ui_mods *, SDL_Event *);
+void ui_mods_render(struct ui_mods *, SDL_Renderer *);

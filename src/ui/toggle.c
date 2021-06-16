@@ -44,6 +44,11 @@ struct toggle *toggle_var(struct font *font, size_t len)
     return toggle;
 }
 
+void toggle_free(struct toggle *toggle)
+{
+    free(toggle);
+}
+
 void toggle_set(struct toggle *toggle, const char *str, size_t len)
 {
     assert((void *)(toggle + 1) == (void *)toggle->str);
@@ -61,9 +66,9 @@ enum ui_ret toggle_event(struct toggle *toggle, const SDL_Event *ev)
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) {
             if (toggle->state == toggle_hover) toggle->state = toggle_idle;
-            return ui_nil;
         }
-        toggle->state = toggle_hover;
+        else if (toggle->state == toggle_idle) toggle->state = toggle_hover;
+
         return ui_nil;
     }
 
@@ -85,11 +90,11 @@ void toggle_render(
 
     switch (toggle->state) {
     case toggle_idle: { rgba_render(rgba_nil(), renderer); break; }
-    case toggle_hover: { rgba_render(rgba_gray(0xAA), renderer); break; }
-    case toggle_selected: { rgba_render(rgba_gray(0x66), renderer); break; }
+    case toggle_hover: { rgba_render(rgba_gray(0x44), renderer); break; }
+    case toggle_selected: { rgba_render(rgba_gray(0x22), renderer); break; }
     default: { assert(false); }
     }
-    
+
     SDL_Rect rect = widget_rect(&toggle->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 

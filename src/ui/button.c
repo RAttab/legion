@@ -50,6 +50,11 @@ struct button *button_var(struct font *font, size_t len)
     return button;
 }
 
+void button_free(struct button *button)
+{
+    free(button);
+}
+
 void button_set(struct button *button, const char *str, size_t len)
 {
     assert((void *)(button + 1) == (void *)button->str);

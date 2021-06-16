@@ -9,4 +9,5 @@
 #include "render/sprites.c"
 #include "render/map.c"
 #include "render/ui_topbar.c"
+#include "render/ui_mods.c"
 

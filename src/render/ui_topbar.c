@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "render/gui.h"
+#include "render/ui.h"
 #include "ui/ui.h"
 
 
@@ -32,7 +32,7 @@ struct ui_topbar *ui_topbar_new(void)
     struct font *font = font_mono6;
     struct ui_topbar *topbar = calloc(1, sizeof(*topbar));
     *topbar = (struct ui_topbar) {
-        .panel = panel_slim(make_pos(0, 0), make_dim(core.rect.w, 24)),
+        .panel = panel_slim(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
         .mods = button_const(font, "mods"),
         .coord = label_var(font, topbar_coord_len),
         .close = button_const(font, "x"),
@@ -41,13 +41,25 @@ struct ui_topbar *ui_topbar_new(void)
     return topbar;
 }
 
+void ui_topbar_free(struct ui_topbar *topbar) {
+    panel_free(topbar->panel);
+    button_free(topbar->mods);
+    label_free(topbar->coord);
+    button_free(topbar->close);
+}
+
+int16_t ui_topbar_height(const struct ui_topbar *topbar)
+{
+    return topbar->panel->w.dim.h;
+}
+
 bool ui_topbar_event(struct ui_topbar *topbar, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
     if ((ret = panel_event(topbar->panel, ev))) return ret == ui_consume;
 
     if ((ret = button_event(topbar->mods, ev))) {
-        // \todo show mods panel.
+        core_push_event(EV_MODS_TOGGLE, 0, 0);
         return true;
     }
 

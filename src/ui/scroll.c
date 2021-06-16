@@ -29,6 +29,11 @@ struct scroll *scroll_new(struct dim dim, size_t total, size_t visible)
     return scroll;
 }
 
+void scroll_free(struct scroll *scroll)
+{
+    free(scroll);
+}
+
 void scroll_move(struct scroll *scroll, ssize_t inc)
 {
     if (inc > 0 || scroll->first) scroll->first += inc;

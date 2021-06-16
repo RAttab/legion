@@ -57,6 +57,13 @@ struct panel *panel_var(struct pos pos, struct dim dim, size_t len)
     return panel;
 }
 
+void panel_free(struct panel *panel)
+{
+    label_free(panel->title);
+    button_free(panel->close);
+    free(panel);
+}
+
 enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
 {
     if (panel->state == panel_hidden) return ui_skip;
@@ -67,7 +74,6 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
     case SDL_KEYDOWN: { return panel->state == panel_focused ? ui_skip : ui_nil; }
 
     case SDL_MOUSEWHEEL:
-    case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = widget_rect(&panel->w);
         panel->state = sdl_rect_contains(&rect, &core.cursor.point) ?
@@ -75,6 +81,7 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
         if (panel->state != panel_focused) return ui_skip;
         // fallthrough
     }
+    case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEMOTION: {
         if (panel->close && button_event(panel->close, ev) == ui_consume) {
             if (panel->close->state == button_pressed) panel->state = panel_hidden;
@@ -83,7 +90,16 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
         return ui_nil;
     }
 
-    default: { return ui_nil; }
+    default: {
+        if (ev->type == core.event) {
+            if (ev->user.code == EV_FOCUS) {
+                struct panel *target = (void *) ev->user.data1;
+                panel->state = target == panel ? panel_focused : panel_visible;
+            }
+        }
+        return ui_nil;
+    }
+
     }
 }
 
@@ -100,7 +116,8 @@ struct layout panel_render(struct panel *panel, SDL_Renderer *renderer)
         rgba_render(rgba_gray(0x22), renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = rect.x, .y = rect.y,
-                            .w = rect.w, .h = panel->title->font->glyph_h }));
+                            .w = rect.w,
+                            .h = panel->close->w.dim.h + panel_margin.h }));
 
         rgba_render(rgba_gray(0x22), renderer);
         sdl_err(SDL_RenderDrawRect(renderer, &rect));

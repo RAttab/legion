@@ -24,17 +24,15 @@ enum event
 
     EV_STATE_UPDATE,
 
-    EV_MODS_SELECT,
-    EV_MODS_CLEAR,
+    EV_MODS_TOGGLE,
 
-    EV_CODE_SELECT,
-    EV_CODE_CLEAR,
+    EV_MOD_SELECT,
+    EV_MOD_CLEAR,
 
     EV_STAR_SELECT,
     EV_STAR_CLEAR,
 
-    EV_OBJ_SELECT,
-    EV_OBJ_CLEAR,
+    EV_FOCUS,
 
     EV_MAX,
 };
@@ -62,6 +60,7 @@ struct core
     struct {
         struct map *map;
         struct ui_topbar *topbar;
+        struct ui_mods *mods;
     } ui;
 
     struct {

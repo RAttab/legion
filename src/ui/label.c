@@ -44,6 +44,11 @@ struct label *label_var(struct font *font, size_t len)
     return label;
 }
 
+void label_free(struct label *label)
+{
+    free(label);
+}
+
 void label_set(struct label *label, const char *str, size_t len)
 {
     assert((void *)(label + 1) == (void *)label->str);
