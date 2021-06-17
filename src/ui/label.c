@@ -7,6 +7,8 @@
 #include "ui/ui.h"
 #include "render/font.h"
 
+#include <stdarg.h>
+
 
 // -----------------------------------------------------------------------------
 // label
@@ -54,6 +56,18 @@ void label_set(struct label *label, const char *str, size_t len)
     assert((void *)(label + 1) == (void *)label->str);
     assert(len <= label->len);
     memcpy(label + 1, str, len);
+}
+
+void label_setf(struct label *label, const char *fmt, ...)
+{
+    assert((void *)(label + 1) == (void *)label->str);
+
+    va_list args;
+    va_start(args, fmt);
+    ssize_t n = vsnprintf((void *)(label + 1), label->len, fmt, args);
+    va_end(args);
+
+    assert(n >= 0);
 }
 
 void label_render(

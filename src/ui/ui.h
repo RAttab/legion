@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "utils/log.h"
+#include "utils/text.h"
 
 #include "SDL.h"
 
@@ -172,6 +173,7 @@ struct label *label_const(struct font *, const char *str);
 struct label *label_var(struct font *, size_t len);
 void label_free(struct label *);
 void label_set(struct label *, const char *str, size_t len);
+void label_setf(struct label *, const char *fmt, ...);
 void label_render(struct label *, struct layout *, SDL_Renderer *);
 
 
@@ -272,6 +274,38 @@ inline size_t scroll_last(const struct scroll *scroll)
 {
     return legion_min(scroll->total, scroll->first + scroll->visible);
 }
+
+
+// -----------------------------------------------------------------------------
+// code
+// -----------------------------------------------------------------------------
+
+struct code
+{
+    struct widget w;
+
+    struct font *font;
+    struct scroll *scroll;
+    struct label *num, *code;
+
+    struct text text;
+    struct mod *mod;
+
+    struct {
+        bool blink;
+        size_t row, col;
+        struct line *line;
+    } carret;
+};
+
+
+struct code *code_new(struct dim, struct font *);
+void code_free(struct code *);
+
+void code_set(struct code *code, struct mod *mod);
+
+enum ui_ret code_event(struct code *, const SDL_Event *);
+void code_render(struct code *, struct layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------

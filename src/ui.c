@@ -8,4 +8,5 @@
 #include "ui/button.c"
 #include "ui/toggle.c"
 #include "ui/scroll.c"
+#include "ui/code.c"
 #include "ui/panel.c"
