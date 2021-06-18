@@ -79,6 +79,7 @@ void label_render(
     SDL_Rect rect = widget_rect(&label->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
+    size_t len = strnlen(label->str, label->len);
     SDL_Point point = pos_as_point(label->w.pos);
-    font_render(label->font, renderer, point, label->fg, label->str, label->len);
+    font_render(label->font, renderer, point, label->fg, label->str, len);
 }

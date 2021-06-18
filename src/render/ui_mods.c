@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ui.h"
-
 #include "common.h"
 #include "render/ui.h"
 #include "ui/ui.h"
@@ -34,7 +32,7 @@ struct ui_mods *ui_mods_new(void)
 
     struct ui_mods *mods = calloc(1, sizeof(*mods));
     *mods = (struct ui_mods) {
-        .panel = panel_const(pos, dim, "mods"),
+        .panel = panel_var(pos, dim, 12),
         .scroll = scroll_new(make_dim(layout_inf, layout_inf), 0, 1),
         .list = NULL,
         .toggles = NULL,
@@ -54,6 +52,11 @@ void ui_mods_free(struct ui_mods *mods) {
 
     free(mods->toggles);
     free(mods->list);
+}
+
+int16_t ui_mods_width(const struct ui_mods *mods)
+{
+    return mods->panel->w.dim.w;
 }
 
 static void ui_mods_update(struct ui_mods *mods)
@@ -77,6 +80,8 @@ static void ui_mods_update(struct ui_mods *mods)
 
     for (size_t i = 0; i < mods->list->len; ++i)
         toggle_set(mods->toggles[i], mods->list->items[i].str, vm_atom_cap);
+
+    label_setf(mods->panel->title, "mods(%zu)", mods->list->len);
 }
 
 static bool ui_mods_event_user(struct ui_mods *mods, SDL_Event *ev)
@@ -123,7 +128,6 @@ bool ui_mods_event(struct ui_mods *mods, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = panel_event(mods->panel, ev))) return ret == ui_consume;
-
     if ((ret = scroll_event(mods->scroll, ev))) return ret == ui_consume;
 
     for (size_t i = 0; i < mods->list->len; ++i) {

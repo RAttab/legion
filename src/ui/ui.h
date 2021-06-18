@@ -8,7 +8,7 @@
 #include "common.h"
 #include "utils/log.h"
 #include "utils/text.h"
-
+#include "vm/mod.h"
 #include "SDL.h"
 
 struct font;
@@ -257,7 +257,7 @@ struct scroll
     struct widget w;
 
     size_t first, total, visible;
-    struct { int16_t y, top; } drag;
+    struct { int16_t start, bar; } drag;
 };
 
 struct scroll *scroll_new(struct dim dim, size_t total, size_t visible);
@@ -298,11 +298,14 @@ struct code
     } carret;
 };
 
+enum { code_num_len = 4 };
 
 struct code *code_new(struct dim, struct font *);
 void code_free(struct code *);
 
-void code_set(struct code *code, struct mod *mod);
+void code_clear(struct code *);
+void code_set(struct code *, struct mod *, ip_t);
+void code_tick(struct code *, uint64_t ticks);
 
 enum ui_ret code_event(struct code *, const SDL_Event *);
 void code_render(struct code *, struct layout *, SDL_Renderer *);

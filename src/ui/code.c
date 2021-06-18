@@ -14,7 +14,6 @@
 // code
 // -----------------------------------------------------------------------------
 
-enum { code_num_len = 4 + 1 };
 
 struct code *code_new(struct dim dim, struct font *font)
 {
@@ -22,7 +21,7 @@ struct code *code_new(struct dim dim, struct font *font)
     *code = (struct code) {
         .w = make_widget(dim.w, dim.h),
         .font = font,
-        .scroll = scroll_new(dim, 1, 0),
+        .scroll = scroll_new(dim, 1, 1),
         .num = label_var(font, code_num_len),
         .code = label_var(font, text_line_cap),
     };
@@ -42,16 +41,40 @@ void code_free(struct code *code)
     free(code);
 }
 
-void code_set(struct code *code, struct mod *mod)
+void code_clear(struct code *code)
+{
+    code->mod = NULL;
+    text_clear(&code->text);
+}
+
+void code_set(struct code *code, struct mod *mod, ip_t ip)
 {
     code->mod = mod;
-    text_from_str(&code->text, mod->src, mod->src_len);
+    text_unpack(&code->text, mod->src, mod->src_len);
+
+    code->carret.line = code->text.first;
+    code->carret.row = code->carret.col = 0;
     scroll_update(code->scroll, code->text.len);
+
+    if (ip) {
+        size_t line = mod_line(code->mod, ip);
+        for (size_t i = 0; i < line && code->carret.line->next; ++i)
+            code->carret.line = code->carret.line->next;
+        code->scroll->first = line;
+    }
+}
+
+void code_tick(struct code *code, uint64_t ticks)
+{
+    bool blink = (ticks / 20) % 2;
+    if (code->carret.blink != blink)
+        code->carret.blink = blink;
 }
 
 void code_render(struct code *code, struct layout *layout, SDL_Renderer *renderer)
 {
     struct layout inner = scroll_render(code->scroll, layout, renderer);
+    code->w = code->scroll->w;
     if (layout_is_nil(&inner)) return;
 
     code->scroll->visible = inner.dim.h / code->font->glyph_h;
@@ -64,13 +87,14 @@ void code_render(struct code *code, struct layout *layout, SDL_Renderer *rendere
 
     for (size_t i = first; i < last; ++i, line = line->next) {
         {
-            char num[code_num_len + 1] = {0};
-            str_utoa(i, num, code_num_len - 1);
-            num[code_num_len] = ':';
+            char num[code_num_len] = {0};
+            str_utoa(i, num, code_num_len);
 
             label_set(code->num, num, sizeof(num));
             label_render(code->num, &inner, renderer);
         }
+
+        layout_sep_x(&inner, code->font->glyph_w);
 
         {
             code->code->bg = rgba_nil();
@@ -79,7 +103,7 @@ void code_render(struct code *code, struct layout *layout, SDL_Renderer *rendere
             if (err != err_end && err->line == i)
                 code->code->bg = make_rgba(0x88, 0x00, 0x00, 0x44);
 
-            label_set(code->code, line->c, line_len(line));
+            label_set(code->code, line->c, text_line_cap);
             label_render(code->code, &inner, renderer);
         }
 
@@ -87,7 +111,7 @@ void code_render(struct code *code, struct layout *layout, SDL_Renderer *rendere
     }
 
     if (code->carret.blink) {
-        size_t x = (code->carret.col + code_num_len) * code->font->glyph_w;
+        size_t x = (code->carret.col + code_num_len + 1) * code->font->glyph_w;
         size_t y = code->carret.row * code->font->glyph_h;
 
         rgba_render(rgba_white(), renderer);
@@ -109,9 +133,9 @@ static enum ui_ret code_event_click(struct code *code)
     SDL_Rect rect = widget_rect(&code->w);
     if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
 
-    size_t col = (cursor.y - code->w.pos.y) / code->font->glyph_h;
-    size_t row = (cursor.x - code->w.pos.x) / code->font->glyph_w;
-    row = row < code_num_len ? 0 : row - code_num_len;
+    size_t col = (cursor.x - code->w.pos.x) / code->font->glyph_w;
+    size_t row = (cursor.y - code->w.pos.y) / code->font->glyph_h;
+    col = col < (code_num_len+1) ? 0 : col - (code_num_len+1);
     assert(row < code->scroll->visible);
     assert(col < text_line_cap);
 
@@ -182,7 +206,7 @@ static enum ui_ret code_event_move(struct code *code, int hori, int vert)
 
 static void code_event_scroll(struct code *code, size_t old, size_t new)
 {
-    assert(old != new);
+    if (old == new) return;
 
     if (old < new) {
         size_t delta = new - old;

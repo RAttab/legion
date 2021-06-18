@@ -75,7 +75,8 @@ enum ui_ret toggle_event(struct toggle *toggle, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
-        toggle->state = toggle_selected;
+        toggle->state = toggle->state == toggle_selected ?
+            toggle_idle : toggle_selected;
         return ui_consume;
     }
 

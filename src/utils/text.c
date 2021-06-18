@@ -110,7 +110,7 @@ struct line *text_goto(struct text *text, size_t line)
     if (line > text->len) return NULL;
 
     struct line *ptr = text->first;
-    for (size_t i = 1; i != line; ++i, ptr = ptr->next);
+    for (size_t i = 0; i != line; ++i, ptr = ptr->next);
     return ptr;
 }
 

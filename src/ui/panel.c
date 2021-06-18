@@ -71,7 +71,7 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_KEYUP:
-    case SDL_KEYDOWN: { return panel->state == panel_focused ? ui_skip : ui_nil; }
+    case SDL_KEYDOWN: { return panel->state == panel_focused ? ui_nil : ui_skip; }
 
     case SDL_MOUSEWHEEL:
     case SDL_MOUSEBUTTONDOWN: {
@@ -126,7 +126,7 @@ struct layout panel_render(struct panel *panel, SDL_Renderer *renderer)
     struct layout layout = panel->layout;
 
     if (panel->title) {
-        panel->title->fg = panel->state == panel_focused ? rgba_white() : rgba_gray(88);
+        panel->title->fg = panel->state == panel_focused ? rgba_white() : rgba_gray(0xAA);
         label_render(panel->title, &layout, renderer);
     }
 

@@ -61,6 +61,7 @@ struct core
         struct map *map;
         struct ui_topbar *topbar;
         struct ui_mods *mods;
+        struct ui_mod *mod;
     } ui;
 
     struct {
