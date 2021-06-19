@@ -16,7 +16,7 @@ struct ui_topbar
 {
     struct ui_panel *panel;
     struct ui_button *mods;
-    struct ui_label *coord;
+    struct ui_label coord;
     struct ui_button *close;
 };
 
@@ -44,7 +44,7 @@ struct ui_topbar *ui_topbar_new(void)
 void ui_topbar_free(struct ui_topbar *topbar) {
     ui_panel_free(topbar->panel);
     ui_button_free(topbar->mods);
-    ui_label_free(topbar->coord);
+    ui_label_free(&topbar->coord);
     ui_button_free(topbar->close);
 }
 
@@ -90,8 +90,8 @@ static void topbar_render_coord(
     it += scale_str(scale, it, end - it);
     assert(it <= end);
 
-    ui_label_set(topbar->coord, buffer, sizeof(buffer));
-    ui_label_render(topbar->coord, layout, renderer);
+    ui_label_set(&topbar->coord, buffer, sizeof(buffer));
+    ui_label_render(&topbar->coord, layout, renderer);
 }
 
 void ui_topbar_render(struct ui_topbar *topbar, SDL_Renderer *renderer)
@@ -100,7 +100,7 @@ void ui_topbar_render(struct ui_topbar *topbar, SDL_Renderer *renderer)
 
     ui_button_render(topbar->mods, &layout, renderer);
 
-    ui_layout_mid(&layout, &topbar->coord->w);
+    ui_layout_mid(&layout, &topbar->coord.w);
     topbar_render_coord(topbar, &layout, renderer);
 
     ui_layout_right(&layout, &topbar->close->w);

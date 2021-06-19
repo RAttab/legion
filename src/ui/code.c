@@ -26,8 +26,8 @@ struct ui_code *ui_code_new(struct dim dim, struct font *font)
         .code = ui_label_var(font, text_line_cap),
     };
 
-    code->num->fg = rgba_gray(0x88);
-    code->num->bg = rgba_gray_a(0x44, 0x88);
+    code->num.fg = rgba_gray(0x88);
+    code->num.bg = rgba_gray_a(0x44, 0x88);
 
     text_init(&code->text);
     return code;
@@ -91,21 +91,21 @@ void ui_code_render(
             char num[ui_code_num_len] = {0};
             str_utoa(i, num, ui_code_num_len);
 
-            ui_label_set(code->num, num, sizeof(num));
-            ui_label_render(code->num, &inner, renderer);
+            ui_label_set(&code->num, num, sizeof(num));
+            ui_label_render(&code->num, &inner, renderer);
         }
 
         ui_layout_sep_x(&inner, code->font->glyph_w);
 
         {
-            code->code->bg = rgba_nil();
+            code->code.bg = rgba_nil();
 
             while (err->line < i && err < err_end) err++;
             if (err != err_end && err->line == i)
-                code->code->bg = make_rgba(0x88, 0x00, 0x00, 0x44);
+                code->code.bg = make_rgba(0x88, 0x00, 0x00, 0x44);
 
-            ui_label_set(code->code, line->c, text_line_cap);
-            ui_label_render(code->code, &inner, renderer);
+            ui_label_set(&code->code, line->c, text_line_cap);
+            ui_label_render(&code->code, &inner, renderer);
         }
 
         ui_layout_next_row(&inner);

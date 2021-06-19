@@ -81,7 +81,7 @@ static void ui_mods_update(struct ui_mods *mods)
     for (size_t i = 0; i < mods->list->len; ++i)
         ui_toggle_set(mods->toggles[i], mods->list->items[i].str, vm_atom_cap);
 
-    ui_label_setf(mods->panel->title, "mods(%zu)", mods->list->len);
+    ui_label_setf(&mods->panel->title, "mods(%zu)", mods->list->len);
 }
 
 static bool ui_mods_event_user(struct ui_mods *mods, SDL_Event *ev)

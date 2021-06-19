@@ -67,7 +67,7 @@ static bool ui_mod_event_user(struct ui_mod *mod, SDL_Event *ev)
 
         atom_t name = {0};
         mods_name(id, &name);
-        ui_label_setf(mod->panel->title, "mod: %s", name);
+        ui_label_setf(&mod->panel->title, "mod: %s", name);
 
         mod->panel->state = ui_panel_visible;
         core_push_event(EV_FOCUS, (uintptr_t) mod->panel, 0);

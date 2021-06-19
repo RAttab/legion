@@ -163,14 +163,14 @@ struct ui_label
     struct font *font;
     struct rgba fg, bg;
 
-    uint8_t len;
+    uint8_t len, cap;
     const char *str;
 };
 
 enum { ui_label_cap = 128 };
 
-struct ui_label *ui_label_const(struct font *, const char *str);
-struct ui_label *ui_label_var(struct font *, size_t len);
+struct ui_label ui_label_const(struct font *, const char *str);
+struct ui_label ui_label_var(struct font *, size_t len);
 void ui_label_free(struct ui_label *);
 void ui_label_set(struct ui_label *, const char *str, size_t len);
 void ui_label_setf(struct ui_label *, const char *fmt, ...);
@@ -286,7 +286,7 @@ struct ui_code
 
     struct font *font;
     struct ui_scroll *scroll;
-    struct ui_label *num, *code;
+    struct ui_label num, code;
 
     struct text text;
     struct mod *mod;
@@ -329,7 +329,7 @@ struct ui_panel
 
     enum ui_panel_state state;
 
-    struct ui_label *title;
+    struct ui_label title;
     struct ui_button *close;
 };
 

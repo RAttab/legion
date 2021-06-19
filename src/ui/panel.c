@@ -59,7 +59,7 @@ struct ui_panel *ui_panel_var(struct pos pos, struct dim dim, size_t len)
 
 void ui_panel_free(struct ui_panel *panel)
 {
-    ui_label_free(panel->title);
+    ui_label_free(&panel->title);
     ui_button_free(panel->close);
     free(panel);
 }
@@ -112,7 +112,7 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
     rgba_render(rgba_gray_a(0x11, 0x88), renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    if (panel->title || panel->close) {
+    if (panel->title.len || panel->close) {
         rgba_render(rgba_gray(0x22), renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = rect.x, .y = rect.y,
@@ -125,9 +125,9 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
 
     struct ui_layout layout = panel->layout;
 
-    if (panel->title) {
-        panel->title->fg = panel->state == ui_panel_focused ? rgba_white() : rgba_gray(0xAA);
-        ui_label_render(panel->title, &layout, renderer);
+    if (panel->title.str) {
+        panel->title.fg = panel->state == ui_panel_focused ? rgba_white() : rgba_gray(0xAA);
+        ui_label_render(&panel->title, &layout, renderer);
     }
 
     if (panel->close) {
@@ -135,7 +135,7 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
         ui_button_render(panel->close, &layout, renderer);
     }
 
-    if (panel->title || panel->close) {
+    if (panel->title.str || panel->close) {
         ui_layout_next_row(&layout);
         ui_layout_sep_y(&layout, 4);
     }
