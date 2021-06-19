@@ -14,13 +14,13 @@
 // label
 // -----------------------------------------------------------------------------
 
-struct label *label_const(struct font *font, const char *str)
+struct ui_label *ui_label_const(struct font *font, const char *str)
 {
-    size_t len = strnlen(str, label_cap);
-    struct label *label = calloc(1, sizeof(*label));
+    size_t len = strnlen(str, ui_label_cap);
+    struct ui_label *label = calloc(1, sizeof(*label));
 
-    *label = (struct label) {
-        .w = make_widget(len * font->glyph_w, font->glyph_h),
+    *label = (struct ui_label) {
+        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
         .font = font,
         .fg = rgba_white(),
         .bg = rgba_nil(),
@@ -30,13 +30,13 @@ struct label *label_const(struct font *font, const char *str)
     return label;
 }
 
-struct label *label_var(struct font *font, size_t len)
+struct ui_label *ui_label_var(struct font *font, size_t len)
 {
-    assert(len <= label_cap);
+    assert(len <= ui_label_cap);
 
-    struct label *label = calloc(1, sizeof(*label) + len);
-    *label = (struct label) {
-        .w = make_widget(len * font->glyph_w, font->glyph_h),
+    struct ui_label *label = calloc(1, sizeof(*label) + len);
+    *label = (struct ui_label) {
+        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
         .font = font,
         .fg = rgba_white(),
         .bg = rgba_nil(),
@@ -46,19 +46,19 @@ struct label *label_var(struct font *font, size_t len)
     return label;
 }
 
-void label_free(struct label *label)
+void ui_label_free(struct ui_label *label)
 {
     free(label);
 }
 
-void label_set(struct label *label, const char *str, size_t len)
+void ui_label_set(struct ui_label *label, const char *str, size_t len)
 {
     assert((void *)(label + 1) == (void *)label->str);
     assert(len <= label->len);
     memcpy(label + 1, str, len);
 }
 
-void label_setf(struct label *label, const char *fmt, ...)
+void ui_label_setf(struct ui_label *label, const char *fmt, ...)
 {
     assert((void *)(label + 1) == (void *)label->str);
 
@@ -70,13 +70,13 @@ void label_setf(struct label *label, const char *fmt, ...)
     assert(n >= 0);
 }
 
-void label_render(
-        struct label *label, struct layout *layout, SDL_Renderer *renderer)
+void ui_label_render(
+        struct ui_label *label, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    layout_add(layout, &label->w);
+    ui_layout_add(layout, &label->w);
 
     rgba_render(label->bg, renderer);
-    SDL_Rect rect = widget_rect(&label->w);
+    SDL_Rect rect = ui_widget_rect(&label->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     size_t len = strnlen(label->str, label->len);

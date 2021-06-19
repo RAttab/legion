@@ -11,80 +11,80 @@
 // panel
 // -----------------------------------------------------------------------------
 
-static const struct dim panel_margin = { .w = 2, .h = 2 };
+static const struct dim ui_panel_margin = { .w = 2, .h = 2 };
 
-static struct panel *panel_alloc(struct pos pos, struct dim dim)
+static struct ui_panel *ui_panel_alloc(struct pos pos, struct dim dim)
 {
-    struct panel *panel = calloc(1, sizeof(*panel));
+    struct ui_panel *panel = calloc(1, sizeof(*panel));
 
-    panel->w = (struct widget) { .pos = pos, .dim = dim };
-    panel->layout = layout_new(
+    panel->w = (struct ui_widget) { .pos = pos, .dim = dim };
+    panel->layout = ui_layout_new(
             make_pos(
-                    pos.x + panel_margin.w,
-                    pos.y + panel_margin.h),
+                    pos.x + ui_panel_margin.w,
+                    pos.y + ui_panel_margin.h),
             make_dim(
-                    dim.w - (panel_margin.w * 2),
-                    dim.h - (panel_margin.h * 2)));
+                    dim.w - (ui_panel_margin.w * 2),
+                    dim.h - (ui_panel_margin.h * 2)));
 
-    panel->state = panel_visible;
+    panel->state = ui_panel_visible;
     return panel;
 }
 
-struct panel *panel_slim(struct pos pos, struct dim dim)
+struct ui_panel *ui_panel_slim(struct pos pos, struct dim dim)
 {
-    return panel_alloc(pos, dim);
+    return ui_panel_alloc(pos, dim);
 }
 
-struct panel *panel_const(struct pos pos, struct dim dim, const char *str)
+struct ui_panel *ui_panel_const(struct pos pos, struct dim dim, const char *str)
 {
-    struct panel *panel = panel_alloc(pos, dim);
+    struct ui_panel *panel = ui_panel_alloc(pos, dim);
 
     struct font *font = font_mono6;
-    panel->title = label_const(font, str);
-    panel->close = button_const(font, "X");
+    panel->title = ui_label_const(font, str);
+    panel->close = ui_button_const(font, "X");
 
     return panel;
 }
 
-struct panel *panel_var(struct pos pos, struct dim dim, size_t len)
+struct ui_panel *ui_panel_var(struct pos pos, struct dim dim, size_t len)
 {
-    struct panel *panel = panel_alloc(pos, dim);
+    struct ui_panel *panel = ui_panel_alloc(pos, dim);
 
     struct font *font = font_mono6;
-    panel->title = label_var(font, len);
-    panel->close = button_const(font, "X");
+    panel->title = ui_label_var(font, len);
+    panel->close = ui_button_const(font, "X");
 
     return panel;
 }
 
-void panel_free(struct panel *panel)
+void ui_panel_free(struct ui_panel *panel)
 {
-    label_free(panel->title);
-    button_free(panel->close);
+    ui_label_free(panel->title);
+    ui_button_free(panel->close);
     free(panel);
 }
 
-enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
+enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 {
-    if (panel->state == panel_hidden) return ui_skip;
+    if (panel->state == ui_panel_hidden) return ui_skip;
 
     switch (ev->type) {
 
     case SDL_KEYUP:
-    case SDL_KEYDOWN: { return panel->state == panel_focused ? ui_nil : ui_skip; }
+    case SDL_KEYDOWN: { return panel->state == ui_panel_focused ? ui_nil : ui_skip; }
 
     case SDL_MOUSEWHEEL:
     case SDL_MOUSEBUTTONDOWN: {
-        struct SDL_Rect rect = widget_rect(&panel->w);
+        struct SDL_Rect rect = ui_widget_rect(&panel->w);
         panel->state = sdl_rect_contains(&rect, &core.cursor.point) ?
-            panel_focused : panel_visible;
-        if (panel->state != panel_focused) return ui_skip;
+            ui_panel_focused : ui_panel_visible;
+        if (panel->state != ui_panel_focused) return ui_skip;
         // fallthrough
     }
     case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEMOTION: {
-        if (panel->close && button_event(panel->close, ev) == ui_consume) {
-            if (panel->close->state == button_pressed) panel->state = panel_hidden;
+        if (panel->close && ui_button_event(panel->close, ev) == ui_consume) {
+            if (panel->close->state == ui_button_pressed) panel->state = ui_panel_hidden;
             return ui_consume;
         }
         return ui_nil;
@@ -93,8 +93,8 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
     default: {
         if (ev->type == core.event) {
             if (ev->user.code == EV_FOCUS) {
-                struct panel *target = (void *) ev->user.data1;
-                panel->state = target == panel ? panel_focused : panel_visible;
+                struct ui_panel *target = (void *) ev->user.data1;
+                panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
             }
         }
         return ui_nil;
@@ -103,11 +103,11 @@ enum ui_ret panel_event(struct panel *panel, const SDL_Event *ev)
     }
 }
 
-struct layout panel_render(struct panel *panel, SDL_Renderer *renderer)
+struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
 {
-    if (panel->state == panel_hidden) return (struct layout) {0};
+    if (panel->state == ui_panel_hidden) return (struct ui_layout) {0};
 
-    struct SDL_Rect rect = widget_rect(&panel->w);
+    struct SDL_Rect rect = ui_widget_rect(&panel->w);
 
     rgba_render(rgba_gray_a(0x11, 0x88), renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
@@ -117,27 +117,27 @@ struct layout panel_render(struct panel *panel, SDL_Renderer *renderer)
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = rect.x, .y = rect.y,
                             .w = rect.w,
-                            .h = panel->close->w.dim.h + panel_margin.h }));
+                            .h = panel->close->w.dim.h + ui_panel_margin.h }));
 
         rgba_render(rgba_gray(0x22), renderer);
         sdl_err(SDL_RenderDrawRect(renderer, &rect));
     }
 
-    struct layout layout = panel->layout;
+    struct ui_layout layout = panel->layout;
 
     if (panel->title) {
-        panel->title->fg = panel->state == panel_focused ? rgba_white() : rgba_gray(0xAA);
-        label_render(panel->title, &layout, renderer);
+        panel->title->fg = panel->state == ui_panel_focused ? rgba_white() : rgba_gray(0xAA);
+        ui_label_render(panel->title, &layout, renderer);
     }
 
     if (panel->close) {
-        layout_right(&layout, &panel->close->w);
-        button_render(panel->close, &layout, renderer);
+        ui_layout_right(&layout, &panel->close->w);
+        ui_button_render(panel->close, &layout, renderer);
     }
 
     if (panel->title || panel->close) {
-        layout_next_row(&layout);
-        layout_sep_y(&layout, 4);
+        ui_layout_next_row(&layout);
+        ui_layout_sep_y(&layout, 4);
     }
 
     return layout;

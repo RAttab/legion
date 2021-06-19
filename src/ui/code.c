@@ -15,15 +15,15 @@
 // -----------------------------------------------------------------------------
 
 
-struct code *code_new(struct dim dim, struct font *font)
+struct ui_code *ui_code_new(struct dim dim, struct font *font)
 {
-    struct code *code = calloc(1, sizeof(*code));
-    *code = (struct code) {
-        .w = make_widget(dim.w, dim.h),
+    struct ui_code *code = calloc(1, sizeof(*code));
+    *code = (struct ui_code) {
+        .w = ui_widget_new(dim.w, dim.h),
         .font = font,
-        .scroll = scroll_new(dim, 1, 1),
-        .num = label_var(font, code_num_len),
-        .code = label_var(font, text_line_cap),
+        .scroll = ui_scroll_new(dim, 1, 1),
+        .num = ui_label_var(font, ui_code_num_len),
+        .code = ui_label_var(font, text_line_cap),
     };
 
     code->num->fg = rgba_gray(0x88);
@@ -34,27 +34,27 @@ struct code *code_new(struct dim dim, struct font *font)
 }
 
 
-void code_free(struct code *code)
+void ui_code_free(struct ui_code *code)
 {
-    scroll_free(code->scroll);
+    ui_scroll_free(code->scroll);
     text_clear(&code->text);
     free(code);
 }
 
-void code_clear(struct code *code)
+void ui_code_clear(struct ui_code *code)
 {
     code->mod = NULL;
     text_clear(&code->text);
 }
 
-void code_set(struct code *code, struct mod *mod, ip_t ip)
+void ui_code_set(struct ui_code *code, struct mod *mod, ip_t ip)
 {
     code->mod = mod;
     text_unpack(&code->text, mod->src, mod->src_len);
 
     code->carret.line = code->text.first;
     code->carret.row = code->carret.col = 0;
-    scroll_update(code->scroll, code->text.len);
+    ui_scroll_update(code->scroll, code->text.len);
 
     if (ip) {
         size_t line = mod_line(code->mod, ip);
@@ -64,22 +64,23 @@ void code_set(struct code *code, struct mod *mod, ip_t ip)
     }
 }
 
-void code_tick(struct code *code, uint64_t ticks)
+void ui_code_tick(struct ui_code *code, uint64_t ticks)
 {
     bool blink = (ticks / 20) % 2;
     if (code->carret.blink != blink)
         code->carret.blink = blink;
 }
 
-void code_render(struct code *code, struct layout *layout, SDL_Renderer *renderer)
+void ui_code_render(
+        struct ui_code *code, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct layout inner = scroll_render(code->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(code->scroll, layout, renderer);
     code->w = code->scroll->w;
-    if (layout_is_nil(&inner)) return;
+    if (ui_layout_is_nil(&inner)) return;
 
     code->scroll->visible = inner.dim.h / code->font->glyph_h;
-    size_t first = scroll_first(code->scroll);
-    size_t last = scroll_last(code->scroll);
+    size_t first = ui_scroll_first(code->scroll);
+    size_t last = ui_scroll_last(code->scroll);
 
     struct line *line = text_goto(&code->text, first);
     struct mod_err *err = code->mod->errs;
@@ -87,14 +88,14 @@ void code_render(struct code *code, struct layout *layout, SDL_Renderer *rendere
 
     for (size_t i = first; i < last; ++i, line = line->next) {
         {
-            char num[code_num_len] = {0};
-            str_utoa(i, num, code_num_len);
+            char num[ui_code_num_len] = {0};
+            str_utoa(i, num, ui_code_num_len);
 
-            label_set(code->num, num, sizeof(num));
-            label_render(code->num, &inner, renderer);
+            ui_label_set(code->num, num, sizeof(num));
+            ui_label_render(code->num, &inner, renderer);
         }
 
-        layout_sep_x(&inner, code->font->glyph_w);
+        ui_layout_sep_x(&inner, code->font->glyph_w);
 
         {
             code->code->bg = rgba_nil();
@@ -103,15 +104,15 @@ void code_render(struct code *code, struct layout *layout, SDL_Renderer *rendere
             if (err != err_end && err->line == i)
                 code->code->bg = make_rgba(0x88, 0x00, 0x00, 0x44);
 
-            label_set(code->code, line->c, text_line_cap);
-            label_render(code->code, &inner, renderer);
+            ui_label_set(code->code, line->c, text_line_cap);
+            ui_label_render(code->code, &inner, renderer);
         }
 
-        layout_next_row(&inner);
+        ui_layout_next_row(&inner);
     }
 
     if (code->carret.blink) {
-        size_t x = (code->carret.col + code_num_len + 1) * code->font->glyph_w;
+        size_t x = (code->carret.col + ui_code_num_len + 1) * code->font->glyph_w;
         size_t y = code->carret.row * code->font->glyph_h;
 
         rgba_render(rgba_white(), renderer);
@@ -127,15 +128,15 @@ void code_render(struct code *code, struct layout *layout, SDL_Renderer *rendere
 // event
 // -----------------------------------------------------------------------------
 
-static enum ui_ret code_event_click(struct code *code)
+static enum ui_ret ui_code_event_click(struct ui_code *code)
 {
     SDL_Point cursor = core.cursor.point;
-    SDL_Rect rect = widget_rect(&code->w);
+    SDL_Rect rect = ui_widget_rect(&code->w);
     if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
 
     size_t col = (cursor.x - code->w.pos.x) / code->font->glyph_w;
     size_t row = (cursor.y - code->w.pos.y) / code->font->glyph_h;
-    col = col < (code_num_len+1) ? 0 : col - (code_num_len+1);
+    col = col < (ui_code_num_len+1) ? 0 : col - (ui_code_num_len+1);
     assert(row < code->scroll->visible);
     assert(col < text_line_cap);
 
@@ -157,7 +158,7 @@ static enum ui_ret code_event_click(struct code *code)
     return ui_consume;
 }
 
-static enum ui_ret code_event_move(struct code *code, int hori, int vert)
+static enum ui_ret ui_code_event_move(struct ui_code *code, int hori, int vert)
 {
     if (hori > 0) {
         if (code->carret.col < line_len(code->carret.line)) code->carret.col++;
@@ -204,7 +205,7 @@ static enum ui_ret code_event_move(struct code *code, int hori, int vert)
     return ui_nil;
 }
 
-static void code_event_scroll(struct code *code, size_t old, size_t new)
+static void ui_code_event_scroll(struct ui_code *code, size_t old, size_t new)
 {
     if (old == new) return;
 
@@ -228,7 +229,7 @@ static void code_event_scroll(struct code *code, size_t old, size_t new)
 
 }
 
-static enum ui_ret code_event_ins(struct code *code, char key, uint16_t mod)
+static enum ui_ret ui_code_event_ins(struct ui_code *code, char key, uint16_t mod)
 {
     if (mod & KMOD_SHIFT) key = str_keycode_shift(key);
 
@@ -248,7 +249,7 @@ static enum ui_ret code_event_ins(struct code *code, char key, uint16_t mod)
     return ui_consume;
 }
 
-static enum ui_ret code_event_delete(struct code *code)
+static enum ui_ret ui_code_event_delete(struct ui_code *code)
 {
     struct line_ret ret =
         line_delete(&code->text, code->carret.line, code->carret.col);
@@ -262,7 +263,7 @@ static enum ui_ret code_event_delete(struct code *code)
     return ui_consume;
 }
 
-static enum ui_ret code_event_backspace(struct code *code)
+static enum ui_ret ui_code_event_backspace(struct ui_code *code)
 {
     struct line_ret ret =
         line_backspace(&code->text, code->carret.line, code->carret.col);
@@ -280,37 +281,37 @@ static enum ui_ret code_event_backspace(struct code *code)
     return ui_consume;
 }
 
-enum ui_ret code_event(struct code *code, const SDL_Event *ev)
+enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
 
     size_t old_scroll = code->scroll->first;
-    if ((ret = scroll_event(code->scroll, ev))) {
-        if (ret != ui_skip) code_event_scroll(code, old_scroll, code->scroll->first);
+    if ((ret = ui_scroll_event(code->scroll, ev))) {
+        if (ret != ui_skip) ui_code_event_scroll(code, old_scroll, code->scroll->first);
         return ret;
     }
 
     switch (ev->type) {
 
-    case SDL_MOUSEBUTTONDOWN: { return code_event_click(code); }
+    case SDL_MOUSEBUTTONDOWN: { return ui_code_event_click(code); }
 
     case SDL_KEYDOWN: {
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;
         switch (keysym) {
 
-        case SDLK_UP: { return code_event_move(code, 0, -1); }
-        case SDLK_DOWN: { return code_event_move(code, 0, 1); }
-        case SDLK_LEFT: { return code_event_move(code, -1, 0); }
-        case SDLK_RIGHT: { return code_event_move(code, 1, 0); }
+        case SDLK_UP: { return ui_code_event_move(code, 0, -1); }
+        case SDLK_DOWN: { return ui_code_event_move(code, 0, 1); }
+        case SDLK_LEFT: { return ui_code_event_move(code, -1, 0); }
+        case SDLK_RIGHT: { return ui_code_event_move(code, 1, 0); }
 
         // from 32 to 176 on the ascii table. The uppercase letters are not
         // mapped by SDL so they're just skipped
-        case ' '...'~': { return code_event_ins(code, keysym, mod); }
-        case SDLK_RETURN: { return code_event_ins(code, '\n', mod); }
+        case ' '...'~': { return ui_code_event_ins(code, keysym, mod); }
+        case SDLK_RETURN: { return ui_code_event_ins(code, '\n', mod); }
 
-        case SDLK_DELETE: { return code_event_delete(code); }
-        case SDLK_BACKSPACE: { return code_event_backspace(code); }
+        case SDLK_DELETE: { return ui_code_event_delete(code); }
+        case SDLK_BACKSPACE: { return ui_code_event_backspace(code); }
 
         case SDLK_HOME: { code->carret.col = 0; return ui_consume; }
         case SDLK_END: { code->carret.col = line_len(code->carret.line); return ui_consume; }

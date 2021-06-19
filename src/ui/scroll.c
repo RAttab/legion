@@ -12,15 +12,15 @@
 // scroll
 // -----------------------------------------------------------------------------
 
-enum { scroll_width = 8 };
+enum { ui_scroll_width = 8 };
 
-struct scroll *scroll_new(struct dim dim, size_t total, size_t visible)
+struct ui_scroll *ui_scroll_new(struct dim dim, size_t total, size_t visible)
 {
     assert(visible > 0);
 
-    struct scroll *scroll = calloc(1, sizeof(*scroll));
-    *scroll = (struct scroll) {
-        .w = make_widget(dim.w, dim.h),
+    struct ui_scroll *scroll = calloc(1, sizeof(*scroll));
+    *scroll = (struct ui_scroll) {
+        .w = ui_widget_new(dim.w, dim.h),
         .first = 0,
         .total = total,
         .visible = visible,
@@ -29,51 +29,51 @@ struct scroll *scroll_new(struct dim dim, size_t total, size_t visible)
     return scroll;
 }
 
-void scroll_free(struct scroll *scroll)
+void ui_scroll_free(struct ui_scroll *scroll)
 {
     free(scroll);
 }
 
-void scroll_move(struct scroll *scroll, ssize_t inc)
+void ui_scroll_move(struct ui_scroll *scroll, ssize_t inc)
 {
     if (scroll->total <= scroll->visible) return;
     if (inc > 0 || scroll->first) scroll->first += inc;
     scroll->first = legion_min(scroll->first, scroll->total - 1);
 }
 
-void scroll_update(struct scroll *scroll, size_t total)
+void ui_scroll_update(struct ui_scroll *scroll, size_t total)
 {
     scroll->total = total;
     scroll->first = legion_min(scroll->first, scroll->total);
 }
 
-static SDL_Rect scroll_rect(struct scroll *scroll)
+static SDL_Rect ui_scroll_rect(struct ui_scroll *scroll)
 {
     if (!scroll->total) return (SDL_Rect) {0};
     return (SDL_Rect) {
-        .x = scroll->w.pos.x + (scroll->w.dim.w - scroll_width),
+        .x = scroll->w.pos.x + (scroll->w.dim.w - ui_scroll_width),
         .y = scroll->w.pos.y + ((scroll->w.dim.h * scroll->first) / scroll->total),
-        .w = scroll_width,
+        .w = ui_scroll_width,
         .h = (scroll->w.dim.h * scroll->visible) / scroll->total,
     };
 }
 
 
-enum ui_ret scroll_event(struct scroll *scroll, const SDL_Event *ev)
+enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
 {
     switch (ev->type) {
 
     case SDL_MOUSEWHEEL: {
-        SDL_Rect widget = widget_rect(&scroll->w);
+        SDL_Rect widget = ui_widget_rect(&scroll->w);
         if (!sdl_rect_contains(&widget, &core.cursor.point))
             return ui_nil;
 
-        scroll_move(scroll, -ev->wheel.y);
+        ui_scroll_move(scroll, -ev->wheel.y);
         return ui_consume;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_Rect bar = scroll_rect(scroll);
+        SDL_Rect bar = ui_scroll_rect(scroll);
         if (!sdl_rect_contains(&bar, &core.cursor.point))
             return ui_nil;
 
@@ -106,18 +106,18 @@ enum ui_ret scroll_event(struct scroll *scroll, const SDL_Event *ev)
     }
 }
 
-struct layout scroll_render(
-        struct scroll *scroll, struct layout *layout, SDL_Renderer *renderer)
+struct ui_layout ui_scroll_render(
+        struct ui_scroll *scroll, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    layout_add(layout, &scroll->w);
+    ui_layout_add(layout, &scroll->w);
 
-    struct dim dim = make_dim(scroll->w.dim.w - scroll_width, scroll->w.dim.h);
-    struct layout inner = layout_new(scroll->w.pos, dim);
+    struct dim dim = make_dim(scroll->w.dim.w - ui_scroll_width, scroll->w.dim.h);
+    struct ui_layout inner = ui_layout_new(scroll->w.pos, dim);
     if (scroll->visible >= scroll->total) return inner;
 
     rgba_render(rgba_white(), renderer);
 
-    SDL_Rect rect = scroll_rect(scroll);
+    SDL_Rect rect = ui_scroll_rect(scroll);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     return inner;

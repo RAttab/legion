@@ -99,20 +99,20 @@ inline void rgba_render(struct rgba c, SDL_Renderer *renderer)
 // widget
 // -----------------------------------------------------------------------------
 
-struct widget
+struct ui_widget
 {
     struct pos pos;
     struct dim dim;
 };
 
-inline struct widget make_widget(int16_t w, int16_t h)
+inline struct ui_widget ui_widget_new(int16_t w, int16_t h)
 {
-    return (struct widget) {
+    return (struct ui_widget) {
         .dim = (struct dim) { .w = w, .h = h },
     };
 }
 
-inline struct SDL_Rect widget_rect(const struct widget *widget)
+inline struct SDL_Rect ui_widget_rect(const struct ui_widget *widget)
 {
     return (SDL_Rect) {
         .x = widget->pos.x, .y = widget->pos.y,
@@ -125,7 +125,7 @@ inline struct SDL_Rect widget_rect(const struct widget *widget)
 // layout
 // -----------------------------------------------------------------------------
 
-struct layout
+struct ui_layout
 {
     struct pos top;
     struct dim dim;
@@ -135,18 +135,18 @@ struct layout
     int16_t next_y;
 };
 
-enum { layout_inf = -1 };
+enum { ui_layout_inf = -1 };
 
-struct layout layout_new(struct pos, struct dim);
-void layout_add(struct layout *, struct widget *);
+struct ui_layout ui_layout_new(struct pos, struct dim);
+void ui_layout_add(struct ui_layout *, struct ui_widget *);
 
-void layout_next_row(struct layout *);
-void layout_sep_x(struct layout *, int16_t px);
-void layout_sep_y(struct layout *, int16_t px);
-void layout_mid(struct layout *, const struct widget *);
-void layout_right(struct layout *, const struct widget *);
+void ui_layout_next_row(struct ui_layout *);
+void ui_layout_sep_x(struct ui_layout *, int16_t px);
+void ui_layout_sep_y(struct ui_layout *, int16_t px);
+void ui_layout_mid(struct ui_layout *, const struct ui_widget *);
+void ui_layout_right(struct ui_layout *, const struct ui_widget *);
 
-inline bool layout_is_nil(struct layout *layout)
+inline bool ui_layout_is_nil(struct ui_layout *layout)
 {
     return pos_is_nil(layout->top) && dim_is_nil(layout->dim);
 }
@@ -156,9 +156,9 @@ inline bool layout_is_nil(struct layout *layout)
 // label
 // -----------------------------------------------------------------------------
 
-struct label
+struct ui_label
 {
-    struct widget w;
+    struct ui_widget w;
 
     struct font *font;
     struct rgba fg, bg;
@@ -167,110 +167,110 @@ struct label
     const char *str;
 };
 
-enum { label_cap = 128 };
+enum { ui_label_cap = 128 };
 
-struct label *label_const(struct font *, const char *str);
-struct label *label_var(struct font *, size_t len);
-void label_free(struct label *);
-void label_set(struct label *, const char *str, size_t len);
-void label_setf(struct label *, const char *fmt, ...);
-void label_render(struct label *, struct layout *, SDL_Renderer *);
+struct ui_label *ui_label_const(struct font *, const char *str);
+struct ui_label *ui_label_var(struct font *, size_t len);
+void ui_label_free(struct ui_label *);
+void ui_label_set(struct ui_label *, const char *str, size_t len);
+void ui_label_setf(struct ui_label *, const char *fmt, ...);
+void ui_label_render(struct ui_label *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
 // button
 // -----------------------------------------------------------------------------
 
-enum button_state
+enum ui_button_state
 {
-    button_idle = 0,
-    button_hover,
-    button_pressed,
+    ui_button_idle = 0,
+    ui_button_hover,
+    ui_button_pressed,
 };
 
-struct button
+struct ui_button
 {
-    struct widget w;
+    struct ui_widget w;
 
     struct font *font;
     struct rgba fg;
     struct dim pad;
 
-    enum button_state state;
+    enum ui_button_state state;
 
     uint8_t len;
     const char *str;
 };
 
-enum { button_cap = 128 };
+enum { ui_button_cap = 128 };
 
-struct button *button_const(struct font *, const char *str);
-struct button *button_var(struct font *, size_t len);
-void button_free(struct button *);
-void button_set(struct button *, const char *str, size_t len);
+struct ui_button *ui_button_const(struct font *, const char *str);
+struct ui_button *ui_button_var(struct font *, size_t len);
+void ui_button_free(struct ui_button *);
+void ui_button_set(struct ui_button *, const char *str, size_t len);
 
-enum ui_ret button_event(struct button *, const SDL_Event *);
-void button_render(struct button *, struct layout *, SDL_Renderer *);
+enum ui_ret ui_button_event(struct ui_button *, const SDL_Event *);
+void ui_button_render(struct ui_button *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
 // toggle
 // -----------------------------------------------------------------------------
 
-enum toggle_state
+enum ui_toggle_state
 {
-    toggle_idle = 0,
-    toggle_hover,
-    toggle_selected,
+    ui_toggle_idle = 0,
+    ui_toggle_hover,
+    ui_toggle_selected,
 };
 
-struct toggle
+struct ui_toggle
 {
-    struct widget w;
+    struct ui_widget w;
 
     struct font *font;
     struct rgba fg;
 
-    enum toggle_state state;
+    enum ui_toggle_state state;
 
     uint8_t len;
     const char *str;
 };
 
-enum { toggle_cap = 128 };
+enum { ui_toggle_cap = 128 };
 
-struct toggle *toggle_const(struct font *, const char *str);
-struct toggle *toggle_var(struct font *, size_t len);
-void toggle_free(struct toggle *);
-void toggle_set(struct toggle *, const char *str, size_t len);
+struct ui_toggle *ui_toggle_const(struct font *, const char *str);
+struct ui_toggle *ui_toggle_var(struct font *, size_t len);
+void ui_toggle_free(struct ui_toggle *);
+void ui_toggle_set(struct ui_toggle *, const char *str, size_t len);
 
-enum ui_ret toggle_event(struct toggle *, const SDL_Event *);
-void toggle_render(struct toggle *, struct layout *, SDL_Renderer *);
+enum ui_ret ui_toggle_event(struct ui_toggle *, const SDL_Event *);
+void ui_toggle_render(struct ui_toggle *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
 // scroll
 // -----------------------------------------------------------------------------
 
-struct scroll
+struct ui_scroll
 {
-    struct widget w;
+    struct ui_widget w;
 
     size_t first, total, visible;
     struct { int16_t start, bar; } drag;
 };
 
-struct scroll *scroll_new(struct dim dim, size_t total, size_t visible);
-void scroll_free(struct scroll *);
+struct ui_scroll *ui_scroll_new(struct dim dim, size_t total, size_t visible);
+void ui_scroll_free(struct ui_scroll *);
 
-void scroll_move(struct scroll *, ssize_t inc);
-void scroll_update(struct scroll *, size_t total);
+void ui_scroll_move(struct ui_scroll *, ssize_t inc);
+void ui_scroll_update(struct ui_scroll *, size_t total);
 
-enum ui_ret scroll_event(struct scroll *, const SDL_Event *);
-struct layout scroll_render(struct scroll *, struct layout *, SDL_Renderer *);
+enum ui_ret ui_scroll_event(struct ui_scroll *, const SDL_Event *);
+struct ui_layout ui_scroll_render(struct ui_scroll *, struct ui_layout *, SDL_Renderer *);
 
-inline size_t scroll_first(const struct scroll *scroll) { return scroll->first; }
-inline size_t scroll_last(const struct scroll *scroll)
+inline size_t ui_scroll_first(const struct ui_scroll *scroll) { return scroll->first; }
+inline size_t ui_scroll_last(const struct ui_scroll *scroll)
 {
     return legion_min(scroll->total, scroll->first + scroll->visible);
 }
@@ -280,13 +280,13 @@ inline size_t scroll_last(const struct scroll *scroll)
 // code
 // -----------------------------------------------------------------------------
 
-struct code
+struct ui_code
 {
-    struct widget w;
+    struct ui_widget w;
 
     struct font *font;
-    struct scroll *scroll;
-    struct label *num, *code;
+    struct ui_scroll *scroll;
+    struct ui_label *num, *code;
 
     struct text text;
     struct mod *mod;
@@ -298,45 +298,45 @@ struct code
     } carret;
 };
 
-enum { code_num_len = 4 };
+enum { ui_code_num_len = 4 };
 
-struct code *code_new(struct dim, struct font *);
-void code_free(struct code *);
+struct ui_code *ui_code_new(struct dim, struct font *);
+void ui_code_free(struct ui_code *);
 
-void code_clear(struct code *);
-void code_set(struct code *, struct mod *, ip_t);
-void code_tick(struct code *, uint64_t ticks);
+void ui_code_clear(struct ui_code *);
+void ui_code_set(struct ui_code *, struct mod *, ip_t);
+void ui_code_tick(struct ui_code *, uint64_t ticks);
 
-enum ui_ret code_event(struct code *, const SDL_Event *);
-void code_render(struct code *, struct layout *, SDL_Renderer *);
+enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
+void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
 // panel
 // -----------------------------------------------------------------------------
 
-enum panel_state
+enum ui_panel_state
 {
-    panel_hidden = 0,
-    panel_visible = 1,
-    panel_focused = 2,
+    ui_panel_hidden = 0,
+    ui_panel_visible = 1,
+    ui_panel_focused = 2,
 };
 
-struct panel
+struct ui_panel
 {
-    struct widget w;
-    struct layout layout;
+    struct ui_widget w;
+    struct ui_layout layout;
 
-    enum panel_state state;
+    enum ui_panel_state state;
 
-    struct label *title;
-    struct button *close;
+    struct ui_label *title;
+    struct ui_button *close;
 };
 
-struct panel *panel_slim(struct pos, struct dim);
-struct panel *panel_const(struct pos, struct dim, const char *str);
-struct panel *panel_var(struct pos, struct dim, size_t len);
-void panel_free(struct panel *);
+struct ui_panel *ui_panel_slim(struct pos, struct dim);
+struct ui_panel *ui_panel_const(struct pos, struct dim, const char *str);
+struct ui_panel *ui_panel_var(struct pos, struct dim, size_t len);
+void ui_panel_free(struct ui_panel *);
 
-enum ui_ret panel_event(struct panel *, const SDL_Event *);
-struct layout panel_render(struct panel *, SDL_Renderer *);
+enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
+struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);

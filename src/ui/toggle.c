@@ -12,62 +12,62 @@
 // toggle
 // -----------------------------------------------------------------------------
 
-struct toggle *toggle_const(struct font *font, const char *str)
+struct ui_toggle *ui_toggle_const(struct font *font, const char *str)
 {
-    size_t len = strnlen(str, toggle_cap);
-    struct toggle *toggle = calloc(1, sizeof(*toggle));
+    size_t len = strnlen(str, ui_toggle_cap);
+    struct ui_toggle *toggle = calloc(1, sizeof(*toggle));
 
-    *toggle = (struct toggle) {
-        .w = make_widget(len * font->glyph_w, font->glyph_h),
+    *toggle = (struct ui_toggle) {
+        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
         .font = font,
         .fg = rgba_white(),
-        .state = toggle_idle,
+        .state = ui_toggle_idle,
         .len = len,
         .str = str,
     };
     return toggle;
 }
 
-struct toggle *toggle_var(struct font *font, size_t len)
+struct ui_toggle *ui_toggle_var(struct font *font, size_t len)
 {
-    assert(len <= toggle_cap);
+    assert(len <= ui_toggle_cap);
 
-    struct toggle *toggle = calloc(1, sizeof(*toggle) + len);
-    *toggle = (struct toggle) {
-        .w = make_widget(len * font->glyph_w, font->glyph_h),
+    struct ui_toggle *toggle = calloc(1, sizeof(*toggle) + len);
+    *toggle = (struct ui_toggle) {
+        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
         .font = font,
         .fg = rgba_white(),
-        .state = toggle_idle,
+        .state = ui_toggle_idle,
         .len = len,
         .str = (void *)(toggle + 1),
     };
     return toggle;
 }
 
-void toggle_free(struct toggle *toggle)
+void ui_toggle_free(struct ui_toggle *toggle)
 {
     free(toggle);
 }
 
-void toggle_set(struct toggle *toggle, const char *str, size_t len)
+void ui_toggle_set(struct ui_toggle *toggle, const char *str, size_t len)
 {
     assert((void *)(toggle + 1) == (void *)toggle->str);
     assert(len <= toggle->len);
     memcpy(toggle + 1, str, len);
 }
 
-enum ui_ret toggle_event(struct toggle *toggle, const SDL_Event *ev)
+enum ui_ret ui_toggle_event(struct ui_toggle *toggle, const SDL_Event *ev)
 {
-    struct SDL_Rect rect = widget_rect(&toggle->w);
+    struct SDL_Rect rect = ui_widget_rect(&toggle->w);
 
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) {
-            if (toggle->state == toggle_hover) toggle->state = toggle_idle;
+            if (toggle->state == ui_toggle_hover) toggle->state = ui_toggle_idle;
         }
-        else if (toggle->state == toggle_idle) toggle->state = toggle_hover;
+        else if (toggle->state == ui_toggle_idle) toggle->state = ui_toggle_hover;
 
         return ui_nil;
     }
@@ -75,8 +75,8 @@ enum ui_ret toggle_event(struct toggle *toggle, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
-        toggle->state = toggle->state == toggle_selected ?
-            toggle_idle : toggle_selected;
+        toggle->state = toggle->state == ui_toggle_selected ?
+            ui_toggle_idle : ui_toggle_selected;
         return ui_consume;
     }
 
@@ -84,19 +84,19 @@ enum ui_ret toggle_event(struct toggle *toggle, const SDL_Event *ev)
     }
 }
 
-void toggle_render(
-        struct toggle *toggle, struct layout *layout, SDL_Renderer *renderer)
+void ui_toggle_render(
+        struct ui_toggle *toggle, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    layout_add(layout, &toggle->w);
+    ui_layout_add(layout, &toggle->w);
 
     switch (toggle->state) {
-    case toggle_idle: { rgba_render(rgba_nil(), renderer); break; }
-    case toggle_hover: { rgba_render(rgba_gray(0x44), renderer); break; }
-    case toggle_selected: { rgba_render(rgba_gray(0x22), renderer); break; }
+    case ui_toggle_idle: { rgba_render(rgba_nil(), renderer); break; }
+    case ui_toggle_hover: { rgba_render(rgba_gray(0x44), renderer); break; }
+    case ui_toggle_selected: { rgba_render(rgba_gray(0x22), renderer); break; }
     default: { assert(false); }
     }
 
-    SDL_Rect rect = widget_rect(&toggle->w);
+    SDL_Rect rect = ui_widget_rect(&toggle->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     SDL_Point point = pos_as_point(toggle->w.pos);
