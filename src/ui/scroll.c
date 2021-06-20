@@ -14,24 +14,19 @@
 
 enum { ui_scroll_width = 8 };
 
-struct ui_scroll *ui_scroll_new(struct dim dim, size_t total, size_t visible)
+struct ui_scroll ui_scroll_new(struct dim dim, size_t total, size_t visible)
 {
-    assert(visible > 0);
-
-    struct ui_scroll *scroll = calloc(1, sizeof(*scroll));
-    *scroll = (struct ui_scroll) {
+    return (struct ui_scroll) {
         .w = ui_widget_new(dim.w, dim.h),
         .first = 0,
         .total = total,
         .visible = visible,
     };
-
-    return scroll;
 }
 
 void ui_scroll_free(struct ui_scroll *scroll)
 {
-    free(scroll);
+    (void) scroll;
 }
 
 void ui_scroll_move(struct ui_scroll *scroll, ssize_t inc)

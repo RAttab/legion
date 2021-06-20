@@ -3,6 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "ui/str.c"
 #include "ui/layout.c"
 #include "ui/label.c"
 #include "ui/button.c"

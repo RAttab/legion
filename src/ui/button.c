@@ -14,52 +14,23 @@
 // button
 // -----------------------------------------------------------------------------
 
-struct ui_button *ui_button_const(struct font *font, const char *str)
+struct ui_button ui_button_new(struct font *font, struct ui_str str)
 {
-    size_t len = strnlen(str, ui_button_cap);
-    struct ui_button *button = calloc(1, sizeof(*button));
-
     struct dim pad = make_dim(6, 2);
-    *button = (struct ui_button) {
+    return (struct ui_button) {
         .w = ui_widget_new(
-                font->glyph_w * len + pad.w*2,
+                font->glyph_w * ui_str_len(&str) + pad.w*2,
                 font->glyph_h + pad.h*2),
+        .str = str,
         .font = font,
-        .fg = rgba_white(),
         .pad = pad,
         .state = ui_button_idle,
-        .len = len,
-        .str = str,
     };
-    return button;
-}
-
-struct ui_button *ui_button_var(struct font *font, size_t len)
-{
-    assert(len <= ui_button_cap);
-
-    struct ui_button *button = calloc(1, sizeof(*button) + len);
-    *button = (struct ui_button) {
-        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
-        .font = font,
-        .fg = rgba_white(),
-        .state = ui_button_idle,
-        .len = len,
-        .str = (void *)(button + 1),
-    };
-    return button;
 }
 
 void ui_button_free(struct ui_button *button)
 {
-    free(button);
-}
-
-void ui_button_set(struct ui_button *button, const char *str, size_t len)
-{
-    assert((void *)(button + 1) == (void *)button->str);
-    assert(len <= button->len);
-    memcpy(button + 1, str, len);
+    ui_str_free(&button->str);
 }
 
 enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
@@ -115,5 +86,5 @@ void ui_button_render(
         .x = button->w.pos.x + button->pad.w,
         .y = button->w.pos.y + button->pad.h
     };
-    font_render(button->font, renderer, point, button->fg, button->str, button->len);
+    font_render(button->font, renderer, point, rgba_white(), button->str.str, button->str.len);
 }

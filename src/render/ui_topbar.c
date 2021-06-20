@@ -14,10 +14,10 @@
 
 struct ui_topbar
 {
-    struct ui_panel *panel;
-    struct ui_button *mods;
+    struct ui_panel panel;
+    struct ui_button mods;
     struct ui_label coord;
-    struct ui_button *close;
+    struct ui_button close;
 };
 
 enum
@@ -32,38 +32,38 @@ struct ui_topbar *ui_topbar_new(void)
     struct font *font = font_mono6;
     struct ui_topbar *topbar = calloc(1, sizeof(*topbar));
     *topbar = (struct ui_topbar) {
-        .panel = ui_panel_slim(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
-        .mods = ui_button_const(font, "mods"),
-        .coord = ui_label_var(font, topbar_coord_len),
-        .close = ui_button_const(font, "x"),
+        .panel = ui_panel_menu(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
+        .mods = ui_button_new(font, ui_str_c("mods")),
+        .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
+        .close = ui_button_new(font, ui_str_c("x")),
     };
 
     return topbar;
 }
 
 void ui_topbar_free(struct ui_topbar *topbar) {
-    ui_panel_free(topbar->panel);
-    ui_button_free(topbar->mods);
+    ui_panel_free(&topbar->panel);
+    ui_button_free(&topbar->mods);
     ui_label_free(&topbar->coord);
-    ui_button_free(topbar->close);
+    ui_button_free(&topbar->close);
 }
 
 int16_t ui_topbar_height(const struct ui_topbar *topbar)
 {
-    return topbar->panel->w.dim.h;
+    return topbar->panel.w.dim.h;
 }
 
 bool ui_topbar_event(struct ui_topbar *topbar, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(topbar->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&topbar->panel, ev))) return ret == ui_consume;
 
-    if ((ret = ui_button_event(topbar->mods, ev))) {
+    if ((ret = ui_button_event(&topbar->mods, ev))) {
         core_push_event(EV_MODS_TOGGLE, 0, 0);
         return true;
     }
 
-    if ((ret = ui_button_event(topbar->close, ev))) {
+    if ((ret = ui_button_event(&topbar->close, ev))) {
         sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
         return true;
     }
@@ -90,19 +90,19 @@ static void topbar_render_coord(
     it += scale_str(scale, it, end - it);
     assert(it <= end);
 
-    ui_label_set(&topbar->coord, buffer, sizeof(buffer));
+    ui_str_setv(&topbar->coord.str, buffer, sizeof(buffer));
     ui_label_render(&topbar->coord, layout, renderer);
 }
 
 void ui_topbar_render(struct ui_topbar *topbar, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(topbar->panel, renderer);
+    struct ui_layout layout = ui_panel_render(&topbar->panel, renderer);
 
-    ui_button_render(topbar->mods, &layout, renderer);
+    ui_button_render(&topbar->mods, &layout, renderer);
 
     ui_layout_mid(&layout, &topbar->coord.w);
     topbar_render_coord(topbar, &layout, renderer);
 
-    ui_layout_right(&layout, &topbar->close->w);
-    ui_button_render(topbar->close, &layout, renderer);
+    ui_layout_right(&layout, &topbar->close.w);
+    ui_button_render(&topbar->close, &layout, renderer);
 }

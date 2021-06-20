@@ -12,48 +12,19 @@
 // toggle
 // -----------------------------------------------------------------------------
 
-struct ui_toggle *ui_toggle_const(struct font *font, const char *str)
+struct ui_toggle ui_toggle_new(struct font *font, struct ui_str str)
 {
-    size_t len = strnlen(str, ui_toggle_cap);
-    struct ui_toggle *toggle = calloc(1, sizeof(*toggle));
-
-    *toggle = (struct ui_toggle) {
-        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
-        .font = font,
-        .fg = rgba_white(),
-        .state = ui_toggle_idle,
-        .len = len,
+    return (struct ui_toggle) {
+        .w = ui_widget_new(ui_str_len(&str) * font->glyph_w, font->glyph_h),
         .str = str,
-    };
-    return toggle;
-}
-
-struct ui_toggle *ui_toggle_var(struct font *font, size_t len)
-{
-    assert(len <= ui_toggle_cap);
-
-    struct ui_toggle *toggle = calloc(1, sizeof(*toggle) + len);
-    *toggle = (struct ui_toggle) {
-        .w = ui_widget_new(len * font->glyph_w, font->glyph_h),
         .font = font,
-        .fg = rgba_white(),
         .state = ui_toggle_idle,
-        .len = len,
-        .str = (void *)(toggle + 1),
     };
-    return toggle;
 }
 
 void ui_toggle_free(struct ui_toggle *toggle)
 {
-    free(toggle);
-}
-
-void ui_toggle_set(struct ui_toggle *toggle, const char *str, size_t len)
-{
-    assert((void *)(toggle + 1) == (void *)toggle->str);
-    assert(len <= toggle->len);
-    memcpy(toggle + 1, str, len);
+    ui_str_free(&toggle->str);
 }
 
 enum ui_ret ui_toggle_event(struct ui_toggle *toggle, const SDL_Event *ev)
@@ -100,5 +71,5 @@ void ui_toggle_render(
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     SDL_Point point = pos_as_point(toggle->w.pos);
-    font_render(toggle->font, renderer, point, toggle->fg, toggle->str, toggle->len);
+    font_render(toggle->font, renderer, point, rgba_white(), toggle->str.str, toggle->str.len);
 }
