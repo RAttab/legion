@@ -11,4 +11,5 @@
 #include "render/ui_topbar.c"
 #include "render/ui_mods.c"
 #include "render/ui_mod.c"
+#include "render/ui_star.c"
 

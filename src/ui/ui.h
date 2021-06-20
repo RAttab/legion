@@ -153,7 +153,7 @@ inline bool ui_layout_is_nil(struct ui_layout *layout)
 
 
 // -----------------------------------------------------------------------------
-// text
+// str
 // -----------------------------------------------------------------------------
 
 struct ui_str
@@ -170,6 +170,9 @@ void ui_str_free(struct ui_str *);
 void ui_str_setc(struct ui_str *, const char *str);
 void ui_str_setv(struct ui_str *, const char *str, size_t len);
 void ui_str_setf(struct ui_str *, const char *fmt, ...) legion_printf(2, 3);
+void ui_str_set_u64(struct ui_str *, uint64_t val);
+void ui_str_set_hex(struct ui_str *, uint64_t val);
+void ui_str_set_scaled(struct ui_str *, uint64_t val);
 inline size_t ui_str_len(struct ui_str *str) { return str->cap ? str->cap : str->len; }
 
 

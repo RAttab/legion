@@ -26,6 +26,31 @@ size_t str_utox(uint64_t val, char *dst, size_t len)
     return i;
 }
 
+size_t str_scaled(uint64_t val, char *dst, size_t len)
+{
+    assert(len >= str_scaled_len);
+    static const char units[] = "ukMG?";
+
+    size_t unit = 0;
+    while (val > 1000) {
+        val /= 1000;
+        unit++;
+    }
+
+    dst[3] = units[unit];
+    dst[2] = '0' + (val % 10);
+    dst[1] = '0' + ((val / 10) % 10);
+    dst[0] = '0' + ((val / 100) % 10);
+
+    if (dst[0] == '0') {
+        dst[0] = ' ';
+        if (dst[1] == '0') dst[1] = ' ';
+    }
+
+    return str_scaled_len;
+}
+
+
 static char str_keycode_shift_map[] = {
     ['a'] = 'A', ['b'] = 'B', ['c'] = 'C', ['d'] = 'D', ['e'] = 'E',
     ['f'] = 'F', ['g'] = 'G', ['h'] = 'H', ['i'] = 'I', ['j'] = 'J',

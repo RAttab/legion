@@ -6,6 +6,7 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
+#include "utils/str.h"
 
 #include <stdarg.h>
 
@@ -62,4 +63,22 @@ void ui_str_setf(struct ui_str *str, const char *fmt, ...)
 
     assert(len >= 0);
     str->len = len;
+}
+
+void ui_str_set_u64(struct ui_str *str, uint64_t val)
+{
+    assert(str->cap);
+    str->len = str_utoa(val, (char *)str->str, str->cap);
+}
+
+void ui_str_set_hex(struct ui_str *str, uint64_t val)
+{
+    assert(str->cap);
+    str->len = str_utox(val, (char *)str->str,  str->cap);
+}
+
+void ui_str_set_scaled(struct ui_str *str, uint64_t val)
+{
+    assert(str->cap);
+    str->len = str_scaled(val, (char *)str->str,  str->cap);
 }

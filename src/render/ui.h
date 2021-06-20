@@ -43,3 +43,14 @@ struct ui_mod *ui_mod_new(void);
 void ui_mod_free(struct ui_mod *);
 bool ui_mod_event(struct ui_mod *, SDL_Event *);
 void ui_mod_render(struct ui_mod *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// star
+// -----------------------------------------------------------------------------
+
+struct ui_star;
+struct ui_star *ui_star_new(void);
+void ui_star_free(struct ui_star *);
+bool ui_star_event(struct ui_star *, SDL_Event *);
+void ui_star_render(struct ui_star *, SDL_Renderer *);

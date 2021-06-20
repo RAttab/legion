@@ -89,9 +89,7 @@ void ui_code_render(
     for (size_t i = first; i < last; ++i, line = line->next) {
 
         {
-            char num[ui_code_num_len] = {0};
-            str_utoa(i, num, ui_code_num_len);
-            ui_str_setv(&code->num.str, num, sizeof(num));
+            ui_str_set_u64(&code->num.str, i);
             ui_label_render(&code->num, &inner, renderer);
         }
 
