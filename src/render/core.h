@@ -32,6 +32,9 @@ enum event
     EV_STAR_SELECT,
     EV_STAR_CLEAR,
 
+    EV_ITEM_SELECT,
+    EV_ITEM_CLEAR,
+
     EV_FOCUS,
 
     EV_MAX,

@@ -7,8 +7,10 @@
 #include "ui/ui.h"
 #include "render/font.h"
 #include "utils/str.h"
+#include "game/item.h"
 
 #include <stdarg.h>
+
 
 // -----------------------------------------------------------------------------
 // str
@@ -86,4 +88,10 @@ void ui_str_set_scaled(struct ui_str *str, uint64_t val)
 {
     assert(str->cap);
     str->len = str_scaled(val, (char *)str->str,  str->cap);
+}
+
+void ui_str_set_id(struct ui_str *str, id_t val)
+{
+    assert(str->cap);
+    str->len = id_str(val, str->cap, (char *) str->str);
 }

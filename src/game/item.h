@@ -106,7 +106,7 @@ inline item_t id_item(id_t id) { return id >> 24; }
 inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
 enum { id_str_len = 2+6 };
-inline void id_str(id_t id, size_t len, char *dst)
+inline size_t id_str(id_t id, size_t len, char *dst)
 {
     assert(id);
     assert(len >= id_str_len);
@@ -132,6 +132,8 @@ inline void id_str(id_t id, size_t len, char *dst)
 
     for (size_t i = 0; i < 6; i++, id >>=4)
         dst[6-i] = str_hexchar(id);
+
+    return id_str_len;
 }
 
 

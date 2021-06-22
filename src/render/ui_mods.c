@@ -57,7 +57,7 @@ static void ui_mods_update(struct ui_mods *mods)
 {
     struct mods *list = mods_list();
     ui_toggles_resize(&mods->toggles, list->len);
-    ui_scroll_update(&mods->scroll, mods->toggles.len);
+    ui_scroll_update(&mods->scroll, list->len);
 
     for (size_t i = 0; i < list->len; ++i) {
         struct ui_toggle *toggle = &mods->toggles.items[i];

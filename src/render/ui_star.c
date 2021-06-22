@@ -6,7 +6,9 @@
 #include "common.h"
 #include "render/ui.h"
 #include "ui/ui.h"
-#include "utils/str.h"
+#include "game/chunk.h"
+#include "game/item.h"
+#include "utils/vec.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,6 +22,10 @@ struct ui_star
     struct ui_panel panel;
     struct ui_label power, power_val;
     struct ui_label elem, elem_val;
+
+    struct ui_button tab_items;
+    struct ui_scroll scroll;
+    struct ui_toggles items;
 };
 
 static struct font *ui_star_font(void) { return font_mono6; }
@@ -53,6 +59,10 @@ struct ui_star *ui_star_new(void)
 
         .elem = ui_label_new(font, ui_str_c(ui_star_elems[0])),
         .elem_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+
+        .tab_items = ui_button_new(font, ui_str_c("items")),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .items = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
     };
 
     star->panel.state = ui_panel_hidden;
@@ -62,6 +72,12 @@ struct ui_star *ui_star_new(void)
 
 void ui_star_free(struct ui_star *star) {
     ui_panel_free(&star->panel);
+    ui_label_free(&star->power);
+    ui_label_free(&star->power_val);
+    ui_label_free(&star->elem);
+    ui_label_free(&star->elem_val);
+    ui_scroll_free(&star->scroll);
+    ui_toggles_free(&star->items);
     free(star);
 }
 
@@ -76,15 +92,25 @@ static void ui_star_update(struct ui_star *star)
     struct chunk *chunk = sector_chunk(core.state.sector, star->star.coord);
     if (!chunk) return;
 
-    // \todo
+    struct vec64 *items = chunk_list(chunk);
+    ui_toggles_resize(&star->items, items->len);
+    ui_scroll_update(&star->scroll, items->len);
+
+    for (size_t i = 0; i < items->len; ++i) {
+        id_t id = items->vals[i];
+        struct ui_toggle *toggle = &star->items.items[i];
+
+        toggle->user = id;
+        ui_str_set_id(&toggle->str, id);
+    }
 
     {
         char str[coord_str_len] = {0};
         coord_str(star->star.coord, str, sizeof(str));
-        ui_str_setf(&star->panel.title.str, "star - %s", str);
+        ui_str_setf(&star->panel.title.str, "star <%s>", str);
     }
 
-    return;
+    free(items);
 }
 
 static bool ui_star_event_user(struct ui_star *star, SDL_Event *ev)
@@ -124,6 +150,18 @@ bool ui_star_event(struct ui_star *star, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&star->panel, ev))) return ret == ui_consume;
+
+    if ((ret = ui_button_event(&star->tab_items, ev))) {
+        // \todo
+        return ret == ui_consume;
+    }
+
+    struct ui_toggle *toggle = NULL;
+    if ((ret = ui_toggles_event(&star->items, ev, &star->scroll, &toggle, NULL))) {
+        enum event type = toggle->state == ui_toggle_selected ? EV_ITEM_SELECT : EV_ITEM_CLEAR;
+        core_push_event(type, toggle->user, 0);
+        return true;
+    }
 
     return false;
 }
@@ -169,4 +207,13 @@ void ui_star_render(struct ui_star *star, SDL_Renderer *renderer)
         ui_layout_sep_y(&layout, font->glyph_h);
     }
 
+
+    {
+        ui_button_render(&star->tab_items, &layout, renderer);
+
+        struct ui_layout inner = ui_scroll_render(&star->scroll, &layout, renderer);
+        if (ui_layout_is_nil(&inner)) return;
+
+        ui_toggles_render(&star->items, &inner, renderer, &star->scroll);
+    }
 }
