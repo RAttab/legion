@@ -120,4 +120,10 @@ void sector_preload(struct sector *sector)
 
     struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
     chunk_create(chunk, ITEM_MINER);
+    chunk_create(chunk, ITEM_MINER);
+    chunk_create(chunk, ITEM_PRINTER);
+    chunk_create(chunk, ITEM_WORKER);
+    chunk_create(chunk, ITEM_DEPLOYER);
+    chunk_create(chunk, ITEM_BRAIN_M);
+    chunk_create(chunk, ITEM_DB_S);
 }
