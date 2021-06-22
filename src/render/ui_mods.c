@@ -23,16 +23,17 @@ static struct font *ui_mods_font(void) { return font_mono6; }
 
 struct ui_mods *ui_mods_new(void)
 {
+    struct font *font = ui_mods_font();
     struct pos pos = make_pos(0, ui_topbar_height(core.ui.topbar));
     struct dim dim = make_dim(
-            (vm_atom_cap+2) * ui_mods_font()->glyph_w,
+            (vm_atom_cap+2) * font->glyph_w,
             core.rect.h - pos.y);
 
     struct ui_mods *mods = calloc(1, sizeof(*mods));
     *mods = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), 0, 1),
-        .toggles = ui_toggles_new(ui_mods_font(), ui_str_v(vm_atom_cap)),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .toggles = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
     };
 
     mods->panel.state = ui_panel_hidden;
@@ -132,6 +133,5 @@ void ui_mods_render(struct ui_mods *mods, SDL_Renderer *renderer)
     struct ui_layout inner = ui_scroll_render(&mods->scroll, &outer, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    mods->scroll.visible = inner.dim.h / ui_mods_font()->glyph_h;
     ui_toggles_render(&mods->toggles, &inner, renderer, &mods->scroll);
 }

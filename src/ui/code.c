@@ -19,7 +19,7 @@ struct ui_code ui_code_new(struct dim dim, struct font *font)
 {
     struct ui_code code = {
         .w = ui_widget_new(dim.w, dim.h),
-        .scroll = ui_scroll_new(dim, 1, 1),
+        .scroll = ui_scroll_new(dim, font->glyph_h),
         .num = ui_label_new(font, ui_str_v(ui_code_num_len)),
         .code = ui_label_new(font, ui_str_v(text_line_cap)),
         .font = font,
@@ -78,7 +78,6 @@ void ui_code_render(
     code->w = code->scroll.w;
     if (ui_layout_is_nil(&inner)) return;
 
-    code->scroll.visible = inner.dim.h / code->font->glyph_h;
     size_t first = ui_scroll_first(&code->scroll);
     size_t last = ui_scroll_last(&code->scroll);
 

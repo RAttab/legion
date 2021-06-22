@@ -14,13 +14,14 @@
 
 enum { ui_scroll_width = 8 };
 
-struct ui_scroll ui_scroll_new(struct dim dim, size_t total, size_t visible)
+struct ui_scroll ui_scroll_new(struct dim dim, int16_t row_h)
 {
     return (struct ui_scroll) {
         .w = ui_widget_new(dim.w, dim.h),
+        .row_h = row_h,
         .first = 0,
-        .total = total,
-        .visible = visible,
+        .total = 0,
+        .visible = 0,
     };
 }
 
@@ -105,6 +106,7 @@ struct ui_layout ui_scroll_render(
         struct ui_scroll *scroll, struct ui_layout *layout, SDL_Renderer *renderer)
 {
     ui_layout_add(layout, &scroll->w);
+    scroll->visible = scroll->w.dim.h / scroll->row_h;
 
     struct dim dim = make_dim(scroll->w.dim.w - ui_scroll_width, scroll->w.dim.h);
     struct ui_layout inner = ui_layout_new(scroll->w.pos, dim);

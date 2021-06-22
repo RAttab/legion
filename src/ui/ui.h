@@ -231,11 +231,12 @@ struct ui_scroll
 {
     struct ui_widget w;
 
+    int16_t row_h;
     size_t first, total, visible;
     struct { int16_t start, bar; } drag;
 };
 
-struct ui_scroll ui_scroll_new(struct dim dim, size_t total, size_t visible);
+struct ui_scroll ui_scroll_new(struct dim dim, int16_t row_h);
 void ui_scroll_free(struct ui_scroll *);
 
 void ui_scroll_move(struct ui_scroll *, ssize_t inc);
