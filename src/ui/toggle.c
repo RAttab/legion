@@ -73,3 +73,80 @@ void ui_toggle_render(
     SDL_Point point = pos_as_point(toggle->w.pos);
     font_render(toggle->font, renderer, point, rgba_white(), toggle->str.str, toggle->str.len);
 }
+
+
+// -----------------------------------------------------------------------------
+// toggles
+// -----------------------------------------------------------------------------
+
+struct ui_toggles ui_toggles_new(struct font *font, struct ui_str str)
+{
+    return (struct ui_toggles) {
+        .font = font,
+        .str = str,
+        .len = 0,
+        .cap = 0,
+        .items = NULL,
+    };
+}
+
+void ui_toggles_free(struct ui_toggles *list)
+{
+    for (size_t i = 0; i < list->cap; ++i)
+        ui_toggle_free(&list->items[i]);
+    free(list->items);
+}
+
+
+void ui_toggles_resize(struct ui_toggles *list, size_t len)
+{
+    if (len <= list->cap) {
+        list->len = len;
+        return;
+    }
+
+    size_t cap = list->cap ? list->cap : 8;
+    while (cap < len) cap *= 2;
+
+    list->items = realloc(list->items, cap * sizeof(*list->items));
+    for (size_t i = list->cap; i < cap; ++i)
+        list->items[i] = ui_toggle_new(list->font, ui_str_clone(&list->str));
+
+    list->len = len;
+    list->cap = cap;
+}
+
+enum ui_ret ui_toggles_event(
+        struct ui_toggles *list, const SDL_Event *ev, const struct ui_scroll *scroll,
+        struct ui_toggle **r_toggle, size_t *r_index)
+{
+    size_t first = scroll ? ui_scroll_first(scroll) : 0;
+    size_t last = scroll ? ui_scroll_last(scroll) : list->len;
+
+    enum ui_ret final = ui_nil;
+    for (size_t i = first; i < last; ++i) {
+        enum ui_ret ret = ui_nil;
+        if ((ret = ui_toggle_event(&list->items[i], ev))) {
+            final = ret;
+            if (r_index) *r_index = i;
+            if (r_toggle) *r_toggle = &list->items[i];
+        }
+    }
+
+    return final;
+}
+
+void ui_toggles_render(
+        struct ui_toggles *list,
+        struct ui_layout *layout,
+        SDL_Renderer *renderer,
+        const struct ui_scroll *scroll)
+{
+    size_t first = scroll ? ui_scroll_first(scroll) : 0;
+    size_t last = scroll ? ui_scroll_last(scroll) : list->len;
+
+    for (size_t i = first; i < last; ++i) {
+        ui_toggle_render(&list->items[i], layout, renderer);
+        ui_layout_next_row(layout);
+    }
+}

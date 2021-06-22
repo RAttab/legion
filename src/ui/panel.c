@@ -52,7 +52,6 @@ void ui_panel_free(struct ui_panel *panel)
         ui_label_free(&panel->title);
         ui_button_free(&panel->close);
     }
-    free(panel);
 }
 
 enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)

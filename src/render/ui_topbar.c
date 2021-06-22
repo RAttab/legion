@@ -46,6 +46,7 @@ void ui_topbar_free(struct ui_topbar *topbar) {
     ui_button_free(&topbar->mods);
     ui_label_free(&topbar->coord);
     ui_button_free(&topbar->close);
+    free(topbar);
 }
 
 int16_t ui_topbar_height(const struct ui_topbar *topbar)

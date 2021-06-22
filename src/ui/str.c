@@ -33,6 +33,11 @@ struct ui_str ui_str_v(size_t len)
     };
 }
 
+struct ui_str ui_str_clone(const struct ui_str *str)
+{
+    return str->cap ? ui_str_v(str->cap) : ui_str_c(str->str);
+}
+
 void ui_str_free(struct ui_str *str)
 {
     if (str->cap) free((char *) str->str);

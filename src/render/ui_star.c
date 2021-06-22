@@ -62,6 +62,7 @@ struct ui_star *ui_star_new(void)
 
 void ui_star_free(struct ui_star *star) {
     ui_panel_free(&star->panel);
+    free(star);
 }
 
 
@@ -160,8 +161,12 @@ void ui_star_render(struct ui_star *star, SDL_Renderer *renderer)
             ui_label_render(&star->elem_val, &layout, renderer);
 
             size_t col = i % 5;
-            if (col < 4) { ui_layout_sep_x(&layout, font->glyph_w); }
-            else { ui_layout_next_row(&layout); }
+            if (col < 4) ui_layout_sep_x(&layout, font->glyph_w);
+            else ui_layout_next_row(&layout);
         }
+
+        ui_layout_next_row(&layout);
+        ui_layout_sep_y(&layout, font->glyph_h);
     }
+
 }

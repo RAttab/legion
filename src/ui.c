@@ -7,7 +7,7 @@
 #include "ui/layout.c"
 #include "ui/label.c"
 #include "ui/button.c"
-#include "ui/toggle.c"
 #include "ui/scroll.c"
+#include "ui/toggle.c"
 #include "ui/code.c"
 #include "ui/panel.c"
