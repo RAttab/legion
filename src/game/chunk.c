@@ -88,14 +88,14 @@ static void class_list(struct class *class, struct vec64 *ids)
     if (!class) return;
 
     for (size_t i = 0; i < class->len; ++i)
-        vec64_append(ids, make_id(class->type, i));
+        vec64_append(ids, make_id(class->type, i+1));
 }
 
 static void *class_get(struct class *class, id_t id)
 {
     if (!class) return NULL;
 
-    size_t offset = id_bot(id) * class->size;
+    size_t offset = (id_bot(id)-1) * class->size;
     if (offset >= class->len) return NULL;
 
     return class->arena + offset;
@@ -106,31 +106,26 @@ static void class_create(struct class *class)
     class->create++;
 }
 
+// \todo calloc and reallocarray won't cache align anything so gotta do it
+// manually.
 static void class_grow(struct class *class)
 {
     if (class->len < class->cap) return;
 
     if (!class->len) {
         class->cap = 1;
-
         class->arena = calloc(class->cap, class->size);
         class->ports = calloc(class->cap, sizeof(class->ports[0]));
-
-        assert((uintptr_t) class->arena % s_cache_line == 0);
-        assert((uintptr_t) class->ports % s_cache_line == 0);
         return;
     }
 
     class->cap *= 2;
     class->arena = reallocarray(class->arena, class->cap, class->size);
-    class->ports = reallocarray(class->arena, class->cap, sizeof(class->ports[0]));
+    class->ports = reallocarray(class->ports, class->cap, sizeof(class->ports[0]));
 
     size_t added = class->cap - class->len;
-    memset(class->arena + class->len, 0, added * class->size);
+    memset(class->arena + (class->len * class->size), 0, added * class->size);
     memset(class->ports + class->len, 0, added * sizeof(class->ports[0]));
-
-    assert((uintptr_t) class->arena % s_cache_line == 0);
-    assert((uintptr_t) class->ports % s_cache_line == 0);
 }
 
 static void class_step(struct class *class, struct chunk *chunk)
@@ -145,11 +140,12 @@ static void class_step(struct class *class, struct chunk *chunk)
     while (class->create) {
         class_grow(class);
 
-        id_t id = make_id(class->type, class->len);
+        id_t id = make_id(class->type, class->len+1);
         void *item = class->arena + (class->len * class->size);
         class->len++;
 
         class->init(item, id, chunk);
+        class->create--;
     }
 }
 
@@ -344,6 +340,7 @@ item_t chunk_ports_take(struct chunk *chunk, id_t id)
 bool chunk_ports_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
 {
     *dst = ring32_pop(chunk->requested);
+    if (!*dst) return false;
 
     struct ports *ports = class_ports(chunk_class(chunk, id_item(*dst)), *dst);
     assert(ports);
