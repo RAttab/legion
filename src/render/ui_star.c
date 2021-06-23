@@ -67,7 +67,6 @@ struct ui_star *ui_star_new(void)
 
     star->panel.state = ui_panel_hidden;
     return star;
-
 }
 
 void ui_star_free(struct ui_star *star) {
@@ -162,6 +161,7 @@ bool ui_star_event(struct ui_star *star, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&star->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_scroll_event(&star->scroll, ev))) return ret == ui_consume;
 
     if ((ret = ui_button_event(&star->tab_items, ev))) {
         // \todo
@@ -171,7 +171,7 @@ bool ui_star_event(struct ui_star *star, SDL_Event *ev)
     struct ui_toggle *toggle = NULL;
     if ((ret = ui_toggles_event(&star->items, ev, &star->scroll, &toggle, NULL))) {
         enum event type = toggle->state == ui_toggle_selected ? EV_ITEM_SELECT : EV_ITEM_CLEAR;
-        core_push_event(type, toggle->user, 0);
+        core_push_event(type, toggle->user, coord_to_id(star->star.coord));
         return true;
     }
 

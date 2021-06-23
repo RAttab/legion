@@ -54,3 +54,15 @@ struct ui_star *ui_star_new(void);
 void ui_star_free(struct ui_star *);
 bool ui_star_event(struct ui_star *, SDL_Event *);
 void ui_star_render(struct ui_star *, SDL_Renderer *);
+int16_t ui_star_width(const struct ui_star *);
+
+
+// -----------------------------------------------------------------------------
+// item
+// -----------------------------------------------------------------------------
+
+struct ui_item;
+struct ui_item *ui_item_new(void);
+void ui_item_free(struct ui_item *);
+bool ui_item_event(struct ui_item *, SDL_Event *);
+void ui_item_render(struct ui_item *, SDL_Renderer *);

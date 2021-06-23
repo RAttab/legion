@@ -66,6 +66,7 @@ struct core
         struct ui_mods *mods;
         struct ui_mod *mod;
         struct ui_star *star;
+        struct ui_item *item;
     } ui;
 
     struct {

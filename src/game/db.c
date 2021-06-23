@@ -15,16 +15,6 @@
 // db
 // -----------------------------------------------------------------------------
 
-struct legion_packed db
-{
-    id_t id;
-    uint8_t len;
-    legion_pad(3);
-    word_t data[];
-};
-
-static_assert(sizeof(struct db) == 8);
-
 enum
 {
     db_len_s = 7 + 8 * 0,

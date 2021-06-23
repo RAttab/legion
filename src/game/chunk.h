@@ -28,6 +28,7 @@ bool chunk_harvest(struct chunk *, item_t item);
 
 struct vec64 *chunk_list(struct chunk *);
 void *chunk_get(struct chunk *, id_t);
+bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 void chunk_create(struct chunk *, item_t);
 
 void chunk_step(struct chunk *);

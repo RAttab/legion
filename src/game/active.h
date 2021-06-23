@@ -33,6 +33,8 @@ struct item_config
 
 const struct item_config *item_config(item_t);
 
+enum { item_state_len_max = s_cache_line * 4 };
+
 // -----------------------------------------------------------------------------
 // progable
 // -----------------------------------------------------------------------------
@@ -59,5 +61,62 @@ static const uint16_t progable_loops_inf = UINT16_MAX;
 
 
 // -----------------------------------------------------------------------------
-// else
+// brain
 // -----------------------------------------------------------------------------
+
+enum { brain_msg_cap = 4 };
+
+struct legion_packed brain
+{
+    id_t id;
+    legion_pad(4);
+
+    id_t msg_src;
+    uint8_t msg_len;
+    legion_pad(3);
+    word_t msg[brain_msg_cap];
+
+    legion_pad(8);
+
+    const struct mod *mod;
+    struct vm vm;
+};
+static_assert(sizeof(struct brain) == s_cache_line + sizeof(struct vm));
+
+
+// -----------------------------------------------------------------------------
+// db
+// -----------------------------------------------------------------------------
+
+struct legion_packed db
+{
+    id_t id;
+    uint8_t len;
+    legion_pad(3);
+    word_t data[];
+};
+
+static_assert(sizeof(struct db) == 8);
+
+
+// -----------------------------------------------------------------------------
+// worker
+// -----------------------------------------------------------------------------
+
+enum legion_packed worker_state
+{
+    worker_idle = 0,
+    worker_paired,
+    worker_loaded,
+};
+
+struct legion_packed worker
+{
+    id_t id;
+    id_t src, dst;
+    item_t item;
+    enum worker_state state;
+    legion_pad(2);
+};
+
+static_assert(sizeof(struct worker) == 16);

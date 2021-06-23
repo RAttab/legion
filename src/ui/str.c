@@ -47,9 +47,9 @@ void ui_str_free(struct ui_str *str)
 
 void ui_str_setc(struct ui_str *str, const char *val)
 {
-    assert(!str->cap);
     str->len = strnlen(val, ui_str_cap);
-    str->str = val;
+    if (!str->cap) str->str = val;
+    else memcpy((char *) str->str, val, str->len);
 }
 
 void ui_str_setv(struct ui_str *str, const char *val, size_t len)

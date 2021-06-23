@@ -16,25 +16,6 @@
 // brain
 // -----------------------------------------------------------------------------
 
-enum { brain_msg_cap = 4 };
-
-struct legion_packed brain
-{
-    id_t id;
-    legion_pad(4);
-
-    id_t msg_src;
-    uint8_t msg_len;
-    legion_pad(3);
-    word_t msg[brain_msg_cap];
-
-    legion_pad(8);
-
-    const struct mod *mod;
-    struct vm vm;
-};
-static_assert(sizeof(struct brain) == s_cache_line + sizeof(struct vm));
-
 enum
 {
     brain_stack_s = 0,

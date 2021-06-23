@@ -95,10 +95,22 @@ static void *class_get(struct class *class, id_t id)
 {
     if (!class) return NULL;
 
-    size_t offset = (id_bot(id)-1) * class->size;
-    if (offset >= class->len) return NULL;
+    size_t index = id_bot(id)-1;
+    if (index >= class->len) return NULL;
 
-    return class->arena + offset;
+    return class->arena + (index * class->size);
+}
+
+static bool class_copy(struct class *class, id_t id, void *dst, size_t len)
+{
+    if (!class) return false;
+    assert(len >= class->size);
+
+    size_t index = id_bot(id)-1;
+    if (index >= class->len) return false;
+
+    memcpy(dst, class->arena + (index * class->size), class->size);
+    return true;
 }
 
 static void class_create(struct class *class)
@@ -233,7 +245,12 @@ struct vec64* chunk_list(struct chunk *chunk)
 
 void *chunk_get(struct chunk *chunk, id_t id)
 {
-    return class_get(chunk_class(chunk, id), id);
+    return class_get(chunk_class(chunk, id_item(id)), id);
+}
+
+bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
+{
+    return class_copy(chunk_class(chunk, id_item(id)), id, dst, len);
 }
 
 void chunk_create(struct chunk *chunk, item_t item)

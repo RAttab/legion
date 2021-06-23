@@ -32,6 +32,7 @@ struct prog
 
 prog_id_t prog_id(const struct prog *prog) { return prog->id; }
 item_t prog_host(const struct prog *prog) { return prog->host; }
+size_t prog_len(const struct prog *prog) { return prog->inputs + prog->outputs; }
 
 struct prog_ret prog_at(const struct prog *prog, prog_it_t index)
 {

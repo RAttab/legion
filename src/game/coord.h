@@ -35,7 +35,7 @@ legion_packed struct coord
     uint32_t x, y;
 };
 
-inline bool coord_null(struct coord coord)
+inline bool coord_is_nil(struct coord coord)
 {
     return coord.x == 0 && coord.y == 0;
 }
