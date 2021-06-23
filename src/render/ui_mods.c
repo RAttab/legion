@@ -90,16 +90,12 @@ static bool ui_mods_event_user(struct ui_mods *mods, SDL_Event *ev)
 
     case EV_MOD_SELECT: {
         mod_t mod = (uintptr_t) ev->user.data1;
-        for (size_t i = 0; i < mods->toggles.len; ++i) {
-            struct ui_toggle *toggle = &mods->toggles.items[i];
-            toggle->state = toggle->user == mod ? ui_toggle_selected : ui_toggle_idle;
-        }
+        ui_toggles_select(&mods->toggles, mod);
         return false;
     }
 
     case EV_MOD_CLEAR: {
-        for (size_t i = 0; i < mods->toggles.len; ++i)
-            mods->toggles.items[i].state = ui_toggle_idle;
+        ui_toggles_clear(&mods->toggles);
         return false;
     }
 

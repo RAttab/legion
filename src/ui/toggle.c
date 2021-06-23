@@ -150,3 +150,17 @@ void ui_toggles_render(
         ui_layout_next_row(layout);
     }
 }
+
+void ui_toggles_clear(struct ui_toggles *list)
+{
+    for (size_t i = 0; i < list->len; ++i)
+        list->items[i].state = ui_toggle_idle;
+}
+
+void ui_toggles_select(struct ui_toggles *list, uint64_t user)
+{
+    for (size_t i = 0; i < list->len; ++i) {
+        struct ui_toggle *toggle = list->items + i;
+        toggle->state = toggle->user == user ? ui_toggle_selected : ui_toggle_idle;
+    }
+}

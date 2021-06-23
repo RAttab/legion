@@ -294,6 +294,9 @@ struct ui_toggles ui_toggles_new(struct font *, struct ui_str);
 void ui_toggles_free(struct ui_toggles *);
 void ui_toggles_resize(struct ui_toggles *, size_t len);
 
+void ui_toggles_clear(struct ui_toggles *);
+void ui_toggles_select(struct ui_toggles *, uint64_t user);
+
 enum ui_ret ui_toggles_event(
         struct ui_toggles *, const SDL_Event *, const struct ui_scroll *,
         struct ui_toggle **r_toggle, size_t *r_index);

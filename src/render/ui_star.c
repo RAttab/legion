@@ -117,27 +117,39 @@ static bool ui_star_event_user(struct ui_star *star, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
-        case EV_STAR_SELECT: {
-            const struct star *new = ev->user.data1;
-            star->star = *new;
-            ui_star_update(star);
-            star->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS, (uintptr_t) &star->panel, 0);
-            return true;
-        }
 
-        case EV_STAR_CLEAR: {
-            star->star = (struct star) {0};
-            star->panel.state = ui_panel_hidden;
-            core_push_event(EV_FOCUS, 0, 0);
-            return true;
-        }
+    case EV_STAR_SELECT: {
+        const struct star *new = ev->user.data1;
+        star->star = *new;
+        ui_star_update(star);
+        star->panel.state = ui_panel_visible;
+        core_push_event(EV_FOCUS, (uintptr_t) &star->panel, 0);
+        return true;
+    }
 
-        case EV_STATE_UPDATE: {
-            if (star->panel.state == ui_panel_hidden) return false;
-            ui_star_update(star);
-            return false;
-        }
+    case EV_STAR_CLEAR: {
+        star->star = (struct star) {0};
+        star->panel.state = ui_panel_hidden;
+        core_push_event(EV_FOCUS, 0, 0);
+        return true;
+    }
+
+    case EV_ITEM_SELECT: {
+        id_t id = (uintptr_t) ev->user.data1;
+        ui_toggles_select(&star->items, id);
+        return false;
+    }
+
+    case EV_ITEM_CLEAR: {
+        ui_toggles_clear(&star->items);
+        return false;
+    }
+
+    case EV_STATE_UPDATE: {
+        if (star->panel.state == ui_panel_hidden) return false;
+        ui_star_update(star);
+        return false;
+    }
 
     default: { return false; }
     }
@@ -207,9 +219,9 @@ void ui_star_render(struct ui_star *star, SDL_Renderer *renderer)
         ui_layout_sep_y(&layout, font->glyph_h);
     }
 
-
     {
         ui_button_render(&star->tab_items, &layout, renderer);
+        ui_layout_next_row(&layout);
 
         struct ui_layout inner = ui_scroll_render(&star->scroll, &layout, renderer);
         if (ui_layout_is_nil(&inner)) return;
