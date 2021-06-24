@@ -34,25 +34,24 @@ struct ui_mod *ui_mod_new(void)
             (ui_code_num_len+1 + text_line_cap + 2) * ui_mod_font()->glyph_w,
             core.rect.h - pos.y);
 
-    struct ui_mod *mod = calloc(1, sizeof(*mod));
-    *mod = (struct ui_mod) {
+    struct ui_mod *ui = calloc(1, sizeof(*ui));
+    *ui = (struct ui_mod) {
         .panel = ui_panel_title(pos, dim, ui_str_v(vm_atom_cap)),
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), ui_mod_font())
     };
-    mod->panel.state = ui_panel_hidden;
-    return mod;
-
+    ui->panel.state = ui_panel_hidden;
+    return ui;
 }
 
-void ui_mod_free(struct ui_mod *mod)
+void ui_mod_free(struct ui_mod *ui)
 {
-    ui_panel_free(&mod->panel);
-    ui_code_free(&mod->code);
-    mod_discard(mod->mod);
-    free(mod);
+    ui_panel_free(&ui->panel);
+    ui_code_free(&ui->code);
+    mod_discard(ui->mod);
+    free(ui);
 }
 
-static bool ui_mod_event_user(struct ui_mod *mod, SDL_Event *ev)
+static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
@@ -61,30 +60,30 @@ static bool ui_mod_event_user(struct ui_mod *mod, SDL_Event *ev)
         mod_t id = (uintptr_t) ev->user.data1;
         ip_t ip = (uintptr_t) ev->user.data2;
 
-        mod->mod = mods_load(id);
-        assert(mod->mod);
-        ui_code_set(&mod->code, mod->mod, ip);
+        ui->mod = mods_load(id);
+        assert(ui->mod);
+        ui_code_set(&ui->code, ui->mod, ip);
 
         atom_t name = {0};
         mods_name(id, &name);
-        ui_str_setf(&mod->panel.title.str, "mod: %s", name);
+        ui_str_setf(&ui->panel.title.str, "mod: %s", name);
 
-        mod->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS, (uintptr_t) &mod->panel, 0);
+        ui->panel.state = ui_panel_visible;
+        core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
 
         return false;
     }
 
     case EV_MOD_CLEAR: {
-        ui_code_clear(&mod->code);
-        mod_discard(mod->mod);
-        mod->mod = NULL;
-        mod->panel.state = ui_panel_hidden;
+        ui_code_clear(&ui->code);
+        mod_discard(ui->mod);
+        ui->mod = NULL;
+        ui->panel.state = ui_panel_hidden;
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        ui_code_tick(&mod->code, core.ticks);
+        ui_code_tick(&ui->code, core.ticks);
         return false;
     }
 
@@ -92,27 +91,27 @@ static bool ui_mod_event_user(struct ui_mod *mod, SDL_Event *ev)
     }
 }
 
-bool ui_mod_event(struct ui_mod *mod, SDL_Event *ev)
+bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_mod_event_user(mod, ev)) return true;
+    if (ev->type == core.event && ui_mod_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
 
-    if ((ret = ui_panel_event(&mod->panel, ev))) {
-        if (ret == ui_consume && mod->panel.state == ui_panel_hidden)
+    if ((ret = ui_panel_event(&ui->panel, ev))) {
+        if (ret == ui_consume && ui->panel.state == ui_panel_hidden)
             core_push_event(EV_MOD_CLEAR, 0, 0);
         return ret == ui_consume;
     }
 
-    if ((ret = ui_code_event(&mod->code, ev))) return ret == ui_consume;
+    if ((ret = ui_code_event(&ui->code, ev))) return ret == ui_consume;
 
     return false;
 }
 
-void ui_mod_render(struct ui_mod *mod, SDL_Renderer *renderer)
+void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&mod->panel, renderer);
+    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
-    ui_code_render(&mod->code, &layout, renderer);
+    ui_code_render(&ui->code, &layout, renderer);
 }

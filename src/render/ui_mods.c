@@ -29,73 +29,73 @@ struct ui_mods *ui_mods_new(void)
             (vm_atom_cap+2) * font->glyph_w,
             core.rect.h - pos.y);
 
-    struct ui_mods *mods = calloc(1, sizeof(*mods));
-    *mods = (struct ui_mods) {
+    struct ui_mods *ui = calloc(1, sizeof(*ui));
+    *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .toggles = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
     };
 
-    mods->panel.state = ui_panel_hidden;
-    return mods;
+    ui->panel.state = ui_panel_hidden;
+    return ui;
 }
 
 
-void ui_mods_free(struct ui_mods *mods) {
-    ui_panel_free(&mods->panel);
-    ui_scroll_free(&mods->scroll);
-    ui_toggles_free(&mods->toggles);
-    free(mods);
+void ui_mods_free(struct ui_mods *ui) {
+    ui_panel_free(&ui->panel);
+    ui_scroll_free(&ui->scroll);
+    ui_toggles_free(&ui->toggles);
+    free(ui);
 }
 
-int16_t ui_mods_width(const struct ui_mods *mods)
+int16_t ui_mods_width(const struct ui_mods *ui)
 {
-    return mods->panel.w.dim.w;
+    return ui->panel.w.dim.w;
 }
 
-static void ui_mods_update(struct ui_mods *mods)
+static void ui_mods_update(struct ui_mods *ui)
 {
     struct mods *list = mods_list();
-    ui_toggles_resize(&mods->toggles, list->len);
-    ui_scroll_update(&mods->scroll, list->len);
+    ui_toggles_resize(&ui->toggles, list->len);
+    ui_scroll_update(&ui->scroll, list->len);
 
     for (size_t i = 0; i < list->len; ++i) {
-        struct ui_toggle *toggle = &mods->toggles.items[i];
+        struct ui_toggle *toggle = &ui->toggles.items[i];
         ui_str_setv(&toggle->str, list->items[i].str, vm_atom_cap);
         toggle->user = list->items[i].id;
     }
 
-    ui_str_setf(&mods->panel.title.str, "mods(%zu)", list->len);
+    ui_str_setf(&ui->panel.title.str, "mods(%zu)", list->len);
     free(list);
 }
 
-static bool ui_mods_event_user(struct ui_mods *mods, SDL_Event *ev)
+static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
 
     case EV_MODS_TOGGLE: {
-        if (mods->panel.state == ui_panel_hidden) {
-            ui_mods_update(mods);
-            mods->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS, (uintptr_t) &mods->panel, 0);
+        if (ui->panel.state == ui_panel_hidden) {
+            ui_mods_update(ui);
+            ui->panel.state = ui_panel_visible;
+            core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
         }
         else {
-            if (mods->panel.state == ui_panel_focused)
+            if (ui->panel.state == ui_panel_focused)
                 core_push_event(EV_FOCUS, 0, 0);
-            mods->panel.state = ui_panel_hidden;
+            ui->panel.state = ui_panel_hidden;
         }
         return true;
     }
 
     case EV_MOD_SELECT: {
         mod_t mod = (uintptr_t) ev->user.data1;
-        ui_toggles_select(&mods->toggles, mod);
+        ui_toggles_select(&ui->toggles, mod);
         return false;
     }
 
     case EV_MOD_CLEAR: {
-        ui_toggles_clear(&mods->toggles);
+        ui_toggles_clear(&ui->toggles);
         return false;
     }
 
@@ -103,16 +103,16 @@ static bool ui_mods_event_user(struct ui_mods *mods, SDL_Event *ev)
     }
 }
 
-bool ui_mods_event(struct ui_mods *mods, SDL_Event *ev)
+bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_mods_event_user(mods, ev)) return true;
+    if (ev->type == core.event && ui_mods_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&mods->panel, ev))) return ret == ui_consume;
-    if ((ret = ui_scroll_event(&mods->scroll, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
 
     struct ui_toggle *toggle = NULL;
-    if ((ret = ui_toggles_event(&mods->toggles, ev, &mods->scroll, &toggle, NULL))) {
+    if ((ret = ui_toggles_event(&ui->toggles, ev, &ui->scroll, &toggle, NULL))) {
         enum event type = toggle->state == ui_toggle_selected ? EV_MOD_SELECT : EV_MOD_CLEAR;
         core_push_event(type, toggle->user, 0);
         return true;
@@ -121,13 +121,13 @@ bool ui_mods_event(struct ui_mods *mods, SDL_Event *ev)
     return false;
 }
 
-void ui_mods_render(struct ui_mods *mods, SDL_Renderer *renderer)
+void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout outer = ui_panel_render(&mods->panel, renderer);
+    struct ui_layout outer = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&outer)) return;
 
-    struct ui_layout inner = ui_scroll_render(&mods->scroll, &outer, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, &outer, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    ui_toggles_render(&mods->toggles, &inner, renderer, &mods->scroll);
+    ui_toggles_render(&ui->toggles, &inner, renderer, &ui->scroll);
 }
