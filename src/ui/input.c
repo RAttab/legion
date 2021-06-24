@@ -22,6 +22,7 @@ struct ui_input ui_input_new(struct font *font, size_t cap)
                 font->glyph_w * cap + ui_input_margin.w * 2,
                 font->glyph_h + ui_input_margin.h * 2),
         .font = font,
+        .focused = false,
     };
 
     input.buf.c = calloc(cap + 1, 1);
@@ -70,6 +71,19 @@ void ui_input_render(
         .y = rect.y + ui_input_margin.h,
     };
     font_render(input->font, renderer, pos, rgba_white(), input->buf.c, input->buf.len);
+
+    if (input->focused && input->carret.blink) {
+        size_t x = ui_input_margin.w + input->carret.col * input->font->glyph_w;
+        size_t y = ui_input_margin.h;
+
+        rgba_render(rgba_white(), renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                            .x = input->w.pos.x + x,
+                            .y = input->w.pos.y + y,
+                            .w = input->font->glyph_w,
+                            .h = input->font->glyph_h,
+                        }));
+    }
 }
 
 
@@ -81,7 +95,9 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
 {
     SDL_Point cursor = core.cursor.point;
     SDL_Rect rect = ui_widget_rect(&input->w);
-    if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
+
+    input->focused = sdl_rect_contains(&rect, &cursor);
+    if (!input->focused) return ui_nil;
 
     size_t col = (cursor.x - input->w.pos.x) / input->font->glyph_w;
     assert(col < input->buf.cap);
@@ -89,7 +105,6 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     input->carret.col = legion_min(col, input->buf.len);
     return ui_consume;
 }
-
 
 static enum ui_ret ui_input_event_move(struct ui_input *input, int hori)
 {
@@ -154,6 +169,8 @@ enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: { return ui_input_event_click(input); }
 
     case SDL_KEYDOWN: {
+        if (!input->focused) return ui_nil;
+
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;
         switch (keysym) {

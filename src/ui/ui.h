@@ -314,6 +314,7 @@ struct ui_input
 
     struct font *font;
 
+    bool focused;
     struct { char *c; uint8_t len, cap; } buf;
     struct { uint8_t col; bool blink; } carret;
 };
