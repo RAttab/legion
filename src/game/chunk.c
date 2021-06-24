@@ -143,11 +143,12 @@ static void class_grow(struct class *class)
 static void class_step(struct class *class, struct chunk *chunk)
 {
     if (!class) return;
-    if (!class->step) return;
 
-    void *end = class->arena + class->len * class->size;
-    for (void *it = class->arena; it < end; it += class->size)
-        class->step(it, chunk);
+    if (class->step) {
+        void *end = class->arena + class->len * class->size;
+        for (void *it = class->arena; it < end; it += class->size)
+            class->step(it, chunk);
+    }
 
     while (class->create) {
         class_grow(class);

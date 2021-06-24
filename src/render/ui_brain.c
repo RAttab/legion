@@ -129,6 +129,7 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
     ui_str_set_u64(&ui->io_val.str, state->vm.io);
     ui_str_set_u64(&ui->ior_val.str, state->vm.ior);
     ui_str_set_u64(&ui->ip_val.str, state->vm.ip);
+    ui_scroll_update(&ui->scroll, state->vm.sp);
 }
 
 static bool ui_brain_event(
@@ -252,12 +253,12 @@ static void ui_brain_render(
             size_t sp = state->vm.sp - i - 1;
 
             ui_str_set_u64(&ui->stack_index.str, sp);
-            ui_label_render(&ui->stack_index, layout, renderer);
-            ui_layout_sep_x(layout, font->glyph_w);
+            ui_label_render(&ui->stack_index, &inner, renderer);
+            ui_layout_sep_x(&inner, font->glyph_w);
 
             ui_str_set_u64(&ui->stack_val.str, state->vm.stack[sp]);
-            ui_label_render(&ui->stack_val, layout, renderer);
-            ui_layout_next_row(layout);
+            ui_label_render(&ui->stack_val, &inner, renderer);
+            ui_layout_next_row(&inner);
         }
     }
 }

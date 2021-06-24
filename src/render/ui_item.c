@@ -11,23 +11,14 @@
 
 
 // -----------------------------------------------------------------------------
-// ???
+// global
 // -----------------------------------------------------------------------------
 
 static struct font *ui_item_font(void) { return font_mono6; }
 
 #include "render/ui_progable.c"
 #include "render/ui_brain.c"
-
-
-// -----------------------------------------------------------------------------
-// db
-// -----------------------------------------------------------------------------
-
-struct ui_db
-{
-
-};
+#include "render/ui_db.c"
 
 
 // -----------------------------------------------------------------------------
@@ -84,6 +75,7 @@ struct ui_item *ui_item_new(void)
 
     ui_progable_init(&ui->progable);
     ui_brain_init(&ui->brain);
+    ui_db_init(&ui->db);
 
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -94,6 +86,7 @@ void ui_item_free(struct ui_item *ui)
     ui_panel_free(&ui->panel);
     ui_progable_free(&ui->progable);
     ui_brain_free(&ui->brain);
+    ui_db_free(&ui->db);
     free(ui);
 }
 
@@ -129,7 +122,8 @@ static void ui_item_update(struct ui_item *ui)
 
     case ITEM_DB_S:
     case ITEM_DB_M:
-    case ITEM_DB_L: { assert(false); }
+    case ITEM_DB_L:
+        return ui_db_update(&ui->db, &ui->state.db);
 
     default: { assert(false && "unsuported type in ui update"); }
     }
@@ -189,7 +183,8 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     case ITEM_DB_S:
     case ITEM_DB_M:
-    case ITEM_DB_L: { assert(false); }
+    case ITEM_DB_L:
+        return ui_db_event(&ui->db, &ui->state.db, ev);
 
     default: { assert(false && "unsuported type in ui event"); }
     }
@@ -218,7 +213,8 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     case ITEM_DB_S:
     case ITEM_DB_M:
-    case ITEM_DB_L: { assert(false); }
+    case ITEM_DB_L:
+        return ui_db_render(&ui->db, &ui->state.db, &layout, renderer);
 
     default: { assert(false && "unsuported type in ui render"); }
     }
