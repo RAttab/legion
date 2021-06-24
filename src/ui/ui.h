@@ -305,6 +305,31 @@ void ui_toggles_render(
 
 
 // -----------------------------------------------------------------------------
+// input
+// -----------------------------------------------------------------------------
+
+struct ui_input
+{
+    struct ui_widget w;
+
+    struct font *font;
+
+    struct { char *c; uint8_t len, cap; } buf;
+    struct { uint8_t col; bool blink; } carret;
+};
+
+struct ui_input ui_input_new(struct font *, size_t cap);
+void ui_input_free(struct ui_input *);
+
+void ui_input_clear(struct ui_input *);
+void ui_input_set(struct ui_input *, const char *str);
+void ui_input_tick(struct ui_input *, uint64_t ticks);
+
+enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
+void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // code
 // -----------------------------------------------------------------------------
 

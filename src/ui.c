@@ -9,5 +9,6 @@
 #include "ui/button.c"
 #include "ui/scroll.c"
 #include "ui/toggle.c"
+#include "ui/input.c"
 #include "ui/code.c"
 #include "ui/panel.c"
