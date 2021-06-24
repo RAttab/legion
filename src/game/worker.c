@@ -30,28 +30,17 @@ static void worker_init(void *state, id_t id, struct chunk *chunk)
 static void worker_step(void *state, struct chunk *chunk)
 {
     struct worker *worker = state;
-    switch (worker->state) {
 
-    case worker_idle: {
-        if (chunk_ports_pair(chunk, &worker->item, &worker->src, &worker->dst))
-            worker->state = worker_paired;
+    if (worker->item) {
+        chunk_ports_give(chunk, worker->dst, worker->item);
         return;
     }
 
-    case worker_paired: {
+    // we have to take when we pair otherwise we risk race conditions with other
+    // workers.
+    if (chunk_ports_pair(chunk, &worker->item, &worker->src, &worker->dst)) {
         item_t item = chunk_ports_take(chunk, worker->src);
         assert(item == worker->item);
-        worker->state = worker_loaded;
-        return;
-    }
-
-    case worker_loaded: {
-        chunk_ports_give(chunk, worker->dst, worker->item);
-        worker->state = worker_idle;
-        return;
-    }
-
-    default: { assert(false); }
     }
 }
 

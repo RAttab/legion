@@ -19,16 +19,7 @@ static struct font *ui_item_font(void) { return font_mono6; }
 #include "render/ui_progable.c"
 #include "render/ui_brain.c"
 #include "render/ui_db.c"
-
-
-// -----------------------------------------------------------------------------
-// worker
-// -----------------------------------------------------------------------------
-
-struct ui_worker
-{
-
-};
+#include "render/ui_worker.c"
 
 
 // -----------------------------------------------------------------------------
@@ -76,6 +67,7 @@ struct ui_item *ui_item_new(void)
     ui_progable_init(&ui->progable);
     ui_brain_init(&ui->brain);
     ui_db_init(&ui->db);
+    ui_worker_init(&ui->worker);
 
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -87,6 +79,7 @@ void ui_item_free(struct ui_item *ui)
     ui_progable_free(&ui->progable);
     ui_brain_free(&ui->brain);
     ui_db_free(&ui->db);
+    ui_worker_free(&ui->worker);
     free(ui);
 }
 
@@ -108,7 +101,8 @@ static void ui_item_update(struct ui_item *ui)
 
     switch(id_item(ui->id))
     {
-    case ITEM_WORKER: { assert(false); }
+    case ITEM_WORKER:
+        return ui_worker_update(&ui->worker, &ui->state.worker);
 
     case ITEM_PRINTER:
     case ITEM_MINER:
@@ -169,7 +163,8 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     switch(id_item(ui->id))
     {
-    case ITEM_WORKER: { assert(false); }
+    case ITEM_WORKER:
+        return ui_worker_event(&ui->worker, &ui->state.worker, ev);
 
     case ITEM_PRINTER:
     case ITEM_MINER:
@@ -199,7 +194,8 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     switch(id_item(ui->id))
     {
-    case ITEM_WORKER: { assert(false); }
+    case ITEM_WORKER:
+        return ui_worker_render(&ui->worker, &ui->state.worker, &layout, renderer);
 
     case ITEM_PRINTER:
     case ITEM_MINER:

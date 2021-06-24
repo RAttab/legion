@@ -103,20 +103,12 @@ static_assert(sizeof(struct db) == 8);
 // worker
 // -----------------------------------------------------------------------------
 
-enum legion_packed worker_state
-{
-    worker_idle = 0,
-    worker_paired,
-    worker_loaded,
-};
-
 struct legion_packed worker
 {
     id_t id;
     id_t src, dst;
     item_t item;
-    enum worker_state state;
-    legion_pad(2);
+    legion_pad(3);
 };
 
 static_assert(sizeof(struct worker) == 16);
