@@ -17,16 +17,7 @@
 static struct font *ui_item_font(void) { return font_mono6; }
 
 #include "render/ui_progable.c"
-
-
-// -----------------------------------------------------------------------------
-// brain
-// -----------------------------------------------------------------------------
-
-struct ui_brain
-{
-
-};
+#include "render/ui_brain.c"
 
 
 // -----------------------------------------------------------------------------
@@ -80,7 +71,7 @@ struct ui_item
 
 struct ui_item *ui_item_new(void)
 {
-    size_t width = 200;
+    size_t width = 34 * ui_item_font()->glyph_w;
     struct pos pos = make_pos(
             core.rect.w - width - ui_star_width(core.ui.star),
             ui_topbar_height(core.ui.topbar));
@@ -92,6 +83,7 @@ struct ui_item *ui_item_new(void)
     };
 
     ui_progable_init(&ui->progable);
+    ui_brain_init(&ui->brain);
 
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -101,6 +93,7 @@ void ui_item_free(struct ui_item *ui)
 {
     ui_panel_free(&ui->panel);
     ui_progable_free(&ui->progable);
+    ui_brain_free(&ui->brain);
     free(ui);
 }
 
@@ -131,7 +124,8 @@ static void ui_item_update(struct ui_item *ui)
 
     case ITEM_BRAIN_S:
     case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L: { assert(false); }
+    case ITEM_BRAIN_L:
+        return ui_brain_update(&ui->brain, &ui->state.brain);
 
     case ITEM_DB_S:
     case ITEM_DB_M:
@@ -190,7 +184,8 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     case ITEM_BRAIN_S:
     case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L: { assert(false); }
+    case ITEM_BRAIN_L:
+        return ui_brain_event(&ui->brain, &ui->state.brain, ev);
 
     case ITEM_DB_S:
     case ITEM_DB_M:
@@ -218,7 +213,8 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     case ITEM_BRAIN_S:
     case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L: { assert(false); }
+    case ITEM_BRAIN_L:
+        return ui_brain_render(&ui->brain, &ui->state.brain, &layout, renderer);
 
     case ITEM_DB_S:
     case ITEM_DB_M:
