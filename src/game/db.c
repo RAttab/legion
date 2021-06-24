@@ -37,10 +37,10 @@ static void db_init(void *state, id_t id, struct chunk *chunk)
 }
 
 // -----------------------------------------------------------------------------
-// cmd
+// io
 // -----------------------------------------------------------------------------
 
-static void db_cmd_get(
+static void db_io_get(
         struct db *db, struct chunk *chunk,
         id_t src, size_t len, const word_t *args)
 {
@@ -49,25 +49,25 @@ static void db_cmd_get(
         word_t index = args[0];
         if (index >= 0 && index < db->len) val = db->data[index];
     }
-    chunk_cmd(chunk, IO_VAL, db->id, src, 1, &val);
+    chunk_io(chunk, IO_VAL, db->id, src, 1, &val);
 }
 
-static void db_cmd_set(struct db *db, size_t len, const word_t *args)
+static void db_io_set(struct db *db, size_t len, const word_t *args)
 {
     if (len < 2) return;
     word_t index = args[0];
     if (index < db->len) db->data[index] = args[1];
 }
 
-static void db_cmd(
+static void db_io(
         void *state, struct chunk *chunk,
-        enum atom_io cmd, id_t src, size_t len, const word_t *args)
+        enum atom_io io, id_t src, size_t len, const word_t *args)
 {
     struct db *db = state;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, db->id, src, 0, NULL); return; }
-    if (cmd == IO_GET) { db_cmd_get(db, chunk, src, len, args); return; }
-    if (cmd == IO_SET) { db_cmd_set(db, len, args); return; }
+    if (io == IO_PING) { chunk_io(chunk, IO_PONG, db->id, src, 0, NULL); return; }
+    if (io == IO_GET) { db_io_get(db, chunk, src, len, args); return; }
+    if (io == IO_SET) { db_io_set(db, len, args); return; }
     return;
 }
 
@@ -85,7 +85,7 @@ const struct item_config *db_config(item_t item)
             .size = sizeof(struct db) + db_len_s * sizeof(word_t),
             .init = db_init,
             .step = NULL,
-            .cmd = db_cmd,
+            .io = db_io,
         };
         return &config;
     }
@@ -95,7 +95,7 @@ const struct item_config *db_config(item_t item)
             .size = sizeof(struct db) + db_len_m * sizeof(word_t),
             .init = db_init,
             .step = NULL,
-            .cmd = db_cmd,
+            .io = db_io,
         };
         return &config;
     }
@@ -105,7 +105,7 @@ const struct item_config *db_config(item_t item)
             .size = sizeof(struct db) + db_len_l * sizeof(word_t),
             .init = db_init,
             .step = NULL,
-            .cmd = db_cmd,
+            .io = db_io,
         };
         return &config;
     }

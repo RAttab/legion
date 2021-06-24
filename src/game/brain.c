@@ -84,16 +84,16 @@ static void brain_step(void *state, struct chunk *chunk)
     case IO_RECV: { brain_step_recv(brain, len - 1, io + 1); return; }
 
     default: {
-        uint32_t cmd = 0, dst = 0;
-        vm_unpack(io[0], &cmd, &dst);
+        uint32_t atom = 0, dst = 0;
+        vm_unpack(io[0], &atom, &dst);
 
-        if (cmd < (uint32_t) ATOM_IO_MIN || cmd >= (uint32_t) ATOM_IO_MAX) {
+        if (atom < (uint32_t) ATOM_IO_MIN || atom >= (uint32_t) ATOM_IO_MAX) {
             vm_io_fault(&brain->vm);
             return;
         }
 
         if (!dst) dst = brain->id;
-        chunk_cmd(chunk, cmd, brain->id, dst, len - 1, io + 1);
+        chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1);
     }
 
     }
@@ -101,10 +101,10 @@ static void brain_step(void *state, struct chunk *chunk)
 
 
 // -----------------------------------------------------------------------------
-// cmd
+// io
 // -----------------------------------------------------------------------------
 
-static void brain_cmd_prog(struct brain *brain, size_t len, const word_t *args)
+static void brain_io_prog(struct brain *brain, size_t len, const word_t *args)
 {
     if (len < 1) return;
 
@@ -118,19 +118,19 @@ static void brain_cmd_prog(struct brain *brain, size_t len, const word_t *args)
     brain->mod = mod;
 }
 
-static void brain_cmd_reset(struct brain *brain)
+static void brain_io_reset(struct brain *brain)
 {
     vm_reset(&brain->vm);
     brain->mod = NULL;
     brain->msg_len = 0;
 }
 
-static void brain_cmd_val(struct brain *brain, size_t len, const word_t *args)
+static void brain_io_val(struct brain *brain, size_t len, const word_t *args)
 {
     vm_io_write(&brain->vm, len, args);
 }
 
-static void brain_cmd_send(
+static void brain_io_send(
         struct brain *brain, id_t src, size_t len, const word_t *args)
 {
     if (len > brain_msg_cap) return;
@@ -140,18 +140,18 @@ static void brain_cmd_send(
     memcpy(brain->msg, args, len * sizeof(*args));
 }
 
-static void brain_cmd(
+static void brain_io(
         void *state, struct chunk *chunk,
-        enum atom_io cmd, id_t src, size_t len, const word_t *args)
+        enum atom_io io, id_t src, size_t len, const word_t *args)
 {
     struct brain *brain = state;
 
-    switch(cmd) {
-    case IO_PING: { chunk_cmd(chunk, IO_PONG, brain->id, src, 0, NULL); return; }
-    case IO_PROG: { brain_cmd_prog(brain, len, args); return; }
-    case IO_RESET: { brain_cmd_reset(brain); return; }
-    case IO_VAL: { brain_cmd_val(brain, len, args); return; }
-    case IO_SEND: { brain_cmd_send(brain, src, len, args); return; }
+    switch(io) {
+    case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, 0, NULL); return; }
+    case IO_PROG: { brain_io_prog(brain, len, args); return; }
+    case IO_RESET: { brain_io_reset(brain); return; }
+    case IO_VAL: { brain_io_val(brain, len, args); return; }
+    case IO_SEND: { brain_io_send(brain, src, len, args); return; }
     default: { return; }
     }
 }
@@ -170,7 +170,7 @@ const struct item_config *brain_config(item_t item)
             .size = brain_len_s,
             .init = brain_init,
             .step = brain_step,
-            .cmd = brain_cmd,
+            .io = brain_io,
         };
         return &config;
     }
@@ -180,7 +180,7 @@ const struct item_config *brain_config(item_t item)
             .size = brain_len_m,
             .init = brain_init,
             .step = brain_step,
-            .cmd = brain_cmd,
+            .io = brain_io,
         };
         return &config;
     }
@@ -190,7 +190,7 @@ const struct item_config *brain_config(item_t item)
             .size = brain_len_l,
             .init = brain_init,
             .step = brain_step,
-            .cmd = brain_cmd,
+            .io = brain_io,
         };
         return &config;
     }

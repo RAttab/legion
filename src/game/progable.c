@@ -89,10 +89,10 @@ static void progable_step(void *state, struct chunk *chunk)
 
 
 // -----------------------------------------------------------------------------
-// cmd
+// io
 // -----------------------------------------------------------------------------
 
-static void progable_cmd_reset(struct progable *progable, struct chunk *chunk)
+static void progable_io_reset(struct progable *progable, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, progable->id);
     *progable = (struct progable) {
@@ -104,7 +104,7 @@ static void progable_cmd_reset(struct progable *progable, struct chunk *chunk)
     };
 }
 
-static void progable_cmd_prog(
+static void progable_io_prog(
         struct progable *progable, struct chunk *chunk, size_t len, const word_t *args)
 {
     if (len < 1) return;
@@ -118,21 +118,21 @@ static void progable_cmd_prog(
     const struct prog *prog = prog_fetch(id);
     if (!prog || prog_host(prog) != id_item(progable->id)) return;
 
-    progable_cmd_reset(progable, chunk);
+    progable_io_reset(progable, chunk);
     progable->loops = loops;
     progable->prog = prog;
 }
 
-static void progable_cmd(
+static void progable_io(
         void *state, struct chunk *chunk,
-        enum atom_io cmd, id_t src, size_t len, const word_t *args)
+        enum atom_io io, id_t src, size_t len, const word_t *args)
 {
     struct progable *progable = state;
     (void) src;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, progable->id, src, 0, NULL); return; }
-    if (cmd == IO_PROG) { progable_cmd_prog(progable, chunk, len, args); return; }
-    if (cmd == IO_RESET) { progable_cmd_reset(progable, chunk); return; }
+    if (io == IO_PING) { chunk_io(chunk, IO_PONG, progable->id, src, 0, NULL); return; }
+    if (io == IO_PROG) { progable_io_prog(progable, chunk, len, args); return; }
+    if (io == IO_RESET) { progable_io_reset(progable, chunk); return; }
     return;
 }
 
@@ -149,7 +149,7 @@ const struct item_config *progable_config(item_t item)
         .size = sizeof(struct progable),
         .init = progable_init,
         .step = progable_step,
-        .cmd = progable_cmd,
+        .io = progable_io,
     };
     return &config;
 }

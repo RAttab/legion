@@ -32,9 +32,9 @@ bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 void chunk_create(struct chunk *, item_t);
 
 void chunk_step(struct chunk *);
-bool chunk_cmd(
+bool chunk_io(
         struct chunk *,
-        enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args);
+        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args);
 
 void chunk_ports_reset(struct chunk *, id_t);
 

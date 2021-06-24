@@ -46,17 +46,17 @@ static void worker_step(void *state, struct chunk *chunk)
 
 
 // -----------------------------------------------------------------------------
-// cmd
+// io
 // -----------------------------------------------------------------------------
 
-static void worker_cmd(
+static void worker_io(
         void *state, struct chunk *chunk,
-        enum atom_io cmd, id_t src, size_t len, const word_t *args)
+        enum atom_io io, id_t src, size_t len, const word_t *args)
 {
     struct worker *worker = state;
     (void) src, (void) len, (void) args;
 
-    if (cmd == IO_PING) { chunk_cmd(chunk, IO_PONG, worker->id, src, 0, NULL); return; }
+    if (io == IO_PING) { chunk_io(chunk, IO_PONG, worker->id, src, 0, NULL); return; }
     return;
 }
 
@@ -71,7 +71,7 @@ const struct item_config *worker_config(void)
         .size = sizeof(struct worker),
         .init = worker_init,
         .step = worker_step,
-        .cmd = worker_cmd,
+        .io = worker_io,
     };
     return &config;
 }

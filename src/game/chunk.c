@@ -50,7 +50,7 @@ struct class
 
     init_fn_t init;
     step_fn_t step;
-    cmd_fn_t cmd;
+    io_fn_t io;
 
     void *arena;
     struct ports *ports;
@@ -70,7 +70,7 @@ static struct class *class_alloc(item_t type)
         .size = config->size,
         .init = config->init,
         .step = config->step,
-        .cmd = config->cmd,
+        .io = config->io,
     };
 
     return class;
@@ -162,14 +162,14 @@ static void class_step(struct class *class, struct chunk *chunk)
     }
 }
 
-static bool class_cmd(
+static bool class_io(
         struct class *class, struct chunk *chunk,
-        enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args)
+        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
 {
     void *state = class_get(class, dst);
     if (!state) return false;
 
-    class->cmd(state, chunk, cmd, src, len, args);
+    class->io(state, chunk, io, src, len, args);
     return true;
 }
 
@@ -269,12 +269,12 @@ void chunk_step(struct chunk *chunk)
         class_step(chunk->class[i], chunk);
 }
 
-bool chunk_cmd(
+bool chunk_io(
         struct chunk *chunk,
-        enum atom_io cmd, id_t src, id_t dst, size_t len, const word_t *args)
+        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
 {
     struct class *class = chunk_class(chunk, id_item(dst));
-    return class_cmd(class, chunk, cmd, src, dst, len, args);
+    return class_io(class, chunk, io, src, dst, len, args);
 }
 
 void chunk_ports_reset(struct chunk *chunk, id_t id)
