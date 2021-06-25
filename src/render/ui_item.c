@@ -146,14 +146,14 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui_item_update(ui);
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
-        return true;
+        return false;
     }
 
     case EV_ITEM_CLEAR: {
         ui->id = 0;
         ui->panel.state = ui_panel_hidden;
         core_push_event(EV_FOCUS, 0, 0);
-        return true;
+        return false;
     }
 
     case EV_STATE_UPDATE: {

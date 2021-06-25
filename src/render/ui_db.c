@@ -83,7 +83,7 @@ static void ui_db_render(
         ui_label_render(&ui->data_index, &inner, renderer);
         ui_layout_sep_x(&inner, font->glyph_w);
 
-        ui_str_set_u64(&ui->data_val.str, state->data[i]);
+        ui_str_set_hex(&ui->data_val.str, state->data[i]);
         ui_label_render(&ui->data_val, &inner, renderer);
         ui_layout_next_row(&inner);
     }

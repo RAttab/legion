@@ -71,7 +71,7 @@ static struct ui_io_cmd ui_io_cmd1(
 static struct ui_io_cmd ui_io_cmd2(
         struct font *font, enum atom_io id, const char *arg0, const char *arg1)
 {
-    struct ui_io_cmd cmd = ui_io_cmd(font, id, 1);
+    struct ui_io_cmd cmd = ui_io_cmd(font, id, 2);
     cmd.arg[0] = ui_io_arg(font, arg0);
     cmd.arg[1] = ui_io_arg(font, arg1);
     return cmd;
@@ -157,6 +157,26 @@ void ui_io_free(struct ui_io *ui)
     free(ui);
 }
 
+static void ui_io_update(struct ui_io *ui)
+{
+    ui_str_set_id(&ui->target_val.str, ui->id);
+
+    const struct item_config *config = item_config(id_item(ui->id));
+    ui->list = config->io_list;
+    ui->list_len = config->io_list_len;
+
+    for (size_t i = 0; i < ui_io_max; ++i) {
+        struct ui_io_cmd *cmd = &ui->io[i];
+
+        for (size_t j = 0; j < cmd->args; ++j)
+            ui_input_clear(&cmd->arg[j].val);
+
+        cmd->active = false;
+        for (size_t k = 0; k < ui->list_len; ++k)
+            cmd->active = cmd->active || (cmd->id == ui->list[k]);
+    }
+}
+
 static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
@@ -169,27 +189,13 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
         }
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
+        return false;
+    }
 
+    case EV_ITEM_SELECT: {
         ui->id = (uintptr_t) ev->user.data1;
         ui->star = id_to_coord((uintptr_t) ev->user.data2);
-
-        ui_str_set_id(&ui->target_val.str, ui->id);
-
-        const struct item_config *config = item_config(id_item(ui->id));
-        ui->list = config->io_list;
-        ui->list_len = config->io_list_len;
-
-        for (size_t i = 0; i < ui_io_max; ++i) {
-            struct ui_io_cmd *cmd = &ui->io[i];
-
-            for (size_t j = 0; j < cmd->args; ++j)
-                ui_input_clear(&cmd->arg[j].val);
-
-            cmd->active = false;
-            for (size_t k = 0; k < ui->list_len; ++k)
-                cmd->active = cmd->active || (cmd->id == ui->list[k]);
-        }
-
+        ui_io_update(ui);
         return false;
     }
 
@@ -197,6 +203,13 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     case EV_ITEM_CLEAR: {
         ui->panel.state = ui_panel_hidden;
         return false;
+    }
+
+    case EV_STATE_UPDATE: {
+        for (size_t i = 0; i < ui_io_max; ++i) {
+            for (size_t j = 0; j < ui->io[i].args; ++j)
+                ui_input_tick(&ui->io[i].arg[j].val, core.ticks);
+        }
     }
 
     default: { return false; }

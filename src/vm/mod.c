@@ -259,8 +259,6 @@ struct mods *mods_list(void)
 
 static void mods_load_path(const char *path)
 {
-    dbg("compiling: %s", path);
-
     struct mod *mod= NULL;
     {
         int fd = open(path, O_RDONLY);
@@ -301,6 +299,7 @@ static void mods_load_path(const char *path)
 
     mod_t id = mods_register(&name);
     assert(mods_store(id, mod));
+    dbg("mod: %s -> %x", &name[0], id);
 
     mod_discard(mod);
 }

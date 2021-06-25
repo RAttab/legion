@@ -32,8 +32,8 @@ inline char str_hexchar(uint8_t val)
 inline uint8_t str_charhex(char val)
 {
     if (val >= '0' && val <= '9') return val - '0';
-    if (val >= 'A' && val <= 'F') return val - 'A';
-    if (val >= 'a' && val <= 'f') return val - 'a';
+    if (val >= 'A' && val <= 'F') return 10 + (val - 'A');
+    if (val >= 'a' && val <= 'f') return 10 + (val - 'a');
     return 0xFF;
 }
 
