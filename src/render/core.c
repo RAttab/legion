@@ -123,6 +123,7 @@ static void ui_init()
     core.ui.mod = ui_mod_new();
     core.ui.star = ui_star_new();
     core.ui.item = ui_item_new();
+    core.ui.io = ui_io_new();
 }
 
 static void ui_close()
@@ -132,6 +133,7 @@ static void ui_close()
     ui_mod_free(core.ui.mod);
     ui_star_free(core.ui.star);
     ui_item_free(core.ui.item);
+    ui_io_free(core.ui.io);
     map_free(core.ui.map);
 }
 
@@ -148,6 +150,7 @@ static void ui_event(SDL_Event *event)
     if (ui_mod_event(core.ui.mod, event)) return;
     if (ui_star_event(core.ui.star, event)) return;
     if (ui_item_event(core.ui.item, event)) return;
+    if (ui_io_event(core.ui.io, event)) return;
     if (map_event(core.ui.map, event)) return;
 }
 
@@ -159,6 +162,7 @@ static void ui_render(SDL_Renderer *renderer)
     ui_mod_render(core.ui.mod, renderer);
     ui_star_render(core.ui.star, renderer);
     ui_item_render(core.ui.item, renderer);
+    ui_io_render(core.ui.io, renderer);
 }
 
 

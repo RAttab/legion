@@ -12,7 +12,9 @@
 
 enum legion_packed atom_io
 {
-    ATOM_IO_MIN = 1 << 31,
+    // 31 is the sign bit and would cause sign-bit extension when converting to
+    // u64. Need something less dumb then this.
+    ATOM_IO_MIN = 1 << 30,
 
     IO_NIL = ATOM_IO_MIN,
 
@@ -21,6 +23,7 @@ enum legion_packed atom_io
 
     IO_RESET,
     IO_PROG,
+    IO_MOD,
 
     IO_GET,
     IO_SET,

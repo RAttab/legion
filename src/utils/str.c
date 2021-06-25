@@ -26,6 +26,25 @@ size_t str_utox(uint64_t val, char *dst, size_t len)
     return i;
 }
 
+size_t str_atou(const char *src, size_t len, uint64_t *dst)
+{
+    size_t i = 0;
+    for(; i < len && (*src < '0' || *src > '9'); ++i, ++src)
+        *dst = *dst * 10 + (*src - '0');
+    return i;
+}
+
+size_t str_atox(const char *src, size_t len, uint64_t *dst)
+{
+    size_t i = 0;
+    uint8_t hex = 0;
+
+    for (; i < len && (hex = str_charhex(*src)) != 0xFF; ++i, ++src)
+        *dst = (*dst << 4) | hex;
+
+    return i;
+}
+
 size_t str_scaled(uint64_t val, char *dst, size_t len)
 {
     assert(len >= str_scaled_len);

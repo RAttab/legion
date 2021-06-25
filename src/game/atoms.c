@@ -79,6 +79,7 @@ void atoms_register(void)
 
     reg_atom(IO_RESET);
     reg_atom(IO_PROG);
+    reg_atom(IO_MOD);
 
     reg_atom(IO_GET);
     reg_atom(IO_SET);

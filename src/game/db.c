@@ -78,6 +78,8 @@ static void db_io(
 
 const struct item_config *db_config(item_t item)
 {
+    static const word_t io_list[] = { IO_PING, IO_GET, IO_SET };
+
     switch(item) {
 
     case ITEM_DB_S: {
@@ -86,6 +88,8 @@ const struct item_config *db_config(item_t item)
             .init = db_init,
             .step = NULL,
             .io = db_io,
+            .io_list = io_list,
+            .io_list_len = array_len(io_list),
         };
         return &config;
     }
@@ -96,6 +100,8 @@ const struct item_config *db_config(item_t item)
             .init = db_init,
             .step = NULL,
             .io = db_io,
+            .io_list = io_list,
+            .io_list_len = array_len(io_list),
         };
         return &config;
     }
@@ -106,6 +112,8 @@ const struct item_config *db_config(item_t item)
             .init = db_init,
             .step = NULL,
             .io = db_io,
+            .io_list = io_list,
+            .io_list_len = array_len(io_list),
         };
         return &config;
     }

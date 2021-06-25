@@ -144,12 +144,15 @@ static void progable_io(
 const struct item_config *progable_config(item_t item)
 {
     (void) item;
+    static const word_t io_list[] = { IO_PING, IO_PROG, IO_RESET };
 
     static const struct item_config config = {
         .size = sizeof(struct progable),
         .init = progable_init,
         .step = progable_step,
         .io = progable_io,
+        .io_list = io_list,
+        .io_list_len = array_len(io_list),
     };
     return &config;
 }

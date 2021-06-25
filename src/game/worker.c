@@ -67,11 +67,15 @@ static void worker_io(
 
 const struct item_config *worker_config(void)
 {
+    static const word_t io_list[] = { IO_PING };
+
     static const struct item_config config = {
         .size = sizeof(struct worker),
         .init = worker_init,
         .step = worker_step,
         .io = worker_io,
+        .io_list = io_list,
+        .io_list_len = array_len(io_list),
     };
     return &config;
 }

@@ -45,6 +45,7 @@ struct ui_item
     union ui_item_state state;
 
     struct ui_panel panel;
+    struct ui_button io;
     struct ui_progable progable;
     struct ui_brain brain;
     struct ui_db db;
@@ -53,6 +54,8 @@ struct ui_item
 
 struct ui_item *ui_item_new(void)
 {
+    struct font *font = ui_item_font();
+
     size_t width = 34 * ui_item_font()->glyph_w;
     struct pos pos = make_pos(
             core.rect.w - width - ui_star_width(core.ui.star),
@@ -62,7 +65,10 @@ struct ui_item *ui_item_new(void)
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {
         .panel = ui_panel_title(pos, dim, ui_str_v(id_str_len + 8)),
+        .io = ui_button_new(font, ui_str_c("<< io")),
     };
+
+    ui->io.w.dim.w = ui_layout_inf;
 
     ui_progable_init(&ui->progable);
     ui_brain_init(&ui->brain);
@@ -76,11 +82,17 @@ struct ui_item *ui_item_new(void)
 void ui_item_free(struct ui_item *ui)
 {
     ui_panel_free(&ui->panel);
+    ui_button_free(&ui->io);
     ui_progable_free(&ui->progable);
     ui_brain_free(&ui->brain);
     ui_db_free(&ui->db);
     ui_worker_free(&ui->worker);
     free(ui);
+}
+
+int16_t ui_item_width(struct ui_item *ui)
+{
+    return ui->panel.w.dim.w;
 }
 
 static void ui_item_update(struct ui_item *ui)
@@ -161,6 +173,11 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
 
+    if ((ret = ui_button_event(&ui->io, ev))) {
+        core_push_event(EV_IO_TOGGLE, ui->id, coord_to_id(ui->star));
+        return true;
+    }
+
     switch(id_item(ui->id))
     {
     case ITEM_WORKER:
@@ -191,6 +208,10 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 {
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
+
+    ui_button_render(&ui->io, &layout, renderer);
+    ui_layout_next_row(&layout);
+    ui_layout_sep_y(&layout, ui_item_font()->glyph_h);
 
     switch(id_item(ui->id))
     {

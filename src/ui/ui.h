@@ -326,6 +326,9 @@ void ui_input_clear(struct ui_input *);
 void ui_input_set(struct ui_input *, const char *str);
 void ui_input_tick(struct ui_input *, uint64_t ticks);
 
+uint64_t ui_input_get_u64(struct ui_input *);
+uint64_t ui_input_get_hex(struct ui_input *);
+
 enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
 void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
 

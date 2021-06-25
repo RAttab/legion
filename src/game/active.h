@@ -26,9 +26,13 @@ typedef void (*io_fn_t) (
 struct item_config
 {
     size_t size;
+
     init_fn_t init;
     step_fn_t step;
     io_fn_t io;
+
+    size_t io_list_len;
+    const word_t *io_list;
 };
 
 const struct item_config *item_config(item_t);

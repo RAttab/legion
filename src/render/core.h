@@ -22,6 +22,7 @@ enum event
 {
     EV_NIL = 0,
 
+    EV_FOCUS,
     EV_STATE_UPDATE,
 
     EV_MODS_TOGGLE,
@@ -35,7 +36,7 @@ enum event
     EV_ITEM_SELECT,
     EV_ITEM_CLEAR,
 
-    EV_FOCUS,
+    EV_IO_TOGGLE,
 
     EV_MAX,
 };
@@ -67,6 +68,7 @@ struct core
         struct ui_mod *mod;
         struct ui_star *star;
         struct ui_item *item;
+        struct ui_io *io;
     } ui;
 
     struct {

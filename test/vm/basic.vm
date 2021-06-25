@@ -417,7 +417,7 @@ push !io_nil
 io 2
 yield
 &in>S:1
-&out>S:1,flags:0x1,io:2,ior:0xff,sp:2,s0:1,s1:0x80000000
+&out>S:1,flags:0x1,io:2,ior:0xff,sp:2,s0:1,s1:0x40000000
 
 !basic-ios
 &prog
@@ -427,7 +427,7 @@ push 2
 ios
 yield
 &in>S:1
-&out>S:1,flags:0x1,io:2,ior:0,sp:2,s0:1,s1:0x80000000
+&out>S:1,flags:0x1,io:2,ior:0,sp:2,s0:1,s1:0x40000000
 
 !basic-ior
 &prog
@@ -438,7 +438,7 @@ popr $1
 ior $1
 yield
 &in>S:1
-&out>S:1,flags:0x1,io:2,ior:1,r1:2,sp:2,s0:1,s1:0x80000000
+&out>S:1,flags:0x1,io:2,ior:1,r1:2,sp:2,s0:1,s1:0x40000000
 
 
 ############################################################

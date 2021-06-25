@@ -121,7 +121,7 @@ static struct atom_data *atoms_insert(const atom_t *atom, word_t id)
 
     struct atom_data *data = atoms.curr;
     atoms.curr++;
-    
+
     data->word = id;
     memcpy(data->str, atom, vm_atom_cap);
 
@@ -150,7 +150,7 @@ static struct atom_data *atoms_chain(
 
     struct atom_data *data = atoms.curr;
     atoms.curr++;
-    
+
     data->word = id;
     memcpy(data->str, atom, vm_atom_cap);
 

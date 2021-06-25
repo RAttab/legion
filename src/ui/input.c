@@ -57,6 +57,22 @@ void ui_input_tick(struct ui_input *input, uint64_t ticks)
         input->carret.blink = blink;
 }
 
+// \todo could use better error handling
+uint64_t ui_input_get_u64(struct ui_input *input)
+{
+    uint64_t val = 0;
+    (void) str_atou(input->buf.c, input->buf.len, &val);
+    return val;
+}
+
+// \todo could use better error handling
+uint64_t ui_input_get_hex(struct ui_input *input)
+{
+    uint64_t val = 0;
+    (void) str_atox(input->buf.c, input->buf.len, &val);
+    return val;
+}
+
 void ui_input_render(
         struct ui_input *input, struct ui_layout *layout, SDL_Renderer *renderer)
 {

@@ -66,3 +66,15 @@ struct ui_item *ui_item_new(void);
 void ui_item_free(struct ui_item *);
 bool ui_item_event(struct ui_item *, SDL_Event *);
 void ui_item_render(struct ui_item *, SDL_Renderer *);
+int16_t ui_item_width(struct ui_item *);
+
+
+// -----------------------------------------------------------------------------
+// io
+// -----------------------------------------------------------------------------
+
+struct ui_io;
+struct ui_io *ui_io_new(void);
+void ui_io_free(struct ui_io *);
+bool ui_io_event(struct ui_io *, SDL_Event *);
+void ui_io_render(struct ui_io *, SDL_Renderer *);

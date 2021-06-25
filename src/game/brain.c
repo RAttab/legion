@@ -104,7 +104,7 @@ static void brain_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void brain_io_prog(struct brain *brain, size_t len, const word_t *args)
+static void brain_io_mod(struct brain *brain, size_t len, const word_t *args)
 {
     if (len < 1) return;
 
@@ -148,7 +148,7 @@ static void brain_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, 0, NULL); return; }
-    case IO_PROG: { brain_io_prog(brain, len, args); return; }
+    case IO_MOD: { brain_io_mod(brain, len, args); return; }
     case IO_RESET: { brain_io_reset(brain); return; }
     case IO_VAL: { brain_io_val(brain, len, args); return; }
     case IO_SEND: { brain_io_send(brain, src, len, args); return; }
@@ -163,6 +163,8 @@ static void brain_io(
 
 const struct item_config *brain_config(item_t item)
 {
+    static const word_t io_list[] = { IO_PING, IO_MOD, IO_RESET, IO_VAL, IO_SEND };
+
     switch(item) {
 
     case ITEM_BRAIN_S: {
@@ -171,6 +173,8 @@ const struct item_config *brain_config(item_t item)
             .init = brain_init,
             .step = brain_step,
             .io = brain_io,
+            .io_list = io_list,
+            .io_list_len = array_len(io_list),
         };
         return &config;
     }
@@ -181,6 +185,8 @@ const struct item_config *brain_config(item_t item)
             .init = brain_init,
             .step = brain_step,
             .io = brain_io,
+            .io_list = io_list,
+            .io_list_len = array_len(io_list),
         };
         return &config;
     }
@@ -191,6 +197,8 @@ const struct item_config *brain_config(item_t item)
             .init = brain_init,
             .step = brain_step,
             .io = brain_io,
+            .io_list = io_list,
+            .io_list_len = array_len(io_list),
         };
         return &config;
     }
