@@ -82,7 +82,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 
     default: {
         if (ev->type == core.event) {
-            if (ev->user.code == EV_FOCUS) {
+            if (ev->user.code == EV_FOCUS_PANEL) {
                 struct ui_panel *target = (void *) ev->user.data1;
                 panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
             }

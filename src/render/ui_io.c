@@ -32,6 +32,7 @@ struct ui_io_cmd
     enum atom_io id;
     bool active;
 
+    struct ui_label name;
     size_t args;
     struct ui_io_arg arg[2];
     struct ui_button exec;
@@ -43,14 +44,18 @@ static struct ui_io_cmd ui_io_cmd(
     struct ui_io_cmd cmd = {
         .id = id,
         .active = false,
-        .exec = ui_button_new(font, ui_str_v(vm_atom_cap)),
+        .name = ui_label_new(font, ui_str_v(vm_atom_cap)),
+        .exec = ui_button_new(font, ui_str_c("exec >>")),
         .args = args,
     };
 
     atom_t str = {0};
     bool ok = vm_atoms_str(id, &str);
     assert(ok);
-    ui_str_setc(&cmd.exec.str, str);
+
+    ui_str_setc(&cmd.name.str, str);
+    cmd.name.w.dim.w = ui_layout_inf;
+    cmd.name.bg = rgba_gray_a(0x44, 0x44);
 
     return cmd;
 }
@@ -132,8 +137,8 @@ struct ui_io *ui_io_new(void)
         },
     };
 
-    for (size_t i = 0; i < ui_io_max; ++i)
-        ui->io[i].exec.w.dim.w = ui_layout_inf;
+    for (size_t i = 0; i < ui_io_max; ++i) {
+    }
 
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -147,6 +152,7 @@ void ui_io_free(struct ui_io *ui)
 
     for (size_t i = 0; i < ui_io_max; ++i) {
         struct ui_io_cmd *cmd = &ui->io[i];
+        ui_label_free(&cmd->name);
         ui_button_free(&cmd->exec);
         for (size_t j = 0; j < cmd->args; ++j) {
             ui_label_free(&cmd->arg[j].name);
@@ -188,7 +194,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
             return false;
         }
         ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
+        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
         return false;
     }
 
@@ -269,8 +275,9 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
         struct ui_io_cmd *cmd = &ui->io[i];
         if (!cmd->active) continue;
 
-        ui_button_render(&cmd->exec, &layout, renderer);
+        ui_label_render(&cmd->name, &layout, renderer);
         ui_layout_next_row(&layout);
+        ui_layout_sep_y(&layout, 2);
 
         for (size_t j = 0; j < cmd->args; ++j) {
             struct ui_io_arg *arg = &cmd->arg[j];
@@ -279,6 +286,10 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
             ui_input_render(&arg->val, &layout, renderer);
             ui_layout_next_row(&layout);
         }
+
+        ui_layout_sep_x(&layout, 2 * font->glyph_w);
+        ui_button_render(&cmd->exec, &layout, renderer);
+        ui_layout_next_row(&layout);
 
         ui_layout_sep_y(&layout, font->glyph_h);
     }

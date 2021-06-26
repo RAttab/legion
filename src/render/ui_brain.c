@@ -123,12 +123,12 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
         ui_str_setv(&ui->mod_val.str, mod, vm_atom_cap);
     }
 
-    ui_str_set_u64(&ui->spec_stack.str, state->vm.specs.stack);
-    ui_str_set_u64(&ui->spec_speed.str, state->vm.specs.speed);
-    ui_str_set_u64(&ui->tsc_val.str, state->vm.tsc);
-    ui_str_set_u64(&ui->io_val.str, state->vm.io);
-    ui_str_set_u64(&ui->ior_val.str, state->vm.ior);
-    ui_str_set_u64(&ui->ip_val.str, state->vm.ip);
+    ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
+    ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
+    ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
+    ui_str_set_hex(&ui->io_val.str, state->vm.io);
+    ui_str_set_hex(&ui->ior_val.str, state->vm.ior);
+    ui_str_set_hex(&ui->ip_val.str, state->vm.ip);
     ui_scroll_update(&ui->scroll, state->vm.sp);
 }
 
@@ -158,7 +158,7 @@ static void ui_brain_render(
             ui_label_render(&ui->msg_index, layout, renderer);
             ui_layout_sep_x(layout, font->glyph_w);
 
-            ui_str_set_u64(&ui->msg_val.str, state->msg[i]);
+            ui_str_set_hex(&ui->msg_val.str, state->msg[i]);
             ui_label_render(&ui->msg_val, layout, renderer);
             ui_layout_next_row(layout);
         }
@@ -231,7 +231,7 @@ static void ui_brain_render(
             ui_label_render(&ui->regs_index, layout, renderer);
             ui_layout_sep_x(layout, font->glyph_w);
 
-            ui_str_set_u64(&ui->regs_val.str, state->vm.regs[i]);
+            ui_str_set_hex(&ui->regs_val.str, state->vm.regs[i]);
             ui_label_render(&ui->regs_val, layout, renderer);
             ui_layout_next_row(layout);
         }
@@ -256,7 +256,7 @@ static void ui_brain_render(
             ui_label_render(&ui->stack_index, &inner, renderer);
             ui_layout_sep_x(&inner, font->glyph_w);
 
-            ui_str_set_u64(&ui->stack_val.str, state->vm.stack[sp]);
+            ui_str_set_hex(&ui->stack_val.str, state->vm.stack[sp]);
             ui_label_render(&ui->stack_val, &inner, renderer);
             ui_layout_next_row(&inner);
         }

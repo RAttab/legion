@@ -92,6 +92,7 @@ struct ui_toggles ui_toggles_new(struct font *font, struct ui_str str)
 
 void ui_toggles_free(struct ui_toggles *list)
 {
+    ui_str_free(&list->str);
     for (size_t i = 0; i < list->cap; ++i)
         ui_toggle_free(&list->items[i]);
     free(list->items);

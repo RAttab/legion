@@ -7,3 +7,13 @@
    obj:/usr/lib/dri/iris_dri.so
    ...
 }
+
+{
+   sdl
+   Memcheck:Leak
+   match-leak-kinds: all
+   fun:*
+   ...
+   obj:/usr/lib/libSDL2-*
+   ...
+}

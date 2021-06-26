@@ -69,7 +69,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
         ui_str_setf(&ui->panel.title.str, "mod: %s", name);
 
         ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
+        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
 
         return false;
     }

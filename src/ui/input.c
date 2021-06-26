@@ -60,15 +60,18 @@ void ui_input_tick(struct ui_input *input, uint64_t ticks)
 // \todo could use better error handling
 uint64_t ui_input_get_u64(struct ui_input *input)
 {
-    if (input->buf.c[0] == '@') {
+    const char c0 = input->buf.c[0];
+    const char c1 = input->buf.c[1];
+
+    if (c0 == '@' || c0 == '!') {
         if (input->buf.len > vm_atom_cap) return 0;
         atom_t atom = {0};
         memcpy(atom, input->buf.c+1, input->buf.len-1);
-        return vm_atom(&atom);
+        return c0 == '@' ? vm_atom(&atom) : mods_find(&atom);
     }
 
     uint64_t val = 0;
-    if (input->buf.c[0] == '0' && input->buf.c[1] == 'x')
+    if (c0 == '0' && c1 == 'x')
         (void) str_atox(input->buf.c+2, input->buf.len-2, &val);
     else (void) str_atou(input->buf.c, input->buf.len, &val);
     return val;
@@ -126,8 +129,9 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
 
     size_t col = (cursor.x - input->w.pos.x) / input->font->glyph_w;
     assert(col < input->buf.cap);
-
     input->carret.col = legion_min(col, input->buf.len);
+
+    core_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
     return ui_consume;
 }
 
@@ -220,6 +224,15 @@ enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
         }
     }
 
-    default: { return ui_nil; }
+    default: {
+        if (ev->type == core.event) {
+            if (ev->user.code == EV_FOCUS_INPUT) {
+                struct ui_input *target = (void *) ev->user.data1;
+                input->focused = target == input;
+            }
+        }
+        return ui_nil;
+    }
+
     }
 }

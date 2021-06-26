@@ -145,14 +145,14 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui->star = id_to_coord((uintptr_t) ev->user.data2);
         ui_item_update(ui);
         ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
+        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
         return false;
     }
 
     case EV_ITEM_CLEAR: {
         ui->id = 0;
         ui->panel.state = ui_panel_hidden;
-        core_push_event(EV_FOCUS, 0, 0);
+        core_push_event(EV_FOCUS_PANEL, 0, 0);
         return false;
     }
 

@@ -22,8 +22,10 @@ enum event
 {
     EV_NIL = 0,
 
-    EV_FOCUS,
     EV_STATE_UPDATE,
+
+    EV_FOCUS_PANEL,
+    EV_FOCUS_INPUT,
 
     EV_MODS_TOGGLE,
 

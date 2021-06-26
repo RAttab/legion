@@ -78,11 +78,11 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
         if (ui->panel.state == ui_panel_hidden) {
             ui_mods_update(ui);
             ui->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS, (uintptr_t) &ui->panel, 0);
+            core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
         }
         else {
             if (ui->panel.state == ui_panel_focused)
-                core_push_event(EV_FOCUS, 0, 0);
+                core_push_event(EV_FOCUS_PANEL, 0, 0);
             ui->panel.state = ui_panel_hidden;
         }
         return true;

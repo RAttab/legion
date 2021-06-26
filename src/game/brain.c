@@ -116,6 +116,7 @@ static void brain_io_mod(struct brain *brain, size_t len, const word_t *args)
 
     vm_reset(&brain->vm);
     brain->mod = mod;
+    brain->vm.ip = make_ip(mod->id, 0);
 }
 
 static void brain_io_reset(struct brain *brain)

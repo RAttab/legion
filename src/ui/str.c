@@ -63,7 +63,7 @@ void ui_str_setf(struct ui_str *str, const char *fmt, ...)
 {
     assert(str->cap);
 
-    va_list args;
+    va_list args = {0};
     va_start(args, fmt);
     ssize_t len = vsnprintf((char *)(str->str), str->cap, fmt, args);
     va_end(args);
