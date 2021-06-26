@@ -29,7 +29,7 @@ size_t str_utox(uint64_t val, char *dst, size_t len)
 size_t str_atou(const char *src, size_t len, uint64_t *dst)
 {
     size_t i = 0;
-    for(; i < len && (*src < '0' || *src > '9'); ++i, ++src)
+    for(; i < len && (*src >= '0' || *src <= '9'); ++i, ++src)
         *dst = *dst * 10 + (*src - '0');
     return i;
 }

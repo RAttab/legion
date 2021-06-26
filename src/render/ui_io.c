@@ -23,7 +23,7 @@ static struct ui_io_arg ui_io_arg(struct font *font, const char *arg)
 {
     return (struct ui_io_arg) {
         .name = ui_label_new(font, ui_str_c(arg)),
-        .val = ui_input_new(font, 16),
+        .val = ui_input_new(font, 20),
     };
 }
 
@@ -223,7 +223,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 
     word_t args[cmd->args];
     for (size_t i = 0; i < cmd->args; ++i)
-        args[i] = ui_input_get_hex(&cmd->arg[i].val);
+        args[i] = ui_input_get_u64(&cmd->arg[i].val);
 
     bool ok = chunk_io(chunk, cmd->id, 0, ui->id, cmd->args, args);
     assert(ok);

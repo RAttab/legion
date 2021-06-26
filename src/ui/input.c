@@ -60,8 +60,17 @@ void ui_input_tick(struct ui_input *input, uint64_t ticks)
 // \todo could use better error handling
 uint64_t ui_input_get_u64(struct ui_input *input)
 {
+    if (input->buf.c[0] == '@') {
+        if (input->buf.len > vm_atom_cap) return 0;
+        atom_t atom = {0};
+        memcpy(atom, input->buf.c+1, input->buf.len-1);
+        return vm_atom(&atom);
+    }
+
     uint64_t val = 0;
-    (void) str_atou(input->buf.c, input->buf.len, &val);
+    if (input->buf.c[0] == '0' && input->buf.c[1] == 'x')
+        (void) str_atox(input->buf.c+2, input->buf.len-2, &val);
+    else (void) str_atou(input->buf.c, input->buf.len, &val);
     return val;
 }
 
