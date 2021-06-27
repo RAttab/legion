@@ -46,7 +46,7 @@ enum
 struct ui_star *ui_star_new(void)
 {
     struct font *font = ui_star_font();
-    size_t width = (ui_star_elems_total_len + 1) * font->glyph_w;
+    size_t width = 35 * font->glyph_w;
     struct pos pos = make_pos(core.rect.w - width, ui_topbar_height(core.ui.topbar));
     struct dim dim = make_dim(width, core.rect.h - pos.y);
 
@@ -104,7 +104,7 @@ static void ui_star_update(struct ui_star *ui)
     }
 
     {
-        char str[coord_str_len] = {0};
+        char str[coord_str_len+1] = {0};
         coord_str(ui->star.coord, str, sizeof(str));
         ui_str_setf(&ui->panel.title.str, "star - %s", str);
     }

@@ -118,7 +118,6 @@ struct htable_ret htable_get(struct htable *ht, uint64_t key)
 struct htable_ret htable_try_put(struct htable *ht, uint64_t key, uint64_t value)
 {
     assert(key);
-    assert(value);
 
     uint64_t hash = hash_key(key);
     htable_resize(ht, htable_window);
@@ -152,7 +151,6 @@ struct htable_ret htable_put(struct htable *ht, uint64_t key, uint64_t value)
 struct htable_ret htable_xchg(struct htable *ht, uint64_t key, uint64_t value)
 {
     assert(key);
-    assert(value);
 
     uint64_t hash = hash_key(key);
     htable_resize(ht, htable_window);

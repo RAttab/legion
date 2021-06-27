@@ -91,8 +91,8 @@ void ui_code_render(
         {
             code->code.bg = rgba_nil();
 
-            while (err->line < i && err < err_end) err++;
-            if (err != err_end && err->line == i)
+            while (err < err_end && err->line < i) err++;
+            if (err < err_end && err->line == i)
                 code->code.bg = make_rgba(0x88, 0x00, 0x00, 0x44);
 
             ui_str_setv(&code->code.str, line->c, text_line_cap);

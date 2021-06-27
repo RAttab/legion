@@ -229,7 +229,7 @@ static void compiler_index(struct compiler *comp, size_t line, size_t byte)
 
     if (comp->index.len) {
         struct mod_index *prev = index-1;
-        assert(prev->line < line && prev->byte < byte);
+        assert(prev->line < line && prev->byte <= byte);
     }
 
     *index = (struct mod_index) { .line = line, .byte = byte };

@@ -215,6 +215,7 @@ struct ui_button
     struct font *font;
     struct dim pad;
 
+    bool disabled;
     enum ui_button_state state;
 };
 

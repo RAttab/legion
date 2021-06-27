@@ -23,6 +23,7 @@ struct ui_button ui_button_new(struct font *font, struct ui_str str)
                 font->glyph_h + pad.h*2),
         .str = str,
         .font = font,
+        .disabled = false,
         .pad = pad,
         .state = ui_button_idle,
     };
@@ -52,7 +53,7 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
-        button->state = ui_button_pressed;
+        if (!button->disabled) button->state = ui_button_pressed;
         return ui_consume;
     }
 
@@ -72,13 +73,23 @@ void ui_button_render(
 {
     ui_layout_add(layout, &button->w);
 
-    switch (button->state) {
-    case ui_button_idle: { rgba_render(rgba_gray(0x22), renderer); break; }
-    case ui_button_hover: { rgba_render(rgba_gray(0x33), renderer); break; }
-    case ui_button_pressed: { rgba_render(rgba_gray(0x11), renderer); break; }
-    default: { assert(false); }
+    struct rgba fg = {0}, bg = {0};
+
+    if (button->disabled) {
+        fg = rgba_gray(0x88);
+        bg = rgba_gray(0x22);
+    }
+    else {
+        fg = rgba_white();
+        switch (button->state) {
+        case ui_button_idle: { bg = rgba_gray(0x22); break; }
+        case ui_button_hover: { bg = rgba_gray(0x33); break; }
+        case ui_button_pressed: { bg = rgba_gray(0x11); break; }
+        default: { assert(false); }
+        }
     }
 
+    rgba_render(bg, renderer);
     SDL_Rect rect = ui_widget_rect(&button->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
@@ -86,5 +97,5 @@ void ui_button_render(
         .x = button->w.pos.x + button->pad.w,
         .y = button->w.pos.y + button->pad.h
     };
-    font_render(button->font, renderer, point, rgba_white(), button->str.str, button->str.len);
+    font_render(button->font, renderer, point, fg, button->str.str, button->str.len);
 }

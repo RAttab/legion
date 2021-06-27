@@ -87,7 +87,7 @@ struct legion_packed brain
 
     legion_pad(8);
 
-    const struct mod *mod;
+    struct mod *mod;
     struct vm vm;
 };
 static_assert(sizeof(struct brain) == s_cache_line + sizeof(struct vm));

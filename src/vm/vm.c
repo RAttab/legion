@@ -42,16 +42,9 @@ void vm_free(struct vm *vm)
     free(vm);
 }
 
-size_t vm_len(uint8_t stack)
-{
-    stack = 2 + (8 * stack);
-    return sizeof(struct vm) + sizeof(((struct vm *) NULL)->stack[0]) * stack;
-}
-
-
 void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
 {
-    vm->specs.stack = 2 + (8 * stack); // add one cache line per spec increment.
+    vm->specs.stack = vm_stack_len(stack);
     vm->specs.speed = 1 << (speed + 1);
 }
 

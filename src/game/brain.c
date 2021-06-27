@@ -26,9 +26,9 @@ enum
     brain_speed_m = 4,
     brain_speed_l = 6,
 
-    brain_len_s = sizeof(struct brain) + brain_stack_s * sizeof(word_t),
-    brain_len_m = sizeof(struct brain) + brain_stack_m * sizeof(word_t),
-    brain_len_l = sizeof(struct brain) + brain_stack_l * sizeof(word_t),
+    brain_len_s = sizeof(struct brain) + vm_len(brain_stack_s),
+    brain_len_m = sizeof(struct brain) + vm_len(brain_stack_m),
+    brain_len_l = sizeof(struct brain) + vm_len(brain_stack_l),
 };
 
 
@@ -94,8 +94,8 @@ static void brain_step(void *state, struct chunk *chunk)
 
         if (!dst) dst = brain->id;
         chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1);
+        return;
     }
-
     }
 }
 
@@ -111,7 +111,7 @@ static void brain_io_mod(struct brain *brain, size_t len, const word_t *args)
     mod_t id = args[0];
     if (id != args[0]) return;
 
-    const struct mod *mod = mods_load(id);
+    struct mod *mod = mods_load(id);
     if (!mod) return;
 
     vm_reset(&brain->vm);
@@ -122,6 +122,7 @@ static void brain_io_mod(struct brain *brain, size_t len, const word_t *args)
 static void brain_io_reset(struct brain *brain)
 {
     vm_reset(&brain->vm);
+    mod_discard(brain->mod);
     brain->mod = NULL;
     brain->msg_len = 0;
 }

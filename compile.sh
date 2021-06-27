@@ -11,7 +11,7 @@ declare -a SRC
 SRC=(ui render game vm utils)
 
 declare -a TEST
-TEST=(coord chunk vm)
+TEST=(coord chunk mod vm)
 
 CC=${CC:-gcc}
 
