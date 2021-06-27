@@ -12,10 +12,10 @@
 
 struct ui_worker
 {
+    struct ui_label state, state_val;
     struct ui_label src, src_val;
     struct ui_label dst, dst_val;
     struct ui_label item, item_val;
-    struct ui_label state, state_val;
 };
 
 static void ui_worker_init(struct ui_worker *ui)
@@ -23,6 +23,9 @@ static void ui_worker_init(struct ui_worker *ui)
     struct font *font = ui_item_font();
 
     *ui = (struct ui_worker) {
+        .state = ui_label_new(font, ui_str_c("state: ")),
+        .state_val = ui_label_new(font, ui_str_v(8)),
+
         .src = ui_label_new(font, ui_str_c("src:   ")),
         .src_val = ui_label_new(font, ui_str_v(id_str_len)),
 
@@ -36,6 +39,8 @@ static void ui_worker_init(struct ui_worker *ui)
 
 static void ui_worker_free(struct ui_worker *ui)
 {
+    ui_label_free(&ui->state);
+    ui_label_free(&ui->state_val);
     ui_label_free(&ui->src);
     ui_label_free(&ui->src_val);
     ui_label_free(&ui->dst);
@@ -46,6 +51,14 @@ static void ui_worker_free(struct ui_worker *ui)
 
 static void ui_worker_update(struct ui_worker *ui, struct worker *state)
 {
+    switch (state->state)
+    {
+    case worker_idle: { ui_str_setc(&ui->state_val.str, "idle"); break; }
+    case worker_paired: { ui_str_setc(&ui->state_val.str, "paired"); break; }
+    case worker_loaded: { ui_str_setc(&ui->state_val.str, "loaded"); break; }
+    default: { assert(false); }
+    }
+
     if (!state->src) ui_str_setc(&ui->src_val.str, "nil");
     else ui_str_set_id(&ui->src_val.str, state->src);
 
@@ -68,7 +81,11 @@ static void ui_worker_render(
         struct ui_layout *layout, SDL_Renderer *renderer)
 {
     (void) state;
-    
+
+    ui_label_render(&ui->state, layout, renderer);
+    ui_label_render(&ui->state_val, layout, renderer);
+    ui_layout_next_row(layout);
+
     ui_label_render(&ui->src, layout, renderer);
     ui_label_render(&ui->src_val, layout, renderer);
     ui_layout_next_row(layout);

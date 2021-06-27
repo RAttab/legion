@@ -205,6 +205,8 @@ bool mods_store(mod_t id, struct mod *mod)
 
 struct mod *mods_load(mod_t id)
 {
+    if (!id) return NULL;
+
     struct htable_ret ret = htable_get(&mods.index, id);
     if (!ret.ok) return NULL;
 

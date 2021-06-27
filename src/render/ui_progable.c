@@ -15,6 +15,7 @@ struct ui_progable
     struct ui_label state, state_val;
     struct ui_label loops, loops_val;
 
+    struct ui_label tape;
     struct ui_scroll scroll;
     struct ui_label index, in, out;
 };
@@ -33,6 +34,7 @@ static void ui_progable_init(struct ui_progable *ui)
         .loops = ui_label_new(font, ui_str_c("loops: ")),
         .loops_val = ui_label_new(font, ui_str_v(10)),
 
+        .tape = ui_label_new(font, ui_str_c("tape: ")),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .index = ui_label_new(font, ui_str_v(2)),
         .in = ui_label_new(font, ui_str_v(10)),
@@ -53,6 +55,7 @@ static void ui_progable_free(struct ui_progable *ui)
     ui_label_free(&ui->state_val);
     ui_label_free(&ui->loops);
     ui_label_free(&ui->loops_val);
+    ui_label_free(&ui->tape);
     ui_scroll_free(&ui->scroll);
     ui_label_free(&ui->index);
     ui_label_free(&ui->in);
@@ -63,7 +66,7 @@ static void ui_progable_update(struct ui_progable *ui, struct progable *state)
 {
 
     if (!state->prog) ui_str_setc(&ui->prog_val.str, "nil");
-    else ui_str_set_u64(&ui->prog_val.str, prog_id(state->prog));
+    else ui_str_set_hex(&ui->prog_val.str, prog_id(state->prog));
 
     switch (state->state)
     {
@@ -120,6 +123,10 @@ static void ui_progable_render(
     ui_label_render(&ui->loops_val, layout, renderer);
     ui_layout_next_row(layout);
 
+    ui_layout_sep_y(layout, font->glyph_h);
+    ui_label_render(&ui->tape, layout, renderer);
+    ui_layout_next_row(layout);
+
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
@@ -143,7 +150,7 @@ static void ui_progable_render(
         }
 
         ui_str_set_hex(&label->str, ret.item);
-        label->bg = i == state->index ? rgba_gray_a(0x33, 0x88) : rgba_nil();
+        label->bg = i == state->index ? rgba_gray(0x44) : rgba_nil();
         ui_label_render(label, &inner, renderer);
 
         ui_layout_next_row(&inner);

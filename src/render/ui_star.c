@@ -52,7 +52,7 @@ struct ui_star *ui_star_new(void)
 
     struct ui_star *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_star) {
-        .panel = ui_panel_title(pos, dim, ui_str_v(coord_str_len + 7)),
+        .panel = ui_panel_title(pos, dim, ui_str_v(coord_str_len + 8)),
 
         .power = ui_label_new(font, ui_str_c("power: ")),
         .power_val = ui_label_new(font, ui_str_v(str_scaled_len)),
@@ -106,7 +106,7 @@ static void ui_star_update(struct ui_star *ui)
     {
         char str[coord_str_len] = {0};
         coord_str(ui->star.coord, str, sizeof(str));
-        ui_str_setf(&ui->panel.title.str, "star <%s>", str);
+        ui_str_setf(&ui->panel.title.str, "star - %s", str);
     }
 
     free(items);

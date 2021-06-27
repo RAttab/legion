@@ -12,6 +12,7 @@
 #include "game/coord.h"
 #include "game/galaxy.h"
 #include "game/atoms.h"
+#include "game/prog.h"
 #include "vm/mod.h"
 #include "utils/log.h"
 #include "utils/time.h"
@@ -176,6 +177,7 @@ void core_init()
     atoms_register();
     vm_compile_init();
     mods_preload();
+    prog_load();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 

@@ -31,16 +31,29 @@ static void worker_step(void *state, struct chunk *chunk)
 {
     struct worker *worker = state;
 
-    if (worker->item) {
-        chunk_ports_give(chunk, worker->dst, worker->item);
+    switch (worker->state)
+    {
+
+    case worker_idle: {
+        if (chunk_ports_pair(chunk, &worker->item, &worker->src, &worker->dst))
+            worker->state = worker_paired;
         return;
     }
 
-    // we have to take when we pair otherwise we risk race conditions with other
-    // workers.
-    if (chunk_ports_pair(chunk, &worker->item, &worker->src, &worker->dst)) {
+    case worker_paired: {
         item_t item = chunk_ports_take(chunk, worker->src);
         assert(item == worker->item);
+        worker->state = worker_loaded;
+        return;
+    }
+
+    case worker_loaded: {
+        chunk_ports_give(chunk, worker->dst, worker->item);
+        worker->state = worker_idle;
+        return;
+    }
+
+    default: { assert(false); }
     }
 }
 

@@ -30,7 +30,7 @@ check_project(const struct state *state, SDL_Point sdl, struct coord exp)
     assert(sdl.x == sdl_out.x && sdl.y == sdl_out.y);
 }
 
-void test_project()
+void test_project(void)
 {
     struct state state = {
         .rect = (SDL_Rect) { .x = 0, .y = 0, .w = 1000, .h = 1000 },

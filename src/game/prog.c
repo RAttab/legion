@@ -63,8 +63,11 @@ static struct
 
 const struct prog *prog_fetch(prog_id_t prog)
 {
+    if (!prog) return NULL;
+
     struct htable_ret ret = htable_get(&progs.index, prog);
     if (!ret.ok) return NULL;
+
     return (const struct prog *) ret.value;
 }
 
@@ -79,7 +82,7 @@ static const char *prog_hex(
     do {
         uint8_t val = str_charhex(*it);
         assert(val != 0xFF);
-        *ret = val << 4;
+        *ret = (*ret << 4) | val;
         it++;
     } while (--len);
 
@@ -116,9 +119,10 @@ static const char *prog_expect(const char *it, const char *end, char exp)
 static struct prog *prog_read(const char *it, const char *end)
 {
     size_t line_len = end - it;
-    assert(line_len % 3 == 0);
+    assert(line_len > 5);
+    assert((line_len - 5) % 3 == 0);
 
-    size_t tape_len = line_len / 3 - 2;
+    size_t tape_len = (line_len - 5) / 3 - 1;
     assert(tape_len >= 1);
 
     struct prog *prog = calloc(1, sizeof(*prog) + tape_len * sizeof(prog->tape[0]));
@@ -131,7 +135,6 @@ static struct prog *prog_read(const char *it, const char *end)
     enum prog_state state = prog_eof;
 
     while (it < end) {
-
         switch (*it) {
         case '<': {
             assert(state == prog_eof);
@@ -153,7 +156,7 @@ static struct prog *prog_read(const char *it, const char *end)
         default: { assert(false); }
         }
 
-        it = prog_hex8(it, end, &prog->tape[index]);
+        it = prog_hex8(it+1, end, &prog->tape[index]);
         index++;
     }
 

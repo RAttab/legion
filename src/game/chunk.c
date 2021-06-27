@@ -101,6 +101,13 @@ static void *class_get(struct class *class, id_t id)
     return class->arena + (index * class->size);
 }
 
+static struct ports *class_ports(struct class *class, id_t id)
+{
+    size_t index = id_bot(id)-1;
+    if (!class || index >= class->len) return NULL;
+    return &class->ports[index];
+}
+
 static bool class_copy(struct class *class, id_t id, void *dst, size_t len)
 {
     if (!class) return false;
@@ -171,13 +178,6 @@ static bool class_io(
 
     class->io(state, chunk, io, src, len, args);
     return true;
-}
-
-static struct ports *class_ports(struct class *class, id_t id)
-{
-    size_t index = id_bot(id);
-    if (!class || index < class->len) return NULL;
-    return &class->ports[index];
 }
 
 
@@ -298,10 +298,11 @@ bool chunk_ports_produce(struct chunk *chunk, id_t id, item_t item)
 
     if (likely(hret.ok)) provided = (struct ring32 *) hret.value;
     else {
-        struct ring32 *provided = ring32_reserve(1);
+        provided = ring32_reserve(1);
         hret = htable_put(&chunk->provided, item, (uint64_t) provided);
         assert(hret.ok);
     }
+    assert(provided);
 
     struct ring32 *rret = ring32_push(provided, id);
     if (unlikely(rret != provided)) {
@@ -332,6 +333,7 @@ item_t chunk_ports_consume(struct chunk *chunk, id_t id)
     if (ports->in_state != ports_received) return ITEM_NIL;
     item_t ret = ports->in;
     ports->in = ITEM_NIL;
+    ports->in_state = ports_nil;
     return ret;
 }
 
@@ -368,6 +370,7 @@ bool chunk_ports_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
     if (!hret.ok) goto nomatch;
 
     struct ring32 *provided = (struct ring32 *) hret.value;
+    assert(provided);
     if (ring32_empty(provided)) goto nomatch;
 
     *src = ring32_pop(provided);
@@ -377,5 +380,6 @@ bool chunk_ports_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
   nomatch:
     struct ring32 *rret = ring32_push(chunk->requested, *dst);
     assert(rret == chunk->requested);
+    *item = *src = *dst = 0;
     return false;
 }

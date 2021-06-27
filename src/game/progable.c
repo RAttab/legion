@@ -54,9 +54,7 @@ static void progable_step_output(
         struct progable *progable, struct chunk *chunk, item_t item)
 {
     if (id_item(progable->id) == ITEM_MINER) {
-        if (progable->state != progable_blocked
-                && !chunk_harvest(chunk, item))
-        {
+        if (progable->state != progable_blocked && !chunk_harvest(chunk, item)) {
             progable->state = progable_error;
             return;
         }
@@ -109,11 +107,11 @@ static void progable_io_prog(
 {
     if (len < 1) return;
 
-    uint32_t id, loops;
-    vm_unpack(args[0], &id, &loops);
-
-    if (!loops) loops = progable_loops_inf;
+    word_t id = args[0];
     if (id != (prog_id_t) id) return;
+
+    word_t loops = len > 1 ? args[1] : 0;
+    if (!loops) loops = progable_loops_inf;
 
     const struct prog *prog = prog_fetch(id);
     if (!prog || prog_host(prog) != id_item(progable->id)) return;

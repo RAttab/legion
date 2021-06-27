@@ -35,9 +35,14 @@ struct item_config
     const word_t *io_list;
 };
 
+enum { item_state_len_max = s_cache_line * 4 };
+
 const struct item_config *item_config(item_t);
 
-enum { item_state_len_max = s_cache_line * 4 };
+bool item_is_progable(item_t);
+bool item_is_brain(item_t);
+bool item_is_db(item_t);
+
 
 // -----------------------------------------------------------------------------
 // progable
@@ -107,12 +112,20 @@ static_assert(sizeof(struct db) == 8);
 // worker
 // -----------------------------------------------------------------------------
 
+enum legion_packed worker_state
+{
+    worker_idle = 0,
+    worker_paired,
+    worker_loaded
+};
+
 struct legion_packed worker
 {
     id_t id;
     id_t src, dst;
     item_t item;
-    legion_pad(3);
+    enum worker_state state;
+    legion_pad(2);
 };
 
 static_assert(sizeof(struct worker) == 16);

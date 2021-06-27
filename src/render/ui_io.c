@@ -131,7 +131,7 @@ struct ui_io *ui_io_new(void)
         .target_val = ui_label_new(font, ui_str_v(id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
-            [ui_io_prog] = ui_io_cmd1(font, IO_PROG, "id:    "),
+            [ui_io_prog] = ui_io_cmd2(font, IO_PROG, "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD, "id:    "),
             [ui_io_set] = ui_io_cmd2(font, IO_SET, "index: ", "value: "),
         },
