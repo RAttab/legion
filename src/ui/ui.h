@@ -324,10 +324,10 @@ void ui_input_free(struct ui_input *);
 
 void ui_input_clear(struct ui_input *);
 void ui_input_set(struct ui_input *, const char *str);
-void ui_input_tick(struct ui_input *, uint64_t ticks);
 
 uint64_t ui_input_get_u64(struct ui_input *);
 uint64_t ui_input_get_hex(struct ui_input *);
+size_t ui_input_get_atom(struct ui_input *, atom_t *dst);
 
 enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
 void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
@@ -344,6 +344,7 @@ struct ui_code
     struct ui_label num, code;
 
     struct font *font;
+    bool focused;
 
     struct text text;
     struct mod *mod;
@@ -362,7 +363,6 @@ void ui_code_free(struct ui_code *);
 
 void ui_code_clear(struct ui_code *);
 void ui_code_set(struct ui_code *, struct mod *, ip_t);
-void ui_code_tick(struct ui_code *, uint64_t ticks);
 
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
 void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);

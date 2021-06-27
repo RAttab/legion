@@ -211,13 +211,6 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
         return false;
     }
 
-    case EV_STATE_UPDATE: {
-        for (size_t i = 0; i < ui_io_max; ++i) {
-            for (size_t j = 0; j < ui->io[i].args; ++j)
-                ui_input_tick(&ui->io[i].arg[j].val, core.ticks);
-        }
-    }
-
     default: { return false; }
     }
 }

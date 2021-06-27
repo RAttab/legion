@@ -15,6 +15,8 @@
 struct ui_mods
 {
     struct ui_panel panel;
+    struct ui_button new;
+    struct ui_input new_val;
     struct ui_scroll scroll;
     struct ui_toggles toggles;
 };
@@ -26,12 +28,14 @@ struct ui_mods *ui_mods_new(void)
     struct font *font = ui_mods_font();
     struct pos pos = make_pos(0, ui_topbar_height(core.ui.topbar));
     struct dim dim = make_dim(
-            (vm_atom_cap+2) * font->glyph_w,
+            (vm_atom_cap+5) * font->glyph_w,
             core.rect.h - pos.y);
 
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
+        .new = ui_button_new(font, ui_str_c("+")),
+        .new_val = ui_input_new(font, vm_atom_cap),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .toggles = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
     };
@@ -43,6 +47,8 @@ struct ui_mods *ui_mods_new(void)
 
 void ui_mods_free(struct ui_mods *ui) {
     ui_panel_free(&ui->panel);
+    ui_button_free(&ui->new);
+    ui_input_free(&ui->new_val);
     ui_scroll_free(&ui->scroll);
     ui_toggles_free(&ui->toggles);
     free(ui);
@@ -109,6 +115,17 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+
+    if ((ret = ui_input_event(&ui->new_val, ev))) return ret == ui_consume;
+    if ((ret = ui_button_event(&ui->new, ev))) {
+        atom_t name = {0};
+        ui_input_get_atom(&ui->new_val, &name);
+        mod_t mod = mods_register(&name);
+        ui_mods_update(ui);
+        core_push_event(EV_MOD_SELECT, mod, 0);
+        return ret;
+    }
+
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
 
     struct ui_toggle *toggle = NULL;
@@ -123,10 +140,17 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
 void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout outer = ui_panel_render(&ui->panel, renderer);
-    if (ui_layout_is_nil(&outer)) return;
+    struct font *font = ui_mods_font();
 
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, &outer, renderer);
+    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    if (ui_layout_is_nil(&layout)) return;
+
+    ui_input_render(&ui->new_val, &layout, renderer);
+    ui_button_render(&ui->new, &layout, renderer);
+    ui_layout_next_row(&layout);
+    ui_layout_sep_y(&layout, font->glyph_h);
+
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, &layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
     ui_toggles_render(&ui->toggles, &inner, renderer, &ui->scroll);

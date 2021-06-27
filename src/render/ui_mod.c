@@ -82,11 +82,6 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
         return false;
     }
 
-    case EV_STATE_UPDATE: {
-        ui_code_tick(&ui->code, core.ticks);
-        return false;
-    }
-
     default: { return false; }
     }
 }

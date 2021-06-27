@@ -23,6 +23,7 @@ struct ui_code ui_code_new(struct dim dim, struct font *font)
         .num = ui_label_new(font, ui_str_v(ui_code_num_len)),
         .code = ui_label_new(font, ui_str_v(text_line_cap)),
         .font = font,
+        .focused = false,
     };
 
     text_init(&code.text);
@@ -64,13 +65,6 @@ void ui_code_set(struct ui_code *code, struct mod *mod, ip_t ip)
     }
 }
 
-void ui_code_tick(struct ui_code *code, uint64_t ticks)
-{
-    bool blink = (ticks / 20) % 2;
-    if (code->carret.blink != blink)
-        code->carret.blink = blink;
-}
-
 void ui_code_render(
         struct ui_code *code, struct ui_layout *layout, SDL_Renderer *renderer)
 {
@@ -108,7 +102,7 @@ void ui_code_render(
         ui_layout_next_row(&inner);
     }
 
-    if (code->carret.blink) {
+    if (code->focused && code->carret.blink) {
         size_t x = (code->carret.col + ui_code_num_len + 1) * code->font->glyph_w;
         size_t y = code->carret.row * code->font->glyph_h;
 
@@ -129,7 +123,9 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
 {
     SDL_Point cursor = core.cursor.point;
     SDL_Rect rect = ui_widget_rect(&code->w);
-    if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
+
+    code->focused = sdl_rect_contains(&rect, &cursor);
+    if (!code->focused) return ui_nil;
 
     size_t col = (cursor.x - code->w.pos.x) / code->font->glyph_w;
     size_t row = (cursor.y - code->w.pos.y) / code->font->glyph_h;
@@ -152,6 +148,8 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
     }
 
     code->carret.col = legion_min(col, line_len(code->carret.line));
+
+    core_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
     return ui_consume;
 }
 
@@ -278,8 +276,31 @@ static enum ui_ret ui_code_event_backspace(struct ui_code *code)
     return ui_consume;
 }
 
+static enum ui_ret ui_code_event_user(struct ui_code *code, const SDL_Event *ev)
+{
+    switch (ev->user.code)
+    {
+
+    case EV_TICK: {
+        uint64_t ticks = (uintptr_t) ev->user.data1;
+        code->carret.blink = (ticks / 20) % 2;
+        return ui_nil;
+    }
+
+    case EV_FOCUS_INPUT: {
+        void *target = ev->user.data1;
+        code->focused = target == code;
+        return ui_nil;
+    }
+
+    default: { return ui_nil; }
+    }
+}
+
 enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
 {
+    if (ev->type == core.event) return ui_code_event_user(code, ev);
+
     enum ui_ret ret = ui_nil;
 
     size_t old_scroll = code->scroll.first;
@@ -293,6 +314,8 @@ enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: { return ui_code_event_click(code); }
 
     case SDL_KEYDOWN: {
+        if (!code->focused) return ui_nil;
+
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;
         switch (keysym) {

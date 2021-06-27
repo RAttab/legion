@@ -171,7 +171,11 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_item_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) {
+        if (ret == ui_consume && ui->panel.state == ui_panel_hidden)
+            core_push_event(EV_ITEM_CLEAR, 0, 0);
+        return ret == ui_consume;
+    }
 
     if ((ret = ui_button_event(&ui->io, ev))) {
         core_push_event(EV_IO_TOGGLE, ui->id, coord_to_id(ui->star));

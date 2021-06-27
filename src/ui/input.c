@@ -19,7 +19,7 @@ struct ui_input ui_input_new(struct font *font, size_t cap)
 {
     struct ui_input input = {
         .w = ui_widget_new(
-                font->glyph_w * cap + ui_input_margin.w * 2,
+                font->glyph_w * (cap+1) + ui_input_margin.w * 2,
                 font->glyph_h + ui_input_margin.h * 2),
         .font = font,
         .focused = false,
@@ -50,12 +50,6 @@ void ui_input_set(struct ui_input *input, const char *str)
     memcpy(input->buf.c, str, input->buf.len);
 }
 
-void ui_input_tick(struct ui_input *input, uint64_t ticks)
-{
-    bool blink = (ticks / 20) % 2;
-    if (input->carret.blink != blink)
-        input->carret.blink = blink;
-}
 
 // \todo could use better error handling
 uint64_t ui_input_get_u64(struct ui_input *input)
@@ -83,6 +77,13 @@ uint64_t ui_input_get_hex(struct ui_input *input)
     uint64_t val = 0;
     (void) str_atox(input->buf.c, input->buf.len, &val);
     return val;
+}
+
+size_t ui_input_get_atom(struct ui_input *input, atom_t *dst)
+{
+    size_t len = legion_min(input->buf.len, vm_atom_cap);
+    memcpy(dst, input->buf.c, len);
+    return len;
 }
 
 void ui_input_render(
@@ -191,8 +192,32 @@ static enum ui_ret ui_input_event_backspace(struct ui_input *input)
     return ui_consume;
 }
 
+
+static enum ui_ret ui_input_event_user(struct ui_input *input, const SDL_Event *ev)
+{
+    switch (ev->user.code)
+    {
+
+    case EV_TICK: {
+        uint64_t ticks = (uintptr_t) ev->user.data1;
+        input->carret.blink = (ticks / 20) % 2;
+        return ui_nil;
+    }
+
+    case EV_FOCUS_INPUT: {
+        void *target = ev->user.data1;
+        input->focused = target == input;
+        return ui_nil;
+    }
+
+    default: { return ui_nil; }
+    }
+}
+
 enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
 {
+    if (ev->type == core.event) return ui_input_event_user(input, ev);
+
     switch (ev->type) {
 
     case SDL_MOUSEBUTTONDOWN: { return ui_input_event_click(input); }
@@ -224,15 +249,6 @@ enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
         }
     }
 
-    default: {
-        if (ev->type == core.event) {
-            if (ev->user.code == EV_FOCUS_INPUT) {
-                struct ui_input *target = (void *) ev->user.data1;
-                input->focused = target == input;
-            }
-        }
-        return ui_nil;
-    }
-
+    default: { return ui_nil; }
     }
 }

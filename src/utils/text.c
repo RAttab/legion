@@ -168,10 +168,10 @@ void text_unpack(struct text *text, const char *src, size_t len)
 
     const char *end = src + len;
     struct line *line = text->first;
-    while (true) {
+    while (src < end) {
         memcpy(line->c, src, bytes);
-        if ((src += bytes) == end) break;
-        line = text_insert(text, line);
+        src += bytes;
+        if (src < end) line = text_insert(text, line);
     }
 }
 

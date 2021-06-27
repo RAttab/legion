@@ -49,6 +49,22 @@ struct mod *mod_alloc(
     return mod;
 }
 
+struct mod *mod_nil(mod_t id)
+{
+    struct mod *mod = alloc_cache(sizeof(*mod));
+    void *end = mod+1;
+
+    *mod = (struct mod) {
+        .id = id,
+        .src = end,
+        .errs = end,
+        .index = end,
+    };
+    ref_init(mod);
+
+    return mod;
+}
+
 size_t mod_line(struct mod *mod, ip_t ip)
 {
     addr_t byte = ip_addr(ip);
@@ -157,8 +173,11 @@ mod_t mods_register(const atom_t *name)
 {
     struct mods_entry *entry = calloc(1, sizeof(*entry));
     memcpy(entry->str, name, vm_atom_cap);
+
     entry->id = ++mods.ids;
     assert(entry->id);
+
+    entry->mod = mod_nil(entry->id);
 
     struct htable_ret ret = htable_put(&mods.index, entry->id, (uint64_t) entry);
     assert(ret.ok);

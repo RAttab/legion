@@ -240,7 +240,9 @@ void core_run()
 
         state_step(ts);
         ts = ts_sleep_until(ts + sleep);
+
         core.ticks++;
+        core_push_event(EV_TICK, core.ticks, 0);
     }
 }
 
