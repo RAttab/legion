@@ -37,8 +37,8 @@ static void ui_progable_init(struct ui_progable *ui)
         .tape = ui_label_new(font, ui_str_c("tape: ")),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .index = ui_label_new(font, ui_str_v(2)),
-        .in = ui_label_new(font, ui_str_v(10)),
-        .out = ui_label_new(font, ui_str_v(10)),
+        .in = ui_label_new(font, ui_str_v(2)),
+        .out = ui_label_new(font, ui_str_v(2)),
     };
 
     ui->index.fg = rgba_gray(0x88);

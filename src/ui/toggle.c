@@ -154,14 +154,18 @@ void ui_toggles_render(
 
 void ui_toggles_clear(struct ui_toggles *list)
 {
-    for (size_t i = 0; i < list->len; ++i)
-        list->items[i].state = ui_toggle_idle;
+    for (size_t i = 0; i < list->len; ++i) {
+        struct ui_toggle *toggle = &list->items[i];
+        if (toggle->state == ui_toggle_selected)
+            toggle->state = ui_toggle_idle;
+    }
 }
 
 void ui_toggles_select(struct ui_toggles *list, uint64_t user)
 {
     for (size_t i = 0; i < list->len; ++i) {
         struct ui_toggle *toggle = list->items + i;
-        toggle->state = toggle->user == user ? ui_toggle_selected : ui_toggle_idle;
+        if (toggle->user == user) toggle->state = ui_toggle_selected;
+        else if (toggle->state == ui_toggle_selected) toggle->state = ui_toggle_idle;
     }
 }

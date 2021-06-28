@@ -15,11 +15,11 @@ struct ui_brain
     struct ui_label msg, msg_src, msg_index, msg_val;
     struct ui_label mod, mod_val;
     struct ui_label spec, spec_stack, spec_speed, spec_sep;
-    struct ui_label flags, flags_val;
-    struct ui_label tsc, tsc_val;
     struct ui_label io, io_val, ior, ior_val;
+    struct ui_label tsc, tsc_val;
     struct ui_label ip;
     struct ui_toggle ip_val;
+    struct ui_label flags, flags_val;
     struct ui_label regs, regs_index, regs_val;
     struct ui_scroll scroll;
     struct ui_label stack, stack_index, stack_val;
@@ -40,26 +40,26 @@ static void ui_brain_init(struct ui_brain *ui)
         .mod = ui_label_new(font, ui_str_c("mod:  ")),
         .mod_val = ui_label_new(font, ui_str_v(vm_atom_cap)),
 
-        .spec = ui_label_new(font, ui_str_c("spec: ")),
+        .spec = ui_label_new(font, ui_str_c("stack: ")),
         .spec_stack = ui_label_new(font, ui_str_v(u8_len)),
         .spec_speed = ui_label_new(font, ui_str_v(u8_len)),
-        .spec_sep = ui_label_new(font, ui_str_c(" / ")),
+        .spec_sep = ui_label_new(font, ui_str_c("  speed: ")),
 
-        .flags = ui_label_new(font, ui_str_c("font: ")),
-        .flags_val = ui_label_new(font, ui_str_c("XX ")),
+        .io = ui_label_new(font, ui_str_c("io:    ")),
+        .io_val = ui_label_new(font, ui_str_v(u8_len)),
+        .ior = ui_label_new(font, ui_str_c("  ior:   ")),
+        .ior_val = ui_label_new(font, ui_str_v(u8_len)),
 
         .tsc = ui_label_new(font, ui_str_c("tsc:  ")),
         .tsc_val = ui_label_new(font, ui_str_v(u32_len)),
 
-        .io = ui_label_new(font, ui_str_c("io: ")),
-        .io_val = ui_label_new(font, ui_str_v(u8_len)),
-        .ior = ui_label_new(font, ui_str_c(" ior: ")),
-        .ior_val = ui_label_new(font, ui_str_v(u8_len)),
-
         .ip = ui_label_new(font, ui_str_c("ip:   ")),
         .ip_val = ui_toggle_new(font, ui_str_v(u32_len)),
 
-        .regs = ui_label_new(font, ui_str_c("reg:  ")),
+        .flags = ui_label_new(font, ui_str_c("flag: ")),
+        .flags_val = ui_label_new(font, ui_str_c("XX ")),
+
+        .regs = ui_label_new(font, ui_str_c("registers: ")),
         .regs_index = ui_label_new(font, ui_str_v(u8_len)),
         .regs_val = ui_label_new(font, ui_str_v(u64_len)),
 
@@ -88,19 +88,19 @@ static void ui_brain_free(struct ui_brain *ui)
     ui_label_free(&ui->spec_speed);
     ui_label_free(&ui->spec_sep);
 
-    ui_label_free(&ui->flags);
-    ui_label_free(&ui->flags_val);
-
-    ui_label_free(&ui->tsc);
-    ui_label_free(&ui->tsc_val);
-
     ui_label_free(&ui->io);
     ui_label_free(&ui->io_val);
     ui_label_free(&ui->ior);
     ui_label_free(&ui->ior_val);
 
+    ui_label_free(&ui->tsc);
+    ui_label_free(&ui->tsc_val);
+
     ui_label_free(&ui->ip);
     ui_toggle_free(&ui->ip_val);
+
+    ui_label_free(&ui->flags);
+    ui_label_free(&ui->flags_val);
 
     ui_label_free(&ui->regs);
     ui_label_free(&ui->regs_index);
@@ -126,9 +126,9 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
     ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
-    ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
     ui_str_set_hex(&ui->io_val.str, state->vm.io);
     ui_str_set_hex(&ui->ior_val.str, state->vm.ior);
+    ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
     ui_str_set_hex(&ui->ip_val.str, state->vm.ip);
     ui_scroll_update(&ui->scroll, state->vm.sp);
 }
@@ -185,6 +185,20 @@ static void ui_brain_render(
     ui_label_render(&ui->spec_speed, layout, renderer);
     ui_layout_next_row(layout);
 
+    ui_label_render(&ui->io, layout, renderer);
+    ui_label_render(&ui->io_val, layout, renderer);
+    ui_label_render(&ui->ior, layout, renderer);
+    ui_label_render(&ui->ior_val, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_label_render(&ui->tsc, layout, renderer);
+    ui_label_render(&ui->tsc_val, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_label_render(&ui->ip, layout, renderer);
+    ui_toggle_render(&ui->ip_val, layout, renderer);
+    ui_layout_next_row(layout);
+
     { // flags
         ui_label_render(&ui->flags, layout, renderer);
 
@@ -214,20 +228,6 @@ static void ui_brain_render(
 
         ui_layout_next_row(layout);
     }
-
-    ui_label_render(&ui->tsc, layout, renderer);
-    ui_label_render(&ui->tsc_val, layout, renderer);
-    ui_layout_next_row(layout);
-
-    ui_label_render(&ui->io, layout, renderer);
-    ui_label_render(&ui->io_val, layout, renderer);
-    ui_label_render(&ui->ior, layout, renderer);
-    ui_label_render(&ui->ior_val, layout, renderer);
-    ui_layout_next_row(layout);
-
-    ui_label_render(&ui->ip, layout, renderer);
-    ui_toggle_render(&ui->ip_val, layout, renderer);
-    ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, font->glyph_h);
 
