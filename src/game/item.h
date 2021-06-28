@@ -18,7 +18,7 @@
 // item_t when defining the type. The enum is mostly for the constants.
 typedef uint8_t item_t;
 
-enum item
+enum legion_packed item
 {
     ITEM_NIL = 0x00,
 
@@ -61,14 +61,15 @@ enum item
     // Passives
     ITEM_PASSIVE_FIRST = 0x20,
     ITEM_BLAH = 0x20,
+
+    ITEM_WORKER   = 0xEF,
     ITEM_PASSIVE_LAST,
 
     // Actives
     ITEM_ACTIVE_FIRST = 0xD0,
-    ITEM_WORKER   = 0xD0,
+    ITEM_MINER    = 0xD0,
     ITEM_PRINTER  = 0xD1,
-    ITEM_MINER    = 0xD2,
-    ITEM_DEPLOYER = 0xD3,
+    ITEM_DEPLOYER = 0xD2,
     ITEM_BRAIN_S  = 0xE0,
     ITEM_BRAIN_M  = 0xE1,
     ITEM_BRAIN_L  = 0xE2,

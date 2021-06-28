@@ -17,8 +17,6 @@ const struct item_config *item_config(item_t item)
     const struct item_config *db_config(item_t);
 
     switch (item) {
-    case ITEM_WORKER: return worker_config();
-
     case ITEM_PRINTER:
     case ITEM_MINER:
     case ITEM_DEPLOYER: return progable_config(item);

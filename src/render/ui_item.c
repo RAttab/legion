@@ -19,7 +19,6 @@ static struct font *ui_item_font(void) { return font_mono6; }
 #include "render/ui_progable.c"
 #include "render/ui_brain.c"
 #include "render/ui_db.c"
-#include "render/ui_worker.c"
 
 
 // -----------------------------------------------------------------------------
@@ -31,7 +30,6 @@ union ui_item_state
     struct progable progable;
     struct brain brain;
     struct db db;
-    struct worker worker;
 
     // Some item have flexible sizes so we need to ensure enough room for all of
     // em.
@@ -49,7 +47,6 @@ struct ui_item
     struct ui_progable progable;
     struct ui_brain brain;
     struct ui_db db;
-    struct ui_worker worker;
 };
 
 struct ui_item *ui_item_new(void)
@@ -73,7 +70,6 @@ struct ui_item *ui_item_new(void)
     ui_progable_init(&ui->progable);
     ui_brain_init(&ui->brain);
     ui_db_init(&ui->db);
-    ui_worker_init(&ui->worker);
 
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -86,7 +82,6 @@ void ui_item_free(struct ui_item *ui)
     ui_progable_free(&ui->progable);
     ui_brain_free(&ui->brain);
     ui_db_free(&ui->db);
-    ui_worker_free(&ui->worker);
     free(ui);
 }
 
@@ -113,9 +108,6 @@ static void ui_item_update(struct ui_item *ui)
 
     switch(id_item(ui->id))
     {
-    case ITEM_WORKER:
-        return ui_worker_update(&ui->worker, &ui->state.worker);
-
     case ITEM_PRINTER:
     case ITEM_MINER:
     case ITEM_DEPLOYER:
@@ -184,9 +176,6 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     switch(id_item(ui->id))
     {
-    case ITEM_WORKER:
-        return ui_worker_event(&ui->worker, &ui->state.worker, ev);
-
     case ITEM_PRINTER:
     case ITEM_MINER:
     case ITEM_DEPLOYER:
@@ -219,9 +208,6 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     switch(id_item(ui->id))
     {
-    case ITEM_WORKER:
-        return ui_worker_render(&ui->worker, &ui->state.worker, &layout, renderer);
-
     case ITEM_PRINTER:
     case ITEM_MINER:
     case ITEM_DEPLOYER:

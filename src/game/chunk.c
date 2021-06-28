@@ -19,18 +19,17 @@
 typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
 typedef void (*step_fn_t) (void *state, struct chunk *);
 
-enum ports_state
+enum legion_packed ports_state
 {
     ports_nil = 0,
     ports_requested,
-    ports_assigned,
     ports_received,
 };
 
 struct legion_packed ports
 {
     item_t in;
-    uint8_t in_state;
+    enum ports_state in_state;
     item_t out;
     legion_pad(1);
 };
@@ -185,11 +184,15 @@ static bool class_io(
 // chunk
 // -----------------------------------------------------------------------------
 
+static void chunk_ports_step(struct chunk *);
+
+
 struct chunk
 {
     struct star star;
     struct class *class[ITEMS_ACTIVE_LEN];
 
+    struct workers workers;
     struct htable provided;
     struct ring32 *requested;
 };
@@ -224,6 +227,11 @@ bool chunk_harvest(struct chunk *chunk, item_t item)
     return true;
 }
 
+struct workers chunk_workers(struct chunk *chunk)
+{
+    return chunk->workers;
+}
+
 struct class *chunk_class(struct chunk *chunk, item_t item)
 {
     assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
@@ -232,14 +240,30 @@ struct class *chunk_class(struct chunk *chunk, item_t item)
 
 struct vec64* chunk_list(struct chunk *chunk)
 {
-    size_t len = 0;
+    size_t sum = 0;
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
-        if (chunk->class[i]) len += chunk->class[i]->len;
+        if (chunk->class[i]) sum += chunk->class[i]->len;
     }
 
-    struct vec64 *ids = vec64_reserve(len);
+    struct vec64 *ids = vec64_reserve(sum);
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
         class_list(chunk->class[i], ids);
+
+    return ids;
+}
+
+struct vec64* chunk_list_filter(
+        struct chunk *chunk, const item_t *filter, size_t len)
+{
+    size_t sum = 0;
+    for (size_t i = 0; i < len; ++i) {
+        struct class *class = chunk_class(chunk, filter[i]);
+        if (class) sum += class->len;
+    }
+
+    struct vec64 *ids = vec64_reserve(sum);
+    for (size_t i = 0; i < len; ++i)
+        class_list(chunk_class(chunk, filter[i]), ids);
 
     return ids;
 }
@@ -256,6 +280,7 @@ bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
 
 void chunk_create(struct chunk *chunk, item_t item)
 {
+    if (item == ITEM_WORKER) { chunk->workers.count++; return; }
     assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
 
     struct class **ptr = &chunk->class[item - ITEM_ACTIVE_FIRST];
@@ -267,6 +292,7 @@ void chunk_step(struct chunk *chunk)
 {
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
         class_step(chunk->class[i], chunk);
+    chunk_ports_step(chunk);
 }
 
 bool chunk_io(
@@ -276,6 +302,11 @@ bool chunk_io(
     struct class *class = chunk_class(chunk, id_item(dst));
     return class_io(class, chunk, io, src, dst, len, args);
 }
+
+
+// -----------------------------------------------------------------------------
+// ports
+// -----------------------------------------------------------------------------
 
 void chunk_ports_reset(struct chunk *chunk, id_t id)
 {
@@ -337,49 +368,37 @@ item_t chunk_ports_consume(struct chunk *chunk, id_t id)
     return ret;
 }
 
-void chunk_ports_give(struct chunk *chunk, id_t id, item_t item)
+static void chunk_ports_step(struct chunk *chunk)
 {
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
-    if (!ports) return;
+    chunk->workers.idle = 0;
+    chunk->workers.fail = 0;
 
-    assert(ports->in_state == ports_assigned);
-    ports->in_state = ports_received;
-    ports->in = item;
-}
+    for (size_t i = 0; i < chunk->workers.count; ++i) {
+        id_t dst = ring32_pop(chunk->requested);
+        if (!dst) { chunk->workers.idle = chunk->workers.count - i; break; }
 
-item_t chunk_ports_take(struct chunk *chunk, id_t id)
-{
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
-    if (!ports) return ITEM_NIL;
+        struct ports *in = class_ports(chunk_class(chunk, id_item(dst)), dst);
+        assert(in);
+        if (in->in_state != ports_requested) goto nomatch;
 
-    item_t ret = ports->out;
-    ports->out = ITEM_NIL;
-    return ret;
-}
+        struct htable_ret hret = htable_get(&chunk->provided, in->in);
+        if (!hret.ok) goto nomatch;
 
-bool chunk_ports_pair(struct chunk *chunk, item_t *item, id_t *src, id_t *dst)
-{
-    *dst = ring32_pop(chunk->requested);
-    if (!*dst) return false;
+        struct ring32 *provided = (struct ring32 *) hret.value;
+        assert(provided);
+        if (ring32_empty(provided)) goto nomatch;
 
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(*dst)), *dst);
-    assert(ports);
-    *item = ports->in;
+        id_t src = ring32_pop(provided);
+        struct ports *out = class_ports(chunk_class(chunk, id_item(src)), src);
+        assert(out);
 
-    struct htable_ret hret = htable_get(&chunk->provided, *item);
-    if (!hret.ok) goto nomatch;
+        in->in_state = ports_received;
+        out->out = ITEM_NIL;
+        continue;
 
-    struct ring32 *provided = (struct ring32 *) hret.value;
-    assert(provided);
-    if (ring32_empty(provided)) goto nomatch;
-
-    *src = ring32_pop(provided);
-    ports->in_state = ports_assigned;
-    return true;
-
-  nomatch:
-    struct ring32 *rret = ring32_push(chunk->requested, *dst);
-    assert(rret == chunk->requested);
-    *item = *src = *dst = 0;
-    return false;
+      nomatch:
+       struct ring32 *rret = ring32_push(chunk->requested, dst);
+       assert(rret == chunk->requested);
+       chunk->workers.fail++;
+    }
 }

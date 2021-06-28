@@ -12,6 +12,7 @@ SRC=(ui render game vm utils)
 
 declare -a TEST
 TEST=(coord chunk mod vm)
+#TEST=(chunk)
 
 CC=${CC:-gcc}
 

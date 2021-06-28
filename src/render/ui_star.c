@@ -23,9 +23,15 @@ struct ui_star
     struct ui_label power, power_val;
     struct ui_label elem, elem_val;
 
-    struct ui_button tab_items;
-    struct ui_scroll scroll;
-    struct ui_toggles items;
+    struct ui_button control, factory, logistic;
+
+    id_t selected;
+    struct ui_scroll control_scroll, factory_scroll;
+    struct ui_toggles control_list, factory_list;
+
+    struct ui_label workers, workers_val;
+    struct ui_label idle, idle_val;
+    struct ui_label fail, fail_val;
 };
 
 static struct font *ui_star_font(void) { return font_mono6; }
@@ -60,12 +66,26 @@ struct ui_star *ui_star_new(void)
         .elem = ui_label_new(font, ui_str_c(ui_star_elems[0])),
         .elem_val = ui_label_new(font, ui_str_v(str_scaled_len)),
 
-        .tab_items = ui_button_new(font, ui_str_c("items")),
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .items = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
+        .control = ui_button_new(font, ui_str_c("control")),
+        .factory = ui_button_new(font, ui_str_c("factory")),
+        .logistic = ui_button_new(font, ui_str_c("logistic")),
+
+        .control_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .control_list = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
+
+        .factory_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .factory_list = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
+
+        .workers = ui_label_new(font, ui_str_c("workers: ")),
+        .workers_val = ui_label_new(font, ui_str_v(10)),
+        .idle = ui_label_new(font, ui_str_c("- idle:  ")),
+        .idle_val = ui_label_new(font, ui_str_v(10)),
+        .fail = ui_label_new(font, ui_str_c("- fail:  ")),
+        .fail_val = ui_label_new(font, ui_str_v(10)),
     };
 
     ui->panel.state = ui_panel_hidden;
+    ui->control.disabled = true;
     return ui;
 }
 
@@ -75,8 +95,19 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->power_val);
     ui_label_free(&ui->elem);
     ui_label_free(&ui->elem_val);
-    ui_scroll_free(&ui->scroll);
-    ui_toggles_free(&ui->items);
+    ui_button_free(&ui->control);
+    ui_button_free(&ui->factory);
+    ui_button_free(&ui->logistic);
+    ui_scroll_free(&ui->control_scroll);
+    ui_scroll_free(&ui->factory_scroll);
+    ui_toggles_free(&ui->control_list);
+    ui_toggles_free(&ui->factory_list);
+    ui_label_free(&ui->workers);
+    ui_label_free(&ui->workers_val);
+    ui_label_free(&ui->idle);
+    ui_label_free(&ui->idle_val);
+    ui_label_free(&ui->fail);
+    ui_label_free(&ui->fail_val);
     free(ui);
 }
 
@@ -86,21 +117,58 @@ int16_t ui_star_width(const struct ui_star *ui)
     return ui->panel.w.dim.w;
 }
 
+static void ui_star_update_list(
+        struct ui_star *ui, struct chunk *chunk,
+        struct ui_toggles *toggles, struct ui_scroll *scroll,
+        const item_t *filter, size_t len)
+{
+    struct vec64 *ids = chunk_list_filter(chunk, filter, len);
+    ui_toggles_resize(toggles, ids->len);
+    ui_scroll_update(scroll, ids->len);
+
+    for (size_t i = 0; i < ids->len; ++i) {
+        id_t id = ids->vals[i];
+        struct ui_toggle *toggle = &toggles->items[i];
+
+        toggle->user = id;
+        ui_str_set_id(&toggle->str, id);
+    }
+
+    ui_toggles_select(toggles, ui->selected);
+    vec64_free(ids);
+}
+
 static void ui_star_update(struct ui_star *ui)
 {
     struct chunk *chunk = sector_chunk(core.state.sector, ui->star.coord);
     if (!chunk) return;
 
-    struct vec64 *items = chunk_list(chunk);
-    ui_toggles_resize(&ui->items, items->len);
-    ui_scroll_update(&ui->scroll, items->len);
+    {
+        static const item_t filter[] = {
+            ITEM_BRAIN_S, ITEM_BRAIN_M, ITEM_BRAIN_L,
+            ITEM_DB_S, ITEM_DB_M, ITEM_DB_L,
+        };
+        ui_star_update_list(
+                ui, chunk,
+                &ui->control_list, &ui->control_scroll,
+                filter, array_len(filter));
+    }
 
-    for (size_t i = 0; i < items->len; ++i) {
-        id_t id = items->vals[i];
-        struct ui_toggle *toggle = &ui->items.items[i];
+    {
+        static const item_t filter[] = {
+            ITEM_MINER, ITEM_PRINTER, ITEM_DEPLOYER
+        };
+        ui_star_update_list(
+                ui, chunk,
+                &ui->factory_list, &ui->factory_scroll,
+                filter, array_len(filter));
+    }
 
-        toggle->user = id;
-        ui_str_set_id(&toggle->str, id);
+    {
+        struct workers workers = chunk_workers(chunk);
+        ui_str_set_u64(&ui->workers_val.str, workers.count);
+        ui_str_set_u64(&ui->idle_val.str, workers.idle);
+        ui_str_set_u64(&ui->fail_val.str, workers.fail);
     }
 
     {
@@ -108,8 +176,6 @@ static void ui_star_update(struct ui_star *ui)
         coord_str(ui->star.coord, str, sizeof(str));
         ui_str_setf(&ui->panel.title.str, "star - %s", str);
     }
-
-    free(items);
 }
 
 static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
@@ -134,13 +200,15 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_ITEM_SELECT: {
-        id_t id = (uintptr_t) ev->user.data1;
-        ui_toggles_select(&ui->items, id);
+        ui->selected = (uintptr_t) ev->user.data1;
+        ui_toggles_select(&ui->control_list, ui->selected);
+        ui_toggles_select(&ui->factory_list, ui->selected);
         return false;
     }
 
     case EV_ITEM_CLEAR: {
-        ui_toggles_clear(&ui->items);
+        ui_toggles_clear(&ui->control_list);
+        ui_toggles_clear(&ui->factory_list);
         return false;
     }
 
@@ -161,18 +229,50 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
 
-    if ((ret = ui_button_event(&ui->tab_items, ev))) {
-        // \todo
+    if ((ret = ui_button_event(&ui->control, ev))) {
+        ui->control.disabled = true;
+        ui->factory.disabled = ui->logistic.disabled = false;
         return ret == ui_consume;
     }
 
-    struct ui_toggle *toggle = NULL;
-    if ((ret = ui_toggles_event(&ui->items, ev, &ui->scroll, &toggle, NULL))) {
-        enum event type = toggle->state == ui_toggle_selected ? EV_ITEM_SELECT : EV_ITEM_CLEAR;
-        core_push_event(type, toggle->user, coord_to_id(ui->star.coord));
-        return true;
+    if ((ret = ui_button_event(&ui->factory, ev))) {
+        ui->factory.disabled = true;
+        ui->control.disabled = ui->logistic.disabled = false;
+        return ret == ui_consume;
+    }
+
+    if ((ret = ui_button_event(&ui->logistic, ev))) {
+        ui->logistic.disabled = true;
+        ui->control.disabled = ui->factory.disabled = false;
+        return ret == ui_consume;
+    }
+
+
+    if (ui->control.disabled) {
+        if ((ret = ui_scroll_event(&ui->control_scroll, ev)))
+            return ret == ui_consume;
+
+        struct ui_toggle *toggle = NULL;
+        if ((ret = ui_toggles_event(&ui->control_list, ev, &ui->control_scroll, &toggle, NULL))) {
+            enum event type = toggle->state == ui_toggle_selected ?
+                EV_ITEM_SELECT : EV_ITEM_CLEAR;
+            core_push_event(type, toggle->user, coord_to_id(ui->star.coord));
+            return true;
+        }
+    }
+
+    if (ui->factory.disabled) {
+        if ((ret = ui_scroll_event(&ui->factory_scroll, ev)))
+            return ret == ui_consume;
+
+        struct ui_toggle *toggle = NULL;
+        if ((ret = ui_toggles_event(&ui->factory_list, ev, &ui->factory_scroll, &toggle, NULL))) {
+            enum event type = toggle->state == ui_toggle_selected ?
+                EV_ITEM_SELECT : EV_ITEM_CLEAR;
+            core_push_event(type, toggle->user, coord_to_id(ui->star.coord));
+            return true;
+        }
     }
 
     return false;
@@ -219,13 +319,35 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_layout_sep_y(&layout, font->glyph_h);
     }
 
-    {
-        ui_button_render(&ui->tab_items, &layout, renderer);
+    ui_button_render(&ui->control, &layout, renderer);
+    ui_button_render(&ui->factory, &layout, renderer);
+    ui_button_render(&ui->logistic, &layout, renderer);
+    ui_layout_next_row(&layout);
+    ui_layout_sep_y(&layout, font->glyph_h);
+
+    if (ui->control.disabled) {
+        struct ui_layout inner = ui_scroll_render(&ui->control_scroll, &layout, renderer);
+        if (ui_layout_is_nil(&inner)) return;
+        ui_toggles_render(&ui->control_list, &inner, renderer, &ui->control_scroll);
+    }
+
+    if (ui->factory.disabled) {
+        struct ui_layout inner = ui_scroll_render(&ui->factory_scroll, &layout, renderer);
+        if (ui_layout_is_nil(&inner)) return;
+        ui_toggles_render(&ui->factory_list, &inner, renderer, &ui->factory_scroll);
+    }
+
+    if (ui->logistic.disabled) {
+        ui_label_render(&ui->workers, &layout, renderer);
+        ui_label_render(&ui->workers_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        struct ui_layout inner = ui_scroll_render(&ui->scroll, &layout, renderer);
-        if (ui_layout_is_nil(&inner)) return;
+        ui_label_render(&ui->idle, &layout, renderer);
+        ui_label_render(&ui->idle_val, &layout, renderer);
+        ui_layout_next_row(&layout);
 
-        ui_toggles_render(&ui->items, &inner, renderer, &ui->scroll);
+        ui_label_render(&ui->fail, &layout, renderer);
+        ui_label_render(&ui->fail_val, &layout, renderer);
+        ui_layout_next_row(&layout);
     }
 }
