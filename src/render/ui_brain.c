@@ -18,7 +18,8 @@ struct ui_brain
     struct ui_label flags, flags_val;
     struct ui_label tsc, tsc_val;
     struct ui_label io, io_val, ior, ior_val;
-    struct ui_label ip, ip_val;
+    struct ui_label ip;
+    struct ui_toggle ip_val;
     struct ui_label regs, regs_index, regs_val;
     struct ui_scroll scroll;
     struct ui_label stack, stack_index, stack_val;
@@ -56,7 +57,7 @@ static void ui_brain_init(struct ui_brain *ui)
         .ior_val = ui_label_new(font, ui_str_v(u8_len)),
 
         .ip = ui_label_new(font, ui_str_c("ip:   ")),
-        .ip_val = ui_label_new(font, ui_str_v(u32_len)),
+        .ip_val = ui_toggle_new(font, ui_str_v(u32_len)),
 
         .regs = ui_label_new(font, ui_str_c("reg:  ")),
         .regs_index = ui_label_new(font, ui_str_v(u8_len)),
@@ -99,7 +100,7 @@ static void ui_brain_free(struct ui_brain *ui)
     ui_label_free(&ui->ior_val);
 
     ui_label_free(&ui->ip);
-    ui_label_free(&ui->ip_val);
+    ui_toggle_free(&ui->ip_val);
 
     ui_label_free(&ui->regs);
     ui_label_free(&ui->regs_index);
@@ -135,10 +136,18 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
 static bool ui_brain_event(
         struct ui_brain *ui, struct brain *state, const SDL_Event *ev)
 {
-    (void) state;
-
     enum ui_ret ret = ui_nil;
+
+    if ((ret = ui_toggle_event(&ui->ip_val, ev))) {
+        if (ui->ip_val.state == ui_toggle_selected) {
+            if (state->mod) core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+            ui->ip_val.state = ui_toggle_idle;
+        }
+        return ret == ui_consume;
+    }
+
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
+
     return false;
 }
 
@@ -217,7 +226,7 @@ static void ui_brain_render(
     ui_layout_next_row(layout);
 
     ui_label_render(&ui->ip, layout, renderer);
-    ui_label_render(&ui->ip_val, layout, renderer);
+    ui_toggle_render(&ui->ip_val, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, font->glyph_h);
@@ -227,7 +236,7 @@ static void ui_brain_render(
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < 4; ++i) {
-            ui_str_set_u64(&ui->regs_index.str, i);
+            ui_str_set_u64(&ui->regs_index.str, i+1);
             ui_label_render(&ui->regs_index, layout, renderer);
             ui_layout_sep_x(layout, font->glyph_w);
 

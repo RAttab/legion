@@ -90,6 +90,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
 
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
+        core_push_event(EV_FOCUS_INPUT, (uintptr_t) &ui->code, 0);
 
         return false;
     }
