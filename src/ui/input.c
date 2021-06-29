@@ -61,7 +61,11 @@ uint64_t ui_input_get_u64(struct ui_input *input)
         if (input->buf.len > vm_atom_cap) return 0;
         atom_t atom = {0};
         memcpy(atom, input->buf.c+1, input->buf.len-1);
-        return c0 == '@' ? vm_atom(&atom) : mods_find(&atom);
+
+        if (c0 == '@') return vm_atom(&atom);
+
+        mod_id_t id = mods_find(&atom);
+        return id ? mods_latest(id)->id : 0;
     }
 
     uint64_t val = 0;

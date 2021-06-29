@@ -49,7 +49,7 @@ static void brain_init(void *state, id_t id, struct chunk *chunk)
 
 static void brain_mod(struct brain *brain, mod_t id)
 {
-    struct mod *mod = mods_load(id);
+    struct mod *mod = mods_get(id);
     if (!mod) return;
 
     vm_reset(&brain->vm);
@@ -127,7 +127,6 @@ static void brain_io_mod(struct brain *brain, size_t len, const word_t *args)
 static void brain_io_reset(struct brain *brain)
 {
     vm_reset(&brain->vm);
-    mod_discard(brain->mod);
     brain->mod = NULL;
     brain->msg_len = 0;
 }

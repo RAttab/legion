@@ -40,7 +40,7 @@ struct ui_mod *ui_mod_new(void)
 
     struct ui_mod *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mod) {
-        .panel = ui_panel_title(pos, dim, ui_str_v(vm_atom_cap)),
+        .panel = ui_panel_title(pos, dim, ui_str_v(6 + vm_atom_cap + 5)),
         .compile = ui_button_new(font, ui_str_c("compile")),
         .publish = ui_button_new(font, ui_str_c("publish")),
         .reset = ui_button_new(font, ui_str_c("reset")),
@@ -57,7 +57,6 @@ void ui_mod_free(struct ui_mod *ui)
     ui_button_free(&ui->publish);
     ui_button_free(&ui->reset);
     ui_code_free(&ui->code);
-    mod_discard(ui->mod);
     free(ui);
 }
 
@@ -65,10 +64,17 @@ static void ui_mod_update(struct ui_mod *ui, struct mod *mod, ip_t ip)
 {
     assert(mod);
 
-    mod_discard(ui->mod);
     ui->mod = mod;
     ui_code_set(&ui->code, mod, ip);
     ui->publish.disabled = mod->errs_len > 0;
+}
+
+
+static void ui_mod_title(struct ui_mod *ui)
+{
+    atom_t name = {0};
+    mods_name(mod_id(ui->id), &name);
+    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name, mod_ver(ui->id));
 }
 
 static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
@@ -80,13 +86,13 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
         mod_t id = (uintptr_t) ev->user.data1;
         ip_t ip = (uintptr_t) ev->user.data2;
 
-        ui->id = id;
-        ui_mod_update(ui, mods_load(id), ip);
-        ui->publish.disabled = true;
+        struct mod *mod = mods_get(id);
+        assert(mod);
 
-        atom_t name = {0};
-        mods_name(id, &name);
-        ui_str_setf(&ui->panel.title.str, "mod: %s", name);
+        ui->id = mod->id;
+        ui_mod_update(ui, mod, ip);
+        ui->publish.disabled = true;
+        ui_mod_title(ui);
 
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
@@ -97,7 +103,6 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
 
     case EV_MOD_CLEAR: {
         ui_code_clear(&ui->code);
-        mod_discard(ui->mod);
         ui->mod = NULL;
         ui->id = 0;
         ui->panel.state = ui_panel_hidden;
@@ -127,13 +132,14 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
         assert(ui->mod->errs_len == 0);
-        mods_store(ui->id, ui->mod);
+        ui->id = mods_set(mod_id(ui->id), ui->mod);
         ui->publish.disabled = true;
+        ui_mod_title(ui);
         return ret == ui_consume;
     }
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
-        ui_mod_update(ui, mods_load(ui->id), 0);
+        ui_mod_update(ui, mods_get(ui->id), 0);
         return ret == ui_consume;
     }
 

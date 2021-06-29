@@ -28,7 +28,6 @@ struct mod *mod_alloc(
             head_bytes + code_bytes + src_bytes + errs_bytes + index_bytes);
 
     struct mod *mod = alloc_cache(total_bytes);
-    ref_init(mod);
 
     memcpy(&mod->code, code, code_bytes);
     mod->len = code_len;
@@ -60,7 +59,6 @@ struct mod *mod_nil(mod_t id)
         .errs = end,
         .index = end,
     };
-    ref_init(mod);
 
     return mod;
 }
@@ -144,100 +142,101 @@ size_t mod_hexdump(struct mod *mod, char *dst, size_t len)
 // mods
 // -----------------------------------------------------------------------------
 
-struct mods_entry
+static struct
 {
-    mod_t id;
+    mod_id_t id;
+    struct htable by_id;
+    struct htable by_mod;
+} mods;
+
+struct mod_entry
+{
+    mod_id_t id;
+    mod_ver_t ver;
+
     atom_t str;
     struct mod *mod;
 };
 
-static struct
-{
-    mod_t ids;
-    struct htable index;
-} mods;
-
-
 void mods_free()
 {
-    struct htable_bucket *it = htable_next(&mods.index, NULL);
-    for (; it; it = htable_next(&mods.index, it)) {
-        struct mods_entry *entry = (void *) it->value;
-        mod_discard(entry->mod);
-        free(entry);
-    }
-    htable_reset(&mods.index);
+    struct htable_bucket *it = NULL;
+
+    for (it = htable_next(&mods.by_id, NULL); it; it = htable_next(&mods.by_id, it))
+        free((struct mod_entry *) it->value);
+    htable_reset(&mods.by_id);
+
+    for (htable_next(&mods.by_mod, NULL); it; it = htable_next(&mods.by_mod, it))
+        free((struct mod *) it->value);
+    htable_reset(&mods.by_mod);
 }
 
 mod_t mods_register(const atom_t *name)
 {
-    struct mods_entry *entry = calloc(1, sizeof(*entry));
+    struct mod_entry *entry = calloc(1, sizeof(*entry));
     memcpy(entry->str, name, vm_atom_cap);
+    entry->id = ++mods.id;
 
-    entry->id = ++mods.ids;
-    assert(entry->id);
+    mod_t mod = make_mod(entry->id, ++entry->ver);
+    entry->mod = mod_nil(mod);
 
-    entry->mod = mod_nil(entry->id);
+    struct htable_ret ret = {0};
 
-    struct htable_ret ret = htable_put(&mods.index, entry->id, (uint64_t) entry);
+    ret = htable_put(&mods.by_id, entry->id, (uintptr_t) entry);
     assert(ret.ok);
 
-    return entry->id;
+    ret = htable_put(&mods.by_mod, mod, (uintptr_t) entry->mod);
+    assert(ret.ok);
+
+    return mod;
 }
 
-bool mods_name(mod_t id, atom_t *dst)
+bool mods_name(mod_id_t id, atom_t *dst)
 {
-    struct htable_ret ret = htable_get(&mods.index, id);
+    struct htable_ret ret = htable_get(&mods.by_id, id);
     if (!ret.ok) return false;
 
-    struct mods_entry *entry = (void *) ret.value;
+    struct mod_entry *entry = (void *) ret.value;
     memcpy(dst, entry->str, vm_atom_cap);
     return true;
 }
 
-bool mods_del(mod_t id)
+mod_t mods_set(mod_id_t id, struct mod *mod)
 {
-    struct htable_ret ret = htable_get(&mods.index, id);
-    if (!ret.ok) return false;
+    struct htable_ret ret = htable_get(&mods.by_id, id);
+    if (!ret.ok) return 0;
 
-    struct mods_entry *entry = (void *) ret.value;
-    if (entry->mod) mod_discard(entry->mod);
+    struct mod_entry *entry = (void *) ret.value;
+    entry->mod = mod;
+    entry->ver++;
 
-    ret = htable_del(&mods.index, id);
+    mod->id = make_mod(id, entry->ver);
+    ret = htable_put(&mods.by_mod, mod->id, (uintptr_t) mod);
     assert(ret.ok);
 
-    return true;
+    return mod->id;
 }
 
-bool mods_store(mod_t id, struct mod *mod)
+struct mod *mods_latest(mod_id_t id)
 {
-    struct htable_ret ret = htable_get(&mods.index, id);
-    if (!ret.ok) return false;
-
-    struct mods_entry *entry = (void *) ret.value;
-    if (entry->mod) mod_discard(entry->mod);
-    entry->mod = mod_share(mod);
-    mod->id = id;
-
-    return true;
+    struct htable_ret ret = htable_get(&mods.by_id, id);
+    return ret.ok ? ((struct mod_entry *) ret.value)->mod : NULL;
 }
 
-struct mod *mods_load(mod_t id)
+struct mod *mods_get(mod_t id)
 {
-    if (!id) return NULL;
+    if (!mod_ver(id)) return mods_latest(mod_id(id));
 
-    struct htable_ret ret = htable_get(&mods.index, id);
-    if (!ret.ok) return NULL;
-
-    struct mods_entry *entry = (void *) ret.value;
-    return mod_share(entry->mod);
+    struct htable_ret ret = htable_get(&mods.by_mod, id);
+    return ret.ok ? (struct mod *) ret.value : NULL;
 }
 
-mod_t mods_find(const atom_t *name)
+
+mod_id_t mods_find(const atom_t *name)
 {
-    struct htable_bucket *it = htable_next(&mods.index, NULL);
-    for (; it; it = htable_next(&mods.index, it)) {
-        struct mods_entry *entry = (void *) it->value;
+    struct htable_bucket *it = htable_next(&mods.by_id, NULL);
+    for (; it; it = htable_next(&mods.by_id, it)) {
+        struct mod_entry *entry = (void *) it->value;
         if (vm_atoms_eq(name, &entry->str)) return entry->id;
     }
     return 0;
@@ -253,12 +252,12 @@ static int mods_item_cmp(const void *lhs_, const void *rhs_)
 struct mods *mods_list(void)
 {
     struct mods *ret = calloc(1,
-            sizeof(*ret) + mods.index.len * sizeof(ret->items[0]));
-    ret->len = mods.index.len;
+            sizeof(*ret) + mods.by_id.len * sizeof(ret->items[0]));
+    ret->len = mods.by_id.len;
 
-    struct htable_bucket *it = htable_next(&mods.index, NULL);
-    for (size_t i = 0; it; it = htable_next(&mods.index, it), i++) {
-        struct mods_entry *entry = (void *) it->value;
+    struct htable_bucket *it = htable_next(&mods.by_id, NULL);
+    for (size_t i = 0; it; it = htable_next(&mods.by_id, it), i++) {
+        struct mod_entry *entry = (void *) it->value;
         ret->items[i].id = entry->id;
         memcpy(ret->items[i].str, entry->str, vm_atom_cap);
     }
@@ -318,11 +317,8 @@ static void mods_load_path(const char *path)
     atom_t name = {0};
     memcpy(name, path + slash + 1, dot - slash - 1);
 
-    mod_t id = mods_register(&name);
-    assert(mods_store(id, mod));
-    dbg("mod: %s -> %x", &name[0], id);
-
-    mod_discard(mod);
+    mod_id_t id = mod_id(mods_register(&name));
+    mods_set(id, mod);
 }
 
 void mods_preload(void)

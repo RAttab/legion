@@ -96,7 +96,7 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 
     case EV_MOD_SELECT: {
         mod_t mod = (uintptr_t) ev->user.data1;
-        ui_toggles_select(&ui->toggles, mod);
+        ui_toggles_select(&ui->toggles, mod_id(mod));
         return false;
     }
 
@@ -131,7 +131,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     struct ui_toggle *toggle = NULL;
     if ((ret = ui_toggles_event(&ui->toggles, ev, &ui->scroll, &toggle, NULL))) {
         enum event type = toggle->state == ui_toggle_selected ? EV_MOD_SELECT : EV_MOD_CLEAR;
-        core_push_event(type, toggle->user, 0);
+        core_push_event(type, make_mod(toggle->user, 0), 0);
         return true;
     }
 

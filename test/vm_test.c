@@ -54,10 +54,6 @@ bool check(struct test *test)
     text_from_str(&src, test->src, strlen(test->src));
     struct mod *mod = mod_compile(&src);
 
-    mod_t key = mods_register(&test->title);
-    assert(mods_store(key, mod));
-    test->in->ip = 0;
-
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {
             struct mod_err *err = &mod->errs[i];
@@ -68,7 +64,6 @@ bool check(struct test *test)
 
     struct vm *vm = test->in;
     ip_t ret = vm_exec(vm, mod);
-
 
     bool ok = true;
     struct vm *exp = test->exp;
@@ -105,7 +100,7 @@ bool check(struct test *test)
         fprintf(stderr, "<exp>\n%sret:   %x\n\n", buffer, test->exp_ret);
     }
 
-    mod_discard(mod);
+    free(mod);
     text_clear(&src);
     free(test->exp);
     free(test->in);

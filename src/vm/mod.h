@@ -30,8 +30,6 @@ struct legion_packed mod_index
 
 struct legion_packed mod
 {
-    ref_t ref;
-
     mod_t id;
     legion_pad(8 - sizeof(mod_t));
 
@@ -40,10 +38,11 @@ struct legion_packed mod
     uint32_t errs_len;
     uint32_t index_len;
 
+    legion_pad(2 * 8);
+
     char *src;
     struct mod_err *errs;
     struct mod_index *index;
-    legion_pad(8);
     uint8_t code[];
 };
 
@@ -67,9 +66,6 @@ inline size_t mod_len(struct mod *mod)
         (mod->index_len + 1) * sizeof(*mod->index);
 }
 
-inline struct mod *mod_share(struct mod *mod) { return ref_share(mod); }
-inline void mod_discard(struct mod *mod) { ref_discard(mod); }
-
 size_t mod_dump(struct mod *mod, char *dst, size_t len);
 size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
 
@@ -81,16 +77,18 @@ ip_t mod_byte(struct mod *mod, size_t line);
 // mods
 // -----------------------------------------------------------------------------
 
-mod_t mods_register(const atom_t *name);
-bool mods_name(mod_t, atom_t *dst);
 void mods_free();
 
-bool mods_del(mod_t);
-bool mods_store(mod_t, struct mod *);
-mod_t mods_find(const atom_t *name);
-struct mod *mods_load(mod_t);
+mod_t mods_register(const atom_t *name);
+bool mods_name(mod_id_t, atom_t *dst);
 
-struct mods_item { mod_t id; atom_t str; };
+mod_t mods_set(mod_id_t, struct mod *);
+struct mod *mods_get(mod_t);
+struct mod *mods_latest(mod_id_t);
+
+mod_id_t mods_find(const atom_t *name);
+
+struct mods_item { mod_id_t id; atom_t str; };
 struct mods
 {
     size_t len;

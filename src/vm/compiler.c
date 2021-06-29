@@ -160,7 +160,9 @@ static bool compiler_mod(const char *str, size_t len, mod_t *mod)
     atom_t atom = {0};
     memcpy(atom, str + 1, len - 1);
 
-    *mod = mods_find(&atom);
+    mod_id_t id = mods_find(&atom);
+    *mod = mods_latest(id)->id;
+
     return true;
 }
 
