@@ -19,12 +19,18 @@ typedef int64_t word_t;
 typedef uint8_t reg_t;
 
 typedef uint32_t ip_t;
-typedef uint16_t mod_t;
-typedef uint16_t addr_t;
+typedef uint32_t mod_t;
+typedef uint16_t mod_id_t;
+typedef uint16_t mod_ver_t;
 
-inline ip_t make_ip(mod_t mod, addr_t off) { return (((uint32_t) mod) << 16) | off; }
-inline mod_t ip_mod(ip_t ip) { return ip >> 16; }
-inline addr_t ip_addr(ip_t ip) { return (uint16_t) ip; }
+
+inline mod_t make_mod(mod_id_t id, mod_ver_t ver) { assert(!(id >> 15)); return id << 16 | ver; }
+inline mod_id_t mod_id(mod_t mod) { return mod >> 16; }
+inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
+
+inline ip_t mod_ip(mod_t mod) { return 1U << 31 | mod; }
+inline bool ip_is_mod(ip_t ip) { return ip >> 31; }
+inline mod_t ip_mod(ip_t ip) { return ((1U << 31) - 1) & ip;  }
 
 
 // -----------------------------------------------------------------------------

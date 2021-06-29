@@ -56,7 +56,7 @@ bool check(struct test *test)
 
     mod_t key = mods_register(&test->title);
     assert(mods_store(key, mod));
-    test->in->ip = make_ip(key, 0);
+    test->in->ip = 0;
 
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {

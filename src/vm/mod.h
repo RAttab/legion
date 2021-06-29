@@ -25,7 +25,7 @@ struct mod_err
 struct legion_packed mod_index
 {
     uint16_t line;
-    addr_t byte;
+    ip_t byte;
 };
 
 struct legion_packed mod
@@ -74,7 +74,7 @@ size_t mod_dump(struct mod *mod, char *dst, size_t len);
 size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
 
 size_t mod_line(struct mod *mod, ip_t ip);
-addr_t mod_byte(struct mod *mod, size_t line);
+ip_t mod_byte(struct mod *mod, size_t line);
 
 
 // -----------------------------------------------------------------------------

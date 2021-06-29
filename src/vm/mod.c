@@ -67,17 +67,17 @@ struct mod *mod_nil(mod_t id)
 
 size_t mod_line(struct mod *mod, ip_t ip)
 {
-    addr_t byte = ip_addr(ip);
-    assert(byte < mod->len);
+    assert(!ip_is_mod(ip));
+    assert(ip < mod->len);
 
     for (size_t i = 0; i < mod->index_len; ++i) {
-        if (byte < mod->index[i+1].byte)
+        if (ip < mod->index[i+1].byte)
             return mod->index[i].line;
     }
     assert(false);
 }
 
-addr_t mod_byte(struct mod *mod, size_t line)
+ip_t mod_byte(struct mod *mod, size_t line)
 {
     assert(line < mod->src_len);
 

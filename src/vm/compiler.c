@@ -283,7 +283,7 @@ static void compiler_label_def(
 
     struct vec64 *vec = (void *) ret.value;
     for (size_t i = 0; i < vec->len; ++i)
-        compiler_write_ip_at(comp, make_ip(0, vec->vals[i]), comp->out.i);
+        compiler_write_ip_at(comp, vec->vals[i], comp->out.i);
 
     (void) htable_del(&comp->lbl.wants, hash);
     vec64_free(vec);
@@ -296,7 +296,7 @@ static void compiler_label_ref(
 
     uint64_t hash = hash_str(label + 1, len - 2); // remove @ and \0
     struct htable_ret ret = htable_get(&comp->lbl.is, hash);
-    if (ret.ok) { compiler_write_ip(comp, make_ip(0, ret.value)); return; }
+    if (ret.ok) { compiler_write_ip(comp, ret.value); return; }
 
     ret = htable_get(&comp->lbl.wants, hash);
 
@@ -473,7 +473,7 @@ struct mod *mod_compile(struct text *source)
                     break;
                 }
                 if (!mod) { compiler_err(comp, "unknown mod"); break; }
-                compiler_write_ip(comp, make_ip(mod, 0));
+                compiler_write_ip(comp, mod_ip(mod));
                 break;
             }
 

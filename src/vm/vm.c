@@ -93,7 +93,6 @@ void vm_io_write(struct vm *vm, size_t len, const word_t *src)
 
 void vm_reset(struct vm *vm)
 {
-    mod_t mod = ip_mod(vm->ip);
     uint8_t stack = vm->specs.stack;
     uint8_t speed = vm->specs.speed;
 
@@ -101,7 +100,7 @@ void vm_reset(struct vm *vm)
 
     vm->specs.stack = stack;
     vm->specs.speed = speed;
-    vm->ip = make_ip(mod, 0);
+    vm->ip = 0;
 }
 
 size_t vm_dbg(struct vm *vm, char *dst, size_t len)
@@ -147,8 +146,8 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
     if (vm->flags & flag_faults) return VM_FAULT;
     if (vm->flags & FLAG_SUSPENDED) return 0;
 
+    assert(!ip_is_mod(vm->ip));
     vm_assert(ip_addr(vm->ip) < mod->len);
-    assert(ip_mod(vm->ip) == mod->id);
 
     static const void *opcodes[] = {
         [OP_PUSH]   = &&op_push,
@@ -207,9 +206,8 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
 #define vm_code(arg_type_t)                                             \
     ({                                                                  \
-        addr_t off = ip_addr(vm->ip);                                   \
         vm_assert(off + sizeof(arg_type_t) <= mod->len);                \
-        arg_type_t arg = *((const arg_type_t *) (mod->code + off));     \
+        arg_type_t arg = *((const arg_type_t *) (mod->code + vm->ip));  \
         vm->ip += sizeof(arg_type_t);                                   \
         arg;                                                            \
     })
@@ -251,49 +249,44 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
         vm->stack[vm->sp++] = (val);                    \
     })
 
-#define vm_jmp(_target_)                        \
-    do {                                        \
-        addr_t target = (_target_);             \
-        vm->ip = make_ip(mod->id, target);      \
-    } while (false)
-
 
     size_t cycles = vm->specs.speed;
     for (size_t i = 0; i < cycles; ++i) {
+        vm->tsc++;
 
         uint8_t opcode = vm_code(uint8_t);
         const void *label = opcodes[opcode];
         vm_assert(label);
         goto *label;
 
-      op_push: { vm_push(vm_code(word_t)); goto next; }
-      op_pushr: { vm_push(vm->regs[vm_code(reg_t)]); goto next; }
-      op_pushf: { vm_push(vm->flags); goto next; }
+      op_push: { vm_push(vm_code(word_t)); continue; }
+      op_pushr: { vm_push(vm->regs[vm_code(reg_t)]); continue; }
+      op_pushf: { vm_push(vm->flags); continue; }
 
-      op_pop: { vm_pop(); goto next; }
-      op_popr: { vm->regs[vm_code(reg_t)] = vm_pop(); goto next; }
+      op_pop: { vm_pop(); continue; }
+      op_popr: { vm->regs[vm_code(reg_t)] = vm_pop(); continue; }
 
-      op_dupe: { vm_push(vm_peek()); goto next; }
+      op_dupe: { vm_push(vm_peek()); continue; }
       op_swap: {
             vm_ensure(2);
             word_t tmp = vm_stack(0);
             vm_stack(0) = vm_stack(1);
             vm_stack(1) = tmp;
-            goto next;
+            continue;
         }
 
-      op_not: { vm_ensure(1); vm_stack(0) = !vm_stack(0); goto next; }
+      op_not: { vm_ensure(1); vm_stack(0) = !vm_stack(0); continue; }
       op_and: {
             vm_ensure(2);
             vm_stack(1) = vm_stack(1) && vm_stack(0);
             vm_pop();
-            goto next;
+            continue;
         }
       op_or: {
             vm_ensure(2);
             vm_stack(1) = vm_stack(1) || vm_stack(0);
             vm_pop();
-            goto next;
+            continue;
         }
       op_xor: {
             vm_ensure(2);
@@ -301,36 +294,36 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             uint64_t y = vm_stack(1);
             vm_stack(1) = (x || y) && !(x && y);
             vm_pop();
-            goto next;
+            continue;
         }
 
-      op_bnot: { vm_ensure(1); vm_stack(0) = ~vm_stack(0); goto next; }
-      op_band: { vm_ensure(2); vm_stack(1) &= vm_stack(0); vm_pop(); goto next; }
-      op_bor: { vm_ensure(2); vm_stack(1) |= vm_stack(0); vm_pop(); goto next; }
-      op_bxor: { vm_ensure(2); vm_stack(1) ^= vm_stack(0); vm_pop(); goto next; }
+      op_bnot: { vm_ensure(1); vm_stack(0) = ~vm_stack(0); continue; }
+      op_band: { vm_ensure(2); vm_stack(1) &= vm_stack(0); vm_pop(); continue; }
+      op_bor: { vm_ensure(2); vm_stack(1) |= vm_stack(0); vm_pop(); continue; }
+      op_bxor: { vm_ensure(2); vm_stack(1) ^= vm_stack(0); vm_pop(); continue; }
       op_bsl: {
             vm_ensure(2);
             vm_stack(1) = ((uint64_t)vm_stack(1)) << vm_stack(0);
             vm_pop();
-            goto next;
+            continue;
         }
       op_bsr: {
             vm_ensure(2);
             vm_stack(1) = ((uint64_t)vm_stack(1)) >> vm_stack(0);
             vm_pop();
-            goto next;
+            continue;
         }
 
-      op_neg: { vm_ensure(1); vm_stack(0) = -vm_stack(0); goto next; }
-      op_add: { vm_ensure(2); vm_stack(1) += vm_stack(0); vm_pop(); goto next; }
-      op_sub: { vm_ensure(2); vm_stack(1) -= vm_stack(0); vm_pop(); goto next; }
-      op_mul: { vm_ensure(2); vm_stack(1) *= vm_stack(0); vm_pop(); goto next; }
+      op_neg: { vm_ensure(1); vm_stack(0) = -vm_stack(0); continue; }
+      op_add: { vm_ensure(2); vm_stack(1) += vm_stack(0); vm_pop(); continue; }
+      op_sub: { vm_ensure(2); vm_stack(1) -= vm_stack(0); vm_pop(); continue; }
+      op_mul: { vm_ensure(2); vm_stack(1) *= vm_stack(0); vm_pop(); continue; }
       op_lmul: {
             vm_ensure(2);
             __int128 ret = ((__int128)vm_stack(0)) * ((__int128)vm_stack(1));
             vm_stack(0) = ret >> 64;
             vm_stack(1) = ret & ((((__int128) 1) << 64) - 1);
-            goto next;
+            continue;
         }
       op_div: {
             vm_ensure(2);
@@ -338,7 +331,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             if (unlikely(!div)) { vm->flags |= FLAG_FAULT_MATH; return VM_FAULT; }
             vm_stack(1) /= div;
             vm_pop();
-            goto next;
+            continue;
         }
       op_rem: {
             vm_ensure(2);
@@ -346,34 +339,33 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             if (unlikely(!div)) { vm->flags |= FLAG_FAULT_MATH; return VM_FAULT; }
             vm_stack(1) %= div;
             vm_pop();
-            goto next;
+            continue;
         }
 
-      op_eq:  { vm_ensure(2); vm_stack(1) = vm_stack(0) == vm_stack(1); vm_pop(); goto next; }
-      op_ne:  { vm_ensure(2); vm_stack(1) = vm_stack(0) != vm_stack(1); vm_pop(); goto next; }
-      op_gt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) > vm_stack(1);  vm_pop(); goto next; }
-      op_lt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1);  vm_pop(); goto next; }
-      op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1);  vm_pop(); goto next; }
+      op_eq:  { vm_ensure(2); vm_stack(1) = vm_stack(0) == vm_stack(1); vm_pop(); continue; }
+      op_ne:  { vm_ensure(2); vm_stack(1) = vm_stack(0) != vm_stack(1); vm_pop(); continue; }
+      op_gt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) > vm_stack(1);  vm_pop(); continue; }
+      op_lt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1);  vm_pop(); continue; }
+      op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1);  vm_pop(); continue; }
 
       op_ret: {
             word_t raw = vm_pop();
             if (raw > ((ip_t)-1)) { vm->flags |= FLAG_FAULT_CODE; return VM_FAULT; }
-            ip_t ip = raw;
-            if (ip_mod(ip) == mod->id) { vm_jmp(ip_addr(ip)); goto next; }
-            return ip;
+            vm->ip = raw;
+            if (ip_is_mod(vm->ip)) return vm->ip;
+            continue;
         }
       op_call: {
-            ip_t ip = vm_code(ip_t);
+            ip_t dst = vm_code(ip_t);
             vm_push(vm->ip);
-
-            if (!ip_mod(ip)) { vm_jmp(ip_addr(ip)); goto next; }
-            vm_assert(!ip_addr(ip));
-            return ip;
+            vm->ip = dst;
+            if (ip_is_mod(vm->ip)) return vm->ip;
+            continue;
         }
       op_load: { ip_t ip = vm_pop(); vm_reset(vm); return ip; }
-      op_jmp: { vm_jmp(vm_code(ip_t)); goto next; }
-      op_jz:  { ip_t dst = vm_code(ip_t); if (!vm_pop()) vm_jmp(dst); goto next; }
-      op_jnz: { ip_t dst = vm_code(ip_t); if ( vm_pop()) vm_jmp(dst); goto next; }
+      op_jmp: { vm->ip = vm_code(ip_t); continue; }
+      op_jz:  { ip_t dst = vm_code(ip_t); if (!vm_pop()) vm->ip = dst; continue; }
+      op_jnz: { ip_t dst = vm_code(ip_t); if ( vm_pop()) vm->ip = dst; continue; }
 
       op_reset: { vm_reset(vm); return 0; }
       op_yield: { return 0; }
@@ -403,18 +395,15 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             vm_ensure(2);
             vm_stack(1) = vm_pack(vm_stack(0), vm_stack(1));
             vm_pop();
-            goto next;
+            continue;
         }
       op_unpack: {
             uint32_t msb = 0, lsb = 0;
             vm_unpack(vm_pop(), &msb, &lsb);
             vm_push(lsb);
             vm_push(msb);
-            goto next;
+            continue;
         }
-
-      next:
-        vm->tsc++;
     }
 
     return 0;
@@ -425,5 +414,4 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 #undef vm_peek
 #undef vm_pop
 #undef vm_push
-#undef vm_jmp
 }

@@ -343,7 +343,7 @@ call @fn
 fn:
 yield
 &in>S:1
-&out>S:1,sp:1,s0:0x1f0005
+&out>S:1,sp:1,s0:0x05
 
 !basic-ret
 &prog
