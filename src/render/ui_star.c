@@ -140,8 +140,24 @@ static void ui_star_update_list(
 
 static void ui_star_update(struct ui_star *ui)
 {
+    {
+        char str[coord_str_len+1] = {0};
+        coord_str(ui->star.coord, str, sizeof(str));
+        ui_str_setf(&ui->panel.title.str, "star - %s", str);
+    }
+
     struct chunk *chunk = world_chunk(core.state.world, ui->star.coord);
-    if (!chunk) return;
+    if (!chunk) {
+        ui_toggles_resize(&ui->control_list, 0);
+        ui_scroll_update(&ui->control_scroll, 0);
+        ui_toggles_resize(&ui->factory_list, 0);
+        ui_scroll_update(&ui->factory_scroll, 0);
+
+        ui_str_set_u64(&ui->workers_val.str, 0);
+        ui_str_set_u64(&ui->idle_val.str, 0);
+        ui_str_set_u64(&ui->fail_val.str, 0);
+        return;
+    }
 
     {
         static const item_t filter[] = {
@@ -169,12 +185,6 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_u64(&ui->workers_val.str, workers.count);
         ui_str_set_u64(&ui->idle_val.str, workers.idle);
         ui_str_set_u64(&ui->fail_val.str, workers.fail);
-    }
-
-    {
-        char str[coord_str_len+1] = {0};
-        coord_str(ui->star.coord, str, sizeof(str));
-        ui_str_setf(&ui->panel.title.str, "star - %s", str);
     }
 }
 
