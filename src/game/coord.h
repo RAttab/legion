@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/bits.h"
 #include "SDL.h"
 
 // -----------------------------------------------------------------------------
@@ -14,17 +15,18 @@
 
 enum
 {
-    coord_top_bits = 8,
-    coord_top_size = 1 << coord_top_bits,
-    coord_top_mask = coord_top_size - 1,
+    coord_sector_bits = 16,
+    coord_sector_size = 1 << coord_sector_bits,
+    coord_sector_mask = coord_sector_size - 1,
 
     coord_area_bits = 8,
     coord_area_size = 1 << coord_area_bits,
     coord_area_mask = coord_area_size - 1,
+    coord_area_inc = 1 << (coord_area_bits + coord_sector_bits),
 
-    coord_sector_bits = 16,
-    coord_sector_size = 1 << coord_sector_bits,
-    coord_sector_mask = coord_sector_size - 1,
+    coord_top_bits = 8,
+    coord_top_size = 1 << coord_top_bits,
+    coord_top_mask = coord_top_size - 1,
 };
 
 static_assert(coord_top_bits + coord_area_bits + coord_sector_bits == 32);
@@ -116,6 +118,11 @@ struct rect
     struct coord top, bot;
 };
 
+inline struct rect make_rect(struct coord top, struct coord bot)
+{
+    return (struct rect) { .top = top, .bot = bot };
+}
+
 inline bool rect_contains(const struct rect *r, struct coord coord)
 {
     return
@@ -144,9 +151,32 @@ inline struct coord rect_next_sector(struct rect rect, struct coord it)
     if (coord_is_nil(it)) return coord_sector(rect.top);
 
     if (it.x < rect.bot.x)
-        return make_coord(it.x + coord_sector_size, it.y);
-    if (it.y < rect.bot.y)
-        return make_coord(rect.top.x, it.y + coord_sector_size);
+        return make_coord(u32_saturate_add(it.x, coord_sector_size), it.y);
+
+    if (it.y < rect.bot.y) {
+        const size_t bits = coord_sector_bits;
+        return make_coord(
+                (rect.top.x >> bits) << bits,
+                u32_saturate_add(it.y, coord_sector_size));
+    }
+
+    return coord_nil();
+}
+
+inline struct coord rect_next_area(struct rect rect, struct coord it)
+{
+    if (coord_is_nil(it)) return coord_area(rect.top);
+
+    if (it.x < rect.bot.x)
+        return make_coord(u32_saturate_add(it.x, coord_area_inc), it.y);
+
+    if (it.y < rect.bot.y) {
+        const size_t bits = coord_sector_bits + coord_area_bits;
+        return make_coord(
+                (rect.top.x >> bits) << bits,
+                u32_saturate_add(it.y, coord_area_inc));
+    }
+
     return coord_nil();
 }
 

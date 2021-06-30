@@ -71,3 +71,9 @@ inline uint16_t u16_saturate_add(uint64_t val, uint64_t add)
     val += add;
     return val > UINT16_MAX ? UINT16_MAX : val;
 }
+
+inline uint32_t u32_saturate_add(uint64_t val, uint64_t add)
+{
+    val += add;
+    return val > UINT32_MAX ? UINT32_MAX : val;
+}

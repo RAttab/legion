@@ -41,8 +41,8 @@ struct sector *sector_gen(struct coord coord)
     coord = coord_sector(coord);
     struct rng rng = rng_make(coord_to_id(coord));
 
-    uint64_t delta_max = coord_dist(coord_nil(), coord_center());
-    uint64_t delta = coord_dist(coord, coord_center());
+    double delta_max = coord_dist_2(coord_nil(), coord_center());
+    double delta = coord_dist_2(coord, coord_center());
 
     enum { stars_max = 1U << 10 };
     size_t stars = (stars_max * (delta_max - delta)) / delta_max;

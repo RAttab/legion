@@ -30,6 +30,13 @@ struct map
 
 enum { px_star = 1 << 10 };
 
+enum {
+    map_scale_default = scale_base << 6,
+    map_thresh_stars = scale_base << 0x8,
+    map_thresh_sector = scale_base << 0xE,
+    map_thresh_sector_active = scale_base << 0xA,
+};
+
 
 // -----------------------------------------------------------------------------
 // basics
@@ -46,7 +53,7 @@ struct map *map_new(void)
         .panned = false,
     };
 
-    map->scale <<= 6;
+    map->scale = map_scale_default;
 
     char path[PATH_MAX];
     core_path_res("map.bmp", path, sizeof(path));
@@ -103,6 +110,7 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
 
     case EV_MAP_GOTO: {
         map->pos = id_to_coord((uintptr_t) ev->user.data1);
+        map->scale = map_scale_default;
         return true;
     }
 
@@ -144,7 +152,7 @@ bool map_event(struct map *map, SDL_Event *event)
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &event->button;
         if (b->button == SDL_BUTTON_LEFT) {
-            if (!map->panned) {
+            if (!map->panned && map->scale < map_thresh_stars) {
                 SDL_Point point = core.cursor.point;
                 size_t px = scale_div(map->scale, px_star);
                 struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
@@ -171,6 +179,61 @@ bool map_event(struct map *map, SDL_Event *event)
 // -----------------------------------------------------------------------------
 // render
 // -----------------------------------------------------------------------------
+
+static void map_render_areas(struct map *map, SDL_Renderer *renderer)
+{
+    struct rect rect = map_project_coord_rect(map, &core.rect);
+
+    struct coord it = rect_next_area(rect, coord_nil());
+    for (; !coord_is_nil(it); it = rect_next_area(rect, it)) {
+        SDL_Point top = map_project_sdl(map, it);
+        SDL_Point bot = map_project_sdl(map, make_coord(
+                it.x + coord_area_inc,
+                it.y + coord_area_inc));
+
+        SDL_Rect sdl_rect = {
+            .x = top.x, .y = top.y,
+            .w = bot.x - top.x,
+            .h = bot.y - top.y,
+        };
+
+        rgba_render(make_rgba(0x00, 0x00, 0x33, 0x88), renderer);
+        sdl_err(SDL_RenderDrawRect(renderer, &sdl_rect));
+    }
+}
+
+static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
+{
+    struct rect rect = map_project_coord_rect(map, &core.rect);
+
+    struct coord it = rect_next_sector(rect, coord_nil());
+    for (; !coord_is_nil(it); it = rect_next_sector(rect, it)) {
+        SDL_Point top = map_project_sdl(map, it);
+        SDL_Point bot = map_project_sdl(map, make_coord(
+                it.x + coord_sector_size,
+                it.y + coord_sector_size));
+
+        SDL_Rect sdl_rect = {
+            .x = top.x, .y = top.y,
+            .w = bot.x - top.x,
+            .h = bot.y - top.y,
+        };
+
+        if (map->scale < map_thresh_sector_active) {
+            struct sector *sector = world_sector(core.state.world, it);
+            if (sector->chunks.len) {
+                uint8_t alpha = 0x44;
+                if (map->scale < map_thresh_stars)
+                    alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_stars);
+                rgba_render(make_rgba(0x00, 0x33, 0x00, alpha), renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &sdl_rect));
+            }
+        }
+
+        rgba_render(make_rgba(0x00, 0x33, 0x00, 0x88), renderer);
+        sdl_err(SDL_RenderDrawRect(renderer, &sdl_rect));
+    }
+}
 
 static void map_render_stars(struct map *map, SDL_Renderer *renderer)
 {
@@ -212,10 +275,17 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
     }
 }
 
+static void map_render_sectors(struct map *map, SDL_Renderer *renderer);
+
 void map_render(struct map *map, SDL_Renderer *renderer)
 {
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &core.rect);
 
-    map_render_stars(map, renderer);
+    if (map->scale < map_thresh_sector)
+        map_render_sectors(map, renderer);
+
+    if (map->scale < map_thresh_stars)
+        map_render_stars(map, renderer);
+    else map_render_areas(map, renderer);
 }

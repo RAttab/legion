@@ -15,6 +15,7 @@
 struct ui_topbar
 {
     struct ui_panel panel;
+    struct ui_button home;
     struct ui_button mods;
     struct ui_label coord;
     struct ui_button close;
@@ -33,6 +34,7 @@ struct ui_topbar *ui_topbar_new(void)
     struct ui_topbar *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_topbar) {
         .panel = ui_panel_menu(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
+        .home = ui_button_new(font, ui_str_c("home")),
         .mods = ui_button_new(font, ui_str_c("mods")),
         .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
         .close = ui_button_new(font, ui_str_c("x")),
@@ -43,6 +45,7 @@ struct ui_topbar *ui_topbar_new(void)
 
 void ui_topbar_free(struct ui_topbar *ui) {
     ui_panel_free(&ui->panel);
+    ui_button_free(&ui->home);
     ui_button_free(&ui->mods);
     ui_label_free(&ui->coord);
     ui_button_free(&ui->close);
@@ -58,6 +61,11 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+
+    if ((ret = ui_button_event(&ui->home, ev))) {
+        core_push_event(EV_MAP_GOTO, coord_to_id(core.state.home), 0);
+        return true;
+    }
 
     if ((ret = ui_button_event(&ui->mods, ev))) {
         core_push_event(EV_MODS_TOGGLE, 0, 0);
@@ -99,6 +107,8 @@ void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
 {
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
 
+    ui_button_render(&ui->home, &layout, renderer);
+    ui_layout_sep_x(&layout, 10);
     ui_button_render(&ui->mods, &layout, renderer);
 
     ui_layout_mid(&layout, &ui->coord.w);
