@@ -25,7 +25,7 @@ check_project(const struct state *state, SDL_Point sdl, struct coord exp)
             state->scale,
             sdl.x, sdl.y, exp.x, exp.y,
             coord_out.x, coord_out.y, sdl_out.x, sdl_out.y);
-    
+
     assert(coord_out.x == exp.x && coord_out.y == exp.y);
     assert(sdl.x == sdl_out.x && sdl.y == sdl_out.y);
 }
@@ -37,7 +37,7 @@ void test_project(void)
         .center = (struct coord) { .x = 500, .y = 500 },
         .scale = scale_init(),
     };
-    
+
     check_project(&state,
             (SDL_Point) { .x = 500, .y = 500 },
             (struct coord) { .x = 500, .y = 500 });
@@ -68,9 +68,44 @@ void test_project(void)
             (struct coord) { .x = 250, .y = 250 });
 }
 
+void check_rect_next_sector(size_t exp, struct rect rect)
+{
+    size_t n = 0;
+
+    struct coord prev = coord_nil();
+    struct coord it = rect_next_sector(rect, prev);
+
+    for (; !coord_is_nil(it); it = rect_next_sector(rect, it)) {
+        n++;
+
+        if (coord_is_nil(prev)) assert(coord_eq(it, rect.top));
+        else {
+            if (prev.x < it.x) assert(it.x == prev.x + coord_sector_size);
+            else {
+                assert(it.x == rect.top.x);
+                assert(it.y == prev.y + coord_sector_size);
+            }
+        }
+
+        prev = it;
+    }
+    assert(n == exp);
+}
+
+void test_rect_next_sector(void)
+{
+    check_rect_next_sector(9, (struct rect) {
+                .top = make_coord(1 << coord_sector_bits, 1 << coord_sector_bits),
+                .bot = make_coord(3 << coord_sector_bits, 3 << coord_sector_bits),
+            });
+}
+
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
-    
+
     test_project();
+    test_rect_next_sector();
+
+    return 0;
 }

@@ -40,8 +40,9 @@ bool chunk_io(
         struct chunk *,
         enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args);
 
-void chunk_ports_reset(struct chunk *, id_t);
+ssize_t chunk_scan(struct chunk *, item_t);
 
+void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, item_t);
 void chunk_ports_request(struct chunk *, id_t, item_t);
 item_t chunk_ports_consume(struct chunk *, id_t);

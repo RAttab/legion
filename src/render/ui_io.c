@@ -217,7 +217,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
 
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
-    struct chunk *chunk = sector_chunk(core.state.sector, ui->star);
+    struct chunk *chunk = world_chunk(core.state.world, ui->star);
     assert(chunk);
 
     word_t args[cmd->args];

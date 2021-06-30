@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "galaxy.h"
+#include "game/sector.h"
 #include "game/chunk.h"
 #include "utils/rng.h"
 
@@ -26,8 +26,7 @@ void star_gen(struct star *star, struct coord coord)
         size_t size = rng_norm(&rng, 1, 16);
         for (size_t roll = 0; roll < size; ++roll) {
             size_t elem = rng_exp(&rng, 0, ITEMS_NATURAL_LEN);
-            star->elements[elem] =
-                u16_saturate_add(star->elements[elem], 1U << size);
+            star->elems[elem] = u16_saturate_add(star->elems[elem], 1U << size);
         }
     }
 }
@@ -51,22 +50,24 @@ struct sector *sector_gen(struct coord coord)
 
     for (size_t i = 0; i < stars; ++i) {
         struct star *star = &sector->stars[i];
-        uint64_t value = rng_step(&rng);
 
-        struct coord star_coord = {
-            .x = value & coord_sector_mask,
-            .y = (value >> coord_sector_bits) & coord_sector_mask,
-        };
+        struct coord pos = id_to_coord(rng_step(&rng));
+        pos.x = coord.x | (pos.x & coord_sector_mask);
+        pos.y = coord.y | (pos.y & coord_sector_mask);
 
-        // \todo index with qtree to check for proximity.
         struct htable_ret ret =
-            htable_put(&sector->index, coord_to_id(star_coord), (uint64_t) star);
+            htable_put(&sector->index, coord_to_id(pos), (uintptr_t) star);
         if (!ret.ok) continue;
 
-        star_gen(star, star_coord);
+        star_gen(star, pos);
     }
 
     return sector;
+}
+
+void sector_free(struct sector *sector)
+{
+    free(sector);
 }
 
 
@@ -96,6 +97,15 @@ struct chunk *sector_chunk(struct sector *sector, struct coord coord)
     return ret.ok ? (void *) ret.value : NULL;
 }
 
+const struct star *sector_star(struct sector *sector, struct rect rect)
+{
+    for (size_t i = 0; i < sector->stars_len; ++i) {
+        struct star *star = &sector->stars[i];
+        if (rect_contains(&rect, star->coord)) return star;
+    }
+    return NULL;
+}
+
 void sector_step(struct sector *sector)
 {
     struct htable_bucket *bucket = htable_next(&sector->chunks, NULL);
@@ -103,27 +113,20 @@ void sector_step(struct sector *sector)
         chunk_step((void *) bucket->value);
 }
 
-const struct star *sector_star(struct sector *sector, const struct rect *rect)
+ssize_t sector_scan(struct sector *sector, struct coord coord, item_t item)
 {
-    for (size_t i = 0; i < sector->stars_len; ++i) {
-        struct star *star = &sector->stars[i];
-        if (rect_contains(rect, star->coord)) return star;
+    uint64_t id = coord_to_id(coord);
+
+    struct htable_ret ret = htable_get(&sector->index, id);
+    if (!ret.ok) return -1;
+
+    struct star *star = (void *) ret.value;
+    if (star->state != star_active) {
+        if (item < ITEM_NATURAL_FIRST && item >= ITEM_SYNTH_FIRST) return -1;
+        return star->elems[item - ITEM_NATURAL_FIRST];
     }
-    return NULL;
-}
 
-void sector_preload(struct sector *sector)
-{
-    struct rng rng = rng_make(coord_to_id(sector->coord));
-    size_t i = rng_uni(&rng, 0, sector->stars_len);
-    struct star *star = &sector->stars[i];
-
-    struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
-    chunk_create(chunk, ITEM_MINER);
-    chunk_create(chunk, ITEM_MINER);
-    chunk_create(chunk, ITEM_PRINTER);
-    chunk_create(chunk, ITEM_WORKER);
-    chunk_create(chunk, ITEM_DEPLOYER);
-    chunk_create(chunk, ITEM_BRAIN_M);
-    chunk_create(chunk, ITEM_DB_S);
+    ret = htable_get(&sector->chunks, id);
+    assert(ret.ok);
+    return chunk_scan((struct chunk *) ret.value, item);
 }

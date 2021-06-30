@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/chunk.h"
-#include "game/galaxy.h"
+#include "game/sector.h"
 
 
 void test_ports_1on1(void)

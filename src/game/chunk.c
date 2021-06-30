@@ -5,7 +5,8 @@
 
 #include "chunk.h"
 
-#include "game/galaxy.h"
+#include "game/world.h"
+#include "game/sector.h"
 #include "game/active.h"
 #include "utils/vec.h"
 #include "utils/ring.h"
@@ -221,9 +222,9 @@ struct star *chunk_star(struct chunk *chunk)
 bool chunk_harvest(struct chunk *chunk, item_t item)
 {
     assert(item >= ITEM_NATURAL_FIRST && item < ITEM_SYNTH_FIRST);
-    if (!chunk->star.elements[item]) return false;
+    if (!chunk->star.elems[item]) return false;
 
-    chunk->star.elements[item]--;
+    chunk->star.elems[item]--;
     return true;
 }
 
@@ -301,6 +302,26 @@ bool chunk_io(
 {
     struct class *class = chunk_class(chunk, id_item(dst));
     return class_io(class, chunk, io, src, dst, len, args);
+}
+
+ssize_t chunk_scan(struct chunk *chunk, item_t item)
+{
+    switch (item) {
+
+    case ITEM_WORKER: { return chunk->workers.count; }
+
+    case ITEM_NATURAL_FIRST...ITEM_SYNTH_FIRST: {
+        return chunk->star.elems[item - ITEM_NATURAL_FIRST];
+    }
+
+    case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
+        struct class *class = chunk_class(chunk, item);
+        return class ? class->len : 0;
+    }
+
+    default: { return -1; }
+
+    }
 }
 
 

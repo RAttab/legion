@@ -29,7 +29,7 @@ struct legion_packed star
     enum star_state state;
 
     uint32_t power;
-    uint16_t elements[ITEMS_NATURAL_LEN];
+    uint16_t elems[ITEMS_NATURAL_LEN];
 
     legion_pad(16);
 };
@@ -53,11 +53,12 @@ struct sector
 };
 
 struct sector *sector_gen(struct coord coord);
-void sector_preload(struct sector *);
+void sector_free(struct sector *);
 
 struct chunk *sector_chunk(struct sector *, struct coord coord);
 struct chunk *sector_chunk_alloc(struct sector *, struct coord coord);
 
-const struct star *sector_star(struct sector *, const struct rect *);
+const struct star *sector_star(struct sector *, struct rect);
 
 void sector_step(struct sector *);
+ssize_t sector_scan(struct sector *, struct coord, item_t);

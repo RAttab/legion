@@ -7,7 +7,7 @@
 
 #include "render/color.h"
 #include "render/core.h"
-#include "game/galaxy.h"
+#include "game/world.h"
 #include "utils/log.h"
 
 
@@ -35,14 +35,11 @@ enum { px_star = 1 << 10 };
 // basics
 // -----------------------------------------------------------------------------
 
-struct map *map_new()
+struct map *map_new(void)
 {
     struct map *map = calloc(1, sizeof(*map));
     *map = (struct map) {
-        .pos = (struct coord) {
-            .x = core.state.sector->coord.x + coord_sector_size / 2,
-            .y = core.state.sector->coord.y + coord_sector_size / 2,
-        },
+        .pos = core.state.home,
         .scale = scale_init(),
         .tex = NULL,
         .panning = false,
@@ -99,8 +96,24 @@ SDL_Point map_project_sdl(struct map *map, struct coord coord)
 // events
 // -----------------------------------------------------------------------------
 
+static bool map_event_user(struct map *map, SDL_Event *ev)
+{
+    switch (ev->user.code)
+    {
+
+    case EV_MAP_GOTO: {
+        map->pos = id_to_coord((uintptr_t) ev->user.data1);
+        return true;
+    }
+
+    default: { return false; }
+    }
+}
+
 bool map_event(struct map *map, SDL_Event *event)
 {
+    if (event->type == core.event) return map_event_user(map, event);
+
     switch (event->type)
     {
 
@@ -140,7 +153,7 @@ bool map_event(struct map *map, SDL_Event *event)
                             .h = px, .w = px,
                         });
 
-                const struct star *star = sector_star(core.state.sector, &rect);
+                const struct star *star = world_star(core.state.world, rect);
                 if (star) core_push_event(EV_STAR_SELECT, (uintptr_t) star, 0);
             }
 
@@ -159,14 +172,14 @@ bool map_event(struct map *map, SDL_Event *event)
 // render
 // -----------------------------------------------------------------------------
 
-static void map_render_sector(struct map *map, SDL_Renderer *renderer)
+static void map_render_stars(struct map *map, SDL_Renderer *renderer)
 {
     struct rect rect = map_project_coord_rect(map, &core.rect);
 
-    for (size_t i = 0; i < core.state.sector->stars_len; ++i) {
-        struct star *star = &core.state.sector->stars[i];
-        if (!rect_contains(&rect, star->coord)) continue;
+    struct world_render_it it = world_render_it(core.state.world, rect);
 
+    const struct star *star = NULL;
+    while ((star = world_render_next(core.state.world, &it))) {
         SDL_Point pos = map_project_sdl(map, star->coord);
 
         size_t px = scale_div(map->scale, px_star);
@@ -204,5 +217,5 @@ void map_render(struct map *map, SDL_Renderer *renderer)
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &core.rect);
 
-    map_render_sector(map, renderer);
+    map_render_stars(map, renderer);
 }

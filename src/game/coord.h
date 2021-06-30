@@ -35,6 +35,13 @@ legion_packed struct coord
     uint32_t x, y;
 };
 
+inline struct coord make_coord(uint32_t x, uint32_t y)
+{
+    return (struct coord) { .x = x, .y = y };
+}
+
+inline struct coord coord_nil(void) { return (struct coord) {0}; }
+
 inline bool coord_is_nil(struct coord coord)
 {
     return coord.x == 0 && coord.y == 0;
@@ -103,6 +110,25 @@ inline bool rect_intersect(const struct rect *lhs, struct rect *rhs)
     return
         (lhs->top.x >= rhs->bot.x && lhs->bot.x < rhs->top.x) ||
         (lhs->top.y >= rhs->bot.y && lhs->bot.y < rhs->top.y);
+}
+
+inline struct coord rect_center(const struct rect *r)
+{
+    return (struct coord) {
+        .x = r->top.x + ((r->bot.x - r->top.x) / 2),
+        .y = r->top.y + ((r->bot.y - r->top.y) / 2),
+    };
+}
+
+inline struct coord rect_next_sector(struct rect rect, struct coord it)
+{
+    if (coord_is_nil(it)) return coord_sector(rect.top);
+
+    if (it.x < rect.bot.x)
+        return make_coord(it.x + coord_sector_size, it.y);
+    if (it.y < rect.bot.y)
+        return make_coord(rect.top.x, it.y + coord_sector_size);
+    return coord_nil();
 }
 
 

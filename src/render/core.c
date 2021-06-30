@@ -10,7 +10,7 @@
 #include "render/map.h"
 #include "render/ui.h"
 #include "game/coord.h"
-#include "game/galaxy.h"
+#include "game/world.h"
 #include "game/atoms.h"
 #include "game/prog.h"
 #include "vm/mod.h"
@@ -35,17 +35,20 @@ static void state_init()
     core.state.sleep = ts_sec / state_freq;
     core.state.next = ts_now();
 
-    core.state.sector = sector_gen((struct coord) { .x = 0x0101, .y = 0x0101 });
-    sector_preload(core.state.sector);
+    core.state.world = world_new();
+    core.state.home = world_populate(core.state.world);
 }
 
-static void state_close() {}
+static void state_close()
+{
+    world_free(core.state.world);
+}
 
 static void state_step(ts_t now)
 {
     if (now < core.state.next) return;
 
-    sector_step(core.state.sector);
+    world_step(core.state.world);
     core_push_event(EV_STATE_UPDATE, 0, 0);
 
     core.state.next += core.state.sleep;

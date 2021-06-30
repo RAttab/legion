@@ -140,7 +140,7 @@ static void ui_star_update_list(
 
 static void ui_star_update(struct ui_star *ui)
 {
-    struct chunk *chunk = sector_chunk(core.state.sector, ui->star.coord);
+    struct chunk *chunk = world_chunk(core.state.world, ui->star.coord);
     if (!chunk) return;
 
     {
@@ -305,7 +305,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
             ui_str_setc(&ui->elem.str, ui_star_elems[i]);
             ui_label_render(&ui->elem, &layout, renderer);
 
-            uint16_t value = ui->star.elements[i];
+            uint16_t value = ui->star.elems[i];
             ui_str_set_scaled(&ui->elem_val.str, value);
             ui->elem_val.fg = rgba_gray(0x11 * u64_log2(value));
             ui_label_render(&ui->elem_val, &layout, renderer);

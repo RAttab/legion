@@ -15,7 +15,7 @@
 
 struct map;
 
-struct map *map_new();
+struct map *map_new(void);
 void map_free(struct map *);
 
 scale_t map_scale(struct map *);

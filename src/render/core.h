@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "game/coord.h"
 #include "utils/time.h"
 #include "SDL.h"
 
@@ -27,6 +28,8 @@ enum event
 
     EV_FOCUS_PANEL,
     EV_FOCUS_INPUT,
+
+    EV_MAP_GOTO,
 
     EV_MODS_TOGGLE,
 
@@ -77,7 +80,8 @@ struct core
     struct {
         ts_t next, sleep;
         uint64_t time;
-        struct sector *sector;
+        struct world *world;
+        struct coord home;
     } state;
 };
 

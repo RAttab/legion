@@ -94,7 +94,7 @@ static void ui_item_update(struct ui_item *ui)
 {
     if (!ui->id || coord_is_nil(ui->star)) return;
 
-    struct chunk *chunk = sector_chunk(core.state.sector, ui->star);
+    struct chunk *chunk = world_chunk(core.state.world, ui->star);
     assert(chunk);
 
     bool ok = chunk_copy(chunk, ui->id, &ui->state, sizeof(ui->state));
