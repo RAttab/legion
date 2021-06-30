@@ -16,7 +16,7 @@ TEST=(coord chunk mod vm)
 
 CC=${CC:-gcc}
 
-CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE"
+CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm"
 CFLAGS="$CFLAGS -I${PREFIX}/src"
 CFLAGS="$CFLAGS -I${PREFIX}/build/nuklear"
 CFLAGS="$CFLAGS $(sdl2-config --cflags)"

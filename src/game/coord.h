@@ -40,7 +40,12 @@ inline struct coord make_coord(uint32_t x, uint32_t y)
     return (struct coord) { .x = x, .y = y };
 }
 
-inline struct coord coord_nil(void) { return (struct coord) {0}; }
+inline struct coord coord_center(void)
+{
+    return make_coord(UINT32_MAX / 2, UINT32_MAX / 2);
+}
+
+inline struct coord coord_nil(void) { return make_coord(0,0); }
 
 inline bool coord_is_nil(struct coord coord)
 {
@@ -68,6 +73,20 @@ inline struct coord coord_sector(struct coord coord)
         .x = (coord.x >> bits) << bits,
         .y = (coord.y >> bits) << bits,
     };
+}
+
+inline uint64_t coord_dist_2(struct coord base, struct coord target)
+{
+    uint64_t dx = target.x < base.x ? base.x - target.x : target.x - base.x;
+    uint64_t dy = target.y < base.y ? base.y - target.y : target.y - base.y;
+    return dx*dx + dy*dy;
+}
+
+inline uint64_t coord_dist(struct coord base, struct coord target)
+{
+    double dx = target.x < base.x ? base.x - target.x : target.x - base.x;
+    double dy = target.y < base.y ? base.y - target.y : target.y - base.y;
+    return sqrt(dx*dx + dy*dy);
 }
 
 inline uint64_t coord_to_id(struct coord coord)

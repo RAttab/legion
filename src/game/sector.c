@@ -41,7 +41,14 @@ struct sector *sector_gen(struct coord coord)
     coord = coord_sector(coord);
     struct rng rng = rng_make(coord_to_id(coord));
 
-    size_t stars = rng_uni(&rng, 1, 1U << 10);
+    uint64_t delta_max = coord_dist(coord_nil(), coord_center());
+    uint64_t delta = coord_dist(coord, coord_center());
+
+    enum { stars_max = 1U << 10 };
+    size_t stars = (stars_max * (delta_max - delta)) / delta_max;
+
+    size_t fuzz = rng_uni(&rng, 0, (stars / 4) * 2);
+    stars = fuzz < stars ? stars - fuzz : stars + fuzz;
 
     struct sector *sector =
         calloc(1, sizeof(*sector) + (stars * sizeof(sector->stars[0])));
