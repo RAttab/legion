@@ -38,7 +38,7 @@ struct htable_ret htable_put(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_try_put(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_xchg(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_del(struct htable *, uint64_t key);
-struct htable_bucket * htable_next(struct htable *, struct htable_bucket *bucket);
+struct htable_bucket * htable_next(const struct htable *, struct htable_bucket *bucket);
 
 // FNV-1a hash implementation: http://isthe.com/chongo/tech/comp/fnv/
 inline uint64_t hash_str(const char *key, size_t len)

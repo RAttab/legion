@@ -18,6 +18,13 @@
 // fail
 // -----------------------------------------------------------------------------
 
+#define fail(fmt, ...) \
+    do {                                                                \
+        fprintf(stderr, "fail<%s:%u> " fmt "\n",                        \
+                __FILE__, __LINE__, __VA_ARGS__);                       \
+        abort();                                                        \
+    } while(false)
+
 #define fail_errno(fmt, ...)                                            \
     do {                                                                \
         fprintf(stderr, "fail<%s:%u> " fmt ": %s\n",                    \

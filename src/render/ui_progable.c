@@ -64,9 +64,10 @@ static void ui_progable_free(struct ui_progable *ui)
 
 static void ui_progable_update(struct ui_progable *ui, struct progable *state)
 {
+    const struct prog *prog = progable_prog(state);
 
-    if (!state->prog) ui_str_setc(&ui->prog_val.str, "nil");
-    else ui_str_set_hex(&ui->prog_val.str, prog_id(state->prog));
+    if (!prog) ui_str_setc(&ui->prog_val.str, "nil");
+    else ui_str_set_hex(&ui->prog_val.str, prog_id(prog));
 
     switch (state->state)
     {
@@ -92,7 +93,7 @@ static void ui_progable_update(struct ui_progable *ui, struct progable *state)
         ui_str_set_u64(&ui->loops_val.str, state->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 
-    ui_scroll_update(&ui->scroll, state->prog ? prog_len(state->prog) : 0);
+    ui_scroll_update(&ui->scroll, prog ? prog_len(prog) : 0);
 }
 
 static bool ui_progable_event(
@@ -138,7 +139,8 @@ static void ui_progable_render(
         ui_label_render(&ui->index, &inner, renderer);
         ui_layout_sep_x(&inner, font->glyph_w);
 
-        struct prog_ret ret = prog_at(state->prog, i);
+        const struct prog *prog = progable_prog(state);
+        struct prog_ret ret = prog_at(prog, i);
 
         struct ui_label *label = NULL;
         switch (ret.state)

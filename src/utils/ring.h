@@ -21,7 +21,6 @@ struct ring32
     uint32_t vals[];
 };
 
-inline void ring32_free(struct ring32 *ring) { free(ring); }
 inline size_t ring32_cap(struct ring32 *ring) { return ring->cap; }
 inline size_t ring32_len(struct ring32 *ring) { return ring->head - ring->tail; }
 inline bool ring32_empty(struct ring32 *ring) { return ring->head == ring->tail; }

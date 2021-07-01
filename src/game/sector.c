@@ -32,9 +32,41 @@ void star_gen(struct star *star, struct coord coord)
 }
 
 
+bool star_load(struct star *star, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_star)) return false;
+    save_read_into(save, &star->coord);
+    save_read_into(save, &star->state);
+    save_read_into(save, &star->power);
+    save_read_into(save, &star->elems);
+    return save_read_magic(save, save_magic_star);
+}
+
+void star_save(struct star *star, struct save *save)
+{
+    save_write_magic(save, save_magic_star);
+    save_write_value(save, star->coord);
+    save_write_value(save, star->state);
+    save_write_value(save, star->power);
+    save_write_from(save, &star->elems);
+    save_write_magic(save, save_magic_star);
+}
+
+
 // -----------------------------------------------------------------------------
 // sector
 // -----------------------------------------------------------------------------
+
+static struct sector *sector_new(size_t stars)
+{
+    struct sector *sector =
+        calloc(1, sizeof(*sector) + (stars * sizeof(sector->stars[0])));
+
+    sector->stars_len = stars;
+    htable_reserve(&sector->index, stars);
+
+    return sector;
+}
 
 struct sector *sector_gen(struct coord coord)
 {
@@ -50,10 +82,8 @@ struct sector *sector_gen(struct coord coord)
     size_t fuzz = rng_uni(&rng, 0, (stars / 4) * 2);
     stars = fuzz < stars ? stars - fuzz : stars + fuzz;
 
-    struct sector *sector =
-        calloc(1, sizeof(*sector) + (stars * sizeof(sector->stars[0])));
+    struct sector *sector = sector_new(stars);
     sector->coord = coord;
-    sector->stars_len = stars;
 
     for (size_t i = 0; i < stars; ++i) {
         struct star *star = &sector->stars[i];
@@ -77,6 +107,59 @@ void sector_free(struct sector *sector)
     free(sector);
 }
 
+
+struct sector *sector_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_sector)) return NULL;
+
+    size_t stars = save_read_type(save, uint16_t);
+    struct sector *sector = sector_new(stars);
+
+    save_read_into(save, &sector->coord);
+
+    for (size_t i = 0; i < stars; ++i) {
+        struct star *star = &sector->stars[i];
+        if (!star_load(star, save)) goto fail;
+
+        uint64_t id = coord_to_id(star->coord);
+        struct htable_ret ret = htable_put(&sector->index, id, (uintptr_t) star);
+        assert(ret.ok);
+    }
+
+    size_t chunks = save_read_type(save, uint16_t);
+    htable_reserve(&sector->chunks, chunks);
+    for (size_t i = 0; i < chunks; ++i) {
+        struct chunk *chunk = chunk_load(save);
+        if (!chunk) goto fail;
+
+        uint64_t id = coord_to_id(chunk_star(chunk)->coord);
+        struct htable_ret ret = htable_put(&sector->chunks, id, (uintptr_t) chunk);
+        assert(ret.ok);
+    }
+
+    if (!save_read_magic(save, save_magic_sector)) goto fail;
+    return sector;
+
+  fail:
+    sector_free(sector);
+    return NULL;
+}
+
+void sector_save(struct sector *sector, struct save *save)
+{
+    save_write_magic(save, save_magic_sector);
+    save_write_value(save, (uint16_t) sector->stars_len);
+    save_write_value(save, sector->coord);
+    for (size_t i = 0; i < sector->stars_len; ++i)
+        star_save(&sector->stars[i], save);
+    save_write_value(save, (uint16_t) sector->chunks.len);
+    struct htable_bucket *it = htable_next(&sector->chunks, NULL);
+    for (; it; it = htable_next(&sector->chunks, it)) {
+        chunk_save((struct chunk *) it->value, save);
+    }
+
+    save_write_magic(save, save_magic_sector);
+}
 
 struct chunk *sector_chunk_alloc(struct sector *sector, struct coord coord)
 {

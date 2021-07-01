@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "game/save.h"
 #include "game/coord.h"
 #include "game/sector.h"
 
@@ -18,6 +19,9 @@ struct world;
 
 struct world *world_new(void);
 void world_free(struct world *);
+
+struct world *world_load(struct save *);
+void world_save(struct world *, struct save *);
 
 void world_step(struct world *);
 struct coord world_populate(struct world *);

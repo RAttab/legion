@@ -47,6 +47,15 @@ static void brain_init(void *state, id_t id, struct chunk *chunk)
     }
 }
 
+static void brain_load(void *state)
+{
+    struct brain *brain = state;
+    if (!brain->mod_id) return;
+
+    brain->mod = mods_get(brain->mod_id);
+    assert(brain->mod);
+}
+
 static void brain_mod(struct brain *brain, mod_t id)
 {
     struct mod *mod = mods_get(id);
@@ -54,6 +63,7 @@ static void brain_mod(struct brain *brain, mod_t id)
 
     vm_reset(&brain->vm);
     brain->mod = mod;
+    brain->mod_id = id;
 }
 
 
@@ -128,6 +138,7 @@ static void brain_io_reset(struct brain *brain)
 {
     vm_reset(&brain->vm);
     brain->mod = NULL;
+    brain->mod_id = 0;
     brain->msg_len = 0;
 }
 
@@ -177,6 +188,7 @@ const struct item_config *brain_config(item_t item)
         static const struct item_config config = {
             .size = brain_len_s,
             .init = brain_init,
+            .load = brain_load,
             .step = brain_step,
             .io = brain_io,
             .io_list = io_list,
@@ -189,6 +201,7 @@ const struct item_config *brain_config(item_t item)
         static const struct item_config config = {
             .size = brain_len_m,
             .init = brain_init,
+            .load = brain_load,
             .step = brain_step,
             .io = brain_io,
             .io_list = io_list,
@@ -201,6 +214,7 @@ const struct item_config *brain_config(item_t item)
         static const struct item_config config = {
             .size = brain_len_l,
             .init = brain_init,
+            .load = brain_load,
             .step = brain_step,
             .io = brain_io,
             .io_list = io_list,

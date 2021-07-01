@@ -48,9 +48,9 @@ struct class
     uint16_t len, cap;
     legion_pad(4);
 
-    init_fn_t init;
     step_fn_t step;
     io_fn_t io;
+    const struct item_config *config;
 
     void *arena;
     struct ports *ports;
@@ -68,9 +68,9 @@ static struct class *class_alloc(item_t type)
     *class = (struct class) {
         .type = type,
         .size = config->size,
-        .init = config->init,
         .step = config->step,
         .io = config->io,
+        .config = config,
     };
 
     return class;
@@ -81,6 +81,45 @@ static void class_free(struct class *class)
     if (!class) return;
     free(class->arena);
     free(class->ports);
+}
+
+
+static struct class *class_load(item_t type, struct save *save)
+{
+    uint16_t len = save_read_type(save, typeof(len));
+    if (!len) return NULL;
+
+    struct class *class = class_alloc(type);
+    class->len = len;
+
+    class->cap = 1;
+    while (class->cap < len) class->cap *= 2;
+
+    class->arena = calloc(len, class->size);
+    save_read(save, class->arena, len * class->size);
+
+    class->ports = calloc(len, sizeof(*class->ports));
+    save_read(save, class->ports, len * sizeof(*class->ports));
+
+    for (size_t i = 0; i < len; ++i) {
+        if (!class->config->load) continue;
+        class->config->load(class->arena + (i * class->size));
+    }
+
+    return class;
+}
+
+static void class_save(struct class *class, struct save *save)
+{
+    uint16_t len = class ? class->len : 0;
+    save_write_value(save, len);
+    if (!class) return;
+
+    // would mean that we're saving mid step and that's a bad idea.
+    assert(!class->create);
+
+    save_write(save, class->arena, len * class->size);
+    save_write(save, class->ports, len * sizeof(struct ports));
 }
 
 static void class_list(struct class *class, struct vec64 *ids)
@@ -129,7 +168,7 @@ static void class_create(struct class *class)
 // manually.
 static void class_grow(struct class *class)
 {
-    if (class->len < class->cap) return;
+    if (likely(class->len < class->cap)) return;
 
     if (!class->len) {
         class->cap = 1;
@@ -164,7 +203,7 @@ static void class_step(struct class *class, struct chunk *chunk)
         void *item = class->arena + (class->len * class->size);
         class->len++;
 
-        class->init(item, id, chunk);
+        class->config->init(item, id, chunk);
         class->create--;
     }
 }
@@ -209,9 +248,64 @@ struct chunk *chunk_alloc(const struct star *star)
 
 void chunk_free(struct chunk *chunk)
 {
+    free(chunk->requested);
+    htable_reset(&chunk->provided);
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
         class_free(chunk->class[i]);
     free(chunk);
+}
+
+struct chunk *chunk_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_chunk)) return NULL;
+
+    struct chunk *chunk = calloc(1, sizeof(*chunk));
+    star_load(&chunk->star, save);
+
+    save_read_into(save, &chunk->workers.count);
+    chunk->requested = save_read_ring32(save);
+
+    size_t len = save_read_type(save, typeof(chunk->provided.len));
+    htable_reserve(&chunk->provided, len);
+    for (size_t i = 0; i < len; ++i) {
+        item_t item = save_read_type(save, typeof(item));
+        struct ring32 *ring = save_read_ring32(save);
+        if (!ring) goto fail;
+
+        struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
+        assert(ret.ok);
+    }
+
+    for (size_t i = 0; i < array_len(chunk->class); ++i)
+        chunk->class[i] = class_load(i + ITEM_ACTIVE_FIRST, save);
+
+    if (!save_read_magic(save, save_magic_chunk)) goto fail;
+    return chunk;
+
+  fail:
+    chunk_free(chunk);
+    return NULL;
+}
+
+void chunk_save(struct chunk *chunk, struct save *save)
+{
+    save_write_magic(save, save_magic_chunk);
+
+    star_save(&chunk->star, save);
+    save_write_value(save, chunk->workers.count);
+    save_write_ring32(save, chunk->requested);
+
+    save_write_value(save, chunk->provided.len);
+    struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+    for (; it; it = htable_next(&chunk->provided, it)) {
+        save_write_value(save, (item_t) it->key);
+        save_write_ring32(save, (struct ring32 *) it->value);
+    }
+
+    for (size_t i = 0; i < array_len(chunk->class); ++i)
+        class_save(chunk->class[i], save);
+
+    save_write_magic(save, save_magic_chunk);
 }
 
 struct star *chunk_star(struct chunk *chunk)

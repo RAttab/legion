@@ -33,7 +33,8 @@ enum { px_star = 1 << 10 };
 enum {
     map_scale_default = scale_base << 6,
     map_thresh_stars = scale_base << 0x8,
-    map_thresh_sector = scale_base << 0xE,
+    map_thresh_sector_low = scale_base << 0x7,
+    map_thresh_sector_high = scale_base << 0xE,
     map_thresh_sector_active = scale_base << 0xA,
 };
 
@@ -222,9 +223,9 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
         if (map->scale < map_thresh_sector_active) {
             struct sector *sector = world_sector(core.state.world, it);
             if (sector->chunks.len) {
-                uint8_t alpha = 0x44;
+                uint8_t alpha = 0xFF;
                 if (map->scale < map_thresh_stars)
-                    alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_stars);
+                    alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_sector_low);
                 rgba_render(make_rgba(0x00, 0x33, 0x00, alpha), renderer);
                 sdl_err(SDL_RenderFillRect(renderer, &sdl_rect));
             }
@@ -282,7 +283,7 @@ void map_render(struct map *map, SDL_Renderer *renderer)
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &core.rect);
 
-    if (map->scale < map_thresh_sector)
+    if (map->scale >= map_thresh_sector_low && map->scale < map_thresh_sector_high)
         map_render_sectors(map, renderer);
 
     if (map->scale < map_thresh_stars)

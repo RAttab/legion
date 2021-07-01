@@ -19,6 +19,7 @@ struct chunk;
 
 typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
 typedef void (*step_fn_t) (void *state, struct chunk *);
+typedef void (*load_fn_t) (void *state);
 typedef void (*io_fn_t) (
         void *state, struct chunk *,
         enum atom_io io, id_t src, size_t len, const word_t *args);
@@ -29,6 +30,7 @@ struct item_config
 
     init_fn_t init;
     step_fn_t step;
+    load_fn_t load;
     io_fn_t io;
 
     size_t io_list_len;
@@ -62,11 +64,13 @@ struct legion_packed progable
     enum progable_state state;
 
     prog_it_t index;
-    const struct prog *prog;
+    uint64_t prog;
 };
 static_assert(sizeof(struct progable) == 16);
 
 static const uint16_t progable_loops_inf = UINT16_MAX;
+
+const struct prog *progable_prog(struct progable *);
 
 
 // -----------------------------------------------------------------------------
@@ -85,9 +89,11 @@ struct legion_packed brain
     legion_pad(3);
     word_t msg[brain_msg_cap];
 
-    legion_pad(8);
+    legion_pad(4);
 
+    mod_t mod_id;
     struct mod *mod;
+
     struct vm vm;
 };
 static_assert(sizeof(struct brain) == s_cache_line + sizeof(struct vm));

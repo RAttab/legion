@@ -22,6 +22,42 @@ static void progable_init(void *state, id_t id, struct chunk *chunk)
     *progable = (struct progable) { .id = id };
 }
 
+// This crap is awful but it's either that or double the size of the struct
+// so... yeah... If you're currently trying to port this code, I regret nothing!
+
+const struct prog *progable_prog(struct progable *progable)
+{
+    return (const struct prog *) (progable->prog & ((1UL << 48) - 1));
+}
+
+static prog_id_t progable_prog_id(struct progable *progable)
+{
+    return progable->prog >> 48;
+}
+
+static void progable_set_prog(struct progable *progable, const struct prog *prog)
+{
+    uint64_t raw = (uintptr_t) prog;
+    assert(!(raw >> 48));
+
+    uint64_t id = prog_id(prog);
+    progable->prog = raw | (id << 48);
+}
+
+
+static void progable_load(void *state)
+{
+    struct progable *progable = state;
+
+    prog_id_t id = progable_prog_id(progable);
+    if (!id) return;
+
+    const struct prog *prog = prog_fetch(id);
+    assert(prog);
+
+    progable_set_prog(progable, prog);
+}
+
 
 // -----------------------------------------------------------------------------
 // step
@@ -74,9 +110,11 @@ static void progable_step_output(
 static void progable_step(void *state, struct chunk *chunk)
 {
     struct progable *progable = state;
-    if (!progable->prog || progable->state == progable_error) return;
 
-    struct prog_ret ret = prog_at(progable->prog, progable->index);
+    const struct prog *prog = progable_prog(progable);
+    if (!prog || progable->state == progable_error) return;
+
+    struct prog_ret ret = prog_at(prog, progable->index);
     switch (ret.state) {
     case prog_eof: { progable_step_eof(progable); return; }
     case prog_input: { progable_step_input(progable, chunk, ret.item); return; }
@@ -97,8 +135,8 @@ static void progable_io_reset(struct progable *progable, struct chunk *chunk)
         .id = progable->id,
         .state = progable_nil,
         .loops = 0,
-        .prog = NULL,
         .index = 0,
+        .prog = 0,
     };
 }
 
@@ -117,8 +155,8 @@ static void progable_io_prog(
     if (!prog || prog_host(prog) != id_item(progable->id)) return;
 
     progable_io_reset(progable, chunk);
+    progable_set_prog(progable, prog);
     progable->loops = loops;
-    progable->prog = prog;
 }
 
 static void progable_io(
@@ -147,6 +185,7 @@ const struct item_config *progable_config(item_t item)
     static const struct item_config config = {
         .size = sizeof(struct progable),
         .init = progable_init,
+        .load = progable_load,
         .step = progable_step,
         .io = progable_io,
         .io_list = io_list,

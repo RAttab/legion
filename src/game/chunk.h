@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "game/save.h"
 #include "game/item.h"
 #include "game/atoms.h"
 #include "vm/vm.h"
@@ -22,6 +23,9 @@ struct chunk;
 
 struct chunk *chunk_alloc(const struct star *);
 void chunk_free(struct chunk *);
+
+struct chunk *chunk_load(struct save *);
+void chunk_save(struct chunk *, struct save *);
 
 struct star *chunk_star(struct chunk *);
 bool chunk_harvest(struct chunk *, item_t item);

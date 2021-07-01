@@ -32,6 +32,51 @@ void world_free(struct world *world)
     free(world);
 }
 
+struct world *world_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_world)) return NULL;
+
+    struct world *world = world_new();
+
+    uint32_t sectors = save_read_type(save, uint32_t);
+    htable_reserve(&world->sectors, sectors);
+
+    for (size_t i = 0; i < sectors; ++i) {
+        struct sector *sector = sector_load(save);
+        if (!sector) goto fail;
+
+        uint64_t id = coord_to_id(sector->coord);
+        struct htable_ret ret = htable_put(&world->sectors, id, (uintptr_t) sector);
+        assert(ret.ok);
+    }
+
+    if (!save_read_magic(save, save_magic_world)) goto fail;
+    return world;
+
+  fail:
+    world_free(world);
+    return NULL;
+}
+
+void world_save(struct world *world, struct save *save)
+{
+    save_write_magic(save, save_magic_world);
+
+    uint32_t sectors = 0;
+    struct htable_bucket *it = htable_next(&world->sectors, NULL);
+    for (; it; it = htable_next(&world->sectors, it)) {
+        struct sector *sector = (void *) it->value;
+        if (sector->chunks.len) sectors++;
+    }
+    save_write_value(save, sectors);
+
+    it = htable_next(&world->sectors, NULL);
+    for (; it; it = htable_next(&world->sectors, it))
+        sector_save((struct sector *) it->value, save);
+
+    save_write_magic(save, save_magic_world);
+}
+
 void world_step(struct world *world)
 {
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
