@@ -10,6 +10,7 @@
 #include "utils/ref.h"
 #include "utils/text.h"
 
+struct save;
 
 // -----------------------------------------------------------------------------
 // mod
@@ -48,14 +49,14 @@ struct legion_packed mod
 
 static_assert(sizeof(struct mod) == s_cache_line);
 
-void vm_compile_init(void);
-struct mod *mod_compile(struct text *source);
-
 struct mod *mod_alloc(
         const struct text *src,
         const uint8_t *code, size_t code_len,
         const struct mod_err *errs, size_t errs_len,
         const struct mod_index *index, size_t index_len);
+
+struct mod *mod_load(struct save *);
+void mod_save(const struct mod *, struct save *);
 
 inline size_t mod_len(struct mod *mod)
 {
@@ -77,23 +78,35 @@ ip_t mod_byte(struct mod *mod, size_t line);
 // mods
 // -----------------------------------------------------------------------------
 
-void mods_free();
+struct mods *mods_new(void);
+void mods_free(struct mods *);
 
-mod_t mods_register(const atom_t *name);
-bool mods_name(mod_id_t, atom_t *dst);
+struct mods *mods_load(struct save *);
+void mods_save(const struct mods *, struct save *);
 
-mod_t mods_set(mod_id_t, struct mod *);
-struct mod *mods_get(mod_t);
-struct mod *mods_latest(mod_id_t);
+mod_t mods_register(struct mods *, const atom_t *name);
+bool mods_name(struct mods *, mod_id_t, atom_t *dst);
 
-mod_id_t mods_find(const atom_t *name);
+mod_t mods_set(struct mods *, mod_id_t, struct mod *);
+struct mod *mods_get(struct mods *, mod_t);
+struct mod *mods_latest(struct mods *, mod_id_t);
+
+mod_id_t mods_find(struct mods *, const atom_t *name);
 
 struct mods_item { mod_id_t id; atom_t str; };
-struct mods
+struct mods_list
 {
     size_t len;
     struct mods_item items[];
 };
-struct mods *mods_list(void);
+struct mods_list *mods_list(struct mods *);
 
-void mods_preload(void);
+void mods_populate(struct mods *);
+
+
+// -----------------------------------------------------------------------------
+// compiler
+// -----------------------------------------------------------------------------
+
+void vm_compile_init(void);
+struct mod *mod_compile(struct text *source, struct mods *mods);

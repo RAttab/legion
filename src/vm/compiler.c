@@ -18,6 +18,8 @@
 
 struct compiler
 {
+    struct mods *mods;
+
     struct {
         struct text *text;
         struct line *line;
@@ -152,7 +154,7 @@ static bool compiler_atom(const char *str, size_t len, uint64_t *val)
     return true;
 }
 
-static bool compiler_mod(const char *str, size_t len, mod_t *mod)
+static bool compiler_mod(struct compiler *comp, const char *str, size_t len, mod_t *mod)
 {
     assert(str[0] == '!');
     if (len - 1 > vm_atom_cap) return false;
@@ -160,8 +162,9 @@ static bool compiler_mod(const char *str, size_t len, mod_t *mod)
     atom_t atom = {0};
     memcpy(atom, str + 1, len - 1);
 
-    mod_id_t id = mods_find(&atom);
-    *mod = mods_latest(id)->id;
+    assert(comp->mods);
+    mod_id_t id = mods_find(comp->mods, &atom);
+    *mod = mods_latest(comp->mods, id)->id;
 
     return true;
 }
@@ -313,9 +316,11 @@ static void compiler_label_ref(
     compiler_write_ip(comp, 0);
 }
 
-static struct compiler *compiler_alloc(struct text *in)
+static struct compiler *compiler_alloc(struct text *in, struct mods *mods)
 {
     struct compiler *comp = calloc(1, sizeof(*comp));
+    comp->mods = mods;
+
     comp->in.text = in;
     comp->in.line = in->first;
 
@@ -365,10 +370,10 @@ static void compiler_free(struct compiler *comp)
 // mod_compile
 // -----------------------------------------------------------------------------
 
-struct mod *mod_compile(struct text *source)
+struct mod *mod_compile(struct text *source, struct mods *mods)
 {
     assert(source);
-    struct compiler *comp = compiler_alloc(source);
+    struct compiler *comp = compiler_alloc(source, mods);
 
     size_t len = 0;
     const char *token = NULL;
@@ -470,7 +475,7 @@ struct mod *mod_compile(struct text *source)
 
             if (label[0] == '!') {
                 mod_t mod = 0;
-                if (!compiler_mod(label, len, &mod)) {
+                if (!compiler_mod(comp, label, len, &mod)) {
                     compiler_err(comp, "invalid mod");
                     break;
                 }

@@ -11,7 +11,7 @@ struct mod *compile(const char *code)
     struct text text = {0};
     text_from_str(&text, code, strlen(code));
 
-    struct mod *mod =  mod_compile(&text);
+    struct mod *mod =  mod_compile(&text, NULL);
     for (size_t i = 0; i < mod->errs_len; ++i)
         dbg("%zu: %s", mod->errs[i].line, mod->errs[i].str);
 

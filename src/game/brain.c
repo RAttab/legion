@@ -52,13 +52,13 @@ static void brain_load(void *state)
     struct brain *brain = state;
     if (!brain->mod_id) return;
 
-    brain->mod = mods_get(brain->mod_id);
+    brain->mod = mods_get(core.state.mods, brain->mod_id);
     assert(brain->mod);
 }
 
 static void brain_mod(struct brain *brain, mod_t id)
 {
-    struct mod *mod = mods_get(id);
+    struct mod *mod = mods_get(core.state.mods, id);
     if (!mod) return;
 
     vm_reset(&brain->vm);

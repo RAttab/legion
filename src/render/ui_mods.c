@@ -61,7 +61,7 @@ int16_t ui_mods_width(const struct ui_mods *ui)
 
 static void ui_mods_update(struct ui_mods *ui)
 {
-    struct mods *list = mods_list();
+    struct mods_list *list = mods_list(core.state.mods);
     ui_toggles_resize(&ui->toggles, list->len);
     ui_scroll_update(&ui->scroll, list->len);
 
@@ -120,7 +120,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     if ((ret = ui_button_event(&ui->new, ev))) {
         atom_t name = {0};
         ui_input_get_atom(&ui->new_val, &name);
-        mod_t mod = mods_register(&name);
+        mod_t mod = mods_register(core.state.mods, &name);
         ui_mods_update(ui);
         core_push_event(EV_MOD_SELECT, mod, 0);
         return ret;

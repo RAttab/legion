@@ -80,6 +80,7 @@ struct core
     struct {
         ts_t next, sleep;
         uint64_t time;
+        struct mods *mods;
         struct world *world;
         struct coord home;
     } state;

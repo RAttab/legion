@@ -120,7 +120,7 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
     if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
         atom_t mod = {0};
-        mods_name(mod_id(state->mod->id), &mod);
+        mods_name(core.state.mods, mod_id(state->mod->id), &mod);
         ui_str_setv(&ui->mod_val.str, mod, vm_atom_cap);
     }
 

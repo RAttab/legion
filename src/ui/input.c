@@ -64,8 +64,8 @@ uint64_t ui_input_get_u64(struct ui_input *input)
 
         if (c0 == '@') return vm_atom(&atom);
 
-        mod_id_t id = mods_find(&atom);
-        return id ? mods_latest(id)->id : 0;
+        mod_id_t id = mods_find(core.state.mods, &atom);
+        return id ? mods_latest(core.state.mods, id)->id : 0;
     }
 
     uint64_t val = 0;

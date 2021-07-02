@@ -35,6 +35,9 @@ static void state_init()
     core.state.sleep = ts_sec / state_freq;
     core.state.next = ts_now();
 
+    core.state.mods = mods_new();
+    mods_populate(core.state.mods);
+
     core.state.world = world_new();
     core.state.home = world_populate(core.state.world);
 }
@@ -42,6 +45,7 @@ static void state_init()
 static void state_close()
 {
     world_free(core.state.world);
+    mods_free(core.state.mods);
 }
 
 static void state_step(ts_t now)
@@ -119,7 +123,7 @@ static void cursor_render(SDL_Renderer *renderer)
 // ui
 // -----------------------------------------------------------------------------
 
-static void ui_init()
+static void ui_init(void)
 {
     core.ui.map = map_new();
     core.ui.topbar = ui_topbar_new();
@@ -179,7 +183,6 @@ void core_init()
     vm_atoms_init();
     atoms_register();
     vm_compile_init();
-    mods_preload();
     prog_load();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
@@ -213,8 +216,6 @@ void core_close()
     SDL_DestroyRenderer(core.renderer);
     SDL_DestroyWindow(core.window);
     SDL_Quit();
-
-    mods_free();
 }
 
 void core_path_res(const char *name, char *dst, size_t len)

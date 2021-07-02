@@ -52,7 +52,7 @@ bool check(struct test *test)
 
     struct text src = {0};
     text_from_str(&src, test->src, strlen(test->src));
-    struct mod *mod = mod_compile(&src);
+    struct mod *mod = mod_compile(&src, NULL);
 
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {
@@ -227,7 +227,6 @@ int main(int argc, char **argv)
     vm_compile_init();
 
     bool ok = check_dir(path);
-    mods_free();
 
     return ok ? 0 : 1;
 }
