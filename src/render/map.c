@@ -147,25 +147,26 @@ bool map_event(struct map *map, SDL_Event *event)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_MouseButtonEvent *b = &event->button;
         if (b->button == SDL_BUTTON_LEFT) map->panning = true;
+
+        if (map->scale < map_thresh_stars) {
+            SDL_Point point = core.cursor.point;
+            size_t px = scale_div(map->scale, px_star);
+            struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
+                        .x = point.x - px / 2,
+                        .y = point.y - px / 2,
+                        .h = px, .w = px,
+                    });
+
+            const struct star *star = world_star(core.state.world, rect);
+            if (star) core_push_event(EV_STAR_SELECT, (uintptr_t) star, 0);
+        }
+
         break;
     }
 
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &event->button;
         if (b->button == SDL_BUTTON_LEFT) {
-            if (!map->panned && map->scale < map_thresh_stars) {
-                SDL_Point point = core.cursor.point;
-                size_t px = scale_div(map->scale, px_star);
-                struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
-                            .x = point.x - px / 2,
-                            .y = point.y - px / 2,
-                            .h = px, .w = px,
-                        });
-
-                const struct star *star = world_star(core.state.world, rect);
-                if (star) core_push_event(EV_STAR_SELECT, (uintptr_t) star, 0);
-            }
-
             map->panning = false;
             map->panned = false;
         }
