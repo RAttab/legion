@@ -175,6 +175,10 @@ uint8_t save_version(struct save *save)
     return save->version;
 }
 
+size_t save_len(struct save *save)
+{
+    return save->len;
+}
 
 static void save_grow(struct save *save, size_t len)
 {

@@ -15,6 +15,7 @@
 struct ui_topbar
 {
     struct ui_panel panel;
+    struct ui_button save, load;
     struct ui_button home;
     struct ui_button mods;
     struct ui_label coord;
@@ -34,6 +35,8 @@ struct ui_topbar *ui_topbar_new(void)
     struct ui_topbar *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_topbar) {
         .panel = ui_panel_menu(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
+        .save = ui_button_new(font, ui_str_c("save")),
+        .load = ui_button_new(font, ui_str_c("load")),
         .home = ui_button_new(font, ui_str_c("home")),
         .mods = ui_button_new(font, ui_str_c("mods")),
         .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
@@ -45,6 +48,8 @@ struct ui_topbar *ui_topbar_new(void)
 
 void ui_topbar_free(struct ui_topbar *ui) {
     ui_panel_free(&ui->panel);
+    ui_button_free(&ui->save);
+    ui_button_free(&ui->load);
     ui_button_free(&ui->home);
     ui_button_free(&ui->mods);
     ui_label_free(&ui->coord);
@@ -61,6 +66,16 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+
+    if ((ret = ui_button_event(&ui->save, ev))) {
+        core_save();
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->load, ev))) {
+        core_load();
+        return true;
+    }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
         core_push_event(EV_MAP_GOTO, coord_to_id(core.state.home), 0);
@@ -88,7 +103,7 @@ static void topbar_render_coord(
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
-    it += str_utoa(core.state.time, it, topbar_ticks_len);
+    it += str_utoa(world_time(core.state.world), it, topbar_ticks_len);
     *it = ' '; it++; assert(it < end);
 
     struct coord coord = map_project_coord(core.ui.map, core.cursor.point);
@@ -106,6 +121,11 @@ static void topbar_render_coord(
 void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
 {
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+
+    ui_button_render(&ui->save, &layout, renderer);
+    ui->load.disabled = core.state.loading;
+    ui_button_render(&ui->load, &layout, renderer);
+    ui_layout_sep_x(&layout, 10);
 
     ui_button_render(&ui->home, &layout, renderer);
     ui_layout_sep_x(&layout, 10);

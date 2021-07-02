@@ -25,6 +25,7 @@ enum event
 
     EV_TICK,
     EV_STATE_UPDATE,
+    EV_STATE_LOAD,
 
     EV_FOCUS_PANEL,
     EV_FOCUS_INPUT,
@@ -61,13 +62,15 @@ struct core
     uint32_t event;
     uint64_t ticks;
 
-    struct {
+    struct
+    {
         SDL_Point point;
         SDL_Texture *tex;
         size_t size;
     } cursor;
 
-    struct {
+    struct
+    {
         struct map *map;
         struct ui_topbar *topbar;
         struct ui_mods *mods;
@@ -77,10 +80,10 @@ struct core
         struct ui_io *io;
     } ui;
 
-    struct {
+    struct
+    {
+        bool loading;
         ts_t next, sleep;
-        uint64_t time;
-        struct mods *mods;
         struct world *world;
         struct coord home;
     } state;
@@ -97,3 +100,6 @@ void core_run();
 void core_quit();
 
 void core_push_event(enum event, uint64_t d0, uint64_t d1);
+
+void core_save(void);
+void core_load(void);

@@ -61,7 +61,7 @@ int16_t ui_mods_width(const struct ui_mods *ui)
 
 static void ui_mods_update(struct ui_mods *ui)
 {
-    struct mods_list *list = mods_list(core.state.mods);
+    struct mods_list *list = mods_list(world_mods(core.state.world));
     ui_toggles_resize(&ui->toggles, list->len);
     ui_scroll_update(&ui->scroll, list->len);
 
@@ -79,6 +79,11 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
+
+    case EV_STATE_LOAD: {
+        ui->panel.state = ui_panel_hidden;
+        return false;
+    }
 
     case EV_MODS_TOGGLE: {
         if (ui->panel.state == ui_panel_hidden) {
@@ -120,7 +125,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     if ((ret = ui_button_event(&ui->new, ev))) {
         atom_t name = {0};
         ui_input_get_atom(&ui->new_val, &name);
-        mod_t mod = mods_register(core.state.mods, &name);
+        mod_t mod = mods_register(world_mods(core.state.world), &name);
         ui_mods_update(ui);
         core_push_event(EV_MOD_SELECT, mod, 0);
         return ret;

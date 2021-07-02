@@ -13,6 +13,7 @@
 
 struct star;
 struct vec64;
+struct world;
 
 
 // -----------------------------------------------------------------------------
@@ -21,12 +22,13 @@ struct vec64;
 
 struct chunk;
 
-struct chunk *chunk_alloc(const struct star *);
+struct chunk *chunk_alloc(struct world *, const struct star *);
 void chunk_free(struct chunk *);
 
-struct chunk *chunk_load(struct save *);
+struct chunk *chunk_load(struct world *, struct save *);
 void chunk_save(struct chunk *, struct save *);
 
+struct world *chunk_world(struct chunk *);
 struct star *chunk_star(struct chunk *);
 bool chunk_harvest(struct chunk *, item_t item);
 

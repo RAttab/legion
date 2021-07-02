@@ -48,6 +48,8 @@ void star_save(struct star *, struct save *);
 
 struct sector
 {
+    struct world *world;
+
     struct coord coord;
     struct htable chunks;
     struct htable index;
@@ -56,10 +58,10 @@ struct sector
     struct star stars[];
 };
 
-struct sector *sector_gen(struct coord coord);
+struct sector *sector_gen(struct world *, struct coord coord);
 void sector_free(struct sector *);
 
-struct sector *sector_load(struct save *);
+struct sector *sector_load(struct world *, struct save *);
 void sector_save(struct sector *, struct save *);
 
 struct chunk *sector_chunk(struct sector *, struct coord coord);

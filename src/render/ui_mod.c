@@ -73,7 +73,7 @@ static void ui_mod_update(struct ui_mod *ui, struct mod *mod, ip_t ip)
 static void ui_mod_title(struct ui_mod *ui)
 {
     atom_t name = {0};
-    mods_name(core.state.mods, mod_id(ui->id), &name);
+    mods_name(world_mods(core.state.world), mod_id(ui->id), &name);
     ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name, mod_ver(ui->id));
 }
 
@@ -82,11 +82,19 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     switch (ev->user.code)
     {
 
+    case EV_STATE_LOAD: {
+        ui->panel.state = ui_panel_hidden;
+        ui->id = 0;
+        ui->mod = NULL;
+        ui_code_clear(&ui->code);
+        return false;
+    }
+
     case EV_MOD_SELECT: {
         mod_t id = (uintptr_t) ev->user.data1;
         ip_t ip = (uintptr_t) ev->user.data2;
 
-        struct mod *mod = mods_get(core.state.mods, id);
+        struct mod *mod = mods_get(world_mods(core.state.world), id);
         assert(mod);
 
         ui->id = mod->id;
@@ -126,20 +134,20 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->compile, ev))) {
-        ui_mod_update(ui, mod_compile(&ui->code.text, core.state.mods), 0);
+        ui_mod_update(ui, mod_compile(&ui->code.text, world_mods(core.state.world)), 0);
         return ret == ui_consume;
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
         assert(ui->mod->errs_len == 0);
-        ui->id = mods_set(core.state.mods, mod_id(ui->id), ui->mod);
+        ui->id = mods_set(world_mods(core.state.world), mod_id(ui->id), ui->mod);
         ui->publish.disabled = true;
         ui_mod_title(ui);
         return ret == ui_consume;
     }
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
-        ui_mod_update(ui, mods_get(core.state.mods, ui->id), 0);
+        ui_mod_update(ui, mods_get(world_mods(core.state.world), ui->id), 0);
         return ret == ui_consume;
     }
 

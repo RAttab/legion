@@ -45,9 +45,10 @@ static void progable_set_prog(struct progable *progable, const struct prog *prog
 }
 
 
-static void progable_load(void *state)
+static void progable_load(void *state, struct chunk *chunk)
 {
     struct progable *progable = state;
+    (void) chunk;
 
     prog_id_t id = progable_prog_id(progable);
     if (!id) return;

@@ -188,6 +188,15 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     switch (ev->user.code)
     {
 
+    case EV_STATE_LOAD: {
+        ui->panel.state = ui_panel_hidden;
+        ui->id = 0;
+        ui->star = coord_nil();
+        ui->list_len = 0;
+        ui->list = NULL;
+        return false;
+    }
+
     case EV_IO_TOGGLE: {
         if (ui->panel.state != ui_panel_hidden) {
             ui->panel.state = ui_panel_hidden;

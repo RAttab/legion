@@ -132,6 +132,13 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     switch (ev->user.code)
     {
 
+    case EV_STATE_LOAD: {
+        ui->panel.state = ui_panel_hidden;
+        ui->id = 0;
+        ui->star = coord_nil();
+        return false;
+    }
+
     case EV_ITEM_SELECT: {
         ui->id = (uintptr_t) ev->user.data1;
         ui->star = id_to_coord((uintptr_t) ev->user.data2);

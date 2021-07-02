@@ -84,7 +84,7 @@ static void class_free(struct class *class)
 }
 
 
-static struct class *class_load(item_t type, struct save *save)
+static struct class *class_load(item_t type, struct chunk *chunk, struct save *save)
 {
     uint16_t len = save_read_type(save, typeof(len));
     if (!len) return NULL;
@@ -103,7 +103,7 @@ static struct class *class_load(item_t type, struct save *save)
 
     for (size_t i = 0; i < len; ++i) {
         if (!class->config->load) continue;
-        class->config->load(class->arena + (i * class->size));
+        class->config->load(class->arena + (i * class->size), chunk);
     }
 
     return class;
@@ -229,6 +229,8 @@ static void chunk_ports_step(struct chunk *);
 
 struct chunk
 {
+    struct world *world;
+
     struct star star;
     struct class *class[ITEMS_ACTIVE_LEN];
 
@@ -237,9 +239,10 @@ struct chunk
     struct ring32 *requested;
 };
 
-struct chunk *chunk_alloc(const struct star *star)
+struct chunk *chunk_alloc(struct world *world, const struct star *star)
 {
     struct chunk *chunk = calloc(1, sizeof(*chunk));
+    chunk->world = world;
     chunk->star = *star;
     chunk->requested = ring32_reserve(16);
     htable_reset(&chunk->provided);
@@ -255,11 +258,12 @@ void chunk_free(struct chunk *chunk)
     free(chunk);
 }
 
-struct chunk *chunk_load(struct save *save)
+struct chunk *chunk_load(struct world *world, struct save *save)
 {
     if (!save_read_magic(save, save_magic_chunk)) return NULL;
 
     struct chunk *chunk = calloc(1, sizeof(*chunk));
+    chunk->world = world;
     star_load(&chunk->star, save);
 
     save_read_into(save, &chunk->workers.count);
@@ -277,7 +281,7 @@ struct chunk *chunk_load(struct save *save)
     }
 
     for (size_t i = 0; i < array_len(chunk->class); ++i)
-        chunk->class[i] = class_load(i + ITEM_ACTIVE_FIRST, save);
+        chunk->class[i] = class_load(i + ITEM_ACTIVE_FIRST, chunk, save);
 
     if (!save_read_magic(save, save_magic_chunk)) goto fail;
     return chunk;
@@ -306,6 +310,11 @@ void chunk_save(struct chunk *chunk, struct save *save)
         class_save(chunk->class[i], save);
 
     save_write_magic(save, save_magic_chunk);
+}
+
+struct world *chunk_world(struct chunk *chunk)
+{
+    return chunk->world;
 }
 
 struct star *chunk_star(struct chunk *chunk)

@@ -11,7 +11,7 @@
 void test_ports_1on1(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(&star);
+    struct chunk *chunk = chunk_alloc(NULL, &star);
 
     item_t item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_MINER, 1);
@@ -40,7 +40,7 @@ void test_ports_1on1(void)
 void test_ports_2on1(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(&star);
+    struct chunk *chunk = chunk_alloc(NULL, &star);
 
     item_t item = ITEM_ELEM_A;
     id_t src0 = make_id(ITEM_MINER, 1);
@@ -70,7 +70,7 @@ void test_ports_2on1(void)
 void test_ports_1on2(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(&star);
+    struct chunk *chunk = chunk_alloc(NULL, &star);
 
     item_t item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_MINER, 1);

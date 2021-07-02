@@ -43,6 +43,7 @@ void save_close(struct save *);
 
 bool save_eof(struct save *);
 uint8_t save_version(struct save *);
+size_t save_len(struct save *);
 
 void save_write(struct save *, const void *src, size_t len);
 

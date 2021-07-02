@@ -3,8 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
 #include "ui/ui.h"
+#include "vm/mod.h"
+#include "game/world.h"
 #include "render/font.h"
 #include "utils/str.h"
 
@@ -64,8 +65,8 @@ uint64_t ui_input_get_u64(struct ui_input *input)
 
         if (c0 == '@') return vm_atom(&atom);
 
-        mod_id_t id = mods_find(core.state.mods, &atom);
-        return id ? mods_latest(core.state.mods, id)->id : 0;
+        mod_id_t id = mods_find(world_mods(core.state.world), &atom);
+        return id ? mods_latest(world_mods(core.state.world), id)->id : 0;
     }
 
     uint64_t val = 0;

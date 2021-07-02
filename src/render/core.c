@@ -24,6 +24,9 @@
 
 struct core core = {0};
 
+static void core_load_apply(void);
+static void core_exec_event(enum event code, uint64_t d0, uint64_t d1);
+
 
 // -----------------------------------------------------------------------------
 // state
@@ -35,9 +38,6 @@ static void state_init()
     core.state.sleep = ts_sec / state_freq;
     core.state.next = ts_now();
 
-    core.state.mods = mods_new();
-    mods_populate(core.state.mods);
-
     core.state.world = world_new();
     core.state.home = world_populate(core.state.world);
 }
@@ -45,18 +45,17 @@ static void state_init()
 static void state_close()
 {
     world_free(core.state.world);
-    mods_free(core.state.mods);
 }
 
 static void state_step(ts_t now)
 {
+    if (core.state.loading) { core_load_apply(); return; }
     if (now < core.state.next) return;
 
     world_step(core.state.world);
     core_push_event(EV_STATE_UPDATE, 0, 0);
 
     core.state.next += core.state.sleep;
-    core.state.time++;
 
     if (core.state.next <= now) {
         core.state.next = now + core.state.sleep;
@@ -265,4 +264,54 @@ void core_push_event(enum event code, uint64_t d0, uint64_t d1)
 
     int ret = sdl_err(SDL_PushEvent(&ev));
     assert(ret > 0);
+}
+
+static void core_exec_event(enum event code, uint64_t d0, uint64_t d1)
+{
+    SDL_Event ev = {0};
+    ev.type = core.event;
+    ev.user.code = code;
+    ev.user.data1 = (void *) d0;
+    ev.user.data2 = (void *) d1;
+
+    ui_event(&ev);
+}
+
+// -----------------------------------------------------------------------------
+// save
+// -----------------------------------------------------------------------------
+
+enum { core_save_version = 1 };
+
+void core_save(void)
+{
+    struct save *save = save_new("./legion.save", core_save_version);
+    world_save(core.state.world, save);
+
+    size_t bytes = save_len(save);
+    save_close(save);
+    dbg("saved %zu bytes", bytes);
+}
+
+void core_load(void)
+{
+    if (core.state.loading) return;
+    core.state.loading = true;
+}
+
+static void core_load_apply(void)
+{
+    assert(core.state.loading);
+
+    struct save *save = save_load("./legion_save");
+    assert(save_version(save) == core_save_version);
+
+    struct world *world = world_load(save);
+    if (!world) return;
+
+    struct world *old = core.state.world;
+    core_exec_event(EV_STATE_LOAD, 0, 0);
+    world_free(old);
+
+    core.state.loading = false;
 }

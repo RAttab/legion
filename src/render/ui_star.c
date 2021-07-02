@@ -193,6 +193,13 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     switch (ev->user.code)
     {
 
+    case EV_STATE_LOAD: {
+        ui->panel.state = ui_panel_hidden;
+        ui->star = (struct star) {0};
+        ui->selected = 0;
+        return false;
+    }
+
     case EV_STAR_SELECT: {
         const struct star *new = ev->user.data1;
         ui->star = *new;

@@ -4,6 +4,7 @@
 */
 
 #include "game/world.h"
+#include "vm/mod.h"
 
 
 // -----------------------------------------------------------------------------
@@ -13,12 +14,15 @@
 
 struct world
 {
+    uint64_t time;
+    struct mods *mods;
     struct htable sectors;
 };
 
 struct world *world_new(void)
 {
     struct world *world = calloc(1, sizeof(*world));
+    world->mods = mods_new();
     htable_reset(&world->sectors);
     return world;
 }
@@ -29,6 +33,7 @@ void world_free(struct world *world)
     for (; it; it = htable_next(&world->sectors, it))
         sector_free((struct sector *) it->value);
     htable_reset(&world->sectors);
+    mods_free(world->mods);
     free(world);
 }
 
@@ -37,12 +42,15 @@ struct world *world_load(struct save *save)
     if (!save_read_magic(save, save_magic_world)) return NULL;
 
     struct world *world = world_new();
+    save_read_into(save, &world->time);
+
+    if (!(world->mods = mods_load(save))) goto fail;
 
     uint32_t sectors = save_read_type(save, uint32_t);
     htable_reserve(&world->sectors, sectors);
 
     for (size_t i = 0; i < sectors; ++i) {
-        struct sector *sector = sector_load(save);
+        struct sector *sector = sector_load(world, save);
         if (!sector) goto fail;
 
         uint64_t id = coord_to_id(sector->coord);
@@ -61,6 +69,8 @@ struct world *world_load(struct save *save)
 void world_save(struct world *world, struct save *save)
 {
     save_write_magic(save, save_magic_world);
+    save_write_value(save, world->time);
+    mods_save(world->mods, save);
 
     uint32_t sectors = 0;
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
@@ -79,6 +89,8 @@ void world_save(struct world *world, struct save *save)
 
 void world_step(struct world *world)
 {
+    world->time++;
+
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
     for (; it; it = htable_next(&world->sectors, it))
         sector_step((struct sector *) it->value);
@@ -86,8 +98,9 @@ void world_step(struct world *world)
 
 struct coord world_populate(struct world *world)
 {
-    struct rng rng = rng_make(0);
+    mods_populate(world->mods);
 
+    struct rng rng = rng_make(0);
     while (true) {
         struct coord coord = id_to_coord(rng_step(&rng));
         struct sector *sector = world_sector(world, coord);
@@ -114,6 +127,16 @@ struct coord world_populate(struct world *world)
     }
 }
 
+uint64_t world_time(struct world *world)
+{
+    return world->time;
+}
+
+struct mods *world_mods(struct world *world)
+{
+    return world->mods;
+}
+
 struct chunk *world_chunk(struct world *world, struct coord coord)
 {
     return sector_chunk(world_sector(world, coord), coord);
@@ -127,7 +150,7 @@ struct sector *world_sector(struct world *world, struct coord sector)
     struct htable_ret ret = htable_get(&world->sectors, id);
     if (ret.ok) return (struct sector *) ret.value;
 
-    struct sector *value = sector_gen(coord);
+    struct sector *value = sector_gen(world, coord);
     ret = htable_put(&world->sectors, id, (uintptr_t) value);
     assert(ret.ok);
 

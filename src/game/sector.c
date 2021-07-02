@@ -57,18 +57,19 @@ void star_save(struct star *star, struct save *save)
 // sector
 // -----------------------------------------------------------------------------
 
-static struct sector *sector_new(size_t stars)
+static struct sector *sector_new(struct world *world, size_t stars)
 {
     struct sector *sector =
         calloc(1, sizeof(*sector) + (stars * sizeof(sector->stars[0])));
 
+    sector->world = world;
     sector->stars_len = stars;
     htable_reserve(&sector->index, stars);
 
     return sector;
 }
 
-struct sector *sector_gen(struct coord coord)
+struct sector *sector_gen(struct world *world, struct coord coord)
 {
     coord = coord_sector(coord);
     struct rng rng = rng_make(coord_to_id(coord));
@@ -82,7 +83,7 @@ struct sector *sector_gen(struct coord coord)
     size_t fuzz = rng_uni(&rng, 0, (stars / 4) * 2);
     stars = fuzz < stars ? stars - fuzz : stars + fuzz;
 
-    struct sector *sector = sector_new(stars);
+    struct sector *sector = sector_new(world, stars);
     sector->coord = coord;
 
     for (size_t i = 0; i < stars; ++i) {
@@ -108,12 +109,12 @@ void sector_free(struct sector *sector)
 }
 
 
-struct sector *sector_load(struct save *save)
+struct sector *sector_load(struct world *world, struct save *save)
 {
     if (!save_read_magic(save, save_magic_sector)) return NULL;
 
     size_t stars = save_read_type(save, uint16_t);
-    struct sector *sector = sector_new(stars);
+    struct sector *sector = sector_new(world, stars);
 
     save_read_into(save, &sector->coord);
 
@@ -129,7 +130,7 @@ struct sector *sector_load(struct save *save)
     size_t chunks = save_read_type(save, uint16_t);
     htable_reserve(&sector->chunks, chunks);
     for (size_t i = 0; i < chunks; ++i) {
-        struct chunk *chunk = chunk_load(save);
+        struct chunk *chunk = chunk_load(world, save);
         if (!chunk) goto fail;
 
         uint64_t id = coord_to_id(chunk_star(chunk)->coord);
@@ -172,7 +173,7 @@ struct chunk *sector_chunk_alloc(struct sector *sector, struct coord coord)
     struct star *star = (void *) ret.value;
     assert(ret.ok);
 
-    chunk = chunk_alloc(star);
+    chunk = chunk_alloc(sector->world, star);
     ret = htable_put(&sector->chunks, id, (uint64_t) chunk);
     assert(ret.ok);
 
