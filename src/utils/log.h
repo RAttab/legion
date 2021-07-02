@@ -27,8 +27,8 @@
 
 #define fail_errno(fmt, ...)                                            \
     do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt ": %s\n",                    \
-                __FILE__, __LINE__, __VA_ARGS__, strerror(errno));      \
+        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
+                __FILE__, __LINE__, __VA_ARGS__, strerror(errno), errno); \
         abort();                                                        \
     } while(false)
 

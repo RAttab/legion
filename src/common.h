@@ -67,7 +67,7 @@
 enum { s_cache_line = 64 };
 static const size_t cache_line = s_cache_line;
 
-enum { s_page_len = 64 };
+enum { s_page_len = 4096 };
 static const size_t page_len = s_page_len;
 
 

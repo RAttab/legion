@@ -9,8 +9,10 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+
 
 // -----------------------------------------------------------------------------
 // save
@@ -23,29 +25,32 @@ static const size_t save_chunks = 10 * page_len;
 struct save
 {
     bool load;
-    int fd, fd_dst;
-    size_t len, cap;
-    void *base, *it;
     uint8_t version;
-};
 
+    size_t cap;
+    void *base, *it;
+
+    int fd;
+    char dst[PATH_MAX];
+};
 
 struct save *save_new(const char *path, uint8_t version)
 {
     struct save *save = calloc(1, sizeof(*save));
     save->load = false;
     save->version = version;
+    strcpy(save->dst, path);
 
-    save->fd = open("legion.tmp", O_CREAT | O_EXCL | O_WRONLY | O_TMPFILE, 0640);
+    // need O_RD to mmap the fd because... reasons...
+    save->fd = open(".", O_TMPFILE | O_RDWR, 0640);
     if (save->fd == -1) {
         fail_errno("unable to open tmp file for '%s'", path);
         goto fail_open;
     }
 
-    save->fd_dst = open(path, O_PATH | O_CREAT);
-    if (save->fd_dst == -1) {
-        fail_errno("unable to open '%s'", path);
-        goto fail_open_dst;
+    if (ftruncate(save->fd, save_chunks) == -1) {
+        fail_errno("unable to grow file '%lx'", save_chunks);
+        goto fail_truncate;
     }
 
     save->cap = save_chunks;
@@ -55,7 +60,6 @@ struct save *save_new(const char *path, uint8_t version)
         goto fail_mmap;
     }
 
-    save->len = 0;
     save->it = save->base;
 
     save_write_value(save, save_magic_top);
@@ -66,8 +70,7 @@ struct save *save_new(const char *path, uint8_t version)
 
     munmap(save->base, save->cap);
   fail_mmap:
-    close(save->fd_dst);
-  fail_open_dst:
+  fail_truncate:
     close(save->fd);
   fail_open:
     free(save);
@@ -93,13 +96,11 @@ struct save *save_load(const char *path)
     }
     save->cap = stat.st_size;
 
-    save->base = mmap(0, save->len, PROT_READ, MAP_PRIVATE, save->fd, 0);
+    save->base = mmap(0, save->cap, PROT_READ, MAP_PRIVATE, save->fd, 0);
     if (save->base == MAP_FAILED) {
         fail_errno("unable to mmap '%s'", path);
         goto fail_mmap;
     }
-
-    save->len = save->cap;
     save->it = save->base;
 
     uint64_t magic = save_read_type(save, typeof(magic));
@@ -131,12 +132,13 @@ struct save *save_load(const char *path)
 
 static void save_seal(struct save *save)
 {
-    if (ftruncate(save->fd, save->len) == -1) {
-        fail_errno("unable to truncate '%d' to '%zu'", save->fd, save->len);
+    size_t len = save_len(save);
+    if (ftruncate(save->fd, len) == -1) {
+        fail_errno("unable to truncate '%d' to '%zu'", save->fd, save->cap);
         assert(false);
     }
 
-    if (msync(save->base, save->len, MS_SYNC) == -1) {
+    if (msync(save->base, len, MS_SYNC) == -1) {
         fail_errno("unable to msync '%d'", save->fd);
         assert(false);
     }
@@ -144,15 +146,27 @@ static void save_seal(struct save *save)
     save->it = save->base + sizeof(save_magic_top);
     save_write_value(save, save_magic_seal);
 
-    if (msync(save->base, page_len, MS_SYNC) == -1) {
+    if (msync(save->base, save_len(save), MS_SYNC) == -1) {
         fail_errno("unable to msync header '%d'", save->fd);
         assert(false);
     }
 
-    if (linkat(save->fd, "", save->fd_dst, "", AT_EMPTY_PATH) == -1) {
-        fail_errno("unable to link '%d' to '%d'", save->fd, save->fd_dst);
+    char file[PATH_MAX] = {0};
+    strcpy(file, basename(save->dst));
+
+    int fd = open(dirname(save->dst), O_PATH);
+    if (fd == -1) {
+        fail_errno("unable open dir '%s' for file '%s'", save->dst, file);
         assert(false);
     }
+
+    if (linkat(save->fd, "", fd, file, AT_EMPTY_PATH) == -1) {
+        fail_errno("unable to link '%d' to '%s/%s' (%d)",
+                save->fd, save->dst, file, fd);
+        assert(false);
+    }
+
+    close(fd);
 }
 
 void save_close(struct save *save)
@@ -160,14 +174,13 @@ void save_close(struct save *save)
     if (!save->load) save_seal(save);
 
     munmap(save->base, save->cap);
-    close(save->fd_dst);
     close(save->fd);
     free(save);
 }
 
 bool save_eof(struct save *save)
 {
-    return save->len == save->cap;
+    return save_len(save) == save->cap;
 }
 
 uint8_t save_version(struct save *save)
@@ -177,15 +190,23 @@ uint8_t save_version(struct save *save)
 
 size_t save_len(struct save *save)
 {
-    return save->len;
+    return save->it - save->base;
 }
 
 static void save_grow(struct save *save, size_t len)
 {
-    if (likely(save->len + len <= save->cap)) return;
+    size_t need = save_len(save) + len;
+    if (likely(need <= save->cap)) return;
 
+    size_t it = save_len(save);
     size_t cap = save->cap;
-    while (save->len + len >= cap) cap += save_chunks;
+    while (need >= cap) cap += save_chunks;
+
+    if (ftruncate(save->fd, cap) == -1) {
+        fail_errno("unable to grow file '%lx'", cap);
+        assert(false);
+    }
+
 
     save->base = mremap(save->base, save->cap, cap, MREMAP_MAYMOVE);
     if (save->base == MAP_FAILED) {
@@ -195,7 +216,7 @@ static void save_grow(struct save *save, size_t len)
     }
 
     save->cap = cap;
-    save->it = save->base + save->len;
+    save->it = save->base + it;
 }
 
 
