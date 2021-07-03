@@ -61,9 +61,15 @@ enum legion_packed item
     // Passives
     ITEM_PASSIVE_FIRST = 0x20,
     ITEM_BLAH = 0x20,
-
-    ITEM_WORKER   = 0xEF,
     ITEM_PASSIVE_LAST,
+
+
+    ITEM_LOGISTIC_FIRST = 0xA0,
+    ITEM_WORKER     = 0xA0,
+    ITEM_SHUTTLE_S  = 0xA1,
+    ITEM_SHUTTLE_M  = 0xA2,
+    ITEM_SHUTTLE_F  = 0xA3,
+    ITEM_LOGISTIC_LAST,
 
     // Actives
     ITEM_ACTIVE_FIRST = 0xD0,

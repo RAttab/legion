@@ -59,6 +59,21 @@
             __x <= __y ? __x : __y;                                     \
         })
 
+#define legion_xchg(_ptr, _val) ({              \
+            typeof(_val) val = (_val);          \
+            typeof(_ptr) ptr = (_ptr);          \
+                                                \
+            typeof(val) tmp = *ptr;             \
+            *ptr = val;                         \
+            tmp;                                \
+        })
+
+#define legion_swap(p0, _p1)                    \
+    do {                                        \
+        typeof(_p1) p1 = (_p1);                 \
+        *p1 = legion_xchg(p0, *p1);             \
+    } while(false)
+
 
 // -----------------------------------------------------------------------------
 // constants

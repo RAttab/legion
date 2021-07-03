@@ -14,15 +14,17 @@
 
 struct world
 {
-    uint64_t time;
+    world_ts_t time;
     struct mods *mods;
     struct htable sectors;
+    struct lanes lanes;
 };
 
 struct world *world_new(void)
 {
     struct world *world = calloc(1, sizeof(*world));
     world->mods = mods_new();
+    lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
     return world;
 }
@@ -33,6 +35,7 @@ void world_free(struct world *world)
     for (; it; it = htable_next(&world->sectors, it))
         sector_free((struct sector *) it->value);
     htable_reset(&world->sectors);
+    lanes_free(&world->lanes);
     mods_free(world->mods);
     free(world);
 }
@@ -45,6 +48,7 @@ struct world *world_load(struct save *save)
     save_read_into(save, &world->time);
 
     if (!(world->mods = mods_load(save))) goto fail;
+    if (!lanes_load(&world->lanes, world, save)) goto fail;
 
     uint32_t sectors = save_read_type(save, uint32_t);
     htable_reserve(&world->sectors, sectors);
@@ -71,6 +75,7 @@ void world_save(struct world *world, struct save *save)
     save_write_magic(save, save_magic_world);
     save_write_value(save, world->time);
     mods_save(world->mods, save);
+    lanes_save(&world->lanes, save);
 
     uint32_t sectors = 0;
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
@@ -92,6 +97,7 @@ void world_save(struct world *world, struct save *save)
 void world_step(struct world *world)
 {
     world->time++;
+    lanes_step(&world->lanes);
 
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
     for (; it; it = htable_next(&world->sectors, it))
@@ -117,6 +123,8 @@ struct coord world_populate(struct world *world)
             if (sum < 1 << 16) continue;
 
             struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
+            assert(chunk);
+
             chunk_create(chunk, ITEM_MINER);
             chunk_create(chunk, ITEM_MINER);
             chunk_create(chunk, ITEM_PRINTER);
@@ -124,12 +132,13 @@ struct coord world_populate(struct world *world)
             chunk_create(chunk, ITEM_DEPLOYER);
             chunk_create(chunk, ITEM_BRAIN_M);
             chunk_create(chunk, ITEM_DB_S);
+
             return star->coord;
         }
     }
 }
 
-uint64_t world_time(struct world *world)
+world_ts_t world_time(struct world *world)
 {
     return world->time;
 }
@@ -224,4 +233,18 @@ struct coord world_scan_next(struct world *world, struct world_scan_it *it)
 ssize_t world_scan(struct world *world, struct coord coord, item_t item)
 {
     return sector_scan(world_sector(world, coord), coord, item);
+}
+
+
+void world_lanes_launch(struct world *world,
+        struct coord src, struct coord dst,
+        item_t type, item_t cargo, uint8_t count)
+{
+    lanes_launch(&world->lanes, src, dst, type, cargo, count);
+}
+
+void world_lanes_arrive(struct world *world,
+        struct coord dst, item_t type, item_t cargo, uint8_t count)
+{
+    sector_lanes_arrive(world_sector(world, dst), dst, type, cargo, count);
 }

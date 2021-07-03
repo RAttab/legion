@@ -227,6 +227,26 @@ static bool class_io(
 static void chunk_ports_step(struct chunk *);
 
 
+struct legion_packed chunk_cargo
+{
+    item_t type;
+    item_t cargo;
+    uint8_t count;
+    legion_pad(1);
+};
+static_assert(sizeof(struct chunk_cargo) == 4);
+
+inline uint32_t chunk_cargo_to_u32(struct chunk_cargo val)
+{
+    return (union { struct chunk_cargo from; uint32_t to; }) {.from = val}.to;
+}
+
+
+inline struct chunk_cargo chunk_cargo_from_u32(uint32_t val)
+{
+    return (union { struct chunk_cargo to; uint32_t from; }) {.from = val}.to;
+}
+
 struct chunk
 {
     struct world *world;
@@ -237,6 +257,7 @@ struct chunk
     struct workers workers;
     struct htable provided;
     struct ring32 *requested;
+    struct ring32 *arrivals;
 };
 
 struct chunk *chunk_alloc(struct world *world, const struct star *star)
@@ -425,6 +446,12 @@ ssize_t chunk_scan(struct chunk *chunk, item_t item)
     default: { return -1; }
 
     }
+}
+
+void chunk_lanes_arrive(struct chunk *chunk, item_t type, item_t cargo, uint8_t count)
+{
+    struct chunk_cargo arrival = {.type = type, .cargo = cargo, .count = count };
+    chunk->arrivals = ring32_push(chunk->arrivals, chunk_cargo_to_u32(arrival));
 }
 
 

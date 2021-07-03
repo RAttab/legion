@@ -161,8 +161,8 @@ struct chunk *sector_chunk_alloc(struct sector *sector, struct coord coord)
     if (likely(chunk != NULL)) return chunk;
 
     struct htable_ret ret = htable_get(&sector->index, id);
+    if (!ret.ok) return NULL;
     struct star *star = (void *) ret.value;
-    assert(ret.ok);
 
     chunk = chunk_alloc(sector->world, star);
     ret = htable_put(&sector->chunks, id, (uint64_t) chunk);
@@ -211,4 +211,12 @@ ssize_t sector_scan(struct sector *sector, struct coord coord, item_t item)
     ret = htable_get(&sector->chunks, id);
     assert(ret.ok);
     return chunk_scan((struct chunk *) ret.value, item);
+}
+
+
+void sector_lanes_arrive(struct sector *sector,
+        struct coord dst, item_t type, item_t cargo, uint8_t count)
+{
+    struct chunk *chunk = sector_chunk_alloc(sector, dst);
+    if (chunk) chunk_lanes_arrive(chunk, type, cargo, count);
 }

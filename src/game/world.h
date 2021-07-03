@@ -11,6 +11,7 @@
 #include "game/sector.h"
 
 struct mods;
+typedef uint32_t world_ts_t;
 
 // -----------------------------------------------------------------------------
 // world
@@ -27,7 +28,7 @@ void world_save(struct world *, struct save *);
 void world_step(struct world *);
 struct coord world_populate(struct world *);
 
-uint64_t world_time(struct world *);
+world_ts_t world_time(struct world *);
 struct mods *world_mods(struct world *);
 struct chunk *world_chunk(struct world *, struct coord);
 struct sector *world_sector(struct world *, struct coord);
@@ -55,3 +56,9 @@ struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);
 
 ssize_t world_scan(struct world *, struct coord, item_t);
+
+void world_lanes_launch(struct world *,
+        struct coord src, struct coord dst,
+        item_t type, item_t cargo, uint8_t count);
+void world_lanes_arrive(struct world *,
+        struct coord dst, item_t type, item_t cargo, uint8_t count);

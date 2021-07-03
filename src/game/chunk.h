@@ -48,6 +48,8 @@ bool chunk_io(
 
 ssize_t chunk_scan(struct chunk *, item_t);
 
+void chunk_lanes_arrive(struct chunk *, item_t type, item_t cargo, uint8_t count);
+
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, item_t);
 void chunk_ports_request(struct chunk *, id_t, item_t);

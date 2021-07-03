@@ -71,3 +71,6 @@ const struct star *sector_star(struct sector *, struct rect);
 
 void sector_step(struct sector *);
 ssize_t sector_scan(struct sector *, struct coord, item_t);
+
+void sector_lanes_arrive(struct sector *,
+        struct coord dst, item_t type, item_t cargo, uint8_t count);

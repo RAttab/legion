@@ -26,6 +26,7 @@ enum legion_packed save_magic
     save_magic_chunk = 0x13,
     save_magic_mods = 0x14,
     save_magic_mod = 0x15,
+    save_magic_lanes = 0x16,
 };
 
 static_assert(sizeof(enum save_magic) == 1);
