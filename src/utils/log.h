@@ -12,24 +12,38 @@
 #include <errno.h>
 #include <stdio.h>
 
+// -----------------------------------------------------------------------------
+// err
+// -----------------------------------------------------------------------------
+
+#define err(fmt, ...) \
+    do {                                                                \
+        fprintf(stderr, "fail<%s:%u> " fmt "\n",                        \
+                __FILE__, __LINE__, __VA_ARGS__);                       \
+    } while(false)
+
+#define err_errno(fmt, ...)                                             \
+    do {                                                                \
+        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
+                __FILE__, __LINE__, __VA_ARGS__, strerror(errno), errno); \
+    } while(false)
+
 
 
 // -----------------------------------------------------------------------------
 // fail
 // -----------------------------------------------------------------------------
 
-#define fail(fmt, ...) \
-    do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt "\n",                        \
-                __FILE__, __LINE__, __VA_ARGS__);                       \
-        abort();                                                        \
+#define fail(fmt, ...)                          \
+    do {                                        \
+        err(fmt, __VA_ARGS__);                  \
+        abort();                                \
     } while(false)
 
-#define fail_errno(fmt, ...)                                            \
-    do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
-                __FILE__, __LINE__, __VA_ARGS__, strerror(errno), errno); \
-        abort();                                                        \
+#define fail_errno(fmt, ...)                    \
+    do {                                        \
+        err(fmt, __VA_ARGS__);                  \
+        abort();                                \
     } while(false)
 
 // -----------------------------------------------------------------------------

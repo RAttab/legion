@@ -25,10 +25,9 @@ struct mod *mod_alloc(
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
     size_t index_bytes = (index_len + 1) * sizeof(*index);
-    size_t total_bytes = align_cache(
-            head_bytes + code_bytes + src_bytes + errs_bytes + index_bytes);
+    size_t total_bytes = head_bytes + code_bytes + src_bytes + errs_bytes + index_bytes;
 
-    struct mod *mod = alloc_cache(total_bytes);
+    struct mod *mod = alloc_cache(align_cache(total_bytes));
 
     memcpy(&mod->code, code, code_bytes);
     mod->len = code_len;
@@ -58,8 +57,8 @@ struct mod *mod_load(struct save *save)
     uint32_t src_len = save_read_type(save, typeof(src_len));
     uint32_t index_len = save_read_type(save, typeof(index_len));
 
-    size_t total_bytes = align_cache(sizeof(struct mod) + code_len + src_len + index_len);
-    struct mod *mod = calloc(1, total_bytes);
+    size_t total_bytes = sizeof(struct mod) + code_len + src_len + index_len;
+    struct mod *mod = alloc_cache(align_cache(total_bytes));
     mod->id = id;
 
     void *it = mod + 1;
@@ -260,6 +259,9 @@ struct mods *mods_load(struct save *save)
         struct htable_ret ret = htable_get(&mods->by_mod, make_mod(entry->id, entry->ver));
         if (!ret.ok) goto fail;
         entry->mod = (struct mod *) ret.value;
+
+        ret = htable_put(&mods->by_id, entry->id, (uintptr_t) entry);
+        assert(ret.ok);
     }
 
     if (!save_read_magic(save, save_magic_mods)) goto fail;

@@ -81,8 +81,10 @@ void world_save(struct world *world, struct save *save)
     save_write_value(save, sectors);
 
     it = htable_next(&world->sectors, NULL);
-    for (; it; it = htable_next(&world->sectors, it))
-        sector_save((struct sector *) it->value, save);
+    for (; it; it = htable_next(&world->sectors, it)) {
+        struct sector *sector = (void *) it->value;
+        if (sector->chunks.len) sector_save(sector, save);
+    }
 
     save_write_magic(save, save_magic_world);
 }

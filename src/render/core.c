@@ -303,15 +303,20 @@ static void core_load_apply(void)
 {
     assert(core.state.loading);
 
-    struct save *save = save_load("./legion_save");
+    struct save *save = save_load("./legion.save");
     assert(save_version(save) == core_save_version);
 
     struct world *world = world_load(save);
-    if (!world) return;
+    size_t bytes = save_len(save);
+    if (!world) goto done;
 
     struct world *old = core.state.world;
+    core.state.world = world;
     core_exec_event(EV_STATE_LOAD, 0, 0);
     world_free(old);
 
+  done:
+    save_close(save);
     core.state.loading = false;
+    dbg("loaded %zu bytes", bytes);
 }

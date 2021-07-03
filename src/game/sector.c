@@ -113,28 +113,22 @@ struct sector *sector_load(struct world *world, struct save *save)
 {
     if (!save_read_magic(save, save_magic_sector)) return NULL;
 
-    size_t stars = save_read_type(save, uint16_t);
-    struct sector *sector = sector_new(world, stars);
+    struct coord coord = save_read_type(save, typeof(coord));
+    struct sector *sector = sector_gen(world, coord);
 
-    save_read_into(save, &sector->coord);
-
-    for (size_t i = 0; i < stars; ++i) {
-        struct star *star = &sector->stars[i];
-        if (!star_load(star, save)) goto fail;
-
-        uint64_t id = coord_to_id(star->coord);
-        struct htable_ret ret = htable_put(&sector->index, id, (uintptr_t) star);
-        assert(ret.ok);
-    }
-
-    size_t chunks = save_read_type(save, uint16_t);
+    size_t chunks = save_read_type(save, uint32_t);
     htable_reserve(&sector->chunks, chunks);
     for (size_t i = 0; i < chunks; ++i) {
         struct chunk *chunk = chunk_load(world, save);
         if (!chunk) goto fail;
 
         uint64_t id = coord_to_id(chunk_star(chunk)->coord);
-        struct htable_ret ret = htable_put(&sector->chunks, id, (uintptr_t) chunk);
+
+        struct htable_ret ret = htable_get(&sector->index, id);
+        if (!ret.ok) goto fail;
+        ((struct star *) ret.value)->state = star_active;
+
+        ret = htable_put(&sector->chunks, id, (uintptr_t) chunk);
         assert(ret.ok);
     }
 
@@ -149,11 +143,8 @@ struct sector *sector_load(struct world *world, struct save *save)
 void sector_save(struct sector *sector, struct save *save)
 {
     save_write_magic(save, save_magic_sector);
-    save_write_value(save, (uint16_t) sector->stars_len);
     save_write_value(save, sector->coord);
-    for (size_t i = 0; i < sector->stars_len; ++i)
-        star_save(&sector->stars[i], save);
-    save_write_value(save, (uint16_t) sector->chunks.len);
+    save_write_value(save, (uint32_t) sector->chunks.len);
     struct htable_bucket *it = htable_next(&sector->chunks, NULL);
     for (; it; it = htable_next(&sector->chunks, it)) {
         chunk_save((struct chunk *) it->value, save);
