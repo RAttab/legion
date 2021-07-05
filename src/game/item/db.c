@@ -29,9 +29,9 @@ static void db_init(void *state, id_t id, struct chunk *chunk)
 
     db->id = id;
     switch (id_item(id)) {
-    case ITEM_DB_S: { db->len = db_len_s; break; }
-    case ITEM_DB_M: { db->len = db_len_m; break; }
-    case ITEM_DB_L: { db->len = db_len_l; break; }
+    case ITEM_DB_I:   { db->len = db_len_s; break; }
+    case ITEM_DB_II:  { db->len = db_len_m; break; }
+    case ITEM_DB_III: { db->len = db_len_l; break; }
     default: { assert(false); }
     }
 }
@@ -82,7 +82,7 @@ const struct item_config *db_config(item_t item)
 
     switch(item) {
 
-    case ITEM_DB_S: {
+    case ITEM_DB_I: {
         static const struct item_config config = {
             .size = sizeof(struct db) + db_len_s * sizeof(word_t),
             .init = db_init,
@@ -94,7 +94,7 @@ const struct item_config *db_config(item_t item)
         return &config;
     }
 
-    case ITEM_DB_M: {
+    case ITEM_DB_II: {
         static const struct item_config config = {
             .size = sizeof(struct db) + db_len_m * sizeof(word_t),
             .init = db_init,
@@ -106,7 +106,7 @@ const struct item_config *db_config(item_t item)
         return &config;
     }
 
-    case ITEM_DB_L: {
+    case ITEM_DB_III: {
         static const struct item_config config = {
             .size = sizeof(struct db) + db_len_l * sizeof(word_t),
             .init = db_init,

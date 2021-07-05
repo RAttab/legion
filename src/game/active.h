@@ -47,30 +47,78 @@ bool item_is_db(item_t);
 
 
 // -----------------------------------------------------------------------------
-// progable
+// loops
 // -----------------------------------------------------------------------------
 
-enum legion_packed progable_state
+typedef uint16_t loops_t;
+static const uint16_t loops_inf = UINT16_MAX;
+inline loops_t loops_io(word_t loops)
 {
-    progable_nil = 0,
-    progable_blocked,
-    progable_error,
-};
+    return loops > 0 && loops < loops_inf ? loops : loops_inf;
+}
 
-struct legion_packed progable
+
+// -----------------------------------------------------------------------------
+// deploy
+// -----------------------------------------------------------------------------
+
+struct legion_packed deploy
 {
     id_t id;
-    uint16_t loops;
-    enum progable_state state;
-
-    prog_it_t index;
-    uint64_t prog;
+    loops_t loops;
+    item_t item;
+    bool waiting;
 };
-static_assert(sizeof(struct progable) == 16);
 
-static const uint16_t progable_loops_inf = UINT16_MAX;
+static_assert(sizeof(struct deploy) == 8);
 
-const struct prog *progable_prog(struct progable *);
+
+// -----------------------------------------------------------------------------
+// extract
+// -----------------------------------------------------------------------------
+
+struct legion_packed extract
+{
+    id_t id;
+    loops_t loops;
+    bool waiting;
+    legion_pad(1);
+    prog_packed_t prog;
+};
+
+static_assert(sizeof(struct extract) == 16);
+
+
+// -----------------------------------------------------------------------------
+// printer
+// -----------------------------------------------------------------------------
+// Also used for assembler. It's the exact same logic.
+
+struct legion_packed printer
+{
+    id_t id;
+    loops_t loops;
+    bool waiting;
+    legion_pad(1);
+    prog_packed_t prog;
+};
+
+static_assert(sizeof(struct printer) == 16);
+
+
+// -----------------------------------------------------------------------------
+// storage
+// -----------------------------------------------------------------------------
+
+struct legion_packed storage
+{
+    id_t id;
+    item_t item;
+    bool waiting;
+    uint16_t count;
+};
+
+static_assert(sizeof(struct storage) == 8);
 
 
 // -----------------------------------------------------------------------------
@@ -112,3 +160,20 @@ struct legion_packed db
 };
 
 static_assert(sizeof(struct db) == 8);
+
+
+// -----------------------------------------------------------------------------
+// legion
+// -----------------------------------------------------------------------------
+
+struct legion_packed legion
+{
+    id_t id;
+    mod_t mod;
+    bool arrived;
+};
+
+static_assert(sizeof(struct legion) == 8);
+
+static const struct coord legion_deployed = { .x = 0, .y = 0 };
+static const struct coord legion_waiting = { .x = UINT32_MAX, .y = UINT32_MAX };

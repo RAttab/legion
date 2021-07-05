@@ -40,9 +40,9 @@ static void brain_init(void *state, id_t id, struct chunk *chunk)
     brain->id = id;
 
     switch (id_item(id)) {
-    case ITEM_BRAIN_S: { vm_init(&brain->vm, brain_stack_s, brain_speed_s); break; }
-    case ITEM_BRAIN_M: { vm_init(&brain->vm, brain_stack_m, brain_speed_s); break; }
-    case ITEM_BRAIN_L: { vm_init(&brain->vm, brain_stack_l, brain_speed_s); break; }
+    case ITEM_BRAIN_I:   { vm_init(&brain->vm, brain_stack_s, brain_speed_s); break; }
+    case ITEM_BRAIN_II:  { vm_init(&brain->vm, brain_stack_m, brain_speed_s); break; }
+    case ITEM_BRAIN_III: { vm_init(&brain->vm, brain_stack_l, brain_speed_s); break; }
     default: { assert(false); }
     }
 }
@@ -185,7 +185,7 @@ const struct item_config *brain_config(item_t item)
 
     switch(item) {
 
-    case ITEM_BRAIN_S: {
+    case ITEM_BRAIN_I: {
         static const struct item_config config = {
             .size = brain_len_s,
             .init = brain_init,
@@ -198,7 +198,7 @@ const struct item_config *brain_config(item_t item)
         return &config;
     }
 
-    case ITEM_BRAIN_M: {
+    case ITEM_BRAIN_II: {
         static const struct item_config config = {
             .size = brain_len_m,
             .init = brain_init,
@@ -211,7 +211,7 @@ const struct item_config *brain_config(item_t item)
         return &config;
     }
 
-    case ITEM_BRAIN_L: {
+    case ITEM_BRAIN_III: {
         static const struct item_config config = {
             .size = brain_len_l,
             .init = brain_init,

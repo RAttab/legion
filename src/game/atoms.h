@@ -10,7 +10,7 @@
 // atoms_io
 // -----------------------------------------------------------------------------
 
-enum legion_packed atom_io
+legion_packed enum atom_io
 {
     // 31 is the sign bit and would cause sign-bit extension when converting to
     // u64. Need something less dumb then this.
@@ -22,6 +22,7 @@ enum legion_packed atom_io
     IO_PONG,
 
     IO_RESET,
+    IO_ITEM,
     IO_PROG,
     IO_MOD,
 
@@ -31,6 +32,8 @@ enum legion_packed atom_io
 
     IO_SEND,
     IO_RECV,
+
+    IO_LAUNCH,
 
     ATOM_IO_MAX,
 };
