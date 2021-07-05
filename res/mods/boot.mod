@@ -12,13 +12,13 @@ push !io_prog
 pack
 io 2
 
-push 0xD1EF
+push 0xD1A0
 push 0xD1000001
 push !io_prog
 pack
 io 2
 
-push 0xD2EF
+push 0xD2A0
 push 0xD2000001
 push !io_prog
 pack
