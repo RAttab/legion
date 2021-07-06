@@ -13,7 +13,3 @@
 #include "game/chunk.c"
 #include "game/active.c"
 #include "game/save.c"
-
-#include "game/progable.c"
-#include "game/brain.c"
-#include "game/db.c"
