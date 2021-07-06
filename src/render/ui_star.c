@@ -120,7 +120,7 @@ int16_t ui_star_width(const struct ui_star *ui)
 static void ui_star_update_list(
         struct ui_star *ui, struct chunk *chunk,
         struct ui_toggles *toggles, struct ui_scroll *scroll,
-        const item_t *filter, size_t len)
+        const enum item *filter, size_t len)
 {
     struct vec64 *ids = chunk_list_filter(chunk, filter, len);
     ui_toggles_resize(toggles, ids->len);
@@ -160,7 +160,7 @@ static void ui_star_update(struct ui_star *ui)
     }
 
     {
-        static const item_t filter[] = {
+        static const enum item filter[] = {
             ITEM_BRAIN_S, ITEM_BRAIN_M, ITEM_BRAIN_L,
             ITEM_DB_S, ITEM_DB_M, ITEM_DB_L,
         };
@@ -171,7 +171,7 @@ static void ui_star_update(struct ui_star *ui)
     }
 
     {
-        static const item_t filter[] = {
+        static const enum item filter[] = {
             ITEM_MINER, ITEM_PRINTER, ITEM_DEPLOYER
         };
         ui_star_update_list(

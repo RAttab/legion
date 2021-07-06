@@ -38,7 +38,7 @@ static void deploy_step(void *state, struct chunk *chunk)
         return;
     }
 
-    item_t ret = chunk_ports_consume(chunk, deploy->id);
+    enum item ret = chunk_ports_consume(chunk, deploy->id);
     if (!ret) return;
     assert(ret == deploy->item);
 
@@ -67,7 +67,7 @@ static void deploy_io_item(
     if (len < 1) return;
 
     word_t item = args[0];
-    if (item != (item_t) item) return;
+    if (item != (enum item) item) return;
 
     deploy_io_reset(deploy, chunk);
     deploy->item = item;
@@ -93,7 +93,7 @@ static void deploy_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *deploy_config(item_t item)
+const struct item_config *deploy_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_ITEM, IO_RESET };

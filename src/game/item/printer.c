@@ -47,7 +47,7 @@ static void printer_step_eof(struct printer *printer)
 }
 
 static void printer_step_input(
-        struct printer *printer, struct chunk *chunk, item_t item)
+        struct printer *printer, struct chunk *chunk, enum item item)
 {
     if (!printer->waiting) {
         chunk_ports_request(chunk, printer->id, item);
@@ -55,7 +55,7 @@ static void printer_step_input(
         return;
     }
 
-    item_t consumed = chunk_ports_consume(chunk, printer->id);
+    enum item consumed = chunk_ports_consume(chunk, printer->id);
     if (!consumed) return;
     assert(consumed == item);
 
@@ -64,7 +64,7 @@ static void printer_step_input(
 }
 
 static void printer_step_output(
-        struct printer *printer, struct chunk *chunk, item_t item)
+        struct printer *printer, struct chunk *chunk, enum item item)
 {
     if (chunk_ports_produce(chunk, printer->id, item))
         printer->prog = prog_packed_it_inc(printer->prog);
@@ -135,7 +135,7 @@ static void printer_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *printer_config(item_t item)
+const struct item_config *printer_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_PROG, IO_RESET };

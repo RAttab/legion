@@ -29,9 +29,9 @@ enum legion_packed ports_state
 
 struct legion_packed ports
 {
-    item_t in;
+    enum item in;
     enum ports_state in_state;
-    item_t out;
+    enum item out;
     legion_pad(1);
 };
 
@@ -40,7 +40,7 @@ static_assert(sizeof(struct ports) == 4);
 
 struct class
 {
-    item_t type;
+    enum item type;
     uint8_t size;
     uint8_t create;
     legion_pad(2);
@@ -60,7 +60,7 @@ struct class
 static_assert(sizeof(struct class) <= s_cache_line);
 
 
-static struct class *class_alloc(item_t type)
+static struct class *class_alloc(enum item type)
 {
     const struct item_config *config = item_config(type);
 
@@ -84,7 +84,7 @@ static void class_free(struct class *class)
 }
 
 
-static struct class *class_load(item_t type, struct chunk *chunk, struct save *save)
+static struct class *class_load(enum item type, struct chunk *chunk, struct save *save)
 {
     uint16_t len = save_read_type(save, typeof(len));
     if (!len) return NULL;
@@ -229,8 +229,8 @@ static void chunk_ports_step(struct chunk *);
 
 struct legion_packed chunk_cargo
 {
-    item_t type;
-    item_t cargo;
+    enum item type;
+    enum item cargo;
     uint8_t count;
     legion_pad(1);
 };
@@ -293,7 +293,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     size_t len = save_read_type(save, typeof(chunk->provided.len));
     htable_reserve(&chunk->provided, len);
     for (size_t i = 0; i < len; ++i) {
-        item_t item = save_read_type(save, typeof(item));
+        enum item item = save_read_type(save, typeof(item));
         struct ring32 *ring = save_read_ring32(save);
         if (!ring) goto fail;
 
@@ -323,7 +323,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_value(save, chunk->provided.len);
     struct htable_bucket *it = htable_next(&chunk->provided, NULL);
     for (; it; it = htable_next(&chunk->provided, it)) {
-        save_write_value(save, (item_t) it->key);
+        save_write_value(save, (enum item) it->key);
         save_write_ring32(save, (struct ring32 *) it->value);
     }
 
@@ -343,7 +343,7 @@ struct star *chunk_star(struct chunk *chunk)
     return &chunk->star;
 }
 
-bool chunk_harvest(struct chunk *chunk, item_t item)
+bool chunk_harvest(struct chunk *chunk, enum item item)
 {
     assert(item >= ITEM_NATURAL_FIRST && item < ITEM_SYNTH_FIRST);
     if (!chunk->star.elems[item]) return false;
@@ -357,7 +357,7 @@ struct workers chunk_workers(struct chunk *chunk)
     return chunk->workers;
 }
 
-struct class *chunk_class(struct chunk *chunk, item_t item)
+struct class *chunk_class(struct chunk *chunk, enum item item)
 {
     assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
     return chunk->class[item - ITEM_ACTIVE_FIRST];
@@ -378,7 +378,7 @@ struct vec64* chunk_list(struct chunk *chunk)
 }
 
 struct vec64* chunk_list_filter(
-        struct chunk *chunk, const item_t *filter, size_t len)
+        struct chunk *chunk, const enum item *filter, size_t len)
 {
     size_t sum = 0;
     for (size_t i = 0; i < len; ++i) {
@@ -403,7 +403,7 @@ bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
     return class_copy(chunk_class(chunk, id_item(id)), id, dst, len);
 }
 
-void chunk_create(struct chunk *chunk, item_t item)
+void chunk_create(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) { chunk->workers.count++; return; }
     assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
@@ -428,7 +428,7 @@ bool chunk_io(
     return class_io(class, chunk, io, src, dst, len, args);
 }
 
-ssize_t chunk_scan(struct chunk *chunk, item_t item)
+ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
     switch (item) {
 
@@ -448,7 +448,7 @@ ssize_t chunk_scan(struct chunk *chunk, item_t item)
     }
 }
 
-void chunk_lanes_arrive(struct chunk *chunk, item_t type, item_t cargo, uint8_t count)
+void chunk_lanes_arrive(struct chunk *chunk, enum item type, enum item cargo, uint8_t count)
 {
     struct chunk_cargo arrival = {.type = type, .cargo = cargo, .count = count };
     chunk->arrivals = ring32_push(chunk->arrivals, chunk_cargo_to_u32(arrival));
@@ -467,7 +467,7 @@ void chunk_ports_reset(struct chunk *chunk, id_t id)
     *ports = (struct ports) {0};
 }
 
-bool chunk_ports_produce(struct chunk *chunk, id_t id, item_t item)
+bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
 {
     struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
     if (!ports) return false;
@@ -495,7 +495,7 @@ bool chunk_ports_produce(struct chunk *chunk, id_t id, item_t item)
     return true;
 }
 
-void chunk_ports_request(struct chunk *chunk, id_t id, item_t item)
+void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 {
     struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
     if (!ports) return;
@@ -507,13 +507,13 @@ void chunk_ports_request(struct chunk *chunk, id_t id, item_t item)
     ring32_push(chunk->requested, id);
 }
 
-item_t chunk_ports_consume(struct chunk *chunk, id_t id)
+enum item chunk_ports_consume(struct chunk *chunk, id_t id)
 {
     struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
     if (!ports) return ITEM_NIL;
 
     if (ports->in_state != ports_received) return ITEM_NIL;
-    item_t ret = ports->in;
+    enum item ret = ports->in;
     ports->in = ITEM_NIL;
     ports->in_state = ports_nil;
     return ret;

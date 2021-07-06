@@ -70,7 +70,7 @@ struct chunk *sector_chunk_alloc(struct sector *, struct coord coord);
 const struct star *sector_star(struct sector *, struct rect);
 
 void sector_step(struct sector *);
-ssize_t sector_scan(struct sector *, struct coord, item_t);
+ssize_t sector_scan(struct sector *, struct coord, enum item);
 
 void sector_lanes_arrive(struct sector *,
-        struct coord dst, item_t type, item_t cargo, uint8_t count);
+        struct coord dst, enum item type, enum item cargo, uint8_t count);

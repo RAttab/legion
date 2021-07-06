@@ -17,8 +17,8 @@
 struct legion_packed cargo
 {
     world_ts_t ts;
-    item_t type;
-    item_t cargo;
+    enum item type;
+    enum item cargo;
     uint8_t count;
     legion_pad(1);
     struct coord dst;
@@ -42,6 +42,6 @@ void lanes_save(struct lanes *, struct save *);
 void lanes_launch(
         struct lanes *,
         struct coord src, struct coord dst,
-        item_t type, item_t cargo, uint8_t count);
+        enum item type, enum item cargo, uint8_t count);
 
 void lanes_step(struct lanes *);

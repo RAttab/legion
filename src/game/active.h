@@ -39,11 +39,11 @@ struct item_config
 
 enum { item_state_len_max = s_cache_line * 4 };
 
-const struct item_config *item_config(item_t);
+const struct item_config *item_config(enum item);
 
-bool item_is_progable(item_t);
-bool item_is_brain(item_t);
-bool item_is_db(item_t);
+bool item_is_progable(enum item);
+bool item_is_brain(enum item);
+bool item_is_db(enum item);
 
 
 // -----------------------------------------------------------------------------
@@ -66,7 +66,7 @@ struct legion_packed deploy
 {
     id_t id;
     loops_t loops;
-    item_t item;
+    enum item item;
     bool waiting;
 };
 
@@ -113,7 +113,7 @@ static_assert(sizeof(struct printer) == 16);
 struct legion_packed storage
 {
     id_t id;
-    item_t item;
+    enum item item;
     bool waiting;
     uint16_t count;
 };

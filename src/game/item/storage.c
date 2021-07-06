@@ -32,7 +32,7 @@ static void storage_step(void *state, struct chunk *chunk)
     struct storage *storage = state;
     if (!storage->item) return;
 
-    item_t ret = 0;
+    enum item ret = 0;
     if (!storage->waiting) {
         if (storage->count < UINT16_MAX) {
             chunk_ports_request(chunk, storage->id, storage->item);
@@ -68,7 +68,7 @@ static void storage_io_item(
     if (len < 1) return;
 
     word_t item = args[0];
-    if (item != (item_t) item) return;
+    if (item != (enum item) item) return;
     if (item == storage->item) return;
 
     storage_io_reset(storage, chunk);
@@ -95,7 +95,7 @@ static void storage_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *storage_config(item_t item)
+const struct item_config *storage_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_ITEM, IO_RESET };

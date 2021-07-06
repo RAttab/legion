@@ -12,10 +12,6 @@
 // item
 // -----------------------------------------------------------------------------
 
-// enum item represents the values while item_t represents the storage size. Use
-// item_t when defining the type. The enum is mostly for the constants.
-typedef uint8_t item_t;
-
 legion_packed enum item
 {
     ITEM_NIL = 0x00,
@@ -109,6 +105,8 @@ legion_packed enum item
     ITEM_MAX = ITEM_ACTIVE_LAST,
 };
 
+static_assert(sizeof(enum item) == 1);
+
 enum items_utils
 {
     ITEMS_NATURAL_LEN = ITEM_SYNTH_FIRST - ITEM_NATURAL_FIRST,
@@ -121,7 +119,7 @@ enum items_utils
 static_assert(ITEMS_NATURAL_LEN + ITEMS_SYNTH_LEN == 26);
 
 enum { item_str_len = 4 };
-size_t item_str(item_t, size_t len, char *dst);
+size_t item_str(enum item, size_t len, char *dst);
 
 
 // -----------------------------------------------------------------------------
@@ -130,8 +128,8 @@ size_t item_str(item_t, size_t len, char *dst);
 
 typedef uint32_t id_t;
 
-inline id_t make_id(item_t type, id_t id) { return type << 24 | id; }
-inline item_t id_item(id_t id) { return id >> 24; }
+inline id_t make_id(enum item type, id_t id) { return type << 24 | id; }
+inline enum item id_item(id_t id) { return id >> 24; }
 inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
 enum { id_str_len = item_str_len+1+6 };

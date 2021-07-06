@@ -9,12 +9,12 @@
 // item_config
 // -----------------------------------------------------------------------------
 
-const struct item_config *item_config(item_t item)
+const struct item_config *item_config(enum item item)
 {
-    const struct item_config *progable_config(item_t);
+    const struct item_config *progable_config(enum item);
     const struct item_config *worker_config(void);
-    const struct item_config *brain_config(item_t);
-    const struct item_config *db_config(item_t);
+    const struct item_config *brain_config(enum item);
+    const struct item_config *db_config(enum item);
 
     switch (item) {
     case ITEM_PRINTER:
@@ -33,7 +33,7 @@ const struct item_config *item_config(item_t item)
     }
 }
 
-bool item_is_progable(item_t item)
+bool item_is_progable(enum item item)
 {
     switch (item)
     {
@@ -45,7 +45,7 @@ bool item_is_progable(item_t item)
     }
 }
 
-bool item_is_brain(item_t item)
+bool item_is_brain(enum item item)
 {
     switch (item)
     {
@@ -57,7 +57,7 @@ bool item_is_brain(item_t item)
     }
 }
 
-bool item_is_db(item_t item)
+bool item_is_db(enum item item)
 {
     switch (item)
     {

@@ -179,7 +179,7 @@ static void brain_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *brain_config(item_t item)
+const struct item_config *brain_config(enum item item)
 {
     static const word_t io_list[] = { IO_PING, IO_MOD, IO_RESET, IO_VAL, IO_SEND };
 

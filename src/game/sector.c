@@ -195,7 +195,7 @@ void sector_step(struct sector *sector)
         chunk_step((void *) bucket->value);
 }
 
-ssize_t sector_scan(struct sector *sector, struct coord coord, item_t item)
+ssize_t sector_scan(struct sector *sector, struct coord coord, enum item item)
 {
     uint64_t id = coord_to_id(coord);
 
@@ -215,7 +215,7 @@ ssize_t sector_scan(struct sector *sector, struct coord coord, item_t item)
 
 
 void sector_lanes_arrive(struct sector *sector,
-        struct coord dst, item_t type, item_t cargo, uint8_t count)
+        struct coord dst, enum item type, enum item cargo, uint8_t count)
 {
     struct chunk *chunk = sector_chunk_alloc(sector, dst);
     if (chunk) chunk_lanes_arrive(chunk, type, cargo, count);

@@ -112,7 +112,7 @@ static const char *item_str_table[] =
     0,
 };
 
-size_t item_str(item_t item, size_t len, char *dst)
+size_t item_str(enum item item, size_t len, char *dst)
 {
     assert(len <= 4);
     assert(item < array_len(item_str_table));

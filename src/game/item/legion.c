@@ -93,7 +93,7 @@ static void legion_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *legion_config(item_t item)
+const struct item_config *legion_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_ITEM, IO_RESET };

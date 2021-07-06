@@ -58,7 +58,7 @@ void lanes_save(struct lanes *lanes, struct save *save)
 }
 
 static world_ts_t lanes_arrival(
-        struct lanes *lanes, struct coord src, struct coord dst, item_t type)
+        struct lanes *lanes, struct coord src, struct coord dst, enum item type)
 {
     world_ts_t now = world_time(lanes->world);
     uint64_t dist = coord_dist(src, dst);
@@ -78,7 +78,7 @@ static world_ts_t lanes_arrival(
 void lanes_launch(
         struct lanes *lanes,
         struct coord src, struct coord dst,
-        item_t type, item_t cargo, uint8_t count)
+        enum item type, enum item cargo, uint8_t count)
 {
     size_t index = lanes->len++;
     struct cargo *it = &lanes->data[index];

@@ -47,7 +47,7 @@ static void extract_step_eof(struct extract *extract)
 }
 
 static void extract_step_input(
-        struct extract *extract, struct chunk *chunk, item_t item)
+        struct extract *extract, struct chunk *chunk, enum item item)
 {
     if (!extract->waiting) {
         chunk_ports_request(chunk, extract->id, item);
@@ -55,7 +55,7 @@ static void extract_step_input(
         return;
     }
 
-    item_t consumed = chunk_ports_consume(chunk, extract->id);
+    enum item consumed = chunk_ports_consume(chunk, extract->id);
     if (!consumed) return;
     assert(consumed == item);
 
@@ -64,7 +64,7 @@ static void extract_step_input(
 }
 
 static void extract_step_output(
-        struct extract *extract, struct chunk *chunk, item_t item)
+        struct extract *extract, struct chunk *chunk, enum item item)
 {
     if (!extract->waiting && !chunk_harvest(chunk, item)) return;
 
@@ -137,7 +137,7 @@ static void extract_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *extract_config(item_t item)
+const struct item_config *extract_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_PROG, IO_RESET };

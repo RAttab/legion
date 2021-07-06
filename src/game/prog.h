@@ -26,7 +26,7 @@ enum prog_state
 struct prog_ret
 {
     enum prog_state state;
-    item_t item;
+    enum item item;
 };
 
 void prog_load();
@@ -34,7 +34,7 @@ const struct prog *prog_fetch(prog_id_t prog);
 
 prog_id_t prog_id(const struct prog *);
 size_t prog_len(const struct prog *);
-item_t prog_host(const struct prog *);
+enum item prog_host(const struct prog *);
 struct prog_ret prog_at(const struct prog *, prog_it_t index);
 
 

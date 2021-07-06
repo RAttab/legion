@@ -24,14 +24,14 @@
 struct prog
 {
     prog_id_t id;
-    item_t host;
+    enum item host;
     uint8_t inputs, outputs;
-    item_t tape[];
+    enum item tape[];
 };
 
 
 prog_id_t prog_id(const struct prog *prog) { return prog->id; }
-item_t prog_host(const struct prog *prog) { return prog->host; }
+enum item prog_host(const struct prog *prog) { return prog->host; }
 size_t prog_len(const struct prog *prog) { return prog->inputs + prog->outputs; }
 
 struct prog_ret prog_at(const struct prog *prog, prog_it_t index)

@@ -230,7 +230,7 @@ struct coord world_scan_next(struct world *world, struct world_scan_it *it)
 }
 
 
-ssize_t world_scan(struct world *world, struct coord coord, item_t item)
+ssize_t world_scan(struct world *world, struct coord coord, enum item item)
 {
     return sector_scan(world_sector(world, coord), coord, item);
 }
@@ -238,13 +238,13 @@ ssize_t world_scan(struct world *world, struct coord coord, item_t item)
 
 void world_lanes_launch(struct world *world,
         struct coord src, struct coord dst,
-        item_t type, item_t cargo, uint8_t count)
+        enum item type, enum item cargo, uint8_t count)
 {
     lanes_launch(&world->lanes, src, dst, type, cargo, count);
 }
 
 void world_lanes_arrive(struct world *world,
-        struct coord dst, item_t type, item_t cargo, uint8_t count)
+        struct coord dst, enum item type, enum item cargo, uint8_t count)
 {
     sector_lanes_arrive(world_sector(world, dst), dst, type, cargo, count);
 }

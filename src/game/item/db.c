@@ -76,7 +76,7 @@ static void db_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *db_config(item_t item)
+const struct item_config *db_config(enum item item)
 {
     static const word_t io_list[] = { IO_PING, IO_GET, IO_SET };
 

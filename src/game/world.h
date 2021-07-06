@@ -55,10 +55,10 @@ struct legion_packed world_scan_it
 struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);
 
-ssize_t world_scan(struct world *, struct coord, item_t);
+ssize_t world_scan(struct world *, struct coord, enum item);
 
 void world_lanes_launch(struct world *,
         struct coord src, struct coord dst,
-        item_t type, item_t cargo, uint8_t count);
+        enum item type, enum item cargo, uint8_t count);
 void world_lanes_arrive(struct world *,
-        struct coord dst, item_t type, item_t cargo, uint8_t count);
+        struct coord dst, enum item type, enum item cargo, uint8_t count);
