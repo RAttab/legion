@@ -69,9 +69,15 @@ bool item_is_db(item_t item)
     }
 }
 
+
 // -----------------------------------------------------------------------------
 // impl
 // -----------------------------------------------------------------------------
 
 #include "game/item/brain.c"
 #include "game/item/db.c"
+#include "game/item/deploy.c"
+#include "game/item/extract.c"
+#include "game/item/legion.c"
+#include "game/item/printer.c"
+#include "game/item/storage.c"

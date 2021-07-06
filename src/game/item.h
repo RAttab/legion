@@ -6,8 +6,6 @@
 #pragma once
 
 #include "common.h"
-#include "utils/str.h"
-#include "utils/bits.h"
 
 
 // -----------------------------------------------------------------------------
@@ -76,6 +74,7 @@ legion_packed enum item
     ITEM_DATABANK      = 0x52,
     ITEM_PASSIVE_LAST,
 
+    // Logistics
     ITEM_LOGISTIC_FIRST = 0xA0,
     ITEM_WORKER         = 0xA0,
     ITEM_SHUTTLE_S      = 0xA1,
@@ -110,10 +109,6 @@ legion_packed enum item
     ITEM_MAX = ITEM_ACTIVE_LAST,
 };
 
-// -----------------------------------------------------------------------------
-// useful
-// -----------------------------------------------------------------------------
-
 enum items_utils
 {
     ITEMS_NATURAL_LEN = ITEM_SYNTH_FIRST - ITEM_NATURAL_FIRST,
@@ -124,6 +119,9 @@ enum items_utils
 };
 
 static_assert(ITEMS_NATURAL_LEN + ITEMS_SYNTH_LEN == 26);
+
+enum { item_str_len = 4 };
+size_t item_str(item_t, size_t len, char *dst);
 
 
 // -----------------------------------------------------------------------------
@@ -136,61 +134,5 @@ inline id_t make_id(item_t type, id_t id) { return type << 24 | id; }
 inline item_t id_item(id_t id) { return id >> 24; }
 inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
-enum { id_str_len = 2+6 };
-inline size_t id_str(id_t id, size_t len, char *dst)
-{
-    assert(id);
-    assert(len >= id_str_len);
-
-    switch(id_item(id)) {
-    case ITEM_WORKER: { dst[0] = 'w'; break; }
-    case ITEM_PRINTER: { dst[0] = 'p'; break; }
-    case ITEM_MINER: { dst[0] = 'm'; break; }
-    case ITEM_DEPLOYER: { dst[0] = 'd'; break; }
-
-    case ITEM_BRAIN_S:
-    case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L: { dst[0] = 'B'; break; }
-    case ITEM_DB_S:
-    case ITEM_DB_M:
-    case ITEM_DB_L: { dst[0] = 'D'; break; }
-
-    default: { assert(false && "unsuported item in id_str"); }
-    }
-
-    id = id_bot(id);
-    assert(id);
-
-    for (size_t i = 0; i < 6; i++, id >>=4)
-        dst[6-i] = str_hexchar(id);
-
-    return id_str_len;
-}
-
-
-// -----------------------------------------------------------------------------
-// cargo
-// -----------------------------------------------------------------------------
-
-typedef uint8_t item_t;
-typedef uint16_t cargo_t;
-
-inline cargo_t make_cargo(item_t item, uint8_t count)
-{
-    return (((cargo_t) item) << 8) | count;
-}
-
-inline item_t cargo_item(cargo_t cargo) { return cargo >> 8; }
-inline uint8_t cargo_count(cargo_t cargo) { return cargo; }
-
-inline cargo_t cargo_add(cargo_t cargo, uint8_t val)
-{
-    size_t count = cargo_count(cargo);
-    return (cargo & ~0xFF) | i64_min(0xFF, count + val);
-}
-
-inline cargo_t cargo_sub(cargo_t cargo, uint8_t val)
-{
-    ssize_t count = cargo_count(cargo);
-    return (cargo & ~0xFF) | i64_max(0, count - val);
-}
+enum { id_str_len = item_str_len+1+6 };
+size_t id_str(id_t id, size_t len, char *dst);
