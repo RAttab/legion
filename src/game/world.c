@@ -235,6 +235,10 @@ ssize_t world_scan(struct world *world, struct coord coord, enum item item)
     return sector_scan(world_sector(world, coord), coord, item);
 }
 
+struct vec64 *world_lanes_list(struct world *world, struct coord key)
+{
+    lanes_list(&world->lanes, key);
+}
 
 void world_lanes_launch(struct world *world,
         struct coord src, struct coord dst, enum item type, uint32_t data)

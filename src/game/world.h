@@ -57,6 +57,7 @@ struct coord world_scan_next(struct world *, struct world_scan_it *);
 
 ssize_t world_scan(struct world *, struct coord, enum item);
 
+struct vec64 *world_lanes_list(struct world *, struct coord key);
 void world_lanes_launch(struct world *,
         struct coord src, struct coord dst, enum item type, uint32_t data);
 void world_lanes_arrive(struct world *,

@@ -237,6 +237,21 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
     }
 }
 
+static void map_render_lanes(
+        struct map *map, SDL_Renderer *renderer, struct coord star)
+{
+    struct vec64 *lanes = world_lanes_list(core.state.world, coord);
+    if (!lanes || !lanes->len) return;
+
+    rgba_render(rgba_white(), renderer);
+
+    SDL_Point src = map_project_coord(map, coord);
+    for (size_t i = 0; i < lanes->len; ++i) {
+        SDL_Point dst = map_project_coord(map, id_to_coord(lanes->data[i]));
+        sdl_err(SDL_RenderDrawLine(renderer, src.x, src.y, dst.x, dst.y);
+    }
+}
+
 static void map_render_stars(struct map *map, SDL_Renderer *renderer)
 {
     struct rect rect = map_project_coord_rect(map, &core.rect);
@@ -265,6 +280,8 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
         sdl_err(SDL_RenderCopy(renderer, map->tex, &map->tex_star, &dst));
 
         if (star->state == star_active) {
+            map_render_lanes(map, renderer, star->coord);
+
             dst = (SDL_Rect) {
                 .x = pos.x - px / 2,
                 .y = pos.y - px,
