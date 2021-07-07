@@ -71,12 +71,12 @@ legion_packed enum item
     ITEM_PASSIVE_LAST,
 
     // Logistics
-    ITEM_LOGISTIC_FIRST = 0xA0,
+    ITEM_LOGISTICS_FIRST = 0xA0,
     ITEM_WORKER         = 0xA0,
     ITEM_SHUTTLE_S      = 0xA1,
     ITEM_SHUTTLE_M      = 0xA2,
     ITEM_SHUTTLE_F      = 0xA3,
-    ITEM_LOGISTIC_LAST,
+    ITEM_LOGISTICS_LAST,
 
     // Actives
     ITEM_ACTIVE_FIRST  = 0xB0,
@@ -117,6 +117,17 @@ enum items_utils
 };
 
 static_assert(ITEMS_NATURAL_LEN + ITEMS_SYNTH_LEN == 26);
+
+inline bool item_is_logistics(enum item item)
+{
+    return item >= ITEM_LOGISTICS_FIRST && item < ITEM_LOGISTICS_LAST;
+}
+
+inline bool item_is_active(enum item item)
+{
+    return item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST;
+}
+
 
 enum { item_str_len = 4 };
 size_t item_str(enum item, size_t len, char *dst);

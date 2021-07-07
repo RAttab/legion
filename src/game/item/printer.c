@@ -110,6 +110,7 @@ static void printer_io_prog(
 
     struct prog *prog = prog_fetch(prog_id);
     if (!prog) return;
+    if (prog_host(prog) != id_item(printer->id)) return;
     
     printer_io_reset(printer, chunk);
     printer->prog = prog_pack(prog_id, 0, prog);

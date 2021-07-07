@@ -40,6 +40,7 @@ struct vec64 *chunk_list_filter(struct chunk *, const enum item *filter, size_t 
 void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 void chunk_create(struct chunk *, enum item);
+void chunk_delete(struct chunk *, id_t id);
 
 void chunk_step(struct chunk *);
 bool chunk_io(

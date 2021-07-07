@@ -12,220 +12,11 @@
 #include "utils/ring.h"
 #include "utils/htable.h"
 
-
-// -----------------------------------------------------------------------------
-// class
-// -----------------------------------------------------------------------------
-
-typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
-typedef void (*step_fn_t) (void *state, struct chunk *);
-
-enum legion_packed ports_state
-{
-    ports_nil = 0,
-    ports_requested,
-    ports_received,
-};
-
-struct legion_packed ports
-{
-    enum item in;
-    enum ports_state in_state;
-    enum item out;
-    legion_pad(1);
-};
-
-static_assert(sizeof(struct ports) == 4);
-
-
-struct class
-{
-    enum item type;
-    uint8_t size;
-    uint8_t create;
-    legion_pad(2);
-
-    uint16_t len, cap;
-    legion_pad(4);
-
-    step_fn_t step;
-    io_fn_t io;
-    const struct item_config *config;
-
-    void *arena;
-    struct ports *ports;
-
-    legion_pad(8);
-};
-static_assert(sizeof(struct class) <= s_cache_line);
-
-
-static struct class *class_alloc(enum item type)
-{
-    const struct item_config *config = item_config(type);
-
-    struct class *class = calloc(1, sizeof(*class));
-    *class = (struct class) {
-        .type = type,
-        .size = config->size,
-        .step = config->step,
-        .io = config->io,
-        .config = config,
-    };
-
-    return class;
-}
-
-static void class_free(struct class *class)
-{
-    if (!class) return;
-    free(class->arena);
-    free(class->ports);
-}
-
-
-static struct class *class_load(enum item type, struct chunk *chunk, struct save *save)
-{
-    uint16_t len = save_read_type(save, typeof(len));
-    if (!len) return NULL;
-
-    struct class *class = class_alloc(type);
-    class->len = len;
-
-    class->cap = 1;
-    while (class->cap < len) class->cap *= 2;
-
-    class->arena = calloc(len, class->size);
-    save_read(save, class->arena, len * class->size);
-
-    class->ports = calloc(len, sizeof(*class->ports));
-    save_read(save, class->ports, len * sizeof(*class->ports));
-
-    for (size_t i = 0; i < len; ++i) {
-        if (!class->config->load) continue;
-        class->config->load(class->arena + (i * class->size), chunk);
-    }
-
-    return class;
-}
-
-static void class_save(struct class *class, struct save *save)
-{
-    uint16_t len = class ? class->len : 0;
-    save_write_value(save, len);
-    if (!class) return;
-
-    // would mean that we're saving mid step and that's a bad idea.
-    assert(!class->create);
-
-    save_write(save, class->arena, len * class->size);
-    save_write(save, class->ports, len * sizeof(struct ports));
-}
-
-static void class_list(struct class *class, struct vec64 *ids)
-{
-    if (!class) return;
-
-    for (size_t i = 0; i < class->len; ++i)
-        vec64_append(ids, make_id(class->type, i+1));
-}
-
-static void *class_get(struct class *class, id_t id)
-{
-    if (!class) return NULL;
-
-    size_t index = id_bot(id)-1;
-    if (index >= class->len) return NULL;
-
-    return class->arena + (index * class->size);
-}
-
-static struct ports *class_ports(struct class *class, id_t id)
-{
-    size_t index = id_bot(id)-1;
-    if (!class || index >= class->len) return NULL;
-    return &class->ports[index];
-}
-
-static bool class_copy(struct class *class, id_t id, void *dst, size_t len)
-{
-    if (!class) return false;
-    assert(len >= class->size);
-
-    size_t index = id_bot(id)-1;
-    if (index >= class->len) return false;
-
-    memcpy(dst, class->arena + (index * class->size), class->size);
-    return true;
-}
-
-static void class_create(struct class *class)
-{
-    class->create++;
-}
-
-// \todo calloc and reallocarray won't cache align anything so gotta do it
-// manually.
-static void class_grow(struct class *class)
-{
-    if (likely(class->len < class->cap)) return;
-
-    if (!class->len) {
-        class->cap = 1;
-        class->arena = calloc(class->cap, class->size);
-        class->ports = calloc(class->cap, sizeof(class->ports[0]));
-        return;
-    }
-
-    class->cap *= 2;
-    class->arena = reallocarray(class->arena, class->cap, class->size);
-    class->ports = reallocarray(class->ports, class->cap, sizeof(class->ports[0]));
-
-    size_t added = class->cap - class->len;
-    memset(class->arena + (class->len * class->size), 0, added * class->size);
-    memset(class->ports + class->len, 0, added * sizeof(class->ports[0]));
-}
-
-static void class_step(struct class *class, struct chunk *chunk)
-{
-    if (!class) return;
-
-    if (class->step) {
-        void *end = class->arena + class->len * class->size;
-        for (void *it = class->arena; it < end; it += class->size)
-            class->step(it, chunk);
-    }
-
-    while (class->create) {
-        class_grow(class);
-
-        id_t id = make_id(class->type, class->len+1);
-        void *item = class->arena + (class->len * class->size);
-        class->len++;
-
-        class->config->init(item, id, chunk);
-        class->create--;
-    }
-}
-
-static bool class_io(
-        struct class *class, struct chunk *chunk,
-        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
-{
-    void *state = class_get(class, dst);
-    if (!state) return false;
-
-    class->io(state, chunk, io, src, len, args);
-    return true;
-}
-
-
-// -----------------------------------------------------------------------------
-// chunk
-// -----------------------------------------------------------------------------
-
 static void chunk_ports_step(struct chunk *);
 
+// -----------------------------------------------------------------------------
+// chunk_cargo
+// -----------------------------------------------------------------------------
 
 struct legion_packed chunk_cargo
 {
@@ -247,16 +38,22 @@ inline struct chunk_cargo chunk_cargo_from_u32(uint32_t val)
     return (union { struct chunk_cargo to; uint32_t from; }) {.from = val}.to;
 }
 
+// -----------------------------------------------------------------------------
+// cargo
+// -----------------------------------------------------------------------------
+
 struct chunk
 {
     struct world *world;
 
     struct star star;
-    struct class *class[ITEMS_ACTIVE_LEN];
+    active_list_t active;
 
-    struct workers workers;
+    // ports
     struct htable provided;
     struct ring32 *requested;
+
+    struct workers workers;
     struct ring32 *arrivals;
 };
 
@@ -272,10 +69,11 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
 
 void chunk_free(struct chunk *chunk)
 {
+    active_it_t it = active_next(&chunk->active, NULL);
+    for (; it; it = active_next(&chunk->active, it)) active_free(*it);
+
     free(chunk->requested);
     htable_reset(&chunk->provided);
-    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
-        class_free(chunk->class[i]);
     free(chunk);
 }
 
@@ -301,8 +99,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
         assert(ret.ok);
     }
 
-    for (size_t i = 0; i < array_len(chunk->class); ++i)
-        chunk->class[i] = class_load(i + ITEM_ACTIVE_FIRST, chunk, save);
+    active_list_load(&chunk->active, chunk, save);
 
     if (!save_read_magic(save, save_magic_chunk)) goto fail;
     return chunk;
@@ -327,8 +124,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
         save_write_ring32(save, (struct ring32 *) it->value);
     }
 
-    for (size_t i = 0; i < array_len(chunk->class); ++i)
-        class_save(chunk->class[i], save);
+    active_list_save(&chunk->active, save);
 
     save_write_magic(save, save_magic_chunk);
 }
@@ -357,22 +153,17 @@ struct workers chunk_workers(struct chunk *chunk)
     return chunk->workers;
 }
 
-struct class *chunk_class(struct chunk *chunk, enum item item)
-{
-    assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
-    return chunk->class[item - ITEM_ACTIVE_FIRST];
-}
-
 struct vec64* chunk_list(struct chunk *chunk)
 {
     size_t sum = 0;
-    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
-        if (chunk->class[i]) sum += chunk->class[i]->len;
-    }
+    active_it_t it = active_next(&chunk->active, NULL);
+    for (; it; it = active_next(&chunk->active, it))
+        sum += active_count(*it);
 
     struct vec64 *ids = vec64_reserve(sum);
-    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
-        class_list(chunk->class[i], ids);
+    it = active_next(&chunk->active, NULL);
+    for (; it; it = active_next(&chunk->active, it))
+        active_list(*it, ids);
 
     return ids;
 }
@@ -381,42 +172,38 @@ struct vec64* chunk_list_filter(
         struct chunk *chunk, const enum item *filter, size_t len)
 {
     size_t sum = 0;
-    for (size_t i = 0; i < len; ++i) {
-        struct class *class = chunk_class(chunk, filter[i]);
-        if (class) sum += class->len;
-    }
+    for (size_t i = 0; i < len; ++i)
+        sum += active_count(active_index(&chunk->active, filter[i]));
 
     struct vec64 *ids = vec64_reserve(sum);
     for (size_t i = 0; i < len; ++i)
-        class_list(chunk_class(chunk, filter[i]), ids);
+        active_list(active_index(&chunk->active, filter[i]), ids);
 
     return ids;
 }
 
-void *chunk_get(struct chunk *chunk, id_t id)
-{
-    return class_get(chunk_class(chunk, id_item(id)), id);
-}
-
 bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
 {
-    return class_copy(chunk_class(chunk, id_item(id)), id, dst, len);
+    return active_copy(active_index(&chunk->active, id_item(id)), id, dst, len);
 }
 
 void chunk_create(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) { chunk->workers.count++; return; }
-    assert(item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST);
+    active_create(active_index_create(&chunk->active, item));
+}
 
-    struct class **ptr = &chunk->class[item - ITEM_ACTIVE_FIRST];
-    if (!*ptr) *ptr = class_alloc(item);
-    class_create(*ptr);
+void chunk_delete(struct chunk *chunk, id_t id)
+{
+    active_delete(active_index(&chunk->active, id_item(id)), id);
 }
 
 void chunk_step(struct chunk *chunk)
 {
-    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i)
-        class_step(chunk->class[i], chunk);
+    active_it_t it = active_next(&chunk->active, NULL);
+    for (; it; it = active_next(&chunk->active, it))
+        active_step(*it, chunk);
+
     chunk_ports_step(chunk);
 }
 
@@ -424,8 +211,8 @@ bool chunk_io(
         struct chunk *chunk,
         enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
 {
-    struct class *class = chunk_class(chunk, id_item(dst));
-    return class_io(class, chunk, io, src, dst, len, args);
+    struct active *active = active_index(&chunk->active, id_item(dst));
+    return active_io(active, chunk, io, src, dst, len, args);
 }
 
 ssize_t chunk_scan(struct chunk *chunk, enum item item)
@@ -439,8 +226,7 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     }
 
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
-        struct class *class = chunk_class(chunk, item);
-        return class ? class->len : 0;
+        return active_count(active_index(&chunk->active, item));
     }
 
     default: { return -1; }
@@ -461,15 +247,13 @@ void chunk_lanes_arrive(struct chunk *chunk, enum item type, enum item cargo, ui
 
 void chunk_ports_reset(struct chunk *chunk, id_t id)
 {
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
-    if (!ports) return;
-
-    *ports = (struct ports) {0};
+    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    if (likely(ports)) ports_reset(ports);
 }
 
 bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
 {
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
     if (!ports) return false;
 
     if (ports->out != ITEM_NIL) return false;
