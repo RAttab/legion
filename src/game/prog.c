@@ -34,17 +34,17 @@ prog_id_t prog_id(const struct prog *prog) { return prog->id; }
 enum item prog_host(const struct prog *prog) { return prog->host; }
 size_t prog_len(const struct prog *prog) { return prog->inputs + prog->outputs; }
 
-struct prog_ret prog_at(const struct prog *prog, prog_it_t index)
+struct prog_ret prog_at(const struct prog *prog, prog_it_t it)
 {
     struct prog_ret ret = { .state = prog_eof };
 
-    if (index < prog->inputs) {
+    if (it < prog->inputs) {
         ret.state = prog_input;
         ret.item = prog->tape[index];
     }
-    else if (index < prog->inputs + prog->outputs) {
+    else if (it < prog->inputs + prog->outputs) {
         ret.state = prog_output;
-        ret.item = prog->tape[index];
+        ret.item = prog->tape[it];
     }
 
     return ret;
@@ -57,18 +57,13 @@ struct prog_ret prog_at(const struct prog *prog, prog_it_t index)
 
 static struct
 {
-    struct htable index;
+    struct prog *index[ITEM_MAX];
 } progs;
 
 
 const struct prog *prog_fetch(prog_id_t prog)
 {
-    if (!prog) return NULL;
-
-    struct htable_ret ret = htable_get(&progs.index, prog);
-    if (!ret.ok) return NULL;
-
-    return (const struct prog *) ret.value;
+    return progs.index[prog];
 }
 
 static const char *prog_hex(
@@ -89,14 +84,6 @@ static const char *prog_hex(
     return it;
 }
 
-static const char *prog_hex16(const char *it, const char *end, uint16_t *ret)
-{
-    uint64_t value = 0;
-    it = prog_hex(it, end, &value, sizeof(*ret));
-    *ret = value;
-    return it;
-}
-
 static const char *prog_hex8(const char *it, const char *end, uint8_t *ret)
 {
     uint64_t value = 0;
@@ -113,9 +100,9 @@ static const char *prog_expect(const char *it, const char *end, char exp)
 }
 
 
-// 0000:00<00,00,00,00>00,00.
-// 0000:00<00,00,00,00.
-// 0000:00>00,00,00,00.
+// 00:00<00,00,00,00>00,00.
+// 00:00<00,00,00,00.
+// 00:00>00,00,00,00.
 static struct prog *prog_read(const char *it, const char *end)
 {
     size_t line_len = end - it;
@@ -127,9 +114,9 @@ static struct prog *prog_read(const char *it, const char *end)
 
     struct prog *prog = calloc(1, sizeof(*prog) + tape_len * sizeof(prog->tape[0]));
 
-    it = prog_hex16(it, end, &prog->id);
-    it = prog_expect(it, end, ':');
     it = prog_hex8(it, end, &prog->host);
+    it = prog_expect(it, end, ':');
+    it = prog_hex8(it, end, &prog->id);
 
     size_t index = 0;
     enum prog_state state = prog_eof;
@@ -184,8 +171,6 @@ void prog_load()
 
     const char *it = base;
     const char *end = it + len;
-    htable_reserve(&progs.index, UINT8_MAX);
-
     while (it < end) {
         const char *line = it;
         while (*it != '\n' && it < end) it++;
@@ -194,8 +179,8 @@ void prog_load()
             struct prog *prog = prog_read(line, it);
             assert(prog);
 
-            struct htable_ret ret = htable_put(&progs.index, prog->id, (uint64_t) prog);
-            assert(ret.ok);
+            assert(!progs.index[prog->id]);
+            progs.index[prog->id] = prog;
         }
         it++;
     }
