@@ -239,7 +239,7 @@ ssize_t world_scan(struct world *world, struct coord coord, enum item item)
 void world_lanes_launch(struct world *world,
         struct coord src, struct coord dst, enum item type, uint32_t data)
 {
-    lanes_launch(&world->lanes, src, dst, type, cargo, count);
+    lanes_launch(&world->lanes, src, dst, type, data);
 }
 
 void world_lanes_arrive(struct world *world,

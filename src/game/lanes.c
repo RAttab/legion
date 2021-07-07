@@ -10,36 +10,247 @@
 // lanes
 // -----------------------------------------------------------------------------
 
-enum { lanes_min_cap = 32 };
+legion_packed struct lane_heap
+{
+    world_ts_t ts;
+    uint16_t data;
+    legion_pad(2);
+};
+
+static_assert(sizeof(struct lane_heap) == 8);
+
+
+legion_packed struct lane_data
+{
+    uint32_t data;
+    uint16_t next;
+    enum item item;
+    bool direction;
+};
+
+static_assert(sizeof(struct lane_data) == 8);
+
+
+struct lane
+{
+    struct coord src, dst;
+
+    uint16_t free, len, cap;
+    struct lane_heap *heap;
+    struct lane_data *data;
+};
+
+static struct lane *lane_alloc(struct coord src, struct coord dst)
+{
+    enum { cap_default = 1 };
+
+    struct lane *lane = calloc(1, sizeof(*lane));
+    *lane = (struct lane) {
+        .src = src,
+        .dst = dst,
+        .cap = cap_default,
+        .free = 0,
+        .heap = calloc(cap_default, sizeof(struct lane_heap)),
+        .data = calloc(cap_default, sizeof(struct lane_data)),
+    };
+    return lane;
+}
+
+static void lane_free(struct lane *lane)
+{
+    free(lane->heap);
+    free(lane->data);
+    free(lane);
+}
+
+static struct lane *lane_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_lane)) return NULL;
+
+    struct lane *lane = calloc(1, sizeof(*lane));
+    save_read_into(save, &lane->src);
+    save_read_into(save, &lane->dst);
+    save_read_into(save, &lane->free);
+    save_read_into(save, &lane->len);
+    save_read_into(save, &lane->cap);
+
+    lane->heap = calloc(lane->cap, sizeof(*lane->heap));
+    save_read(save, lane->heap, lane->cap * sizeof(*lane->heap));
+
+    lane->data = calloc(lane->cap, sizeof(*lane->data));
+    save_read(save, lane->data, lane->cap * sizeof(*lane->data));
+
+    if (!save_read_magic(save, save_magic_lane)) goto fail;
+    return lane;
+
+  fail:
+    free(lane->heap);
+    free(lane->data);
+    free(lane);
+    return NULL;
+}
+
+static void lane_save(struct lane *lane, struct save *save)
+{
+    save_write_magic(save, save_magic_lane);
+    save_write_value(save, src);
+    save_write_value(save, dst);
+    save_write_value(save, free);
+    save_write_value(save, len);
+    save_write_value(save, cap);
+    save_write(save, lane->heap, lane->cap * sizeof(*lane->heap));
+    save_write(save, lane->data, lane->cap * sizeof(*lane->data));
+    save_write_magic(save, save_magic_lane);
+}
+
+static void lane_grow(struct lane *lane)
+{
+    if (likely(lane->len != lane->cap)) return;
+
+    lane->cap *= 2;
+    lane->heap = reallocarray(lane->heap, lane->cap, sizeof(*lane->heap));
+    lane->data = reallocarray(lane->data, lane->cap, sizeof(*lane->data));
+
+    lane->free = lane->len;
+    for (size_t i = lane->len; i < lane->cap; ++i)
+        lane->data[i] = i+1;
+}
+
+static void lane_push(struct lane *lane,
+        world_ts_t ts, struct coord src, enum item type, uint32_t data)
+{
+    lane_grow(lane);
+
+    uint16_t index = lane->free;
+    struct lane_data *data = lane->data + index;
+    lane->free = data->next;
+
+    *data = (struct lane_data) {
+        .data = data,
+        .item = type,
+        .direction = coord_eq(src, lane->src),
+    };
+
+    struct lane_heap *it = &lane->heap[lane->len++];
+    *it = (struct lane_heap) { .ts = ts, .data = index };
+
+    while (index) {
+        struct lane_heap *parent = &lanes->heap[index / 2];
+        if (parent->ts < it->ts) break;
+
+        legion_swap(it, parent);
+        it = parent;
+        index /= 2;
+    }
+}
+
+static ts_t lane_peek(struct lane *lane)
+{
+    return lane->len ? lane->heap[0].ts : -1;
+}
+
+static struct lane_data lane_pop(struct lane *lane)
+{
+    assert(lane->len);
+
+    size_t ret = lane->heap[0].data;
+    lanes->heap[0] = lanes->heap[--lanes->len];
+
+    size_t index = 0;
+    while (index < lanes->len) {
+        struct lane_heap *it = &lanes->heap[index];
+
+        size_t li = index * 2;
+        size_t ri = index * 2 + 1;
+
+        struct lane_heap *lp = li < lanes->len ? &lanes->heap[li] : NULL;
+        struct lane_heap *rp = ri < lanes->len ? &lanes->heap[ri] : NULL;
+
+        size_t child = 0;
+        struct cargo *ptr = NULL;
+
+        if ((lp && lp->ts < it->ts) && (!rp || lp->ts < rp->ts)) {
+            child = li;
+            ptr = lp;
+        }
+        else if (rp && rp->ts < it->ts) {
+            child = ri;
+            ptr = rp;
+        }
+        else break;
+
+        legion_swap(it, ptr);
+        index = child;
+        it = ptr;
+    }
+
+    lane->data[ret].next = lane->free;
+    lane->free = ret;
+    return lane->data[ret];
+}
+
+
+// -----------------------------------------------------------------------------
+// lanes
+// -----------------------------------------------------------------------------
 
 void lanes_init(struct lanes *lanes, struct world *world)
 {
-    *lanes = (struct lanes) {
-        .world = world,
-        .len = 0,
-        .cap = lanes_min_cap,
-        .data = calloc(lanes_min_cap, sizeof(struct cargo)),
-    };
+    lanes->world = world;
 }
 
 void lanes_free(struct lanes *lanes)
 {
-    free(lanes->data);
+    struct htable_bucket *it = NULL;
+
+    it = htable_next(&lanes->lanes, NULL);
+    for (; it; it = htable_next(&lanes->lanes, it))
+        lane_free((void *) it->value);
+    htable_reset(&lanes->lanes);
+
+    it = htable_next(&lanes->index, NULL);
+    for (; it; it = htable_next(&lanes->index, it))
+        vec64_free((void *) it->value);
+    htable_reset(&lanes->index);
 }
 
+static uint64_t lanes_key(struct coord src, struct coord dst)
+{
+    return coord_to_id(src) ^ coord_to_id(dst);
+}
+
+static void lanes_index(struct lanes *lanes, struct coord key, struct coord val)
+{
+    uint64_t key = coord_to_id(coord);
+    struct htable_ret ret = htable_get(&lanes->index, key);
+
+    struct vec64 *old = (void *) ret.value;
+    struct vec64 *new = vec64_append(old, coord_to_id(val));
+    if (old == new) return;
+
+    if (old)
+        ret = htable_xchg(&lanes->index, key, (uintptr_t) new);
+    else ret = htable_put(&lanes->index, key, (uintptr_t) new);
+    assert(ret.ok);
+}
 
 bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
 {
     if (!save_read_magic(save, save_magic_lanes)) return false;
-
     lanes->world = world;
-    lanes->len = save_read_type(save, uint32_t);
 
-    lanes->cap = lanes_min_cap;
-    while (lanes->cap < lanes->len) lanes->cap *= 2;
-    lanes->data = calloc(lanes->cap, sizeof(lanes->data[0]));
+    uint32_t len = save_read_type(save, typeof(len));
+    for (size_t i = 0; i < len; ++i) {
+        struct lane *lane = lane_load(save);
+        if (!lane) goto fail;
 
-    save_read(save, lanes->data, lanes->len * sizeof(lanes->data[0]));
+        uint64_t key = lanes_key(lane->src, lane->dst);
+        struct htable_ret ret = htable_put(&lanes->lanes, key);
+        assert(ret.ok);
+
+        lanes_index(lanes, lane->src, lane->dst);
+        lanes_index(lanes, lane->dst, lane->src);
+    }
 
     if (!save_read_magic(save, save_magic_lanes)) goto fail;
     return true;
@@ -52,91 +263,72 @@ bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
 void lanes_save(struct lanes *lanes, struct save *save)
 {
     save_write_magic(save, save_magic_lanes);
-    save_write_value(save, (uint32_t) lanes->len);
-    save_write(save, lanes->data, lanes->len * sizeof(lanes->data[0]));
+    save_write_value(lanes->lanes.len);
+
+    struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+    for (; it; it = htable_next(&lanes->lanes, it))
+        lane_save((void *) it->value, (uint32_t) save);
+
     save_write_magic(save, save_magic_lanes);
 }
 
-static world_ts_t lanes_arrival(
-        struct lanes *lanes, struct coord src, struct coord dst, enum item type)
+struct vec64 *lanes_list(struct lane *lane, struct coord key)
 {
-    world_ts_t now = world_time(lanes->world);
-    uint64_t dist = coord_dist(src, dst);
+    struct htable_ret ret = htable_get(&lanes->index, coord_to_id(key));
+    return (void *) ret.value;
+}
 
-    uint64_t div = 0;
+static uint64_t lanes_item_div(enum item type)
+{
     switch (type) {
-    case ITEM_SHUTTLE_S: { div = 1; break; }
-    case ITEM_SHUTTLE_M: { div = 10; break; }
-    case ITEM_SHUTTLE_F: { div = 100; break; }
+
+    case ITEM_LEGION_I:
+    case ITEM_SHUTTLE_I: { return 1; }
+
+    case ITEM_LEGION_II:
+    case ITEM_SHUTTLE_II: { return 10; }
+
+    case ITEM_LEGION_III:
+    case ITEM_SHUTTLE_III: { return 100; }
+
     default: { assert(false); }
     };
-
-    return now + (dist / div);
 }
 
-
-void lanes_launch(
-        struct lanes *lanes,
-        struct coord src, struct coord dst,
-        enum item type, enum item cargo, uint8_t count)
+void lanes_launch(struct lanes *lanes,
+        struct coord src, struct coord dst, enum item type, uint32_t data)
 {
-    size_t index = lanes->len++;
-    struct cargo *it = &lanes->data[index];
+    uint64_t key = lanes_key(src, dst);
+    struct htable_ret ret = htable_get(&lanes->lanes, key);
 
-    *it = (struct cargo) {
-        .ts = lanes_arrival(lanes, src, dst, type),
-        .type = type, .cargo = cargo, .count = count, .dst = dst,
-    };
+    struct lane *lane = NULL;
+    if (ret.ok) lane = (void *) lane.value;
+    else {
+        lane = lane_alloc(src, dst);
+        ret = htable_put(lanes->lanes, key, (uintptr_t) lane);
+        assert(ret.ok);
 
-    while (index) {
-        struct cargo *parent = &lanes->data[index / 2];
-        if (parent->ts < it->ts) break;
-
-        legion_swap(it, parent);
-        it = parent;
-        index /= 2;
+        lanes_index(lanes, src, dst);
+        lanes_index(lanes, dst, src);
     }
-}
 
-static void lanes_pop(struct lanes *lanes)
-{
-    lanes->data[0] = lanes->data[--lanes->len];
-
-    size_t index = 0;
-    while (index < lanes->len) {
-        struct cargo *it = &lanes->data[index];
-
-        size_t li = index * 2;
-        size_t ri = index * 2 + 1;
-
-        struct cargo *lp = li < lanes->len ? &lanes->data[li] : NULL;
-        struct cargo *rp = ri < lanes->len ? &lanes->data[ri] : NULL;
-
-        size_t index = 0;
-        struct cargo *ptr = NULL;
-
-        if ((lp && lp->ts < it->ts) && (!rp || lp->ts < rp->ts)) {
-            index = li;
-            ptr = lp;
-        }
-        else if (rp && rp->ts < it->ts) {
-            index = ri;
-            ptr = rp;
-        }
-        else break;
-
-        legion_swap(it, ptr);
-        index = index;
-        it = ptr;
-    }
+    world_ts_t now = world_time(lanes->world);
+    world_ts_t ts = now + (coord_dist(src, dst) / lanes_item_div(type));
+    lane_push(lane, ts, src, type, data);
 }
 
 void lanes_step(struct lanes *lanes)
 {
     world_ts_t now = world_time(lanes->world);
-    while (lanes->len && lanes->data[0].ts <= now) {
-        struct cargo *it = &lanes->data[0];
-        world_lanes_arrive(lanes->world, it->dst, it->type, it->cargo, it->count);
-        lanes_pop(lanes);
+
+    struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+    for (; it; it = htable_next(&lanes->lanes, it)) {
+        struct lane *lane = (void *) it->value;
+
+        while (lane_peek(lane) < now) {
+            struct lane_data data = lane_pop(lane);
+            struct coord dst = data.direction ? lane->dst : lane->src;
+            world_lanes_arrive(lanes->world, dst, data.item, data.data);
+        }
     }
 }
