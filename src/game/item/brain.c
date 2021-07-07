@@ -11,6 +11,8 @@
 #include "vm/vm.h"
 #include "vm/mod.h"
 
+static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id);
+
 
 // -----------------------------------------------------------------------------
 // brain
@@ -45,6 +47,13 @@ static void brain_init(void *state, id_t id, struct chunk *chunk)
     case ITEM_BRAIN_III: { vm_init(&brain->vm, brain_stack_l, brain_speed_s); break; }
     default: { assert(false); }
     }
+}
+
+static void brain_make(void *state, id_t id, struct chunk *chunk, uint32_t data)
+{
+    struct brain *brain = state;
+    brain_init(brain, id, chunk);
+    brain_mod(brain, chunk, data);
 }
 
 static void brain_load(void *state, struct chunk *chunk)
@@ -189,6 +198,7 @@ const struct item_config *brain_config(enum item item)
         static const struct item_config config = {
             .size = brain_len_s,
             .init = brain_init,
+            .make = brain_make,
             .load = brain_load,
             .step = brain_step,
             .io = brain_io,
@@ -202,6 +212,7 @@ const struct item_config *brain_config(enum item item)
         static const struct item_config config = {
             .size = brain_len_m,
             .init = brain_init,
+            .make = brain_make,
             .load = brain_load,
             .step = brain_step,
             .io = brain_io,
@@ -215,6 +226,7 @@ const struct item_config *brain_config(enum item item)
         static const struct item_config config = {
             .size = brain_len_l,
             .init = brain_init,
+            .make = brain_make,
             .load = brain_load,
             .step = brain_step,
             .io = brain_io,

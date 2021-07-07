@@ -77,7 +77,7 @@ void active_delete(struct active *active, id_t id)
     size_t index = id_bot(id)-1;
     if (index >= active->len) return;
 
-    if (likely(active->cap < 64))
+    if (likely(active->cap <= 64))
         active->index &= 1ULL << index;
     else {
         struct vec64 *vec = (void *) active->free;
@@ -88,7 +88,7 @@ void active_delete(struct active *active, id_t id)
 inline bool active_deleted(struct active *active, size_t index)
 {
     if (likely(!active->free)) return false;
-    if (likely(active->cap < 64)) return (active->free & (1ULL << index)) != 0;
+    if (likely(active->cap <= 64)) return (active->free & (1ULL << index)) != 0;
 
     struct vec64 *vec = (void *) active->free;
     return (vec->data[index / 64] & (1ULL << (index % 64))) != 0;
@@ -98,7 +98,7 @@ static bool active_recycle(struct active *active, size_t *index)
 {
     if (likely(!active->free)) return false;
 
-    if (likely(active->cap < 64)) {
+    if (likely(active->cap <= 64)) {
         *index = u64_ctz(active->free);
         active->free &= ~(1ULL << *index);
         return true;
@@ -164,6 +164,7 @@ void active_save(struct active *active, struct save *save)
     else active_write_vec64(save, (const void *) active->free);
 }
 
+
 size_t active_count(struct active *active)
 {
     return active ? active->count : 0;
@@ -208,17 +209,13 @@ bool active_copy(struct active *active, id_t id, void *dst, size_t len)
     return true;
 }
 
-void active_create(struct active *active)
-{
-    active->create++;
-}
-
 
 // \todo calloc and reallocarray won't cache align anything so gotta do it
 // manually.
 static void active_grow(struct active *active)
 {
     if (likely(active->len < active->cap)) return;
+    size_t old = active->cap;
 
     if (!active->len) {
         active->cap = 1;
@@ -235,13 +232,40 @@ static void active_grow(struct active *active)
     memset(active->arena + (active->len * active->size), 0, added * active->size);
     memset(active->ports + active->len, 0, added * sizeof(active->ports[0]));
 
-    if (active->cap > 64)
+    if (old > 64)
         active->free = (uintptr_t) vec_grow((void *) active->free, active->cap / 64);
-    else if (active->cap == 64) {
-        struct vec64 *vec = vec_reserve(1);
+    else if (old == 64) {
+        struct vec64 *vec = vec_reserve(2);
         vec->data[0] = active->free;
         active->free = (uintptr_t) vec;
     }
+}
+
+// Given that an item can replicate itself through this function (assembler
+// generating a new assembler), moving the pointers around would break things so
+// we prefer to defer to creation process.
+void active_create(struct active *active)
+{
+    active->create++;
+}
+
+// This creation function is not used for replication (...yet) which means that
+// we don't need to defer the creation (... yet)
+void active_create_from(struct active *active, uint32_t data)
+{
+    assert(active->config->make);
+
+    size_t index = 0;
+    if (!active_recycle(active, &index)) {
+        active_grow(active);
+        index = active->len;
+        active->len++;
+    }
+
+    id_t id = make_id(active->type, index+1);
+    void *item = active->arena + (index * active->size);
+    active->config->make(item, id, chunk, data);
+    active->count++;
 }
 
 void active_step(struct active *active, struct chunk *chunk)

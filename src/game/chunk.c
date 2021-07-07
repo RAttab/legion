@@ -190,7 +190,12 @@ bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
 void chunk_create(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) { chunk->workers.count++; return; }
-    active_create(active_index_create(&chunk->active, item));
+    active_create(active_index(&chunk->active, item));
+}
+
+void chunk_create_from(struct chunk *chunk, enum item item, uint32_t data)
+{
+    active_create_from(active_index(&chunk->active, item), data);
 }
 
 void chunk_delete(struct chunk *chunk, id_t id)
@@ -234,10 +239,15 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     }
 }
 
-void chunk_lanes_arrive(struct chunk *chunk, enum item type, enum item cargo, uint8_t count)
+void chunk_lanes_launch(struct chunk *chunk,
+        struct coord dst, enum item type, uint32_t data)
 {
-    struct chunk_cargo arrival = {.type = type, .cargo = cargo, .count = count };
-    chunk->arrivals = ring32_push(chunk->arrivals, chunk_cargo_to_u32(arrival));
+    world_lanes_launch(chunk->world, chunk->star.coord, dst, type, data);
+}
+
+void chunk_lanes_arrive(struct chunk *chunk, enum item type, uint32_t data)
+{
+    // \todo
 }
 
 

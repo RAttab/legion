@@ -40,8 +40,6 @@ bool lanes_load(struct lanes *, struct world *, struct save *);
 void lanes_save(struct lanes *, struct save *);
 
 void lanes_launch(
-        struct lanes *,
-        struct coord src, struct coord dst,
-        enum item type, enum item cargo, uint8_t count);
+        struct lanes *, struct coord src, struct coord dst, enum item type, uint32_t data);
 
 void lanes_step(struct lanes *);

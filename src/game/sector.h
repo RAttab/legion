@@ -73,4 +73,4 @@ void sector_step(struct sector *);
 ssize_t sector_scan(struct sector *, struct coord, enum item);
 
 void sector_lanes_arrive(struct sector *,
-        struct coord dst, enum item type, enum item cargo, uint8_t count);
+        struct coord dst, enum item type, uint32_t data);

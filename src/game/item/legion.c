@@ -20,24 +20,28 @@ static void legion_init(void *state, id_t id, struct chunk *chunk)
     (void) chunk;
 
     legion->id = id;
-    legion->dst = legion_waiting;
-
-    // need to determine if it was just created or if it just arrived on a new
-    // star. Lanes doesn't really allow to carry state at the moment so...
 }
 
-
-// -----------------------------------------------------------------------------
-// step
-// -----------------------------------------------------------------------------
-
-static void legion_step(void *state, struct chunk *chunk)
+static void legion_make(void *state, id_t id, struct chunk *chunk, uint32_t data)
 {
-    struct legion *legion = state;
+    switch (id_item(id))
+    {
 
-    assert(false);
-    // if in new star system, create the various items.
-    // delete yourself from chunk
+    case ITEM_LEGION_I: {
+        chunk_create(chunk, ITEM_EXTRACT_I);
+        chunk_create(chunk, ITEM_EXTRACT_I);
+        chunk_create(chunk, ITEM_PRINTER_I);
+        chunk_create(chunk, ITEM_PRINTER_I);
+        chunk_create(chunk, ITEM_ASSEMBLER_I);
+        chunk_create(chunk, ITEM_ASSEMBLER_I);
+        chunk_create(chunk, ITEM_DB_I);
+        chunk_create_from(chunk, ITEM_BRAIN_I, data);
+        chunk_delete(chunk, id);
+        return;
+    }
+
+    default: { assert(false); }
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -48,7 +52,7 @@ static void legion_io_reset(struct legion *legion, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, progable->id);
     legion->mod = 0;
-    legion->dst = legion_waiting;
+    legion->dst = legion_idle;
 }
 
 static void legion_io_mod(
@@ -69,8 +73,7 @@ static void legion_io_launch(
     struct coord dst = id_to_coord(args[0]);
     if (coord_is_nil(dst)) return;
 
-    // launch into the lanes but not as a logistic... need special logic here.
-    // also requires that chunks removes this item from the source star.
+    chunk_lanes_launch(chunk, dst, id_item(legion->id), legion->mod);
 }
 
 static void legion_io(
@@ -101,7 +104,7 @@ const struct item_config *legion_config(enum item item)
     static const struct item_config config = {
         .size = sizeof(struct legion),
         .init = legion_init,
-        .step = legion_step,
+        .make = legion_make,
         .io = legion_io,
         .io_list = io_list,
         .io_list_len = array_len(io_list),

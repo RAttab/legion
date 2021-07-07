@@ -18,6 +18,7 @@ struct chunk;
 // active_config
 // -----------------------------------------------------------------------------
 
+typedef void (*make_fn_t) (void *state, id_t id, struct chunk *, uint32_t data);
 typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
 typedef void (*step_fn_t) (void *state, struct chunk *);
 typedef void (*load_fn_t) (void *state, struct chunk *);
@@ -29,6 +30,7 @@ struct active_config
 {
     size_t size;
 
+    make_fn_t make;
     init_fn_t init;
     load_fn_t load;
     step_fn_t step;
@@ -90,6 +92,7 @@ struct ports *active_ports(struct active *active, id_t id);
 
 bool active_copy(struct active *, id_t id, void *dst, size_t len);
 void active_create(struct active *);
+void active_create_from(struct active *, uint32_t data);
 void active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);
@@ -257,10 +260,6 @@ struct legion_packed legion
 {
     id_t id;
     mod_t mod;
-    bool arrived;
 };
 
 static_assert(sizeof(struct legion) == 8);
-
-static const struct coord legion_deployed = { .x = 0, .y = 0 };
-static const struct coord legion_waiting = { .x = UINT32_MAX, .y = UINT32_MAX };

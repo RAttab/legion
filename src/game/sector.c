@@ -215,8 +215,8 @@ ssize_t sector_scan(struct sector *sector, struct coord coord, enum item item)
 
 
 void sector_lanes_arrive(struct sector *sector,
-        struct coord dst, enum item type, enum item cargo, uint8_t count)
+        struct coord dst, enum item type, uint32_t data)
 {
     struct chunk *chunk = sector_chunk_alloc(sector, dst);
-    if (chunk) chunk_lanes_arrive(chunk, type, cargo, count);
+    if (chunk) chunk_lanes_arrive(chunk, type, data);
 }

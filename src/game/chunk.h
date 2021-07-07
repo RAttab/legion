@@ -40,6 +40,7 @@ struct vec64 *chunk_list_filter(struct chunk *, const enum item *filter, size_t 
 void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 void chunk_create(struct chunk *, enum item);
+void chunk_create_from(struct chunk *, enum item, uint32_t data);
 void chunk_delete(struct chunk *, id_t id);
 
 void chunk_step(struct chunk *);
@@ -49,7 +50,8 @@ bool chunk_io(
 
 ssize_t chunk_scan(struct chunk *, enum item);
 
-void chunk_lanes_arrive(struct chunk *, enum item type, enum item cargo, uint8_t count);
+void chunk_lanes_launch(struct chunk *, struct coord dst, enum item type, uint32_t data);
+void chunk_lanes_arrive(struct chunk *, enum item type, uint32_t data);
 
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, enum item);
