@@ -32,6 +32,7 @@ struct ui_star
     struct ui_label workers, workers_val;
     struct ui_label idle, idle_val;
     struct ui_label fail, fail_val;
+    struct ui_label queue, queue_val;
 };
 
 static struct font *ui_star_font(void) { return font_mono6; }
@@ -39,8 +40,7 @@ static struct font *ui_star_font(void) { return font_mono6; }
 static const char *ui_star_elems[] = {
     "A:", "B:", "C:", "D:", "E:",
     "F:", "G:", "H:", "I:", "J:",
-    "K:", "L:", "M:", "N:", "O:",
-    "P:"
+    "K:"
 };
 
 enum
@@ -82,6 +82,8 @@ struct ui_star *ui_star_new(void)
         .idle_val = ui_label_new(font, ui_str_v(10)),
         .fail = ui_label_new(font, ui_str_c("- fail:  ")),
         .fail_val = ui_label_new(font, ui_str_v(10)),
+        .queue = ui_label_new(font, ui_str_c("- queue: ")),
+        .queue_val = ui_label_new(font, ui_str_v(10)),
     };
 
     ui->panel.state = ui_panel_hidden;
@@ -108,6 +110,8 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->idle_val);
     ui_label_free(&ui->fail);
     ui_label_free(&ui->fail_val);
+    ui_label_free(&ui->queue);
+    ui_label_free(&ui->queue_val);
     free(ui);
 }
 
@@ -156,13 +160,15 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_u64(&ui->workers_val.str, 0);
         ui_str_set_u64(&ui->idle_val.str, 0);
         ui_str_set_u64(&ui->fail_val.str, 0);
+        ui_str_set_u64(&ui->queue_val.str, 0);
         return;
     }
 
     {
         static const enum item filter[] = {
-            ITEM_BRAIN_S, ITEM_BRAIN_M, ITEM_BRAIN_L,
-            ITEM_DB_S, ITEM_DB_M, ITEM_DB_L,
+            ITEM_DB_I, ITEM_DB_II, ITEM_DB_III,
+            ITEM_BRAIN_I, ITEM_BRAIN_II, ITEM_BRAIN_III,
+            ITEM_LEGION_I, ITEM_LEGION_II, ITEM_LEGION_III,
         };
         ui_star_update_list(
                 ui, chunk,
@@ -172,7 +178,10 @@ static void ui_star_update(struct ui_star *ui)
 
     {
         static const enum item filter[] = {
-            ITEM_MINER, ITEM_PRINTER, ITEM_DEPLOYER
+            ITEM_DEPLOY, ITEM_STORAGE,
+            ITEM_EXTRACT_I, ITEM_EXTRACT_II, ITEM_EXTRACT_III,
+            ITEM_PRINTER_I, ITEM_PRINTER_II, ITEM_PRINTER_III,
+            ITEM_ASSEMBLER_I, ITEM_ASSEMBLER_II, ITEM_ASSEMBLER_III,
         };
         ui_star_update_list(
                 ui, chunk,
@@ -185,6 +194,7 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_u64(&ui->workers_val.str, workers.count);
         ui_str_set_u64(&ui->idle_val.str, workers.idle);
         ui_str_set_u64(&ui->fail_val.str, workers.fail);
+        ui_str_set_u64(&ui->queue_val.str, workers.queue);
     }
 }
 
@@ -365,6 +375,10 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
         ui_label_render(&ui->fail, &layout, renderer);
         ui_label_render(&ui->fail_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+
+        ui_label_render(&ui->queue, &layout, renderer);
+        ui_label_render(&ui->queue_val, &layout, renderer);
         ui_layout_next_row(&layout);
     }
 }
