@@ -54,7 +54,7 @@ struct chunk
     struct ring32 *requested;
 
     struct workers workers;
-    struct ring32 *arrivals;
+    struct ring64 *shuttles;
 };
 
 struct chunk *chunk_alloc(struct world *world, const struct star *star)
@@ -63,6 +63,7 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->world = world;
     chunk->star = *star;
     chunk->requested = ring32_reserve(16);
+    chunk->shuttles = ring64_reserve(2);
     htable_reset(&chunk->provided);
     return chunk;
 }
@@ -71,8 +72,8 @@ void chunk_free(struct chunk *chunk)
 {
     active_it_t it = active_next(&chunk->active, NULL);
     for (; it; it = active_next(&chunk->active, it)) active_free(*it);
-
-    free(chunk->requested);
+    ring32_free(chunk->requested);
+    ring64_free(chunk->shuttles);
     htable_reset(&chunk->provided);
     free(chunk);
 }
@@ -87,6 +88,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     save_read_into(save, &chunk->workers.count);
     chunk->requested = save_read_ring32(save);
+    chunk->shuttles = save_read_ring64(save);
 
     size_t len = save_read_type(save, typeof(chunk->provided.len));
     htable_reserve(&chunk->provided, len);
@@ -116,6 +118,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     star_save(&chunk->star, save);
     save_write_value(save, chunk->workers.count);
     save_write_ring32(save, chunk->requested);
+    save_write_ring64(save, chunl->shuttles);
 
     save_write_value(save, chunk->provided.len);
     struct htable_bucket *it = htable_next(&chunk->provided, NULL);
@@ -222,9 +225,10 @@ bool chunk_io(
 
 ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
-    switch (item) {
-
+    switch (item)
+    {
     case ITEM_WORKER: { return chunk->workers.count; }
+    case ITEM_SHUTTLE_I...ITEM_SHUTTLE_III: { return ring32_len(chunk->shuttles); }
 
     case ITEM_NATURAL_FIRST...ITEM_SYNTH_FIRST: {
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
@@ -235,9 +239,12 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     }
 
     default: { return -1; }
-
     }
 }
+
+// -----------------------------------------------------------------------------
+// lanes
+// -----------------------------------------------------------------------------
 
 void chunk_lanes_launch(struct chunk *chunk,
         struct coord dst, enum item type, uint32_t data)
@@ -245,9 +252,31 @@ void chunk_lanes_launch(struct chunk *chunk,
     world_lanes_launch(chunk->world, chunk->star.coord, dst, type, data);
 }
 
-void chunk_lanes_arrive(struct chunk *chunk, enum item type, uint32_t data)
+void chunk_lanes_arrive(struct chunk *chunk, enum item item, uint32_t data)
 {
-    // \todo
+    switch (item)
+    {
+    case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
+        active_create_from(active_index(&chunk->active, item), data);
+        break;
+    }
+    case ITEM_SHUTTLE_I...ITEM_SHUTTLE_III: {
+        uint64_t value = (((uint64_t) item) << 32) | data;
+        chunk->shuttles = ring64_push(chunk->shuttles, value);
+        break;
+    }
+    default: { assert(false); }
+    }
+}
+
+bool chunk_lanes_dock(struct chunk *chunk, enum item *item, uint32_t *data)
+{
+    if (ring64_empty(chunk->shuttles)) return false;
+
+    uint64_t value = ring64_pop(chunk->shuttles);
+    *item = value >> 32;
+    *data = value & ((1ULL << 32) - 1);
+    return true;
 }
 
 
@@ -315,12 +344,14 @@ enum item chunk_ports_consume(struct chunk *chunk, id_t id)
 
 static void chunk_ports_step(struct chunk *chunk)
 {
+    id_t fail = 0;
     chunk->workers.idle = 0;
     chunk->workers.fail = 0;
 
     for (size_t i = 0; i < chunk->workers.count; ++i) {
         id_t dst = ring32_pop(chunk->requested);
         if (!dst) { chunk->workers.idle = chunk->workers.count - i; break; }
+        if (dst == fail) break;
 
         struct ports *in = class_ports(chunk_class(chunk, id_item(dst)), dst);
         assert(in);
@@ -344,6 +375,10 @@ static void chunk_ports_step(struct chunk *chunk)
       nomatch:
        struct ring32 *rret = ring32_push(chunk->requested, dst);
        assert(rret == chunk->requested);
+        if (!fail) fail = dst;
        chunk->workers.fail++;
+       break;
     }
+
+    chunk->workers.queue = ring32_len(chunk->requested);
 }

@@ -32,7 +32,7 @@ struct world *chunk_world(struct chunk *);
 struct star *chunk_star(struct chunk *);
 bool chunk_harvest(struct chunk *, enum item item);
 
-struct workers { uint16_t count, idle, fail; };
+struct workers { uint16_t count, idle, fail, queue; };
 struct workers chunk_workers(struct chunk *);
 
 struct vec64 *chunk_list(struct chunk *);
@@ -50,8 +50,9 @@ bool chunk_io(
 
 ssize_t chunk_scan(struct chunk *, enum item);
 
-void chunk_lanes_launch(struct chunk *, struct coord dst, enum item type, uint32_t data);
-void chunk_lanes_arrive(struct chunk *, enum item type, uint32_t data);
+void chunk_lanes_launch(struct chunk *, struct coord dst, enum item item, uint32_t data);
+void chunk_lanes_arrive(struct chunk *, enum item item, uint32_t data);
+bool chunk_lanes_dock(struct chunk *, enum item *item, uint32_t *data);
 
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, enum item);
