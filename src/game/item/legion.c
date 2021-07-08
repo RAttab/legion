@@ -22,25 +22,35 @@ static void legion_init(void *state, id_t id, struct chunk *chunk)
     legion->id = id;
 }
 
-static void legion_make(void *state, id_t id, struct chunk *chunk, uint32_t data)
+const enum item *legion_cargo(enum item type)
 {
-    switch (id_item(id))
+    switch (type)
     {
-
     case ITEM_LEGION_I: {
-        chunk_create(chunk, ITEM_EXTRACT_I);
-        chunk_create(chunk, ITEM_EXTRACT_I);
-        chunk_create(chunk, ITEM_PRINTER_I);
-        chunk_create(chunk, ITEM_PRINTER_I);
-        chunk_create(chunk, ITEM_ASSEMBLER_I);
-        chunk_create(chunk, ITEM_ASSEMBLER_I);
-        chunk_create(chunk, ITEM_DB_I);
-        chunk_create_from(chunk, ITEM_BRAIN_I, data);
-        chunk_delete(chunk, id);
-        return;
+        static const enum item *cargo = {
+            ITEM_EXTRACT_I,
+            ITEM_EXTRACT_I,
+            ITEM_PRINTER_I,
+            ITEM_PRINTER_I,
+            ITEM_ASSEMBLER_I,
+            ITEM_ASSEMBLER_I,
+            ITEM_DB_I,
+            ITEM_BRAIN_I,
+            0
+        };
+        return cargo;
     }
 
     default: { assert(false); }
+    };
+}
+
+static void legion_make(void *state, id_t id, struct chunk *chunk, uint32_t data)
+{
+    for (const enum item *it = legion_cargo(id_item(id)); *it; ++it) {
+        if (*it >= ITEM_LEGION_BRAIN_I && *it <= ITEM_LEGION_BRAIN_III)
+            chunk_create_from(chunk, *it, data);
+        else chunk_create(chunk, *it);
     }
 }
 

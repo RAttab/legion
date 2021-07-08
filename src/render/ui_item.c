@@ -16,9 +16,14 @@
 
 static struct font *ui_item_font(void) { return font_mono6; }
 
-#include "render/ui_progable.c"
-#include "render/ui_brain.c"
-#include "render/ui_db.c"
+#include "render/items/ui_prog.c"
+#include "render/items/ui_deploy.c"
+#include "render/items/ui_extract.c"
+#include "render/items/ui_printer.c"
+#include "render/items/ui_storage.c"
+#include "render/items/ui_brain.c"
+#include "render/items/ui_db.c"
+#include "render/items/ui_legion.c"
 
 
 // -----------------------------------------------------------------------------
@@ -27,9 +32,13 @@ static struct font *ui_item_font(void) { return font_mono6; }
 
 union ui_item_state
 {
-    struct progable progable;
+    struct deploy deploy;
+    struct extract extract;
+    struct printer printer;
+    struct storage storage;
     struct brain brain;
     struct db db;
+    struct legion legion;
 
     // Some item have flexible sizes so we need to ensure enough room for all of
     // em.
@@ -44,9 +53,14 @@ struct ui_item
 
     struct ui_panel panel;
     struct ui_button io;
-    struct ui_progable progable;
+
+    struct ui_deploy deploy;
+    struct ui_extract extract;
+    struct ui_printer printer;
+    struct ui_storage storage;
     struct ui_brain brain;
     struct ui_db db;
+    struct ui_legion legion;
 };
 
 struct ui_item *ui_item_new(void)
@@ -67,9 +81,13 @@ struct ui_item *ui_item_new(void)
 
     ui->io.w.dim.w = ui_layout_inf;
 
-    ui_progable_init(&ui->progable);
+    ui_deploy_init(&ui->deploy);
+    ui_extract_init(&ui->extract);
+    ui_printer_init(&ui->printer);
+    ui_storage_init(&ui->storage);
     ui_brain_init(&ui->brain);
     ui_db_init(&ui->db);
+    ui_legion_init(&ui->legion);
 
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -79,9 +97,13 @@ void ui_item_free(struct ui_item *ui)
 {
     ui_panel_free(&ui->panel);
     ui_button_free(&ui->io);
-    ui_progable_free(&ui->progable);
+    ui_deploy_free(&ui->deploy);
+    ui_extract_free(&ui->extract);
+    ui_printer_free(&ui->printer);
+    ui_storage_free(&ui->storage);
     ui_brain_free(&ui->brain);
     ui_db_free(&ui->db);
+    ui_legion_free(&ui->legion);
     free(ui);
 }
 
@@ -108,21 +130,20 @@ static void ui_item_update(struct ui_item *ui)
 
     switch(id_item(ui->id))
     {
-    case ITEM_PRINTER:
-    case ITEM_MINER:
-    case ITEM_DEPLOYER:
-        return ui_progable_update(&ui->progable, &ui->state.progable);
-
-    case ITEM_BRAIN_S:
-    case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L:
+    case ITEM_DEPLOY:
+        return ui_deploy_update(&ui->deploy, &ui->state.deploy);
+    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:
+        return ui_extract_update(&ui->extract, &ui->state.extract);
+    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III:
+        return ui_printer_update(&ui->printer, &ui->state.printer);
+    case ITEM_STORAGE:
+        return ui_storage_update(&ui->storage, &ui->state.storage);
+    case ITEM_BRAIN_I...ITEM_BRAIN_III:
         return ui_brain_update(&ui->brain, &ui->state.brain);
-
-    case ITEM_DB_S:
-    case ITEM_DB_M:
-    case ITEM_DB_L:
+    case ITEM_DB_I...ITEM_DB_III:
         return ui_db_update(&ui->db, &ui->state.db);
-
+    case ITEM_LEGION_I...ITEM_LEGION_III:
+        return ui_db_update(&ui->db, &ui->state.db);
     default: { assert(false && "unsuported type in ui update"); }
     }
 }
@@ -183,22 +204,21 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     switch(id_item(ui->id))
     {
-    case ITEM_PRINTER:
-    case ITEM_MINER:
-    case ITEM_DEPLOYER:
-        return ui_progable_event(&ui->progable, &ui->state.progable, ev);
-
-    case ITEM_BRAIN_S:
-    case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L:
+    case ITEM_DEPLOY:
+        return ui_deploy_event(&ui->deploy, &ui->state.deploy, ev);
+    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:
+        return ui_extract_event(&ui->extract, &ui->state.extract, ev);
+    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III:
+        return ui_printer_event(&ui->printer, &ui->state.printer, ev);
+    case ITEM_STORAGE:
+        return ui_storage_event(&ui->storage, &ui->state.storage, ev);
+    case ITEM_BRAIN_I...ITEM_BRAIN_III:
         return ui_brain_event(&ui->brain, &ui->state.brain, ev);
-
-    case ITEM_DB_S:
-    case ITEM_DB_M:
-    case ITEM_DB_L:
+    case ITEM_DB_I...ITEM_DB_III:
         return ui_db_event(&ui->db, &ui->state.db, ev);
-
-    default: { assert(false && "unsuported type in ui event"); }
+    case ITEM_LEGION_I...ITEM_LEGION_III:
+        return ui_db_event(&ui->db, &ui->state.db, ev);
+    default: { assert(false && "unsuported type in ui update"); }
     }
 
     return false;
@@ -215,21 +235,20 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     switch(id_item(ui->id))
     {
-    case ITEM_PRINTER:
-    case ITEM_MINER:
-    case ITEM_DEPLOYER:
-        return ui_progable_render(&ui->progable, &ui->state.progable, &layout, renderer);
-
-    case ITEM_BRAIN_S:
-    case ITEM_BRAIN_M:
-    case ITEM_BRAIN_L:
+    case ITEM_DEPLOY:
+        return ui_deploy_render(&ui->deploy, &ui->state.deploy, &layout, renderer);
+    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:
+        return ui_extract_render(&ui->extract, &ui->state.extract, &layout, renderer);
+    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III:
+        return ui_printer_render(&ui->printer, &ui->state.printer, &layout, renderer);
+    case ITEM_STORAGE:
+        return ui_storage_render(&ui->storage, &ui->state.storage, &layout, renderer);
+    case ITEM_BRAIN_I...ITEM_BRAIN_III:
         return ui_brain_render(&ui->brain, &ui->state.brain, &layout, renderer);
-
-    case ITEM_DB_S:
-    case ITEM_DB_M:
-    case ITEM_DB_L:
+    case ITEM_DB_I...ITEM_DB_III:
         return ui_db_render(&ui->db, &ui->state.db, &layout, renderer);
-
-    default: { assert(false && "unsuported type in ui render"); }
+    case ITEM_LEGION_I...ITEM_LEGION_III:
+        return ui_db_render(&ui->db, &ui->state.db, &layout, renderer);
+    default: { assert(false && "unsuported type in ui update"); }
     }
 }

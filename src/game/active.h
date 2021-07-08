@@ -262,4 +262,6 @@ struct legion_packed legion
     mod_t mod;
 };
 
+const enum item *legion_cargo(enum item type);
+
 static_assert(sizeof(struct legion) == 8);
