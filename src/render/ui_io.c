@@ -92,9 +92,11 @@ static struct font *ui_io_font(void) { return font_mono6; }
 enum
 {
     ui_io_reset = 0,
+    ui_io_item,
     ui_io_prog,
     ui_io_mod,
     ui_io_set,
+    ui_io_launch,
 
     ui_io_max,
 };
@@ -131,9 +133,11 @@ struct ui_io *ui_io_new(void)
         .target_val = ui_label_new(font, ui_str_v(id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
+            [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:    ", "loops: "),
             [ui_io_prog] = ui_io_cmd2(font, IO_PROG, "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD, "id:    "),
             [ui_io_set] = ui_io_cmd2(font, IO_SET, "index: ", "value: "),
+            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:    "),
         },
     };
 
@@ -167,7 +171,7 @@ static void ui_io_update(struct ui_io *ui)
 {
     ui_str_set_id(&ui->target_val.str, ui->id);
 
-    const struct item_config *config = item_config(id_item(ui->id));
+    const struct active_config *config = active_config(id_item(ui->id));
     ui->list = config->io_list;
     ui->list_len = config->io_list_len;
 

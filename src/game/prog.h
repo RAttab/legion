@@ -44,10 +44,10 @@ struct prog_ret prog_at(const struct prog *, prog_it_t index);
 
 typedef uint64_t prog_packed_t;
 
-inline prog_packed_t prog_pack(prod_id_t id, prog_it_t it, struct prog *ptr)
+inline prog_packed_t prog_pack(prog_id_t id, prog_it_t it, struct prog *ptr)
 {
-    assert(~((1UL << 48) - 1) & ptr);
-    return (id << 56) | (it << 48) | ((uintptr_t) ptr);
+    assert(~((1UL << 48) - 1) & ((uintptr_t) ptr));
+    return (((uint64_t) id) << 56) | (((uint64_t) it) << 48) | ((uintptr_t) ptr);
 }
 
 inline struct prog *prog_packed_ptr(prog_packed_t packed)
@@ -55,9 +55,9 @@ inline struct prog *prog_packed_ptr(prog_packed_t packed)
     return (void *) (((1UL << 48) - 1) & packed);
 }
 
-inline prog_packed_ptr_update(prog_packed_t packed, struct prog *ptr)
+inline prog_packed_t prog_packed_ptr_update(prog_packed_t packed, struct prog *ptr)
 {
-    assert(~((1UL << 48) - 1) & ptr);
+    assert(~((1UL << 48) - 1) & ((uintptr_t) ptr));
     return ((uintptr_t) ptr) | (packed & (~((1UL << 48) - 1)));
 }
 

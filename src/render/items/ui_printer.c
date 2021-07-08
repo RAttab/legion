@@ -48,15 +48,15 @@ static void ui_printer_update(struct ui_printer *ui, struct printer *state)
         ui_str_set_u64(&ui->loops_val.str, state->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 
-    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting", "working");
+    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
 
-    ui_prog_update(ui, state->prog);
+    ui_prog_update(&ui->prog, state->prog);
 }
 
 static bool ui_printer_event(
         struct ui_printer *ui, struct printer *state, const SDL_Event *ev)
 {
-    return ui_prog_event(ui, state->prog, ev);
+    return ui_prog_event(&ui->prog, state->prog, ev);
 }
 
 static void ui_printer_render(
@@ -65,14 +65,14 @@ static void ui_printer_render(
 {
     struct font *font = ui_item_font();
 
-    ui_label_render(&ui->loops, renderer);
+    ui_label_render(&ui->loops, layout, renderer);
     ui_label_render(&ui->loops_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, renderer);
+    ui_label_render(&ui->state, layout, renderer);
     ui_label_render(&ui->state_val, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, font->glyph_h);
-    ui_prog_render(ui, state->prog, layout, renderer);
+    ui_prog_render(&ui->prog, state->prog, layout, renderer);
 }

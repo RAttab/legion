@@ -93,11 +93,11 @@ static struct lane *lane_load(struct save *save)
 static void lane_save(struct lane *lane, struct save *save)
 {
     save_write_magic(save, save_magic_lane);
-    save_write_value(save, src);
-    save_write_value(save, dst);
-    save_write_value(save, free);
-    save_write_value(save, len);
-    save_write_value(save, cap);
+    save_write_value(save, lane->src);
+    save_write_value(save, lane->dst);
+    save_write_value(save, lane->free);
+    save_write_value(save, lane->len);
+    save_write_value(save, lane->cap);
     save_write(save, lane->heap, lane->cap * sizeof(*lane->heap));
     save_write(save, lane->data, lane->cap * sizeof(*lane->data));
     save_write_magic(save, save_magic_lane);
@@ -113,7 +113,7 @@ static void lane_grow(struct lane *lane)
 
     lane->free = lane->len;
     for (size_t i = lane->len; i < lane->cap; ++i)
-        lane->data[i] = i+1;
+        lane->data[i].next = i+1;
 }
 
 static void lane_push(struct lane *lane,
@@ -122,10 +122,9 @@ static void lane_push(struct lane *lane,
     lane_grow(lane);
 
     uint16_t index = lane->free;
-    struct lane_data *data = lane->data + index;
-    lane->free = data->next;
-
-    *data = (struct lane_data) {
+    struct lane_data *entry = lane->data + index;
+    lane->free = entry->next;
+    *entry = (struct lane_data) {
         .data = data,
         .item = type,
         .direction = coord_eq(src, lane->src),
@@ -135,7 +134,7 @@ static void lane_push(struct lane *lane,
     *it = (struct lane_heap) { .ts = ts, .data = index };
 
     while (index) {
-        struct lane_heap *parent = &lanes->heap[index / 2];
+        struct lane_heap *parent = lane->heap + (index / 2);
         if (parent->ts < it->ts) break;
 
         legion_swap(it, parent);
@@ -144,9 +143,9 @@ static void lane_push(struct lane *lane,
     }
 }
 
-static ts_t lane_peek(struct lane *lane)
+static world_ts_t lane_peek(struct lane *lane)
 {
-    return lane->len ? lane->heap[0].ts : -1;
+    return lane->len ? lane->heap[0].ts : (world_ts_t) -1;
 }
 
 static struct lane_data lane_pop(struct lane *lane)
@@ -154,17 +153,17 @@ static struct lane_data lane_pop(struct lane *lane)
     assert(lane->len);
 
     size_t ret = lane->heap[0].data;
-    lanes->heap[0] = lanes->heap[--lanes->len];
+    lane->heap[0] = lane->heap[--lane->len];
 
     size_t index = 0;
-    while (index < lanes->len) {
-        struct lane_heap *it = &lanes->heap[index];
+    while (index < lane->len) {
+        struct lane_heap *it = lane->heap + index;
 
         size_t li = index * 2;
         size_t ri = index * 2 + 1;
 
-        struct lane_heap *lp = li < lanes->len ? &lanes->heap[li] : NULL;
-        struct lane_heap *rp = ri < lanes->len ? &lanes->heap[ri] : NULL;
+        struct lane_heap *lp = li < lane->len ? lane->heap + li : NULL;
+        struct lane_heap *rp = ri < lane->len ? lane->heap + ri : NULL;
 
         size_t child = 0;
         struct cargo *ptr = NULL;

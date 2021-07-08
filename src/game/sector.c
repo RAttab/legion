@@ -18,7 +18,7 @@ void star_gen(struct star *star, struct coord coord)
     star->coord = coord;
     star->state = star_untouched;
 
-    star->power = 1U << rng_uni(&rng, 1, 32);
+    star->power = 1U << rng_uni(&rng, 1, 16);
     star->power += rng_uni(&rng, 1, star->power);
 
     size_t planets = rng_norm(&rng, 1, 16);

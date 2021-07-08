@@ -326,33 +326,13 @@ const struct active_config *active_config(enum item item)
 {
     switch (item)
     {
-    case ITEM_DEPLOY: { return deploy_config(item); }
-
-    case ITEM_EXTRACT_I:
-    case ITEM_EXTRACT_II:
-    case ITEM_EXTRACT_III: { return extract_config(item); }
-
-    case ITEM_PRINTER_I:
-    case ITEM_PRINTER_II:
-    case ITEM_PRINTER_III:
-    case ITEM_ASSEMBLER_I:
-    case ITEM_ASSEMBLER_II:
-    case ITEM_ASSEMBLER_III: { return printer_config(item); }
-
-    case ITEM_STORAGE: { return storage_config(item); }
-
-    case ITEM_DB_I:
-    case ITEM_DB_II:
-    case ITEM_DB_III: { return db_config(item); }
-
-    case ITEM_BRAIN_I:
-    case ITEM_BRAIN_II:
-    case ITEM_BRAIN_III: { return brain_config(item); }
-
-    case ITEM_LEGION_I:
-    case ITEM_LEGION_II:
-    case ITEM_LEGION_III: { return legion_config(item); }
-
+    case ITEM_DEPLOY:                         return deploy_config(item);
+    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:   return extract_config(item);
+    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III: return printer_config(item);
+    case ITEM_STORAGE:                        return storage_config(item);
+    case ITEM_DB_I...ITEM_DB_III:             return db_config(item);
+    case ITEM_BRAIN_I...ITEM_BRAIN_III:       return brain_config(item);
+    case ITEM_LEGION_I...ITEM_LEGION_III:     return legion_config(item);
     default: { assert(false); }
     }
 }

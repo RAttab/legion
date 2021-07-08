@@ -49,12 +49,12 @@ static void ui_legion_update(struct ui_legion *ui, struct legion *state)
     if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
         atom_t mod = {0};
-        mods_name(world_mods(core.state.world), mod_id(state->mod->id), &mod);
+        mods_name(world_mods(core.state.world), mod_id(state->mod), &mod);
         ui_str_setv(&ui->mod_val.str, mod, vm_atom_cap);
     }
 
     size_t count = 0;
-    for (const enum item *it = legion_cargo(id_item(id)); *it; ++it) count++;
+    for (const enum item *it = legion_cargo(id_item(state->id)); *it; ++it) count++;
     ui_scroll_update(&ui->scroll, count);
 }
 
@@ -74,7 +74,7 @@ static void ui_legion_render(
 {
     struct font *font = ui_mod_font();
 
-    ui_label_render(&ui->mod, renderer);
+    ui_label_render(&ui->mod, layout, renderer);
     ui_label_render(&ui->mod_val, layout, renderer);
     ui_layout_next_row(layout);
 

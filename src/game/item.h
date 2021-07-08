@@ -12,7 +12,7 @@
 // item
 // -----------------------------------------------------------------------------
 
-legion_packed enum item
+enum legion_packed item
 {
     ITEM_NIL = 0x00,
 
@@ -113,7 +113,6 @@ enum items_utils
     ITEMS_SYNTH_LEN = ITEM_ELEM_LAST - ITEM_SYNTH_FIRST,
     ITEMS_PASSIVE_LEN = ITEM_PASSIVE_LAST - ITEM_PASSIVE_FIRST,
     ITEMS_ACTIVE_LEN = ITEM_ACTIVE_LAST - ITEM_ACTIVE_FIRST,
-    ITEMS_SPECIAL_LEN = ITEM_SPECIAL_LAST - ITEM_SPECIAL_FIRST,
 };
 
 static_assert(ITEMS_NATURAL_LEN + ITEMS_SYNTH_LEN == 26);

@@ -19,7 +19,7 @@ inline size_t id_str(id_t id, size_t len, char *dst)
     dst += ret; len -= ret;
 
     *dst = '.';
-    *dst++; len--;
+    dst++; len--;
 
     str_utox(id_bot(id), dst, len);
     return id_str_len;

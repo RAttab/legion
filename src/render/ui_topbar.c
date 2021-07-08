@@ -6,6 +6,7 @@
 #include "common.h"
 #include "render/ui.h"
 #include "ui/ui.h"
+#include "utils/str.h"
 
 
 // -----------------------------------------------------------------------------

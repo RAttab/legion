@@ -34,7 +34,7 @@ inline struct vec64 *vec64_grow(struct vec64 *vec, size_t size)
     if (!vec) return vec64_reserve(size);
     if (size < vec->cap) return vec;
 
-    vec = realloc(vec, size * sizeof(vec->val[0]));
+    vec = realloc(vec, size * sizeof(vec->vals[0]));
     vec->cap = size;
     return vec;
 }

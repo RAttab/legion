@@ -27,18 +27,14 @@ enum legion_packed star_state
 struct legion_packed star
 {
     struct coord coord;
+    uint16_t power;
     enum star_state state;
-    legion_pad(3);
-
-    uint32_t power;
+    legion_pad(1);
     uint16_t elems[ITEMS_NATURAL_LEN];
-
-    legion_pad(16);
 };
-static_assert(sizeof(struct star) == s_cache_line);
+static_assert(sizeof(struct star) == 4 * 8 + 2);
 
 void star_gen(struct star *, struct coord);
-
 bool star_load(struct star *, struct save *);
 void star_save(struct star *, struct save *);
 

@@ -54,7 +54,7 @@ static void ui_deploy_update(struct ui_deploy *ui, struct deploy *state)
         ui_str_set_u64(&ui->loops_val.str, state->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 
-    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting", "working");
+    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
 }
 
 static bool ui_deploy_event(
@@ -68,17 +68,17 @@ static void ui_deploy_render(
         struct ui_deploy *ui, struct deploy *state,
         struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct font *font = ui_item_font();
+    (void) state;
 
-    ui_label_render(&ui->item, renderer);
+    ui_label_render(&ui->item, layout, renderer);
     ui_label_render(&ui->item_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->loops, renderer);
+    ui_label_render(&ui->loops, layout, renderer);
     ui_label_render(&ui->loops_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, renderer);
+    ui_label_render(&ui->state, layout, renderer);
     ui_label_render(&ui->state_val, layout, renderer);
     ui_layout_next_row(layout);
 }

@@ -28,7 +28,7 @@ void lanes_free(struct lanes *);
 bool lanes_load(struct lanes *, struct world *, struct save *);
 void lanes_save(struct lanes *, struct save *);
 
-struct vec64 *lanes_list(struct lane *, struct coord key);
+struct vec64 *lanes_list(struct lanes *, struct coord key);
 
 void lanes_launch(struct lanes *,
         struct coord src, struct coord dst, enum item type, uint32_t data);

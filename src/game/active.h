@@ -8,7 +8,6 @@
 #include "common.h"
 #include "game/item.h"
 #include "game/prog.h"
-#include "game/ports.h"
 #include "vm/vm.h"
 
 struct chunk;
@@ -43,33 +42,6 @@ struct active_config
 enum { item_state_len_max = s_cache_line * 4 };
 
 const struct active_config *active_config(enum item);
-
-
-// -----------------------------------------------------------------------------
-// ports
-// -----------------------------------------------------------------------------
-
-legion_packed enum ports_state
-{
-    ports_nil = 0,
-    ports_requested,
-    ports_received,
-};
-
-legion_packed struct ports
-{
-    enum item in;
-    enum port_state in_state;
-    enum item out;
-    legion_pad(1);
-};
-
-static_assert(sizeof(struct ports) == 4);
-
-inline void ports_reset(struct ports *port)
-{
-    *port = (struct port) { 0 };
-}
 
 
 // -----------------------------------------------------------------------------
@@ -109,23 +81,23 @@ typedef struct active *active_list_t[ITEMS_ACTIVE_LEN];
 inline struct active *active_index(active_list_t *list, enum item item)
 {
     assert(item_is_active(item));
-    return list[item];
+    return (*list)[item];
 }
 
 inline struct active *active_index_create(active_list_t *list, enum item item)
 {
     assert(item_is_active(item));
-    if (unlikely(!list[item])) list[item] = active_alloc(item);
-    return list[item];
+    if (unlikely(!(*list)[item])) (*list)[item] = active_alloc(item);
+    return (*list)[item];
 }
 
 typedef struct active **active_it_t;
 active_it_t active_next(active_list_t *list, active_it_t it)
 {
-    const active_it_t end = list + ITEM_ACTIVE_LAST;
+    const active_it_t end = (*list) + ITEM_ACTIVE_LAST;
     assert(it < end);
 
-    if (!it) it = &list[0];
+    if (!it) it = *list;
     while (!*it && it < end) it++;
 
     return likely(it < end) ? it : NULL;

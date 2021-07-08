@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "game/item.h"
 #include "utils/log.h"
 #include "utils/text.h"
 #include "vm/mod.h"
@@ -175,7 +176,7 @@ void ui_str_set_u64(struct ui_str *, uint64_t val);
 void ui_str_set_hex(struct ui_str *, uint64_t val);
 void ui_str_set_scaled(struct ui_str *, uint64_t val);
 void ui_str_set_id(struct ui_str *, id_t val);
-void ui_str_set_item(struct ui_str *, enum item val)
+void ui_str_set_item(struct ui_str *, enum item val);
 inline size_t ui_str_len(struct ui_str *str) { return str->cap ? str->cap : str->len; }
 
 
