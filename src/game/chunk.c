@@ -195,6 +195,7 @@ bool chunk_io(
         struct chunk *chunk,
         enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
 {
+    if (!item_is_active(id_item(dst))) return false;
     struct active *active = active_index(&chunk->active, id_item(dst));
     return active_io(active, chunk, io, src, dst, len, args);
 }

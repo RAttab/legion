@@ -99,7 +99,7 @@ static void ui_prog_render(
         default: { assert(false); }
         }
 
-        ui_str_set_hex(&label->str, ret.item);
+        ui_str_set_item(&label->str, ret.item);
         label->bg = i == prog_packed_it(state) ? rgba_gray(0x44) : rgba_nil();
         ui_label_render(label, &inner, renderer);
 

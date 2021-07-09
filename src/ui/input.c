@@ -63,7 +63,7 @@ uint64_t ui_input_get_u64(struct ui_input *input)
         atom_t atom = {0};
         memcpy(atom, input->buf.c+1, input->buf.len-1);
 
-        if (c0 == '@') return vm_atom(&atom);
+        if (c0 == '!') return vm_atom(&atom);
 
         mod_id_t id = mods_find(world_mods(core.state.world), &atom);
         return id ? mods_latest(world_mods(core.state.world), id)->id : 0;

@@ -68,6 +68,7 @@ static void deploy_io_item(
 
     word_t item = args[0];
     if (item != (enum item) item) return;
+    if (!item_is_active(item)) return;
 
     deploy_io_reset(deploy, chunk);
     deploy->item = item;

@@ -114,7 +114,7 @@ static const char *item_str_table[] =
 
 size_t item_str(enum item item, size_t len, char *dst)
 {
-    assert(len <= 4);
+    assert(len >= 4);
     assert(item < array_len(item_str_table));
 
     const char *str = item_str_table[item];

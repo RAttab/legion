@@ -71,10 +71,10 @@ struct ui_star *ui_star_new(void)
         .logistic = ui_button_new(font, ui_str_c("logistic")),
 
         .control_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .control_list = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
+        .control_list = ui_toggles_new(font, ui_str_v(id_str_len)),
 
         .factory_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .factory_list = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
+        .factory_list = ui_toggles_new(font, ui_str_v(id_str_len)),
 
         .workers = ui_label_new(font, ui_str_c("workers: ")),
         .workers_val = ui_label_new(font, ui_str_v(10)),

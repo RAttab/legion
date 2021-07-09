@@ -28,6 +28,9 @@ const enum item *legion_cargo(enum item type)
     {
     case ITEM_LEGION_1: {
         static const enum item cargo[] = {
+            ITEM_WORKER,
+            ITEM_WORKER,
+            ITEM_DEPLOY,
             ITEM_EXTRACT_1,
             ITEM_EXTRACT_1,
             ITEM_PRINTER_1,
@@ -35,7 +38,7 @@ const enum item *legion_cargo(enum item type)
             ITEM_ASSEMBLY_1,
             ITEM_ASSEMBLY_1,
             ITEM_DB_1,
-            ITEM_BRAIN_1,
+            ITEM_BRAIN_2,
             ITEM_NIL,
         };
         return cargo;
