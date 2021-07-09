@@ -107,9 +107,9 @@ static struct prog *prog_read(const char *it, const char *end)
 {
     size_t line_len = end - it;
     assert(line_len > 5);
-    assert((line_len - 5) % 3 == 0);
+    assert(line_len % 3 == 0);
 
-    size_t tape_len = (line_len - 5) / 3 - 1;
+    size_t tape_len = (line_len / 3) - 2;
     assert(tape_len >= 1);
 
     struct prog *prog = calloc(1, sizeof(*prog) + tape_len * sizeof(prog->tape[0]));
