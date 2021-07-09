@@ -4,6 +4,8 @@
 */
 
 #include "game/lanes.h"
+#include "game/item.h"
+#include "utils/vec.h"
 
 
 // -----------------------------------------------------------------------------
@@ -166,7 +168,7 @@ static struct lane_data lane_pop(struct lane *lane)
         struct lane_heap *rp = ri < lane->len ? lane->heap + ri : NULL;
 
         size_t child = 0;
-        struct cargo *ptr = NULL;
+        struct lane_heap *ptr = NULL;
 
         if ((lp && lp->ts < it->ts) && (!rp || lp->ts < rp->ts)) {
             child = li;
@@ -220,16 +222,16 @@ static uint64_t lanes_key(struct coord src, struct coord dst)
 
 static void lanes_index(struct lanes *lanes, struct coord key, struct coord val)
 {
-    uint64_t key = coord_to_id(coord);
-    struct htable_ret ret = htable_get(&lanes->index, key);
+    uint64_t key64 = coord_to_id(key);
+    struct htable_ret ret = htable_get(&lanes->index, key64);
 
     struct vec64 *old = (void *) ret.value;
     struct vec64 *new = vec64_append(old, coord_to_id(val));
     if (old == new) return;
 
     if (old)
-        ret = htable_xchg(&lanes->index, key, (uintptr_t) new);
-    else ret = htable_put(&lanes->index, key, (uintptr_t) new);
+        ret = htable_xchg(&lanes->index, key64, (uintptr_t) new);
+    else ret = htable_put(&lanes->index, key64, (uintptr_t) new);
     assert(ret.ok);
 }
 
@@ -244,7 +246,7 @@ bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
         if (!lane) goto fail;
 
         uint64_t key = lanes_key(lane->src, lane->dst);
-        struct htable_ret ret = htable_put(&lanes->lanes, key);
+        struct htable_ret ret = htable_put(&lanes->lanes, key, (uintptr_t) lane);
         assert(ret.ok);
 
         lanes_index(lanes, lane->src, lane->dst);
@@ -255,23 +257,23 @@ bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
     return true;
 
   fail:
-    free(lanes->data);
+    lanes_free(lanes);
     return false;
 }
 
 void lanes_save(struct lanes *lanes, struct save *save)
 {
     save_write_magic(save, save_magic_lanes);
-    save_write_value(lanes->lanes.len);
+    save_write_value(save, lanes->lanes.len);
 
     struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it))
-        lane_save((void *) it->value, (uint32_t) save);
+        lane_save((void *) it->value, save);
 
     save_write_magic(save, save_magic_lanes);
 }
 
-struct vec64 *lanes_list(struct lane *lane, struct coord key)
+struct vec64 *lanes_list(struct lanes *lanes, struct coord key)
 {
     struct htable_ret ret = htable_get(&lanes->index, coord_to_id(key));
     return (void *) ret.value;
@@ -281,14 +283,14 @@ static uint64_t lanes_item_div(enum item type)
 {
     switch (type) {
 
-    case ITEM_LEGION_I:
-    case ITEM_SHUTTLE_I: { return 1; }
+    case ITEM_LEGION_1:
+    case ITEM_SHUTTLE_1: { return 1; }
 
-    case ITEM_LEGION_II:
-    case ITEM_SHUTTLE_II: { return 10; }
+    case ITEM_LEGION_2:
+    case ITEM_SHUTTLE_2: { return 10; }
 
-    case ITEM_LEGION_III:
-    case ITEM_SHUTTLE_III: { return 100; }
+    case ITEM_LEGION_3:
+    case ITEM_SHUTTLE_3: { return 100; }
 
     default: { assert(false); }
     };
@@ -301,10 +303,10 @@ void lanes_launch(struct lanes *lanes,
     struct htable_ret ret = htable_get(&lanes->lanes, key);
 
     struct lane *lane = NULL;
-    if (ret.ok) lane = (void *) lane.value;
+    if (ret.ok) lane = (void *) ret.value;
     else {
         lane = lane_alloc(src, dst);
-        ret = htable_put(lanes->lanes, key, (uintptr_t) lane);
+        ret = htable_put(&lanes->lanes, key, (uintptr_t) lane);
         assert(ret.ok);
 
         lanes_index(lanes, src, dst);

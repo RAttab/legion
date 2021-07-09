@@ -41,7 +41,7 @@ legion_packed struct active
 
     step_fn_t step;
     io_fn_t io;
-    const struct item_config *config;
+    const struct active_config *config;
 };
 
 static_assert(sizeof(struct active) == s_cache_line);
@@ -78,10 +78,10 @@ void active_delete(struct active *active, id_t id)
     if (index >= active->len) return;
 
     if (likely(active->cap <= 64))
-        active->index &= 1ULL << index;
+        active->free &= 1ULL << index;
     else {
         struct vec64 *vec = (void *) active->free;
-        vec->data[index / 64] &= 1ULL << (index % 64);
+        vec->vals[index / 64] &= 1ULL << (index % 64);
     }
 }
 
@@ -91,7 +91,7 @@ inline bool active_deleted(struct active *active, size_t index)
     if (likely(active->cap <= 64)) return (active->free & (1ULL << index)) != 0;
 
     struct vec64 *vec = (void *) active->free;
-    return (vec->data[index / 64] & (1ULL << (index % 64))) != 0;
+    return (vec->vals[index / 64] & (1ULL << (index % 64))) != 0;
 }
 
 static bool active_recycle(struct active *active, size_t *index)
@@ -106,10 +106,10 @@ static bool active_recycle(struct active *active, size_t *index)
 
     struct vec64 *vec = (void *) active->free;
     for (size_t i = 0; i < vec->len; ++i) {
-        if (!vec->data[i]) continue;
+        if (!vec->vals[i]) continue;
 
-        *index = u64_ctz(vec->data[i]);
-        vec->data[i] &= ~(1ULL << *index);
+        *index = u64_ctz(vec->vals[i]);
+        vec->vals[i] &= ~(1ULL << *index);
         *index += (i * 64);
         return true;
     }
@@ -161,7 +161,7 @@ void active_save(struct active *active, struct save *save)
     save_write(save, active->ports, len * sizeof(struct ports));
 
     if (active->cap < 64) save_write_value(save, active->free);
-    else active_write_vec64(save, (const void *) active->free);
+    else save_write_vec64(save, (const void *) active->free);
 }
 
 
@@ -175,7 +175,7 @@ void active_list(struct active *active, struct vec64 *ids)
     if (!active) return;
 
     for (size_t i = 0; i < active->len; ++i) {
-        if (active_deleted(save, i)) continue;
+        if (active_deleted(active, i)) continue;
         vec64_append(ids, make_id(active->type, i+1));
     }
 }
@@ -202,6 +202,8 @@ struct ports *active_ports(struct active *active, id_t id)
 
 bool active_copy(struct active *active, id_t id, void *dst, size_t len)
 {
+    assert(len >= active->size);
+
     void *src = active_get(active, id);
     if (!src) return false;
 
@@ -233,10 +235,10 @@ static void active_grow(struct active *active)
     memset(active->ports + active->len, 0, added * sizeof(active->ports[0]));
 
     if (old > 64)
-        active->free = (uintptr_t) vec_grow((void *) active->free, active->cap / 64);
+        active->free = (uintptr_t) vec64_grow((void *) active->free, active->cap / 64);
     else if (old == 64) {
-        struct vec64 *vec = vec_reserve(2);
-        vec->data[0] = active->free;
+        struct vec64 *vec = vec64_reserve(2);
+        vec->vals[0] = active->free;
         active->free = (uintptr_t) vec;
     }
 }
@@ -251,7 +253,7 @@ void active_create(struct active *active)
 
 // This creation function is not used for replication (...yet) which means that
 // we don't need to defer the creation (... yet)
-void active_create_from(struct active *active, uint32_t data)
+void active_create_from(struct active *active, struct chunk *chunk, uint32_t data)
 {
     assert(active->config->make);
 
@@ -273,7 +275,7 @@ void active_step(struct active *active, struct chunk *chunk)
     if (!active) return;
 
     if (active->step) {
-        for (size_t i = 0; i < it->len; ++i) {
+        for (size_t i = 0; i < active->len; ++i) {
             if (active_deleted(active, i)) continue;
             active->step(active->arena + (i * active->size), chunk);
         }
@@ -326,13 +328,13 @@ const struct active_config *active_config(enum item item)
 {
     switch (item)
     {
-    case ITEM_DEPLOY:                         return deploy_config(item);
-    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:   return extract_config(item);
-    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III: return printer_config(item);
-    case ITEM_STORAGE:                        return storage_config(item);
-    case ITEM_DB_I...ITEM_DB_III:             return db_config(item);
-    case ITEM_BRAIN_I...ITEM_BRAIN_III:       return brain_config(item);
-    case ITEM_LEGION_I...ITEM_LEGION_III:     return legion_config(item);
+    case ITEM_DEPLOY:                       return deploy_config(item);
+    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:   return extract_config(item);
+    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:  return printer_config(item);
+    case ITEM_STORAGE:                      return storage_config(item);
+    case ITEM_DB_1...ITEM_DB_3:             return db_config(item);
+    case ITEM_BRAIN_1...ITEM_BRAIN_3:       return brain_config(item);
+    case ITEM_LEGION_1...ITEM_LEGION_3:     return legion_config(item);
     default: { assert(false); }
     }
 }

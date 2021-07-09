@@ -56,7 +56,7 @@ static void storage_step(void *state, struct chunk *chunk)
 
 static void storage_io_reset(struct storage *storage, struct chunk *chunk)
 {
-    chunk_ports_reset(chunk, progable->id);
+    chunk_ports_reset(chunk, storage->id);
     storage->item = 0;
     storage->count = 0;
     storage->waiting = false;
@@ -73,7 +73,7 @@ static void storage_io_item(
 
     storage_io_reset(storage, chunk);
     storage->item = item;
-    storage->count = count;
+    storage->count = 0;
 }
 
 static void storage_io(
@@ -84,8 +84,8 @@ static void storage_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, storage->id, src, 0, NULL); return; }
-    case IO_ITEM: { storage_io_prog(storage, chunk, len, args); return; }
-    case IO_RESET: { storage_io_reset(storage); return; }
+    case IO_ITEM: { storage_io_item(storage, chunk, len, args); return; }
+    case IO_RESET: { storage_io_reset(storage, chunk); return; }
     default: { return; }
     }
 }
@@ -95,12 +95,12 @@ static void storage_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *storage_config(enum item item)
+const struct active_config *storage_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_ITEM, IO_RESET };
 
-    static const struct item_config config = {
+    static const struct active_config config = {
         .size = sizeof(struct storage),
         .init = storage_init,
         .step = storage_step,

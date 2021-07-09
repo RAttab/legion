@@ -4,6 +4,7 @@
 */
 
 #include "game/world.h"
+#include "game/active.h"
 #include "vm/mod.h"
 
 
@@ -125,13 +126,8 @@ struct coord world_populate(struct world *world)
             struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
             assert(chunk);
 
-            chunk_create(chunk, ITEM_MINER);
-            chunk_create(chunk, ITEM_MINER);
-            chunk_create(chunk, ITEM_PRINTER);
-            chunk_create(chunk, ITEM_WORKER);
-            chunk_create(chunk, ITEM_DEPLOYER);
-            chunk_create(chunk, ITEM_BRAIN_M);
-            chunk_create(chunk, ITEM_DB_S);
+            for (const enum item *it = legion_cargo(ITEM_LEGION_1); *it; it++)
+                chunk_create(chunk, *it);
 
             return star->coord;
         }
@@ -237,7 +233,7 @@ ssize_t world_scan(struct world *world, struct coord coord, enum item item)
 
 struct vec64 *world_lanes_list(struct world *world, struct coord key)
 {
-    lanes_list(&world->lanes, key);
+    return lanes_list(&world->lanes, key);
 }
 
 void world_lanes_launch(struct world *world,

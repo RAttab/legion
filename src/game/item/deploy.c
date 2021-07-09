@@ -55,7 +55,7 @@ static void deploy_step(void *state, struct chunk *chunk)
 
 static void deploy_io_reset(struct deploy *deploy, struct chunk *chunk)
 {
-    chunk_ports_reset(chunk, progable->id);
+    chunk_ports_reset(chunk, deploy->id);
     deploy->item = 0;
     deploy->loops = 0;
     deploy->waiting = false;
@@ -82,8 +82,8 @@ static void deploy_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, deploy->id, src, 0, NULL); return; }
-    case IO_ITEM: { deploy_io_prog(deploy, chunk, len, args); return; }
-    case IO_RESET: { deploy_io_reset(deploy); return; }
+    case IO_ITEM: { deploy_io_item(deploy, chunk, len, args); return; }
+    case IO_RESET: { deploy_io_reset(deploy, chunk); return; }
     default: { return; }
     }
 }
@@ -93,12 +93,12 @@ static void deploy_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *deploy_config(enum item item)
+const struct active_config *deploy_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_ITEM, IO_RESET };
 
-    static const struct item_config config = {
+    static const struct active_config config = {
         .size = sizeof(struct deploy),
         .init = deploy_init,
         .step = deploy_step,

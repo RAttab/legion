@@ -49,7 +49,7 @@ static void ui_prog_free(struct ui_prog *ui)
 
 static void ui_prog_update(struct ui_prog *ui, prog_packed_t state)
 {
-    struct prog *prog = prog_packed_ptr(state);
+    const struct prog *prog = prog_packed_ptr(state);
     if (!prog) ui_str_setc(&ui->prog_val.str, "nil");
     else ui_str_set_item(&ui->prog_val.str, prog_id(prog));
     

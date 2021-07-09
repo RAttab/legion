@@ -40,7 +40,7 @@ struct prog_ret prog_at(const struct prog *prog, prog_it_t it)
 
     if (it < prog->inputs) {
         ret.state = prog_input;
-        ret.item = prog->tape[index];
+        ret.item = prog->tape[it];
     }
     else if (it < prog->inputs + prog->outputs) {
         ret.state = prog_output;

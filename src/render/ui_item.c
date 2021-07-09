@@ -132,18 +132,18 @@ static void ui_item_update(struct ui_item *ui)
     {
     case ITEM_DEPLOY:
         return ui_deploy_update(&ui->deploy, &ui->state.deploy);
-    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:
+    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
         return ui_extract_update(&ui->extract, &ui->state.extract);
-    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III:
+    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
         return ui_printer_update(&ui->printer, &ui->state.printer);
     case ITEM_STORAGE:
         return ui_storage_update(&ui->storage, &ui->state.storage);
-    case ITEM_BRAIN_I...ITEM_BRAIN_III:
+    case ITEM_BRAIN_1...ITEM_BRAIN_3:
         return ui_brain_update(&ui->brain, &ui->state.brain);
-    case ITEM_DB_I...ITEM_DB_III:
+    case ITEM_DB_1...ITEM_DB_3:
         return ui_db_update(&ui->db, &ui->state.db);
-    case ITEM_LEGION_I...ITEM_LEGION_III:
-        return ui_db_update(&ui->db, &ui->state.db);
+    case ITEM_LEGION_1...ITEM_LEGION_3:
+        return ui_legion_update(&ui->legion, &ui->state.legion);
     default: { assert(false && "unsuported type in ui update"); }
     }
 }
@@ -206,18 +206,18 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     {
     case ITEM_DEPLOY:
         return ui_deploy_event(&ui->deploy, &ui->state.deploy, ev);
-    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:
+    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
         return ui_extract_event(&ui->extract, &ui->state.extract, ev);
-    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III:
+    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
         return ui_printer_event(&ui->printer, &ui->state.printer, ev);
     case ITEM_STORAGE:
         return ui_storage_event(&ui->storage, &ui->state.storage, ev);
-    case ITEM_BRAIN_I...ITEM_BRAIN_III:
+    case ITEM_BRAIN_1...ITEM_BRAIN_3:
         return ui_brain_event(&ui->brain, &ui->state.brain, ev);
-    case ITEM_DB_I...ITEM_DB_III:
+    case ITEM_DB_1...ITEM_DB_3:
         return ui_db_event(&ui->db, &ui->state.db, ev);
-    case ITEM_LEGION_I...ITEM_LEGION_III:
-        return ui_db_event(&ui->db, &ui->state.db, ev);
+    case ITEM_LEGION_1...ITEM_LEGION_3:
+        return ui_legion_event(&ui->legion, &ui->state.legion, ev);
     default: { assert(false && "unsuported type in ui update"); }
     }
 
@@ -237,18 +237,18 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     {
     case ITEM_DEPLOY:
         return ui_deploy_render(&ui->deploy, &ui->state.deploy, &layout, renderer);
-    case ITEM_EXTRACT_I...ITEM_EXTRACT_III:
+    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
         return ui_extract_render(&ui->extract, &ui->state.extract, &layout, renderer);
-    case ITEM_PRINTER_I...ITEM_ASSEMBLER_III:
+    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
         return ui_printer_render(&ui->printer, &ui->state.printer, &layout, renderer);
     case ITEM_STORAGE:
         return ui_storage_render(&ui->storage, &ui->state.storage, &layout, renderer);
-    case ITEM_BRAIN_I...ITEM_BRAIN_III:
+    case ITEM_BRAIN_1...ITEM_BRAIN_3:
         return ui_brain_render(&ui->brain, &ui->state.brain, &layout, renderer);
-    case ITEM_DB_I...ITEM_DB_III:
+    case ITEM_DB_1...ITEM_DB_3:
         return ui_db_render(&ui->db, &ui->state.db, &layout, renderer);
-    case ITEM_LEGION_I...ITEM_LEGION_III:
-        return ui_db_render(&ui->db, &ui->state.db, &layout, renderer);
+    case ITEM_LEGION_1...ITEM_LEGION_3:
+        return ui_legion_render(&ui->legion, &ui->state.legion, &layout, renderer);
     default: { assert(false && "unsuported type in ui update"); }
     }
 }

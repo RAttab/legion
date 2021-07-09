@@ -29,9 +29,9 @@ static void db_init(void *state, id_t id, struct chunk *chunk)
 
     db->id = id;
     switch (id_item(id)) {
-    case ITEM_DB_I:   { db->len = db_len_s; break; }
-    case ITEM_DB_II:  { db->len = db_len_m; break; }
-    case ITEM_DB_III: { db->len = db_len_l; break; }
+    case ITEM_DB_1:   { db->len = db_len_s; break; }
+    case ITEM_DB_2:  { db->len = db_len_m; break; }
+    case ITEM_DB_3: { db->len = db_len_l; break; }
     default: { assert(false); }
     }
 }
@@ -76,14 +76,14 @@ static void db_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *db_config(enum item item)
+const struct active_config *db_config(enum item item)
 {
     static const word_t io_list[] = { IO_PING, IO_GET, IO_SET };
 
     switch(item) {
 
-    case ITEM_DB_I: {
-        static const struct item_config config = {
+    case ITEM_DB_1: {
+        static const struct active_config config = {
             .size = sizeof(struct db) + db_len_s * sizeof(word_t),
             .init = db_init,
             .step = NULL,
@@ -94,8 +94,8 @@ const struct item_config *db_config(enum item item)
         return &config;
     }
 
-    case ITEM_DB_II: {
-        static const struct item_config config = {
+    case ITEM_DB_2: {
+        static const struct active_config config = {
             .size = sizeof(struct db) + db_len_m * sizeof(word_t),
             .init = db_init,
             .step = NULL,
@@ -106,8 +106,8 @@ const struct item_config *db_config(enum item item)
         return &config;
     }
 
-    case ITEM_DB_III: {
-        static const struct item_config config = {
+    case ITEM_DB_3: {
+        static const struct active_config config = {
             .size = sizeof(struct db) + db_len_l * sizeof(word_t),
             .init = db_init,
             .step = NULL,

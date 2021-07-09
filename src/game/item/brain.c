@@ -42,9 +42,9 @@ static void brain_init(void *state, id_t id, struct chunk *chunk)
     brain->id = id;
 
     switch (id_item(id)) {
-    case ITEM_BRAIN_I:   { vm_init(&brain->vm, brain_stack_s, brain_speed_s); break; }
-    case ITEM_BRAIN_II:  { vm_init(&brain->vm, brain_stack_m, brain_speed_s); break; }
-    case ITEM_BRAIN_III: { vm_init(&brain->vm, brain_stack_l, brain_speed_s); break; }
+    case ITEM_BRAIN_1: { vm_init(&brain->vm, brain_stack_s, brain_speed_s); break; }
+    case ITEM_BRAIN_2: { vm_init(&brain->vm, brain_stack_m, brain_speed_s); break; }
+    case ITEM_BRAIN_3: { vm_init(&brain->vm, brain_stack_l, brain_speed_s); break; }
     default: { assert(false); }
     }
 }
@@ -188,14 +188,14 @@ static void brain_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *brain_config(enum item item)
+const struct active_config *brain_config(enum item item)
 {
     static const word_t io_list[] = { IO_PING, IO_MOD, IO_RESET, IO_VAL, IO_SEND };
 
     switch(item) {
 
-    case ITEM_BRAIN_I: {
-        static const struct item_config config = {
+    case ITEM_BRAIN_1: {
+        static const struct active_config config = {
             .size = brain_len_s,
             .init = brain_init,
             .make = brain_make,
@@ -208,8 +208,8 @@ const struct item_config *brain_config(enum item item)
         return &config;
     }
 
-    case ITEM_BRAIN_II: {
-        static const struct item_config config = {
+    case ITEM_BRAIN_2: {
+        static const struct active_config config = {
             .size = brain_len_m,
             .init = brain_init,
             .make = brain_make,
@@ -222,8 +222,8 @@ const struct item_config *brain_config(enum item item)
         return &config;
     }
 
-    case ITEM_BRAIN_III: {
-        static const struct item_config config = {
+    case ITEM_BRAIN_3: {
+        static const struct active_config config = {
             .size = brain_len_l,
             .init = brain_init,
             .make = brain_make,

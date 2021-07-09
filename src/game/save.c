@@ -298,3 +298,26 @@ struct ring32 *save_read_ring32(struct save *save)
     if (!save_read_magic(save, save_magic_ring32)) { free(ring); return NULL; }
     return ring;
 }
+
+void save_write_ring64(struct save *save, const struct ring64 *ring)
+{
+    save_write_magic(save, save_magic_ring64);
+    save_write_value(save, ring->cap);
+    save_write_value(save, ring->head);
+    save_write_value(save, ring->tail);
+    save_write(save, ring->vals, ring->cap * sizeof(ring->vals[0]));
+    save_write_magic(save, save_magic_ring64);
+}
+
+struct ring64 *save_read_ring64(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_ring64)) return NULL;
+
+    struct ring64 *ring = ring64_reserve(save_read_type(save, typeof(ring->cap)));
+    save_read_into(save, &ring->head);
+    save_read_into(save, &ring->tail);
+    save_read(save, ring->vals, ring->cap * sizeof(ring->vals[0]));
+
+    if (!save_read_magic(save, save_magic_ring64)) { free(ring); return NULL; }
+    return ring;
+}

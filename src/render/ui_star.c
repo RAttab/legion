@@ -166,9 +166,9 @@ static void ui_star_update(struct ui_star *ui)
 
     {
         static const enum item filter[] = {
-            ITEM_DB_I, ITEM_DB_II, ITEM_DB_III,
-            ITEM_BRAIN_I, ITEM_BRAIN_II, ITEM_BRAIN_III,
-            ITEM_LEGION_I, ITEM_LEGION_II, ITEM_LEGION_III,
+            ITEM_DB_1, ITEM_DB_2, ITEM_DB_3,
+            ITEM_BRAIN_1, ITEM_BRAIN_2, ITEM_BRAIN_3,
+            ITEM_LEGION_1, ITEM_LEGION_2, ITEM_LEGION_3,
         };
         ui_star_update_list(
                 ui, chunk,
@@ -179,9 +179,9 @@ static void ui_star_update(struct ui_star *ui)
     {
         static const enum item filter[] = {
             ITEM_DEPLOY, ITEM_STORAGE,
-            ITEM_EXTRACT_I, ITEM_EXTRACT_II, ITEM_EXTRACT_III,
-            ITEM_PRINTER_I, ITEM_PRINTER_II, ITEM_PRINTER_III,
-            ITEM_ASSEMBLER_I, ITEM_ASSEMBLER_II, ITEM_ASSEMBLER_III,
+            ITEM_EXTRACT_1, ITEM_EXTRACT_2, ITEM_EXTRACT_3,
+            ITEM_PRINTER_1, ITEM_PRINTER_2, ITEM_PRINTER_3,
+            ITEM_ASSEMBLY_1, ITEM_ASSEMBLY_2, ITEM_ASSEMBLY_3,
         };
         ui_star_update_list(
                 ui, chunk,

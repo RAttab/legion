@@ -88,38 +88,38 @@ void atoms_register(void)
     reg_atom(ITEM_PROPULSION);
     reg_atom(ITEM_PLATE);
     reg_atom(ITEM_SHIELDING);
-    reg_atom(ITEM_HULL_I);
+    reg_atom(ITEM_HULL_1);
     reg_atom(ITEM_CORE);
     reg_atom(ITEM_MATRIX);
     reg_atom(ITEM_DATABANK);
 
     // Logistics
     reg_atom(ITEM_WORKER);
-    reg_atom(ITEM_SHUTTLE_S);
-    reg_atom(ITEM_SHUTTLE_M);
-    reg_atom(ITEM_SHUTTLE_F);
+    reg_atom(ITEM_SHUTTLE_1);
+    reg_atom(ITEM_SHUTTLE_2);
+    reg_atom(ITEM_SHUTTLE_3);
 
     // Actives
     reg_atom(ITEM_DEPLOY);
-    reg_atom(ITEM_EXTRACT_I);
-    reg_atom(ITEM_EXTRACT_II);
-    reg_atom(ITEM_EXTRACT_III);
-    reg_atom(ITEM_PRINTER_I);
-    reg_atom(ITEM_PRINTER_II);
-    reg_atom(ITEM_PRINTER_III);
-    reg_atom(ITEM_ASSEMBLER_I);
-    reg_atom(ITEM_ASSEMBLER_II);
-    reg_atom(ITEM_ASSEMBLER_III);
+    reg_atom(ITEM_EXTRACT_1);
+    reg_atom(ITEM_EXTRACT_2);
+    reg_atom(ITEM_EXTRACT_3);
+    reg_atom(ITEM_PRINTER_1);
+    reg_atom(ITEM_PRINTER_2);
+    reg_atom(ITEM_PRINTER_3);
+    reg_atom(ITEM_ASSEMBLY_1);
+    reg_atom(ITEM_ASSEMBLY_2);
+    reg_atom(ITEM_ASSEMBLY_3);
     reg_atom(ITEM_STORAGE);
-    reg_atom(ITEM_DB_I);
-    reg_atom(ITEM_DB_II);
-    reg_atom(ITEM_DB_III);
-    reg_atom(ITEM_BRAIN_I);
-    reg_atom(ITEM_BRAIN_II);
-    reg_atom(ITEM_BRAIN_III);
-    reg_atom(ITEM_LEGION_I);
-    reg_atom(ITEM_LEGION_II);
-    reg_atom(ITEM_LEGION_III);
+    reg_atom(ITEM_DB_1);
+    reg_atom(ITEM_DB_2);
+    reg_atom(ITEM_DB_3);
+    reg_atom(ITEM_BRAIN_1);
+    reg_atom(ITEM_BRAIN_2);
+    reg_atom(ITEM_BRAIN_3);
+    reg_atom(ITEM_LEGION_1);
+    reg_atom(ITEM_LEGION_2);
+    reg_atom(ITEM_LEGION_3);
         
 #undef reg_atom
 }

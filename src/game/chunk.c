@@ -15,30 +15,6 @@
 static void chunk_ports_step(struct chunk *);
 
 // -----------------------------------------------------------------------------
-// chunk_cargo
-// -----------------------------------------------------------------------------
-
-struct legion_packed chunk_cargo
-{
-    enum item type;
-    enum item cargo;
-    uint8_t count;
-    legion_pad(1);
-};
-static_assert(sizeof(struct chunk_cargo) == 4);
-
-inline uint32_t chunk_cargo_to_u32(struct chunk_cargo val)
-{
-    return (union { struct chunk_cargo from; uint32_t to; }) {.from = val}.to;
-}
-
-
-inline struct chunk_cargo chunk_cargo_from_u32(uint32_t val)
-{
-    return (union { struct chunk_cargo to; uint32_t from; }) {.from = val}.to;
-}
-
-// -----------------------------------------------------------------------------
 // cargo
 // -----------------------------------------------------------------------------
 
@@ -118,7 +94,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     star_save(&chunk->star, save);
     save_write_value(save, chunk->workers.count);
     save_write_ring32(save, chunk->requested);
-    save_write_ring64(save, chunl->shuttles);
+    save_write_ring64(save, chunk->shuttles);
 
     save_write_value(save, chunk->provided.len);
     struct htable_bucket *it = htable_next(&chunk->provided, NULL);
@@ -193,12 +169,12 @@ bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
 void chunk_create(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) { chunk->workers.count++; return; }
-    active_create(active_index(&chunk->active, item));
+    active_create(active_index_create(&chunk->active, item));
 }
 
 void chunk_create_from(struct chunk *chunk, enum item item, uint32_t data)
 {
-    active_create_from(active_index(&chunk->active, item), data);
+    active_create_from(active_index_create(&chunk->active, item), chunk, data);
 }
 
 void chunk_delete(struct chunk *chunk, id_t id)
@@ -228,7 +204,7 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     switch (item)
     {
     case ITEM_WORKER: { return chunk->workers.count; }
-    case ITEM_SHUTTLE_I...ITEM_SHUTTLE_III: { return ring32_len(chunk->shuttles); }
+    case ITEM_SHUTTLE_1...ITEM_SHUTTLE_3: { return ring64_len(chunk->shuttles); }
 
     case ITEM_NATURAL_FIRST...ITEM_SYNTH_FIRST: {
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
@@ -257,10 +233,10 @@ void chunk_lanes_arrive(struct chunk *chunk, enum item item, uint32_t data)
     switch (item)
     {
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
-        active_create_from(active_index(&chunk->active, item), data);
+        chunk_create_from(chunk, item, data);
         break;
     }
-    case ITEM_SHUTTLE_I...ITEM_SHUTTLE_III: {
+    case ITEM_SHUTTLE_1...ITEM_SHUTTLE_3: {
         uint64_t value = (((uint64_t) item) << 32) | data;
         chunk->shuttles = ring64_push(chunk->shuttles, value);
         break;
@@ -287,7 +263,7 @@ bool chunk_lanes_dock(struct chunk *chunk, enum item *item, uint32_t *data)
 void chunk_ports_reset(struct chunk *chunk, id_t id)
 {
     struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
-    if (likely(ports)) ports_reset(ports);
+    if (ports) *ports = (struct ports) {0};
 }
 
 bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
@@ -320,7 +296,7 @@ bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
 
 void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 {
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
     if (!ports) return;
 
     assert(ports->in_state == ports_nil);
@@ -332,7 +308,7 @@ void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 
 enum item chunk_ports_consume(struct chunk *chunk, id_t id)
 {
-    struct ports *ports = class_ports(chunk_class(chunk, id_item(id)), id);
+    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
     if (!ports) return ITEM_NIL;
 
     if (ports->in_state != ports_received) return ITEM_NIL;
@@ -353,7 +329,7 @@ static void chunk_ports_step(struct chunk *chunk)
         if (!dst) { chunk->workers.idle = chunk->workers.count - i; break; }
         if (dst == fail) break;
 
-        struct ports *in = class_ports(chunk_class(chunk, id_item(dst)), dst);
+        struct ports *in = active_ports(active_index(&chunk->active, id_item(dst)), dst);
         assert(in);
         if (in->in_state != ports_requested) goto nomatch;
 
@@ -365,7 +341,7 @@ static void chunk_ports_step(struct chunk *chunk)
         if (ring32_empty(provided)) goto nomatch;
 
         id_t src = ring32_pop(provided);
-        struct ports *out = class_ports(chunk_class(chunk, id_item(src)), src);
+        struct ports *out = active_ports(active_index(&chunk->active, id_item(src)), src);
         assert(out);
 
         in->in_state = ports_received;

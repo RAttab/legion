@@ -13,9 +13,9 @@ void test_ports_1on1(void)
     struct star star = {0};
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
-    item_t item = ITEM_ELEM_A;
-    id_t src = make_id(ITEM_MINER, 1);
-    id_t dst = make_id(ITEM_PRINTER, 1);
+    enum item item = ITEM_ELEM_A;
+    id_t src = make_id(ITEM_EXTRACT_1, 1);
+    id_t dst = make_id(ITEM_PRINTER_1, 1);
 
     chunk_create(chunk, id_item(src));
     chunk_create(chunk, id_item(dst));
@@ -42,10 +42,10 @@ void test_ports_2on1(void)
     struct star star = {0};
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
-    item_t item = ITEM_ELEM_A;
-    id_t src0 = make_id(ITEM_MINER, 1);
-    id_t src1 = make_id(ITEM_MINER, 2);
-    id_t dst = make_id(ITEM_PRINTER, 1);
+    enum item item = ITEM_ELEM_A;
+    id_t src0 = make_id(ITEM_EXTRACT_1, 1);
+    id_t src1 = make_id(ITEM_EXTRACT_1, 2);
+    id_t dst = make_id(ITEM_PRINTER_1, 1);
 
     chunk_create(chunk, id_item(src0));
     chunk_create(chunk, id_item(src1));
@@ -72,10 +72,10 @@ void test_ports_1on2(void)
     struct star star = {0};
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
-    item_t item = ITEM_ELEM_A;
-    id_t src = make_id(ITEM_MINER, 1);
-    id_t dst0 = make_id(ITEM_PRINTER, 1);
-    id_t dst1 = make_id(ITEM_PRINTER, 2);
+    enum item item = ITEM_ELEM_A;
+    id_t src = make_id(ITEM_EXTRACT_1, 1);
+    id_t dst0 = make_id(ITEM_PRINTER_1, 1);
+    id_t dst1 = make_id(ITEM_PRINTER_1, 2);
 
     chunk_create(chunk, id_item(src));
     chunk_create(chunk, id_item(dst0));

@@ -9,6 +9,7 @@
 #include "game/coord.h"
 #include "game/world.h"
 
+struct vec64;
 
 // -----------------------------------------------------------------------------
 // lanes

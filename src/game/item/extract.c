@@ -32,7 +32,7 @@ static void extract_load(void *state, struct chunk *chunk)
 
     const struct prog *prog = prog_fetch(id);
     assert(prog);
-    deploy->prog = prog_packed_ptr_update(extract->prog, prog);
+    extract->prog = prog_packed_ptr_update(extract->prog, prog);
 }
 
 
@@ -42,7 +42,7 @@ static void extract_load(void *state, struct chunk *chunk)
 
 static void extract_step_eof(struct extract *extract)
 {
-    if (extract->loops != extract_loops_inf) extract->loops--;
+    if (extract->loops != loops_inf) extract->loops--;
     if (extract->loops) extract->prog = prog_packed_it_zero(extract->prog);
 }
 
@@ -59,14 +59,17 @@ static void extract_step_input(
     if (!consumed) return;
     assert(consumed == item);
 
-    extract->waitng = false;
+    extract->waiting = false;
     extract->prog = prog_packed_it_inc(extract->prog);
 }
 
 static void extract_step_output(
         struct extract *extract, struct chunk *chunk, enum item item)
 {
-    if (!extract->waiting && !chunk_harvest(chunk, item)) return;
+    if (!extract->waiting) {
+        if (!chunk_harvest(chunk, item))
+            extract->prog = prog_packed_it_zero(extract->prog);
+    }
 
     if (chunk_ports_produce(chunk, extract->id, item))
         extract->prog = prog_packed_it_inc(extract->prog);
@@ -78,7 +81,7 @@ static void extract_step(void *state, struct chunk *chunk)
     struct extract *extract = state;
 
     const struct prog *prog = prog_packed_ptr(extract->prog);
-    if (!prog || extract->state == extract_error) return;
+    if (!prog) return;
 
     struct prog_ret ret = prog_at(prog, prog_packed_it(extract->prog));
     switch (ret.state) {
@@ -96,7 +99,7 @@ static void extract_step(void *state, struct chunk *chunk)
 
 static void extract_io_reset(struct extract *extract, struct chunk *chunk)
 {
-    chunk_ports_reset(chunk, progable->id);
+    chunk_ports_reset(chunk, extract->id);
     extract->waiting = false;
     extract->loops = 0;
     extract->prog = 0;
@@ -110,7 +113,7 @@ static void extract_io_prog(
     word_t prog_id = args[0];
     if (prog_id != (prog_id_t) prog_id) return;
 
-    struct prog *prog = prog_fetch(prog_id);
+    const struct prog *prog = prog_fetch(prog_id);
     if (!prog) return;
     
     extract_io_reset(extract, chunk);
@@ -127,7 +130,7 @@ static void extract_io(
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, extract->id, src, 0, NULL); return; }
     case IO_PROG: { extract_io_prog(extract, chunk, len, args); return; }
-    case IO_RESET: { extract_io_reset(extract); return; }
+    case IO_RESET: { extract_io_reset(extract, chunk); return; }
     default: { return; }
     }
 }
@@ -137,12 +140,12 @@ static void extract_io(
 // config
 // -----------------------------------------------------------------------------
 
-const struct item_config *extract_config(enum item item)
+const struct active_config *extract_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = { IO_PING, IO_PROG, IO_RESET };
 
-    static const struct item_config config = {
+    static const struct active_config config = {
         .size = sizeof(struct extract),
         .init = extract_init,
         .load = extract_load,

@@ -8,6 +8,7 @@
 #include "common.h"
 
 struct ring32;
+struct ring64;
 struct vec64;
 
 // -----------------------------------------------------------------------------
@@ -18,17 +19,18 @@ enum legion_packed save_magic
 {
     save_magic_vec64 = 0x01,
     save_magic_ring32 = 0x02,
-    save_magic_htable = 0x03,
+    save_magic_ring64 = 0x03,
+    save_magic_htable = 0x04,
 
     save_magic_world = 0x10,
     save_magic_sector = 0x11,
     save_magic_star = 0x12,
-        
+
     save_magic_chunk = 0x20,
-        
+
     save_magic_mods = 0x30,
     save_magic_mod = 0x31,
-        
+
     save_magic_lanes = 0x40,
     save_magic_lane = 0x41,
 };
@@ -87,3 +89,6 @@ struct vec64 *save_read_vec64(struct save *);
 
 void save_write_ring32(struct save *, const struct ring32 *);
 struct ring32 *save_read_ring32(struct save *);
+
+void save_write_ring64(struct save *, const struct ring64 *);
+struct ring64 *save_read_ring64(struct save *);

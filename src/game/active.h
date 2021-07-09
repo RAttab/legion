@@ -45,6 +45,27 @@ const struct active_config *active_config(enum item);
 
 
 // -----------------------------------------------------------------------------
+// ports
+// -----------------------------------------------------------------------------
+
+enum legion_packed ports_state
+{
+    ports_nil = 0,
+    ports_requested,
+    ports_received,
+};
+
+struct legion_packed ports
+{
+    enum item in, out;
+    enum ports_state in_state;
+    legion_pad(1);
+};
+
+static_assert(sizeof(struct ports) == 4);
+
+
+// -----------------------------------------------------------------------------
 // active
 // -----------------------------------------------------------------------------
 
@@ -64,7 +85,7 @@ struct ports *active_ports(struct active *active, id_t id);
 
 bool active_copy(struct active *, id_t id, void *dst, size_t len);
 void active_create(struct active *);
-void active_create_from(struct active *, uint32_t data);
+void active_create_from(struct active *, struct chunk *, uint32_t data);
 void active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);
@@ -92,7 +113,7 @@ inline struct active *active_index_create(active_list_t *list, enum item item)
 }
 
 typedef struct active **active_it_t;
-active_it_t active_next(active_list_t *list, active_it_t it)
+inline active_it_t active_next(active_list_t *list, active_it_t it)
 {
     const active_it_t end = (*list) + ITEM_ACTIVE_LAST;
     assert(it < end);
@@ -113,7 +134,7 @@ void active_list_save(active_list_t *, struct save *);
 // -----------------------------------------------------------------------------
 
 typedef uint16_t loops_t;
-static const uint16_t loops_inf = UINT16_MAX;
+enum { loops_inf = UINT16_MAX };
 inline loops_t loops_io(word_t loops)
 {
     return loops > 0 && loops < loops_inf ? loops : loops_inf;
