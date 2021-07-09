@@ -102,25 +102,28 @@ typedef struct active *active_list_t[ITEMS_ACTIVE_LEN];
 inline struct active *active_index(active_list_t *list, enum item item)
 {
     assert(item_is_active(item));
-    return (*list)[item];
+    size_t index =  item - ITEM_ACTIVE_FIRST;
+
+    return (*list)[index];
 }
 
 inline struct active *active_index_create(active_list_t *list, enum item item)
 {
     assert(item_is_active(item));
-    if (unlikely(!(*list)[item])) (*list)[item] = active_alloc(item);
-    return (*list)[item];
+    size_t index =  item - ITEM_ACTIVE_FIRST;
+
+    if (unlikely(!(*list)[index])) (*list)[index] = active_alloc(item);
+    return (*list)[index];
 }
 
 typedef struct active **active_it_t;
 inline active_it_t active_next(active_list_t *list, active_it_t it)
 {
-    const active_it_t end = (*list) + ITEM_ACTIVE_LAST;
+    const active_it_t end = (*list) + ITEMS_ACTIVE_LEN;
     assert(it < end);
 
-    if (!it) it = *list;
+    it = it ? it+1 : *list;
     while (!*it && it < end) it++;
-
     return likely(it < end) ? it : NULL;
 }
 
