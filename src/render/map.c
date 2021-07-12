@@ -270,7 +270,7 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
             .h = px, .w = px
         };
 
-        struct rgb rgb = spectrum_rgb(32 - u64_log2(star->power), 32);
+        struct rgb rgb = spectrum_rgb(16 - u64_log2(star->power), 16);
         if (!SDL_PointInRect(&core.cursor.point, &dst)) {
             rgb = desaturate(rgb, .8);
         }

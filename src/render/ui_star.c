@@ -317,7 +317,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
         uint32_t value = ui->star.power;
         ui_str_set_scaled(&ui->power_val.str, value);
-        ui->power_val.fg = rgba_gray(0x11 * (u64_log2(value) / 2));
+        ui->power_val.fg = rgba_gray(0x11 * u64_log2(value));
         ui_label_render(&ui->power_val, &layout, renderer);
 
         ui_layout_next_row(&layout);
