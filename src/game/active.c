@@ -120,6 +120,8 @@ static bool active_recycle(struct active *active, size_t *index)
 
 struct active *active_load(enum item type, struct chunk *chunk, struct save *save)
 {
+    if (!save_read_magic(save, save_magic_active)) return NULL;
+
     uint16_t len = save_read_type(save, typeof(len));
     if (!len) return NULL;
 
@@ -149,6 +151,8 @@ struct active *active_load(enum item type, struct chunk *chunk, struct save *sav
 
 void active_save(struct active *active, struct save *save)
 {
+    save_write_magic(save, save_magic_active);
+
     uint16_t len = active ? active->len : 0;
     save_write_value(save, len);
     if (!active) return;

@@ -264,7 +264,7 @@ bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
 void lanes_save(struct lanes *lanes, struct save *save)
 {
     save_write_magic(save, save_magic_lanes);
-    save_write_value(save, lanes->lanes.len);
+    save_write_value(save, (uint32_t) lanes->lanes.len);
 
     struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it))
