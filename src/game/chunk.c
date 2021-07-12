@@ -326,10 +326,12 @@ static void chunk_ports_step(struct chunk *chunk)
     chunk->workers.fail = 0;
 
     for (size_t i = 0; i < chunk->workers.count; ++i) {
-        id_t dst = ring32_pop(chunk->requested);
-        if (!dst) { chunk->workers.idle = chunk->workers.count - i; break; }
-        if (dst == fail) break;
+        if (ring32_empty(chunk->requested) || ring32_peek(chunk->requested) == fail) {
+            chunk->workers.idle = chunk->workers.count - i;
+            break;
+        }
 
+        id_t dst = ring32_pop(chunk->requested);
         struct ports *in = active_ports(active_index(&chunk->active, id_item(dst)), dst);
         assert(in);
         if (in->in_state != ports_requested) goto nomatch;
@@ -354,7 +356,7 @@ static void chunk_ports_step(struct chunk *chunk)
        assert(rret == chunk->requested);
         if (!fail) fail = dst;
        chunk->workers.fail++;
-       break;
+       continue;
     }
 
     chunk->workers.queue = ring32_len(chunk->requested);

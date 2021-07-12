@@ -59,16 +59,20 @@ static void printer_step_input(
     if (!consumed) return;
     assert(consumed == item);
 
-    printer->waiting = false;
     printer->prog = prog_packed_it_inc(printer->prog);
+    printer->waiting = false;
 }
 
 static void printer_step_output(
         struct printer *printer, struct chunk *chunk, enum item item)
 {
-    if (chunk_ports_produce(chunk, printer->id, item))
-        printer->prog = prog_packed_it_inc(printer->prog);
-    else printer->waiting = true;
+    if (!chunk_ports_produce(chunk, printer->id, item)) {
+        printer->waiting = true;
+        return;
+    }
+
+    printer->prog = prog_packed_it_inc(printer->prog);
+    printer->waiting = false;
 }
 
 static void printer_step(void *state, struct chunk *chunk)
@@ -111,7 +115,7 @@ static void printer_io_prog(
     const struct prog *prog = prog_fetch(prog_id);
     if (!prog) return;
     if (prog_host(prog) != id_item(printer->id)) return;
-    
+
     printer_io_reset(printer, chunk);
     printer->prog = prog_pack(prog_id, 0, prog);
     printer->loops = loops_io(len > 1 ? args[1] : loops_inf);

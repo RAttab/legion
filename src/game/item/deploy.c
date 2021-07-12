@@ -45,7 +45,9 @@ static void deploy_step(void *state, struct chunk *chunk)
     chunk_create(chunk, deploy->item);
     
     deploy->waiting = false;
-    if (!(--deploy->loops)) deploy->item = 0;
+
+    if (deploy->loops != loops_inf) --deploy->loops;
+    if (!deploy->loops) deploy->item = 0;
 }
 
 

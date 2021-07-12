@@ -42,7 +42,7 @@ inline uint32_t ring32_peek(struct ring32 *ring)
 inline uint32_t ring32_pop(struct ring32 *ring)
 {
     if (ring32_empty(ring)) return 0;
-    uint32_t val = ring->vals[ring->tail % ring->cap];
+    uint32_t val = legion_xchg(ring->vals + (ring->tail % ring->cap), 0);
     ring->tail++;
     return val;
 }
@@ -99,7 +99,7 @@ inline uint64_t ring64_peek(struct ring64 *ring)
 inline uint64_t ring64_pop(struct ring64 *ring)
 {
     if (ring64_empty(ring)) return 0;
-    uint64_t val = ring->vals[ring->tail % ring->cap];
+    uint64_t val = legion_xchg(ring->vals + (ring->tail % ring->cap), 0);
     ring->tail++;
     return val;
 }
