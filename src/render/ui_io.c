@@ -262,7 +262,7 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
         }
     }
 
-    return false;
+    return ui_panel_event_consume(&ui->panel, ev);
 }
 
 void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)

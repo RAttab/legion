@@ -153,7 +153,7 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 
     if ((ret = ui_code_event(&ui->code, ev))) return ret == ui_consume;
 
-    return false;
+    return ui_panel_event_consume(&ui->panel, ev);
 }
 
 void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)

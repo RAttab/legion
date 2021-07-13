@@ -316,7 +316,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         }
     }
 
-    return false;
+    return ui_panel_event_consume(&ui->panel, ev);
 }
 
 void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)

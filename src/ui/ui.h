@@ -457,4 +457,5 @@ struct ui_panel ui_panel_menu(struct pos, struct dim);
 struct ui_panel ui_panel_title(struct pos, struct dim, struct ui_str);
 void ui_panel_free(struct ui_panel *);
 enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
+enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);
 struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);

@@ -215,26 +215,27 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
         return true;
     }
 
+    bool done = false;
     switch(id_item(ui->id))
     {
     case ITEM_DEPLOY:
-        return ui_deploy_event(&ui->deploy, &ui->state.deploy, ev);
+        { done = ui_deploy_event(&ui->deploy, &ui->state.deploy, ev); break; }
     case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
-        return ui_extract_event(&ui->extract, &ui->state.extract, ev);
+        { done = ui_extract_event(&ui->extract, &ui->state.extract, ev); break; }
     case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
-        return ui_printer_event(&ui->printer, &ui->state.printer, ev);
+        { done = ui_printer_event(&ui->printer, &ui->state.printer, ev); break; }
     case ITEM_STORAGE:
-        return ui_storage_event(&ui->storage, &ui->state.storage, ev);
+        { done = ui_storage_event(&ui->storage, &ui->state.storage, ev); break; }
     case ITEM_BRAIN_1...ITEM_BRAIN_3:
-        return ui_brain_event(&ui->brain, &ui->state.brain, ev);
+        { done = ui_brain_event(&ui->brain, &ui->state.brain, ev); break; }
     case ITEM_DB_1...ITEM_DB_3:
-        return ui_db_event(&ui->db, &ui->state.db, ev);
+        { done = ui_db_event(&ui->db, &ui->state.db, ev); break; }
     case ITEM_LEGION_1...ITEM_LEGION_3:
-        return ui_legion_event(&ui->legion, &ui->state.legion, ev);
+        { done = ui_legion_event(&ui->legion, &ui->state.legion, ev); break; }
     default: { assert(false && "unsuported type in ui update"); }
     }
 
-    return false;
+    return done ? done : ui_panel_event_consume(&ui->panel, ev);
 }
 
 void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)

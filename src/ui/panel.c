@@ -93,6 +93,26 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     }
 }
 
+enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
+{
+    if (panel->state == ui_panel_hidden) return ui_skip;
+
+    switch (ev->type) {
+
+    case SDL_KEYUP:
+    case SDL_KEYDOWN: {
+        return panel->state == ui_panel_focused ? ui_consume : ui_nil;
+    }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        struct SDL_Rect rect = ui_widget_rect(&panel->w);
+        return sdl_rect_contains(&rect, &core.cursor.point) ? ui_consume : ui_nil;
+    }
+
+    default: { return ui_nil; }
+    }
+}
+
 struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
 {
     if (panel->state == ui_panel_hidden) return (struct ui_layout) {0};

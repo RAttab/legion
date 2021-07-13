@@ -93,7 +93,7 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
         return true;
     }
 
-    return false;
+    return ui_panel_event_consume(&ui->panel, ev);
 }
 
 static void topbar_render_coord(

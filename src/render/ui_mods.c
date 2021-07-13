@@ -140,7 +140,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
         return true;
     }
 
-    return false;
+    return ui_panel_event_consume(&ui->panel, ev);
 }
 
 void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
