@@ -133,10 +133,10 @@ struct active *active_load(enum item type, struct chunk *chunk, struct save *sav
     while (active->cap < len) active->cap *= 2;
 
     active->arena = calloc(active->cap, active->size);
-    save_read(save, active->arena, active->cap * active->size);
+    save_read(save, active->arena, active->len * active->size);
 
     active->ports = calloc(active->cap, sizeof(*active->ports));
-    save_read(save, active->ports, active->cap * sizeof(*active->ports));
+    save_read(save, active->ports, active->len * sizeof(*active->ports));
 
     if (active->cap < 64) save_read_into(save, &active->free);
     else active->free = (uintptr_t) save_read_vec64(save);
