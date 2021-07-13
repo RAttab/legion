@@ -53,6 +53,8 @@ struct ui_item
 
     struct ui_panel panel;
     struct ui_button io;
+    struct ui_label id_lbl;
+    struct ui_link id_val;
 
     struct ui_deploy deploy;
     struct ui_extract extract;
@@ -77,6 +79,8 @@ struct ui_item *ui_item_new(void)
     *ui = (struct ui_item) {
         .panel = ui_panel_title(pos, dim, ui_str_v(id_str_len + 8)),
         .io = ui_button_new(font, ui_str_c("<< io")),
+        .id_lbl = ui_label_new(font, ui_str_c("id: ")),
+        .id_val = ui_link_new(font, ui_str_v(id_str_len)),
     };
 
     ui->io.w.dim.w = ui_layout_inf;
@@ -97,6 +101,8 @@ void ui_item_free(struct ui_item *ui)
 {
     ui_panel_free(&ui->panel);
     ui_button_free(&ui->io);
+    ui_label_free(&ui->id_lbl);
+    ui_link_free(&ui->id_val);
     ui_deploy_free(&ui->deploy);
     ui_extract_free(&ui->extract);
     ui_printer_free(&ui->printer);
@@ -115,6 +121,8 @@ int16_t ui_item_width(struct ui_item *ui)
 static void ui_item_update(struct ui_item *ui)
 {
     if (!ui->id || coord_is_nil(ui->star)) return;
+
+    ui_str_set_id(&ui->id_val.str, ui->id);
 
     struct chunk *chunk = world_chunk(core.state.world, ui->star);
     assert(chunk);
@@ -202,6 +210,11 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
         return true;
     }
 
+    if ((ret = ui_link_event(&ui->id_val, ev))) {
+        ui_clipboard_copy_hex(&core.ui.board, ui->id);
+        return true;
+    }
+
     switch(id_item(ui->id))
     {
     case ITEM_DEPLOY:
@@ -231,6 +244,11 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     ui_button_render(&ui->io, &layout, renderer);
     ui_layout_next_row(&layout);
+
+    ui_label_render(&ui->id_lbl, &layout, renderer);
+    ui_link_render(&ui->id_val, &layout, renderer);
+    ui_layout_next_row(&layout);
+
     ui_layout_sep_y(&layout, ui_item_font()->glyph_h);
 
     switch(id_item(ui->id))

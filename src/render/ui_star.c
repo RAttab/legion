@@ -20,6 +20,10 @@ struct ui_star
     struct star star;
 
     struct ui_panel panel;
+
+    struct ui_label coord;
+    struct ui_link coord_val;
+
     struct ui_label power, power_val;
     struct ui_label elem, elem_val;
 
@@ -59,6 +63,9 @@ struct ui_star *ui_star_new(void)
     struct ui_star *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_star) {
         .panel = ui_panel_title(pos, dim, ui_str_v(coord_str_len + 8)),
+
+        .coord = ui_label_new(font, ui_str_c("coord: ")),
+        .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
 
         .power = ui_label_new(font, ui_str_c("power: ")),
         .power_val = ui_label_new(font, ui_str_v(str_scaled_len)),
@@ -149,6 +156,8 @@ static void ui_star_update(struct ui_star *ui)
         coord_str(ui->star.coord, str, sizeof(str));
         ui_str_setf(&ui->panel.title.str, "star - %s", str);
     }
+
+    ui_str_set_coord(&ui->coord_val.str, ui->star.coord);
 
     struct chunk *chunk = world_chunk(core.state.world, ui->star.coord);
     if (!chunk) {
@@ -257,6 +266,11 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
 
+    if ((ret = ui_link_event(&ui->coord_val, ev))) {
+        ui_clipboard_copy_hex(&core.ui.board, coord_to_id(ui->star.coord));
+        return ret == ui_consume;
+    }
+
     if ((ret = ui_button_event(&ui->control, ev))) {
         ui->control.disabled = true;
         ui->factory.disabled = ui->logistic.disabled = false;
@@ -311,6 +325,10 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     if (ui_layout_is_nil(&layout)) return;
 
     struct font *font = ui_star_font();
+
+    ui_label_render(&ui->coord, &layout, renderer);
+    ui_link_render(&ui->coord_val, &layout, renderer);
+    ui_layout_next_row(&layout);
 
     {
         ui_label_render(&ui->power, &layout, renderer);

@@ -124,6 +124,8 @@ static void cursor_render(SDL_Renderer *renderer)
 
 static void ui_init(void)
 {
+    ui_clipboard_init(&core.ui.board);
+
     core.ui.map = map_new();
     core.ui.topbar = ui_topbar_new();
     core.ui.mods = ui_mods_new();
@@ -142,6 +144,8 @@ static void ui_close()
     ui_item_free(core.ui.item);
     ui_io_free(core.ui.io);
     map_free(core.ui.map);
+
+    ui_clipboard_free(&core.ui.board);
 }
 
 static void ui_event(SDL_Event *event)

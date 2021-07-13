@@ -5,7 +5,9 @@
 
 #include "ui/str.c"
 #include "ui/layout.c"
+#include "ui/clipboard.c"
 #include "ui/label.c"
+#include "ui/link.c"
 #include "ui/button.c"
 #include "ui/scroll.c"
 #include "ui/toggle.c"

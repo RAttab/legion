@@ -16,13 +16,15 @@
 
 static const struct dim ui_input_margin = { .w = 2, .h = 2 };
 
-struct ui_input ui_input_new(struct font *font, size_t cap)
+struct ui_input ui_input_new(
+        struct font *font, size_t cap, struct ui_clipboard *board)
 {
     struct ui_input input = {
         .w = ui_widget_new(
                 font->glyph_w * (cap+1) + ui_input_margin.w * 2,
                 font->glyph_h + ui_input_margin.h * 2),
         .font = font,
+        .board = board,
         .focused = false,
     };
 
@@ -172,6 +174,21 @@ static enum ui_ret ui_input_event_ins(struct ui_input *input, char key, uint16_t
     return ui_consume;
 }
 
+static enum ui_ret ui_input_event_copy(struct ui_input *input)
+{
+    if (!input->board) return ui_consume;
+    ui_clipboard_copy(input->board, input->buf.len, input->buf.c);
+    return ui_consume;
+}
+
+static enum ui_ret ui_input_event_paste(struct ui_input *input)
+{
+    if (!input->board) return ui_consume;
+    input->buf.len = ui_clipboard_paste(input->board, input->buf.cap, input->buf.c);
+    input->carret.col = input->buf.len;
+    return ui_consume;
+}
+
 static enum ui_ret ui_input_event_delete(struct ui_input *input)
 {
     if (!input->buf.len) return ui_consume;
@@ -239,7 +256,19 @@ enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
 
         // from 32 to 176 on the ascii table. The uppercase letters are not
         // mapped by SDL so they're just skipped
-        case ' '...'~': { return ui_input_event_ins(input, keysym, mod); }
+        case ' '...'~': {
+            if (likely(!(mod & (KMOD_CTRL | KMOD_ALT))))
+                return ui_input_event_ins(input, keysym, mod);
+
+            if (mod & KMOD_CTRL) {
+                switch (keysym)
+                {
+                case 'c': { return ui_input_event_copy(input); }
+                case 'v': { return ui_input_event_paste(input); }
+                default: { return ui_nil; }
+                }
+            }
+        }
 
         case SDLK_DELETE: { return ui_input_event_delete(input); }
         case SDLK_BACKSPACE: { return ui_input_event_backspace(input); }

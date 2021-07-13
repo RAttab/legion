@@ -23,7 +23,7 @@ static struct ui_io_arg ui_io_arg(struct font *font, const char *arg)
 {
     return (struct ui_io_arg) {
         .name = ui_label_new(font, ui_str_c(arg)),
-        .val = ui_input_new(font, 20),
+        .val = ui_input_new(font, 20, &core.ui.board),
     };
 }
 

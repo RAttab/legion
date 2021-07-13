@@ -45,6 +45,23 @@ void ui_str_free(struct ui_str *str)
     if (str->cap) free((char *) str->str);
 }
 
+
+void ui_str_copy(struct ui_str *str, struct ui_clipboard *board)
+{
+    ui_clipboard_copy(board, str->len, str->str);
+}
+
+void ui_str_paste(struct ui_str *str, struct ui_clipboard *board)
+{
+    assert(str->cap);
+    str->len = ui_clipboard_paste(board, str->cap, (char *) str->str);
+}
+
+
+// -----------------------------------------------------------------------------
+// set
+// -----------------------------------------------------------------------------
+
 void ui_str_setc(struct ui_str *str, const char *val)
 {
     str->len = strnlen(val, ui_str_cap);
@@ -100,4 +117,10 @@ void ui_str_set_item(struct ui_str *str, enum item val)
 {
     assert(str->cap);
     str->len = item_str(val, str->cap, (char *) str->str);
+}
+
+void ui_str_set_coord(struct ui_str *str, struct coord val)
+{
+    assert(str->cap);
+    str->len = coord_str(val, (char *) str->str, str->cap);
 }

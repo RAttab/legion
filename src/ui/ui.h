@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "game/item.h"
+#include "game/coord.h"
 #include "utils/log.h"
 #include "utils/text.h"
 #include "vm/mod.h"
@@ -154,6 +155,25 @@ inline bool ui_layout_is_nil(struct ui_layout *layout)
 
 
 // -----------------------------------------------------------------------------
+// clipboard
+// -----------------------------------------------------------------------------
+
+struct ui_clipboard
+{
+    size_t len, cap;
+    char *str;
+};
+
+void ui_clipboard_init(struct ui_clipboard *);
+void ui_clipboard_free(struct ui_clipboard *);
+
+size_t ui_clipboard_paste(struct ui_clipboard *, size_t len, char *dst);
+
+void ui_clipboard_copy(struct ui_clipboard *, size_t len, const char *src);
+void ui_clipboard_copy_hex(struct ui_clipboard *, uint64_t val);
+
+
+// -----------------------------------------------------------------------------
 // str
 // -----------------------------------------------------------------------------
 
@@ -169,6 +189,10 @@ struct ui_str ui_str_c(const char *);
 struct ui_str ui_str_v(size_t len);
 struct ui_str ui_str_clone(const struct ui_str *);
 void ui_str_free(struct ui_str *);
+
+void ui_str_copy(struct ui_str *, struct ui_clipboard *);
+void ui_str_paste(struct ui_str *, struct ui_clipboard *);
+
 void ui_str_setc(struct ui_str *, const char *str);
 void ui_str_setv(struct ui_str *, const char *str, size_t len);
 void ui_str_setf(struct ui_str *, const char *fmt, ...) legion_printf(2, 3);
@@ -177,7 +201,13 @@ void ui_str_set_hex(struct ui_str *, uint64_t val);
 void ui_str_set_scaled(struct ui_str *, uint64_t val);
 void ui_str_set_id(struct ui_str *, id_t val);
 void ui_str_set_item(struct ui_str *, enum item val);
-inline size_t ui_str_len(struct ui_str *str) { return str->cap ? str->cap : str->len; }
+void ui_str_set_coord(struct ui_str *, struct coord val);
+
+inline size_t ui_str_len(struct ui_str *str)
+{
+    return str->cap ? str->cap : str->len;
+}
+
 
 
 // -----------------------------------------------------------------------------
@@ -196,6 +226,34 @@ struct ui_label
 struct ui_label ui_label_new(struct font *, struct ui_str);
 void ui_label_free(struct ui_label *);
 void ui_label_render(struct ui_label *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// link
+// -----------------------------------------------------------------------------
+
+enum ui_link_state
+{
+    ui_link_idle = 0,
+    ui_link_hover,
+    ui_link_pressed,
+};
+
+struct ui_link
+{
+    struct ui_widget w;
+    struct ui_str str;
+
+    struct font *font;
+    struct rgba fg;
+
+    enum ui_link_state state;
+};
+
+struct ui_link ui_link_new(struct font *, struct ui_str);
+void ui_link_free(struct ui_link *);
+enum ui_ret ui_link_event(struct ui_link *, const SDL_Event *);
+void ui_link_render(struct ui_link *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -316,13 +374,14 @@ struct ui_input
     struct ui_widget w;
 
     struct font *font;
+    struct ui_clipboard *board;
 
     bool focused;
     struct { char *c; uint8_t len, cap; } buf;
     struct { uint8_t col; bool blink; } carret;
 };
 
-struct ui_input ui_input_new(struct font *, size_t cap);
+struct ui_input ui_input_new(struct font *, size_t cap, struct ui_clipboard *);
 void ui_input_free(struct ui_input *);
 
 void ui_input_clear(struct ui_input *);

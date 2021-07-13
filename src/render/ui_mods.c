@@ -35,7 +35,7 @@ struct ui_mods *ui_mods_new(void)
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
         .new = ui_button_new(font, ui_str_c("+")),
-        .new_val = ui_input_new(font, vm_atom_cap),
+        .new_val = ui_input_new(font, vm_atom_cap, &core.ui.board),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .toggles = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
     };

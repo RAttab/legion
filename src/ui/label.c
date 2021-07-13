@@ -7,8 +7,6 @@
 #include "ui/ui.h"
 #include "render/font.h"
 
-#include <stdarg.h>
-
 
 // -----------------------------------------------------------------------------
 // label

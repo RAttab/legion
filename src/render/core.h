@@ -8,6 +8,7 @@
 #include "common.h"
 #include "game/coord.h"
 #include "utils/time.h"
+#include "ui/ui.h"
 #include "SDL.h"
 
 struct map;
@@ -71,6 +72,8 @@ struct core
 
     struct
     {
+        struct ui_clipboard board;
+
         struct map *map;
         struct ui_topbar *topbar;
         struct ui_mods *mods;

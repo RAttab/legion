@@ -29,6 +29,11 @@ inline int64_t i64_ceil_div(int64_t x, int64_t d)
     return (x - 1) / d + 1;
 }
 
+inline int64_t u64_ceil_div(uint64_t x, uint64_t d)
+{
+    return (x - 1) / d + 1;
+}
+
 inline uint32_t u32_min(uint32_t x, uint32_t y)
 {
     return x <= y ? x : y;
