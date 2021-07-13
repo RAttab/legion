@@ -244,7 +244,7 @@ static void map_render_lanes(
     struct vec64 *lanes = world_lanes_list(core.state.world, star);
     if (!lanes || !lanes->len) return;
 
-    rgba_render(rgba_white(), renderer);
+    rgba_render(rgba_gray_a(0xAA, 0xAA), renderer);
 
     SDL_Point src = map_project_sdl(map, star);
     for (size_t i = 0; i < lanes->len; ++i) {

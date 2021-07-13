@@ -112,7 +112,7 @@ static void legion_io(
 const struct active_config *legion_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_ITEM, IO_RESET };
+    static const word_t io_list[] = { IO_PING, IO_MOD, IO_LAUNCH, IO_RESET };
 
     static const struct active_config config = {
         .size = sizeof(struct legion),
