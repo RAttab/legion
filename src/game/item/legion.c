@@ -52,8 +52,9 @@ static void legion_make(void *state, id_t id, struct chunk *chunk, uint32_t data
 {
     (void) state;
 
+    chunk_delete(chunk, id);
     for (const enum item *it = legion_cargo(id_item(id)); *it; ++it) {
-        if (*it >= ITEM_BRAIN_1 && *it <= ITEM_BRAIN_3)
+        if (data && *it >= ITEM_BRAIN_1 && *it <= ITEM_BRAIN_3)
             chunk_create_from(chunk, *it, data);
         else chunk_create(chunk, *it);
     }

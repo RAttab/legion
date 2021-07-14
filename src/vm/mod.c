@@ -317,6 +317,8 @@ mod_t mods_register(struct mods *mods, const atom_t *name)
 
 bool mods_name(struct mods *mods, mod_id_t id, atom_t *dst)
 {
+    if (!id) return false;
+
     struct htable_ret ret = htable_get(&mods->by_id, id);
     if (!ret.ok) return false;
 
@@ -327,6 +329,7 @@ bool mods_name(struct mods *mods, mod_id_t id, atom_t *dst)
 
 mod_t mods_set(struct mods *mods, mod_id_t id, struct mod *mod)
 {
+    assert(id);
     assert(!mod->errs_len);
 
     struct htable_ret ret = htable_get(&mods->by_id, id);
@@ -345,12 +348,15 @@ mod_t mods_set(struct mods *mods, mod_id_t id, struct mod *mod)
 
 struct mod *mods_latest(struct mods *mods, mod_id_t id)
 {
+    if (!id) return NULL;
+
     struct htable_ret ret = htable_get(&mods->by_id, id);
     return ret.ok ? ((struct mod_entry *) ret.value)->mod : NULL;
 }
 
 struct mod *mods_get(struct mods *mods, mod_t id)
 {
+    if (!id) return NULL;
     if (!mod_ver(id)) return mods_latest(mods, mod_id(id));
 
     struct htable_ret ret = htable_get(&mods->by_mod, id);

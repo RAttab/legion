@@ -284,13 +284,13 @@ static uint64_t lanes_item_div(enum item type)
     switch (type) {
 
     case ITEM_LEGION_1:
-    case ITEM_SHUTTLE_1: { return 1; }
+    case ITEM_SHUTTLE_1: { return 100; }
 
     case ITEM_LEGION_2:
-    case ITEM_SHUTTLE_2: { return 10; }
+    case ITEM_SHUTTLE_2: { return 1000; }
 
     case ITEM_LEGION_3:
-    case ITEM_SHUTTLE_3: { return 100; }
+    case ITEM_SHUTTLE_3: { return 10000; }
 
     default: { assert(false); }
     };
