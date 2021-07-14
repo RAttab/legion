@@ -175,6 +175,7 @@ static void ui_star_update(struct ui_star *ui)
 
     {
         static const enum item filter[] = {
+            ITEM_SCANNER_1, ITEM_SCANNER_2, ITEM_SCANNER_3,
             ITEM_DB_1, ITEM_DB_2, ITEM_DB_3,
             ITEM_BRAIN_1, ITEM_BRAIN_2, ITEM_BRAIN_3,
             ITEM_LEGION_1, ITEM_LEGION_2, ITEM_LEGION_3,

@@ -8,6 +8,7 @@
 #include "common.h"
 #include "game/item.h"
 #include "game/prog.h"
+#include "game/world.h"
 #include "vm/vm.h"
 
 struct chunk;
@@ -261,3 +262,34 @@ struct legion_packed legion
 const enum item *legion_cargo(enum item type);
 
 static_assert(sizeof(struct legion) == 8);
+
+
+// -----------------------------------------------------------------------------
+// scan
+// -----------------------------------------------------------------------------
+
+enum legion_packed scanner_state
+{
+    scanner_idle = 0,
+    scanner_wide,
+    scanner_target,
+};
+
+struct legion_packed scanner
+{
+    id_t id;
+
+    enum scanner_state state;
+    struct { uint8_t left; uint8_t cap; } work;
+    legion_pad(1);
+
+    union
+    {
+        struct world_scan_it wide;
+        struct { enum item item; struct coord coord; } target;
+    } type;
+
+    word_t result;
+};
+
+static_assert(sizeof(struct scanner) == 32);

@@ -33,6 +33,9 @@ legion_packed enum atom_io
     IO_SEND,
     IO_RECV,
 
+    IO_SCAN,
+    IO_RESULT,
+
     IO_LAUNCH,
 
     ATOM_IO_MAX,

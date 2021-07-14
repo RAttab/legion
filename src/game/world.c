@@ -128,6 +128,7 @@ struct coord world_populate(struct world *world)
 
             for (const enum item *it = legion_cargo(ITEM_LEGION_1); *it; it++)
                 chunk_create(chunk, *it);
+            chunk_create(chunk, ITEM_SCANNER_1);
             chunk_create(chunk, ITEM_LEGION_1);
 
             return star->coord;

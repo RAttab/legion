@@ -136,7 +136,6 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     if (!input->focused) return ui_nil;
 
     size_t col = (cursor.x - input->w.pos.x) / input->font->glyph_w;
-    assert(col < input->buf.cap);
     input->carret.col = legion_min(col, input->buf.len);
 
     core_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);

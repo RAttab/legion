@@ -44,6 +44,8 @@ void atoms_register(void)
     reg_atom(IO_VAL);
     reg_atom(IO_SEND);
     reg_atom(IO_RECV);
+    reg_atom(IO_SCAN);
+    reg_atom(IO_RESULT);
     reg_atom(IO_LAUNCH);
 
     // Natural
@@ -111,6 +113,9 @@ void atoms_register(void)
     reg_atom(ITEM_ASSEMBLY_2);
     reg_atom(ITEM_ASSEMBLY_3);
     reg_atom(ITEM_STORAGE);
+    reg_atom(ITEM_SCANNER_1);
+    reg_atom(ITEM_SCANNER_2);
+    reg_atom(ITEM_SCANNER_3);
     reg_atom(ITEM_DB_1);
     reg_atom(ITEM_DB_2);
     reg_atom(ITEM_DB_3);

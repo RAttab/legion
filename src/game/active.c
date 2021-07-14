@@ -326,6 +326,7 @@ bool active_io(
 #include "game/item/legion.c"
 #include "game/item/printer.c"
 #include "game/item/storage.c"
+#include "game/item/scanner.c"
 
 
 const struct active_config *active_config(enum item item)
@@ -336,6 +337,7 @@ const struct active_config *active_config(enum item item)
     case ITEM_EXTRACT_1...ITEM_EXTRACT_3:   return extract_config(item);
     case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:  return printer_config(item);
     case ITEM_STORAGE:                      return storage_config(item);
+    case ITEM_SCANNER_1...ITEM_SCANNER_3:   return scanner_config(item);
     case ITEM_DB_1...ITEM_DB_3:             return db_config(item);
     case ITEM_BRAIN_1...ITEM_BRAIN_3:       return brain_config(item);
     case ITEM_LEGION_1...ITEM_LEGION_3:     return legion_config(item);

@@ -21,6 +21,7 @@ static struct font *ui_item_font(void) { return font_mono6; }
 #include "render/items/ui_extract.c"
 #include "render/items/ui_printer.c"
 #include "render/items/ui_storage.c"
+#include "render/items/ui_scanner.c"
 #include "render/items/ui_brain.c"
 #include "render/items/ui_db.c"
 #include "render/items/ui_legion.c"
@@ -36,6 +37,7 @@ union ui_item_state
     struct extract extract;
     struct printer printer;
     struct storage storage;
+    struct scanner scanner;
     struct brain brain;
     struct db db;
     struct legion legion;
@@ -60,6 +62,7 @@ struct ui_item
     struct ui_extract extract;
     struct ui_printer printer;
     struct ui_storage storage;
+    struct ui_scanner scanner;
     struct ui_brain brain;
     struct ui_db db;
     struct ui_legion legion;
@@ -89,6 +92,7 @@ struct ui_item *ui_item_new(void)
     ui_extract_init(&ui->extract);
     ui_printer_init(&ui->printer);
     ui_storage_init(&ui->storage);
+    ui_scanner_init(&ui->scanner);
     ui_brain_init(&ui->brain);
     ui_db_init(&ui->db);
     ui_legion_init(&ui->legion);
@@ -107,6 +111,7 @@ void ui_item_free(struct ui_item *ui)
     ui_extract_free(&ui->extract);
     ui_printer_free(&ui->printer);
     ui_storage_free(&ui->storage);
+    ui_scanner_free(&ui->scanner);
     ui_brain_free(&ui->brain);
     ui_db_free(&ui->db);
     ui_legion_free(&ui->legion);
@@ -149,6 +154,8 @@ static void ui_item_update(struct ui_item *ui)
         return ui_printer_update(&ui->printer, &ui->state.printer);
     case ITEM_STORAGE:
         return ui_storage_update(&ui->storage, &ui->state.storage);
+    case ITEM_SCANNER_1...ITEM_SCANNER_3:
+        return ui_scanner_update(&ui->scanner, &ui->state.scanner);
     case ITEM_BRAIN_1...ITEM_BRAIN_3:
         return ui_brain_update(&ui->brain, &ui->state.brain);
     case ITEM_DB_1...ITEM_DB_3:
@@ -229,6 +236,8 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
         { done = ui_printer_event(&ui->printer, &ui->state.printer, ev); break; }
     case ITEM_STORAGE:
         { done = ui_storage_event(&ui->storage, &ui->state.storage, ev); break; }
+    case ITEM_SCANNER_1...ITEM_SCANNER_3:
+        { done = ui_scanner_event(&ui->scanner, &ui->state.scanner, ev); break; }
     case ITEM_BRAIN_1...ITEM_BRAIN_3:
         { done = ui_brain_event(&ui->brain, &ui->state.brain, ev); break; }
     case ITEM_DB_1...ITEM_DB_3:
@@ -265,6 +274,8 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
         return ui_printer_render(&ui->printer, &ui->state.printer, &layout, renderer);
     case ITEM_STORAGE:
         return ui_storage_render(&ui->storage, &ui->state.storage, &layout, renderer);
+    case ITEM_SCANNER_1...ITEM_SCANNER_3:
+        return ui_scanner_render(&ui->scanner, &ui->state.scanner, &layout, renderer);
     case ITEM_BRAIN_1...ITEM_BRAIN_3:
         return ui_brain_render(&ui->brain, &ui->state.brain, &layout, renderer);
     case ITEM_DB_1...ITEM_DB_3:
