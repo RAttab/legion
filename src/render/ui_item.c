@@ -128,7 +128,10 @@ static void ui_item_update(struct ui_item *ui)
     assert(chunk);
 
     bool ok = chunk_copy(chunk, ui->id, &ui->state, sizeof(ui->state));
-    assert(ok);
+    if (!ok) { // item was deleted so close the panel
+        core_push_event(EV_ITEM_CLEAR, 0, 0);
+        return;
+    }
 
     {
         char str[id_str_len];

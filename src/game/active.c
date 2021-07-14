@@ -78,10 +78,10 @@ void active_delete(struct active *active, id_t id)
     if (index >= active->len) return;
 
     if (likely(active->cap <= 64))
-        active->free &= 1ULL << index;
+        active->free |= 1ULL << index;
     else {
         struct vec64 *vec = (void *) active->free;
-        vec->vals[index / 64] &= 1ULL << (index % 64);
+        vec->vals[index / 64] |= 1ULL << (index % 64);
     }
 }
 
