@@ -27,7 +27,7 @@ static void extract_load(void *state, struct chunk *chunk)
     struct extract *extract = state;
     (void) chunk;
 
-    prog_id_t id = prog_packed_id(extract->prog);
+    enum item id = prog_packed_id(extract->prog);
     if (!id) return;
 
     const struct prog *prog = prog_fetch(id);
@@ -111,7 +111,7 @@ static void extract_io_prog(
     if (len < 1) return;
 
     word_t prog_id = args[0];
-    if (prog_id != (prog_id_t) prog_id) return;
+    if (prog_id != (enum item) prog_id) return;
 
     const struct prog *prog = prog_fetch(prog_id);
     if (!prog) return;

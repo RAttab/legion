@@ -5,7 +5,6 @@ set -o errexit -o nounset -o pipefail # -o xtrace
 : ${PREFIX:="."}
 : ${VM_DEBUG:=""}
 : ${VALGRIND:=""}
-: ${NK_REPO:="git@github.com:immediate-mode-ui/nuklear"}
 
 declare -a SRC
 SRC=(ui render game vm utils)
@@ -45,8 +44,10 @@ for obj in "${SRC[@]}"; do OBJ="$OBJ ${obj}.o"; done
 ar rcs liblegion.a $OBJ
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
+$CC -o "viz" "${PREFIX}/src/viz.c" $LIBS $CFLAGS
 cp -r "${PREFIX}/res" .
 
+./viz | dot -Tsvg > progs.svg
 parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
 
 if [ -z "${VALGRIND}" ]; then

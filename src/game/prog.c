@@ -23,14 +23,14 @@
 
 struct prog
 {
-    prog_id_t id;
+    enum item id;
     enum item host;
     uint8_t inputs, outputs;
     enum item tape[];
 };
 
 
-prog_id_t prog_id(const struct prog *prog) { return prog->id; }
+enum item prog_id(const struct prog *prog) { return prog->id; }
 enum item prog_host(const struct prog *prog) { return prog->host; }
 size_t prog_len(const struct prog *prog) { return prog->inputs + prog->outputs; }
 
@@ -61,7 +61,7 @@ static struct
 } progs;
 
 
-const struct prog *prog_fetch(prog_id_t prog)
+const struct prog *prog_fetch(enum item prog)
 {
     return progs.index[prog];
 }

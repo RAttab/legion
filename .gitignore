@@ -6,6 +6,3 @@ test_*
 
 build
 res/icons
-
-*.dot
-*.svg

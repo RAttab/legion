@@ -6,6 +6,8 @@
 #pragma once
 
 #include "common.h"
+#include "game/item.h"
+
 
 // -----------------------------------------------------------------------------
 // prog
@@ -14,7 +16,6 @@
 struct prog;
 
 typedef uint8_t prog_it_t;
-typedef uint8_t prog_id_t;
 
 enum prog_state
 {
@@ -30,9 +31,9 @@ struct prog_ret
 };
 
 void prog_load();
-const struct prog *prog_fetch(prog_id_t prog);
+const struct prog *prog_fetch(enum item prog);
 
-prog_id_t prog_id(const struct prog *);
+enum item prog_id(const struct prog *);
 size_t prog_len(const struct prog *);
 enum item prog_host(const struct prog *);
 struct prog_ret prog_at(const struct prog *, prog_it_t index);
@@ -44,7 +45,7 @@ struct prog_ret prog_at(const struct prog *, prog_it_t index);
 
 typedef uint64_t prog_packed_t;
 
-inline prog_packed_t prog_pack(prog_id_t id, prog_it_t it, const struct prog *ptr)
+inline prog_packed_t prog_pack(enum item id, prog_it_t it, const struct prog *ptr)
 {
     assert(!(((uintptr_t) ptr) >> 48));
     return (((uint64_t) id) << 56) | (((uint64_t) it) << 48) | ((uintptr_t) ptr);
@@ -61,12 +62,12 @@ inline prog_packed_t prog_packed_ptr_update(prog_packed_t packed, const struct p
     return ((uintptr_t) ptr) | (packed & (~((1UL << 48) - 1)));
 }
 
-inline prog_id_t prog_packed_id(prog_packed_t packed)
+inline enum item prog_packed_id(prog_packed_t packed)
 {
     return packed >> 56;
 }
 
-inline prog_id_t prog_packed_it(prog_packed_t packed)
+inline enum item prog_packed_it(prog_packed_t packed)
 {
     return (packed >> 48) & 0xFF;
 }

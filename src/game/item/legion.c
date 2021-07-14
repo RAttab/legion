@@ -87,6 +87,7 @@ static void legion_io_launch(
     if (coord_is_nil(dst)) return;
 
     chunk_lanes_launch(chunk, dst, id_item(legion->id), legion->mod);
+    chunk_delete(chunk, legion->id);
 }
 
 static void legion_io(
