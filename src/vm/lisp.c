@@ -14,7 +14,20 @@
 
 enum { symb_cap = 16 };
 typedef char symb_t[symb_cap];
-uint64_t symb_hash(symb_t *symb) { return hash_str(&(symb[0]), symb_cap); }
+
+static uint64_t symb_hash(symb_t *symb)
+{
+    return hash_str(&(symb[0]), symb_cap);
+}
+
+static uint64_t symb_hash_str(const char *str)
+{
+    assert(strlen(str) < symb_cap);
+
+    symb_t symb = {0};
+    strcpy(str, symb);
+    return symb_hash(&symb);
+}
 
 
 // -----------------------------------------------------------------------------
@@ -72,6 +85,11 @@ struct token
     union { symb_t symb; word_t num; } val;
     enum token_type type;
 };
+
+static uint64_t token_symb_hash(struct token *token)
+{
+    return symb_hash(&token->val.symb);
+}
 
 static bool lisp_is_space(char c) { return c <= 0x20; }
 static bool lisp_is_symb(char c)
@@ -240,74 +258,38 @@ static ip_t lisp_ip(struct lisp *lisp)
     return lisp->out.it - lisp->out.base;
 }
 
-
-typedef void (*lisp_fn_t) (struct lisp *);
-static void lisp_fn_call(struct lisp *);
-
-static bool lisp_stmt(struct lisp *lisp)
+static reg_t lisp_reg(struct lisp *lisp, uint64_t key)
 {
-    struct token *token = lisp_next(lisp);
-
-    switch (token->type)
-    {
-
-    case token_nil: {
-        if (lisp->depth) abort();
-        return false;
+    uint64_t key = symb_hash(symb);
+    for (reg_t reg = 0; reg < 4; ++reg) {
+        if (lisp->symb.reg[reg] == key) return reg;
     }
-
-    case token_close: {
-        lisp->depth--;
-        return false;
-    }
-    case token_open: {
-        lisp->depth++;
-        struct token *token = lisp_expect(lisp, token_symb);
-
-        struct htable_ret ret = {0};
-        uint64_t key = symb_hash(&token->val.symb);
-
-        if ((ret = htable_get(&lisp->symb.fn)).ok)
-            ((lisp_fn_t) ret.value)(lisp);
-
-        else if ((ret = htable_get(&lisp->symb.jmp)).ok)
-            lisp_fn_call(lisp);
-
-        else abort();
-
-        return true;
-    }
-
-    case token_num: {
-        lisp_write_value(lisp, OP_PUSH);
-        lisp_write_value(lisp, token->val.num);
-        return true;
-    }
-    case token_atom: {
-        lisp_write_value(lisp, OP_PUSH);
-        lisp_write_value(lisp, vm_atom(&token->val.symb));
-        return true;
-    }
-    case token_reg: {
-        lisp_write_value(lisp, OP_PUSHR);
-        lisp_write_value(lisp, (uint8_t) token->val.num);
-        return true;
-    }
-    case token_symb: {
-        uint64_t key = symb_hash(&token->val.symb);
-        reg_t reg = 0;
-        for (; reg < 4; ++reg) {
-            if (lisp->symb.reg[reg] == key) break;
-        }
-        if (reg == 4) abort();
-
-        lisp_write_value(lisp, OP_PUSHR);
-        lisp_write_value(lisp, reg);
-        return true;
-    }
-
-    default: { abort(); }
-    }
+    abort();
 }
 
+static ip_t lisp_jmp(struct lisp *lisp, uint64_t key)
+{
+    struct htable_ret ret = htable_get(&lisp->symb.jmp, key);
+    ip_t ip = ret.value;
+
+    if (!ret.ok) {
+        ret = htable_put(&lisp->symb.req, key, lisp_skip(lisp, sizeof(ip_t)));
+        assert(ret.ok);
+    }
+
+    return ip;
+}
+
+typedef void (*lisp_fn_t) (struct lisp *);
+
+static void lisp_register(struct lisp *lisp, uint64_t key, lisp_fn_t fn)
+{
+    uint64_t key = symb_hash_str(#fn);                              \
+    uint64_t val = (uintptr_t) lisp_fn_ ## fn;                      \
+    struct htable_ret ret = htable_put(&lisp->symb.fn, key, val);   \
+    assert(ret.ok);                                                 \
+}
+
+
+#include "vm/lisp_asm.c"
 #include "vm/lisp_fn.c"
