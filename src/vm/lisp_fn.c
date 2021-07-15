@@ -158,26 +158,66 @@ static void lisp_fn_head(struct lisp *lisp) { (void) lisp; }
 
 static void lisp_fn_let(struct lisp *lisp)
 {
+    struct token *token = lisp_expect(lisp, token_open);
 
+    lisp_regs_t regs = {0};
+
+    while ((token = lisp_next(lisp))) {
+        if (token->type == token_close) break;
+        if (token->type != token_open) abort();
+
+        uint64_t key = token_symb_hash(lisp_expect(lisp, token_symb));
+
+        if (!lisp_stmt(lisp)) abort();
+
+        reg_t reg = lisp_reg_alloc(lisp, key);
+        lisp_write_value(lisp, OP_POPR);
+        lisp_write_value(lisp, reg);
+        regs[reg] = key;
+
+        (void) lisp_expect(lisp, token_close);
+    }
+
+    while (lisp_stmt(lisp));
+
+    for (reg_t reg = 0; reg < regs; ++reg)
+        lisp_reg_free(lisp, reg, regs[reg]);
 }
 
 static void lisp_fn_if(struct list *lisp)
 {
+    if (!lisp_stmt(lisp)) abort(); // predicate
 
+    lisp_write_value(lisp, OP_JZ);
+    ip_t jmp_else = lisp_skip(lisp, sizeof(ip_t));
+
+    if (!lisp_stmt(lisp)) abort(); // true-clause
+
+    lisp_write_value(lisp, OP_JZ);
+    ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
+    lisp_write_value_at(lisp, jmp_else, lisp_ip(lisp));
+
+    (void) lisp_stmt(lisp); // else-clause (optional)
+
+    lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
 }
 
-static void lisp_fn_do_while(struct list *lisp)
+static void lisp_fn_while(struct list *lisp)
 {
+    ip_t jmp_top = lisp_ip(lisp);
 
+    if (!lisp_stmt(lisp)) abort(); // predictate
 
+    lisp_write_value(lisp, OP_JZ);
+    ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
+
+    while (lisp_stmt(lisp)); // loop-clause
+
+    lisp_write_value(lisp, OP_JMP);
+    lisp_write_value(lisp, jmp_top);
+
+    lisp_write_value_at(lisp, jmp_end, lisp_it(lisp));
 }
-
-static void lisp_fn_while_do(struct list *lisp)
-{
-
-
-}
-
 
 
 // -----------------------------------------------------------------------------
@@ -271,8 +311,7 @@ static void lisp_register_fn(struct lisp *lisp)
     register_fn(let);
 
     register_fn(if);
-    register_fn_str(do_while, "do-while");
-    register_fn_str(while_do, "while-do");
+    register_fn(while);
 
     register_fn(not);
     register_fn(and);

@@ -260,11 +260,28 @@ static ip_t lisp_ip(struct lisp *lisp)
 
 static reg_t lisp_reg(struct lisp *lisp, uint64_t key)
 {
-    uint64_t key = symb_hash(symb);
     for (reg_t reg = 0; reg < 4; ++reg) {
         if (lisp->symb.reg[reg] == key) return reg;
     }
     abort();
+}
+
+static reg_t lisp_reg_alloc(struct lisp *lisp, uint64_t key)
+{
+    for (reg_t reg = 0; reg < 4; ++reg) {
+        if (!lisp->symb.reg[reg]) {
+            lisp->symb.reg[reg] = key;
+            return reg;
+        }
+    }
+    abort();
+}
+
+static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
+{
+    if (!key) return;
+    assert(lisp->symb.reg[reg] == key);
+    lisp->symb.reg[reg] = 0;
 }
 
 static ip_t lisp_jmp(struct lisp *lisp, uint64_t key)
