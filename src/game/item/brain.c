@@ -95,6 +95,23 @@ static void brain_step_recv(struct brain *brain, size_t len, const word_t *args)
     brain->msg_len = 0;
 }
 
+static void brain_step_io(struct brain *brain, size_t len, const word_t *io)
+{
+    uint32_t atom = 0, dst = 0;
+    vm_unpack(io[0], &atom, &dst);
+
+    if (!dst) dst = brain->id;
+    if (atom < (uint32_t) ATOM_IO_MIN || atom >= (uint32_t) ATOM_IO_MAX) {
+        vm_io_fault(&brain->vm);
+        return;
+    }
+
+    switch (atom) {
+    case IO_RECV: { brain_step_recv(brain, len - 1, io + 1); return; }
+    default: { chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1); return; }
+    }
+}
+
 static void brain_step(void *state, struct chunk *chunk)
 {
     struct brain *brain = state;
@@ -106,26 +123,7 @@ static void brain_step(void *state, struct chunk *chunk)
 
     vm_io_buf_t io = {0};
     size_t len = vm_io_read(&brain->vm, io);
-    if (!len) return;
-
-    switch (io[0]) {
-
-    case IO_RECV: { brain_step_recv(brain, len - 1, io + 1); return; }
-
-    default: {
-        uint32_t atom = 0, dst = 0;
-        vm_unpack(io[0], &atom, &dst);
-
-        if (atom < (uint32_t) ATOM_IO_MIN || atom >= (uint32_t) ATOM_IO_MAX) {
-            vm_io_fault(&brain->vm);
-            return;
-        }
-
-        if (!dst) dst = brain->id;
-        chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1);
-        return;
-    }
-    }
+    if (len) brain_step_io(brain, len, io);
 }
 
 

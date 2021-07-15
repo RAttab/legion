@@ -184,7 +184,7 @@ static void lisp_fn_let(struct lisp *lisp)
         lisp_reg_free(lisp, reg, regs[reg]);
 }
 
-static void lisp_fn_if(struct list *lisp)
+static void lisp_fn_if(struct lisp *lisp)
 {
     if (!lisp_stmt(lisp)) abort(); // predicate
 
@@ -202,7 +202,7 @@ static void lisp_fn_if(struct list *lisp)
     lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
 }
 
-static void lisp_fn_while(struct list *lisp)
+static void lisp_fn_while(struct lisp *lisp)
 {
     ip_t jmp_top = lisp_ip(lisp);
 
@@ -217,6 +217,36 @@ static void lisp_fn_while(struct list *lisp)
     lisp_write_value(lisp, jmp_top);
 
     lisp_write_value_at(lisp, jmp_end, lisp_it(lisp));
+}
+
+static void lisp_fn_id(struct lisp *lisp)
+{
+    if (!lisp_stmt(lisp)) abort(); // type
+    lisp_write_value(lisp, (word_t) 24);
+    lisp_write_value(lisp, OP_BSL);
+
+    if (!lisp_stmt(lisp)) abort(); // index
+    lisp_write_value(lisp, OP_ADD);
+}
+
+static void lisp_fn_io(struct lisp *lisp)
+{
+    if (!lisp_stmt(lisp)) abort(); // op
+    if (!lisp_stmt(lisp)) abort(); // dst
+
+    lisp_write_value(lisp, OP_SWAP);
+    lisp_write_value(lisp, OP_PACK);
+
+    size_t len = 0;
+    while (lisp_stmt(lisp)) {
+        lisp_write_value(lisp, OP_SWAP); // gotta keep the op at the top
+        len++;
+    }
+
+    if (len > vm_io_cap) abort();
+
+    lisp_write_value(lisp, OP_IO);
+    lisp_write_value(lisp, (uint8_t) len);
 }
 
 
@@ -309,9 +339,11 @@ static void lisp_register_fn(struct lisp *lisp)
 
     register_fn(head);
     register_fn(let);
-
     register_fn(if);
     register_fn(while);
+
+    register_fn(id);
+    register_fn(io);
 
     register_fn(not);
     register_fn(and);
