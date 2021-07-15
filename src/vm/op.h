@@ -25,6 +25,10 @@ enum legion_packed op_code
     OP_POPR   = 0x14,
     OP_DUPE   = 0x18,
     OP_SWAP   = 0x19,
+    OP_ARG0   = 0x1A,
+    OP_ARG1   = 0x1B,
+    OP_ARG2   = 0x1C,
+    OP_ARG3   = 0x1D,
 
     OP_NOT    = 0x20,
     OP_AND    = 0x21,

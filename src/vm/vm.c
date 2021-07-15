@@ -157,6 +157,10 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
         [OP_POPR]   = &&op_popr,
         [OP_DUPE]   = &&op_dupe,
         [OP_SWAP]   = &&op_swap,
+        [OP_ARG0]   = &&op_arg0,
+        [OP_ARG1]   = &&op_arg1,
+        [OP_ARG2]   = &&op_arg2,
+        [OP_ARG3]   = &&op_arg3,
 
         [OP_NOT]    = &&op_not,
         [OP_AND]    = &&op_and,
@@ -272,6 +276,39 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
             word_t tmp = vm_stack(0);
             vm_stack(0) = vm_stack(1);
             vm_stack(1) = tmp;
+            continue;
+        }
+
+      op_arg0: {
+            uint8_t sp = vm_code(reg_t);
+            vm_ensure(sp);
+            word_t tmp = vm_stack(sp);
+            vm_stack(sp) = vm->regs[0];
+            vm->regs[0] = tmp;
+            continue;
+        }
+      op_arg1: {
+            uint8_t sp = vm_code(reg_t);
+            vm_ensure(sp);
+            word_t tmp = vm_stack(sp);
+            vm_stack(sp) = vm->regs[1];
+            vm->regs[1] = tmp;
+            continue;
+        }
+      op_arg2: {
+            uint8_t sp = vm_code(reg_t);
+            vm_ensure(sp);
+            word_t tmp = vm_stack(sp);
+            vm_stack(sp) = vm->regs[2];
+            vm->regs[2] = tmp;
+            continue;
+        }
+      op_arg3: {
+            uint8_t sp = vm_code(reg_t);
+            vm_ensure(sp);
+            word_t tmp = vm_stack(sp);
+            vm_stack(sp) = vm->regs[3];
+            vm->regs[3] = tmp;
             continue;
         }
 

@@ -21,11 +21,12 @@ uint64_t symb_hash(symb_t *symb) { return hash_str(&(symb[0]), symb_cap); }
 // compiler
 // -----------------------------------------------------------------------------
 
+typedef uint64_t lisp_regs_t[4];
+
 struct lisp
 {
     size_t depth;
     struct token token;
-    struct htable fn;
 
     struct
     {
@@ -44,12 +45,12 @@ struct lisp
 
     struct
     {
+        struct htable fn;
         struct htable req;
         struct htable jmp;
-        uint64_t regs[4];
+        lisp_regs_t regs[4];
     } symb;
 };
-
 
 // -----------------------------------------------------------------------------
 // token
@@ -184,18 +185,22 @@ static bool lisp_expect(struct lisp *lisp, enum token_type exp)
 // parse
 // -----------------------------------------------------------------------------
 
+static void lisp_ensure(struct lisp *lisp, size_t len)
+{
+    if (likely(lisp->out.it + len <= lisp->out.end)) return;
+
+    if (!lisp->out.base) lisp->out.base = calloc(page_len, 1);
+    else {
+        size_t pos = lisp->out.it - lisp->out.first;
+        size_t cap = (lisp->out.end - lisp->out.base) * 2;
+        lisp->out.base = realloc(lisp->out, cap);
+        lisp->out.end = lisp->out.base + cap;
+        lisp->out.it = lisp->out.base + pos;
+    }
+}
+
 static void lisp_write(struct lisp *lisp, size_t len, uint8_t *data)
 {
-    if (unlikely(lisp->out.it + len >= lisp->out.end)) {
-        if (!lisp->out.base) lisp->out.base = calloc(page_len, 1);
-        else {
-            size_t pos = lisp->out.it - lisp->out.first;
-            size_t cap = (lisp->out.end - lisp->out.base) * 2;
-            lisp->out.base = realloc(lisp->out, cap);
-            lisp->out.end = lisp->out.base + cap;
-            lisp->out.it = lisp->out.base + pos;
-        }
-    }
 
     memcpy(lisp->out.it, data, len);
 }
@@ -207,7 +212,37 @@ static void lisp_write(struct lisp *lisp, size_t len, uint8_t *data)
     } while (false)
 
 
+static void lisp_write_at(struct lisp *lisp, ip_t pos, size_t len, uint8_t *data)
+{
+    uint8_t *it = lisp->out.base + pos;
+    assert(it + len < lisp->out.end);
+    memcpy(it, data, len);
+}
+
+#define lisp_write_value_at(lisp, at, _value)           \
+    do {                                                \
+        typeof(_value) value = (_value);                \
+        lisp_write_at(lisp, at, &value, sizeof(value)); \
+    } while (false)
+
+
+static ip_t lisp_skip(struct lisp *lisp, size_t len)
+{
+    lisp_ensure(lisp, len);
+
+    ip_t pos = lisp->out.it - lisp->out.base;
+    lisp->out.it += len;
+    return pos;
+}
+
+static ip_t lisp_ip(struct lisp *lisp)
+{
+    return lisp->out.it - lisp->out.base;
+}
+
+
 typedef void (*lisp_fn_t) (struct lisp *);
+static void lisp_fn_call(struct lisp *);
 
 static bool lisp_stmt(struct lisp *lisp)
 {
@@ -229,10 +264,17 @@ static bool lisp_stmt(struct lisp *lisp)
         lisp->depth++;
         struct token *token = lisp_expect(lisp, token_symb);
 
-        struct htable_ret ret = htable_get(&lisp->fn, symb_hash(&token->val.symb));
-        if (!ret.ok) abort();
+        struct htable_ret ret = {0};
+        uint64_t key = symb_hash(&token->val.symb);
 
-        ((lisp_fn_t) ret.value)(lisp);
+        if ((ret = htable_get(&lisp->symb.fn)).ok)
+            ((lisp_fn_t) ret.value)(lisp);
+
+        else if ((ret = htable_get(&lisp->symb.jmp)).ok)
+            lisp_fn_call(lisp);
+
+        else abort();
+
         return true;
     }
 
@@ -252,8 +294,12 @@ static bool lisp_stmt(struct lisp *lisp)
         return true;
     }
     case token_symb: {
-        reg_t reg = lisp_reg(lisp, symb_hash(&token->val.symb));
-        if (!reg) abort();
+        uint64_t key = symb_hash(&token->val.symb);
+        reg_t reg = 0;
+        for (; reg < 4; ++reg) {
+            if (lisp->symb.reg[reg] == key) break;
+        }
+        if (reg == 4) abort();
 
         lisp_write_value(lisp, OP_PUSHR);
         lisp_write_value(lisp, reg);
@@ -264,30 +310,4 @@ static bool lisp_stmt(struct lisp *lisp)
     }
 }
 
-
-// -----------------------------------------------------------------------------
-// fn
-// -----------------------------------------------------------------------------
-
-static void lisp_fn_fun(struct lisp *lisp)
-{
-    // name
-    struct token *token = lisp_next(lisp);
-    if (token->type != token_symb) abort();
-
-    lisp_expect(lisp, token_open);
-    while ((token = lisp_next(lisp))->type != token_close) {
-        if (token->type != token_symb) abort();
-
-        // arguments;
-    }
-
-    while (lisp_stmt(lisp));
-}
-
-static void lisp_fn_add(struct lisp *lisp)
-{
-    if (!lisp_parse(lisp)) abort();
-    if (!lisp_parse(lisp)) abort();
-    lisp_write_value(lisp, OP_ADD);
-}
+#include "vm/lisp_fn.c"
