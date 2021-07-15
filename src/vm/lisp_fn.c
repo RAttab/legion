@@ -76,6 +76,21 @@ static bool lisp_stmt(struct lisp *lisp)
     }
 }
 
+static void lisp_stmts(struct lisp *lisp)
+{
+    if (!lisp_stmt(lisp)) {
+        // ensures that all statement return exactly one value on the stack.
+        lisp_write_value(lisp, OP_PUSH);
+        lisp_write_value(lisp, (word_t) 0);
+        return;
+    }
+
+    while (lisp_stmt(lisp)) {
+        lisp_write_value(lisp, OP_SWAP);
+        lisp_write_value(lisp, OP_POP);
+    }
+}
+
 
 // -----------------------------------------------------------------------------
 // defun/call
@@ -111,6 +126,7 @@ static void lisp_fn_call(struct lisp *lisp)
     lisp_write_value(lisp, OP_CALL);
     lisp_write_value(lisp, lisp_jmp(lisp, key));
 
+
     do {
         lisp_write_value(lisp, OP_SWAP); // ret value is on top of the stack
         lisp_write_value(lisp, OP_POPR);
@@ -142,7 +158,12 @@ static void lisp_fn_defun(struct lisp *lisp)
         lisp->regs[reg] = token_symb_hash(token);
     }
 
-    while (lisp_stmt(lisp));
+    lisp_stmts(lisp);
+
+    // our return value is above the return ip on the stack. Swaping the two
+    // ensures that we can call RET and that the return value will be on top of
+    // the stack after we return. MAGIC!
+    lisp_write_value(lisp, OP_SWAP);
 
     lisp_write_value(lisp, OP_RET);
     lisp_write_value_at(lisp, skip, lisp_ip(lisp));
@@ -153,7 +174,9 @@ static void lisp_fn_defun(struct lisp *lisp)
 // builtins
 // -----------------------------------------------------------------------------
 
-// for funs that return multiple value on the stack
+// pseudo function that essentially returns whatever is at the top of the stack.
+// This is mostly useful when dealing with statements that can return multiple
+// values.
 static void lisp_fn_head(struct lisp *lisp) { (void) lisp; }
 
 static void lisp_fn_let(struct lisp *lisp)
@@ -178,7 +201,7 @@ static void lisp_fn_let(struct lisp *lisp)
         (void) lisp_expect(lisp, token_close);
     }
 
-    while (lisp_stmt(lisp));
+    lisp_stmts(lisp);
 
     for (reg_t reg = 0; reg < regs; ++reg)
         lisp_reg_free(lisp, reg, regs[reg]);
@@ -197,26 +220,106 @@ static void lisp_fn_if(struct lisp *lisp)
     ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
     lisp_write_value_at(lisp, jmp_else, lisp_ip(lisp));
 
-    (void) lisp_stmt(lisp); // else-clause (optional)
+    if (!lisp_stmt(lisp)) { // else-clause (optional)
+        // if we have no else clause and we're not executing the if clause then
+        // this ensures that we always return a value on the stack.
+        lisp_write_value(lisp, OP_PUSH);
+        lisp_write_value(lisp, (word_t) 0);
+    }
 
     lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
 }
 
 static void lisp_fn_while(struct lisp *lisp)
 {
-    ip_t jmp_top = lisp_ip(lisp);
+    // init
+    {
+        // used to ensure that we always return one value on the stack
+        lisp_write_value(lisp, OP_PUSH);
+        lisp_write_value(lisp, (word_t) 0);
+    }
 
-    if (!lisp_stmt(lisp)) abort(); // predictate
+    // predicate
+    ip_t jmp_end = 0;
+    ip_t jmp_pred = lisp_ip(lisp);
+    {
+        if (!lisp_stmt(lisp)) abort();
 
-    lisp_write_value(lisp, OP_JZ);
-    ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
+        lisp_write_value(lisp, OP_JZ);
+        jmp_end = lisp_skip(lisp, sizeof(ip_t));
+    }
 
-    while (lisp_stmt(lisp)); // loop-clause
+    // stmts
+    {
+        // we will always have a value on the stack before executing the stmt
+        // block (see push at the start) so get rid of it.
+        lisp_write_value(lisp, OP_POP);
 
-    lisp_write_value(lisp, OP_JMP);
-    lisp_write_value(lisp, jmp_top);
+        lisp_stmts(lisp); // loop-clause
+
+        lisp_write_value(lisp, OP_JMP);
+        lisp_write_value(lisp, jmp_pred);
+    }
 
     lisp_write_value_at(lisp, jmp_end, lisp_it(lisp));
+}
+
+static void lisp_fn_for(struct lisp *lisp)
+{
+    reg_t reg = 0;
+    uint64_t key = 0;
+
+    // init
+    {
+        if(!lisp_expect(lisp, token_open)) abort();
+
+        struct token *token = lisp_expect(lisp, token_symb);
+        key = token_symb_hash(token);
+        reg = lisp_reg_alloc(lisp, key);
+
+        if (!lisp_stmt(lisp)) abort();
+        lisp_write_value(lisp, OP_POPR);
+        lisp_write_value(lisp, reg);
+
+        if (!lisp_expect(lisp, token_close)) abort();
+
+        // used to ensure that we always return one value on the stack
+        lisp_write_value(lisp, OP_PUSH);
+        lisp_write_value(lisp, (word_t) 0);
+    }
+
+    // predicate
+    ip_t jmp_end = 0;
+    ip_t jmp_pred = lisp_ip(lisp);
+    {
+        if (!lisp_stmt(lisp)) abort();
+
+        lisp_write_value(lisp, OP_JZ);
+        jmp_end = lisp_skip(lisp, sizeof(ip_t));
+    }
+
+    // inc
+    {
+        if (!lisp(stmt)) abort();
+
+        lisp_write_value(lisp, OP_POPR);
+        lisp_write_value(lisp, reg);
+    }
+
+    // stmts
+    {
+        // we will always have a value on the stack before executing the stmt
+        // block (see push at the start) so get rid of it.
+        lisp_write_value(lisp, OP_POP);
+
+        lisp_stmts(lisp); // loop-clause
+
+        lisp_write_value(lisp, OP_JMP);
+        lisp_write_value(lisp, jmp_pred);
+    }
+
+    lisp_write_value_at(lisp, jmp_end, lisp_it(lisp));
+    lisp_reg_free(lisp, reg, key);
 }
 
 static void lisp_fn_id(struct lisp *lisp)
@@ -229,6 +332,10 @@ static void lisp_fn_id(struct lisp *lisp)
     lisp_write_value(lisp, OP_ADD);
 }
 
+// This function is awkward because we execute the argument in the reverse order
+// that we want them. While we can fix the header, the actual arguments to the
+// io command need to be written in reverse order. This is not really fixable
+// without adding a vm instruction to do so :/
 static void lisp_fn_io(struct lisp *lisp)
 {
     if (!lisp_stmt(lisp)) abort(); // op
@@ -341,6 +448,7 @@ static void lisp_register_fn(struct lisp *lisp)
     register_fn(let);
     register_fn(if);
     register_fn(while);
+    register_fn(for);
 
     register_fn(id);
     register_fn(io);
@@ -379,6 +487,6 @@ static void lisp_register_fn(struct lisp *lisp)
     register_fn(pack);
     register_fn(unpack);
 
-#undef register_fn
 #undef register_fn_str
+#undef register_fn
 }
