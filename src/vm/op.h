@@ -14,7 +14,7 @@
 
 enum { op_len = 8 };
 
-enum op_code
+enum legion_packed op_code
 {
     OP_NOOP   = 0x00,
 
