@@ -25,7 +25,7 @@ static bool lisp_stmt(struct lisp *lisp)
     {
 
     case token_nil: {
-        if (lisp->depth) abort();
+        if (lisp->depth) lisp_err(lisp, "premature eof");
         return false;
     }
 
@@ -36,17 +36,14 @@ static bool lisp_stmt(struct lisp *lisp)
     case token_open: {
         lisp->depth++;
         struct token *token = lisp_expect(lisp, token_symb);
+        lisp_index(lisp);
 
         struct htable_ret ret = {0};
         uint64_t key = token_symb_hash(token);
 
         if ((ret = htable_get(&lisp->symb.fn)).ok)
             ((lisp_fn_t) ret.value)(lisp);
-
-        else if ((ret = htable_get(&lisp->symb.jmp)).ok)
-            lisp_fn_call(lisp);
-
-        else abort();
+        else lisp_fn_call(lisp);
 
         return true;
     }
@@ -68,11 +65,11 @@ static bool lisp_stmt(struct lisp *lisp)
     }
     case token_symb: {
         lisp_write_value(lisp, OP_PUSHR);
-        lisp_write_value(lisp, lisp_reg(lisp, token_symb_hash(token)));
+        lisp_write_value(lisp, lisp_reg(lisp, &token->val.symb));
         return true;
     }
 
-    default: { abort(); }
+    default: { assert(false); }
     }
 }
 
@@ -102,7 +99,7 @@ static void lisp_fn_call(struct lisp *lisp)
 
     reg_t args = 0;
     while (lisp_stmt(lisp)) ++args;
-    if (args >= 4) abort();
+    if (args > 4) lisp_err(lisp, "too many arguments: %u > 4", (unsigned) args);
 
     reg_t reg = 0;
     for (; reg < 4; ++reg) {
@@ -137,24 +134,35 @@ static void lisp_fn_call(struct lisp *lisp)
 
 static void lisp_fn_defun(struct lisp *lisp)
 {
-    if (lisp->depth != 1) abort();
+    if (lisp->depth) lisp_err(lisp, "nested function");
 
+    // since we can have top level instructions, we don't want to actually
+    // execute defun unless it's called so we instead jump over it.
     lisp_write_value(lisp, OP_JMP);
     ip_t skip = lisp_skip(lisp, sizeof(ip_t));
 
     {
-        struct token *token = lisp_next(lisp);
-        if (token->type != token_symb) abort();
+        struct token *token = lisp_expect(lisp, token_symb);
+        if (!token) { lisp_goto_close(lisp); return; }
 
         uint64_t key = token_symb_hash(token);
         struct htable_ret ret = htable_put(&lisp->symb.jmp, key, lisp_ip(lisp));
-        if (!ret.ok) abort();
+        if (!ret.ok)
+            lisp_err(lisp, "function redefined: %s (%lx)", token->val.symb, key);
     }
 
-    lisp_expect(lisp, token_open);
+    if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp); return; }
+
     for (reg_t reg = 0; (token = lisp_next(lisp))->type != token_close; ++reg) {
-        if (token->type != token_symb) abort();
-        if (reg >= 4) abort();
+        if (token->type != token_symb) {
+            lisp_err(lisp, "unexpected token in argument list: %s != %s",
+                    token_type_str(token->type), token_type_str(token_symb));
+            lisp_goto_close(lisp);
+            break;
+        }
+
+        if (reg >= 4) lisp_err(lisp, "too many parameters: %u > 4", reg);
+
         lisp->regs[reg] = token_symb_hash(token);
     }
 
@@ -187,18 +195,27 @@ static void lisp_fn_let(struct lisp *lisp)
 
     while ((token = lisp_next(lisp))) {
         if (token->type == token_close) break;
-        if (token->type != token_open) abort();
+        if (token->type != token_open) {
+            lisp_err(lisp, "unexpected token in argument list: %s != %s",
+                    token_type_str(token->type), token_type_str(token_open));
+            lisp_goto_close(lisp);
+            break;
+        }
 
         uint64_t key = token_symb_hash(lisp_expect(lisp, token_symb));
 
-        if (!lisp_stmt(lisp)) abort();
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing statement");
+            continue;
+        }
 
         reg_t reg = lisp_reg_alloc(lisp, key);
         lisp_write_value(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
         regs[reg] = key;
 
-        (void) lisp_expect(lisp, token_close);
+        if (!lisp_expect(lisp, token_close))
+            lisp_goto_close(lisp);
     }
 
     lisp_stmts(lisp);
@@ -209,12 +226,18 @@ static void lisp_fn_let(struct lisp *lisp)
 
 static void lisp_fn_if(struct lisp *lisp)
 {
-    if (!lisp_stmt(lisp)) abort(); // predicate
+    if (!lisp_stmt(lisp)) { // predicate
+        lisp_err(lisp, "missing predicate-clause");
+        return;
+    }
 
     lisp_write_value(lisp, OP_JZ);
     ip_t jmp_else = lisp_skip(lisp, sizeof(ip_t));
 
-    if (!lisp_stmt(lisp)) abort(); // true-clause
+    if (!lisp_stmt(lisp)) { // true-clause
+        lisp_err(lisp, "missing true-clause");
+        return;
+    }
 
     lisp_write_value(lisp, OP_JZ);
     ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
@@ -243,7 +266,10 @@ static void lisp_fn_while(struct lisp *lisp)
     ip_t jmp_end = 0;
     ip_t jmp_pred = lisp_ip(lisp);
     {
-        if (!lisp_stmt(lisp)) abort();
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing predicate-clause");
+            return;
+        }
 
         lisp_write_value(lisp, OP_JZ);
         jmp_end = lisp_skip(lisp, sizeof(ip_t));
@@ -271,17 +297,33 @@ static void lisp_fn_for(struct lisp *lisp)
 
     // init
     {
-        if(!lisp_expect(lisp, token_open)) abort();
+        if (!lisp_expect(lisp, token_open)) {
+            lisp_err(lisp, "missing init-clause");
+            return;
+        }
 
         struct token *token = lisp_expect(lisp, token_symb);
+        if (!token) {
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
         key = token_symb_hash(token);
         reg = lisp_reg_alloc(lisp, key);
 
-        if (!lisp_stmt(lisp)) abort();
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing init-clause initializer statement");
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
         lisp_write_value(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
 
-        if (!lisp_expect(lisp, token_close)) abort();
+        if (!lisp_expect(lisp, token_close))
+            lisp_goto_close(lisp);
 
         // used to ensure that we always return one value on the stack
         lisp_write_value(lisp, OP_PUSH);
@@ -292,7 +334,10 @@ static void lisp_fn_for(struct lisp *lisp)
     ip_t jmp_end = 0;
     ip_t jmp_pred = lisp_ip(lisp);
     {
-        if (!lisp_stmt(lisp)) abort();
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing predicate-clause");
+            return;
+        }
 
         lisp_write_value(lisp, OP_JZ);
         jmp_end = lisp_skip(lisp, sizeof(ip_t));
@@ -300,7 +345,10 @@ static void lisp_fn_for(struct lisp *lisp)
 
     // inc
     {
-        if (!lisp(stmt)) abort();
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing increment-clause");
+            return;
+        }
 
         lisp_write_value(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
@@ -324,11 +372,19 @@ static void lisp_fn_for(struct lisp *lisp)
 
 static void lisp_fn_id(struct lisp *lisp)
 {
-    if (!lisp_stmt(lisp)) abort(); // type
+    if (!lisp_stmt(lisp)) { // type
+        lisp_err(lisp, "missing type argument");
+        return;
+    }
+
     lisp_write_value(lisp, (word_t) 24);
     lisp_write_value(lisp, OP_BSL);
 
-    if (!lisp_stmt(lisp)) abort(); // index
+    if (!lisp_stmt(lisp)) { // index
+        lisp_err(lisp, "missing index argument");
+        return;
+    }
+
     lisp_write_value(lisp, OP_ADD);
 }
 
@@ -338,8 +394,8 @@ static void lisp_fn_id(struct lisp *lisp)
 // without adding a vm instruction to do so :/
 static void lisp_fn_io(struct lisp *lisp)
 {
-    if (!lisp_stmt(lisp)) abort(); // op
-    if (!lisp_stmt(lisp)) abort(); // dst
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing op argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing dst argument"); return; }
 
     lisp_write_value(lisp, OP_SWAP);
     lisp_write_value(lisp, OP_PACK);
@@ -350,7 +406,8 @@ static void lisp_fn_io(struct lisp *lisp)
         len++;
     }
 
-    if (len > vm_io_cap) abort();
+    if (len > vm_io_cap)
+        lisp_err(lisp, "too many io arguments: %zu > %u", len, vm_io_cap);
 
     lisp_write_value(lisp, OP_IO);
     lisp_write_value(lisp, (uint8_t) len);
@@ -368,21 +425,25 @@ static void lisp_fn_0(struct lisp *lisp, enum op_code op)
 
 static void lisp_fn_1(struct lisp *lisp, enum op_code op)
 {
-    if (!lisp_stmt(lisp)) abort();
+    if (!lisp_stmt(lisp)) {
+        lisp_err(lisp, "missing argument");
+        return;
+    }
+
     lisp_write_value(lisp, op);
 }
 
 static void lisp_fn_2(struct lisp *lisp, enum op_code op)
 {
-    if (!lisp_stmt(lisp)) abort();
-    if (!lisp_stmt(lisp)) abort();
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
     lisp_write_value(lisp, op);
 }
 
 static void lisp_fn_n(struct lisp *lisp, enum op_code op)
 {
-    if (!lisp_stmt(lisp)) abort();
-    if (!lisp_stmt(lisp)) abort();
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
     lisp_write_value(lisp, op);
 
     while (lisp_stmt(lisp)) lisp_write_value(lisp, op);
@@ -437,10 +498,10 @@ static void lisp_fn_n(struct lisp *lisp, enum op_code op)
 static void lisp_register_fn(struct lisp *lisp)
 {
 #define register_fn(fn) \
-    lisp_register(lisp, symb_hash_str(#fn), (uintptr_t) lisp_fn_ ## fn)
+    lisp_register_fn(lisp, symb_hash_str(#fn), (uintptr_t) lisp_fn_ ## fn)
 
 #define register_fn_str(fn, str) \
-    lisp_register(lisp, symb_hash_str(str), (uintptr_t) lisp_fn_ ## fn)
+    lisp_register_fn(lisp, symb_hash_str(str), (uintptr_t) lisp_fn_ ## fn)
 
     register_fn(defun);
 

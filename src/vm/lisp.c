@@ -12,8 +12,8 @@
 // symb
 // -----------------------------------------------------------------------------
 
-enum { symb_cap = 16 };
-typedef char symb_t[symb_cap];
+enum { symb_cap = 15 };
+typedef char symb_t[symb_cap + 1];
 
 static uint64_t symb_hash(symb_t *symb)
 {
@@ -63,7 +63,71 @@ struct lisp
         struct htable jmp;
         lisp_regs_t regs[4];
     } symb;
+
+    struct
+    {
+        size_t len, cap;
+        struct mod_err *list;
+    } err;
+
+    struct
+    {
+        size_t len, cap;
+        struct mod_index *list;
+    } index;
 };
+
+// -----------------------------------------------------------------------------
+// in
+// -----------------------------------------------------------------------------
+
+static bool lisp_eof(struct lisp *lisp) { return lisp->in.it >= lisp->in.end; }
+
+static char lisp_in_inc(struct lisp *lisp)
+{
+    if (unlikely(lisp->in.it >= lisp->in.end)) return 0;
+
+    if (*lisp->in.it == '\n') { lisp->in.col++; lisp->in.row = 0; }
+    else { lisp->in.row++; }
+
+    char c = *lisp->in.it;
+    lisp->in.it++;
+    return c;
+}
+
+
+// -----------------------------------------------------------------------------
+// err
+// -----------------------------------------------------------------------------
+
+legion_printf(2, 3)
+static void lisp_err(struct lisp *lisp, const char *fmt, ...)
+{
+    if (lisp->err.len == lisp->err.cap) {
+        lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
+        lisp->err.list = realloc(lisp->err.list, lisp->err.cap * sizeof(*lisp->err.list));
+    }
+
+    struct mod_err *err = &lisp->err.list[lisp->err.len];
+    err->row = lisp->token.row;
+    err->col = lisp->token.col;
+
+    va_list args;
+    va_start(args, fmt);
+    (void) vsnprintf(err->str, mod_err_cap, fmt, args);
+    va_end(args);
+
+    lisp->err.len++;
+}
+
+static void lisp_goto_close(struct lisp *lisp)
+{
+    for (size_t depth = 1; depth && !lisp_eof(lisp); lisp_in_inc(lisp)) {
+        if (lisp->in.it == '(') depth++;
+        if (lisp->in.it == ')') depth--;
+    }
+}
+
 
 // -----------------------------------------------------------------------------
 // token
@@ -82,6 +146,7 @@ enum token_type
 
 struct token
 {
+    uint32_t row, col;
     union { symb_t symb; word_t num; } val;
     enum token_type type;
 };
@@ -91,8 +156,23 @@ static uint64_t token_symb_hash(struct token *token)
     return symb_hash(&token->val.symb);
 }
 
-static bool lisp_is_space(char c) { return c <= 0x20; }
-static bool lisp_is_symb(char c)
+static const char *token_type_str(enum token_type type)
+{
+    switch (type) {
+    case token_nil: { return "eof"; }
+    case token_open: { return "open"; }
+    case token_close: { return "close"; }
+    case token_atom: { return "atom"; }
+    case token_symb: { return "symbol"; }
+    case token_num: { return "number"; }
+    case token_reg: { return "register"; }
+    default: { assert(false); }
+    }
+}
+
+static bool token_is_space(char c) { return c <= 0x20; }
+
+static bool token_is_symb(char c)
 {
     switch (c) {
     case '-':
@@ -111,27 +191,23 @@ static bool lisp_is_num(char c)
     }
 }
 
-
-static bool lisp_eof(struct lisp *lisp) { return lisp->in.it >= lisp->in.end; }
-static char lisp_in_inc(struct lisp *lisp)
-{
-    if (*lisp->in.it == '\n') { lisp->in.col++; lisp->in.row = 0; }
-    else { lisp->in.row++; }
-
-    char c = *lisp->in.it;
-    lisp->in.it++;
-    return c;
-}
-
 static void lisp_skip_spaces(struct lisp *lisp)
 {
-    while (!lisp_eof(lisp) && lisp_is_space(*lisp->in.it)) lisp_in_inc(lisp);
+    while (!lisp_eof(lisp) && token_is_space(*lisp->in.it)) lisp_in_inc(lisp);
+}
+
+static void lisp_goto_space(struct lisp *lisp)
+{
+    while (!token_is_space(*lisp->in.it)) lisp_in_inc(lisp);
 }
 
 static struct token *lisp_next(struct lisp *lisp)
 {
     lisp_skip_spaces(lisp);
     if (lisp_eof(lisp)) return token_nil;
+
+    lisp->token.row = lisp->in.row;
+    lisp->token.col = lisp->in.col;
 
     switch (*lisp->in.it) {
     case '(': { lisp->token.type = token_open; break; }
@@ -140,8 +216,13 @@ static struct token *lisp_next(struct lisp *lisp)
     case '$': { lisp->token.type = token_reg; break; }
     case '0'...'9': { lisp->token.type = token_num; break; }
     default: {
-        if (!lisp_is_symb(*lisp->in.it)) abort();
-        lisp->token.type = token_sumb; break;
+        if (unlikely(!token_is_symb(*lisp->in.it))) {
+            lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
+            lisp_goto_space(lisp);
+            lisp->token.type = token_nil;
+            return;
+        }
+        lisp->token.type = token_symb; break;
     }
     }
 
@@ -151,19 +232,26 @@ static struct token *lisp_next(struct lisp *lisp)
     case token_atom:
     case token_symb: {
         char *first = lisp->in.it;
-        while(!lisp_eof(lisp) && lisp_is_symb(*lisp->in.it)) lisp_in_inc(lisp);
+        while(!lisp_eof(lisp) && token_is_symb(*lisp->in.it)) lisp_in_inc(lisp);
 
         size_t len = lisp->in.it - first;
-        if (len > symb_cap) abort();
+        if (unlikely(len > symb_cap)) {
+            lisp_err(lisp, "symbol is too long: %zu > %u", len, symb_cap);
+            len = symb_cap;
+        }
         memcpy(lisp->token.val.symb, first, len);
 
-        if (!lisp_is_space(*lisp->in.it)) abort();
+        if (unlikely(!token_is_space(*lisp->in.it))) {
+            lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
+            lisp_goto_space(lisp);
+        }
+
         break;
     }
 
     case token_num: {
         char *first = lisp->in.it;
-        while (!lisp_eof(lisp) && lisp_is_num(*lisp->in.it)) lisp_in_inc(lisp);
+        while (!lisp_eof(lisp) && token_is_num(*lisp->in.it)) lisp_in_inc(lisp);
 
         size_t len = lisp->in.it - first;
         size_t read = 0;
@@ -171,19 +259,37 @@ static struct token *lisp_next(struct lisp *lisp)
             read = str_atox(lisp->in.it+2, len-2, &lisp->token.val.num) + 2;
         else read = str_atou(lisp->in.it, len, &lisp->token.val.num);
 
-        if (read != len) abort();
-        if (!lisp_is_space(*lisp->in.it)) abort();
+        if (unlikely(read != len))
+            lisp_err(lisp, "number was truncated: %zu != %zu", len, read);
+
+        if (unlikely(!token_is_space(*lisp->in.it))) {
+            lisp_err(lisp, "invalid character for number: %c", *lisp->in.it);
+            lisp_goto_space(lisp);
+        }
+
         break;
     }
 
     case token_reg: {
-        if (lisp_eof(lisp)) abort();
+        if (unlikely(lisp_eof(lisp))) {
+            lisp_err(lisp, "invalid register value: %s", "eof");
+            lisp->token->type = token_nil;
+            return;
+        }
 
         char c = lisp_in_inc(lisp);
-        if (c < '1' && c > '4') abort();
+        if (unlikely(c < '0' || c > '3')) {
+            lisp_err(lisp, "invalid register value: %c", c);
+            c = '0';
+        }
+
         lisp->token.val.num = c - '1';
 
-        if (!lisp_is_space(*lisp->in.it)) abort();
+        if (unlikely(!token_is_space(*lisp->in.it))) {
+            lisp_err(lisp, "invalid character for register: %c", *lisp->in.it);
+            lisp_goto_space(lisp);
+        }
+
         break;
     }
 
@@ -193,9 +299,13 @@ static struct token *lisp_next(struct lisp *lisp)
     return &lisp->token;
 }
 
-static bool lisp_expect(struct lisp *lisp, enum token_type exp)
+static struct token *lisp_expect(struct lisp *lisp, enum token_type exp)
 {
-    if (lisp_next(lisp)->type != exp) abort();
+    if (likely(lisp_next(lisp)->type != exp)) return &lisp->token;
+
+    lisp_err(lisp, "unpextected token: %s != %s",
+            token_type_str(lisp->token.type), token_type_str(exp));
+    return NULL;
 }
 
 
@@ -207,19 +317,19 @@ static void lisp_ensure(struct lisp *lisp, size_t len)
 {
     if (likely(lisp->out.it + len <= lisp->out.end)) return;
 
-    if (!lisp->out.base) lisp->out.base = calloc(page_len, 1);
-    else {
-        size_t pos = lisp->out.it - lisp->out.first;
-        size_t cap = (lisp->out.end - lisp->out.base) * 2;
-        lisp->out.base = realloc(lisp->out, cap);
-        lisp->out.end = lisp->out.base + cap;
-        lisp->out.it = lisp->out.base + pos;
-    }
+    size_t pos = lisp->out.it - lisp->out.first;
+
+    size_t cap = (lisp->out.end - lisp->out.base);
+    cap = cap ? cap * 2 : page_len;
+
+    lisp->out.base = realloc(lisp->out.base, cap);
+    lisp->out.end = lisp->out.base + cap;
+    lisp->out.it = lisp->out.base + pos;
 }
 
 static void lisp_write(struct lisp *lisp, size_t len, uint8_t *data)
 {
-
+    lisp_ensure(lisp, len);
     memcpy(lisp->out.it, data, len);
 }
 
@@ -258,12 +368,14 @@ static ip_t lisp_ip(struct lisp *lisp)
     return lisp->out.it - lisp->out.base;
 }
 
-static reg_t lisp_reg(struct lisp *lisp, uint64_t key)
+static reg_t lisp_reg(struct lisp *lisp, symb_t *symb)
 {
+    uint64_t key = symb_hash(symb);
     for (reg_t reg = 0; reg < 4; ++reg) {
         if (lisp->symb.reg[reg] == key) return reg;
     }
-    abort();
+
+    lisp_err("unknown symbol: %s (%lx)", symb, key);
 }
 
 static reg_t lisp_reg_alloc(struct lisp *lisp, uint64_t key)
@@ -274,7 +386,9 @@ static reg_t lisp_reg_alloc(struct lisp *lisp, uint64_t key)
             return reg;
         }
     }
-    abort();
+
+    lisp_err(lisp, "no available registers to allocate");
+    return 0;
 }
 
 static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
@@ -297,9 +411,23 @@ static ip_t lisp_jmp(struct lisp *lisp, uint64_t key)
     return ip;
 }
 
+static void lisp_index(struct lisp *lisp)
+{
+    if (lisp->index.len == lisp->index.cap) {
+        lisp->index.cap = lisp->index.cap ? lisp->index.cap * 2 : 8;
+        lisp->index.list = realloc(
+                lisp->index.list, lisp->index.cap * sizeof(*lisp->index.list));
+    }
+
+    struct mod_index *index = &lisp->index.list[lisp->index.len];
+    index->row = lisp->token.row;
+    index->col = lisp->token.col;
+    index->ip = lisp_ip(lisp);
+}
+
 typedef void (*lisp_fn_t) (struct lisp *);
 
-static void lisp_register(struct lisp *lisp, uint64_t key, lisp_fn_t fn)
+static void lisp_register_fn(struct lisp *lisp, uint64_t key, lisp_fn_t fn)
 {
     uint64_t key = symb_hash_str(#fn);                              \
     uint64_t val = (uintptr_t) lisp_fn_ ## fn;                      \

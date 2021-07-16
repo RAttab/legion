@@ -19,14 +19,14 @@ struct save;
 enum { mod_err_cap = text_line_cap };
 struct mod_err
 {
-    size_t line;
+    uint32_t row, col;
     char str[mod_err_cap];
 };
 
 struct legion_packed mod_index
 {
-    uint16_t line;
-    ip_t byte;
+    uint32_t row, col;
+    ip_t ip;
 };
 
 struct legion_packed mod
