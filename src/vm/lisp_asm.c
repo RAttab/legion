@@ -79,7 +79,7 @@ static void lisp_asm_off(struct lisp *lisp, enum op_code op)
     ip_t val = 0;
     switch (token->type) {
     case token_num: { val = token->val.num; break; }
-    case token_symb: {val = lisp_jmp(lisp, token_symb_hash(token)); break; }
+    case token_symb: { val = lisp_jmp(lisp, token_symb_hash(token)); break; }
     default: {
         lisp_err(lisp, "unexpected token: %s != %s | %s",
                 token_type_str(token->type),
@@ -113,9 +113,7 @@ static void lisp_asm_label(struct lisp *lisp)
     struct token *token = lisp_expect(lisp, token_symb);
     if (!token) return;
 
-    uint64_t key = token_symb_hash(token);
-    struct htable_ret ret = htable_put(&lisp->symb.jmp, key, lisp_ip(lisp));
-    if (!ret.ok) lisp_err(lisp, "label redefined: %s (%lx)", token->val.symb, key);
+    lisp_label(lisp, &token->val.symb);
 }
 
 #define define_asm(op, arg)                             \

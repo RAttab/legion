@@ -144,11 +144,7 @@ static void lisp_fn_defun(struct lisp *lisp)
     {
         struct token *token = lisp_expect(lisp, token_symb);
         if (!token) { lisp_goto_close(lisp); return; }
-
-        uint64_t key = token_symb_hash(token);
-        struct htable_ret ret = htable_put(&lisp->symb.jmp, key, lisp_ip(lisp));
-        if (!ret.ok)
-            lisp_err(lisp, "function redefined: %s (%lx)", token->val.symb, key);
+        lisp_defun(lisp, &token->val.symb);
     }
 
     if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp); return; }

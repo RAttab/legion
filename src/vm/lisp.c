@@ -401,14 +401,49 @@ static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
 static ip_t lisp_jmp(struct lisp *lisp, uint64_t key)
 {
     struct htable_ret ret = htable_get(&lisp->symb.jmp, key);
-    ip_t ip = ret.value;
+    if (likely(ret.ok)) return ret.value;
 
+    ret = htable_get(&lisp->symb.req, key);
+
+    struct vec64 *old = ret.ok ? ret.value : NULL;
+    struct vec64 *new = vec64_append(old, lisp_ip(lisp));
+
+    if (!old)
+        ret = htable_put(&lisp->symb.req, key, (uintptr_t) new);
+    else if (old != new)
+        ret = htable_xchg(&lisp->symb.req, key, (uintptr_t) new);
+
+    assert(ret.ok);
+    return 0;
+}
+
+static void lisp_label(struct lisp *lisp, symb_t *symb)
+{
+    ip_t jmp = lisp_ip(lisp);
+
+    uint64_t key = token_symb_hash(token);
+    struct htable_ret ret = htable_put(&lisp->symb.jmp, key, jmp);
     if (!ret.ok) {
-        ret = htable_put(&lisp->symb.req, key, lisp_skip(lisp, sizeof(ip_t)));
-        assert(ret.ok);
+        lisp_err(lisp, "redefined label: %s (%lx)", token->val.symb, key);
+        return;
     }
 
-    return ip;
+    ret = htable_get(&lisp->symb.req, key);
+    if (!ret.ok) return;
+
+    struct vec64 *req = (void *) ret.value;
+    for (size_t i = 0; i < req->len; ++i)
+        lisp_write_value_at(lisp, req->vals[i], jmp);
+
+    vec64_free(req);
+    ret = htable_del(&lisp->symb.req, key);
+    assert(ret.ok);
+}
+
+// \todo implement funtion export.
+static void lisp_defun(struct lisp *lisp, symb_t *symb)
+{
+    lisp_label(lisp, symb);
 }
 
 static void lisp_index(struct lisp *lisp)
