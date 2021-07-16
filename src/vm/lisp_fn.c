@@ -123,7 +123,6 @@ static void lisp_fn_call(struct lisp *lisp)
     lisp_write_value(lisp, OP_CALL);
     lisp_write_value(lisp, lisp_jmp(lisp, key));
 
-
     do {
         lisp_write_value(lisp, OP_SWAP); // ret value is on top of the stack
         lisp_write_value(lisp, OP_POPR);
@@ -182,6 +181,19 @@ static void lisp_fn_defun(struct lisp *lisp)
 // This is mostly useful when dealing with statements that can return multiple
 // values.
 static void lisp_fn_head(struct lisp *lisp) { (void) lisp; }
+
+// when writting assembly, we won't follow the rule where every statement must
+// return one value on the stack which means that if used in a typical stmts
+// block then things will get poped out of the stack arbitrarily.
+//
+// the asm statement essentially applies all the included statement as is with
+// zero stack modification in between. It's still expected that the overall
+// block pushes one or more element on the stack in used within lisp statements
+// but that's up to the user to manage.
+static void lisp_fn_asm(struct lisp *lisp)
+{
+    while (lisp_stmt(lisp));
+}
 
 static void lisp_fn_let(struct lisp *lisp)
 {
@@ -502,6 +514,7 @@ static void lisp_register_fn(struct lisp *lisp)
     register_fn(defun);
 
     register_fn(head);
+    register_fn(asm);
     register_fn(let);
     register_fn(if);
     register_fn(while);

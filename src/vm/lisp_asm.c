@@ -250,3 +250,197 @@ static void lisp_register_asm(struct lisp *lisp)
 
 #undef register_asm
 }
+
+// -----------------------------------------------------------------------------
+// disasm
+// -----------------------------------------------------------------------------
+
+struct disasm
+{
+    struct { const uint8_t *base, *end, *it; } in;
+    struct { char *base, *end, *it; } out;
+};
+
+static void lisp_disasm_out(
+        struct disasm *disasm, const char *op, size_t arg_len, const char *arg)
+{
+    size_t op_len = strlen(op);
+    size_t sep_len = arg_len ? 1 : 0;
+    size_t len = 3 + op_len + sep_len + arg_len;
+
+    if (unlikely(disasm.out.it + len > disasm.out.end)) {
+        size_t pos = disasm.out.it - disasm.out.base;
+        size_t cap = (disasm.out.end - disasm.out.base) + page_len;
+        disasm.out.base = realloc(disasm.out.base, cap);
+        disasm.out.end = disasm.out.base + cap;
+        disasm.out.it = disasm.out.it + len;
+    }
+
+    size_t avail = disasm.out.end - disasm.out.it;
+    if (!arg_len) disasm.out.it += snprintf(disasm.out.it, avail, "(%s)\n", op);
+    else disasm.out.it += snprintf(disasm.out.it, avail, "(%s %s)\n", op, arg);
+}
+
+#define lisp_disasm_read_into(disasm, _ptr) ({                  \
+    bool ok = disasm.in.it + sizeof(val) <= disasm.in.end;      \
+    if (likely(ok)) {                                           \
+        typeof(_ptr) ptr = (_ptr);                              \
+        memcpy(ptr, disasm.in.it, sizeof(*ptr));                \
+        disasm.in.it += sizeof(*ptr);                           \
+    }                                                           \
+    ok;
+})
+
+
+static bool lisp_disasm_nil(struct disasm *disasm, const char *op)
+{
+    lisp_disasm_out(disasm, op, 0, NULL);
+}
+
+static bool lisp_disasm_lit(struct disasm *disasm, const char *op)
+{
+    word_t val = 0;
+    if (!lisp_disasm_read_into(disasm, &val)) return false;
+
+    char buf[2+16] = {'0','x'};
+    str_atox(val, buf+2, sizeof(buf)-2);
+
+    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    return true;
+}
+
+static bool lisp_disasm_len(struct disasm *disasm, const char *op)
+{
+    uint8_t val = 0;
+    if (!lisp_disasm_read_into(disasm, &val)) return false;
+
+    char buf[3] = {0};
+    str_atou(val, buf, sizeof(buf));
+    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    return true;
+}
+
+static bool lisp_disasm_reg(struct disasm *disasm, const char *op)
+{
+    uint8_t val = 0;
+    if (!lisp_disasm_read_into(disasm, &val)) return false;
+
+    char buf[1+3] = {'$'};
+    str_atou(val, buf+1, sizeof(buf)-1);
+    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    return true;
+}
+
+static bool lisp_disasm_off(struct disasm *disasm, const char *op)
+{
+    ip_t val = 0;
+    if (!lisp_disasm_read_into(disasm, &val)) return false;
+
+    char buf[2+8] = {'0','x'};
+    str_atox(val, buf+2, sizeof(buf)-2);
+    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    return true;
+}
+
+static bool lisp_disasm_mod(struct disasm *disasm, const char *op)
+{
+    ip_t val = 0;
+    if (!lisp_disasm_read_into(disasm, &val)) return false;
+
+    char buf[1+8] = {'0','x'};
+    str_atox(val, buf+2, sizeof(buf)-2);
+    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    return true;
+}
+
+static bool lisp_disasm_op(struct disasm *disasm, enum op_code op)
+{
+    switch (op)
+    {
+
+#define disasm_op(op, arg) \
+    case OP_ ## op: { return lisp_disasm_ ## arg (disasm, #op); }
+
+    disasm_op(NOOP, nil)
+
+    disasm_op(PUSH, lit)
+    disasm_op(PUSHR, reg)
+    disasm_op(PUSHF, nil)
+    disasm_op(POP, nil)
+    disasm_op(POPR, reg)
+    disasm_op(DUPE, nil)
+    disasm_op(SWAP, nil)
+    disasm_op(ARG0, len)
+    disasm_op(ARG1, len)
+    disasm_op(ARG2, len)
+    disasm_op(ARG3, len)
+
+    disasm_op(NOT, nil)
+    disasm_op(AND, nil)
+    disasm_op(XOR, nil)
+    disasm_op(OR, nil)
+    disasm_op(BNOT, nil)
+    disasm_op(BAND, nil)
+    disasm_op(BXOR, nil)
+    disasm_op(BOR, nil)
+    disasm_op(BSL, nil)
+    disasm_op(BSR, nil)
+
+    disasm_op(NEG, nil)
+    disasm_op(ADD, nil)
+    disasm_op(SUB, nil)
+    disasm_op(MUL, nil)
+    disasm_op(MUL, nil)
+    disasm_op(LMUL, nil)
+    disasm_op(DIV, nil)
+    disasm_op(REM, nil)
+
+    disasm_op(EQ, nil)
+    disasm_op(NE, nil)
+    disasm_op(GT, nil)
+    disasm_op(LT, nil)
+    disasm_op(CMP, nil)
+
+    disasm_op(RET, nil)
+    disasm_op(CALL, mod)
+    disasm_op(LOAD, mod)
+    disasm_op(JMP, off)
+    disasm_op(JZ, off)
+    disasm_op(JNZ, off)
+
+    disasm_op(RESET, nil)
+    disasm_op(YIELD, nil)
+    disasm_op(TSC, nil)
+    disasm_op(FAULT, nil)
+
+    disasm_op(IO, len)
+    disasm_op(IOS, nil)
+    disasm_op(IOR, reg)
+
+    disasm_op(PACK, nil)
+    disasm_op(UNPACK, nil)
+
+#undef disasm_op
+
+    default: { return false; }
+    }
+}
+
+char *lisp_disasm(size_t len, const uint8_t *base)
+{
+    struct disasm disasm = { 0 };
+    disasm.in.it = base;
+    disasm.in.base = base;
+    disasm.in.end = base + len;
+
+    while (disasm.in.it < disasm.in.end) {
+        if (!lisp_disasm_op(&disasm, *disasm.in.it)) {
+            free(disasm.out.base);
+            return NULL;
+        }
+    }
+
+    *disasm.out.it = 0;
+    return disasm.out.base;
+
+}
