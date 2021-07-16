@@ -261,24 +261,37 @@ struct disasm
     struct { char *base, *end, *it; } out;
 };
 
+static void lisp_disasm_ensure(struct disasm *disasm, size_t len)
+{
+    if (likely(disasm.out.it + len <= disasm.out.end)) return;
+
+    size_t pos = disasm.out.it - disasm.out.base;
+    size_t cap = (disasm.out.end - disasm.out.base) + page_len;
+
+    disasm.out.base = realloc(disasm.out.base, cap);
+
+    disasm.out.end = disasm.out.base + cap;
+    disasm.out.it = disasm.out.it + len;
+}
+
+static void lisp_disasm_outc(struct disasm *disasm, size_t len, const char *str)
+{
+    lisp_disasm_ensure(disasm, len);
+    size_t avail = disasm.out.end - disasm.out.it;
+    disasm.out.it += snprintf(disasm.out.it, avail, str);
+}
+
 static void lisp_disasm_out(
         struct disasm *disasm, const char *op, size_t arg_len, const char *arg)
 {
     size_t op_len = strlen(op);
     size_t sep_len = arg_len ? 1 : 0;
-    size_t len = 3 + op_len + sep_len + arg_len;
-
-    if (unlikely(disasm.out.it + len > disasm.out.end)) {
-        size_t pos = disasm.out.it - disasm.out.base;
-        size_t cap = (disasm.out.end - disasm.out.base) + page_len;
-        disasm.out.base = realloc(disasm.out.base, cap);
-        disasm.out.end = disasm.out.base + cap;
-        disasm.out.it = disasm.out.it + len;
-    }
+    size_t len = 5 + op_len + sep_len + arg_len;
+    lisp_disasm_ensure(disasm, len);
 
     size_t avail = disasm.out.end - disasm.out.it;
-    if (!arg_len) disasm.out.it += snprintf(disasm.out.it, avail, "(%s)\n", op);
-    else disasm.out.it += snprintf(disasm.out.it, avail, "(%s %s)\n", op, arg);
+    if (!arg_len) disasm.out.it += snprintf(disasm.out.it, avail, "  (%s)\n", op);
+    else disasm.out.it += snprintf(disasm.out.it, avail, "  (%s %s)\n", op, arg);
 }
 
 #define lisp_disasm_read_into(disasm, _ptr) ({                  \
@@ -433,12 +446,18 @@ char *lisp_disasm(size_t len, const uint8_t *base)
     disasm.in.base = base;
     disasm.in.end = base + len;
 
+    const char header[] = "(asm\n";
+    lisp_disasm_outc(disasm, sizeof(header), header);
+
     while (disasm.in.it < disasm.in.end) {
         if (!lisp_disasm_op(&disasm, *disasm.in.it)) {
             free(disasm.out.base);
             return NULL;
         }
     }
+
+    const char footer[] = ")\n";
+    lisp_disasm_outc(disasm, sizeof(footer), footer);
 
     *disasm.out.it = 0;
     return disasm.out.base;

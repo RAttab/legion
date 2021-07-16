@@ -170,6 +170,11 @@ static void lisp_fn_defun(struct lisp *lisp)
 
     lisp_write_value(lisp, OP_RET);
     lisp_write_value_at(lisp, skip, lisp_ip(lisp));
+
+    // every statement must return a value on the stack even if it's at the
+    // top-level.
+    lisp_write_value(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) 0);
 }
 
 

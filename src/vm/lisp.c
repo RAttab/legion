@@ -31,7 +31,7 @@ static uint64_t symb_hash_str(const char *str)
 
 
 // -----------------------------------------------------------------------------
-// compiler
+// lisp
 // -----------------------------------------------------------------------------
 
 typedef uint64_t lisp_regs_t[4];
@@ -44,8 +44,8 @@ struct lisp
     struct
     {
         size_t row, col;
-        const char *const base;
-        const char *const end;
+        const char *base;
+        const char *end;
         const char *it;
     } in;
 
@@ -76,6 +76,7 @@ struct lisp
         struct mod_index *list;
     } index;
 };
+
 
 // -----------------------------------------------------------------------------
 // in
@@ -471,5 +472,48 @@ static void lisp_register_fn(struct lisp *lisp, uint64_t key, lisp_fn_t fn)
 }
 
 
+// -----------------------------------------------------------------------------
+// implementation
+// -----------------------------------------------------------------------------
+
 #include "vm/lisp_asm.c"
 #include "vm/lisp_fn.c"
+
+
+// -----------------------------------------------------------------------------
+// interface
+// -----------------------------------------------------------------------------
+
+struct mod *mod_compile(size_t len, const char *src)
+{
+    struct lisp lisp = {0};
+    lisp.in.it = src;
+    lisp.in.base = src;
+    lisp.in.end = src + len;
+
+    {
+        lisp_stmts(&lisp);
+        lisp_write_value(lisp, OP_RESET);
+    }
+
+    for (struct htable_bucket *it = htable_next(&lisp.symb.req, NULL);
+         it; it = htable_next(&lisp.symb.req, it))
+    {
+        lisp_err("unknown label: %lx", it->value);
+        vec64_free((void *) it->value);
+    }
+
+    struct mod *mod = mod_alloc(
+            lisp.in.base, lisp.in.it - lisp.in.base,
+            lisp.out.base, lisp.out.it - lisp.out.base,
+            lisp.err.list, lisp.err.len,
+            lisp.index.list, lisp.index.len);
+
+    free(lisp.out.base);
+    free(lisp.err.list);
+    free(lisp.index.list);
+    htable_reset(lisp.symb.fn);
+    htable_reset(lisp.symb.req);
+    htable_reset(lisp.symb.jmp);
+    return mod;
+}
