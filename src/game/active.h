@@ -227,7 +227,7 @@ struct legion_packed brain
     legion_pad(4);
 
     mod_t mod_id;
-    struct mod *mod;
+    const struct mod *mod;
 
     struct vm vm;
 };

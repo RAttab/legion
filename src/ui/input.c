@@ -61,14 +61,17 @@ uint64_t ui_input_get_u64(struct ui_input *input)
     const char c1 = input->buf.c[1];
 
     if (c0 == '@' || c0 == '!') {
-        if (input->buf.len > vm_atom_cap) return 0;
-        atom_t atom = {0};
-        memcpy(atom, input->buf.c+1, input->buf.len-1);
+        if (input->buf.len > symbol_cap) return 0;
+        struct symbol symbol = make_symbol_len(input->buf.len-1, input->buf.c+1);
 
-        if (c0 == '!') return vm_atom(&atom);
+        if (c0 == '!') {
+            struct atoms *atoms = world_atoms(core.state.world);
+            return atoms_atom(atoms, &symbol);
+        }
 
-        mod_id_t id = mods_find(world_mods(core.state.world), &atom);
-        return id ? mods_latest(world_mods(core.state.world), id)->id : 0;
+        struct mods *mods = world_mods(core.state.world);
+        mod_id_t id = mods_find(mods, &symbol);
+        return id ? mods_latest(mods, id)->id : 0;
     }
 
     uint64_t val = 0;
@@ -86,11 +89,10 @@ uint64_t ui_input_get_hex(struct ui_input *input)
     return val;
 }
 
-size_t ui_input_get_atom(struct ui_input *input, atom_t *dst)
+struct symbol ui_input_get_symbol(struct ui_input *input)
 {
-    size_t len = legion_min(input->buf.len, vm_atom_cap);
-    memcpy(dst, input->buf.c, len);
-    return len;
+    size_t len = legion_min(input->buf.len, symbol_cap);
+    return make_symbol_len(len, input->buf.c);
 }
 
 void ui_input_render(

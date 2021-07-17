@@ -8,7 +8,7 @@
 #include "common.h"
 #include "game/save.h"
 #include "game/item.h"
-#include "game/atoms.h"
+#include "game/io.h"
 #include "vm/vm.h"
 
 struct star;

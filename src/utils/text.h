@@ -33,7 +33,8 @@ struct line_ret line_delete(struct text *, struct line *, size_t index);
 struct line_ret line_backspace(struct text *, struct line *, size_t index);
 
 void line_setc(struct text *, struct line *, size_t len, const char *str);
-void line_setf(struct text *, struct line *, size_t len, const char *fmt, ...) legion_printf(3, 4);
+void line_setf(struct text *, struct line *, size_t len, const char *fmt, ...)
+    legion_printf(4, 5);
 
 
 // -----------------------------------------------------------------------------
@@ -56,5 +57,5 @@ struct line *text_erase(struct text *, struct line *at);
 void text_indent(struct text *);
 size_t text_indent_at(struct text *, struct line *);
 
-void text_to_str(const struct text *, char *dst, size_t len);
+size_t text_to_str(const struct text *, char *dst, size_t len);
 void text_from_str(struct text *, const char *src, size_t len);

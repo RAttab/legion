@@ -21,6 +21,7 @@ enum legion_packed save_magic
     save_magic_ring32 = 0x02,
     save_magic_ring64 = 0x03,
     save_magic_htable = 0x04,
+    save_magic_symbol = 0x05,
 
     save_magic_world = 0x10,
     save_magic_sector = 0x11,
@@ -94,3 +95,6 @@ struct ring32 *save_read_ring32(struct save *);
 
 void save_write_ring64(struct save *, const struct ring64 *);
 struct ring64 *save_read_ring64(struct save *);
+
+void save_write_symbol(struct save *, const struct symbol *);
+bool save_read_symbol(struct save *, struct symbol *);

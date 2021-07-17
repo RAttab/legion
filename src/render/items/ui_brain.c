@@ -38,7 +38,7 @@ static void ui_brain_init(struct ui_brain *ui)
         .msg_val = ui_label_new(font, ui_str_v(u64_len)),
 
         .mod = ui_label_new(font, ui_str_c("mod:  ")),
-        .mod_val = ui_label_new(font, ui_str_v(vm_atom_cap)),
+        .mod_val = ui_label_new(font, ui_str_v(symbol_cap)),
 
         .spec = ui_label_new(font, ui_str_c("stack: ")),
         .spec_stack = ui_label_new(font, ui_str_v(u8_len)),
@@ -119,9 +119,9 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
 
     if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
-        atom_t mod = {0};
+        struct symbol mod = {0};
         mods_name(world_mods(core.state.world), mod_id(state->mod->id), &mod);
-        ui_str_setv(&ui->mod_val.str, mod, vm_atom_cap);
+        ui_str_set_symbol(&ui->mod_val.str, &mod);
     }
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);

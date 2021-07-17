@@ -42,7 +42,8 @@ struct mod *mod_alloc(
 
     mod->index = ((void *) mod->errs) + errs_bytes;
     memcpy(mod->index, index, index_bytes);
-    mod->index[index_len] = (struct mod_index) { .line = src->len, .byte = code_len };
+    mod->index[index_len] = (struct mod_index) {
+        .row = src_len, .col = 0, .ip = code_len };
     mod->index_len = index_len;
 
     return mod;
@@ -116,30 +117,28 @@ struct mod *mod_nil(mod_t id)
     return mod;
 }
 
-size_t mod_line(struct mod *mod, ip_t ip)
+struct mod_index mod_index(const struct mod *mod, ip_t ip)
 {
     assert(!ip_is_mod(ip));
     assert(ip < mod->len);
 
     for (size_t i = 0; i < mod->index_len; ++i) {
-        if (ip < mod->index[i+1].byte)
-            return mod->index[i].line;
+        if (ip < mod->index[i+1].ip) return mod->index[i];
     }
     assert(false);
 }
 
-ip_t mod_byte(struct mod *mod, size_t line)
+ip_t mod_byte(const struct mod *mod, size_t row, size_t col)
 {
-    assert(line < mod->src_len);
-
     for (size_t i = 0; i < mod->index_len; ++i) {
-        if (line < mod->index[i+1].line)
-            return mod->index[i].byte;
+        struct mod_index *next = &mod->index[i+1];
+        if (row < next->row && col < next->col)
+            return mod->index[i].ip;
     }
     assert(false);
 }
 
-size_t mod_dump(struct mod *mod, char *dst, size_t len)
+size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 {
     size_t orig = len;
 
@@ -147,13 +146,13 @@ size_t mod_dump(struct mod *mod, char *dst, size_t len)
         struct mod_index *curr = &mod->index[i];
         struct mod_index *next = curr + 1;
 
-        size_t n = snprintf(dst, len, "[%04u:%02x] %02x ",
-                curr->line, curr->byte, mod->code[curr->byte]);
+        size_t n = snprintf(dst, len, "[%04u:%04u:%02x] %02x ",
+                curr->row, curr->col, curr->ip, mod->code[curr->ip]);
         dst += n; len -= n;
 
-        void *arg = mod->code + curr->byte + 1;
+        const void *arg = mod->code + curr->ip + 1;
 
-        size_t arg_len = next->byte - (curr->byte + 1);
+        size_t arg_len = next->ip - (curr->ip + 1);
         switch (arg_len) {
         case 0: { n = snprintf(dst, len, "\n"); break; }
         case 1: { n = snprintf(dst, len, "%02x\n", (unsigned) *((uint8_t *) arg)); break; }
@@ -169,7 +168,7 @@ size_t mod_dump(struct mod *mod, char *dst, size_t len)
     return orig - len;
 }
 
-size_t mod_hexdump(struct mod *mod, char *dst, size_t len)
+size_t mod_hexdump(const struct mod *mod, char *dst, size_t len)
 {
     size_t orig = len;
 
@@ -208,7 +207,7 @@ struct mod_entry
     mod_ver_t ver;
 
     struct symbol str;
-    struct mod *mod;
+    const struct mod *mod;
 };
 
 struct mods *mods_new(void)
@@ -254,7 +253,7 @@ struct mods *mods_load(struct save *save)
         struct mod_entry *entry = calloc(1, sizeof(*entry));
         save_read_into(save, &entry->id);
         save_read_into(save, &entry->ver);
-        save_read(save, &entry->str, sizeof(entry->str));
+        if (!save_read_symbol(save, &entry->str)) goto fail;
 
         struct htable_ret ret = htable_get(&mods->by_mod, make_mod(entry->id, entry->ver));
         if (!ret.ok) goto fail;
@@ -288,7 +287,7 @@ void mods_save(const struct mods *mods, struct save *save)
         const struct mod_entry *entry = (const void *) it->value;
         save_write_value(save, entry->id);
         save_write_value(save, entry->ver);
-        save_write(save, entry->str, sizeof(entry->str));
+        save_write_symbol(save, &entry->str);
     }
 
     save_write_magic(save, save_magic_mods);
@@ -298,8 +297,8 @@ void mods_save(const struct mods *mods, struct save *save)
 mod_t mods_register(struct mods *mods, const struct symbol *name)
 {
     struct mod_entry *entry = calloc(1, sizeof(*entry));
-    memcpy(entry->str, name, sizeof(*name));
     entry->id = ++mods->id;
+    entry->str = *name;
 
     mod_t mod = make_mod(entry->id, ++entry->ver);
     entry->mod = mod_nil(mod);
@@ -323,11 +322,11 @@ bool mods_name(struct mods *mods, mod_id_t id, struct symbol *dst)
     if (!ret.ok) return false;
 
     struct mod_entry *entry = (void *) ret.value;
-    memcpy(dst, entry->str, sizeof(*dst));
+    *dst = entry->str;
     return true;
 }
 
-mod_t mods_set(struct mods *mods, mod_id_t id, struct mod *mod)
+mod_t mods_set(struct mods *mods, mod_id_t id, const struct mod *mod)
 {
     assert(id);
     assert(!mod->errs_len);
@@ -339,14 +338,16 @@ mod_t mods_set(struct mods *mods, mod_id_t id, struct mod *mod)
     entry->mod = mod;
     entry->ver++;
 
-    mod->id = make_mod(id, entry->ver);
+    // a bit dirty but this is the only time where we actually want to change
+    // something in mod.
+    ((struct mod *) mod)->id = make_mod(id, entry->ver);
     ret = htable_put(&mods->by_mod, mod->id, (uintptr_t) mod);
     assert(ret.ok);
 
     return mod->id;
 }
 
-struct mod *mods_latest(struct mods *mods, mod_id_t id)
+const struct mod *mods_latest(struct mods *mods, mod_id_t id)
 {
     if (!id) return NULL;
 
@@ -354,7 +355,7 @@ struct mod *mods_latest(struct mods *mods, mod_id_t id)
     return ret.ok ? ((struct mod_entry *) ret.value)->mod : NULL;
 }
 
-struct mod *mods_get(struct mods *mods, mod_t id)
+const struct mod *mods_get(struct mods *mods, mod_t id)
 {
     if (!id) return NULL;
     if (!mod_ver(id)) return mods_latest(mods, mod_id(id));
@@ -409,7 +410,7 @@ struct mods_list *mods_list(struct mods *mods)
 #include <fcntl.h>
 #include <dirent.h>
 
-static void mods_load_path(struct mods *mods, const char *path)
+static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *path)
 {
     struct mod *mod = NULL;
     {
@@ -423,18 +424,14 @@ static void mods_load_path(struct mods *mods, const char *path)
         char *base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
         if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
 
-        struct text src = {0};
-        text_from_str(&src, base, strnlen(base, len));
-
-        mod = mod_compile(&src, mods);
+        mod = mod_compile(strnlen(base, len), base, mods, atoms);
         if (mod->errs_len) {
             for (size_t i = 0; i < mod->errs_len; ++i) {
                 struct mod_err *err = &mod->errs[i];
-                dbg("%s:%zu: %s", path, err->line, err->str);
+                dbg("%s:%u:%u: %s", path, err->row, err->col, err->str);
             }
         }
 
-        text_clear(&src);
         munmap(base, len);
         close(fd);
     }
@@ -446,13 +443,13 @@ static void mods_load_path(struct mods *mods, const char *path)
     }
     assert(slash < dot);
 
-    struct symbol name = make_symbol_len(path + slash + 1, dot - slash - 1);
+    struct symbol name = make_symbol_len(dot - slash - 1, path + slash + 1);
 
     mod_id_t id = mod_id(mods_register(mods, &name));
     mods_set(mods, id, mod);
 }
 
-void mods_populate(struct mods *mods)
+void mods_populate(struct mods *mods, struct atoms *atoms)
 {
     const char *path = "res/mods";
 
@@ -466,7 +463,7 @@ void mods_populate(struct mods *mods)
         char file[PATH_MAX];
         snprintf(file, sizeof(file), "%s/%s", path, entry->d_name);
 
-        mods_load_path(mods, file);
+        mods_load_path(mods, atoms, file);
     }
     closedir(dir);
 }

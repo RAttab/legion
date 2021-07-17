@@ -17,6 +17,7 @@
 size_t str_utoa(uint64_t val, char *dst, size_t len);
 size_t str_utox(uint64_t val, char *dst, size_t len);
 
+size_t str_atod(const char *src, size_t len, int64_t *dst);
 size_t str_atou(const char *src, size_t len, uint64_t *dst);
 size_t str_atox(const char *src, size_t len, uint64_t *dst);
 

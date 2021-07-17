@@ -28,16 +28,16 @@ struct ui_mods *ui_mods_new(void)
     struct font *font = ui_mods_font();
     struct pos pos = make_pos(0, ui_topbar_height(core.ui.topbar));
     struct dim dim = make_dim(
-            (vm_atom_cap+5) * font->glyph_w,
+            (symbol_cap+5) * font->glyph_w,
             core.rect.h - pos.y);
 
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
         .new = ui_button_new(font, ui_str_c("+")),
-        .new_val = ui_input_new(font, vm_atom_cap, &core.ui.board),
+        .new_val = ui_input_new(font, symbol_cap, &core.ui.board),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .toggles = ui_toggles_new(font, ui_str_v(vm_atom_cap)),
+        .toggles = ui_toggles_new(font, ui_str_v(symbol_cap)),
     };
 
     ui->panel.state = ui_panel_hidden;
@@ -67,7 +67,7 @@ static void ui_mods_update(struct ui_mods *ui)
 
     for (size_t i = 0; i < list->len; ++i) {
         struct ui_toggle *toggle = &ui->toggles.items[i];
-        ui_str_setv(&toggle->str, list->items[i].str, vm_atom_cap);
+        ui_str_set_symbol(&toggle->str, &list->items[i].str);
         toggle->user = list->items[i].id;
     }
 
@@ -123,8 +123,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
     if ((ret = ui_input_event(&ui->new_val, ev))) return ret == ui_consume;
     if ((ret = ui_button_event(&ui->new, ev))) {
-        atom_t name = {0};
-        ui_input_get_atom(&ui->new_val, &name);
+        struct symbol name = ui_input_get_symbol(&ui->new_val);
         mod_t mod = mods_register(world_mods(core.state.world), &name);
         ui_mods_update(ui);
         core_push_event(EV_MOD_SELECT, mod, 0);

@@ -124,3 +124,10 @@ void ui_str_set_coord(struct ui_str *str, struct coord val)
     assert(str->cap);
     str->len = coord_str(val, (char *) str->str, str->cap);
 }
+
+void ui_str_set_symbol(struct ui_str *str, struct symbol *val)
+{
+    assert(str->cap);
+    str->len = val->len;
+    memcpy((char *) str->str, val->c, str->len);
+}

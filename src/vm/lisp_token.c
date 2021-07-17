@@ -59,7 +59,7 @@ static struct token *lisp_next(struct lisp *lisp)
             lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
             lisp_goto_space(lisp);
             lisp->token.type = token_nil;
-            return;
+            return &lisp->token;
         }
         lisp->token.type = token_symb; break;
     }
@@ -70,15 +70,15 @@ static struct token *lisp_next(struct lisp *lisp)
 
     case token_atom:
     case token_symb: {
-        char *first = lisp->in.it;
+        const char *first = lisp->in.it;
         while(!lisp_eof(lisp) && lisp_is_symb(*lisp->in.it)) lisp_in_inc(lisp);
 
         lisp->token.len = lisp->in.it - first;
         if (unlikely(lisp->token.len > symbol_cap)) {
-            lisp_err(lisp, "symbol is too long: %zu > %u", lisp->token.len, symb_cap);
-            len = symbol_cap;
+            lisp_err(lisp, "symbol is too long: %u > %u", lisp->token.len, symbol_cap);
+            lisp->token.len = symbol_cap;
         }
-        lisp->token.val.symb = make_symbol_len(first, lisp->token.len);
+        lisp->token.val.symb = make_symbol_len(lisp->token.len, first);
 
         if (unlikely(!lisp_is_space(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
@@ -89,17 +89,20 @@ static struct token *lisp_next(struct lisp *lisp)
     }
 
     case token_num: {
-        char *first = lisp->in.it;
+        const char *first = lisp->in.it;
         while (!lisp_eof(lisp) && lisp_is_num(*lisp->in.it)) lisp_in_inc(lisp);
 
         lisp->token.len = lisp->in.it - first;
         size_t read = 0;
-        if (lisp->token.len > 2 && first[0] == '0' && first[1] == 'x')
-            read = str_atox(lisp->in.it+2, lisp->token.len-2, &lisp->token.val.num) + 2;
-        else read = str_atou(lisp->in.it, lisp->token.len, &lisp->token.val.num);
+        if (lisp->token.len > 2 && first[0] == '0' && first[1] == 'x') {
+            uint64_t value = 0;
+            read = str_atox(lisp->in.it+2, lisp->token.len-2, &value) + 2;
+            lisp->token.val.num = value;
+        }
+        else read = str_atod(lisp->in.it, lisp->token.len, &lisp->token.val.num);
 
         if (unlikely(read != lisp->token.len))
-            lisp_err(lisp, "number was truncated: %zu != %zu", lisp->token.len, read);
+            lisp_err(lisp, "number was truncated: %u != %zu", lisp->token.len, read);
 
         if (unlikely(!lisp_is_space(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for number: %c", *lisp->in.it);
@@ -114,7 +117,7 @@ static struct token *lisp_next(struct lisp *lisp)
             lisp_err(lisp, "invalid register value: %s", "eof");
             lisp->token.type = token_nil;
             lisp->token.len = 1;
-            return;
+            break;
         }
 
         lisp->token.len = 2;

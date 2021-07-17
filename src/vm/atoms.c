@@ -40,7 +40,7 @@ enum
 
 struct atoms *atoms_new(void)
 {
-    struct atoms *atoms = calloc(1, sizeof(atoms));
+    struct atoms *atoms = calloc(1, sizeof(*atoms));
     atoms->id = 1;
 
     atoms->base = alloc_cache(atoms_default_cap * sizeof(*atoms->base));
@@ -82,8 +82,8 @@ struct atoms *atoms_load(struct save *save)
     save_read(save, atoms->base, atoms->it - atoms->base);
 
 
-    htable_reseve(&atoms->iword, cap);
-    htable_reseve(&atoms->istr, cap_str);
+    htable_reserve(&atoms->iword, cap);
+    htable_reserve(&atoms->istr, cap_str);
 
     for (struct atom_data *it = atoms->base; it < atoms->end; it++) {
         it->next = 0;
@@ -156,7 +156,7 @@ static void atoms_expand(struct atoms *atoms)
 
 static void atoms_grow_index(struct atoms *atoms)
 {
-    size_t end = atoms->istr.end * atoms_cap_str_mul;
+    size_t end = atoms->istr.len * atoms_cap_str_mul;
     htable_reset(&atoms->istr);
     htable_reserve(&atoms->istr, end);
 
@@ -166,12 +166,12 @@ static void atoms_grow_index(struct atoms *atoms)
         data->next = 0;
 
         struct atom_data *prev = NULL;
-        struct atom_data *ret = atoms_find(&data->str, &prev);
+        struct atom_data *ret = atoms_find(atoms, &data->symbol, &prev);
         assert(!ret);
 
         if (prev) prev->next = i;
         else {
-            uint64_t hash = symbol_hash(&data->str);
+            uint64_t hash = symbol_hash(&data->symbol);
             struct htable_ret ret = htable_put(&atoms->istr, hash, i);
             assert(ret.ok);
         }
@@ -181,13 +181,13 @@ static void atoms_grow_index(struct atoms *atoms)
 static struct atom_data *atoms_insert(
         struct atoms *atoms, const struct symbol *symbol, word_t id)
 {
-    atoms_expand();
+    atoms_expand(atoms);
 
     struct atom_data *data = atoms->it;
     atoms->it++;
 
     data->word = id;
-    memcpy(data->symbol, symbol, sizeof(*symbol));
+    data->symbol = *symbol;
 
     uint64_t hash = symbol_hash(symbol);
     uint64_t index = data - atoms->base;
@@ -196,7 +196,7 @@ static struct atom_data *atoms_insert(
     assert(!ret.value);
 
     if (!ret.ok) {
-        atoms_grow_index();
+        atoms_grow_index(atoms);
         ret = htable_try_put(&atoms->istr, hash, index);
         assert(ret.ok);
     }
@@ -211,13 +211,13 @@ static struct atom_data *atoms_chain(
         struct atoms *atoms, struct atom_data *prev,
         const struct symbol *symbol, word_t id)
 {
-    atoms_expand();
+    atoms_expand(atoms);
 
     struct atom_data *data = atoms->it;
     atoms->it++;
 
     data->word = id;
-    memcpy(data->symbol, symbol, sizeof(*symbol));
+    data->symbol = *symbol;
 
     uint64_t index = data - atoms->base;
     prev->next = index;
@@ -235,21 +235,21 @@ bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word_t id)
     if (ret.ok) return false;
 
     struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(symbol, &prev);
+    struct atom_data *data = atoms_find(atoms, symbol, &prev);
 
     if (data) return data->word;
-    if (!prev) return atoms_insert(symbol, id)->word;
-    return atoms_chain(symbol, atom, id)->word;
+    if (!prev) return atoms_insert(atoms,symbol, id)->word;
+    return atoms_chain(atoms, prev, symbol, id)->word;
 }
 
 word_t atoms_atom(struct atoms *atoms, const struct symbol *symbol)
 {
     struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(symbol, &prev);
+    struct atom_data *data = atoms_find(atoms, symbol, &prev);
 
     if (data) return data->word;
-    if (!prev) return atoms_insert(symbol, atoms->id++)->word;
-    return atoms_chain(prev, symbol, atoms->id++)->word;
+    if (!prev) return atoms_insert(atoms, symbol, atoms->id++)->word;
+    return atoms_chain(atoms, prev, symbol, atoms->id++)->word;
 }
 
 bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)

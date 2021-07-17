@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "game/atoms.h"
+#include "game/io.h"
 #include "game/item.h"
 #include "game/chunk.h"
 #include "game/active.h"

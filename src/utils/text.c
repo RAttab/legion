@@ -28,8 +28,8 @@ static struct line *line_realloc(struct line *line, size_t len)
 
     size_t cap = line->cap;
     while (cap < len) line->cap += s_cache_line;
-    line = realloc(line, sizeof(*new) + cap);
-    new->cap = cap;
+    line = realloc(line, sizeof(*line) + cap);
+    line->cap = cap;
 
     if (line->next) line->next->prev = line;
     if (line->prev) line->prev->next = line;
@@ -60,12 +60,12 @@ static void line_indent(
         return;
     }
 
-    ssize_t delta = ((ssize_t) spaces) - ((ssize_t) first);
+    ssize_t delta = ((ssize_t) indent) - ((ssize_t) first);
     if (!delta) return;
 
     line = line_realloc(line, line->len + delta);
-    memmove(line->c + spaces, line->c + first, line->len - first);
-    memset(line->c, ' ', spaces);
+    memmove(line->c + indent, line->c + first, line->len - first);
+    memset(line->c, ' ', indent);
 
     line->len += delta;
     text->bytes += delta;
@@ -93,7 +93,7 @@ struct line_ret line_insert(
     new->len = line->len - index;
     line->len = index;
 
-    size_t indent = text_indent_at(new);
+    size_t indent = text_indent_at(text, new);
     line_indent(text, line, indent, true);
 
     return (struct line_ret) { .line = new, .index = indent };
@@ -120,7 +120,7 @@ struct line_ret line_delete(struct text *text, struct line *line, size_t index)
     memcpy(line->c + line->len, next->c, to_copy);
     line->len += to_copy;
 
-    text_erase(line->next);
+    text_erase(text, line->next);
     text->bytes += to_copy;
 
     return (struct line_ret) { .line = line, .index = index };
@@ -147,7 +147,7 @@ struct line_ret line_backspace(struct text *text, struct line *line, size_t inde
     memcpy(prev->c + prev->len, line->c, to_copy);
     prev->len += to_copy;
 
-    text_erase(line);
+    text_erase(text, line);
     text->bytes += to_copy;
 
     return (struct line_ret) { .line = prev, .index = prev->len };
@@ -163,13 +163,13 @@ void line_setc(struct text *text, struct line *line, size_t len, const char *str
     line->len = len;
 }
 
-void line_setf(struct text *, struct line *, size_t cap, const char *fmt, ...)
+void line_setf(struct text *text, struct line *line, size_t cap, const char *fmt, ...)
 {
     line = line_realloc(line, cap);
 
     va_list args = {0};
     va_start(args, fmt);
-    size_t len = vsnprintf(line->c, line-cap, fmt, args);
+    size_t len = vsnprintf(line->c, line->cap, fmt, args);
     va_end(args);
 
     ssize_t delta = len - line->len;
@@ -204,7 +204,7 @@ void text_clear(struct text *text)
 
 struct line *text_goto(struct text *text, size_t line)
 {
-    if (line > text->len) return NULL;
+    if (line > text->lines) return NULL;
 
     struct line *ptr = text->first;
     for (size_t i = 0; i != line; ++i, ptr = ptr->next);
@@ -229,7 +229,8 @@ struct line *text_insert(struct text *text, struct line *at)
 struct line *text_erase(struct text *text, struct line *at)
 {
     if (at == text->first && at == text->last) {
-        memset(at->c, 0, text_line_cap);
+        text->bytes -= at->len;
+        at->len = 0;
         return at;
     }
 
@@ -239,8 +240,8 @@ struct line *text_erase(struct text *text, struct line *at)
     if (at == text->first) text->first = at->next;
     if (at == text->last) text->last = at->prev;
 
+    text->bytes -= at->len + 1;
     text->lines--;
-    text->bytes -= line->len + 1;
 
     free(at);
     return ret;
@@ -250,7 +251,7 @@ struct line *text_erase(struct text *text, struct line *at)
 void text_indent(struct text *text)
 {
     int16_t indent = 0;
-    for (struct line *it = text->first; it; it->next) {
+    for (struct line *it = text->first; it; it = it->next) {
         line_indent(text, it, indent > 0 ? indent * 2 : 0, false);
         indent += line_indent_delta(it);
     }
@@ -259,7 +260,7 @@ void text_indent(struct text *text)
 size_t text_indent_at(struct text *text, struct line *line)
 {
     int16_t indent = 0;
-    for (struct line *it = text->first; it && it != line; it->next)
+    for (struct line *it = text->first; it && it != line; it = it->next)
         indent += line_indent_delta(it);
     return indent;
 }
@@ -295,12 +296,11 @@ void text_from_str(struct text *text, const char *src, size_t len)
     text_init(text);
     text->bytes = len;
 
-    size_t index = 0;
     const char *end = src + len;
     struct line *line = text->first;
 
     while (src < end) {
-        char *start = src;
+        const char *start = src;
         while (src < end && *src != '\n') src++;
 
         line = line_realloc(line, src - start);

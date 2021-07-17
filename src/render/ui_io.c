@@ -44,16 +44,16 @@ static struct ui_io_cmd ui_io_cmd(
     struct ui_io_cmd cmd = {
         .id = id,
         .active = false,
-        .name = ui_label_new(font, ui_str_v(vm_atom_cap)),
+        .name = ui_label_new(font, ui_str_v(symbol_cap)),
         .exec = ui_button_new(font, ui_str_c("exec >>")),
         .args = args,
     };
 
-    atom_t str = {0};
-    bool ok = vm_atoms_str(id, &str);
+    struct symbol str = {0};
+    bool ok = atoms_str(world_atoms(core.state.world), id, &str);
     assert(ok);
 
-    ui_str_setc(&cmd.name.str, str);
+    ui_str_set_symbol(&cmd.name.str, &str);
     cmd.name.w.dim.w = ui_layout_inf;
     cmd.name.bg = rgba_gray_a(0x44, 0x44);
 

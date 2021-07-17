@@ -117,7 +117,7 @@ void world_step(struct world *world)
 
 struct coord world_populate(struct world *world)
 {
-    mods_populate(world->mods);
+    mods_populate(world->mods, world->atoms);
 
     struct rng rng = rng_make(0);
     while (true) {
@@ -149,6 +149,11 @@ struct coord world_populate(struct world *world)
 world_ts_t world_time(struct world *world)
 {
     return world->time;
+}
+
+struct atoms *world_atoms(struct world *world)
+{
+    return world->atoms;
 }
 
 struct mods *world_mods(struct world *world)

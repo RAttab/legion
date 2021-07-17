@@ -23,7 +23,7 @@ static void ui_legion_init(struct ui_legion *ui)
 
     *ui = (struct ui_legion) {
         .mod = ui_label_new(font, ui_str_c("mod: ")),
-        .mod_val = ui_label_new(font, ui_str_v(vm_atom_cap)),
+        .mod_val = ui_label_new(font, ui_str_v(symbol_cap)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .index = ui_label_new(font, ui_str_v(2)),
@@ -48,9 +48,9 @@ static void ui_legion_update(struct ui_legion *ui, struct legion *state)
 {
     if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
-        atom_t mod = {0};
+        struct symbol mod = {0};
         mods_name(world_mods(core.state.world), mod_id(state->mod), &mod);
-        ui_str_setv(&ui->mod_val.str, mod, vm_atom_cap);
+        ui_str_set_symbol(&ui->mod_val.str, &mod);
     }
 
     size_t count = 0;

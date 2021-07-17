@@ -26,6 +26,20 @@ size_t str_utox(uint64_t val, char *dst, size_t len)
     return i;
 }
 
+size_t str_atod(const char *src, size_t len, int64_t *dst)
+{
+    if (!len) return 0;
+
+    bool neg = *src == '-';
+    src++;
+
+    size_t i = 0;
+    for(; i < len && (*src >= '0' || *src <= '9'); ++i, ++src)
+        *dst = *dst * 10 + (*src - '0');
+
+    return neg ? -i : i;
+}
+
 size_t str_atou(const char *src, size_t len, uint64_t *dst)
 {
     size_t i = 0;

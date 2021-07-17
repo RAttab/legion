@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "game/atoms.h"
+#include "game/io.h"
 #include "game/item.h"
 #include "game/chunk.h"
 #include "game/active.h"
@@ -67,7 +67,7 @@ static void brain_load(void *state, struct chunk *chunk)
 
 static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id)
 {
-    struct mod *mod = mods_get(world_mods(chunk_world(chunk)), id);
+    const struct mod *mod = mods_get(world_mods(chunk_world(chunk)), id);
     if (!mod) return;
 
     vm_reset(&brain->vm);
@@ -95,8 +95,11 @@ static void brain_step_recv(struct brain *brain, size_t len, const word_t *args)
     brain->msg_len = 0;
 }
 
-static void brain_step_io(struct brain *brain, size_t len, const word_t *io)
+static void brain_step_io(
+        struct brain *brain, struct chunk *chunk, size_t len, const word_t *io)
 {
+    abort(); // \todo ENSURE THAT IO ALWAYS PUSHES A SINGLE VALUE ON THE STACK!
+
     uint32_t atom = 0, dst = 0;
     vm_unpack(io[0], &atom, &dst);
 
@@ -123,7 +126,7 @@ static void brain_step(void *state, struct chunk *chunk)
 
     vm_io_buf_t io = {0};
     size_t len = vm_io_read(&brain->vm, io);
-    if (len) brain_step_io(brain, len, io);
+    if (len) brain_step_io(brain, chunk, len, io);
 }
 
 

@@ -14,16 +14,16 @@
 // code
 // -----------------------------------------------------------------------------
 
-
-struct ui_code ui_code_new(struct dim dim, struct font *font)
+struct ui_code ui_code_new(struct dim dim, struct font *font, size_t cols)
 {
     struct ui_code code = {
         .w = ui_widget_new(dim.w, dim.h),
         .scroll = ui_scroll_new(dim, font->glyph_h),
         .num = ui_label_new(font, ui_str_v(ui_code_num_len)),
-        .code = ui_label_new(font, ui_str_v(text_line_cap)),
+        .code = ui_label_new(font, ui_str_v(cols)),
         .font = font,
         .focused = false,
+        .cols = cols,
     };
 
     text_init(&code.text);
@@ -48,20 +48,21 @@ void ui_code_clear(struct ui_code *code)
     text_clear(&code->text);
 }
 
-void ui_code_set(struct ui_code *code, struct mod *mod, ip_t ip)
+void ui_code_set(struct ui_code *code, const struct mod *mod, ip_t ip)
 {
     code->mod = mod;
-    text_unpack(&code->text, mod->src, mod->src_len);
+    text_from_str(&code->text, mod->src, mod->src_len);
 
     code->carret.line = code->text.first;
     code->carret.row = code->carret.col = 0;
-    ui_scroll_update(&code->scroll, code->text.len);
+    ui_scroll_update(&code->scroll, code->text.lines);
 
     if (ip) {
-        size_t line = mod_line(code->mod, ip);
-        for (size_t i = 0; i < line && code->carret.line->next; ++i)
+        struct mod_index index = mod_index(code->mod, ip);
+        for (size_t i = 0; i < index.row && code->carret.line->next; ++i)
             code->carret.line = code->carret.line->next;
-        code->scroll.first = line;
+        code->scroll.first = index.row;
+        code->carret.col = index.col;
     }
 }
 
@@ -91,11 +92,11 @@ void ui_code_render(
         {
             code->code.bg = rgba_nil();
 
-            while (err < err_end && err->line < i) err++;
-            if (err < err_end && err->line == i)
+            while (err < err_end && err->row < i) err++;
+            if (err < err_end && err->row == i)
                 code->code.bg = make_rgba(0x88, 0x00, 0x00, 0x44);
 
-            ui_str_setv(&code->code.str, line->c, text_line_cap);
+            ui_str_setv(&code->code.str, line->c, code->cols);
             ui_label_render(&code->code, &inner, renderer);
         }
 
@@ -131,7 +132,7 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
     size_t row = (cursor.y - code->w.pos.y) / code->font->glyph_h;
     col = col < (ui_code_num_len+1) ? 0 : col - (ui_code_num_len+1);
     assert(row < code->scroll.visible);
-    assert(col < text_line_cap);
+    assert(col < code->cols);
 
     while (code->carret.row > row) {
         code->carret.line = code->carret.line->prev;
@@ -140,14 +141,14 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
 
     while (code->carret.row < row) {
         if (!code->carret.line->next) {
-            code->carret.col = line_len(code->carret.line);
+            code->carret.col = code->carret.line->len;
             return ui_consume;
         }
         code->carret.line = code->carret.line->next;
         code->carret.row++;
     }
 
-    code->carret.col = legion_min(col, line_len(code->carret.line));
+    code->carret.col = legion_min(col, code->carret.line->len);
 
     core_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
     return ui_consume;
@@ -156,7 +157,7 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
 static enum ui_ret ui_code_event_move(struct ui_code *code, int hori, int vert)
 {
     if (hori > 0) {
-        if (code->carret.col < line_len(code->carret.line)) code->carret.col++;
+        if (code->carret.col < code->carret.line->len) code->carret.col++;
         else {
             if (!code->carret.line->next) return ui_nil;
             code->carret.line = code->carret.line->next;
@@ -172,7 +173,7 @@ static enum ui_ret ui_code_event_move(struct ui_code *code, int hori, int vert)
         else {
             if (!code->carret.line->prev) return ui_nil;
             code->carret.line = code->carret.line->prev;
-            code->carret.col = line_len(code->carret.line);
+            code->carret.col = code->carret.line->len;
             if (!code->carret.row) code->scroll.first--;
             else code->carret.row--;
         }
@@ -193,7 +194,7 @@ static enum ui_ret ui_code_event_move(struct ui_code *code, int hori, int vert)
             else code->carret.row--;
             code->carret.line = code->carret.line->prev;
         }
-        code->carret.col = legion_min(code->carret.col, line_len(code->carret.line));
+        code->carret.col = legion_min(code->carret.col, code->carret.line->len);
         return ui_consume;
     }
 
@@ -220,7 +221,7 @@ static void ui_code_event_scroll(struct ui_code *code, size_t old, size_t new)
             assert(code->carret.line);
         }
     }
-    code->carret.col = legion_min(code->carret.col, line_len(code->carret.line));
+    code->carret.col = legion_min(code->carret.col, code->carret.line->len);
 
 }
 
@@ -236,7 +237,7 @@ static enum ui_ret ui_code_event_ins(struct ui_code *code, char key, uint16_t mo
     if (ret.line == code->carret.line) return ui_consume;
 
     code->carret.line = ret.line;
-    code->scroll.total = code->text.len;
+    code->scroll.total = code->text.lines;
 
     if (code->carret.row == code->scroll.visible - 1) code->scroll.first++;
     else code->carret.row++;
@@ -254,7 +255,7 @@ static enum ui_ret ui_code_event_delete(struct ui_code *code)
     if (ret.line == code->carret.line) return ui_consume;
 
     code->carret.line = ret.line;
-    code->scroll.total = code->text.len;
+    code->scroll.total = code->text.lines;
     return ui_consume;
 }
 
@@ -268,7 +269,7 @@ static enum ui_ret ui_code_event_backspace(struct ui_code *code)
     if (ret.line == code->carret.line) return ui_consume;
 
     code->carret.line = ret.line;
-    code->scroll.total = code->text.len;
+    code->scroll.total = code->text.lines;
 
     if (!code->carret.row) code->scroll.first--;
     else code->carret.row--;
@@ -334,7 +335,7 @@ enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
         case SDLK_BACKSPACE: { return ui_code_event_backspace(code); }
 
         case SDLK_HOME: { code->carret.col = 0; return ui_consume; }
-        case SDLK_END: { code->carret.col = line_len(code->carret.line); return ui_consume; }
+        case SDLK_END: { code->carret.col = code->carret.line->len; return ui_consume; }
 
         default: { return ui_nil; }
         }

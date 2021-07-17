@@ -43,7 +43,7 @@ static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
     reg_t val = 0;
     switch (token->type) {
     case token_reg: { val = token->val.num; break; }
-    case token_symb: { val = lisp_reg(lisp, token_symb_hash(token)); break; }
+    case token_symb: { val = lisp_reg(lisp, &token->val.symb); break; }
     default: {
         lisp_err(lisp, "unexpected token: %s != %s | %s",
                 token_type_str(token->type),
@@ -67,7 +67,7 @@ static void lisp_asm_len(struct lisp *lisp, enum op_code op)
         return;
     }
 
-    int8_t len = token->val.num;
+    int8_t val = token->val.num;
     lisp_write_value(lisp, op);
     lisp_write_value(lisp, val);
 }
@@ -127,7 +127,12 @@ static void lisp_asm_register(void)
 {
 
 #define op_fn(op, arg) \
-    lisp_register_fn(symb_hash_str(#op), (uintptr_t) lisp_fn_ ## op)
+    do {                                                                \
+        struct symbol symbol = make_symbol_len(sizeof(#op), #op);       \
+        lisp_register_fn(symbol_hash(&symbol), lisp_asm_ ## op);        \
+    } while (false);
+
+    op_fn(label, nil);
 #include "vm/op_xmacro.h"
 
 }

@@ -17,7 +17,7 @@
 struct ui_mod
 {
     mod_t id;
-    struct mod *mod;
+    const struct mod *mod;
 
     struct ui_panel panel;
     struct ui_button compile, publish, reset;
@@ -28,6 +28,7 @@ static struct font *ui_mod_font(void) { return font_mono6; }
 
 struct ui_mod *ui_mod_new(void)
 {
+    enum { cols = 80 };
     struct font *font = ui_mod_font();
 
     struct pos pos = make_pos(
@@ -35,16 +36,16 @@ struct ui_mod *ui_mod_new(void)
             ui_topbar_height(core.ui.topbar));
 
     struct dim dim = make_dim(
-            (ui_code_num_len+1 + text_line_cap + 2) * font_mono8->glyph_w,
+            (ui_code_num_len+1 + cols + 2) * font_mono8->glyph_w,
             core.rect.h - pos.y);
 
     struct ui_mod *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mod) {
-        .panel = ui_panel_title(pos, dim, ui_str_v(6 + vm_atom_cap + 5)),
+        .panel = ui_panel_title(pos, dim, ui_str_v(6 + symbol_cap + 5)),
         .compile = ui_button_new(font, ui_str_c("compile")),
         .publish = ui_button_new(font, ui_str_c("publish")),
         .reset = ui_button_new(font, ui_str_c("reset")),
-        .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font_mono8)
+        .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font, cols)
     };
     ui->panel.state = ui_panel_hidden;
     return ui;
@@ -60,7 +61,7 @@ void ui_mod_free(struct ui_mod *ui)
     free(ui);
 }
 
-static void ui_mod_update(struct ui_mod *ui, struct mod *mod, ip_t ip)
+static void ui_mod_update(struct ui_mod *ui, const struct mod *mod, ip_t ip)
 {
     assert(mod);
 
@@ -72,9 +73,23 @@ static void ui_mod_update(struct ui_mod *ui, struct mod *mod, ip_t ip)
 
 static void ui_mod_title(struct ui_mod *ui)
 {
-    atom_t name = {0};
+    struct symbol name = {0};
     mods_name(world_mods(core.state.world), mod_id(ui->id), &name);
-    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name, mod_ver(ui->id));
+    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_ver(ui->id));
+}
+
+static const struct mod *ui_mod_compile(struct ui_mod *ui)
+{
+    size_t len = ui->code.text.bytes;
+    char *buffer = calloc(len, sizeof(*buffer));
+
+    const struct mod *mod = mod_compile(
+            len, buffer,
+            world_mods(core.state.world),
+            world_atoms(core.state.world));
+
+    free(buffer);
+    return mod;
 }
 
 static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
@@ -94,7 +109,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
         mod_t id = (uintptr_t) ev->user.data1;
         ip_t ip = (uintptr_t) ev->user.data2;
 
-        struct mod *mod = mods_get(world_mods(core.state.world), id);
+        const struct mod *mod = mods_get(world_mods(core.state.world), id);
         assert(mod);
 
         ui->id = mod->id;
@@ -134,7 +149,7 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->compile, ev))) {
-        ui_mod_update(ui, mod_compile(&ui->code.text, world_mods(core.state.world)), 0);
+        ui_mod_update(ui, ui_mod_compile(ui), 0);
         return ret == ui_consume;
     }
 

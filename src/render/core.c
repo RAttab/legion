@@ -11,7 +11,6 @@
 #include "render/ui.h"
 #include "game/coord.h"
 #include "game/world.h"
-#include "game/atoms.h"
 #include "game/prog.h"
 #include "vm/mod.h"
 #include "utils/log.h"
@@ -183,9 +182,7 @@ static void ui_render(SDL_Renderer *renderer)
 
 void core_init()
 {
-    vm_atoms_init();
-    atoms_register();
-    vm_compile_init();
+    mod_compiler_init();
     prog_load();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));

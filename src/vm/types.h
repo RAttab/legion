@@ -7,6 +7,8 @@
 
 #include "common.h"
 
+#include <ctype.h>
+
 
 // -----------------------------------------------------------------------------
 // declarations
@@ -15,6 +17,7 @@
 struct vm;
 struct mod;
 struct text;
+struct save;
 
 
 // -----------------------------------------------------------------------------
@@ -64,7 +67,7 @@ inline struct symbol make_symbol(const char *str)
 {
     struct symbol symbol = { .len = strnlen(str, symbol_cap), .zero = 0 };
     memcpy(symbol.c, str, symbol.len);
-    symbol_normalize(symbol);
+    symbol_normalize(&symbol);
     return symbol;
 }
 
@@ -72,7 +75,7 @@ inline struct symbol make_symbol_len(size_t len, const char *str)
 {
     struct symbol symbol = { .len = len, .zero = 0 };
     memcpy(symbol.c, str, symbol.len);
-    symbol_normalize(symbol);
+    symbol_normalize(&symbol);
     return symbol;
 }
 
@@ -85,13 +88,13 @@ inline uint64_t symbol_hash(const struct symbol *symbol)
     return hash;
 }
 
-inline int symbol_cmp(const struct symbol *lhs, const struct symb *rhs)
+inline int symbol_cmp(const struct symbol *lhs, const struct symbol *rhs)
 {
     int ret = memcmp(lhs->c, rhs->c, legion_min(lhs->len, rhs->len));
     return likely(ret) ? ret : lhs->len < rhs->len;
 }
 
-inline bool symbol_eq(const struct symbol *lhs, const struct symb *rhs)
+inline bool symbol_eq(const struct symbol *lhs, const struct symbol *rhs)
 {
     if (lhs->len != rhs->len) return false;
     return symbol_cmp(lhs, rhs) == 0;

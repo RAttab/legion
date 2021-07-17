@@ -10,7 +10,7 @@
 // declarations
 // -----------------------------------------------------------------------------
 
-void lisp_fn_call(struct lisp *lisp);
+static void lisp_fn_call(struct lisp *lisp);
 
 
 // -----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ static bool lisp_stmt(struct lisp *lisp)
         struct htable_ret ret = {0};
         uint64_t key = token_symb_hash(token);
 
-        if ((ret = htable_get(&lisp->symb.fn)).ok)
+        if ((ret = htable_get(&lisp->symb.fn, key)).ok)
             ((lisp_fn_t) ret.value)(lisp);
         else lisp_fn_call(lisp);
 
@@ -95,7 +95,7 @@ static void lisp_stmts(struct lisp *lisp)
 
 static void lisp_fn_call(struct lisp *lisp)
 {
-    uint64_t key = token_symb_hash(lisp->token);
+    uint64_t key = token_symb_hash(&lisp->token);
 
     reg_t args = 0;
     while (lisp_stmt(lisp)) ++args;
@@ -104,17 +104,17 @@ static void lisp_fn_call(struct lisp *lisp)
     reg_t reg = 0;
     for (; reg < 4; ++reg) {
         bool has_arg = reg < args;
-        bool has_reg = lisp->symb.reg[reg];
+        bool has_reg = lisp->symb.regs[reg];
 
         if (has_arg && has_reg) {
             lisp_write_value(lisp, OP_ARG0 + reg);
             lisp_write_value(lisp, (reg_t) (args - reg - 1));
         }
-        else if (has_arg && !hash_req) {
+        else if (has_arg && !has_reg) {
             lisp_write_value(lisp, OP_POPR);
             lisp_write_value(lisp, reg);
         }
-        else if (!has_arg && hash_req) {
+        else if (!has_arg && has_reg) {
             lisp_write_value(lisp, OP_PUSHR);
             lisp_write_value(lisp, reg);
         }
@@ -148,6 +148,7 @@ static void lisp_fn_defun(struct lisp *lisp)
 
     if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp); return; }
 
+    struct token *token = NULL;
     for (reg_t reg = 0; (token = lisp_next(lisp))->type != token_close; ++reg) {
         if (token->type != token_symb) {
             lisp_err(lisp, "unexpected token in argument list: %s != %s",
@@ -158,7 +159,7 @@ static void lisp_fn_defun(struct lisp *lisp)
 
         if (reg >= 4) lisp_err(lisp, "too many parameters: %u > 4", reg);
 
-        lisp->regs[reg] = token_symb_hash(token);
+        lisp->symb.regs[reg] = token_symb_hash(token);
     }
 
     lisp_stmts(lisp);
@@ -204,7 +205,7 @@ static void lisp_fn_let(struct lisp *lisp)
 {
     struct token *token = lisp_expect(lisp, token_open);
 
-    lisp_regs_t regs = {0};
+    reg_t regs[4] = {0};
 
     while ((token = lisp_next(lisp))) {
         if (token->type == token_close) break;
@@ -233,7 +234,7 @@ static void lisp_fn_let(struct lisp *lisp)
 
     lisp_stmts(lisp);
 
-    for (reg_t reg = 0; reg < regs; ++reg)
+    for (reg_t reg = 0; reg < array_len(regs); ++reg)
         lisp_reg_free(lisp, reg, regs[reg]);
 }
 
@@ -300,7 +301,7 @@ static void lisp_fn_while(struct lisp *lisp)
         lisp_write_value(lisp, jmp_pred);
     }
 
-    lisp_write_value_at(lisp, jmp_end, lisp_it(lisp));
+    lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
 }
 
 static void lisp_fn_for(struct lisp *lisp)
@@ -379,7 +380,7 @@ static void lisp_fn_for(struct lisp *lisp)
         lisp_write_value(lisp, jmp_pred);
     }
 
-    lisp_write_value_at(lisp, jmp_end, lisp_it(lisp));
+    lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
     lisp_reg_free(lisp, reg, key);
 }
 
@@ -510,11 +511,17 @@ static void lisp_fn_n(struct lisp *lisp, enum op_code op)
 
 static void lisp_fn_register(void)
 {
-#define register_fn(fn) \
-    lisp_register_fn(symb_hash_str(#fn), (uintptr_t) lisp_fn_ ## fn)
+#define register_fn(fn)                                                 \
+    do {                                                                \
+        struct symbol symbol = make_symbol_len(sizeof(#fn), #fn);       \
+        lisp_register_fn(symbol_hash(&symbol), lisp_fn_ ## fn);         \
+    } while (false)
 
-#define register_fn_str(fn, str) \
-    lisp_register_fn(symb_hash_str(str), (uintptr_t) lisp_fn_ ## fn)
+#define register_fn_str(fn, str)                                        \
+    do {                                                                \
+        struct symbol symbol = make_symbol(str);                        \
+        lisp_register_fn(symbol_hash(&symbol), lisp_fn_ ## fn);         \
+    } while (false)
 
     register_fn(defun);
 

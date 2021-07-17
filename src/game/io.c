@@ -18,13 +18,13 @@ static void atom_io_reg(
         struct atoms *atoms, word_t val, const char *str, size_t len)
 {
     assert(len <= symbol_cap);
-    struct symbol symbol = make_symbol_len(str, len);
+    struct symbol symbol = make_symbol_len(len, str);
     assert(atoms_set(atoms, &symbol, val));
 }
 
 void atoms_io_register(struct atoms *atoms)
 {
-#define reg_atom(atom) atoms_reg(atoms, atom, #atom, sizeof(#atom))
+#define reg_atom(atom) atom_io_reg(atoms, atom, #atom, sizeof(#atom))
 
     // IO
     reg_atom(IO_NIL);

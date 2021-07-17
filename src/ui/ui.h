@@ -202,6 +202,7 @@ void ui_str_set_scaled(struct ui_str *, uint64_t val);
 void ui_str_set_id(struct ui_str *, id_t val);
 void ui_str_set_item(struct ui_str *, enum item val);
 void ui_str_set_coord(struct ui_str *, struct coord val);
+void ui_str_set_symbol(struct ui_str *, struct symbol *val);
 
 inline size_t ui_str_len(struct ui_str *str)
 {
@@ -388,7 +389,7 @@ void ui_input_set(struct ui_input *, const char *str);
 
 uint64_t ui_input_get_u64(struct ui_input *);
 uint64_t ui_input_get_hex(struct ui_input *);
-size_t ui_input_get_atom(struct ui_input *, atom_t *dst);
+struct symbol ui_input_get_symbol(struct ui_input *);
 
 enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
 void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
@@ -406,9 +407,10 @@ struct ui_code
 
     struct font *font;
     bool focused;
+    size_t cols;
 
     struct text text;
-    struct mod *mod;
+    const struct mod *mod;
 
     struct {
         bool blink;
@@ -419,11 +421,11 @@ struct ui_code
 
 enum { ui_code_num_len = 4 };
 
-struct ui_code ui_code_new(struct dim, struct font *);
+struct ui_code ui_code_new(struct dim, struct font *, size_t cols);
 void ui_code_free(struct ui_code *);
 
 void ui_code_clear(struct ui_code *);
-void ui_code_set(struct ui_code *, struct mod *, ip_t);
+void ui_code_set(struct ui_code *, const struct mod *, ip_t);
 
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
 void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);

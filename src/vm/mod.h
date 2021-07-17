@@ -8,6 +8,7 @@
 #include "common.h"
 #include "vm/types.h"
 
+struct mods;
 struct save;
 struct text;
 
@@ -72,15 +73,15 @@ inline size_t mod_len(const struct mod *mod)
         (mod->index_len + 1) * sizeof(*mod->index);
 }
 
-void mod_compile_init(void);
+void mod_compiler_init(void);
 struct mod *mod_compile(size_t len, const char *src, struct mods *, struct atoms *);
 struct text mod_disasm(const struct mod *);
 
-size_t mod_dump(struct mod *mod, char *dst, size_t len);
-size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
+size_t mod_dump(const struct mod *, char *dst, size_t len);
+size_t mod_hexdump(const struct mod *, char *dst, size_t len);
 
-size_t mod_line(struct mod *mod, ip_t ip);
-ip_t mod_byte(struct mod *mod, size_t line);
+struct mod_index mod_index(const struct mod *, ip_t ip);
+ip_t mod_byte(const struct mod *, size_t row, size_t col);
 
 
 // -----------------------------------------------------------------------------
@@ -96,7 +97,7 @@ void mods_save(const struct mods *, struct save *);
 mod_t mods_register(struct mods *, const struct symbol *name);
 bool mods_name(struct mods *, mod_id_t, struct symbol *dst);
 
-mod_t mods_set(struct mods *, mod_id_t, struct mod *);
+mod_t mods_set(struct mods *, mod_id_t, const struct mod *);
 const struct mod *mods_get(struct mods *, mod_t);
 const struct mod *mods_latest(struct mods *, mod_id_t);
 
@@ -110,4 +111,4 @@ struct mods_list
 };
 struct mods_list *mods_list(struct mods *);
 
-void mods_populate(struct mods *);
+void mods_populate(struct mods *, struct atoms *);
