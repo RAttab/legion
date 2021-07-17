@@ -17,6 +17,7 @@ struct text;
 struct legion_packed line
 {
     struct line *next, *prev;
+    uint32_t user;
     uint16_t len, cap;
     char c[];
 };
@@ -30,6 +31,9 @@ struct line_ret
 struct line_ret line_insert(struct text *, struct line *, size_t index, char c);
 struct line_ret line_delete(struct text *, struct line *, size_t index);
 struct line_ret line_backspace(struct text *, struct line *, size_t index);
+
+void line_setc(struct text *, struct line *, size_t len, const char *str);
+void line_setf(struct text *, struct line *, size_t len, const char *fmt, ...) legion_printf(3, 4);
 
 
 // -----------------------------------------------------------------------------

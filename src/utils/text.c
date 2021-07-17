@@ -5,6 +5,7 @@
 
 #include "text.h"
 #include "utils/bits.h"
+#include <stdarg.h>
 
 
 // -----------------------------------------------------------------------------
@@ -150,6 +151,30 @@ struct line_ret line_backspace(struct text *text, struct line *line, size_t inde
     text->bytes += to_copy;
 
     return (struct line_ret) { .line = prev, .index = prev->len };
+}
+
+void line_setc(struct text *text, struct line *line, size_t len, const char *str)
+{
+    ssize_t delta = len - line->len;
+    text->bytes += delta;
+
+    line = line_realloc(line, len);
+    memcpy(line->c, str, len);
+    line->len = len;
+}
+
+void line_setf(struct text *, struct line *, size_t cap, const char *fmt, ...)
+{
+    line = line_realloc(line, cap);
+
+    va_list args = {0};
+    va_start(args, fmt);
+    size_t len = vsnprintf(line->c, line-cap, fmt, args);
+    va_end(args);
+
+    ssize_t delta = len - line->len;
+    line->len = len;
+    text->bytes += delta;
 }
 
 

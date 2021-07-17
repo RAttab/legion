@@ -258,40 +258,26 @@ static void lisp_register_asm(struct lisp *lisp)
 struct disasm
 {
     struct { const uint8_t *base, *end, *it; } in;
-    struct { char *base, *end, *it; } out;
+
+    struct text text;
+    struct line *line;
 };
 
-static void lisp_disasm_ensure(struct disasm *disasm, size_t len)
+static void lisp_disasm_outc(struct disasm *disasm, const char *str)
 {
-    if (likely(disasm.out.it + len <= disasm.out.end)) return;
-
-    size_t pos = disasm.out.it - disasm.out.base;
-    size_t cap = (disasm.out.end - disasm.out.base) + page_len;
-
-    disasm.out.base = realloc(disasm.out.base, cap);
-
-    disasm.out.end = disasm.out.base + cap;
-    disasm.out.it = disasm.out.it + len;
-}
-
-static void lisp_disasm_outc(struct disasm *disasm, size_t len, const char *str)
-{
-    lisp_disasm_ensure(disasm, len);
-    size_t avail = disasm.out.end - disasm.out.it;
-    disasm.out.it += snprintf(disasm.out.it, avail, str);
+    line_setc(&disasm.text, disasm.line, strlen(str), str);
+    disasm.line = text_insert(&disasm.text, disasm.line);
 }
 
 static void lisp_disasm_out(
-        struct disasm *disasm, const char *op, size_t arg_len, const char *arg)
+        struct disasm *disasm, ip_t ip, const char *op, size_t arg_len, const char *arg)
 {
-    size_t op_len = strlen(op);
-    size_t sep_len = arg_len ? 1 : 0;
-    size_t len = 5 + op_len + sep_len + arg_len;
-    lisp_disasm_ensure(disasm, len);
+    disasm.line->user = ip;
 
-    size_t avail = disasm.out.end - disasm.out.it;
-    if (!arg_len) disasm.out.it += snprintf(disasm.out.it, avail, "  (%s)\n", op);
-    else disasm.out.it += snprintf(disasm.out.it, avail, "  (%s %s)\n", op, arg);
+    if (!arg_len) line_setf(&disasm.text, disasm.line, 32, "  (%s)\n", op);
+    else line_setf(&disasm.text, disasm.line, 32, "  (%s %s)\n", op, arg);
+
+    disasm.line = text_insert(&disasm.text, disasm.line);
 }
 
 #define lisp_disasm_read_into(disasm, _ptr) ({                  \
@@ -304,43 +290,54 @@ static void lisp_disasm_out(
     ok;
 })
 
+static ip_t lisp_disasm_ip(struct disasm *disasm)
+{
+    return (disasm.it - disasm.base) - 1;
+}
 
 static bool lisp_disasm_nil(struct disasm *disasm, const char *op)
 {
-    lisp_disasm_out(disasm, op, 0, NULL);
+    ip_t ip = lisp_disasm_ip(disasm);
+    lisp_disasm_out(disasm, ip, op, 0, NULL);
 }
 
 static bool lisp_disasm_lit(struct disasm *disasm, const char *op)
 {
+    ip_t ip = lisp_disasm_ip(disasm);
+
     word_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[2+16] = {'0','x'};
     str_atox(val, buf+2, sizeof(buf)-2);
 
-    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
 
 static bool lisp_disasm_len(struct disasm *disasm, const char *op)
 {
+    ip_t ip = lisp_disasm_ip(disasm);
+
     uint8_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[3] = {0};
     str_atou(val, buf, sizeof(buf));
-    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
 
 static bool lisp_disasm_reg(struct disasm *disasm, const char *op)
 {
+    ip_t ip = lisp_disasm_ip(disasm);
+
     uint8_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[1+3] = {'$'};
     str_atou(val, buf+1, sizeof(buf)-1);
-    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
 
@@ -357,12 +354,14 @@ static bool lisp_disasm_off(struct disasm *disasm, const char *op)
 
 static bool lisp_disasm_mod(struct disasm *disasm, const char *op)
 {
+    ip_t ip = lisp_disasm_ip(disasm);
+
     ip_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[1+8] = {'0','x'};
     str_atox(val, buf+2, sizeof(buf)-2);
-    lisp_disasm_out(disasm, op, sizeof(buf), buf);
+    lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
 
@@ -439,27 +438,28 @@ static bool lisp_disasm_op(struct disasm *disasm, enum op_code op)
     }
 }
 
-char *lisp_disasm(size_t len, const uint8_t *base)
+struct text lisp_disasm(size_t len, const uint8_t *base)
 {
     struct disasm disasm = { 0 };
+
     disasm.in.it = base;
     disasm.in.base = base;
     disasm.in.end = base + len;
 
-    const char header[] = "(asm\n";
-    lisp_disasm_outc(disasm, sizeof(header), header);
+    text_init(&disasm.text);
+    disasm.line = disasm.text.first;
+
+    lisp_disasm_outc(dissam, "(asm");
 
     while (disasm.in.it < disasm.in.end) {
-        if (!lisp_disasm_op(&disasm, *disasm.in.it)) {
-            free(disasm.out.base);
-            return NULL;
-        }
+        if (!lisp_disasm_op(&disasm, *disasm.in.it)) goto fail;
     }
 
-    const char footer[] = ")\n";
-    lisp_disasm_outc(disasm, sizeof(footer), footer);
+    lisp_disasm_outc(dissam, ")");
 
-    *disasm.out.it = 0;
-    return disasm.out.base;
+    return disasm.text;
 
+  fail:
+    text_clear(&disasm.text);
+    return disasm.text;
 }
