@@ -15,13 +15,13 @@
 // -----------------------------------------------------------------------------
 
 struct mod *mod_alloc(
-        const struct text *src,
+        const char *src, size_t src_len,
         const uint8_t *code, size_t code_len,
         const struct mod_err *errs, size_t errs_len,
         const struct mod_index *index, size_t index_len)
 {
     size_t head_bytes = sizeof(struct mod);
-    size_t src_bytes = src->len * (text_line_cap + 1);
+    size_t src_bytes = src_len;
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
     size_t index_bytes = (index_len + 1) * sizeof(*index);
@@ -33,7 +33,7 @@ struct mod *mod_alloc(
     mod->len = code_len;
 
     mod->src = ((void *) mod->code) + code_bytes;
-    text_pack(src, mod->src, src_bytes);
+    memcpy(mod->src, src, src_bytes);
     mod->src_len = src_bytes;
 
     mod->errs = ((void *) mod->src) + src_bytes;

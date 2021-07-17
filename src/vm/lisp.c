@@ -38,6 +38,8 @@ typedef uint64_t lisp_regs_t[4];
 
 struct lisp
 {
+    struct mods *mods;
+
     size_t depth;
     struct token token;
 
@@ -484,9 +486,10 @@ static void lisp_register_fn(struct lisp *lisp, uint64_t key, lisp_fn_t fn)
 // interface
 // -----------------------------------------------------------------------------
 
-struct mod *mod_compile(size_t len, const char *src)
+struct mod *mod_compile(size_t len, const char *src, struct mods *mods)
 {
     struct lisp lisp = {0};
+    lisp.mods = mods;
     lisp.in.it = src;
     lisp.in.base = src;
     lisp.in.end = src + len;
@@ -516,4 +519,9 @@ struct mod *mod_compile(size_t len, const char *src)
     htable_reset(lisp.symb.req);
     htable_reset(lisp.symb.jmp);
     return mod;
+}
+
+void mod_compile_init(void)
+{
+    // \todo register_fn shouldn't be done on every compile
 }

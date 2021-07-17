@@ -50,7 +50,7 @@ struct legion_packed mod
 static_assert(sizeof(struct mod) == s_cache_line);
 
 struct mod *mod_alloc(
-        const struct text *src,
+        const char *src, size_t src_len,
         const uint8_t *code, size_t code_len,
         const struct mod_err *errs, size_t errs_len,
         const struct mod_index *index, size_t index_len);
@@ -58,7 +58,7 @@ struct mod *mod_alloc(
 struct mod *mod_load(struct save *);
 void mod_save(const struct mod *, struct save *);
 
-inline size_t mod_len(struct mod *mod)
+inline size_t mod_len(const struct mod *mod)
 {
     return sizeof(*mod) +
         mod->len * sizeof(*mod->code) +
@@ -88,8 +88,8 @@ mod_t mods_register(struct mods *, const atom_t *name);
 bool mods_name(struct mods *, mod_id_t, atom_t *dst);
 
 mod_t mods_set(struct mods *, mod_id_t, struct mod *);
-struct mod *mods_get(struct mods *, mod_t);
-struct mod *mods_latest(struct mods *, mod_id_t);
+const struct mod *mods_get(struct mods *, mod_t);
+const struct mod *mods_latest(struct mods *, mod_id_t);
 
 mod_id_t mods_find(struct mods *, const atom_t *name);
 
@@ -108,5 +108,5 @@ void mods_populate(struct mods *);
 // compiler
 // -----------------------------------------------------------------------------
 
-void vm_compile_init(void);
-struct mod *mod_compile(struct text *source, struct mods *mods);
+void mod_compile_init(void);
+struct mod *mod_compile(size_t len, const char *src, struct mods *mods);
