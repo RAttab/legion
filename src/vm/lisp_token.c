@@ -9,9 +9,9 @@
 // token
 // -----------------------------------------------------------------------------
 
-static bool token_is_space(char c) { return c <= 0x20; }
+static bool lisp_is_space(char c) { return c <= 0x20; }
 
-static bool token_is_symb(char c)
+static bool lisp_is_symb(char c)
 {
     switch (c) {
     case '-':
@@ -32,12 +32,12 @@ static bool lisp_is_num(char c)
 
 static void lisp_skip_spaces(struct lisp *lisp)
 {
-    while (!lisp_eof(lisp) && token_is_space(*lisp->in.it)) lisp_in_inc(lisp);
+    while (!lisp_eof(lisp) && lisp_is_space(*lisp->in.it)) lisp_in_inc(lisp);
 }
 
 static void lisp_goto_space(struct lisp *lisp)
 {
-    while (!token_is_space(*lisp->in.it)) lisp_in_inc(lisp);
+    while (!lisp_is_space(*lisp->in.it)) lisp_in_inc(lisp);
 }
 
 static struct token *lisp_next(struct lisp *lisp)
@@ -55,7 +55,7 @@ static struct token *lisp_next(struct lisp *lisp)
     case '$': { lisp->token.type = token_reg; break; }
     case '0'...'9': { lisp->token.type = token_num; break; }
     default: {
-        if (unlikely(!token_is_symb(*lisp->in.it))) {
+        if (unlikely(!lisp_is_symb(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
             lisp_goto_space(lisp);
             lisp->token.type = token_nil;
@@ -71,7 +71,7 @@ static struct token *lisp_next(struct lisp *lisp)
     case token_atom:
     case token_symb: {
         char *first = lisp->in.it;
-        while(!lisp_eof(lisp) && token_is_symb(*lisp->in.it)) lisp_in_inc(lisp);
+        while(!lisp_eof(lisp) && lisp_is_symb(*lisp->in.it)) lisp_in_inc(lisp);
 
         lisp->token.len = lisp->in.it - first;
         if (unlikely(lisp->token.len > symbol_cap)) {
@@ -80,7 +80,7 @@ static struct token *lisp_next(struct lisp *lisp)
         }
         lisp->token.val.symb = make_symbol_len(first, lisp->token.len);
 
-        if (unlikely(!token_is_space(*lisp->in.it))) {
+        if (unlikely(!lisp_is_space(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
             lisp_goto_space(lisp);
         }
@@ -90,7 +90,7 @@ static struct token *lisp_next(struct lisp *lisp)
 
     case token_num: {
         char *first = lisp->in.it;
-        while (!lisp_eof(lisp) && token_is_num(*lisp->in.it)) lisp_in_inc(lisp);
+        while (!lisp_eof(lisp) && lisp_is_num(*lisp->in.it)) lisp_in_inc(lisp);
 
         lisp->token.len = lisp->in.it - first;
         size_t read = 0;
@@ -101,7 +101,7 @@ static struct token *lisp_next(struct lisp *lisp)
         if (unlikely(read != lisp->token.len))
             lisp_err(lisp, "number was truncated: %zu != %zu", lisp->token.len, read);
 
-        if (unlikely(!token_is_space(*lisp->in.it))) {
+        if (unlikely(!lisp_is_space(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for number: %c", *lisp->in.it);
             lisp_goto_space(lisp);
         }
@@ -127,7 +127,7 @@ static struct token *lisp_next(struct lisp *lisp)
 
         lisp->token.val.num = c - '1';
 
-        if (unlikely(!token_is_space(*lisp->in.it))) {
+        if (unlikely(!lisp_is_space(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for register: %c", *lisp->in.it);
             lisp_goto_space(lisp);
         }
