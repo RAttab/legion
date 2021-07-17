@@ -6,20 +6,23 @@
 #pragma once
 
 #include "common.h"
-#include "vm/vm.h"
-#include "utils/ref.h"
-#include "utils/text.h"
+#include "vm/types.h"
 
 struct save;
+struct text;
+
 
 // -----------------------------------------------------------------------------
 // mod
 // -----------------------------------------------------------------------------
 
-enum { mod_err_cap = text_line_cap };
-struct mod_err
+enum { mod_err_cap = 40 };
+struct legion_packed mod_err
 {
-    uint32_t row, col;
+    uint32_t row;
+    uint16_t col;
+    uint16_t len;
+
     char str[mod_err_cap];
 };
 
@@ -28,6 +31,7 @@ struct legion_packed mod_index
     uint32_t row, col;
     ip_t ip;
 };
+
 
 struct legion_packed mod
 {
@@ -49,9 +53,6 @@ struct legion_packed mod
 
 static_assert(sizeof(struct mod) == s_cache_line);
 
-void mod_compile_init(void);
-struct mod *mod_compile(size_t len, const char *src, struct mods *mods);
-struct text mod_disasm(const struct mod *);
 
 struct mod *mod_alloc(
         const char *src, size_t src_len,
@@ -71,6 +72,10 @@ inline size_t mod_len(const struct mod *mod)
         (mod->index_len + 1) * sizeof(*mod->index);
 }
 
+void mod_compile_init(void);
+struct mod *mod_compile(size_t len, const char *src, struct mods *, struct atoms *);
+struct text mod_disasm(const struct mod *);
+
 size_t mod_dump(struct mod *mod, char *dst, size_t len);
 size_t mod_hexdump(struct mod *mod, char *dst, size_t len);
 
@@ -88,16 +93,16 @@ void mods_free(struct mods *);
 struct mods *mods_load(struct save *);
 void mods_save(const struct mods *, struct save *);
 
-mod_t mods_register(struct mods *, const atom_t *name);
-bool mods_name(struct mods *, mod_id_t, atom_t *dst);
+mod_t mods_register(struct mods *, const struct symbol *name);
+bool mods_name(struct mods *, mod_id_t, struct symbol *dst);
 
 mod_t mods_set(struct mods *, mod_id_t, struct mod *);
 const struct mod *mods_get(struct mods *, mod_t);
 const struct mod *mods_latest(struct mods *, mod_id_t);
 
-mod_id_t mods_find(struct mods *, const atom_t *name);
+mod_id_t mods_find(struct mods *, const struct symbol *name);
 
-struct mods_item { mod_id_t id; atom_t str; };
+struct mods_item { mod_id_t id; struct symbol str; };
 struct mods_list
 {
     size_t len;

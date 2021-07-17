@@ -207,7 +207,7 @@ struct mod_entry
     mod_id_t id;
     mod_ver_t ver;
 
-    atom_t str;
+    struct symbol str;
     struct mod *mod;
 };
 
@@ -295,10 +295,10 @@ void mods_save(const struct mods *mods, struct save *save)
 }
 
 
-mod_t mods_register(struct mods *mods, const atom_t *name)
+mod_t mods_register(struct mods *mods, const struct symbol *name)
 {
     struct mod_entry *entry = calloc(1, sizeof(*entry));
-    memcpy(entry->str, name, vm_atom_cap);
+    memcpy(entry->str, name, sizeof(*name));
     entry->id = ++mods->id;
 
     mod_t mod = make_mod(entry->id, ++entry->ver);
@@ -315,7 +315,7 @@ mod_t mods_register(struct mods *mods, const atom_t *name)
     return mod;
 }
 
-bool mods_name(struct mods *mods, mod_id_t id, atom_t *dst)
+bool mods_name(struct mods *mods, mod_id_t id, struct symbol *dst)
 {
     if (!id) return false;
 
@@ -323,7 +323,7 @@ bool mods_name(struct mods *mods, mod_id_t id, atom_t *dst)
     if (!ret.ok) return false;
 
     struct mod_entry *entry = (void *) ret.value;
-    memcpy(dst, entry->str, vm_atom_cap);
+    memcpy(dst, entry->str, sizeof(*dst));
     return true;
 }
 
@@ -364,21 +364,14 @@ struct mod *mods_get(struct mods *mods, mod_t id)
 }
 
 
-mod_id_t mods_find(struct mods *mods, const atom_t *name)
+mod_id_t mods_find(struct mods *mods, const struct symbol *name)
 {
     struct htable_bucket *it = htable_next(&mods->by_id, NULL);
     for (; it; it = htable_next(&mods->by_id, it)) {
         struct mod_entry *entry = (void *) it->value;
-        if (vm_atoms_eq(name, &entry->str)) return entry->id;
+        if (symbol_eq(name, &entry->str)) return entry->id;
     }
     return 0;
-}
-
-static int mods_item_cmp(const void *lhs_, const void *rhs_)
-{
-    const struct mods_item *lhs = lhs_;
-    const struct mods_item *rhs = rhs_;
-    return vm_atoms_cmp(&lhs->str, &rhs->str);
 }
 
 struct mods_list *mods_list(struct mods *mods)
@@ -391,7 +384,14 @@ struct mods_list *mods_list(struct mods *mods)
     for (size_t i = 0; it; it = htable_next(&mods->by_id, it), i++) {
         struct mod_entry *entry = (void *) it->value;
         ret->items[i].id = entry->id;
-        memcpy(ret->items[i].str, entry->str, vm_atom_cap);
+        memcpy(&ret->items[i].str, &entry->str, sizeof(entry->str));
+    }
+
+    int mods_item_cmp(const void *lhs_, const void *rhs_)
+    {
+        const struct mods_item *lhs = lhs_;
+        const struct mods_item *rhs = rhs_;
+        return symbol_cmp(&lhs->str, &rhs->str);
     }
 
     qsort(ret->items, ret->len, sizeof(ret->items[0]), mods_item_cmp);
@@ -411,7 +411,7 @@ struct mods_list *mods_list(struct mods *mods)
 
 static void mods_load_path(struct mods *mods, const char *path)
 {
-    struct mod *mod= NULL;
+    struct mod *mod = NULL;
     {
         int fd = open(path, O_RDONLY);
         if (fd < 0) fail_errno("file not found: %s", path);
@@ -446,8 +446,7 @@ static void mods_load_path(struct mods *mods, const char *path)
     }
     assert(slash < dot);
 
-    atom_t name = {0};
-    memcpy(name, path + slash + 1, dot - slash - 1);
+    struct symbol name = make_symbol_len(path + slash + 1, dot - slash - 1);
 
     mod_id_t id = mod_id(mods_register(mods, &name));
     mods_set(mods, id, mod);

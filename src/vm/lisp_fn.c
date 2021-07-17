@@ -55,7 +55,7 @@ static bool lisp_stmt(struct lisp *lisp)
     }
     case token_atom: {
         lisp_write_value(lisp, OP_PUSH);
-        lisp_write_value(lisp, vm_atom(&token->val.symb));
+        lisp_write_value(lisp, atoms_atom(lisp->atoms, &token->val.symb));
         return true;
     }
     case token_reg: {

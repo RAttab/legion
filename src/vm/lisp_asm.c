@@ -22,7 +22,7 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
     word_t val = 0;
     switch (token->type) {
     case token_num: { val = token->val.num; break; }
-    case token_atom: { val = vm_atom(&token->val.symb); break; }
+    case token_atom: { val = atoms_atom(lisp->atoms, &token->val.symb); break; }
     default: {
         lisp_err(lisp, "unexpected token: %s != %s | %s",
                 token_type_str(token->type),
