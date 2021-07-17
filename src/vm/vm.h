@@ -6,55 +6,7 @@
 #pragma once
 
 #include "common.h"
-
-struct mod;
-struct text;
-
-
-// -----------------------------------------------------------------------------
-// types
-// -----------------------------------------------------------------------------
-
-typedef int64_t word_t;
-typedef uint8_t reg_t;
-
-typedef uint32_t ip_t;
-typedef uint32_t mod_t;
-typedef uint16_t mod_id_t;
-typedef uint16_t mod_ver_t;
-
-
-inline mod_t make_mod(mod_id_t id, mod_ver_t ver) { assert(!(id >> 15)); return id << 16 | ver; }
-inline mod_id_t mod_id(mod_t mod) { return mod >> 16; }
-inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
-
-inline ip_t mod_ip(mod_t mod) { return 1U << 31 | mod; }
-inline bool ip_is_mod(ip_t ip) { return ip >> 31; }
-inline mod_t ip_mod(ip_t ip) { return ((1U << 31) - 1) & ip;  }
-
-
-// -----------------------------------------------------------------------------
-// vm_atoms
-// -----------------------------------------------------------------------------
-
-enum { vm_atom_cap = 16 };
-typedef char atom_t[vm_atom_cap];
-
-void vm_atoms_init(void);
-
-word_t vm_atom(const atom_t *);
-bool vm_atoms_set(const atom_t *, word_t id);
-bool vm_atoms_str(word_t id, atom_t *dst);
-
-inline bool vm_atoms_eq(const atom_t *lhs, const atom_t *rhs)
-{
-    return !memcmp(lhs, rhs, vm_atom_cap);
-}
-
-inline int vm_atoms_cmp(const atom_t *lhs, const atom_t *rhs)
-{
-    return memcmp(lhs, rhs, vm_atom_cap);
-}
+#include "vm/types.h"
 
 
 // -----------------------------------------------------------------------------

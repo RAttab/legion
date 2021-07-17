@@ -17,6 +17,7 @@ struct world
 {
     world_ts_t time;
     struct mods *mods;
+    struct atoms *atoms;
     struct htable sectors;
     struct lanes lanes;
 };
@@ -24,9 +25,14 @@ struct world
 struct world *world_new(void)
 {
     struct world *world = calloc(1, sizeof(*world));
+
+    world->atoms = atoms_new();
+    atoms_io_register(world->atoms);
+
     world->mods = mods_new();
     lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
+
     return world;
 }
 
@@ -38,6 +44,7 @@ void world_free(struct world *world)
     htable_reset(&world->sectors);
     lanes_free(&world->lanes);
     mods_free(world->mods);
+    atoms_free(world->atoms);
     free(world);
 }
 
@@ -48,6 +55,7 @@ struct world *world_load(struct save *save)
     struct world *world = world_new();
     save_read_into(save, &world->time);
 
+    if (!(world->atoms = atoms_load(save))) goto fail;
     if (!(world->mods = mods_load(save))) goto fail;
     if (!lanes_load(&world->lanes, world, save)) goto fail;
 
@@ -74,7 +82,9 @@ struct world *world_load(struct save *save)
 void world_save(struct world *world, struct save *save)
 {
     save_write_magic(save, save_magic_world);
+
     save_write_value(save, world->time);
+    atoms_save(world->atoms, save);
     mods_save(world->mods, save);
     lanes_save(&world->lanes, save);
 

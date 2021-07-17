@@ -31,6 +31,7 @@ enum legion_packed save_magic
 
     save_magic_mods = 0x30,
     save_magic_mod = 0x31,
+    save_magic_atoms = 0x32,
 
     save_magic_lanes = 0x40,
     save_magic_lane = 0x41,

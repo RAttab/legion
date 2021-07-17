@@ -1,11 +1,11 @@
-/* atoms.c
+/* io.c
    Rémi Attab (remi.attab@gmail.com), 23 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 */
 
 #pragma once
 
-#include "game/atoms.h"
+#include "game/io.h"
 #include "game/item.h"
 #include "vm/vm.h"
 
@@ -14,22 +14,17 @@
 // atoms
 // -----------------------------------------------------------------------------
 
-static void atoms_reg(unsigned val, const char *str, size_t len)
+static void atom_io_reg(
+        struct atoms *atoms, word_t val, const char *str, size_t len)
 {
-    assert(len <= vm_atom_cap);
-
-    atom_t atom = {0};
-    memcpy(atom, str, len);
-
-    for (size_t i = 0; i < vm_atom_cap; ++i)
-        atom[i] = tolower(atom[i]);
-
-    assert(vm_atoms_set(&atom, val));
+    assert(len <= symbol_cap);
+    struct symbol symbol = make_symbol_len(str, len);
+    assert(atoms_set(atoms, &symbol, val));
 }
 
-void atoms_register(void)
+void atoms_io_register(struct atoms *atoms)
 {
-#define reg_atom(atom) atoms_reg(atom, #atom, sizeof(#atom))
+#define reg_atom(atom) atoms_reg(atoms, atom, #atom, sizeof(#atom))
 
     // IO
     reg_atom(IO_NIL);
@@ -125,6 +120,6 @@ void atoms_register(void)
     reg_atom(ITEM_LEGION_1);
     reg_atom(ITEM_LEGION_2);
     reg_atom(ITEM_LEGION_3);
-        
+
 #undef reg_atom
 }

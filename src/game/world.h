@@ -30,6 +30,7 @@ struct coord world_populate(struct world *);
 
 world_ts_t world_time(struct world *);
 struct mods *world_mods(struct world *);
+struct atoms *world_atoms(struct world *);
 struct chunk *world_chunk(struct world *, struct coord);
 struct sector *world_sector(struct world *, struct coord);
 const struct star *world_star(struct world *, struct rect);

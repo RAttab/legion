@@ -1,4 +1,4 @@
-/* atoms.h
+/* io.h
    Rémi Attab (remi.attab@gmail.com), 23 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -41,4 +41,4 @@ legion_packed enum atom_io
     ATOM_IO_MAX,
 };
 
-void atoms_register(void);
+void atoms_io_register(struct atoms *);

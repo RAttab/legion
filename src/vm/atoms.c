@@ -1,4 +1,4 @@
-/* atom.c
+/* atoms.c
    Rémi Attab (remi.attab@gmail.com), 28 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 
@@ -6,100 +6,160 @@
    hash table. Need to improve
 */
 
-#include "vm/vm.h"
+#include "vm/types.h"
 #include "utils/htable.h"
 
+
 // -----------------------------------------------------------------------------
-// state
+// atoms
 // -----------------------------------------------------------------------------
 
 struct legion_packed atom_data
 {
     uint64_t next;
     word_t word;
-    atom_t str;
+    struct symbol symbol;
 };
 
-static struct
+struct atoms
 {
-    struct atom_data *base, *curr, *cap;
     word_t id;
+    struct atom_data *base, *it, *end;
+
     struct htable istr;
     struct htable iword;
-} atoms;
+};
 
-
-// -----------------------------------------------------------------------------
-// atom
-// -----------------------------------------------------------------------------
-
-static inline uint64_t atom_hash(const atom_t *atom)
+enum
 {
-    const uint64_t *ptr = ((const uint64_t *) atom);
-    return ptr[0] ^ ptr[1];
+    atoms_default_cap = 1 << 10,
+
+    atoms_cap_mul = 2,
+    atoms_cap_str_mul = 4,
+};
+
+struct atoms *atoms_new(void)
+{
+    struct atoms *atoms = calloc(1, sizeof(atoms));
+    atoms->id = 1;
+
+    atoms->base = alloc_cache(atoms_default_cap * sizeof(*atoms->base));
+    atoms->end = atoms->base + atoms_default_cap;
+    atoms->it = atoms->base + atoms->id; // htable can't index 0
+
+    htable_reserve(&atoms->istr, atoms_default_cap);
+    htable_reserve(&atoms->iword, atoms_default_cap);
+
+    return atoms;
 }
 
-static inline bool atom_eq(const atom_t *lhs, const atom_t *rhs)
+void atoms_free(struct atoms *atoms)
 {
-    return !memcmp(lhs, rhs, vm_atom_cap);
+    htable_reset(&atoms->istr);
+    htable_reset(&atoms->iword);
+    free(atoms->base);
+    free(atoms);
+}
+
+struct atoms *atoms_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_atoms)) return NULL;
+
+    struct atoms *atoms = atoms_new();
+    save_read_into(save, &atoms->id);
+
+    size_t cap = atoms_default_cap;
+    size_t cap_str = atoms_default_cap;
+    while (cap < atoms->id) {
+        cap *= atoms_cap_mul;
+        cap_str *= atoms_cap_str_mul;
+    }
+
+    atoms->base = alloc_cache(cap * sizeof(*atoms->base));
+    atoms->end = atoms->base + cap;
+    atoms->it = atoms->base + atoms->id;
+    save_read(save, atoms->base, atoms->it - atoms->base);
+
+
+    htable_reseve(&atoms->iword, cap);
+    htable_reseve(&atoms->istr, cap_str);
+
+    for (struct atom_data *it = atoms->base; it < atoms->end; it++) {
+        it->next = 0;
+        uint64_t index = (it - atoms->base) / sizeof(*it);
+
+        struct htable_ret ret = htable_put(&atoms->iword, it->word, index);
+        assert(ret.ok);
+
+        ret = htable_try_put(&atoms->istr, symbol_hash(&it->symbol), index);
+        assert(ret.ok || ret.value);
+
+        if (!ret.ok) {
+            struct atom_data *prev = atoms->base + index;
+            prev->next = index;
+        }
+    }
+
+    if (!save_read_magic(save, save_magic_atoms)) goto fail;
+    return atoms;
+
+  fail:
+    atoms_free(atoms);
+    return NULL;
+
+}
+
+void atoms_save(struct atoms *atoms, struct save *save)
+{
+    save_write_magic(save, save_magic_atoms);
+
+    save_write_value(save, atoms->id);
+    save_write(save, atoms->base, atoms->it - atoms->base);
+
+    save_write_magic(save, save_magic_atoms);
 }
 
 
-// -----------------------------------------------------------------------------
-// vm_atoms
-// -----------------------------------------------------------------------------
-
-void vm_atoms_init(void)
-{
-    const size_t items = 1 << 10;
-    atoms.base = alloc_cache(items * sizeof(*atoms.base));
-    atoms.curr = atoms.base + 1; // htable can't index 0
-    atoms.cap = atoms.base + items;
-    atoms.id = 1;
-
-    htable_reserve(&atoms.istr, items);
-    htable_reserve(&atoms.iword, items);
-}
-
-static struct atom_data *atoms_find(const atom_t *atom, struct atom_data **prev)
+static struct atom_data *atoms_find(
+        struct atoms *atoms, const struct symbol *symbol, struct atom_data **prev)
 {
     *prev = NULL;
 
-    struct htable_ret ret = htable_get(&atoms.istr, atom_hash(atom));
+    struct htable_ret ret = htable_get(&atoms->istr, symbol_hash(symbol));
     if (!ret.ok) return NULL;
 
-    struct atom_data *data = atoms.base + ret.value;
+    struct atom_data *data = atoms->base + ret.value;
     while (data) {
-        if (likely(atom_eq(atom, &data->str))) return data;
+        if (likely(symbol_eq(symbol, &data->symbol))) return data;
         *prev = data;
-        data = atoms.base + data->next;
+        data = atoms->base + data->next;
     }
 
     assert(*prev);
     return NULL;
 }
 
-static void atoms_expand(void)
+static void atoms_expand(struct atoms *atoms)
 {
-    if (likely(atoms.curr < atoms.cap)) return;
+    if (likely(atoms->it < atoms->end)) return;
 
-    size_t old = (atoms.cap - atoms.base) / sizeof(*atoms.base);
-    size_t new = old * 2;
+    size_t old = (atoms->end - atoms->base) / sizeof(*atoms->base);
+    size_t new = old * atoms_cap_mul;
 
-    atoms.base = realloc(atoms.base, new * sizeof(*atoms.base));
-    atoms.curr = atoms.base + old;
-    atoms.cap = atoms.base + new;
+    atoms->base = realloc(atoms->base, new * sizeof(*atoms->base));
+    atoms->it = atoms->base + old;
+    atoms->end = atoms->base + new;
 }
 
-static void atoms_grow_index()
+static void atoms_grow_index(struct atoms *atoms)
 {
-    size_t cap = atoms.istr.cap * 4;
-    htable_reset(&atoms.istr);
-    htable_reserve(&atoms.istr, cap);
+    size_t end = atoms->istr.end * atoms_cap_str_mul;
+    htable_reset(&atoms->istr);
+    htable_reserve(&atoms->istr, end);
 
-    size_t len = (atoms.curr - atoms.base) / sizeof(*atoms.base);
+    size_t len = (atoms->it - atoms->base) / sizeof(*atoms->base);
     for (size_t i = 0; i < len; ++i) {
-        struct atom_data *data = &atoms.base[i];
+        struct atom_data *data = &atoms->base[i];
         data->next = 0;
 
         struct atom_data *prev = NULL;
@@ -108,90 +168,92 @@ static void atoms_grow_index()
 
         if (prev) prev->next = i;
         else {
-            uint64_t hash = atom_hash(&data->str);
-            struct htable_ret ret = htable_put(&atoms.istr, hash, i);
+            uint64_t hash = symbol_hash(&data->str);
+            struct htable_ret ret = htable_put(&atoms->istr, hash, i);
             assert(ret.ok);
         }
     }
 }
 
-static struct atom_data *atoms_insert(const atom_t *atom, word_t id)
+static struct atom_data *atoms_insert(
+        struct atoms *atoms, const struct symbol *symbol, word_t id)
 {
     atoms_expand();
 
-    struct atom_data *data = atoms.curr;
-    atoms.curr++;
+    struct atom_data *data = atoms->it;
+    atoms->it++;
 
     data->word = id;
-    memcpy(data->str, atom, vm_atom_cap);
+    memcpy(data->symbol, symbol, sizeof(*symbol));
 
-    uint64_t hash = atom_hash(atom);
-    uint64_t index = data - atoms.base;
+    uint64_t hash = symbol_hash(symbol);
+    uint64_t index = data - atoms->base;
 
-    struct htable_ret ret = htable_try_put(&atoms.istr, hash, index);
+    struct htable_ret ret = htable_try_put(&atoms->istr, hash, index);
     assert(!ret.value);
 
     if (!ret.ok) {
         atoms_grow_index();
-        ret = htable_try_put(&atoms.istr, hash, index);
+        ret = htable_try_put(&atoms->istr, hash, index);
         assert(ret.ok);
     }
 
-    htable_put(&atoms.iword, id, index);
+    htable_put(&atoms->iword, id, index);
     assert(ret.ok);
 
     return data;
 }
 
 static struct atom_data *atoms_chain(
-        struct atom_data *prev, const atom_t *atom, word_t id)
+        struct atoms *atoms, struct atom_data *prev,
+        const struct symbol *symbol, word_t id)
 {
     atoms_expand();
 
-    struct atom_data *data = atoms.curr;
-    atoms.curr++;
+    struct atom_data *data = atoms->it;
+    atoms->it++;
 
     data->word = id;
-    memcpy(data->str, atom, vm_atom_cap);
+    memcpy(data->symbol, symbol, sizeof(*symbol));
 
-    uint64_t index = data - atoms.base;
+    uint64_t index = data - atoms->base;
     prev->next = index;
 
-    struct htable_ret ret = htable_put(&atoms.iword, id, index);
+    struct htable_ret ret = htable_put(&atoms->iword, id, index);
     assert(ret.ok);
 
     return data;
 }
 
-word_t vm_atom(const atom_t *atom)
-{
-    struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(atom, &prev);
-
-    if (data) return data->word;
-    if (!prev) return atoms_insert(atom, atoms.id++)->word;
-    return atoms_chain(prev, atom, atoms.id++)->word;
-}
-
-bool vm_atoms_set(const atom_t *atom, word_t id)
+bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word_t id)
 {
     struct htable_ret ret = {0};
-    ret = htable_get(&atoms.iword, id);
+    ret = htable_get(&atoms->iword, id);
     if (ret.ok) return false;
 
     struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(atom, &prev);
+    struct atom_data *data = atoms_find(symbol, &prev);
 
     if (data) return data->word;
-    if (!prev) return atoms_insert(atom, id)->word;
-    return atoms_chain(prev, atom, id)->word;
+    if (!prev) return atoms_insert(symbol, id)->word;
+    return atoms_chain(symbol, atom, id)->word;
 }
 
-bool vm_atoms_str(word_t id, atom_t *dst)
+word_t atoms_atom(struct atoms *atoms, const struct symbol *symbol)
 {
-    struct htable_ret ret = htable_get(&atoms.iword, id);
+    struct atom_data *prev = NULL;
+    struct atom_data *data = atoms_find(symbol, &prev);
+
+    if (data) return data->word;
+    if (!prev) return atoms_insert(symbol, atoms->id++)->word;
+    return atoms_chain(prev, symbol, atoms->id++)->word;
+}
+
+bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)
+{
+    struct htable_ret ret = htable_get(&atoms->iword, id);
     if (!ret.ok) return false;
 
-    memcpy(dst, atoms.base[ret.value].str, vm_atom_cap);
+    memcpy(dst, &atoms->base[ret.value].symbol, sizeof(*dst));
     return true;
 }
