@@ -49,5 +49,8 @@ struct line *text_goto(struct text *, size_t line);
 struct line *text_insert(struct text *, struct line *at);
 struct line *text_erase(struct text *, struct line *at);
 
+void text_indent(struct text *);
+size_t text_indent_at(struct text *, struct line *);
+
 void text_to_str(const struct text *, char *dst, size_t len);
 void text_from_str(struct text *, const char *src, size_t len);
