@@ -76,24 +76,3 @@ enum legion_packed op_code
 
     OP_MAX_,
 };
-
-enum op_arg
-{
-    ARG_NIL,
-    ARG_LIT,
-    ARG_REG,
-    ARG_LEN,
-    ARG_OFF,
-    ARG_MOD,
-};
-
-struct op_spec
-{
-    enum op_code op;
-    const char str[op_len];
-    enum op_arg arg;
-};
-
-extern const struct op_spec op_specs[];
-
-struct op_spec *op_spec(const char *str, size_t len);

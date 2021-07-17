@@ -477,8 +477,9 @@ static void lisp_register_fn(uint64_t key, lisp_fn_t fn)
     assert.ret.ok;
 }
 
-#include "vm/lisp_asm.c"
 #include "vm/lisp_fn.c"
+#include "vm/lisp_asm.c"
+#include "vm/lisp_disasm.c"
 
 void mod_compile_init(void)
 {
