@@ -68,16 +68,17 @@ struct atoms *atoms_load(struct save *save)
     struct atoms *atoms = atoms_new();
     save_read_into(save, &atoms->id);
 
+    size_t len = save_read_type(save, typeof(len));
     size_t cap = atoms_default_cap;
     size_t cap_str = atoms_default_cap;
-    while (cap < atoms->id) {
+    while (cap < len) {
         cap *= atoms_cap_mul;
         cap_str *= atoms_cap_str_mul;
     }
 
     atoms->base = alloc_cache(cap * sizeof(*atoms->base));
     atoms->end = atoms->base + cap;
-    atoms->it = atoms->base + atoms->id;
+    atoms->it = atoms->base + len;
     save_read(save, atoms->base, atoms->it - atoms->base);
 
 
@@ -112,8 +113,10 @@ struct atoms *atoms_load(struct save *save)
 void atoms_save(struct atoms *atoms, struct save *save)
 {
     save_write_magic(save, save_magic_atoms);
+    size_t len = (atoms->it - atoms->base) / sizeof(*atoms->it);
 
     save_write_value(save, atoms->id);
+    save_write_value(save, len);
     save_write(save, atoms->base, atoms->it - atoms->base);
 
     save_write_magic(save, save_magic_atoms);
