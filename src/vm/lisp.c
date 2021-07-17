@@ -463,23 +463,28 @@ static void lisp_index(struct lisp *lisp)
     index->ip = lisp_ip(lisp);
 }
 
-typedef void (*lisp_fn_t) (struct lisp *);
-
-static void lisp_register_fn(struct lisp *lisp, uint64_t key, lisp_fn_t fn)
-{
-    uint64_t key = symb_hash_str(#fn);                              \
-    uint64_t val = (uintptr_t) lisp_fn_ ## fn;                      \
-    struct htable_ret ret = htable_put(&lisp->symb.fn, key, val);   \
-    assert(ret.ok);                                                 \
-}
-
-
 // -----------------------------------------------------------------------------
 // implementation
 // -----------------------------------------------------------------------------
 
+typedef void (*lisp_fn_t) (struct lisp *);
+
+static struct htable lisp_fn = {0};
+
+static void lisp_register_fn(uint64_t key, lisp_fn_t fn)
+{
+    struct htable_ret ret = htable_put(&lisp_fn, key, (uintptr_t) fn);
+    assert.ret.ok;
+}
+
 #include "vm/lisp_asm.c"
 #include "vm/lisp_fn.c"
+
+void mod_compile_init(void)
+{
+    lisp_fn_register();
+    lisp_asm_register();
+}
 
 
 // -----------------------------------------------------------------------------
@@ -493,6 +498,7 @@ struct mod *mod_compile(size_t len, const char *src, struct mods *mods)
     lisp.in.it = src;
     lisp.in.base = src;
     lisp.in.end = src + len;
+    lisp.symb.fn = htable_clone(&lisp_fn);
 
     {
         lisp_stmts(&lisp);
@@ -519,9 +525,4 @@ struct mod *mod_compile(size_t len, const char *src, struct mods *mods)
     htable_reset(lisp.symb.req);
     htable_reset(lisp.symb.jmp);
     return mod;
-}
-
-void mod_compile_init(void)
-{
-    // \todo register_fn shouldn't be done on every compile
 }

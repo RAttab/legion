@@ -508,13 +508,13 @@ static void lisp_fn_n(struct lisp *lisp, enum op_code op)
 // index
 // -----------------------------------------------------------------------------
 
-static void lisp_register_fn(struct lisp *lisp)
+static void lisp_fn_register(void)
 {
 #define register_fn(fn) \
-    lisp_register_fn(lisp, symb_hash_str(#fn), (uintptr_t) lisp_fn_ ## fn)
+    lisp_register_fn(symb_hash_str(#fn), (uintptr_t) lisp_fn_ ## fn)
 
 #define register_fn_str(fn, str) \
-    lisp_register_fn(lisp, symb_hash_str(str), (uintptr_t) lisp_fn_ ## fn)
+    lisp_register_fn(symb_hash_str(str), (uintptr_t) lisp_fn_ ## fn)
 
     register_fn(defun);
 

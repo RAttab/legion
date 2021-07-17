@@ -90,6 +90,14 @@ void htable_reserve(struct htable *ht, size_t items)
     htable_resize(ht, items * 4);
 }
 
+struct htable htable_clone(const struct htable *src)
+{
+    struct htable dst = { .len = src->len, .cap = src->cap };
+    dst.table = calloc(dst.cap, sizeof(*dst.table));
+    memcpy(dst.table, src->table, dst.cap * sizeof(*dst.table));
+    return dst;
+}
+
 
 // -----------------------------------------------------------------------------
 // ops

@@ -49,6 +49,10 @@ struct legion_packed mod
 
 static_assert(sizeof(struct mod) == s_cache_line);
 
+void mod_compile_init(void);
+struct mod *mod_compile(size_t len, const char *src, struct mods *mods);
+struct text mod_disasm(const struct mod *);
+
 struct mod *mod_alloc(
         const char *src, size_t src_len,
         const uint8_t *code, size_t code_len,
@@ -102,11 +106,3 @@ struct mods_list
 struct mods_list *mods_list(struct mods *);
 
 void mods_populate(struct mods *);
-
-
-// -----------------------------------------------------------------------------
-// compiler
-// -----------------------------------------------------------------------------
-
-void mod_compile_init(void);
-struct mod *mod_compile(size_t len, const char *src, struct mods *mods);

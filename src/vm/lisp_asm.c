@@ -183,11 +183,11 @@ static void lisp_asm_label(struct lisp *lisp)
 
 #undef define_asm
 
-static void lisp_register_asm(struct lisp *lisp)
+static void lisp_asm_register(void)
 {
 
 #define register_asm(op) \
-    lisp_register_fn(lisp, symb_hash_str(#op), (uintptr_t) lisp_fn_ ## op)
+    lisp_register_fn(symb_hash_str(#op), (uintptr_t) lisp_fn_ ## op)
 
     register_asm(NOOP);
 
@@ -438,13 +438,13 @@ static bool lisp_disasm_op(struct disasm *disasm, enum op_code op)
     }
 }
 
-struct text lisp_disasm(size_t len, const uint8_t *base)
+struct text mod_disasm(const struct mod *mod)
 {
     struct disasm disasm = { 0 };
 
-    disasm.in.it = base;
-    disasm.in.base = base;
-    disasm.in.end = base + len;
+    disasm.in.it = mod->code;
+    disasm.in.base = mod->code;
+    disasm.in.end = mod->code + mod->len;
 
     text_init(&disasm.text);
     disasm.line = disasm.text.first;
