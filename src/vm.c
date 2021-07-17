@@ -4,8 +4,7 @@
 */
 
 #include "vm/vm.c"
-#include "vm/op.c"
 #include "vm/mod.c"
+#include "vm/lisp.c"
 #include "vm/atoms.c"
-#include "vm/compiler.c"
 
