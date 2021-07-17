@@ -23,8 +23,8 @@ struct legion_packed line
 
 struct line_ret
 {
-    uint16_t index;
     struct line *line;
+    uint16_t index;
 };
 
 struct line_ret line_insert(struct text *, struct line *, size_t index, char c);

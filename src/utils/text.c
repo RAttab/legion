@@ -48,10 +48,16 @@ static int16_t line_indent_delta(struct line *line)
     return indent;
 }
 
-static void line_indent(struct text *text, struct line *line, size_t indent)
+static void line_indent(
+        struct text *text, struct line *line, size_t indent, bool new)
 {
     size_t first = 0;
     while (first < line->len && line->c[first] <= 0x20) first++;
+
+    if (!new && first == line->len) {
+        line->len = 0;
+        return;
+    }
 
     ssize_t delta = ((ssize_t) spaces) - ((ssize_t) first);
     if (!delta) return;
@@ -68,13 +74,14 @@ struct line_ret line_insert(
         struct text *text, struct line *line, size_t index, char c)
 {
     assert(index <= line->len);
-    assert(line->len < UINT16_MAX);
-
     text->bytes++;
 
     if (likely(c != '\n')) {
+        assert(line->len + 1 < UINT16_MAX);
+
         line = line_realloc(line, line->len + 1);
         memmove(line->c + index + 1, line->c + index, line->len - index);
+
         line->c[index] = c;
         line->len++;
         return (struct line_ret) { .line = line, .index = index + 1 };
@@ -86,7 +93,7 @@ struct line_ret line_insert(
     line->len = index;
 
     size_t indent = text_indent_at(new);
-    line_indent(text, line, indent);
+    line_indent(text, line, indent, true);
 
     return (struct line_ret) { .line = new, .index = indent };
 }
@@ -133,8 +140,9 @@ struct line_ret line_backspace(struct text *text, struct line *line, size_t inde
     if (!prev) return (struct line_ret) {0};
 
     size_t to_copy = line->len;
-    prev = line_realloc(prev, prev->len + to_copy);
+    assert(prev->len + to_copy < UINT16_MAX);
 
+    prev = line_realloc(prev, prev->len + to_copy);
     memcpy(prev->c + prev->len, line->c, to_copy);
     prev->len += to_copy;
 
@@ -218,7 +226,7 @@ void text_indent(struct text *text)
 {
     int16_t indent = 0;
     for (struct line *it = text->first; it; it->next) {
-        line_indent(text, it, indent > 0 ? indent * 2 : 0);
+        line_indent(text, it, indent > 0 ? indent * 2 : 0, false);
         indent += line_indent_delta(it);
     }
 }
