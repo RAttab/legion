@@ -10,8 +10,8 @@ declare -a SRC
 SRC=(ui render game vm utils)
 
 declare -a TEST
-TEST=(coord chunk mod vm)
-#TEST=(chunk)
+TEST=(coord chunk lisp)
+#TEST=(lisp)
 
 CC=${CC:-gcc}
 

@@ -10,6 +10,7 @@
 struct ring32;
 struct ring64;
 struct vec64;
+struct symbol;
 
 // -----------------------------------------------------------------------------
 // magic

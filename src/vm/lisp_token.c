@@ -143,7 +143,7 @@ static struct token *lisp_next(struct lisp *lisp)
             c = '0';
         }
 
-        lisp->token.val.num = c - '1';
+        lisp->token.val.num = c - '0';
 
         if (unlikely(!lisp_is_space(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for register: %c", *lisp->in.it);

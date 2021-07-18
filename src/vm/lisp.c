@@ -111,7 +111,7 @@ static char lisp_in_inc(struct lisp *lisp)
 {
     if (unlikely(lisp->in.it >= lisp->in.end)) return 0;
 
-    if (*lisp->in.it == '\n') { lisp->in.col++; lisp->in.row = 0; }
+    if (*lisp->in.it == '\n') { lisp->in.row++; lisp->in.col = 0; }
     else { lisp->in.row++; }
 
     char c = *lisp->in.it;
