@@ -5,7 +5,6 @@
 
 #include "game/item.c"
 #include "game/coord.c"
-#include "game/io.c"
 #include "game/lanes.c"
 #include "game/sector.c"
 #include "game/world.c"

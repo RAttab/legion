@@ -27,7 +27,7 @@ struct world *world_new(void)
     struct world *world = calloc(1, sizeof(*world));
 
     world->atoms = atoms_new();
-    atoms_io_register(world->atoms);
+    atoms_register_game(world->atoms);
 
     world->mods = mods_new();
     lanes_init(&world->lanes, world);

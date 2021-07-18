@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+struct atoms;
 
 // -----------------------------------------------------------------------------
 // item
@@ -147,3 +148,10 @@ inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
 enum { id_str_len = item_str_len+1+6 };
 size_t id_str(id_t id, size_t len, char *dst);
+
+
+// -----------------------------------------------------------------------------
+// atoms
+// -----------------------------------------------------------------------------
+
+void atoms_register_game(struct atoms *);

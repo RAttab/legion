@@ -65,8 +65,9 @@ inline bool vm_io(struct vm *vm) { return vm->flags & FLAG_IO; }
 enum { vm_io_cap = 8 };
 typedef word_t vm_io_buf_t[vm_io_cap];
 
+void vm_push(struct vm *, word_t);
+
 size_t vm_io_read(struct vm *, word_t *dst);
-void vm_io_write(struct vm *, size_t len, const word_t *src);
 inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 {
     if (unlikely(len < exp)) { vm_io_fault(vm); return false; }

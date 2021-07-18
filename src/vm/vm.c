@@ -63,6 +63,15 @@ void vm_io_fault(struct vm *vm)
     vm->flags |= FLAG_FAULT_IO;
 }
 
+void vm_push(struct vm *vm, word_t word)
+{
+    if (unlikely(vm->sp == vm->specs.stack)) {
+        vm->flags |= FLAG_FAULT_STACK;
+        return;
+    }
+    vm->stack[vm->sp++] = word;
+}
+
 size_t vm_io_read(struct vm *vm, word_t *dst)
 {
     vm->flags &= ~FLAG_IO;
@@ -72,23 +81,6 @@ size_t vm_io_read(struct vm *vm, word_t *dst)
         dst[i] = vm->stack[--vm->sp];
 
     return vm->io;
-}
-
-void vm_io_write(struct vm *vm, size_t len, const word_t *src)
-{
-    assert(len <= vm_io_cap);
-
-    // In case of OOM, we want to fill the stack for debugging purposes.
-    for (size_t i = 0; i < len; ++i) {
-        if (unlikely(vm->sp == vm->specs.stack)) {
-            vm->flags |= FLAG_FAULT_STACK;
-            return;
-        }
-        vm->stack[vm->sp++] = src[len-i-1];
-    }
-
-    if (vm->ior == 0) vm->stack[vm->sp++] = len;
-    else if (vm->ior != 0xFF) vm->regs[vm->ior-1] = len;
 }
 
 void vm_reset(struct vm *vm)

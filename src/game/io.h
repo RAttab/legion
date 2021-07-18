@@ -7,8 +7,6 @@
 
 #include "common.h"
 
-struct atoms;
-
 // -----------------------------------------------------------------------------
 // atoms_io
 // -----------------------------------------------------------------------------
@@ -20,6 +18,8 @@ legion_packed enum atom_io
     ATOM_IO_MIN = 1 << 30,
 
     IO_NIL = ATOM_IO_MIN,
+    IO_OK,
+    IO_FAIL,
 
     IO_PING,
     IO_PONG,
@@ -44,4 +44,3 @@ legion_packed enum atom_io
     ATOM_IO_MAX,
 };
 
-void atoms_io_register(struct atoms *);

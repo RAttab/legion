@@ -80,26 +80,23 @@ static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id)
 // step
 // -----------------------------------------------------------------------------
 
-static void brain_step_recv(struct brain *brain, size_t len, const word_t *args)
+static bool brain_step_recv(struct brain *brain, size_t len, const word_t *args)
 {
-    (void) args;
-
-    if (len != 0) { vm_io_fault(&brain->vm); return; }
+    (void) args, (void) len;
     assert(brain->msg_len <= brain_msg_cap);
 
-    word_t header = vm_pack(brain->msg_src, brain->msg_len);
-    vm_io_write(&brain->vm, brain->msg_len, brain->msg);
-    vm_io_write(&brain->vm, 1, &header);
+    for (size_t i = 0; i < brain->msg_len; ++i)
+        vm_push(&brain->vm, brain->msg[brain->msg_len - i - 1]);
+    vm_push(&brain->vm, vm_pack(brain->msg_src, brain->msg_len));
 
     brain->msg_src = 0;
     brain->msg_len = 0;
+    return true;
 }
 
 static void brain_step_io(
         struct brain *brain, struct chunk *chunk, size_t len, const word_t *io)
 {
-    abort(); // \todo ENSURE THAT IO ALWAYS PUSHES A SINGLE VALUE ON THE STACK!
-
     uint32_t atom = 0, dst = 0;
     vm_unpack(io[0], &atom, &dst);
 
@@ -109,10 +106,15 @@ static void brain_step_io(
         return;
     }
 
+    bool ok = false;
     switch (atom) {
-    case IO_RECV: { brain_step_recv(brain, len - 1, io + 1); return; }
-    default: { chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1); return; }
+    case IO_RECV: { ok = brain_step_recv(brain, len - 1, io + 1); break; }
+    default: { ok = chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1); break; }
     }
+
+    // ALL IO operations must push a value on the stack to maintain our lisp
+    // language invariant that all statements return a value on the stack.
+    vm_push(&brain->vm, ok ? IO_OK : IO_FAIL);
 }
 
 static void brain_step(void *state, struct chunk *chunk)
@@ -155,7 +157,10 @@ static void brain_io_reset(struct brain *brain)
 
 static void brain_io_val(struct brain *brain, size_t len, const word_t *args)
 {
-    vm_io_write(&brain->vm, len, args);
+    (void) len;
+    if (len < 1) return;
+
+    vm_push(&brain->vm,  args[0]);
 }
 
 static void brain_io_send(
