@@ -491,7 +491,9 @@ static void lisp_fn_n(struct lisp *lisp, enum op_code op)
     define_fn_ops(eq, EQ, 2)
     define_fn_ops(ne, NE, 2)
     define_fn_ops(gt, GT, 2)
+    define_fn_ops(ge, GE, 2)
     define_fn_ops(lt, LT, 2)
+    define_fn_ops(le, LE, 2)
     define_fn_ops(cmp, CMP, 2)
 
     define_fn_ops(reset, RESET, 0)
@@ -558,7 +560,9 @@ static void lisp_fn_register(void)
     register_fn_str(eq, "=");
     register_fn_str(ne, "/=");
     register_fn_str(gt, ">");
+    register_fn_str(ge, ">=");
     register_fn_str(lt, "<");
+    register_fn_str(le, "<=");
     register_fn(cmp);
 
     register_fn(reset);

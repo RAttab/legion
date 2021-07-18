@@ -52,8 +52,10 @@ enum legion_packed op_code
     OP_EQ     = 0x40,
     OP_NE     = 0x41,
     OP_GT     = 0x42,
-    OP_LT     = 0x43,
-    OP_CMP    = 0x44,
+    OP_GE     = 0x43,
+    OP_LT     = 0x44,
+    OP_LE     = 0x45,
+    OP_CMP    = 0x46,
 
     OP_RET    = 0x50,
     OP_CALL   = 0x51,

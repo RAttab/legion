@@ -176,7 +176,9 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
         [OP_EQ]     = &&op_eq,
         [OP_NE]     = &&op_ne,
         [OP_GT]     = &&op_gt,
+        [OP_GE]     = &&op_ge,
         [OP_LT]     = &&op_lt,
+        [OP_LE]     = &&op_le,
         [OP_CMP]    = &&op_cmp,
 
         [OP_RET]    = &&op_ret,
@@ -373,9 +375,11 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
       op_eq:  { vm_ensure(2); vm_stack(1) = vm_stack(0) == vm_stack(1); vm_pop(); continue; }
       op_ne:  { vm_ensure(2); vm_stack(1) = vm_stack(0) != vm_stack(1); vm_pop(); continue; }
-      op_gt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) > vm_stack(1);  vm_pop(); continue; }
-      op_lt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) < vm_stack(1);  vm_pop(); continue; }
-      op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) - vm_stack(1);  vm_pop(); continue; }
+      op_gt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) >  vm_stack(1); vm_pop(); continue; }
+      op_ge:  { vm_ensure(2); vm_stack(1) = vm_stack(0) >= vm_stack(1); vm_pop(); continue; }
+      op_lt:  { vm_ensure(2); vm_stack(1) = vm_stack(0) <  vm_stack(1); vm_pop(); continue; }
+      op_le:  { vm_ensure(2); vm_stack(1) = vm_stack(0) <= vm_stack(1); vm_pop(); continue; }
+      op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) -  vm_stack(1); vm_pop(); continue; }
 
       op_ret: {
             word_t raw = vm_pop();
