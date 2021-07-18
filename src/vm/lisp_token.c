@@ -32,7 +32,21 @@ static bool lisp_is_num(char c)
 
 static void lisp_skip_spaces(struct lisp *lisp)
 {
-    while (!lisp_eof(lisp) && lisp_is_space(*lisp->in.it)) lisp_in_inc(lisp);
+    while (!lisp_eof(lisp)) {
+
+        if (likely(lisp_is_space(*lisp->in.it))) {
+            lisp_in_inc(lisp);
+            continue;
+        }
+
+        if (*lisp->in.it == ';') {
+            while (!lisp_eof(lisp) && *lisp->in.it != '\n')
+                lisp_in_inc(lisp);
+            continue;
+        }
+
+        return;
+    }
 }
 
 static void lisp_goto_space(struct lisp *lisp)
