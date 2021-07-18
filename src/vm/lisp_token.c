@@ -51,7 +51,8 @@ static void lisp_skip_spaces(struct lisp *lisp)
 
 static void lisp_goto_space(struct lisp *lisp)
 {
-    while (!lisp_is_space(*lisp->in.it)) lisp_in_inc(lisp);
+    while (!lisp_eof(lisp) && !lisp_is_space(*lisp->in.it))
+        lisp_in_inc(lisp);
 }
 
 static struct token *lisp_next(struct lisp *lisp)
