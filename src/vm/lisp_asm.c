@@ -125,6 +125,10 @@ static void lisp_asm_label(struct lisp *lisp)
 
 static void lisp_asm_register(void)
 {
+    {
+        struct symbol symbol = make_symbol_len(1, ":");
+        lisp_register_fn(symbol_hash(&symbol), lisp_asm_label);
+    }
 
 #define op_fn(op, arg) \
     do {                                                                \
@@ -132,7 +136,6 @@ static void lisp_asm_register(void)
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_ ## op);        \
     } while (false);
 
-    op_fn(label, nil);
 #include "vm/op_xmacro.h"
 
 }
