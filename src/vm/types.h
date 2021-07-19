@@ -57,11 +57,9 @@ static_assert(sizeof(struct symbol) == 32);
 
 inline void symbol_normalize(struct symbol *symbol)
 {
-    memset(symbol->c, 0, symbol_cap - symbol->len);
-    for (size_t i = 0; i < symbol->len; ++i)
-        symbol->c[i] = tolower(symbol->c[i]);
+    while (!symbol->c[symbol->len-1]) symbol->len--;
+    memset(symbol->c + symbol->len, 0, symbol_cap - symbol->len);
 }
-
 
 inline struct symbol make_symbol(const char *str)
 {

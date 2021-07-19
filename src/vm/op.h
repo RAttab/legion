@@ -78,3 +78,5 @@ enum legion_packed op_code
 
     OP_MAX_,
 };
+
+static_assert(sizeof(enum op_code) == 1);

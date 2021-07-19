@@ -58,9 +58,8 @@ char file_inc(struct file *file)
 {
     if (unlikely(file->it >= file->end)) return 0;
     if (*file->it == '\n') file->row++;
-    char c = *file->it;
     file->it++;
-    return c;
+    return *file->it;
 }
 
 
@@ -71,14 +70,14 @@ char file_inc(struct file *file)
 enum token_type
 {
     token_nil = 0,
-    token_open,
-    token_close,
-    token_atom,
-    token_symbol,
-    token_reg,
-    token_stack,
-    token_number,
-    token_assign,
+    token_open = 1,
+    token_close = 2,
+    token_atom = 3,
+    token_symbol = 4,
+    token_reg = 5,
+    token_stack = 6,
+    token_number = 7,
+    token_assign = 8,
 };
 
 struct token
@@ -88,12 +87,29 @@ struct token
     union { struct symbol s; word_t w; } value;
 };
 
+void token_dbg(struct token *token, const char *title)
+{
+    char value[symbol_cap] = {0};
+
+    switch (token->type) {
+    case token_nil: case token_open: case token_close: case token_assign:
+        strcpy(value, "nil"); break;
+    case token_atom: case token_symbol:
+        strcpy(value, token->value.s.c); break;
+    case token_reg: case token_stack: case token_number:
+        str_utox(token->value.w, value, 16); break;
+    default: assert(false);
+    }
+
+    dbg("%s: tok{ row=%u, type=%d, value=%s }", title, token->row, token->type, value);
+}
+
 bool is_space(char c) { return c <= 0x20; }
 
 bool is_symbol(char c)
 {
     switch (c) {
-    case '-':
+    case '-': case '_':
     case 'a'...'z':
     case 'A'...'Z':
     case '0'...'9': return true;
@@ -105,7 +121,9 @@ bool is_number(char c)
     switch (c) {
     case '-':
     case 'x':
-    case '0'...'9': return true;
+    case '0'...'9':
+    case 'a'...'f':
+    case 'A'...'F': return true;
     default: return false;
     }
 }
@@ -143,8 +161,9 @@ struct token token_next(struct file *file)
     case ')': { token.type = token_close; break; }
     case '!': { token.type = token_atom; break; }
     case '$': { token.type = token_reg; break; }
-    case '&': { token.type = token_stack; break; }
+    case '#': { token.type = token_stack; break; }
     case ':': { token.type = token_assign; break; }
+    case '-':
     case '0'...'9': { token.type = token_number; break; }
     default: {
         assert(is_symbol(*file->it));
@@ -155,9 +174,15 @@ struct token token_next(struct file *file)
     switch (token.type)
     {
 
+    case token_open:
+    case token_close:
+    case token_assign: { file_inc(file); break; }
+
     case token_atom:
     case token_symbol: {
         const char *first = file->it;
+        if (token.type == token_atom) { file_inc(file); first++; }
+
         while(!file_eof(file) && is_symbol(*file->it)) file_inc(file);
         size_t len = file->it - first;
 
@@ -174,10 +199,10 @@ struct token token_next(struct file *file)
         size_t read = 0;
         if (len > 2 && first[0] == '0' && first[1] == 'x') {
             uint64_t value = 0;
-            read = str_atox(file->it+2, len-2, &value) + 2;
+            read = str_atox(first+2, len-2, &value) + 2;
             token.value.w = value;
         }
-        else read = str_atod(file->it, len, &token.value.w);
+        else read = str_atod(first, len, &token.value.w);
 
         assert(read == len);
         break;
@@ -186,6 +211,8 @@ struct token token_next(struct file *file)
     case token_reg: {
         assert(!file_eof(file));
         char c = file_inc(file);
+        file_inc(file);
+
         assert(c >= '0' && c <= '3');
         token.value.w = c - '0';
         break;
@@ -194,6 +221,8 @@ struct token token_next(struct file *file)
     case token_stack: {
         assert(!file_eof(file));
         char c = file_inc(file);
+        file_inc(file);
+
         assert(is_number(c));
         token.value.w = c - '0';
         break;
@@ -202,17 +231,8 @@ struct token token_next(struct file *file)
     default: { break; }
     }
 
-    file_inc(file);
     return token;
 }
-
-struct token token_expect(struct file *file, enum token_type exp)
-{
-    struct token token = token_next(file);
-    assert(token.type == exp);
-    return token;
-}
-
 
 word_t token_word(struct file *file, struct atoms *atoms)
 {
@@ -220,7 +240,7 @@ word_t token_word(struct file *file, struct atoms *atoms)
     switch (token.type) {
     case token_number: { return token.value.w; }
     case token_atom: { return atoms_atom(atoms, &token.value.s); }
-    default: { assert(false); }
+    default: { token_dbg(&token, "exp.word"); assert(false); }
     }
 }
 
@@ -230,7 +250,6 @@ void token_goto_close(struct file *file)
         if (*file->it == '(') depth++;
         if (*file->it == ')') depth--;
     }
-    if (!file_eof(file)) assert(file_inc(file) == ')');
 }
 
 
@@ -238,12 +257,22 @@ void token_goto_close(struct file *file)
 // utils
 // -----------------------------------------------------------------------------
 
+#define token_expect(file, exp)                 \
+    ({                                          \
+        struct token token = token_next(file);  \
+        if (token.type != (exp)) {              \
+            dbg("%d != %d", token.type, exp);   \
+            assert(false);                      \
+        }                                       \
+        token;                                  \
+    })
+
 #define check_u64(field, _tval_, _texp_)                                \
     ({                                                                  \
         uint64_t _val_ = (_tval_);                                      \
         uint64_t _exp_ = (_texp_);                                      \
         bool ok = _val_ == _exp_;                                       \
-        if (!ok) dbg("%s> val:%lx != exp:%lx\n", field, _val_, _exp_);  \
+        if (!ok) dbg("<%s> val:%lx != exp:%lx", field, _val_, _exp_);   \
         ok;                                                             \
     })
 
@@ -269,27 +298,52 @@ void print_title(struct file *file)
 
     size_t len = snprintf(title, sizeof(title), "[ %s ]", token.value.s.c);
     title[len] = '=';
-    dbg("%s\n", title);
+    dbg("%s", title);
 }
 
-struct vm *read_vm(struct file *file)
+struct vm *read_vm(struct file *file, struct atoms *atoms)
 {
     token_expect(file, token_open);
 
-    size_t stack = 0, clock = 0;
+    struct vm *vm = vm_alloc(4, 4);
+    while (!file_eof(file)) {
+        struct token token = token_next(file);
+        if (token.type == token_close) break;
 
-    struct token token = {0};
-    while ((token = token_next(file)).type != token_symbol) {
-        uint64_t key = symbol_hash(&token.value.s);
-        token_expect(file, token_assign);
+        switch (token.type)
+        {
 
-        word_t value = token_word(file, NULL);
-        if (key == field("S")) stack = value;
-        if (key == field("C")) stack = value;
+        case token_reg: {
+            size_t index = token.value.w;
+            token_expect(file, token_assign);
+            vm->regs[index] = token_word(file, atoms);
+            break;
+        }
+
+        case token_stack: {
+            size_t index = token.value.w;
+            token_expect(file, token_assign);
+            vm->stack[index] = token_word(file, atoms);
+            break;
+        }
+
+        case token_symbol: {
+            uint64_t key = symbol_hash(&token.value.s);
+            token_expect(file, token_assign);
+
+            word_t value = token_word(file, NULL);
+            if (key == field("S")) { vm->specs.stack = value; }
+            else if (key == field("C")) { vm->specs.speed = value; }
+            else if (key == field("flags")) { vm->flags = value; }
+            break;
+        }
+
+        default: { assert(false); }
+        }
+
     }
 
-    assert(token.type == token_close);
-    return vm_alloc(stack, clock);
+    return vm;
 }
 
 const struct mod *read_mod(struct file *file, struct mods *mods, struct atoms *atoms)
@@ -300,12 +354,13 @@ const struct mod *read_mod(struct file *file, struct mods *mods, struct atoms *a
     token_goto_close(file);
     assert(!file_eof(file));
 
-    const struct mod *mod = mod_compile(file->it - first, first, mods, atoms);
+    size_t len = (file->it - first) - 1;
+    const struct mod *mod = mod_compile(len, first, mods, atoms);
     if (mod && !mod->errs_len) return mod;
 
     for (size_t i = 0; i < mod->errs_len; ++i) {
         const struct mod_err *err = mod->errs + i;
-        dbg("%u:%u:%u: %s\n", err->row, err->col, err->len, err->str);
+        dbg("%u:%u:%u: %s", err->row, err->col, err->len, err->str);
     }
 
     token_goto_close(file);
@@ -320,7 +375,6 @@ bool check_mod(
 {
     token_expect(file, token_open);
 
-    vm_reset(vm);
     ip_t ret = vm_exec(vm, mod);
 
     bool ok = true;
@@ -328,19 +382,20 @@ bool check_mod(
         struct token token = token_next(file);
         if (token.type == token_close) break;
 
-        switch (token.type) {
+        switch (token.type)
+        {
 
         case token_reg: {
             reg_t reg = token.value.w;
             token_expect(file, token_assign);
-            ok = ok && check_u64("reg", vm->regs[reg], token_word(file, atoms));
+            ok = check_u64("reg", vm->regs[reg], token_word(file, atoms)) && ok;
             break;
         }
 
         case token_stack: {
             size_t sp = token.value.w;
             token_expect(file, token_assign);
-            ok = ok && check_u64("stack", vm->stack[sp], token_word(file, atoms));
+            ok = check_u64("stack", vm->stack[sp], token_word(file, atoms)) && ok;
             break;
         }
 
@@ -349,13 +404,13 @@ bool check_mod(
             token_expect(file, token_assign);
 
             word_t exp = token_word(file, atoms);
-            if (key == field("S")) ok = ok && check_u64("S", vm->specs.stack, exp);
-            if (key == field("C")) ok = ok && check_u64("C", vm->specs.speed, exp);
-            if (key == field("flags")) ok = ok && check_u64("flags", vm->flags, exp);
-            if (key == field("io")) ok = ok && check_u64("io", vm->io, exp);
-            if (key == field("ior")) ok = ok && check_u64("ior", vm->ior, exp);
-            if (key == field("sp")) ok = ok && check_u64("sp", vm->sp, exp);
-            if (key == field("ret")) ok = ok && check_u64("ret", ret, exp);
+            if (key == field("S")) ok = check_u64("S", vm->specs.stack, exp) && ok;
+            else if (key == field("C")) ok = check_u64("C", vm->specs.speed, exp) && ok;
+            else if (key == field("flags")) ok = check_u64("flags", vm->flags, exp) && ok;
+            else if (key == field("io")) ok = check_u64("io", vm->io, exp) && ok;
+            else if (key == field("ior")) ok = check_u64("ior", vm->ior, exp) && ok;
+            else if (key == field("sp")) ok = check_u64("sp", vm->sp, exp) && ok;
+            else if (key == field("ret")) ok = check_u64("ret", ret, exp) && ok;
 
             break;
         }
@@ -388,14 +443,17 @@ bool check_file(const char *path)
     struct file file = file_open(path);
 
     while (!file_eof(&file)) {
-        token_expect(&file, token_open);
+        struct token token = token_next(&file);
+        if (token.type == token_nil) break;
+        assert(token.type == token_open);
+
         print_title(&file);
 
-        struct vm *vm = read_vm(&file);
+        struct vm *vm = read_vm(&file, atoms);
         const struct mod *mod = read_mod(&file, mods, atoms);
-        if (!mod) { ok = false; continue; }
+        if (!mod) { ok = false; token_goto_close(&file); continue; }
 
-        ok = ok && check_mod(&file, vm, mod, atoms);
+        ok = check_mod(&file, vm, mod, atoms) && ok;
         token_expect(&file, token_close);
     }
 

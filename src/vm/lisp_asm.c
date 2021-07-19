@@ -13,6 +13,7 @@
 static void lisp_asm_nil(struct lisp *lisp, enum op_code op)
 {
     lisp_write_value(lisp, op);
+    lisp_expect_close(lisp);
 }
 
 static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
@@ -28,12 +29,15 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
                 token_type_str(token->type),
                 token_type_str(token_num),
                 token_type_str(token_atom));
+        lisp_goto_close(lisp);
         return;
     }
     }
 
     lisp_write_value(lisp, op);
     lisp_write_value(lisp, val);
+
+    lisp_expect_close(lisp);
 }
 
 static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
@@ -49,12 +53,15 @@ static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
                 token_type_str(token->type),
                 token_type_str(token_reg),
                 token_type_str(token_symb));
+        lisp_goto_close(lisp);
         return;
     }
     }
 
     lisp_write_value(lisp, op);
     lisp_write_value(lisp, val);
+
+    lisp_expect_close(lisp);
 }
 
 static void lisp_asm_len(struct lisp *lisp, enum op_code op)
@@ -64,19 +71,24 @@ static void lisp_asm_len(struct lisp *lisp, enum op_code op)
 
     if (token->val.num > 0x7F) {
         lisp_err(lisp, "invalid length argument: %zu > %u", token->val.num, 0x7F);
+        lisp_goto_close(lisp);
         return;
     }
 
     int8_t val = token->val.num;
     lisp_write_value(lisp, op);
     lisp_write_value(lisp, val);
+
+    lisp_expect_close(lisp);
 }
 
 static void lisp_asm_off(struct lisp *lisp, enum op_code op)
 {
-    struct token *token = lisp_next(lisp);
+    lisp_write_value(lisp, op);
 
     ip_t val = 0;
+    struct token *token = lisp_next(lisp);
+
     switch (token->type) {
     case token_num: { val = token->val.num; break; }
     case token_symb: { val = lisp_jmp(lisp, token_symb_hash(token)); break; }
@@ -85,22 +97,24 @@ static void lisp_asm_off(struct lisp *lisp, enum op_code op)
                 token_type_str(token->type),
                 token_type_str(token_num),
                 token_type_str(token_symb));
+        lisp_goto_close(lisp);
         return;
     }
     }
 
-    lisp_write_value(lisp, op);
     lisp_write_value(lisp, val);
+    lisp_expect_close(lisp);
 }
 
 static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 {
-    struct token *token = lisp_expect(lisp, token_symb);
-    if (!token) return;
-
-    word_t val = lisp_jmp(lisp, token_symb_hash(token));
     lisp_write_value(lisp, op);
-    lisp_write_value(lisp, val);
+
+    struct token *token = lisp_expect(lisp, token_symb);
+    if (!token) { lisp_goto_close(lisp); return; }
+    lisp_write_value(lisp, lisp_jmp(lisp, token_symb_hash(token)));
+
+    lisp_expect_close(lisp);
 }
 
 
@@ -111,9 +125,11 @@ static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 static void lisp_asm_label(struct lisp *lisp)
 {
     struct token *token = lisp_expect(lisp, token_symb);
-    if (!token) return;
+    if (!token) { lisp_goto_close(lisp); return; }
 
     lisp_label(lisp, &token->val.symb);
+
+    lisp_expect_close(lisp);
 }
 
 #define op_fn(op, arg)                                  \
@@ -130,7 +146,7 @@ static void lisp_asm_register(void)
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_label);
     }
 
-#define op_fn(op, arg) \
+#define op_fn(op, arg)                                                  \
     do {                                                                \
         struct symbol symbol = make_symbol_len(sizeof(#op), #op);       \
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_ ## op);        \

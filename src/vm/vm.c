@@ -109,7 +109,7 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
             (unsigned) vm->io, (unsigned) vm->ior, vm->tsc);
     dst += n; len -= n;
 
-    n = snprintf(dst, len, "reg:   [ 1:%016lx 2:%016lx 3:%016lx 4:%016lx ]\n",
+    n = snprintf(dst, len, "reg:   [ 0:%016lx 1:%016lx 2:%016lx 3:%016lx ]\n",
             vm->regs[0], vm->regs[1], vm->regs[2], vm->regs[3]);
     dst += n; len -= n;
 

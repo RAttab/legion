@@ -4,6 +4,7 @@
 */
 
 #include "common.h"
+#include "vm/mod.h"
 #include "utils/str.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
@@ -112,11 +113,10 @@ static char lisp_in_inc(struct lisp *lisp)
     if (unlikely(lisp->in.it >= lisp->in.end)) return 0;
 
     if (*lisp->in.it == '\n') { lisp->in.row++; lisp->in.col = 0; }
-    else { lisp->in.row++; }
+    else { lisp->in.col++; }
 
-    char c = *lisp->in.it;
     lisp->in.it++;
-    return c;
+    return *lisp->in.it;
 }
 
 
@@ -175,6 +175,13 @@ static void lisp_write(struct lisp *lisp, size_t len, const void *data)
 {
     lisp_ensure(lisp, len);
     memcpy(lisp->out.it, data, len);
+    lisp->out.it += len;
+}
+
+// `sizeof(enum op_code) != sizeof(OP_XXX)` so gotta do it manually.
+static void lisp_write_op(struct lisp *lisp, enum op_code op)
+{
+    lisp_write(lisp, sizeof(op), &op);
 }
 
 #define lisp_write_value(lisp, _value)                  \
@@ -279,7 +286,6 @@ static ip_t lisp_jmp(struct lisp *lisp, uint64_t key)
     if (likely(ret.ok)) return ret.value;
 
     ret = htable_get(&lisp->symb.req, key);
-
     struct vec64 *old = ret.ok ? (void *) ret.value : NULL;
     struct vec64 *new = vec64_append(old, lisp_ip(lisp));
 
@@ -365,7 +371,7 @@ struct mod *mod_compile(
 
     {
         lisp_stmts(&lisp);
-        lisp_write_value(&lisp, OP_RESET);
+        lisp_write_op(&lisp, OP_RESET);
     }
 
     for (struct htable_bucket *it = htable_next(&lisp.symb.req, NULL);
@@ -376,7 +382,7 @@ struct mod *mod_compile(
     }
 
     struct mod *mod = mod_alloc(
-            lisp.in.base, lisp.in.it - lisp.in.base,
+            lisp.in.base, lisp.in.end - lisp.in.base,
             lisp.out.base, lisp.out.it - lisp.out.base,
             lisp.err.list, lisp.err.len,
             lisp.index.list, lisp.index.len);

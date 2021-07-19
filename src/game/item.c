@@ -139,6 +139,10 @@ static void atom_game_reg(
 {
     assert(len <= symbol_cap);
     struct symbol symbol = make_symbol_len(len, str);
+    for (size_t i = 0; i < symbol.len; ++i) {
+        char c = tolower(symbol.c[i]);
+        if (c) symbol.c[i] = c;
+    }
     assert(atoms_set(atoms, &symbol, val));
 }
 

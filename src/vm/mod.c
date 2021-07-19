@@ -21,7 +21,7 @@ struct mod *mod_alloc(
         const struct mod_index *index, size_t index_len)
 {
     size_t head_bytes = sizeof(struct mod);
-    size_t src_bytes = src_len;
+    size_t src_bytes = src_len + 1;
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
     size_t index_bytes = (index_len + 1) * sizeof(*index);
@@ -33,8 +33,9 @@ struct mod *mod_alloc(
     mod->len = code_len;
 
     mod->src = ((void *) mod->code) + code_bytes;
-    memcpy(mod->src, src, src_bytes);
+    memcpy(mod->src, src, src_len);
     mod->src_len = src_bytes;
+    mod->src[src_len] = 0;
 
     mod->errs = ((void *) mod->src) + src_bytes;
     memcpy(mod->errs, errs, errs_bytes);
@@ -142,27 +143,59 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 {
     size_t orig = len;
 
-    for (size_t i = 0; i < mod->index_len; ++i) {
-        struct mod_index *curr = &mod->index[i];
-        struct mod_index *next = curr + 1;
+    const uint8_t *in = mod->code;
+    const uint8_t *end = mod->code + mod->len;
 
-        size_t n = snprintf(dst, len, "[%04u:%04u:%02x] %02x ",
-                curr->row, curr->col, curr->ip, mod->code[curr->ip]);
+    void dump_op(const char *op)
+    {
+        size_t n = snprintf(dst, len, "[%02lx] %s ", in - mod->code, op);
+        dst += n; len -= n; in += sizeof(enum op_code);
+    }
+
+    void dump_nil(void)
+    {
+        size_t n = snprintf(dst, len, "\n");
         dst += n; len -= n;
+    }
 
-        const void *arg = mod->code + curr->ip + 1;
+    void dump_lit(void)
+    {
+        size_t n = snprintf(dst, len, "%016lx\n", *((word_t *) in));
+        dst += n; len -= n; in += sizeof(word_t);
+    }
 
-        size_t arg_len = next->ip - (curr->ip + 1);
-        switch (arg_len) {
-        case 0: { n = snprintf(dst, len, "\n"); break; }
-        case 1: { n = snprintf(dst, len, "%02x\n", (unsigned) *((uint8_t *) arg)); break; }
-        case 2: { n = snprintf(dst, len, "%04x\n", (unsigned) *((uint16_t *) arg)); break; }
-        case 4: { n = snprintf(dst, len, "%08x\n", *((uint32_t *) arg)); break; }
-        case 8: { n = snprintf(dst, len, "%016lx\n", *((uint64_t *) arg)); break; }
+    void dump_reg(void)
+    {
+        size_t n = snprintf(dst, len, "$%u\n", *((reg_t *) in));
+        dst += n; len -= n; in += sizeof(reg_t);
+    }
+
+    void dump_len(void)
+    {
+        size_t n = snprintf(dst, len, "%x\n", *((uint8_t *) in));
+        dst += n; len -= n; in += sizeof(uint8_t);
+    }
+
+    void dump_off(void)
+    {
+        size_t n = snprintf(dst, len, "@%x\n", *((ip_t *) in));
+        dst += n; len -= n; in += sizeof(ip_t);
+    }
+
+    void dump_mod(void)
+    {
+        size_t n = snprintf(dst, len, "@%x\n", *((ip_t *) in));
+        dst += n; len -= n; in += sizeof(ip_t);
+    }
+
+    while (in < end) {
+        switch (*in)
+        {
+#define op_fn(op, arg) case OP_ ## op: { dump_op(#op); dump_ ## arg(); break; }
+    #include "vm/op_xmacro.h"
+
         default: { assert(false); }
         }
-
-        dst += n; len -= n;
     }
 
     return orig - len;
