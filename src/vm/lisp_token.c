@@ -24,6 +24,7 @@ static bool lisp_is_symb(char c)
 static bool lisp_is_num(char c)
 {
     switch (c) {
+    case '-':
     case 'x':
     case '0'...'9': return true;
     default: return false;

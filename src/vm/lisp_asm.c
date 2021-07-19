@@ -126,7 +126,7 @@ static void lisp_asm_label(struct lisp *lisp)
 static void lisp_asm_register(void)
 {
     {
-        struct symbol symbol = make_symbol_len(1, ":");
+        struct symbol symbol = make_symbol_len(1, "@");
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_label);
     }
 
