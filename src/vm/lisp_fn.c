@@ -205,7 +205,7 @@ static void lisp_fn_let(struct lisp *lisp)
 {
     struct token *token = lisp_expect(lisp, token_open);
 
-    reg_t regs[4] = {0};
+    uint64_t regs[4] = {0};
 
     while ((token = lisp_next(lisp))) {
         if (token->type == token_close) break;
@@ -253,7 +253,7 @@ static void lisp_fn_if(struct lisp *lisp)
         return;
     }
 
-    lisp_write_op(lisp, OP_JZ);
+    lisp_write_op(lisp, OP_JMP);
     ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
     lisp_write_value_at(lisp, jmp_else, lisp_ip(lisp));
 
@@ -346,7 +346,8 @@ static void lisp_fn_for(struct lisp *lisp)
     }
 
     // predicate
-    ip_t jmp_end = 0;
+    ip_t jmp_true = 0;
+    ip_t jmp_false = 0;
     ip_t jmp_pred = lisp_ip(lisp);
     {
         if (!lisp_stmt(lisp)) {
@@ -354,11 +355,15 @@ static void lisp_fn_for(struct lisp *lisp)
             return;
         }
 
-        lisp_write_op(lisp, OP_JZ);
-        jmp_end = lisp_skip(lisp, sizeof(ip_t));
+        lisp_write_op(lisp, OP_JNZ);
+        jmp_true = lisp_skip(lisp, sizeof(ip_t));
+
+        lisp_write_op(lisp, OP_JMP);
+        jmp_false = lisp_skip(lisp, sizeof(ip_t));
     }
 
     // inc
+    ip_t jmp_inc = lisp_ip(lisp);
     {
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing increment-clause");
@@ -367,9 +372,13 @@ static void lisp_fn_for(struct lisp *lisp)
 
         lisp_write_op(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
+
+        lisp_write_op(lisp, OP_JMP);
+        lisp_write_value(lisp, jmp_pred);
     }
 
     // stmts
+    lisp_write_value_at(lisp, jmp_true, lisp_ip(lisp));
     {
         // we will always have a value on the stack before executing the stmt
         // block (see push at the start) so get rid of it.
@@ -378,10 +387,11 @@ static void lisp_fn_for(struct lisp *lisp)
         lisp_stmts(lisp); // loop-clause
 
         lisp_write_op(lisp, OP_JMP);
-        lisp_write_value(lisp, jmp_pred);
+        lisp_write_value(lisp, jmp_inc);
     }
 
-    lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
+    // end
+    lisp_write_value_at(lisp, jmp_false, lisp_ip(lisp));
     lisp_reg_free(lisp, reg, key);
 }
 
@@ -441,6 +451,18 @@ static void lisp_fn_sub(struct lisp *lisp)
         lisp_write_op(lisp, OP_SUB);
         lisp_expect_close(lisp);
     }
+}
+
+
+static void lisp_fn_yield(struct lisp *lisp)
+{
+    lisp_write_op(lisp, OP_YIELD);
+
+    // all statement must return a value on the stack.
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) 0);
+
+    lisp_expect_close(lisp);
 }
 
 
@@ -522,7 +544,6 @@ static void lisp_fn_compare(struct lisp *lisp, enum op_code op)
     define_fn_ops(cmp, CMP, compare)
 
     define_fn_ops(reset, RESET, 0)
-    define_fn_ops(yield, YIELD, 0)
     define_fn_ops(tsc, TSC, 0)
     define_fn_ops(fault, FAULT, 0)
 

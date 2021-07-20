@@ -167,6 +167,11 @@ static struct token *lisp_next(struct lisp *lisp)
     default: { break; }
     }
 
+    /* dbg("tok: type=%u:%s, pos=%u:%u, len=%u, val={w:%lx, s:%s}", */
+    /*         token->type, token_type_str(token->type), */
+    /*         token->row, token->col, token->len, */
+    /*         token->val.num, token->val.symb.c); */
+
     return token;
 }
 

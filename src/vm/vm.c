@@ -402,7 +402,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
       op_reset: { vm_reset(vm); return 0; }
       op_yield: { return 0; }
-      op_tsc: { vm_push(vm->tsc); }
+      op_tsc: { vm_push(vm->tsc); continue; }
       op_fault: { vm->flags |= FLAG_FAULT_USER; return VM_FAULT; }
 
       op_io:  {
