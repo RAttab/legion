@@ -57,6 +57,8 @@ static const char *token_type_str(enum token_type type)
 // lisp
 // -----------------------------------------------------------------------------
 
+typedef uint64_t lisp_regs_t[4];
+
 struct lisp
 {
     struct mods *mods;
@@ -85,7 +87,7 @@ struct lisp
         struct htable fn;
         struct htable req;
         struct htable jmp;
-        uint64_t regs[4];
+        lisp_regs_t regs;
     } symb;
 
     struct

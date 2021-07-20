@@ -100,10 +100,12 @@ static void lisp_fn_call(struct lisp *lisp)
     while (lisp_stmt(lisp)) ++args;
     if (args > 4) lisp_err(lisp, "too many arguments: %u > 4", (unsigned) args);
 
-    reg_t reg = 0;
-    for (; reg < 4; ++reg) {
+    lisp_regs_t ctx = {0};
+    memcpy(ctx, lisp->symb.regs, sizeof(ctx));
+
+    for (reg_t reg = 0; reg < 4; ++reg) {
         bool has_arg = reg < args;
-        bool has_reg = lisp->symb.regs[reg];
+        bool has_reg = ctx[reg];
 
         if (has_arg && has_reg) {
             lisp_write_op(lisp, OP_ARG0 + reg);
@@ -123,11 +125,12 @@ static void lisp_fn_call(struct lisp *lisp)
     lisp_write_op(lisp, OP_CALL);
     lisp_write_value(lisp, lisp_jmp(lisp, key));
 
-    do {
+    for (reg_t reg = 0; reg < 4; ++reg) {
+        if (!ctx[reg]) continue;
         lisp_write_op(lisp, OP_SWAP); // ret value is on top of the stack
         lisp_write_op(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
-    } while (--reg);
+    }
 }
 
 
@@ -402,6 +405,7 @@ static void lisp_fn_id(struct lisp *lisp)
         return;
     }
 
+    lisp_write_op(lisp, OP_PUSH);
     lisp_write_value(lisp, (word_t) 24);
     lisp_write_op(lisp, OP_BSL);
 
@@ -548,7 +552,7 @@ static void lisp_fn_compare(struct lisp *lisp, enum op_code op)
     define_fn_ops(fault, FAULT, 0)
 
     define_fn_ops(pack, PACK, 2)
-    define_fn_ops(unpack, UNPACK, 2)
+    define_fn_ops(unpack, UNPACK, 1)
 
 #undef define_fn_ops
 
