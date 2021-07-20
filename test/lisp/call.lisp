@@ -1,5 +1,5 @@
 ; ##########################################################
-; basics
+; call
 
 (call/defun-before-call
  ()
@@ -39,3 +39,15 @@
   (bob-the-fn 1 2 3 4)
   (yield))
  (sp:1 #0:10))
+
+
+; ##########################################################
+; context
+
+(call/ctx-save
+ ()
+ ((defun inner (a b) (- a b))
+  (defun outer (a b) (inner a b))
+  (outer 10 2)
+  (yield))
+ (sp:1 #0:8))

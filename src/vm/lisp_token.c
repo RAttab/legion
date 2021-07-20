@@ -14,7 +14,7 @@ static bool lisp_is_space(char c) { return c <= 0x20; }
 static bool lisp_is_symb(char c)
 {
     switch (c) {
-    case '@': case '_':
+    case '@': case '_': case '*':
     case '-': case '+': case '/':
     case '=': case '<': case '>':
     case 'a'...'z': case 'A'...'Z':

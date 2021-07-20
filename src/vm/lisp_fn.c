@@ -431,6 +431,19 @@ static void lisp_fn_io(struct lisp *lisp)
 }
 
 
+static void lisp_fn_sub(struct lisp *lisp)
+{
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
+
+    if (!lisp_stmt(lisp))
+        lisp_write_op(lisp, OP_NEG);
+    else {
+        lisp_write_op(lisp, OP_SUB);
+        lisp_expect_close(lisp);
+    }
+}
+
+
 // -----------------------------------------------------------------------------
 // ops
 // -----------------------------------------------------------------------------
@@ -460,9 +473,21 @@ static void lisp_fn_n(struct lisp *lisp, enum op_code op)
 {
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
-    lisp_write_value(lisp, op);
 
-    while (lisp_stmt(lisp)) lisp_write_value(lisp, op);
+    do { lisp_write_value(lisp, op); } while (lisp_stmt(lisp));
+}
+
+static void lisp_fn_compare(struct lisp *lisp, enum op_code op)
+{
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
+
+    // gotta swap before the compare as the lisp semantics differ from the vm
+    // semantics
+    lisp_write_op(lisp, OP_SWAP);
+    lisp_write_op(lisp, op);
+
+    lisp_expect_close(lisp);
 }
 
 #define define_fn_ops(fn, op, arg)                      \
@@ -482,21 +507,19 @@ static void lisp_fn_n(struct lisp *lisp, enum op_code op)
     define_fn_ops(bsl, BSL, 2)
     define_fn_ops(bsr, BSR, 2)
 
-    define_fn_ops(neg, NEG, 1)
     define_fn_ops(add, ADD, n)
-    define_fn_ops(sub, SUB, 2)
-    define_fn_ops(mul, MUL, 2)
+    define_fn_ops(mul, MUL, n)
     define_fn_ops(lmul, LMUL, 2)
     define_fn_ops(div, DIV, 2)
     define_fn_ops(rem, REM, 2)
 
-    define_fn_ops(eq, EQ, 2)
-    define_fn_ops(ne, NE, 2)
-    define_fn_ops(gt, GT, 2)
-    define_fn_ops(ge, GE, 2)
-    define_fn_ops(lt, LT, 2)
-    define_fn_ops(le, LE, 2)
-    define_fn_ops(cmp, CMP, 2)
+    define_fn_ops(eq, EQ, compare)
+    define_fn_ops(ne, NE, compare)
+    define_fn_ops(gt, GT, compare)
+    define_fn_ops(ge, GE, compare)
+    define_fn_ops(lt, LT, compare)
+    define_fn_ops(le, LE, compare)
+    define_fn_ops(cmp, CMP, compare)
 
     define_fn_ops(reset, RESET, 0)
     define_fn_ops(yield, YIELD, 0)
@@ -550,7 +573,6 @@ static void lisp_fn_register(void)
     register_fn(bsl);
     register_fn(bsr);
 
-    register_fn(neg);
     register_fn_str(add, "+");
     register_fn_str(sub, "-");
     register_fn_str(mul, "*");
