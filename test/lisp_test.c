@@ -109,7 +109,7 @@ bool is_space(char c) { return c <= 0x20; }
 bool is_symbol(char c)
 {
     switch (c) {
-    case '-': case '_':
+    case '-': case '_': case '/':
     case 'a'...'z':
     case 'A'...'Z':
     case '0'...'9': return true;
@@ -305,7 +305,7 @@ struct vm *read_vm(struct file *file, struct atoms *atoms)
 {
     token_expect(file, token_open);
 
-    struct vm *vm = vm_alloc(4, 4);
+    struct vm *vm = vm_alloc(4, 6);
     while (!file_eof(file)) {
         struct token token = token_next(file);
         if (token.type == token_close) break;
@@ -387,15 +387,20 @@ bool check_mod(
 
         case token_reg: {
             reg_t reg = token.value.w;
+            char name[symbol_cap] = {'$', '0'+reg, 0};
+
             token_expect(file, token_assign);
-            ok = check_u64("reg", vm->regs[reg], token_word(file, atoms)) && ok;
+            ok = check_u64(name, vm->regs[reg], token_word(file, atoms)) && ok;
             break;
         }
 
         case token_stack: {
             size_t sp = token.value.w;
+            char name[symbol_cap] = {0};
+            sprintf(name, "#%zu", sp);
+
             token_expect(file, token_assign);
-            ok = check_u64("stack", vm->stack[sp], token_word(file, atoms)) && ok;
+            ok = check_u64(name, vm->stack[sp], token_word(file, atoms)) && ok;
             break;
         }
 
@@ -474,7 +479,7 @@ bool check_dir(const char *path)
         char file[PATH_MAX];
         snprintf(file, sizeof(file), "%s/%s", path, entry->d_name);
 
-        ok = ok && check_file(file);
+        ok = check_file(file) && ok;
     }
     closedir(dir);
 

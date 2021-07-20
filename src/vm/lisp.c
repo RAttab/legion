@@ -85,7 +85,7 @@ struct lisp
         struct htable fn;
         struct htable req;
         struct htable jmp;
-        reg_t regs[4];
+        uint64_t regs[4];
     } symb;
 
     struct

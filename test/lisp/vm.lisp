@@ -1,7 +1,7 @@
 ; ##########################################################
 ; Systemy tests
 
-(vm-preempt
+(vm/preempt
  (S:1 C:1)
  ((asm (PUSH 1)
        (PUSH 2)
@@ -12,46 +12,46 @@
 ; ##########################################################
 ; push/pop
 
-(vm-push
+(vm/push
  (S:1)
  ((asm (PUSH 1)
        (YIELD)))
  (sp:1 $0:0 #0:1))
 
-(vm-pushr
+(vm/pushr
  (S:1 $0:12)
  ((asm (PUSHR $0)
        (YIELD)))
  (sp:1 $0:12 #0:12))
 
-(vm-pushf
+(vm/pushf
  (S:1 flags:1)
  ((asm (PUSHF)
        (YIELD)))
  (flags:1 sp:1 #0:1))
 
-(vm-pop
+(vm/pop
  (S:1)
  ((asm (PUSH 1)
        (POP)
        (YIELD)))
  (sp:0))
 
-(vm-popr
+(vm/popr
  (S:1)
  ((asm (PUSH 1)
        (POPR $0)
        (YIELD)))
  (sp:0 $0:1))
 
-(vm-dupe
+(vm/dupe
  (S:2)
  ((asm (PUSH 1)
        (DUPE)
        (YIELD)))
  (sp:2 #0:1 #1:1))
 
-(vm-swap
+(vm/swap
  (S:2)
  ((asm (PUSH 1)
        (PUSH 2)
@@ -63,7 +63,7 @@
 ; ##########################################################
 ; boolean
 
-(vm-not
+(vm/not
  (S:2)
  ((asm (PUSH 0x123456789aBcDeF0)
        (NOT)
@@ -72,7 +72,7 @@
        (YIELD)))
  (sp:2 #0:0 #1:1))
 
-(vm-and
+(vm/and
  (S:5)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -89,7 +89,7 @@
        (YIELD)))
  (sp:4 #0:1 #1:0 #2:0 #3:0))
 
-(vm-or
+(vm/or
  (S:5)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -106,7 +106,7 @@
        (YIELD)))
  (sp:4 #0:1 #1:1 #2:1 #3:0))
 
-(vm-xor
+(vm/xor
   (S:5)
   ((asm (PUSH 1)
 	(PUSH 1)
@@ -127,14 +127,14 @@
 ; ##########################################################
 ; binary
 
-(vm-bnot
+(vm/bnot
  (S:1)
  ((asm (PUSH 0xFF00FF00FF00FF00)
        (BNOT)
        (YIELD)))
  (sp:1 #0:0x00ff00ff00ff00ff))
 
-(vm-band
+(vm/band
  (S:2)
  ((asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 0xF0F0F0F0F0F0F0F0)
@@ -142,7 +142,7 @@
        (YIELD)))
  (sp:1 #0:0xf000f000f000f000))
 
-(vm-bor
+(vm/bor
  (S:2)
  ((asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 0xF0F0F0F0F0F0F0F0)
@@ -150,7 +150,7 @@
        (YIELD)))
  (sp:1 #0:0xfff0fff0fff0fff0))
 
-(vm-bxor
+(vm/bxor
  (S:2)
  ((asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 0xF0F0F0F0F0F0F0F0)
@@ -158,7 +158,7 @@
        (YIELD)))
  (sp:1 #0:0x0ff00ff00ff00ff0))
 
-(vm-bsl
+(vm/bsl
  (S:2)
  ((asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 4)
@@ -166,7 +166,7 @@
        (YIELD)))
  (sp:1 #0:0xf00ff00ff00ff000))
 
-(vm-bsr
+(vm/bsr
  (S:2)
  ((asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 4)
@@ -178,7 +178,7 @@
 ; ##########################################################
 ; math
 
-(vm-neg
+(vm/neg
  (S:2)
  ((asm (PUSH -1)
        (NEG)
@@ -187,7 +187,7 @@
        (YIELD)))
  (sp:2 #0:1 #1:-1))
 
-(vm-add
+(vm/add
  (S:2)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -195,7 +195,7 @@
        (YIELD)))
  (sp:1 #0:2))
 
-(vm-sub
+(vm/sub
  (S:2)
  ((asm (PUSH 3)
        (PUSH 2)
@@ -203,7 +203,7 @@
        (YIELD)))
  (sp:1 #0:1))
 
-(vm-mul
+(vm/mul
  (S:2)
  ((asm (PUSH 2)
        (PUSH 3)
@@ -211,7 +211,7 @@
        (YIELD)))
  (sp:1 #0:6))
 
-(vm-lmul
+(vm/lmul
  (S:2)
  ((asm (PUSH 0x7FFFFFFFFFFFFFFF)
        (PUSH 0xF)
@@ -219,7 +219,7 @@
        (YIELD)))
  (sp:2 #0:0x7FFFFFFFFFFFFFF1 #1:0x7))
 
-(vm-div
+(vm/div
  (S:2)
  ((asm (PUSH 6)
        (PUSH 3)
@@ -227,7 +227,7 @@
        (YIELD)))
  (sp:1 #0:2))
 
-(vm-rem
+(vm/rem
  (S:2)
  ((asm (PUSH 5)
        (PUSH 3)
@@ -239,7 +239,7 @@
 ; ##########################################################
 ; comp
 
-(vm-eq
+(vm/eq
  (S:3)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -250,7 +250,7 @@
        (YIELD)))
  (sp:2 #0:1 #1:0))
 
-(vm-ne
+(vm/ne
  (S:3)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -261,7 +261,7 @@
        (YIELD)))
  (sp:2 #0:0 #1:1))
 
-(vm-gt
+(vm/gt
  (S:4)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -275,7 +275,21 @@
        (YIELD)))
  (sp:3 #0:0 #1:1 #2:0))
 
-(vm-lt
+(vm/ge
+ (S:4)
+ ((asm (PUSH 1)
+       (PUSH 1)
+       (GE)
+       (PUSH 1)
+       (PUSH 2)
+       (GE)
+       (PUSH 2)
+       (PUSH 1)
+       (GE)
+       (YIELD)))
+ (sp:3 #0:1 #1:1 #2:0))
+
+(vm/lt
  (S:4)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -289,7 +303,21 @@
        (YIELD)))
  (sp:3 #0:0 #1:0 #2:1))
 
-(vm-cmp
+(vm/le
+ (S:4)
+ ((asm (PUSH 1)
+       (PUSH 1)
+       (LE)
+       (PUSH 1)
+       (PUSH 2)
+       (LE)
+       (PUSH 2)
+       (PUSH 1)
+       (LE)
+       (YIELD)))
+ (sp:3 #0:1 #1:0 #2:1))
+
+(vm/cmp
  (S:4)
  ((asm (PUSH 1)
        (PUSH 1)
@@ -307,14 +335,14 @@
 ; ##########################################################
 ; jmp
 
-(vm-call
+(vm/call
  (S:1)
  ((asm (CALL fn)
        (@ fn)
        (YIELD)))
  (sp:1 #0:0x05))
 
-(vm-ret
+(vm/ret
  (S:1)
  ((asm (CALL fn)
        (YIELD)
@@ -322,7 +350,7 @@
        (RET)))
  (sp:0))
 
-(vm-jmp
+(vm/jmp
  (S:1)
  ((asm (JMP out)
        (PUSH 0xffffffff)
@@ -330,7 +358,7 @@
        (YIELD)))
  (sp:0))
 
-(vm-jz
+(vm/jz
  (S:1)
  ((asm (PUSH 1)
        (JZ fail)
@@ -345,7 +373,7 @@
        (YIELD)))
  (sp:0))
 
-(vm-jnz
+(vm/jnz
  (S:1)
  ((asm (PUSH 0)
        (JNZ fail)
@@ -360,7 +388,7 @@
        (YIELD)))
  (sp:0))
 
-(vm-back-ref
+(vm/back-ref
  (S:1)
  ((asm (JMP next)
        (@ back)
@@ -374,7 +402,7 @@
 ; ##########################################################
 ; io
 
-(vm-io
+(vm/io
  (S:2)
  ((asm (PUSH 1)
        (PUSH !io_nil)
@@ -382,7 +410,7 @@
        (YIELD)))
  (flags:0x1 io:2 ior:0xff sp:2 #0:1 #1:!io_nil))
 
-(vm-ios
+(vm/ios
  (S:3)
  ((asm (PUSH 1)
        (PUSH !io_nil)
@@ -391,7 +419,7 @@
        (YIELD)))
  (flags:0x1 io:2 ior:0 sp:2 #0:1 #1:!io_nil))
 
-(vm-ior
+(vm/ior
  (S:3)
  ((asm (PUSH 1)
        (PUSH !io_nil)
@@ -405,12 +433,12 @@
 ; ##########################################################
 ; misc
 
-(vm-fault
+(vm/fault
  (S:0)
  ((asm (FAULT)))
  (flags:0x4 ret:0xFFFFFFFF))
 
-(vm-pack
+(vm/pack
  (S:2)
  ((asm (PUSH 1)
        (PUSH 2)
@@ -418,7 +446,7 @@
        (YIELD)))
  (sp:1 #0:0x200000001))
 
-(vm-unpack
+(vm/unpack
  (S:2)
  ((asm (PUSH 0x200000001)
        (UNPACK)

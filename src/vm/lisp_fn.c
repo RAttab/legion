@@ -117,6 +117,7 @@ static void lisp_fn_call(struct lisp *lisp)
             lisp_write_op(lisp, OP_PUSHR);
             lisp_write_value(lisp, reg);
         }
+        else break;
     }
 
     lisp_write_op(lisp, OP_CALL);
@@ -127,14 +128,12 @@ static void lisp_fn_call(struct lisp *lisp)
         lisp_write_op(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
     } while (--reg);
-
-    lisp_expect_close(lisp);
 }
 
 
 static void lisp_fn_defun(struct lisp *lisp)
 {
-    if (lisp->depth) lisp_err(lisp, "nested function");
+    if (lisp->depth > 1) lisp_err(lisp, "nested function");
 
     // since we can have top level instructions, we don't want to actually
     // execute defun unless it's called so we instead jump over it.
