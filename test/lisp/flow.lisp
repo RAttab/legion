@@ -51,6 +51,12 @@
 ;; ##########################################################
 ;; while
 
+(flow/while-nil
+ ()
+ ((while (< (tsc) 30))
+  (yield))
+ (sp:1 #0:0))
+
 (flow/while-basic
  ()
  ((while (< (tsc) 30) 1)
@@ -68,6 +74,12 @@
 ;; for
 
 (flow/for-nil
+ ()
+ ((for (i (tsc)) (< i 30) (tsc))
+  (yield))
+ (sp:1 #0:0))
+
+(flow/for-true
  ()
  ((for (i (tsc)) (< i 30) (tsc) 1)
   (yield))
