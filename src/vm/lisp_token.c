@@ -79,8 +79,18 @@ static struct token *lisp_next(struct lisp *lisp)
     case ')': { token->type = token_close; break; }
     case '!': { token->type = token_atom; break; }
     case '$': { token->type = token_reg; break; }
-    case '-':
     case '0'...'9': { token->type = token_num; break; }
+
+    // We have an ambiguity between '-1' and '(- 1 1)' and there's no good way
+    // to resolve it. Our hack is that '(-' always takes at least one argument
+    // then we can guarantee a space after the symbol. Pretty shitty but oh well
+    case '-': {
+        const char *next = lisp->in.it + 1;
+        token->type = next < lisp->in.end && lisp_is_space(*next) ?
+            token_symb : token_num;
+        break;
+    }
+
     default: {
         if (unlikely(!lisp_is_symb(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);

@@ -443,11 +443,7 @@ static void lisp_fn_0(struct lisp *lisp, enum op_code op)
 
 static void lisp_fn_1(struct lisp *lisp, enum op_code op)
 {
-    if (!lisp_stmt(lisp)) {
-        lisp_err(lisp, "missing argument");
-        return;
-    }
-
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing argument");  return; }
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }

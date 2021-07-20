@@ -26,6 +26,12 @@
   (yield))
  (sp:1 #0:10))
 
+(call/args-2
+ ()
+ ((defun bob-the-fn (a b) (- a b))
+  (bob-the-fn 10 2)
+  (yield))
+ (sp:1 #0:8))
 
 (call/args-4
  ()
