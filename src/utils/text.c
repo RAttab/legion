@@ -27,7 +27,7 @@ static struct line *line_realloc(struct line *line, size_t len)
     if (likely(line->cap >= len)) return line;
 
     size_t cap = line->cap;
-    while (cap < len) line->cap += s_cache_line;
+    while (cap < len) cap += s_cache_line;
     line = realloc(line, sizeof(*line) + cap);
     line->cap = cap;
 
@@ -271,11 +271,11 @@ size_t text_to_str(const struct text *text, char *dst, size_t len)
     assert(len >= text->bytes);
 
     size_t written = 0;
-
     char *end = dst + len;
+
     for (struct line *it = text->first; it; it = it->next) {
-        const size_t to_write = it->len + 1;
-        assert(dst + to_write < end);
+        const size_t to_write = it->len + (it->next ? 1 : 0);
+        assert(dst + to_write <= end);
 
         memcpy(dst, it->c, it->len);
         dst += it->len;
@@ -294,7 +294,7 @@ void text_from_str(struct text *text, const char *src, size_t len)
     if (!len) return;
     text_clear(text);
     text_init(text);
-    text->bytes = len;
+    text->bytes = 0;
 
     const char *end = src + len;
     struct line *line = text->first;
@@ -303,12 +303,13 @@ void text_from_str(struct text *text, const char *src, size_t len)
         const char *start = src;
         while (src < end && *src != '\n') src++;
 
-        line = line_realloc(line, src - start);
-        memcpy(line->c, start, src - start);
+        line->len = src - start;
+        line = line_realloc(line, line->len);
+        memcpy(line->c, start, line->len);
+        text->bytes += line->len;
 
         if (*src == '\n') {
             line = text_insert(text, line);
-            text->lines++;
             src++;
         }
     }
