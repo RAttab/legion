@@ -112,7 +112,7 @@ static bool lisp_eof(struct lisp *lisp) { return lisp->in.it >= lisp->in.end; }
 
 static char lisp_in_inc(struct lisp *lisp)
 {
-    if (unlikely(lisp->in.it >= lisp->in.end)) return 0;
+    if (unlikely(lisp_eof(lisp))) return 0;
 
     if (*lisp->in.it == '\n') { lisp->in.row++; lisp->in.col = 0; }
     else { lisp->in.col++; }
@@ -229,15 +229,26 @@ static ip_t lisp_ip(struct lisp *lisp)
 
 static void lisp_index(struct lisp *lisp)
 {
-    if (lisp->index.len == lisp->index.cap) {
-        lisp->index.cap = lisp->index.cap ? lisp->index.cap * 2 : 8;
-        lisp->index.list = realloc(
-                lisp->index.list, lisp->index.cap * sizeof(*lisp->index.list));
+    ip_t ip = lisp_ip(lisp);
+    size_t prev = lisp->index.len - 1;
+
+    struct mod_index *index = NULL;
+    if (lisp->index.len && lisp->index.list[prev].ip == ip)
+        index = &lisp->index.list[prev];
+    else {
+        if (lisp->index.len == lisp->index.cap) {
+            lisp->index.cap = lisp->index.cap ? lisp->index.cap * 2 : 8;
+            lisp->index.list = realloc(
+                    lisp->index.list, lisp->index.cap * sizeof(*lisp->index.list));
+        }
+
+        index = &lisp->index.list[lisp->index.len];
+        lisp->index.len++;
     }
 
-    struct mod_index *index = &lisp->index.list[lisp->index.len];
     index->row = lisp->token.row;
     index->col = lisp->token.col;
+    index->len = lisp->token.len;
     index->ip = lisp_ip(lisp);
 }
 
@@ -373,7 +384,10 @@ struct mod *mod_compile(
 
     {
         lisp_stmts(&lisp);
+
+        lisp_index(&lisp);
         lisp_write_op(&lisp, OP_RESET);
+        lisp_index(&lisp);
     }
 
     for (struct htable_bucket *it = htable_next(&lisp.symb.req, NULL);

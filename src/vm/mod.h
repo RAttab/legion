@@ -17,7 +17,7 @@ struct text;
 // mod
 // -----------------------------------------------------------------------------
 
-enum { mod_err_cap = 40 };
+enum { mod_err_cap = s_cache_line - 8 };
 struct legion_packed mod_err
 {
     uint32_t row;
@@ -27,12 +27,16 @@ struct legion_packed mod_err
     char str[mod_err_cap];
 };
 
+static_assert(sizeof(struct mod_err) == s_cache_line);
+
+
 struct legion_packed mod_index
 {
-    uint32_t row, col;
+    uint32_t row, col, len;
     ip_t ip;
 };
 
+static_assert(sizeof(struct mod_index) == 16);
 
 struct legion_packed mod
 {

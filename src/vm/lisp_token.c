@@ -68,6 +68,7 @@ static struct token *lisp_next(struct lisp *lisp)
     lisp_skip_spaces(lisp);
     if (lisp_eof(lisp)) {
         token->type = token_nil;
+        token->len = 0;
         return token;
     }
 
