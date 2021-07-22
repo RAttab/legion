@@ -411,7 +411,15 @@ struct ui_code
     struct text text;
     const struct mod *mod;
 
-    struct {
+    struct
+    {
+        bool init;
+        size_t top, bot, cols;
+        struct line *line;
+    } view;
+
+    struct
+    {
         bool blink;
         size_t row, col;
         struct line *line;

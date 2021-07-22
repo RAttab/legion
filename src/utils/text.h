@@ -24,7 +24,7 @@ struct legion_packed line
 
 struct line_ret
 {
-    struct line *line;
+    struct line *line, *new;
     uint16_t index;
 };
 

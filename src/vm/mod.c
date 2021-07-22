@@ -24,7 +24,7 @@ struct mod *mod_alloc(
     size_t src_bytes = src_len + 1;
     size_t code_bytes = code_len * sizeof(*code);
     size_t errs_bytes = errs_len * sizeof(*errs);
-    size_t index_bytes = (index_len + 1) * sizeof(*index);
+    size_t index_bytes = index_len * sizeof(*index);
     size_t total_bytes = head_bytes + code_bytes + src_bytes + errs_bytes + index_bytes;
 
     struct mod *mod = alloc_cache(align_cache(total_bytes));
@@ -43,8 +43,6 @@ struct mod *mod_alloc(
 
     mod->index = ((void *) mod->errs) + errs_bytes;
     memcpy(mod->index, index, index_bytes);
-    mod->index[index_len] = (struct mod_index) {
-        .row = src_len, .col = 0, .ip = code_len };
     mod->index_len = index_len;
 
     return mod;

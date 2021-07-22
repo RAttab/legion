@@ -52,19 +52,23 @@ static int16_t line_indent_delta(struct line *line)
     return indent;
 }
 
-static void line_indent(
+static size_t line_indent_spaces(size_t indent) { return indent * 2; }
+
+static struct line *line_indent(
         struct text *text, struct line *line, size_t indent, bool new)
 {
+    indent = line_indent_spaces(indent);
+
     size_t first = 0;
     while (first < line->len && line->c[first] <= 0x20) first++;
 
     if (!new && first == line->len) {
         line->len = 0;
-        return;
+        return line;
     }
 
     ssize_t delta = ((ssize_t) indent) - ((ssize_t) first);
-    if (!delta) return;
+    if (!delta) return line;
 
     line = line_realloc(text, line, line->len + delta);
     memmove(line->c + indent, line->c + first, line->len - first);
@@ -72,6 +76,7 @@ static void line_indent(
 
     line->len += delta;
     text->bytes += delta;
+    return line;
 }
 
 struct line_ret line_insert(
@@ -88,18 +93,22 @@ struct line_ret line_insert(
 
         line->c[index] = c;
         line->len++;
-        return (struct line_ret) { .line = line, .index = index + 1 };
+        return (struct line_ret) { .line = line, .new = NULL, .index = index + 1 };
     }
 
+    size_t to_copy = line->len - index;
     struct line *new = text_insert(text, line);
-    memcpy(new->c, line->c + index, line->len - index);
-    new->len = line->len - index;
+    new = line_realloc(text, new, to_copy);
+
+    memcpy(new->c, line->c + index, to_copy);
+    new->len = to_copy;
     line->len = index;
 
     size_t indent = text_indent_at(text, new);
-    line_indent(text, line, indent, true);
+    new = line_indent(text, new, indent, true);
+    size_t spaces = line_indent_spaces(indent);
 
-    return (struct line_ret) { .line = new, .index = indent };
+    return (struct line_ret) { .line = line, .new = new, .index = spaces };
 }
 
 struct line_ret line_delete(struct text *text, struct line *line, size_t index)
@@ -110,7 +119,7 @@ struct line_ret line_delete(struct text *text, struct line *line, size_t index)
         memmove(line->c + index, line->c + index + 1, line->len - index - 1);
         line->len--;
         text->bytes--;
-        return (struct line_ret) { .line = line, .index = index };
+        return (struct line_ret) { .line = line, .new = NULL, .index = index };
     }
 
     struct line *next = line->next;
@@ -126,7 +135,7 @@ struct line_ret line_delete(struct text *text, struct line *line, size_t index)
     text_erase(text, line->next);
     text->bytes += to_copy;
 
-    return (struct line_ret) { .line = line, .index = index };
+    return (struct line_ret) { .line = line, .new = NULL, .index = index };
 }
 
 struct line_ret line_backspace(struct text *text, struct line *line, size_t index)
@@ -137,12 +146,13 @@ struct line_ret line_backspace(struct text *text, struct line *line, size_t inde
         memmove(line->c + index - 1, line->c + index, line->len - index);
         line->len--;
         text->bytes--;
-        return (struct line_ret) { .line = line, .index = index - 1 };
+        return (struct line_ret) { .line = line, .new = NULL, .index = index - 1 };
     }
 
     struct line *prev = line->prev;
     if (!prev) return (struct line_ret) {0};
 
+    size_t prev_len = prev->len;
     size_t to_copy = line->len;
     assert(prev->len + to_copy < UINT16_MAX);
 
@@ -153,7 +163,7 @@ struct line_ret line_backspace(struct text *text, struct line *line, size_t inde
     text_erase(text, line);
     text->bytes += to_copy;
 
-    return (struct line_ret) { .line = prev, .index = prev->len };
+    return (struct line_ret) { .line = NULL, .new = prev, .index = prev_len };
 }
 
 void line_setc(struct text *text, struct line *line, size_t len, const char *str)
