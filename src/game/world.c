@@ -123,11 +123,19 @@ struct coord world_populate(struct world *world)
     while (true) {
         struct coord coord = id_to_coord(rng_step(&rng));
         struct sector *sector = world_sector(world, coord);
+        if (sector->stars_len < 100) continue;
 
         struct star *star = NULL;
         for (size_t tries = 0; tries < 10; ++tries) {
             size_t index = rng_uni(&rng, 0, sector->stars_len);
             star = &sector->stars[index];
+
+            if (star->elems[ITEM_ELEM_A] < 1000) continue;
+            if (star->elems[ITEM_ELEM_B] < 1000) continue;
+            if (star->elems[ITEM_ELEM_C] < 1000) continue;
+            if (star->elems[ITEM_ELEM_D] < 1000) continue;
+            if (star->elems[ITEM_ELEM_F] < 1000) continue;
+            if (star->elems[ITEM_ELEM_G] < 1000) continue;
 
             size_t sum = 0;
             for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) sum += star->elems[i];

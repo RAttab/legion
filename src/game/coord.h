@@ -27,6 +27,8 @@ enum
     coord_top_bits = 8,
     coord_top_size = 1 << coord_top_bits,
     coord_top_mask = coord_top_size - 1,
+
+    coord_mid = UINT32_MAX / 2,
 };
 
 static_assert(coord_top_bits + coord_area_bits + coord_sector_bits == 32);

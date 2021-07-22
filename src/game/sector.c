@@ -74,11 +74,12 @@ struct sector *sector_gen(struct world *world, struct coord coord)
     coord = coord_sector(coord);
     struct rng rng = rng_make(coord_to_id(coord));
 
-    double delta_max = coord_dist_2(coord_nil(), coord_center());
+    double delta_max = ((double) coord_mid) * coord_mid;
     double delta = coord_dist_2(coord, coord_center());
 
     enum { stars_max = 1U << 10 };
-    size_t stars = (stars_max * (delta_max - delta)) / delta_max;
+    size_t stars = delta > delta_max ? 4 :
+        (stars_max * (delta_max - delta)) / delta_max;
 
     size_t fuzz = rng_uni(&rng, 0, (stars / 4) * 2);
     stars = fuzz < stars ? stars - fuzz : stars + fuzz;
