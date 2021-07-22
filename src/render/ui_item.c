@@ -72,7 +72,7 @@ struct ui_item *ui_item_new(void)
 {
     struct font *font = ui_item_font();
 
-    size_t width = 34 * ui_item_font()->glyph_w;
+    size_t width = 38 * ui_item_font()->glyph_w;
     struct pos pos = make_pos(
             core.rect.w - width - ui_star_width(core.ui.star),
             ui_topbar_height(core.ui.topbar));

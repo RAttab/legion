@@ -122,7 +122,7 @@ struct ui_io *ui_io_new(void)
 {
     struct font *font = ui_io_font();
 
-    size_t width = 34 * font->glyph_w;
+    size_t width = 38 * font->glyph_w;
     struct pos pos = make_pos(
             core.rect.w - width - ui_item_width(core.ui.item) - ui_star_width(core.ui.star),
             ui_topbar_height(core.ui.topbar));
@@ -135,13 +135,13 @@ struct ui_io *ui_io_new(void)
         .target_val = ui_label_new(font, ui_str_v(id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
-            [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:  ", "loops: "),
-            [ui_io_prog] = ui_io_cmd2(font, IO_PROG, "id:    ", "loops: "),
-            [ui_io_mod] = ui_io_cmd1(font, IO_MOD, "id:    "),
-            [ui_io_set] = ui_io_cmd2(font, IO_SET, "index: ", "value: "),
-            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:    "),
+            [ui_io_item] = ui_io_cmd2(font, IO_ITEM,     "item:  ", "loops: "),
+            [ui_io_prog] = ui_io_cmd2(font, IO_PROG,     "id:    ", "loops: "),
+            [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
+            [ui_io_set] = ui_io_cmd2(font, IO_SET,       "index: ", "value: "),
+            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
+            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN,     "coord: ", "item:  "),
             [ui_io_result] = ui_io_cmd0(font, IO_RESULT),
-            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN, "coord: ", "item:  "),
         },
     };
 
