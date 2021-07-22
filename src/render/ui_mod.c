@@ -36,7 +36,7 @@ struct ui_mod *ui_mod_new(void)
             ui_topbar_height(core.ui.topbar));
 
     struct dim dim = make_dim(
-            (ui_code_num_len+1 + cols + 2) * font_mono8->glyph_w,
+            (ui_code_num_len+1 + cols + 2) * font->glyph_w,
             core.rect.h - pos.y);
 
     struct ui_mod *ui = calloc(1, sizeof(*ui));
@@ -45,7 +45,7 @@ struct ui_mod *ui_mod_new(void)
         .compile = ui_button_new(font, ui_str_c("compile")),
         .publish = ui_button_new(font, ui_str_c("publish")),
         .reset = ui_button_new(font, ui_str_c("reset")),
-        .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font, cols)
+        .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
     };
     ui->panel.state = ui_panel_hidden;
     return ui;

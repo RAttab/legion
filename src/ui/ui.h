@@ -403,7 +403,6 @@ struct ui_code
 {
     struct ui_widget w;
     struct ui_scroll scroll;
-    struct ui_label num, code;
 
     struct font *font;
     bool focused;
@@ -421,7 +420,7 @@ struct ui_code
 
 enum { ui_code_num_len = 4 };
 
-struct ui_code ui_code_new(struct dim, struct font *, size_t cols);
+struct ui_code ui_code_new(struct dim, struct font *);
 void ui_code_free(struct ui_code *);
 
 void ui_code_clear(struct ui_code *);

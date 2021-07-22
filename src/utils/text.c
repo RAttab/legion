@@ -21,19 +21,22 @@ static struct line *line_alloc(void)
     return line;
 }
 
-static struct line *line_realloc(struct line *line, size_t len)
+static struct line *line_realloc(
+        struct text *text, struct line *old, size_t len)
 {
-    assert(line);
-    if (likely(line->cap >= len)) return line;
+    assert(old);
+    if (likely(old->cap >= len)) return old;
 
-    size_t cap = line->cap;
+    size_t cap = old->cap;
     while (cap < len) cap += s_cache_line;
-    line = realloc(line, sizeof(*line) + cap);
-    line->cap = cap;
+    struct line *new = realloc(old, sizeof(*new) + cap);
+    new->cap = cap;
 
-    if (line->next) line->next->prev = line;
-    if (line->prev) line->prev->next = line;
-    return line;
+    if (new->next) new->next->prev = new;
+    if (new->prev) new->prev->next = new;
+    if (text->first == old) text->first = new;
+    if (text->last == old) text->last = new;
+    return new;
 }
 
 static int16_t line_indent_delta(struct line *line)
@@ -63,7 +66,7 @@ static void line_indent(
     ssize_t delta = ((ssize_t) indent) - ((ssize_t) first);
     if (!delta) return;
 
-    line = line_realloc(line, line->len + delta);
+    line = line_realloc(text, line, line->len + delta);
     memmove(line->c + indent, line->c + first, line->len - first);
     memset(line->c, ' ', indent);
 
@@ -80,7 +83,7 @@ struct line_ret line_insert(
     if (likely(c != '\n')) {
         assert(line->len + 1 < UINT16_MAX);
 
-        line = line_realloc(line, line->len + 1);
+        line = line_realloc(text, line, line->len + 1);
         memmove(line->c + index + 1, line->c + index, line->len - index);
 
         line->c[index] = c;
@@ -116,7 +119,7 @@ struct line_ret line_delete(struct text *text, struct line *line, size_t index)
     size_t to_copy = next->len;
     assert(line->len + to_copy < UINT16_MAX);
 
-    line = line_realloc(line, line->len + next->len);
+    line = line_realloc(text, line, line->len + next->len);
     memcpy(line->c + line->len, next->c, to_copy);
     line->len += to_copy;
 
@@ -143,7 +146,7 @@ struct line_ret line_backspace(struct text *text, struct line *line, size_t inde
     size_t to_copy = line->len;
     assert(prev->len + to_copy < UINT16_MAX);
 
-    prev = line_realloc(prev, prev->len + to_copy);
+    prev = line_realloc(text, prev, prev->len + to_copy);
     memcpy(prev->c + prev->len, line->c, to_copy);
     prev->len += to_copy;
 
@@ -158,14 +161,14 @@ void line_setc(struct text *text, struct line *line, size_t len, const char *str
     ssize_t delta = len - line->len;
     text->bytes += delta;
 
-    line = line_realloc(line, len);
+    line = line_realloc(text, line, len);
     memcpy(line->c, str, len);
     line->len = len;
 }
 
 void line_setf(struct text *text, struct line *line, size_t cap, const char *fmt, ...)
 {
-    line = line_realloc(line, cap);
+    line = line_realloc(text, line, cap);
 
     va_list args = {0};
     va_start(args, fmt);
@@ -304,7 +307,7 @@ void text_from_str(struct text *text, const char *src, size_t len)
         while (src < end && *src != '\n') src++;
 
         line->len = src - start;
-        line = line_realloc(line, line->len);
+        line = line_realloc(text, line, line->len);
         memcpy(line->c, start, line->len);
         text->bytes += line->len;
 

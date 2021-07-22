@@ -14,21 +14,17 @@
 // code
 // -----------------------------------------------------------------------------
 
-struct ui_code ui_code_new(struct dim dim, struct font *font, size_t cols)
+struct ui_code ui_code_new(struct dim dim, struct font *font)
 {
     struct ui_code code = {
         .w = ui_widget_new(dim.w, dim.h),
         .scroll = ui_scroll_new(dim, font->glyph_h),
-        .num = ui_label_new(font, ui_str_v(ui_code_num_len)),
-        .code = ui_label_new(font, ui_str_v(cols)),
         .font = font,
         .focused = false,
-        .cols = cols,
+        .cols = 1,
     };
 
     text_init(&code.text);
-    code.num.fg = rgba_gray(0x88);
-    code.num.bg = rgba_gray_a(0x44, 0x88);
 
     return code;
 }
@@ -37,8 +33,6 @@ struct ui_code ui_code_new(struct dim dim, struct font *font, size_t cols)
 void ui_code_free(struct ui_code *code)
 {
     ui_scroll_free(&code->scroll);
-    ui_label_free(&code->num);
-    ui_label_free(&code->code);
     text_clear(&code->text);
 }
 
@@ -70,48 +64,97 @@ void ui_code_render(
         struct ui_code *code, struct ui_layout *layout, SDL_Renderer *renderer)
 {
     struct ui_layout inner = ui_scroll_render(&code->scroll, layout, renderer);
-    code->w = code->scroll.w;
     if (ui_layout_is_nil(&inner)) return;
 
+    struct font *font = code->font;
+    code->w = code->scroll.w;
+    code->cols = (inner.dim.w / font->glyph_w) - 5;
+
     size_t first = ui_scroll_first(&code->scroll);
-    size_t last = ui_scroll_last(&code->scroll);
+    size_t last = first + code->scroll.visible;
 
     struct line *line = text_goto(&code->text, first);
+    size_t row = first;
+    size_t col = 0;
+
     struct mod_err *err = code->mod->errs;
     struct mod_err *err_end = err + code->mod->errs_len;
 
-    for (size_t i = first; i < last; ++i, line = line->next) {
+    for (size_t i = first; i < last && line; ++i) {
 
+        // line number
         {
-            ui_str_set_u64(&code->num.str, i);
-            ui_label_render(&code->num, &inner, renderer);
+            struct ui_widget w = ui_widget_new(font->glyph_w * 4, font->glyph_h);
+            ui_layout_add(&inner, &w);
+
+            rgba_render(rgba_gray_a(0x44, 0x88), renderer);
+
+            SDL_Rect rect = ui_widget_rect(&w);
+            sdl_err(SDL_RenderFillRect(renderer, &rect));
+
+            if (!col) {
+                char str[4] = {0};
+                str_utoa(row, str, sizeof(str));
+
+                struct rgba fg = rgba_gray(0x88);
+                SDL_Point pos = pos_as_point(w.pos);
+                font_render(font, renderer, pos, fg, str, sizeof(str));
+            }
         }
 
         ui_layout_sep_x(&inner, code->font->glyph_w);
 
-        {
-            code->code.bg = rgba_nil();
+        // code line
+        struct ui_widget w = ui_widget_new(font->glyph_w * code->cols, font->glyph_h);
+        ui_layout_add(&inner, &w);
 
-            while (err < err_end && err->row < i) err++;
-            if (err < err_end && err->row == i)
-                code->code.bg = make_rgba(0x88, 0x00, 0x00, 0x44);
+        size_t len = legion_min(line->len - col, code->cols);
 
-            ui_str_setv(&code->code.str, line->c, code->cols);
-            ui_label_render(&code->code, &inner, renderer);
+        // err
+        while (err < err_end) {
+            if (err->row < row) { err++; continue; }
+            else if (row != err->row) break;
+
+            if (err->col + err->len < col) { err++; continue; }
+            if (err->col > col + len) break;
+
+            size_t start = legion_max(err->col, col);
+            size_t end = legion_min(err->col + len, col + len);
+
+            rgba_render(make_rgba(0x88, 0x00, 0x00, 0x44), renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = w.pos.x + (start * font->glyph_w),
+                                .y = w.pos.y,
+                                .w = (end - start) * font->glyph_w,
+                                .h = font->glyph_h,
+                            }));
+            err++;
         }
 
+        // code text
+        {
+            struct rgba fg = rgba_white();
+            SDL_Point pos = pos_as_point(w.pos);
+            font_render(font, renderer, pos, fg, line->c + col, len);
+        }
+
+        // carret
+        if (code->focused && code->carret.blink && code->carret.row == row &&
+                (code->carret.col >= col && code->carret.col < col + len))
+        {
+            rgba_render(rgba_white(), renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = w.pos.x + ((code->carret.col - col) * font->glyph_w),
+                                .y = w.pos.y,
+                                .w = font->glyph_w,
+                                .h = font->glyph_h,
+                            }));
+        }
+
+        // advance
+        if (col + len < line->len) col += len;
+        else { row++; col = 0; line = line->next; }
         ui_layout_next_row(&inner);
-    }
-
-    if (code->focused && code->carret.blink) {
-        size_t x = (code->carret.col + ui_code_num_len + 1) * code->font->glyph_w;
-        size_t y = code->carret.row * code->font->glyph_h;
-
-        rgba_render(rgba_white(), renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                            .x = inner.top.x + x, .y = inner.top.y + y,
-                            .w = code->font->glyph_w, .h = code->font->glyph_h,
-                        }));
     }
 }
 
