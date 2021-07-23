@@ -9,6 +9,8 @@
 #include "vm/mod.h"
 #include "utils/str.h"
 
+static struct line *ui_code_view_update(struct ui_code *code);
+
 
 // -----------------------------------------------------------------------------
 // code
@@ -72,6 +74,17 @@ void ui_code_set(struct ui_code *code, const struct mod *mod, ip_t ip)
             code->view.top--;
         }
     }
+}
+
+void ui_code_indent(struct ui_code *code)
+{
+    text_indent(&code->text);
+    ui_code_view_update(code);
+
+    code->carret.line = code->view.line;
+    for (size_t row = code->view.top; row < code->carret.row; ++row)
+        code->carret.line = code->carret.line->next;
+    code->carret.col = legion_min(code->carret.col, code->carret.line->len);
 }
 
 

@@ -460,6 +460,8 @@ void ui_code_free(struct ui_code *);
 void ui_code_clear(struct ui_code *);
 void ui_code_set(struct ui_code *, const struct mod *, ip_t);
 
+void ui_code_indent(struct ui_code *);
+
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
 void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
 

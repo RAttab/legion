@@ -266,7 +266,7 @@ void text_indent(struct text *text)
 {
     int16_t indent = 0;
     for (struct line *it = text->first; it; it = it->next) {
-        line_indent(text, it, indent > 0 ? indent * 2 : 0, false);
+        line_indent(text, it, indent, false);
         indent += line_indent_delta(it);
     }
 }

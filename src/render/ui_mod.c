@@ -20,7 +20,9 @@ struct ui_mod
     const struct mod *mod;
 
     struct ui_panel panel;
-    struct ui_button compile, publish, reset;
+    struct ui_button compile, publish;
+    struct ui_button indent;
+    struct ui_button reset;
     struct ui_code code;
 };
 
@@ -44,6 +46,7 @@ struct ui_mod *ui_mod_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_v(6 + symbol_cap + 5)),
         .compile = ui_button_new(font, ui_str_c("compile")),
         .publish = ui_button_new(font, ui_str_c("publish")),
+        .indent = ui_button_new(font, ui_str_c("indent")),
         .reset = ui_button_new(font, ui_str_c("reset")),
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
     };
@@ -56,6 +59,7 @@ void ui_mod_free(struct ui_mod *ui)
     ui_panel_free(&ui->panel);
     ui_button_free(&ui->compile);
     ui_button_free(&ui->publish);
+    ui_button_free(&ui->indent);
     ui_button_free(&ui->reset);
     ui_code_free(&ui->code);
     free(ui);
@@ -162,6 +166,11 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         return ret == ui_consume;
     }
 
+    if ((ret = ui_button_event(&ui->indent, ev))) {
+        ui_code_indent(&ui->code);
+        return ret == ui_consume;
+    }
+
     if ((ret = ui_button_event(&ui->reset, ev))) {
         ui_mod_update(ui, mods_get(world_mods(core.state.world), ui->id), 0);
         return ret == ui_consume;
@@ -181,6 +190,8 @@ void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 
     ui_button_render(&ui->compile, &layout, renderer);
     ui_button_render(&ui->publish, &layout, renderer);
+    ui_layout_sep_x(&layout, 6);
+    ui_button_render(&ui->indent, &layout, renderer);
     ui_layout_right(&layout, &ui->reset.w);
     ui_button_render(&ui->reset, &layout, renderer);
     ui_layout_next_row(&layout);
