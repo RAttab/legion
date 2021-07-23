@@ -302,7 +302,7 @@ void ui_code_render(
             size_t start = legion_max(err->col, col);
             size_t end = legion_min((size_t) err->col + err->len, col + len);
 
-            rgba_render(make_rgba(0x88, 0x00, 0x00, 0x44), renderer);
+            rgba_render(make_rgba(0xFF, 0x00, 0x00, 0x77), renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = w.pos.x + (start * font->glyph_w),
                                 .y = w.pos.y,

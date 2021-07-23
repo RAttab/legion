@@ -91,7 +91,7 @@ static void lisp_asm_off(struct lisp *lisp, enum op_code op)
 
     switch (token->type) {
     case token_num: { val = token->val.num; break; }
-    case token_symb: { val = lisp_jmp(lisp, token_symb_hash(token)); break; }
+    case token_symb: { val = lisp_jmp(lisp, token); break; }
     default: {
         lisp_err(lisp, "unexpected token: %s != %s | %s",
                 token_type_str(token->type),
@@ -112,7 +112,7 @@ static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 
     struct token *token = lisp_expect(lisp, token_symb);
     if (!token) { lisp_goto_close(lisp); return; }
-    lisp_write_value(lisp, lisp_jmp(lisp, token_symb_hash(token)));
+    lisp_write_value(lisp, lisp_jmp(lisp, token));
 
     lisp_expect_close(lisp);
 }

@@ -38,19 +38,31 @@ struct legion_packed mod_index
 
 static_assert(sizeof(struct mod_index) == 16);
 
+
+struct legion_packed mod_pub
+{
+    uint64_t key;
+    ip_t ip;
+    legion_pad(4);
+};
+
+static_assert(sizeof(struct mod_pub) == 16);
+
+
 struct legion_packed mod
 {
     mod_t id;
-    legion_pad(8 - sizeof(mod_t));
 
     uint32_t len;
     uint32_t src_len;
+    uint32_t pub_len;
     uint32_t errs_len;
     uint32_t index_len;
 
-    legion_pad(2 * 8);
+    legion_pad(8);
 
     char *src;
+    struct mod_pub *pub;
     struct mod_err *errs;
     struct mod_index *index;
     uint8_t code[];
@@ -62,6 +74,7 @@ static_assert(sizeof(struct mod) == s_cache_line);
 struct mod *mod_alloc(
         const char *src, size_t src_len,
         const uint8_t *code, size_t code_len,
+        const struct mod_pub *pub, size_t pub_len,
         const struct mod_err *errs, size_t errs_len,
         const struct mod_index *index, size_t index_len);
 
@@ -73,6 +86,7 @@ inline size_t mod_len(const struct mod *mod)
     return sizeof(*mod) +
         mod->len * sizeof(*mod->code) +
         mod->src_len * sizeof(*mod->src) +
+        mod->pub_len * sizeof(*mod->pub) +
         mod->errs_len * sizeof(*mod->errs) +
         (mod->index_len + 1) * sizeof(*mod->index);
 }
@@ -83,6 +97,8 @@ struct text mod_disasm(const struct mod *);
 
 size_t mod_dump(const struct mod *, char *dst, size_t len);
 size_t mod_hexdump(const struct mod *, char *dst, size_t len);
+
+ip_t mod_pub(const struct mod *, uint64_t key);
 
 struct mod_index mod_index(const struct mod *, ip_t ip);
 ip_t mod_byte(const struct mod *, size_t row, size_t col);

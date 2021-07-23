@@ -95,7 +95,7 @@ static void lisp_stmts(struct lisp *lisp)
 
 static void lisp_fn_call(struct lisp *lisp)
 {
-    uint64_t key = token_symb_hash(&lisp->token);
+    struct token token = lisp->token;
 
     reg_t args = 0;
     while (lisp_stmt(lisp)) ++args;
@@ -124,7 +124,7 @@ static void lisp_fn_call(struct lisp *lisp)
     }
 
     lisp_write_op(lisp, OP_CALL);
-    lisp_write_value(lisp, lisp_jmp(lisp, key));
+    lisp_write_value(lisp, lisp_jmp(lisp, &token));
 
     for (reg_t reg = 0; reg < 4; ++reg) {
         if (!ctx[reg]) continue;
@@ -147,7 +147,7 @@ static void lisp_fn_defun(struct lisp *lisp)
     {
         struct token *token = lisp_expect(lisp, token_symb);
         if (!token) { lisp_goto_close(lisp); return; }
-        lisp_defun(lisp, &token->val.symb);
+        lisp_label(lisp, &token->val.symb);
     }
 
     if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp); return; }

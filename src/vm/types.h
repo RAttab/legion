@@ -47,7 +47,7 @@ inline mod_t ip_mod(ip_t ip) { return ((1U << 31) - 1) & ip;  }
 
 enum { symbol_cap = 30 };
 
-struct symbol
+struct legion_packed symbol
 {
     uint8_t len;
     char c[symbol_cap];

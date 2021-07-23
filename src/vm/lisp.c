@@ -59,6 +59,14 @@ static const char *token_type_str(enum token_type type)
 
 typedef uint64_t lisp_regs_t[4];
 
+struct lisp_req
+{
+    struct lisp_req *next;
+    ip_t ip;
+
+    uint16_t row, col, len;
+};
+
 struct lisp
 {
     struct mods *mods;
@@ -89,6 +97,13 @@ struct lisp
         struct htable jmp;
         lisp_regs_t regs;
     } symb;
+
+    struct
+    {
+        size_t len, cap;
+        struct mod_pub *list;
+        struct htable symb;
+    } pub;
 
     struct
     {
@@ -126,25 +141,56 @@ static char lisp_in_inc(struct lisp *lisp)
 // err
 // -----------------------------------------------------------------------------
 
-legion_printf(2, 3)
-static void lisp_err(struct lisp *lisp, const char *fmt, ...)
+static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
 {
-    if (lisp->err.len == lisp->err.cap) {
+    if (unlikely(lisp->err.len == lisp->err.cap)) {
         lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
         lisp->err.list = realloc(lisp->err.list, lisp->err.cap * sizeof(*lisp->err.list));
     }
+    lisp->err.len++;
 
-    struct mod_err *err = &lisp->err.list[lisp->err.len];
-    err->row = lisp->token.row;
-    err->col = lisp->token.col;
-    err->len = lisp->token.len;
+    struct mod_err *start = lisp->err.list;
+    struct mod_err *it = &lisp->err.list[lisp->err.len-1];
+    while (it > start) {
+        struct mod_err *prev = it - 1;
+        if (prev->row < err->row || (prev->row == err->row && prev->col < err->col))
+            break;
+
+        it = prev;
+    }
+
+    *it = *err;
+}
+
+legion_printf(5, 6)
+static void lisp_err_at(
+        struct lisp *lisp, size_t row, size_t col, size_t len, const char *fmt, ...)
+{
+    struct mod_err err = { .row = row, .col = col, .len = len };
 
     va_list args;
     va_start(args, fmt);
-    (void) vsnprintf(err->str, mod_err_cap, fmt, args);
+    (void) vsnprintf(err.str, mod_err_cap, fmt, args);
     va_end(args);
 
-    lisp->err.len++;
+    lisp_err_ins(lisp, &err);
+}
+
+legion_printf(2, 3)
+static void lisp_err(struct lisp *lisp, const char *fmt, ...)
+{
+    struct mod_err err = {
+        .row = lisp->token.row,
+        .col = lisp->token.col,
+        .len = lisp->token.len,
+    };
+
+    va_list args;
+    va_start(args, fmt);
+    (void) vsnprintf(err.str, mod_err_cap, fmt, args);
+    va_end(args);
+
+    lisp_err_ins(lisp, &err);
 }
 
 static void lisp_goto_close(struct lisp *lisp)
@@ -288,26 +334,70 @@ static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
     lisp->symb.regs[reg] = 0;
 }
 
+// -----------------------------------------------------------------------------
+// pub
+// -----------------------------------------------------------------------------
+
+static void lisp_pub_symbol(struct lisp *lisp, const struct symbol *symbol)
+{
+    uint64_t key = symbol_hash(symbol);
+
+    struct htable_ret ret = htable_get(&lisp->pub.symb, key);
+    if (ret.ok) return;
+
+    struct symbol *value = calloc(1, sizeof(*value));
+    *value = *symbol;
+
+    ret = htable_put(&lisp->pub.symb, key, (uintptr_t) value);
+    assert(ret.ok);
+}
+
+static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, ip_t ip)
+{
+    if (unlikely(lisp->pub.len == lisp->pub.cap)) {
+        lisp->pub.cap = lisp->pub.cap ? lisp->pub.cap * 2 : 2;
+        lisp->pub.list = realloc(lisp->pub.list, lisp->pub.cap * sizeof(*lisp->pub.list));
+    }
+
+    uint64_t key = symbol_hash(symbol);
+    lisp->pub.list[lisp->pub.len] = (struct mod_pub) { .key = key, .ip = ip };
+    lisp->pub.len++;
+
+    lisp_pub_symbol(lisp, symbol);
+}
+
 
 // -----------------------------------------------------------------------------
 // jmp
 // -----------------------------------------------------------------------------
 
-static ip_t lisp_jmp(struct lisp *lisp, uint64_t key)
+static ip_t lisp_jmp(struct lisp *lisp, const struct token *token)
 {
+    const struct symbol *symbol = &token->val.symb;
+    uint64_t key = symbol_hash(symbol);
+
     struct htable_ret ret = htable_get(&lisp->symb.jmp, key);
     if (likely(ret.ok)) return ret.value;
 
     ret = htable_get(&lisp->symb.req, key);
-    struct vec64 *old = ret.ok ? (void *) ret.value : NULL;
-    struct vec64 *new = vec64_append(old, lisp_ip(lisp));
+
+    struct lisp_req *old = ret.ok ? (void *) ret.value : NULL;
+    struct lisp_req *new = calloc(1, sizeof(*new));
+    *new = (struct lisp_req) {
+        .next = old,
+        .ip = lisp_ip(lisp),
+        .row = token->row,
+        .col = token->col,
+        .len = token->len,
+    };
 
     if (!old)
         ret = htable_put(&lisp->symb.req, key, (uintptr_t) new);
     else if (old != new)
         ret = htable_xchg(&lisp->symb.req, key, (uintptr_t) new);
-
     assert(ret.ok);
+
+    lisp_pub_symbol(lisp, symbol);
     return 0;
 }
 
@@ -322,22 +412,46 @@ static void lisp_label(struct lisp *lisp, const struct symbol *symbol)
         return;
     }
 
+    lisp_publish(lisp, symbol, jmp);
+
     ret = htable_get(&lisp->symb.req, key);
     if (!ret.ok) return;
 
-    struct vec64 *req = (void *) ret.value;
-    for (size_t i = 0; i < req->len; ++i)
-        lisp_write_value_at(lisp, req->vals[i], jmp);
+    struct lisp_req *req = (void *) ret.value;
+    while (req) {
+        lisp_write_value_at(lisp, req->ip, jmp);
 
-    vec64_free(req);
+        struct lisp_req *next = req->next;
+        free(req);
+        req = next;
+    }
+
     ret = htable_del(&lisp->symb.req, key);
     assert(ret.ok);
 }
 
-// \todo implement funtion export.
-static void lisp_defun(struct lisp *lisp, const struct symbol *symbol)
+static void lisp_label_unknown(struct lisp *lisp)
 {
-    lisp_label(lisp, symbol);
+
+    for (struct htable_bucket *it = htable_next(&lisp->symb.req, NULL);
+         it; it = htable_next(&lisp->symb.req, it))
+    {
+        uint64_t key = it->key;
+        struct lisp_req *req = (void *) it->value;
+
+        while (req) {
+            struct htable_ret ret = htable_get(&lisp->pub.symb, key);
+            assert(ret.ok);
+
+            struct symbol *symbol = (void *) ret.value;
+            lisp_err_at(lisp, req->row, req->col, req->len,
+                    "unknown label: %s (%lx)", symbol->c, it->value);
+
+            struct lisp_req *next = req->next;
+            free(req);
+            req = next;
+        }
+    }
 }
 
 
@@ -390,24 +504,27 @@ struct mod *mod_compile(
         lisp_index(&lisp);
     }
 
-    for (struct htable_bucket *it = htable_next(&lisp.symb.req, NULL);
-         it; it = htable_next(&lisp.symb.req, it))
-    {
-        lisp_err(&lisp, "unknown label: %lx", it->value);
-        vec64_free((void *) it->value);
-    }
+    lisp_label_unknown(&lisp);
 
     struct mod *mod = mod_alloc(
             lisp.in.base, lisp.in.end - lisp.in.base,
             lisp.out.base, lisp.out.it - lisp.out.base,
+            lisp.pub.list, lisp.pub.len,
             lisp.err.list, lisp.err.len,
             lisp.index.list, lisp.index.len);
 
     free(lisp.out.base);
     free(lisp.err.list);
     free(lisp.index.list);
+    free(lisp.pub.list);
     htable_reset(&lisp.symb.fn);
     htable_reset(&lisp.symb.req);
     htable_reset(&lisp.symb.jmp);
+
+    for (struct htable_bucket *it = htable_next(&lisp.pub.symb, NULL);
+         it; it = htable_next(&lisp.pub.symb, it))
+        free((struct symbol *) it->value);
+    htable_reset(&lisp.pub.symb);
+
     return mod;
 }

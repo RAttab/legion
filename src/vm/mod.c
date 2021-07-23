@@ -17,15 +17,18 @@
 struct mod *mod_alloc(
         const char *src, size_t src_len,
         const uint8_t *code, size_t code_len,
+        const struct mod_pub *pub, size_t pub_len,
         const struct mod_err *errs, size_t errs_len,
         const struct mod_index *index, size_t index_len)
 {
     size_t head_bytes = sizeof(struct mod);
     size_t src_bytes = src_len + 1;
     size_t code_bytes = code_len * sizeof(*code);
+    size_t pub_bytes = pub_len * sizeof(*pub);
     size_t errs_bytes = errs_len * sizeof(*errs);
     size_t index_bytes = index_len * sizeof(*index);
-    size_t total_bytes = head_bytes + code_bytes + src_bytes + errs_bytes + index_bytes;
+    size_t total_bytes =
+        head_bytes + code_bytes + src_bytes + pub_bytes + errs_bytes + index_bytes;
 
     struct mod *mod = alloc_cache(align_cache(total_bytes));
 
@@ -37,7 +40,11 @@ struct mod *mod_alloc(
     mod->src_len = src_bytes;
     mod->src[src_len] = 0;
 
-    mod->errs = ((void *) mod->src) + src_bytes;
+    mod->pub = ((void *) mod->src) + src_bytes;
+    memcpy(mod->pub, pub, pub_bytes);
+    mod->pub_len = pub_len;
+
+    mod->errs = ((void *) mod->pub) + pub_bytes;
     memcpy(mod->errs, errs, errs_bytes);
     mod->errs_len = errs_len;
 
@@ -55,9 +62,10 @@ struct mod *mod_load(struct save *save)
     mod_t id = save_read_type(save, typeof(id));
     uint32_t code_len = save_read_type(save, typeof(code_len));
     uint32_t src_len = save_read_type(save, typeof(src_len));
+    uint32_t pub_len = save_read_type(save, typeof(pub_len));
     uint32_t index_len = save_read_type(save, typeof(index_len));
 
-    size_t total_bytes = sizeof(struct mod) + code_len + src_len + index_len;
+    size_t total_bytes = sizeof(struct mod) + code_len + src_len + pub_len + index_len;
     struct mod *mod = alloc_cache(align_cache(total_bytes));
     mod->id = id;
 
@@ -71,6 +79,11 @@ struct mod *mod_load(struct save *save)
     mod->src = it;
     save_read(save, it, src_len);
     it += src_len;
+
+    mod->pub_len = pub_len;
+    mod->pub = it;
+    save_read(save, it, pub_len);
+    it += pub_len;
 
     mod->errs_len = 0;
     mod->errs = it;
@@ -94,9 +107,11 @@ void mod_save(const struct mod *mod, struct save *save)
     save_write_value(save, mod->id);
     save_write_value(save, mod->len);
     save_write_value(save, mod->src_len);
+    save_write_value(save, mod->pub_len);
     save_write_value(save, mod->index_len);
     save_write(save, mod->code, mod->len);
     save_write(save, mod->src, mod->src_len);
+    save_write(save, mod->pub, mod->pub_len);
     save_write(save, mod->index, mod->index_len);
     save_write_magic(save, save_magic_mod);
 }
@@ -109,11 +124,21 @@ struct mod *mod_nil(mod_t id)
     *mod = (struct mod) {
         .id = id,
         .src = end,
+        .pub = end,
         .errs = end,
         .index = end,
     };
 
     return mod;
+}
+
+ip_t mod_pub(const struct mod *mod, uint64_t key)
+{
+    for (size_t i = 0; i < mod->pub_len; ++i) {
+        if (mod->pub[i].key == key) return mod->pub[i].ip;
+    }
+
+    return 0;
 }
 
 struct mod_index mod_index(const struct mod *mod, ip_t ip)
