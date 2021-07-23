@@ -102,6 +102,12 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
     case EV_MOD_SELECT: {
         mod_t mod = (uintptr_t) ev->user.data1;
         ui_toggles_select(&ui->toggles, mod_id(mod));
+
+        if (ui->panel.state == ui_panel_hidden) {
+            ui->panel.state = ui_panel_visible;
+            ui_mods_update(ui);
+        }
+
         return false;
     }
 
