@@ -29,7 +29,8 @@ static bool lisp_stmt(struct lisp *lisp)
     }
 
     case token_close: {
-        lisp->depth--;
+        if (!lisp->depth) lisp_err(lisp, "unexpected close token");
+        else lisp->depth--;
         return false;
     }
     case token_open: {

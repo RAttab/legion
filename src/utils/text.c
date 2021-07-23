@@ -52,12 +52,15 @@ static int16_t line_indent_delta(struct line *line)
     return indent;
 }
 
-static size_t line_indent_spaces(size_t indent) { return indent * 2; }
+static size_t line_indent_spaces(int16_t indent)
+{
+    return indent > 0 ? indent * 2 : 0;
+}
 
 static struct line *line_indent(
-        struct text *text, struct line *line, size_t indent, bool new)
+        struct text *text, struct line *line, int16_t indent, bool new)
 {
-    indent = line_indent_spaces(indent);
+    size_t spaces = line_indent_spaces(indent);
 
     size_t first = 0;
     while (first < line->len && line->c[first] <= 0x20) first++;
@@ -67,12 +70,12 @@ static struct line *line_indent(
         return line;
     }
 
-    ssize_t delta = ((ssize_t) indent) - ((ssize_t) first);
+    ssize_t delta = ((ssize_t) spaces) - ((ssize_t) first);
     if (!delta) return line;
 
     line = line_realloc(text, line, line->len + delta);
-    memmove(line->c + indent, line->c + first, line->len - first);
-    memset(line->c, ' ', indent);
+    memmove(line->c + spaces, line->c + first, line->len - first);
+    memset(line->c, ' ', spaces);
 
     line->len += delta;
     text->bytes += delta;
@@ -106,9 +109,7 @@ struct line_ret line_insert(
 
     size_t indent = text_indent_at(text, new);
     new = line_indent(text, new, indent, true);
-    size_t spaces = line_indent_spaces(indent);
-
-    return (struct line_ret) { .line = line, .new = new, .index = spaces };
+    return (struct line_ret) { .line = line, .new = new, .index = line_indent_spaces(indent) };
 }
 
 struct line_ret line_delete(struct text *text, struct line *line, size_t index)

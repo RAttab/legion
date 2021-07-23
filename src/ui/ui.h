@@ -86,6 +86,7 @@ inline struct rgba rgba_nil(void)       { return make_rgba(0x00, 0x00, 0x00, 0x0
 inline struct rgba rgba_gray_a(uint8_t v, uint8_t a) { return make_rgba(v, v, v, a); }
 inline struct rgba rgba_gray(uint8_t v) { return rgba_gray_a(v, 0xFF); }
 inline struct rgba rgba_white(void )    { return rgba_gray(0xFF); }
+inline struct rgba rgba_black(void )    { return rgba_gray(0x00); }
 inline struct rgba rgba_red(void)       { return make_rgba(0xCC, 0x00, 0x00, 0xFF); }
 inline struct rgba rgba_green(void)     { return make_rgba(0x00, 0xCC, 0x00, 0xFF); }
 inline struct rgba rgba_blue(void)      { return make_rgba(0x00, 0x00, 0xCC, 0xFF); }
@@ -186,6 +187,7 @@ struct ui_str
 enum { ui_str_cap = 128 };
 
 struct ui_str ui_str_c(const char *);
+struct ui_str ui_str_c(const char *);
 struct ui_str ui_str_v(size_t len);
 struct ui_str ui_str_clone(const struct ui_str *);
 void ui_str_free(struct ui_str *);
@@ -254,6 +256,29 @@ struct ui_link ui_link_new(struct font *, struct ui_str);
 void ui_link_free(struct ui_link *);
 enum ui_ret ui_link_event(struct ui_link *, const SDL_Event *);
 void ui_link_render(struct ui_link *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// tooltip
+// -----------------------------------------------------------------------------
+
+struct ui_tooltip
+{
+    struct ui_widget w;
+    struct ui_str str;
+
+    struct font *font;
+    struct rgba fg;
+    struct dim pad;
+
+    SDL_Rect rect;
+    bool visible;
+};
+
+struct ui_tooltip ui_tooltip_new(struct font *, struct ui_str, SDL_Rect);
+void ui_tooltip_free(struct ui_tooltip *);
+enum ui_ret ui_tooltip_event(struct ui_tooltip *, const SDL_Event *);
+void ui_tooltip_render(struct ui_tooltip *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -403,6 +428,7 @@ struct ui_code
 {
     struct ui_widget w;
     struct ui_scroll scroll;
+    struct ui_tooltip tooltip;
 
     struct font *font;
     bool focused;

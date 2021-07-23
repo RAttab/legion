@@ -82,6 +82,7 @@ static const struct mod *ui_mod_compile(struct ui_mod *ui)
 {
     size_t len = ui->code.text.bytes;
     char *buffer = calloc(len, sizeof(*buffer));
+    text_to_str(&ui->code.text, buffer, len);
 
     const struct mod *mod = mod_compile(
             len, buffer,
