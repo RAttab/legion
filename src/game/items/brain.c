@@ -136,6 +136,18 @@ static void brain_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
+static void brain_io_status(struct brain *brain, struct chunk *chunk, id_t src)
+{
+    word_t value = vm_pack(brain->msg_len, brain->mod_id);
+    chunk_io(chunk, IO_STATE, brain->id, src, 1, &value);
+}
+
+static void brain_io_state(struct brain *brain, size_t len, const word_t *args)
+{
+    for (size_t i = 0; i < len; ++i)
+        vm_push(&brain->vm,  args[i]);
+}
+
 static void brain_io_mod(
         struct brain *brain, struct chunk *chunk, size_t len, const word_t *args)
 {
@@ -181,6 +193,8 @@ static void brain_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, 0, NULL); return; }
+    case IO_STATUS: { brain_io_status(brain, chunk, src); return; }
+    case IO_STATE: { brain_io_state(brain, len, args); return; }
     case IO_MOD: { brain_io_mod(brain, chunk, len, args); return; }
     case IO_RESET: { brain_io_reset(brain); return; }
     case IO_VAL: { brain_io_val(brain, len, args); return; }
@@ -196,7 +210,9 @@ static void brain_io(
 
 const struct active_config *brain_config(enum item item)
 {
-    static const word_t io_list[] = { IO_PING, IO_MOD, IO_RESET, IO_VAL, IO_SEND };
+    static const word_t io_list[] = {
+        IO_PING, IO_STATUS, IO_STATE, IO_MOD, IO_RESET, IO_VAL, IO_SEND, IO_RECV,
+    };
 
     switch(item) {
 

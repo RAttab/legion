@@ -62,6 +62,18 @@ static void scanner_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
+static void scanner_io_status(struct scanner *scanner, struct chunk *chunk, id_t src)
+{
+    word_t target = 0;
+    if (scanner->state == scanner_wide)
+        target = coord_to_id(scanner->type.wide.coord);
+    else if (scanner->state == scanner_target)
+        target = coord_to_id(scanner->type.target.coord);
+
+    word_t value[] = { target, scanner->state };
+    chunk_io(chunk, IO_STATE, scanner->id, src, array_len(value), value);
+}
+
 static void scanner_io_reset(struct scanner *scanner)
 {
     scanner->state = scanner_idle;
@@ -117,6 +129,7 @@ static void scanner_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, scanner->id, src, 0, NULL); return; }
+    case IO_STATUS: { scanner_io_status(scanner, chunk, src); return; }
     case IO_SCAN: { scanner_io_scan(scanner, chunk, len, args); return; }
     case IO_RESULT: { scanner_io_result(scanner, chunk, src); return; }
     case IO_RESET: { scanner_io_reset(scanner); return; }
@@ -132,7 +145,9 @@ static void scanner_io(
 const struct active_config *scanner_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_SCAN, IO_RESULT, IO_RESET };
+    static const word_t io_list[] = {
+        IO_PING, IO_STATUS, IO_SCAN, IO_RESULT, IO_RESET
+    };
 
     static const struct active_config config = {
         .size = sizeof(struct scanner),

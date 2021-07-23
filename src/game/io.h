@@ -24,6 +24,9 @@ legion_packed enum atom_io
     IO_PING,
     IO_PONG,
 
+    IO_STATUS,
+    IO_STATE,
+
     IO_RESET,
     IO_ITEM,
     IO_PROG,

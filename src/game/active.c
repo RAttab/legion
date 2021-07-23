@@ -3,7 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "active.h"
+#include "game/active.h"
+#include "game/items/items.h"
+
 
 // -----------------------------------------------------------------------------
 // active_list
@@ -319,14 +321,14 @@ bool active_io(
 // config
 // -----------------------------------------------------------------------------
 
-#include "game/item/brain.c"
-#include "game/item/db.c"
-#include "game/item/deploy.c"
-#include "game/item/extract.c"
-#include "game/item/legion.c"
-#include "game/item/printer.c"
-#include "game/item/storage.c"
-#include "game/item/scanner.c"
+#include "game/items/brain.c"
+#include "game/items/db.c"
+#include "game/items/deploy.c"
+#include "game/items/extract.c"
+#include "game/items/legion.c"
+#include "game/items/printer.c"
+#include "game/items/storage.c"
+#include "game/items/scanner.c"
 
 
 const struct active_config *active_config(enum item item)

@@ -64,6 +64,12 @@ static void legion_make(void *state, id_t id, struct chunk *chunk, uint32_t data
 // io
 // -----------------------------------------------------------------------------
 
+static void legion_io_status(struct legion *legion, struct chunk *chunk, id_t src)
+{
+    word_t value = legion->mod;
+    chunk_io(chunk, IO_STATE, legion->id, src, 1, &value);
+}
+
 static void legion_io_reset(struct legion *legion, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, legion->id);
@@ -99,6 +105,7 @@ static void legion_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, legion->id, src, 0, NULL); return; }
+    case IO_STATUS: { legion_io_status(legion, chunk, src); return; }
     case IO_MOD: { legion_io_mod(legion, len, args); return; }
     case IO_LAUNCH: { legion_io_launch(legion, chunk, len, args); return; }
     case IO_RESET: { legion_io_reset(legion, chunk); return; }
@@ -114,7 +121,9 @@ static void legion_io(
 const struct active_config *legion_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_MOD, IO_LAUNCH, IO_RESET };
+    static const word_t io_list[] = {
+        IO_PING, IO_STATUS, IO_MOD, IO_LAUNCH, IO_RESET,
+    };
 
     static const struct active_config config = {
         .size = sizeof(struct legion),

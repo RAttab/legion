@@ -97,6 +97,12 @@ static void extract_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
+static void extract_io_status(struct extract *extract, struct chunk *chunk, id_t src)
+{
+    word_t value = vm_pack(extract->loops, prog_packed_id(extract->prog));
+    chunk_io(chunk, IO_STATE, extract->id, src, 1, &value);
+}
+
 static void extract_io_reset(struct extract *extract, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, extract->id);
@@ -129,6 +135,7 @@ static void extract_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, extract->id, src, 0, NULL); return; }
+    case IO_STATUS: { extract_io_status(extract, chunk, src); return; }
     case IO_PROG: { extract_io_prog(extract, chunk, len, args); return; }
     case IO_RESET: { extract_io_reset(extract, chunk); return; }
     default: { return; }
@@ -143,7 +150,7 @@ static void extract_io(
 const struct active_config *extract_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_PROG, IO_RESET };
+    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_PROG, IO_RESET };
 
     static const struct active_config config = {
         .size = sizeof(struct extract),

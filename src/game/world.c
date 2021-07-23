@@ -5,6 +5,7 @@
 
 #include "game/world.h"
 #include "game/active.h"
+#include "game/items/items.h"
 #include "vm/mod.h"
 
 

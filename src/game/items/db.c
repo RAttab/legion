@@ -40,6 +40,12 @@ static void db_init(void *state, id_t id, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
+static void db_io_status(struct db *db, struct chunk *chunk, id_t src)
+{
+    word_t value = db->len;
+    chunk_io(chunk, IO_STATE, db->id, src, 1, &value);
+}
+
 static void db_io_get(
         struct db *db, struct chunk *chunk,
         id_t src, size_t len, const word_t *args)
@@ -65,10 +71,13 @@ static void db_io(
 {
     struct db *db = state;
 
-    if (io == IO_PING) { chunk_io(chunk, IO_PONG, db->id, src, 0, NULL); return; }
-    if (io == IO_GET) { db_io_get(db, chunk, src, len, args); return; }
-    if (io == IO_SET) { db_io_set(db, len, args); return; }
-    return;
+    switch (io) {
+    case IO_PING: { chunk_io(chunk, IO_PONG, db->id, src, 0, NULL); return; }
+    case IO_STATUS: { db_io_status(db, chunk, src); return; }
+    case IO_GET: { db_io_get(db, chunk, src, len, args); return; }
+    case IO_SET: { db_io_set(db, len, args); return; }
+    default: { return; }
+    }
 }
 
 
@@ -78,7 +87,7 @@ static void db_io(
 
 const struct active_config *db_config(enum item item)
 {
-    static const word_t io_list[] = { IO_PING, IO_GET, IO_SET };
+    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_GET, IO_SET };
 
     switch(item) {
 

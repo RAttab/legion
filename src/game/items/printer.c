@@ -96,6 +96,12 @@ static void printer_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
+static void printer_io_status(struct printer *printer, struct chunk *chunk, id_t src)
+{
+    word_t value = vm_pack(printer->loops, prog_packed_id(printer->prog));
+    chunk_io(chunk, IO_STATE, printer->id, src, 1, &value);
+}
+
 static void printer_io_reset(struct printer *printer, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, printer->id);
@@ -129,6 +135,7 @@ static void printer_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, printer->id, src, 0, NULL); return; }
+    case IO_STATUS: { printer_io_status(printer, chunk, src); return; }
     case IO_PROG: { printer_io_prog(printer, chunk, len, args); return; }
     case IO_RESET: { printer_io_reset(printer, chunk); return; }
     default: { return; }
@@ -143,7 +150,7 @@ static void printer_io(
 const struct active_config *printer_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_PROG, IO_RESET };
+    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_PROG, IO_RESET };
 
     static const struct active_config config = {
         .size = sizeof(struct printer),

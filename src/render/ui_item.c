@@ -8,6 +8,7 @@
 #include "ui/ui.h"
 #include "game/chunk.h"
 #include "game/active.h"
+#include "game/items/items.h"
 
 
 // -----------------------------------------------------------------------------
