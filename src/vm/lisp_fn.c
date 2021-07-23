@@ -399,6 +399,23 @@ static void lisp_fn_for(struct lisp *lisp)
     lisp_reg_free(lisp, reg, key);
 }
 
+static void lisp_fn_set(struct lisp *lisp)
+{
+    struct token *token = lisp_expect(lisp, token_symb);
+    if (!token) { lisp_goto_close(lisp); return; }
+    reg_t reg = lisp_reg(lisp, &token->val.symb);
+
+    if (!lisp_stmt(lisp)) {
+        lisp_err(lisp, "missing set value");
+        return;
+    }
+
+    lisp_write_op(lisp, OP_POPR);
+    lisp_write_value(lisp, reg);
+
+    lisp_expect_close(lisp);
+}
+
 static void lisp_fn_id(struct lisp *lisp)
 {
     if (!lisp_stmt(lisp)) { // type
@@ -462,6 +479,22 @@ static void lisp_fn_yield(struct lisp *lisp)
     // all statement must return a value on the stack.
     lisp_write_op(lisp, OP_PUSH);
     lisp_write_value(lisp, (word_t) 0);
+
+    lisp_expect_close(lisp);
+}
+
+static void lisp_fn_assert(struct lisp *lisp)
+{
+    if (!lisp_stmt(lisp)) {
+        lisp_err(lisp, "missing predicate");
+        return;
+    }
+
+    lisp_write_op(lisp, OP_JNZ);
+    ip_t jmp_false = lisp_skip(lisp, sizeof(jmp_false));
+
+    lisp_write_op(lisp, OP_FAULT);
+    lisp_write_value_at(lisp, jmp_false, lisp_ip(lisp));
 
     lisp_expect_close(lisp);
 }
@@ -581,6 +614,7 @@ static void lisp_fn_register(void)
     register_fn(while);
     register_fn(for);
 
+    register_fn(set);
     register_fn(id);
     register_fn(io);
 
@@ -615,6 +649,7 @@ static void lisp_fn_register(void)
     register_fn(yield);
     register_fn(tsc);
     register_fn(fault);
+    register_fn(assert);
 
     register_fn(pack);
     register_fn(unpack);
