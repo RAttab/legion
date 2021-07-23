@@ -404,30 +404,30 @@
 
 (vm/io
  (S:2)
- ((asm (PUSH 1)
-       (PUSH !io_nil)
+ ((asm (PUSH !io_nil)
+       (PUSH 1)
        (IO 2)
        (YIELD)))
- (flags:0x1 io:2 ior:0xff sp:2 #0:1 #1:!io_nil))
+ (flags:0x1 io:2 ior:0xff sp:2 #0:!io_nil #1:1))
 
 (vm/ios
  (S:3)
- ((asm (PUSH 1)
-       (PUSH !io_nil)
+ ((asm (PUSH !io_nil)
+       (PUSH 1)
        (PUSH 2)
        (IOS)
        (YIELD)))
- (flags:0x1 io:2 ior:0 sp:2 #0:1 #1:!io_nil))
+ (flags:0x1 io:2 ior:0 sp:2 #0:!io_nil #1:1))
 
 (vm/ior
  (S:3)
- ((asm (PUSH 1)
-       (PUSH !io_nil)
+ ((asm (PUSH !io_nil)
+       (PUSH 1)
        (PUSH 2)
        (POPR $0)
        (IOR $0)
        (YIELD)))
- (flags:0x1 io:2 ior:1 $0:2 sp:2 #0:1 #1:!io_nil))
+ (flags:0x1 io:2 ior:1 $0:2 sp:2 #0:!io_nil #1:1))
 
 
 ;; ##########################################################

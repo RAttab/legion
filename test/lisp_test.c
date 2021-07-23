@@ -460,8 +460,13 @@ bool check_file(const char *path)
 
         ok = check_mod(&file, vm, mod, atoms) && ok;
         token_expect(&file, token_close);
+
+        vm_free(vm);
+        mod_free(mod);
     }
 
+    mods_free(mods);
+    atoms_free(atoms);
     return ok;
 }
 

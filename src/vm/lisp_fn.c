@@ -428,15 +428,11 @@ static void lisp_fn_io(struct lisp *lisp)
 {
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing op argument"); return; }
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing dst argument"); return; }
-
     lisp_write_op(lisp, OP_SWAP);
     lisp_write_op(lisp, OP_PACK);
 
     size_t len = 1;
-    while (lisp_stmt(lisp)) {
-        lisp_write_op(lisp, OP_SWAP); // gotta keep the op at the top
-        len++;
-    }
+    while (lisp_stmt(lisp)) len++;
 
     if (len > vm_io_cap)
         lisp_err(lisp, "too many io arguments: %zu > %u", len, vm_io_cap);

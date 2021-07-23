@@ -77,10 +77,12 @@ size_t vm_io_read(struct vm *vm, word_t *dst)
     vm->flags &= ~FLAG_IO;
     if (vm->io > vm_io_cap) { vm_io_fault(vm); return 0; }
 
-    for (size_t i = 0; i < vm->io; ++i)
-        dst[i] = vm->stack[--vm->sp];
+    size_t len = legion_min(vm->io, vm->sp);
 
-    return vm->io;
+    vm->sp -= len;
+    memcpy(dst, vm->stack + vm->sp, len * sizeof(*dst));
+
+    return len;
 }
 
 void vm_reset(struct vm *vm)

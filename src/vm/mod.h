@@ -77,6 +77,7 @@ struct mod *mod_alloc(
         const struct mod_pub *pub, size_t pub_len,
         const struct mod_err *errs, size_t errs_len,
         const struct mod_index *index, size_t index_len);
+void mod_free(const struct mod *);
 
 struct mod *mod_load(struct save *);
 void mod_save(const struct mod *, struct save *);

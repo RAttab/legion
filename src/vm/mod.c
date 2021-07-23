@@ -55,6 +55,11 @@ struct mod *mod_alloc(
     return mod;
 }
 
+void mod_free(const struct mod *mod)
+{
+    free((void *) mod);
+}
+
 struct mod *mod_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_mod)) return NULL;

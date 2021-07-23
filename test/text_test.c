@@ -41,6 +41,8 @@ void check_str(size_t eol)
         size_t len = text_to_str(&text, out, sizeof(out));
         assert(len == sizeof(in));
         assert(!memcmp(in, out, sizeof(in)));
+
+        text_clear(&text);
     }
 }
 
