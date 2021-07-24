@@ -376,6 +376,8 @@ static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, ip_t ip
 
 static ip_t lisp_jmp(struct lisp *lisp, const struct token *token)
 {
+    assert(token->type == token_symb);
+
     const struct symbol *symbol = &token->val.symb;
     uint64_t key = symbol_hash(symbol);
 

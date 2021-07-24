@@ -176,9 +176,9 @@ static struct token *lisp_next(struct lisp *lisp)
     return token;
 }
 
-static struct token *lisp_expect(struct lisp *lisp, enum token_type exp)
+static struct token *lisp_assert_token(
+        struct lisp *lisp, struct token *token, enum token_type exp)
 {
-    struct token *token = lisp_next(lisp);
     if (likely(token->type == exp)) return token;
 
     lisp_err(lisp, "unexpected token: %s != %s",
@@ -186,9 +186,20 @@ static struct token *lisp_expect(struct lisp *lisp, enum token_type exp)
     return NULL;
 }
 
+
+static struct token *lisp_expect(struct lisp *lisp, enum token_type exp)
+{
+    return lisp_assert_token(lisp, lisp_next(lisp), exp);
+}
+
+static void lisp_assert_close(struct lisp *lisp, struct token *token)
+{
+    if (!lisp_assert_token(lisp, token, token_close))
+        lisp_goto_close(lisp);
+    lisp->depth--;
+}
+
 static void lisp_expect_close(struct lisp *lisp)
 {
-    struct token *token = lisp_expect(lisp, token_close);
-    if (!token) lisp_goto_close(lisp);
-    lisp->depth--;
+    lisp_assert_close(lisp, lisp_next(lisp));
 }

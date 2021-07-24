@@ -70,7 +70,6 @@ static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id)
     const struct mod *mod = mods_get(world_mods(chunk_world(chunk)), id);
     if (!mod) return;
 
-    vm_reset(&brain->vm);
     brain->mod = mod;
     brain->mod_id = id;
 }
@@ -122,10 +121,11 @@ static void brain_step(void *state, struct chunk *chunk)
     struct brain *brain = state;
     if (!brain->mod) return;
 
-    ip_t ret = vm_exec(&brain->vm, brain->mod);
-    if (ip_is_mod(ret)) { brain_mod(brain, chunk, ip_mod(ret)); return; }
-    if (ret == VM_FAULT || !vm_io(&brain->vm)) return;
+    mod_t mod = vm_exec(&brain->vm, brain->mod);
+    if (mod == VM_FAULT) return;
+    if (mod) { brain_mod(brain, chunk, mod); return; }
 
+    if (!vm_io(&brain->vm)) return;
     vm_io_buf_t io = {0};
     size_t len = vm_io_read(&brain->vm, io);
     if (len) brain_step_io(brain, chunk, len, io);
@@ -156,12 +156,12 @@ static void brain_io_mod(
     mod_t id = args[0];
     if (id != args[0]) return;
 
+    vm_reset(&brain->vm);
     brain_mod(brain, chunk, id);
 }
 
 static void brain_io_reset(struct brain *brain)
 {
-    vm_reset(&brain->vm);
     brain->mod = NULL;
     brain->mod_id = 0;
     brain->msg_len = 0;

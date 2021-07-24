@@ -20,11 +20,12 @@ check_project(const struct state *state, SDL_Point sdl, struct coord exp)
     struct coord coord_out = project_coord(state->rect, state->center, state->scale, sdl);
     SDL_Point sdl_out = project_sdl(state->rect, state->center, state->scale, coord_out);
 
-    fprintf(stderr,
-            "project(scale:%lu, sdl:{%dx%d}, exp:{%xx%x}) -> coord:{%xx%x}, sdl:{%dx%d}\n",
-            state->scale,
-            sdl.x, sdl.y, exp.x, exp.y,
-            coord_out.x, coord_out.y, sdl_out.x, sdl_out.y);
+    if (false) {
+        dbg("project(scale:%lu, sdl:{%dx%d}, exp:{%xx%x}) -> coord:{%xx%x}, sdl:{%dx%d}\n",
+                state->scale,
+                sdl.x, sdl.y, exp.x, exp.y,
+                coord_out.x, coord_out.y, sdl_out.x, sdl_out.y);
+    }
 
     assert(coord_out.x == exp.x && coord_out.y == exp.y);
     assert(sdl.x == sdl_out.x && sdl.y == sdl_out.y);

@@ -99,6 +99,7 @@ struct text mod_disasm(const struct mod *);
 size_t mod_dump(const struct mod *, char *dst, size_t len);
 size_t mod_hexdump(const struct mod *, char *dst, size_t len);
 
+static const ip_t MOD_PUB_UNKNOWN = -1;
 ip_t mod_pub(const struct mod *, uint64_t key);
 
 struct mod_index mod_index(const struct mod *, ip_t ip);

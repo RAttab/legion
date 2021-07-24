@@ -135,7 +135,7 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
 // -----------------------------------------------------------------------------
 
 
-ip_t vm_exec(struct vm *vm, const struct mod *mod)
+mod_t vm_exec(struct vm *vm, const struct mod *mod)
 {
     if (vm->flags & flag_faults) return VM_FAULT;
     if (vm->flags & FLAG_SUSPENDED) return 0;
@@ -256,7 +256,7 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
 
         uint8_t opcode = vm_code(uint8_t);
         const void *label = opcodes[opcode];
-        vm_assert(label);
+        if (unlikely(!label)) { vm->flags |= FLAG_FAULT_CODE; return 0; }
         goto *label;
 
       op_push: { vm_push(vm_code(word_t)); continue; }
@@ -384,20 +384,26 @@ ip_t vm_exec(struct vm *vm, const struct mod *mod)
       op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) -  vm_stack(1); vm_pop(); continue; }
 
       op_ret: {
-            word_t raw = vm_pop();
-            if (raw > ((ip_t)-1)) { vm->flags |= FLAG_FAULT_CODE; return VM_FAULT; }
-            vm->ip = raw;
-            if (ip_is_mod(vm->ip)) return vm->ip;
+            mod_t mod_id = 0; ip_t ip = 0;
+            vm_unpack(vm_pop(), &mod_id, &ip);
+            vm->ip = ip;
+            if (unlikely(mod_id)) return mod_id;
             continue;
         }
       op_call: {
-            ip_t dst = vm_code(ip_t);
-            vm_push(vm->ip);
-            vm->ip = dst;
-            if (ip_is_mod(vm->ip)) return vm->ip;
+            mod_t mod_id = 0; ip_t ip = 0;
+            vm_unpack(vm_code(word_t), &mod_id, &ip);
+            vm_push(vm_pack(unlikely(mod_id) ? mod->id : 0, vm->ip));
+            vm->ip = ip;
+            if (unlikely(mod_id)) { return mod_id; }
             continue;
         }
-      op_load: { ip_t ip = vm_pop(); vm_reset(vm); return ip; }
+      op_load: {
+            word_t mod_id = vm_pop();
+            if (unlikely(mod_id > UINT32_MAX)) { vm->flags |= FLAG_FAULT_CODE; return VM_FAULT; }
+            vm_reset(vm);
+            return mod_id;
+        }
       op_jmp: { vm->ip = vm_code(ip_t); continue; }
       op_jz:  { ip_t dst = vm_code(ip_t); if (!vm_pop()) vm->ip = dst; continue; }
       op_jnz: { ip_t dst = vm_code(ip_t); if ( vm_pop()) vm->ip = dst; continue; }

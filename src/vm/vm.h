@@ -53,8 +53,8 @@ void vm_free(struct vm *);
 
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 
-static const ip_t VM_FAULT = -1;
-ip_t vm_exec(struct vm *, const struct mod *);
+static const mod_t VM_FAULT = -1;
+mod_t vm_exec(struct vm *, const struct mod *);
 
 void vm_reset(struct vm *);
 void vm_suspend(struct vm *);

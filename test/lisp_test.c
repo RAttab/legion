@@ -298,7 +298,7 @@ void print_title(struct file *file)
 
     size_t len = snprintf(title, sizeof(title), "[ %s ]", token.value.s.c);
     title[len] = '=';
-    // dbg("%s", title);
+    if (false) dbg("%s", title);
 }
 
 struct vm *read_vm(struct file *file, struct atoms *atoms)

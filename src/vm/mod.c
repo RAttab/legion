@@ -143,7 +143,7 @@ ip_t mod_pub(const struct mod *mod, uint64_t key)
         if (mod->pub[i].key == key) return mod->pub[i].ip;
     }
 
-    return 0;
+    return MOD_PUB_UNKNOWN;
 }
 
 struct mod_index mod_index(const struct mod *mod, ip_t ip)
@@ -212,8 +212,8 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 
     void dump_mod(void)
     {
-        size_t n = snprintf(dst, len, "@%x\n", *((ip_t *) in));
-        dst += n; len -= n; in += sizeof(ip_t);
+        size_t n = snprintf(dst, len, "@%lx\n", *((word_t *) in));
+        dst += n; len -= n; in += sizeof(word_t);
     }
 
     while (in < end) {
@@ -222,7 +222,10 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 #define op_fn(op, arg) case OP_ ## op: { dump_op(#op); dump_ ## arg(); break; }
     #include "vm/op_xmacro.h"
 
-        default: { assert(false); }
+        default: {
+            dbg("mod.dump.err: %x", *in);
+            assert(false);
+        }
         }
     }
 

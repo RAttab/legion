@@ -110,9 +110,22 @@ static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 {
     lisp_write_value(lisp, op);
 
-    struct token *token = lisp_expect(lisp, token_symb);
-    if (!token) { lisp_goto_close(lisp); return; }
-    lisp_write_value(lisp, lisp_jmp(lisp, token));
+    word_t mod = lisp_parse_call(lisp);
+    if (mod == -1) { lisp_goto_close(lisp); return; }
+
+    if (mod) lisp_write_value(lisp, mod);
+
+    else if (lisp->token.type == token_symb) {
+        // little-endian flips the byte ordering... fuck me...
+        lisp_write_value(lisp, lisp_jmp(lisp, &lisp->token));
+        lisp_write_value(lisp, (mod_t) 0);
+    }
+
+    else if (lisp_assert_token(lisp, &lisp->token, token_num))
+        lisp_write_value(lisp, lisp->token.val.num);
+
+    else { lisp_goto_close(lisp); return; }
+
 
     lisp_expect_close(lisp);
 }

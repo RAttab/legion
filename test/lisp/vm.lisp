@@ -335,12 +335,23 @@
 ;; ##########################################################
 ;; jmp
 
+(vm/load
+ (S:1)
+ ((asm (PUSH 1)
+       (LOAD)))
+ (ret:1 ip:0 sp:0))
+
 (vm/call
  (S:1)
  ((asm (CALL fn)
        (@ fn)
        (YIELD)))
- (sp:1 #0:0x05))
+ (ret:0 sp:1 #0:0x9))
+
+(vm/call-mod
+ (S:1)
+ ((asm (CALL 0x100000002)))
+ (ret:1 sp:1 #0:0x9))
 
 (vm/ret
  (S:1)
@@ -348,7 +359,13 @@
        (YIELD)
        (@ fn)
        (RET)))
- (sp:0))
+ (ret:0 sp:0))
+
+(vm/ret-mod
+ (S:1)
+ ((asm (PUSH 0x100000002)
+       (RET)))
+ (ret:1 ip:2 sp:0))
 
 (vm/jmp
  (S:1)
@@ -356,7 +373,7 @@
        (PUSH 0xffffffff)
        (@ out)
        (YIELD)))
- (sp:0))
+ (ret:0 sp:0))
 
 (vm/jz
  (S:1)

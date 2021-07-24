@@ -53,7 +53,7 @@ op_fn(CMP, nil)
 
 op_fn(RET, nil)
 op_fn(CALL, mod)
-op_fn(LOAD, mod)
+op_fn(LOAD, nil)
 op_fn(JMP, off)
 op_fn(JZ, off)
 op_fn(JNZ, off)
