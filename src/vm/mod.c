@@ -489,7 +489,7 @@ static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *p
         if (mod->errs_len) {
             for (size_t i = 0; i < mod->errs_len; ++i) {
                 struct mod_err *err = &mod->errs[i];
-                dbg("%s:%u:%u: %s", path, err->row, err->col, err->str);
+                dbg("%s:%u:%u: %s", path, err->row+1, err->col+1, err->str);
             }
         }
 

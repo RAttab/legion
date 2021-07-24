@@ -190,7 +190,7 @@ static void lisp_fn_defun(struct lisp *lisp)
 // pseudo function that essentially returns whatever is at the top of the stack.
 // This is mostly useful when dealing with statements that can return multiple
 // values.
-static void lisp_fn_head(struct lisp *lisp) { (void) lisp; }
+static void lisp_fn_head(struct lisp *lisp) { lisp_expect_close(lisp); }
 
 // when writting assembly, we won't follow the rule where every statement must
 // return one value on the stack which means that if used in a typical stmts
@@ -504,39 +504,40 @@ static void lisp_fn_assert(struct lisp *lisp)
 // ops
 // -----------------------------------------------------------------------------
 
-static void lisp_fn_0(struct lisp *lisp, enum op_code op)
+static void lisp_fn_0(struct lisp *lisp, enum op_code op, const char *str)
 {
+    (void) str;
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }
 
-static void lisp_fn_1(struct lisp *lisp, enum op_code op)
+static void lisp_fn_1(struct lisp *lisp, enum op_code op, const char *str)
 {
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing argument");  return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing argument", str);  return; }
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }
 
-static void lisp_fn_2(struct lisp *lisp, enum op_code op)
+static void lisp_fn_2(struct lisp *lisp, enum op_code op, const char *str)
 {
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing first argument", str); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing second argument", str); return; }
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }
 
-static void lisp_fn_n(struct lisp *lisp, enum op_code op)
+static void lisp_fn_n(struct lisp *lisp, enum op_code op, const char *str)
 {
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing first argument", str); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing second argument", str); return; }
 
     do { lisp_write_value(lisp, op); } while (lisp_stmt(lisp));
 }
 
-static void lisp_fn_compare(struct lisp *lisp, enum op_code op)
+static void lisp_fn_compare(struct lisp *lisp, enum op_code op, const char *str)
 {
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
-    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing second argument"); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing first argument", str); return; }
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing second argument", str); return; }
 
     // gotta swap before the compare as the lisp semantics differ from the vm
     // semantics
@@ -549,7 +550,7 @@ static void lisp_fn_compare(struct lisp *lisp, enum op_code op)
 #define define_fn_ops(fn, op, arg)                      \
     static void lisp_fn_ ## fn(struct lisp *lisp)       \
     {                                                   \
-        lisp_fn_ ## arg(lisp, OP_ ## op);               \
+        lisp_fn_ ## arg(lisp, OP_ ## op, #op);          \
     }
 
     define_fn_ops(not, NOT, 1)

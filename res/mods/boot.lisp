@@ -35,7 +35,7 @@
     (for (i 0) (<= i total) (+ i 1)
 	 (io !io_prog (id !item_printer_1 (+ i 1)) (+ !item_elem_a (/ i n))))))
 
-(defun boot/assemlers (n)
+(defun boot/assemblers (n)
   (io !io_prog (id !item_assembly_1 1) !item_assembly_1
       (* n (- !item_databank !item_servo)))
 

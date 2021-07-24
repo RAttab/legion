@@ -143,6 +143,8 @@ static char lisp_in_inc(struct lisp *lisp)
 
 static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
 {
+    /* dbg("err: %u:%u:%u %s", err->row, err->col, err->len, err->str); */
+
     if (unlikely(lisp->err.len == lisp->err.cap)) {
         lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
         lisp->err.list = realloc(lisp->err.list, lisp->err.cap * sizeof(*lisp->err.list));
@@ -156,6 +158,7 @@ static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
         if (prev->row < err->row || (prev->row == err->row && prev->col < err->col))
             break;
 
+        *it = *prev;
         it = prev;
     }
 
