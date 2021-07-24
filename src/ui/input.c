@@ -16,21 +16,24 @@
 
 static const struct dim ui_input_margin = { .w = 2, .h = 2 };
 
-struct ui_input ui_input_new(
-        struct font *font, size_t cap, struct ui_clipboard *board)
+struct ui_input ui_input_new(struct font *font, size_t width)
 {
+    assert(width < ui_input_cap);
+
     struct ui_input input = {
         .w = ui_widget_new(
-                font->glyph_w * (cap+1) + ui_input_margin.w * 2,
+                font->glyph_w * width + ui_input_margin.w * 2,
                 font->glyph_h + ui_input_margin.h * 2),
         .font = font,
-        .board = board,
         .focused = false,
     };
 
-    input.buf.c = calloc(cap + 1, 1);
+    input.view.col = 0;
+    input.view.len = width;
+
+    input.buf.c = calloc(ui_input_cap, sizeof(input.buf.c));
     input.buf.len = 0;
-    input.buf.cap = cap;
+
     input.carret.col = 0;
 
     return input;
@@ -41,55 +44,60 @@ void ui_input_free(struct ui_input *input)
     free(input->buf.c);
 }
 
+static void ui_input_view_update(struct ui_input *input)
+{
+    if (input->carret.col < input->view.col)
+        input->view.col = input->carret.col;
+
+    if (input->carret.col >= input->view.col + input->view.len)
+        input->view.col = (input->carret.col - input->view.len) + 1;
+}
+
 void ui_input_clear(struct ui_input *input)
 {
     input->buf.len = 0;
     input->carret.col = 0;
-}
+    ui_input_view_update(input);
 
+}
 void ui_input_set(struct ui_input *input, const char *str)
 {
-    input->buf.len = strnlen(str, input->buf.cap - 1);
+    input->buf.len = strnlen(str, ui_input_cap);
     memcpy(input->buf.c, str, input->buf.len);
+
+    input->carret.col = 0;
+    ui_input_view_update(input);
 }
 
-
-// \todo could use better error handling
-uint64_t ui_input_get_u64(struct ui_input *input)
+bool ui_input_get_u64(struct ui_input *input, uint64_t *ret)
 {
-    const char c0 = input->buf.c[0];
+    const char *it = input->buf.c;
+    const char *end = it + input->buf.len;
+    it += str_skip_spaces(it, end - it);
 
-    if (c0 == '@' || c0 == '!') {
-        if (input->buf.len > symbol_cap) return 0;
-        struct symbol symbol = make_symbol_len(input->buf.c+1, input->buf.len-1);
-
-        if (c0 == '!') {
-            struct atoms *atoms = world_atoms(core.state.world);
-            return atoms_atom(atoms, &symbol);
-        }
-
-        struct mods *mods = world_mods(core.state.world);
-        mod_id_t id = mods_find(mods, &symbol);
-        return id ? mods_latest(mods, id)->id : 0;
+    if (*it == '!') {
+        struct atoms *atoms = world_atoms(core.state.world);
+        word_t atom = atoms_parse(atoms, it, end - it);
+        if (atom == -1) return false;
+        *ret = atom;
+        return true;
     }
 
-    uint64_t val = 0;
-    str_atou(input->buf.c, input->buf.len, &val);
-    return val;
+    if (*it == '(') {
+        struct mods *mods = world_mods(core.state.world);
+        const struct mod *mod = mods_parse(mods, it, end - it);
+        if (!mod) return false;
+        *ret = mod->id;
+        return true;
+    }
+
+    size_t read = str_atou(it, end - it, ret);
+    return read > 0;
 }
 
-// \todo could use better error handling
-uint64_t ui_input_get_hex(struct ui_input *input)
+bool ui_input_get_symbol(struct ui_input *input, struct symbol *ret)
 {
-    uint64_t val = 0;
-    (void) str_atox(input->buf.c, input->buf.len, &val);
-    return val;
-}
-
-struct symbol ui_input_get_symbol(struct ui_input *input)
-{
-    size_t len = legion_min(input->buf.len, symbol_cap);
-    return make_symbol_len(input->buf.c, len);
+    return symbol_parse(input->buf.c, input->buf.len, ret);
 }
 
 void ui_input_render(
@@ -105,10 +113,15 @@ void ui_input_render(
         .x = rect.x + ui_input_margin.w,
         .y = rect.y + ui_input_margin.h,
     };
-    font_render(input->font, renderer, pos, rgba_white(), input->buf.c, input->buf.len);
+
+    assert(input->view.col <= input->buf.len);
+    const char *it = input->buf.c + input->view.col;
+    size_t len = legion_min(input->buf.len - input->view.col, input->view.len);
+    font_render(input->font, renderer, pos, rgba_white(), it, len);
 
     if (input->focused && input->carret.blink) {
-        size_t x = ui_input_margin.w + input->carret.col * input->font->glyph_w;
+        size_t col = input->carret.col - input->view.col;
+        size_t x = ui_input_margin.w + col * input->font->glyph_w;
         size_t y = ui_input_margin.h;
 
         rgba_render(rgba_white(), renderer);
@@ -120,7 +133,6 @@ void ui_input_render(
                         }));
     }
 }
-
 
 // -----------------------------------------------------------------------------
 // event
@@ -143,23 +155,20 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
 
 static enum ui_ret ui_input_event_move(struct ui_input *input, int hori)
 {
-    if (hori > 0) {
+    if (hori > 0)
         input->carret.col = legion_min(input->carret.col+1, input->buf.len);
-        return ui_consume;
-    }
 
-    if (hori < 0) {
-        if (input->carret.col > 0) input->carret.col--;
-        return ui_consume;
-    }
+    if (hori < 0 && input->carret.col > 0)
+        input->carret.col--;
 
-    return ui_nil;
+    ui_input_view_update(input);
+    return ui_consume;
 }
 
 static enum ui_ret ui_input_event_ins(struct ui_input *input, char key, uint16_t mod)
 {
     assert(key != '\n');
-    if (input->buf.len == input->buf.cap) return ui_consume;
+    if (input->buf.len == ui_input_cap-1) return ui_consume;
 
     size_t col = input->carret.col;
     memmove(input->buf.c + col + 1, input->buf.c + col, input->buf.len - col);
@@ -169,21 +178,21 @@ static enum ui_ret ui_input_event_ins(struct ui_input *input, char key, uint16_t
 
     input->buf.len++;
     input->carret.col++;
+    ui_input_view_update(input);
     return ui_consume;
 }
 
 static enum ui_ret ui_input_event_copy(struct ui_input *input)
 {
-    if (!input->board) return ui_consume;
-    ui_clipboard_copy(input->board, input->buf.len, input->buf.c);
+    ui_clipboard_copy(&core.ui.board, input->buf.len, input->buf.c);
     return ui_consume;
 }
 
 static enum ui_ret ui_input_event_paste(struct ui_input *input)
 {
-    if (!input->board) return ui_consume;
-    input->buf.len = ui_clipboard_paste(input->board, input->buf.cap, input->buf.c);
+    input->buf.len = ui_clipboard_paste(&core.ui.board, ui_input_cap, input->buf.c);
     input->carret.col = input->buf.len;
+    ui_input_view_update(input);
     return ui_consume;
 }
 
@@ -209,6 +218,7 @@ static enum ui_ret ui_input_event_backspace(struct ui_input *input)
     memmove(input->buf.c + col-1, input->buf.c + col, input->buf.len - col);
     input->buf.len--;
     input->carret.col--;
+    ui_input_view_update(input);
     return ui_consume;
 }
 
@@ -272,10 +282,18 @@ enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
         case SDLK_BACKSPACE: { return ui_input_event_backspace(input); }
 
         case SDLK_UP:
-        case SDLK_HOME: { input->carret.col = 0; return ui_consume; }
+        case SDLK_HOME: {
+            input->carret.col = 0;
+            ui_input_view_update(input);
+            return ui_consume;
+        }
 
         case SDLK_DOWN:
-        case SDLK_END: { input->carret.col = input->buf.len; return ui_consume; }
+        case SDLK_END: {
+            input->carret.col = input->buf.len;
+            ui_input_view_update(input);
+            return ui_consume;
+        }
 
         default: { return ui_nil; }
         }

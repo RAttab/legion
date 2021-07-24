@@ -446,13 +446,9 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     if (*it != '(') return NULL;
     it++;
 
-    it += str_skip_spaces(it, end - it);
-
-    const char *start = it;
-    while (symbol_char(*it)) it++;
-
-    if (it - start >= symbol_cap) return NULL;
-    struct symbol symbol = make_symbol_len(start, it - start);
+    struct symbol symbol = {0};
+    if (!symbol_parse(it, end - it, &symbol)) return NULL;
+    it += symbol.len;
 
     mod_id_t mod_id = mods_find(mods, &symbol);
     if (!mod_id) return NULL;
@@ -462,10 +458,12 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     mod_ver_t mod_ver = 0;
     if (*it != ')') {
         const char *start = it;
-        while (str_is_number(*it)) it++;
+        while (it < end && str_is_number(*it)) it++;
 
         uint64_t value = 0;
         (void) str_atou(start, it - start, &value);
+        if (value > UINT16_MAX) return false;
+
         mod_ver = value;
     }
 

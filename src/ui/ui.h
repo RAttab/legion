@@ -394,27 +394,27 @@ void ui_toggles_render(
 // input
 // -----------------------------------------------------------------------------
 
+enum { ui_input_cap = 256 };
+
 struct ui_input
 {
     struct ui_widget w;
-
     struct font *font;
-    struct ui_clipboard *board;
 
     bool focused;
-    struct { char *c; uint8_t len, cap; } buf;
+    struct { uint8_t col, len; } view;
+    struct { char *c; uint8_t len; } buf;
     struct { uint8_t col; bool blink; } carret;
 };
 
-struct ui_input ui_input_new(struct font *, size_t cap, struct ui_clipboard *);
+struct ui_input ui_input_new(struct font *, size_t char_width);
 void ui_input_free(struct ui_input *);
 
 void ui_input_clear(struct ui_input *);
 void ui_input_set(struct ui_input *, const char *str);
 
-uint64_t ui_input_get_u64(struct ui_input *);
-uint64_t ui_input_get_hex(struct ui_input *);
-struct symbol ui_input_get_symbol(struct ui_input *);
+bool ui_input_get_u64(struct ui_input *, uint64_t *ret);
+bool ui_input_get_symbol(struct ui_input *, struct symbol *ret);
 
 enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
 void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);

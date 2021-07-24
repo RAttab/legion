@@ -23,7 +23,7 @@ static struct ui_io_arg ui_io_arg(struct font *font, const char *arg)
 {
     return (struct ui_io_arg) {
         .name = ui_label_new(font, ui_str_c(arg)),
-        .val = ui_input_new(font, 20, &core.ui.board),
+        .val = ui_input_new(font, 20),
     };
 }
 
@@ -232,14 +232,19 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     }
 }
 
+// \todo bad inputs just get ignored... need an error reporting mechanism :(
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
     struct chunk *chunk = world_chunk(core.state.world, ui->star);
     assert(chunk);
 
     word_t args[cmd->args];
-    for (size_t i = 0; i < cmd->args; ++i)
-        args[i] = ui_input_get_u64(&cmd->arg[i].val);
+    memset(args, 0, sizeof(args));
+
+    uint64_t val = 0;
+    for (size_t i = 0; i < cmd->args; ++i) {
+        if (ui_input_get_u64(&cmd->arg[i].val, &val)) args[i] = val;
+    }
 
     bool ok = chunk_io(chunk, cmd->id, 0, ui->id, cmd->args, args);
     assert(ok);

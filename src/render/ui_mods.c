@@ -35,7 +35,7 @@ struct ui_mods *ui_mods_new(void)
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
         .new = ui_button_new(font, ui_str_c("+")),
-        .new_val = ui_input_new(font, symbol_cap, &core.ui.board),
+        .new_val = ui_input_new(font, symbol_cap),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .toggles = ui_toggles_new(font, ui_str_v(symbol_cap)),
     };
@@ -129,10 +129,12 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
     if ((ret = ui_input_event(&ui->new_val, ev))) return ret == ui_consume;
     if ((ret = ui_button_event(&ui->new, ev))) {
-        struct symbol name = ui_input_get_symbol(&ui->new_val);
-        mod_t mod = mods_register(world_mods(core.state.world), &name);
-        ui_mods_update(ui);
-        core_push_event(EV_MOD_SELECT, mod, 0);
+        struct symbol name = {0};
+        if (ui_input_get_symbol(&ui->new_val, &name)) {
+            mod_t mod = mods_register(world_mods(core.state.world), &name);
+            ui_mods_update(ui);
+            core_push_event(EV_MOD_SELECT, mod, 0);
+        }
         return ret;
     }
 

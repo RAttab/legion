@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/str.h"
 
 #include <ctype.h>
 
@@ -108,6 +109,21 @@ inline bool symbol_char(char c)
     }
 }
 
+inline size_t symbol_parse(const char *it, size_t len, struct symbol *value)
+{
+    assert(value);
+
+    const char *end = it + len;
+    it += str_skip_spaces(it, end - it);
+
+    const char *first = it;
+    while (it < end && symbol_char(*it)) it++;
+    if (it - first > symbol_cap) return false;
+
+    *value = make_symbol_len(first, it - first);
+    return true;
+}
+
 
 // -----------------------------------------------------------------------------
 // atoms
@@ -124,3 +140,4 @@ void atoms_save(struct atoms *, struct save *);
 bool atoms_set(struct atoms *, const struct symbol *, word_t id);
 word_t atoms_atom(struct atoms *, const struct symbol *);
 bool atoms_str(struct atoms *, word_t id, struct symbol *dst);
+word_t atoms_parse(struct atoms *, const char *str, size_t len);

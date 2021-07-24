@@ -260,3 +260,16 @@ bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)
     memcpy(dst, &atoms->base[ret.value].symbol, sizeof(*dst));
     return true;
 }
+
+word_t atoms_parse(struct atoms *atoms, const char *it, size_t len)
+{
+    const char *end = it + len;
+    it += str_skip_spaces(it, end - it);
+
+    if (*it != '!') return -1;
+    it++;
+
+    struct symbol symbol = {0};
+    if (!symbol_parse(it, end - it, &symbol)) return -1;
+    return atoms_atom(atoms, &symbol);
+}
