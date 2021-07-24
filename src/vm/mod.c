@@ -8,6 +8,7 @@
 #include "utils/htable.h"
 #include "utils/bits.h"
 #include "utils/log.h"
+#include "utils/str.h"
 
 
 // -----------------------------------------------------------------------------
@@ -148,7 +149,6 @@ ip_t mod_pub(const struct mod *mod, uint64_t key)
 
 struct mod_index mod_index(const struct mod *mod, ip_t ip)
 {
-    assert(!ip_is_mod(ip));
     assert(ip < mod->len);
 
     for (size_t i = 0; i < mod->index_len; ++i) {
@@ -439,6 +439,39 @@ mod_id_t mods_find(struct mods *mods, const struct symbol *name)
     return 0;
 }
 
+const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
+{
+    const char *end = it + len;
+
+    if (*it != '(') return NULL;
+    it++;
+
+    it += str_skip_spaces(it, end - it);
+
+    const char *start = it;
+    while (symbol_char(*it)) it++;
+
+    if (it - start >= symbol_cap) return NULL;
+    struct symbol symbol = make_symbol_len(start, it - start);
+
+    mod_id_t mod_id = mods_find(mods, &symbol);
+    if (!mod_id) return NULL;
+
+    it += str_skip_spaces(it, end - it);
+
+    mod_ver_t mod_ver = 0;
+    if (*it != ')') {
+        const char *start = it;
+        while (str_is_number(*it)) it++;
+
+        uint64_t value = 0;
+        (void) str_atou(start, it - start, &value);
+        mod_ver = value;
+    }
+
+    return mods_get(mods, make_mod(mod_id, mod_ver));
+}
+
 struct mods_list *mods_list(struct mods *mods)
 {
     struct mods_list *ret = calloc(1,
@@ -507,7 +540,7 @@ static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *p
     }
     assert(slash < dot);
 
-    struct symbol name = make_symbol_len(dot - slash - 1, path + slash + 1);
+    struct symbol name = make_symbol_len(path + slash + 1, dot - slash - 1);
 
     mod_id_t id = mod_id(mods_register(mods, &name));
     mods_set(mods, id, mod);

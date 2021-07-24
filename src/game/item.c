@@ -138,7 +138,7 @@ static void atom_game_reg(
         struct atoms *atoms, word_t val, const char *str, size_t len)
 {
     assert(len <= symbol_cap);
-    struct symbol symbol = make_symbol_len(len, str);
+    struct symbol symbol = make_symbol_len(str, len);
     for (size_t i = 0; i < symbol.len; ++i) {
         char c = tolower(symbol.c[i]);
         if (c) symbol.c[i] = c;

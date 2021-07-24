@@ -125,6 +125,8 @@ const struct mod *mods_latest(struct mods *, mod_id_t);
 
 mod_id_t mods_find(struct mods *, const struct symbol *name);
 
+const struct mod *mods_parse(struct mods *, const char *it, size_t len);
+
 struct mods_item { mod_id_t id; struct symbol str; };
 struct mods_list
 {
@@ -134,3 +136,4 @@ struct mods_list
 struct mods_list *mods_list(struct mods *);
 
 void mods_populate(struct mods *, struct atoms *);
+

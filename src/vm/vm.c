@@ -140,8 +140,10 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
     if (vm->flags & flag_faults) return VM_FAULT;
     if (vm->flags & FLAG_SUSPENDED) return 0;
 
-    assert(!ip_is_mod(vm->ip));
-    vm_assert(ip_addr(vm->ip) < mod->len);
+    if (vm->ip >= mod->len) {
+        vm->flags |= FLAG_FAULT_CODE;
+        return VM_FAULT;
+    }
 
     static const void *opcodes[] = {
         [OP_PUSH]   = &&op_push,

@@ -36,10 +36,6 @@ inline mod_t make_mod(mod_id_t id, mod_ver_t ver) { assert(!(id >> 15)); return 
 inline mod_id_t mod_id(mod_t mod) { return mod >> 16; }
 inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
 
-inline ip_t mod_ip(mod_t mod) { return 1U << 31 | mod; }
-inline bool ip_is_mod(ip_t ip) { return ip >> 31; }
-inline mod_t ip_mod(ip_t ip) { return ((1U << 31) - 1) & ip;  }
-
 
 // -----------------------------------------------------------------------------
 // symbol
@@ -69,7 +65,7 @@ inline struct symbol make_symbol(const char *str)
     return symbol;
 }
 
-inline struct symbol make_symbol_len(size_t len, const char *str)
+inline struct symbol make_symbol_len(const char *str, size_t len)
 {
     struct symbol symbol = { .len = len, .zero = 0 };
     memcpy(symbol.c, str, symbol.len);
@@ -96,6 +92,20 @@ inline bool symbol_eq(const struct symbol *lhs, const struct symbol *rhs)
 {
     if (lhs->len != rhs->len) return false;
     return symbol_cmp(lhs, rhs) == 0;
+}
+
+inline bool symbol_char(char c)
+{
+    switch (c) {
+    case '@': case '_': case '*':
+    case '-': case '+': case '/':
+    case '=': case '<': case '>':
+    case 'a'...'z': case 'A'...'Z':
+    case '0'...'9':
+        return true;
+
+    default: return false;
+    }
 }
 
 

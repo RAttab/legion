@@ -104,35 +104,11 @@ void token_dbg(struct token *token, const char *title)
     dbg("%s: tok{ row=%u, type=%d, value=%s }", title, token->row, token->type, value);
 }
 
-bool is_space(char c) { return c <= 0x20; }
-
-bool is_symbol(char c)
-{
-    switch (c) {
-    case '-': case '_': case '/':
-    case 'a'...'z':
-    case 'A'...'Z':
-    case '0'...'9': return true;
-    default: return false;
-    }
-}
-bool is_number(char c)
-{
-    switch (c) {
-    case '-':
-    case 'x':
-    case '0'...'9':
-    case 'a'...'f':
-    case 'A'...'F': return true;
-    default: return false;
-    }
-}
-
 void skip_spaces(struct file *file)
 {
     while (!file_eof(file)) {
 
-        if (likely(is_space(*file->it))) {
+        if (likely(str_is_space(*file->it))) {
             file_inc(file);
             continue;
         }
@@ -166,7 +142,7 @@ struct token token_next(struct file *file)
     case '-':
     case '0'...'9': { token.type = token_number; break; }
     default: {
-        assert(is_symbol(*file->it));
+        assert(symbol_char(*file->it));
         token.type = token_symbol; break;
     }
     }
@@ -183,17 +159,17 @@ struct token token_next(struct file *file)
         const char *first = file->it;
         if (token.type == token_atom) { file_inc(file); first++; }
 
-        while(!file_eof(file) && is_symbol(*file->it)) file_inc(file);
+        while(!file_eof(file) && symbol_char(*file->it)) file_inc(file);
         size_t len = file->it - first;
 
         assert(len <= symbol_cap);
-        token.value.s = make_symbol_len(len, first);
+        token.value.s = make_symbol_len(first, len);
         break;
     }
 
     case token_number: {
         const char *first = file->it;
-        while (!file_eof(file) && is_number(*file->it)) file_inc(file);
+        while (!file_eof(file) && str_is_number(*file->it)) file_inc(file);
         size_t len = file->it - first;
 
         size_t read = 0;
@@ -223,7 +199,7 @@ struct token token_next(struct file *file)
         char c = file_inc(file);
         file_inc(file);
 
-        assert(is_number(c));
+        assert(str_is_number(c));
         token.value.w = c - '0';
         break;
     }
@@ -278,7 +254,7 @@ void token_goto_close(struct file *file)
 
 #define field(str)                                                      \
     ({                                                                  \
-        struct symbol symbol = make_symbol_len(sizeof(str), (str));     \
+        struct symbol symbol = make_symbol_len((str), sizeof(str));     \
         const uint64_t hash = symbol_hash(&symbol);                     \
         hash;                                                           \
     })

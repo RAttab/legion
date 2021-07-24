@@ -38,5 +38,19 @@ inline uint8_t str_charhex(char val)
     return 0xFF;
 }
 
-char str_keycode_shift(unsigned char c);
+inline bool str_is_number(char c)
+{
+    switch (c) {
+    case '-': case 'x':
+    case '0'...'9': case 'a'...'f':
+    case 'A'...'F':
+        return true;
 
+    default: return false;
+    }
+}
+
+inline bool str_is_space(char c) { return c <= 0x20; }
+size_t str_skip_spaces(const char *str, size_t len);
+
+char str_keycode_shift(unsigned char c);

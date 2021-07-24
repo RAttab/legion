@@ -722,7 +722,7 @@ static void lisp_fn_register(void)
 {
 #define register_fn(fn)                                                 \
     do {                                                                \
-        struct symbol symbol = make_symbol_len(sizeof(#fn), #fn);       \
+        struct symbol symbol = make_symbol_len(#fn, sizeof(#fn));       \
         lisp_register_fn(symbol_hash(&symbol), lisp_fn_ ## fn);         \
     } while (false)
 

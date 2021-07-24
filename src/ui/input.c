@@ -58,11 +58,10 @@ void ui_input_set(struct ui_input *input, const char *str)
 uint64_t ui_input_get_u64(struct ui_input *input)
 {
     const char c0 = input->buf.c[0];
-    const char c1 = input->buf.c[1];
 
     if (c0 == '@' || c0 == '!') {
         if (input->buf.len > symbol_cap) return 0;
-        struct symbol symbol = make_symbol_len(input->buf.len-1, input->buf.c+1);
+        struct symbol symbol = make_symbol_len(input->buf.c+1, input->buf.len-1);
 
         if (c0 == '!') {
             struct atoms *atoms = world_atoms(core.state.world);
@@ -75,9 +74,7 @@ uint64_t ui_input_get_u64(struct ui_input *input)
     }
 
     uint64_t val = 0;
-    if (c0 == '0' && c1 == 'x')
-        (void) str_atox(input->buf.c+2, input->buf.len-2, &val);
-    else (void) str_atou(input->buf.c, input->buf.len, &val);
+    str_atou(input->buf.c, input->buf.len, &val);
     return val;
 }
 
@@ -92,7 +89,7 @@ uint64_t ui_input_get_hex(struct ui_input *input)
 struct symbol ui_input_get_symbol(struct ui_input *input)
 {
     size_t len = legion_min(input->buf.len, symbol_cap);
-    return make_symbol_len(len, input->buf.c);
+    return make_symbol_len(input->buf.c, len);
 }
 
 void ui_input_render(

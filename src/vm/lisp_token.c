@@ -9,38 +9,11 @@
 // token
 // -----------------------------------------------------------------------------
 
-static bool lisp_is_space(char c) { return c <= 0x20; }
-
-static bool lisp_is_symb(char c)
-{
-    switch (c) {
-    case '@': case '_': case '*':
-    case '-': case '+': case '/':
-    case '=': case '<': case '>':
-    case 'a'...'z': case 'A'...'Z':
-    case '0'...'9':
-        return true;
-
-    default: return false;
-    }
-}
-static bool lisp_is_num(char c)
-{
-    switch (c) {
-    case '-': case 'x':
-    case '0'...'9': case 'a'...'f':
-    case 'A'...'F':
-        return true;
-
-    default: return false;
-    }
-}
-
 static void lisp_skip_spaces(struct lisp *lisp)
 {
     while (!lisp_eof(lisp)) {
 
-        if (likely(lisp_is_space(*lisp->in.it))) {
+        if (likely(str_is_space(*lisp->in.it))) {
             lisp_in_inc(lisp);
             continue;
         }
@@ -57,7 +30,7 @@ static void lisp_skip_spaces(struct lisp *lisp)
 
 static void lisp_goto_space(struct lisp *lisp)
 {
-    while (!lisp_eof(lisp) && !lisp_is_space(*lisp->in.it))
+    while (!lisp_eof(lisp) && !str_is_space(*lisp->in.it))
         lisp_in_inc(lisp);
 }
 
@@ -87,13 +60,13 @@ static struct token *lisp_next(struct lisp *lisp)
     // then we can guarantee a space after the symbol. Pretty shitty but oh well
     case '-': {
         const char *next = lisp->in.it + 1;
-        token->type = next < lisp->in.end && lisp_is_space(*next) ?
+        token->type = next < lisp->in.end && str_is_space(*next) ?
             token_symb : token_num;
         break;
     }
 
     default: {
-        if (unlikely(!lisp_is_symb(*lisp->in.it))) {
+        if (unlikely(!symbol_char(*lisp->in.it))) {
             lisp_err(lisp, "invalid character for symbol: %c", *lisp->in.it);
             lisp_goto_space(lisp);
             token->type = token_nil;
@@ -114,20 +87,20 @@ static struct token *lisp_next(struct lisp *lisp)
         const char *first = lisp->in.it;
         if (token->type == token_atom) { lisp_in_inc(lisp); first++; }
 
-        while(!lisp_eof(lisp) && lisp_is_symb(*lisp->in.it)) lisp_in_inc(lisp);
+        while(!lisp_eof(lisp) && symbol_char(*lisp->in.it)) lisp_in_inc(lisp);
 
         token->len = lisp->in.it - first;
         if (unlikely(token->len > symbol_cap)) {
             lisp_err(lisp, "symbol is too long: %u > %u", token->len, symbol_cap);
             token->len = symbol_cap;
         }
-        token->val.symb = make_symbol_len(token->len, first);
+        token->val.symb = make_symbol_len(first, token->len);
         break;
     }
 
     case token_num: {
         const char *first = lisp->in.it;
-        while (!lisp_eof(lisp) && lisp_is_num(*lisp->in.it)) lisp_in_inc(lisp);
+        while (!lisp_eof(lisp) && str_is_number(*lisp->in.it)) lisp_in_inc(lisp);
 
         token->len = lisp->in.it - first;
         size_t read = 0;

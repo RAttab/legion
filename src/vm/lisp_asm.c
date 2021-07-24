@@ -155,13 +155,13 @@ static void lisp_asm_label(struct lisp *lisp)
 static void lisp_asm_register(void)
 {
     {
-        struct symbol symbol = make_symbol_len(1, "@");
+        struct symbol symbol = make_symbol_len("@", 1);
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_label);
     }
 
 #define op_fn(op, arg)                                                  \
     do {                                                                \
-        struct symbol symbol = make_symbol_len(sizeof(#op), #op);       \
+        struct symbol symbol = make_symbol_len(#op, sizeof(#op));       \
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_ ## op);        \
     } while (false);
 
