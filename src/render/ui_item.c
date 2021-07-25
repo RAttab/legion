@@ -179,6 +179,12 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         return false;
     }
 
+    case EV_STATE_UPDATE: {
+        if (ui->panel.state == ui_panel_hidden) return false;
+        ui_item_update(ui);
+        return false;
+    }
+
     case EV_ITEM_SELECT: {
         ui->id = (uintptr_t) ev->user.data1;
         ui->star = id_to_coord((uintptr_t) ev->user.data2);
@@ -192,12 +198,6 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui->id = 0;
         ui->panel.state = ui_panel_hidden;
         core_push_event(EV_FOCUS_PANEL, 0, 0);
-        return false;
-    }
-
-    case EV_STATE_UPDATE: {
-        if (ui->panel.state == ui_panel_hidden) return false;
-        ui_item_update(ui);
         return false;
     }
 

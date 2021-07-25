@@ -10,6 +10,7 @@
 #include "game/active.h"
 #include "vm/vm.h"
 #include "vm/mod.h"
+#include "vm/op.h"
 
 static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id);
 
@@ -116,9 +117,8 @@ static void brain_step_io(
     vm_push(&brain->vm, ok ? IO_OK : IO_FAIL);
 }
 
-static void brain_step(void *state, struct chunk *chunk)
+static void brain_vm_step(struct brain *brain, struct chunk *chunk)
 {
-    struct brain *brain = state;
     if (!brain->mod) return;
 
     mod_t mod = vm_exec(&brain->vm, brain->mod);
@@ -129,6 +129,14 @@ static void brain_step(void *state, struct chunk *chunk)
     vm_io_buf_t io = {0};
     size_t len = vm_io_read(&brain->vm, io);
     if (len) brain_step_io(brain, chunk, len, io);
+}
+
+static void brain_step(void *state, struct chunk *chunk)
+{
+    struct brain *brain = state;
+    if (brain->debug) return;
+
+    brain_vm_step(brain, chunk);
 }
 
 
@@ -185,6 +193,40 @@ static void brain_io_send(
     memcpy(brain->msg, args, len * sizeof(*args));
 }
 
+static void brain_io_dbg_step(struct brain *brain, struct chunk *chunk)
+{
+    if (!brain->debug) return;
+    uint8_t speed = legion_xchg(&brain->vm.specs.speed, 1);
+
+    brain_vm_step(brain, chunk);
+
+    brain->vm.specs.speed = speed;
+}
+
+static void brain_io_dbg_ret(struct brain *brain, struct chunk *chunk)
+{
+    if (!brain->debug) return;
+    uint8_t speed = legion_xchg(&brain->vm.specs.speed, 1);
+
+    static const enum op_code stop[] = {
+        OP_RET, OP_RESET, OP_YIELD, OP_FAULT, OP_IO, OP_IOS, OP_IOR,
+    };
+
+    bool done = false;
+    do {
+        brain_vm_step(brain, chunk);
+        assert(brain->vm.ip < brain->mod->len);
+        if (vm_fault(&brain->vm)) break;
+
+        enum op_code op = brain->mod->code[brain->vm.ip];
+        for (size_t i = 0; i < array_len(stop) && !done; ++i)
+            done = done || (op == stop[i]);
+
+    } while (!done);
+
+    brain->vm.specs.speed = speed;
+}
+
 static void brain_io(
         void *state, struct chunk *chunk,
         enum atom_io io, id_t src, size_t len, const word_t *args)
@@ -199,6 +241,12 @@ static void brain_io(
     case IO_RESET: { brain_io_reset(brain); return; }
     case IO_VAL: { brain_io_val(brain, len, args); return; }
     case IO_SEND: { brain_io_send(brain, src, len, args); return; }
+
+    case IO_DBG_ATTACH: { brain->debug = true; return; }
+    case IO_DBG_DETACH: { brain->debug = false; return; }
+    case IO_DBG_STEP: { brain_io_dbg_step(brain, chunk); return; }
+    case IO_DBG_RET: { brain_io_dbg_ret(brain, chunk); return; }
+
     default: { return; }
     }
 }
@@ -211,7 +259,10 @@ static void brain_io(
 const struct active_config *brain_config(enum item item)
 {
     static const word_t io_list[] = {
-        IO_PING, IO_STATUS, IO_STATE, IO_MOD, IO_RESET, IO_VAL, IO_SEND, IO_RECV,
+        IO_PING, IO_STATUS, IO_STATE,
+        IO_MOD, IO_RESET,
+        IO_VAL, IO_SEND, IO_RECV,
+        IO_DBG_ATTACH, IO_DBG_DETACH, IO_DBG_STEP, IO_DBG_RET,
     };
 
     switch(item) {

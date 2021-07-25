@@ -170,6 +170,10 @@ void atoms_register_game(struct atoms *atoms)
     reg_atom(IO_SCAN);
     reg_atom(IO_RESULT);
     reg_atom(IO_LAUNCH);
+    reg_atom(IO_DBG_ATTACH);
+    reg_atom(IO_DBG_DETACH);
+    reg_atom(IO_DBG_STEP);
+    reg_atom(IO_DBG_RET);
 
     // Natural
     reg_atom(ITEM_ELEM_A);

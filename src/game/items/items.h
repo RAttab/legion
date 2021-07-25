@@ -94,7 +94,8 @@ enum { brain_msg_cap = 4 };
 struct legion_packed brain
 {
     id_t id;
-    legion_pad(4);
+    uint8_t debug;
+    legion_pad(3);
 
     id_t msg_src;
     uint8_t msg_len;
@@ -170,4 +171,3 @@ struct legion_packed scanner
 };
 
 static_assert(sizeof(struct scanner) == 32);
-

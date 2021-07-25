@@ -58,6 +58,11 @@ void vm_resume(struct vm *vm)
     vm->flags &= ~FLAG_SUSPENDED;
 }
 
+bool vm_fault(struct vm *vm)
+{
+    return vm->flags & flag_faults;
+}
+
 void vm_io_fault(struct vm *vm)
 {
     vm->flags |= FLAG_FAULT_IO;

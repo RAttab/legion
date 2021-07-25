@@ -59,6 +59,7 @@ mod_t vm_exec(struct vm *, const struct mod *);
 void vm_reset(struct vm *);
 void vm_suspend(struct vm *);
 void vm_resume(struct vm *);
+bool vm_fault(struct vm *);
 void vm_io_fault(struct vm *);
 inline bool vm_io(struct vm *vm) { return vm->flags & FLAG_IO; }
 

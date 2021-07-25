@@ -65,9 +65,11 @@ void ui_code_goto(struct ui_code *code, ip_t ip)
 
     else {
         struct mod_index index = mod_index(code->mod, ip);
-        for (size_t i = 0; i < index.row && code->carret.line->next; ++i) {
+
+        code->carret.line = code->text.first;
+        for (size_t i = 0; i < index.row && code->carret.line->next; ++i)
             code->carret.line = code->carret.line->next;
-        }
+
         code->carret.row = index.row;
         code->carret.col = index.col;
     }

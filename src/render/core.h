@@ -45,6 +45,7 @@ enum event
     EV_ITEM_CLEAR,
 
     EV_IO_TOGGLE,
+    EV_IO_EXEC,
 
     EV_MAX,
 };

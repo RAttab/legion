@@ -126,7 +126,7 @@ static bool lisp_disasm_mod(struct disasm *disasm, const char *op)
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[2+16+1] = {0}; buf[0] = '0'; buf[1] = 'x';
-    str_utox(val, buf+3, sizeof(buf)-2-1);
+    str_utox(val, buf+2, sizeof(buf)-2-1);
 
     lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;

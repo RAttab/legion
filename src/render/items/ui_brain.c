@@ -18,7 +18,7 @@ struct ui_brain
     struct ui_label io, io_val, ior, ior_val;
     struct ui_label tsc, tsc_val;
     struct ui_label ip;
-    struct ui_toggle ip_val;
+    struct ui_link ip_val;
     struct ui_label flags, flags_val;
     struct ui_label regs, regs_index, regs_val;
     struct ui_scroll scroll;
@@ -54,7 +54,7 @@ static void ui_brain_init(struct ui_brain *ui)
         .tsc_val = ui_label_new(font, ui_str_v(u32_len)),
 
         .ip = ui_label_new(font, ui_str_c("ip:   ")),
-        .ip_val = ui_toggle_new(font, ui_str_v(u32_len)),
+        .ip_val = ui_link_new(font, ui_str_v(u32_len)),
 
         .flags = ui_label_new(font, ui_str_c("flag: ")),
         .flags_val = ui_label_new(font, ui_str_c("XX ")),
@@ -97,7 +97,7 @@ static void ui_brain_free(struct ui_brain *ui)
     ui_label_free(&ui->tsc_val);
 
     ui_label_free(&ui->ip);
-    ui_toggle_free(&ui->ip_val);
+    ui_link_free(&ui->ip_val);
 
     ui_label_free(&ui->flags);
     ui_label_free(&ui->flags_val);
@@ -133,16 +133,29 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
     ui_scroll_update(&ui->scroll, state->vm.sp);
 }
 
+static bool ui_brain_event_io(
+        struct ui_brain *ui, struct brain *state, enum atom_io io)
+{
+    (void) ui;
+
+    if (!state->mod) return false;
+    if (io != IO_DBG_ATTACH && io != IO_DBG_STEP && io != IO_DBG_RET)
+        return false;
+
+    core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+    return true;
+}
+
 static bool ui_brain_event(
         struct ui_brain *ui, struct brain *state, const SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
 
-    if ((ret = ui_toggle_event(&ui->ip_val, ev))) {
-        if (ui->ip_val.state == ui_toggle_selected) {
-            if (state->mod) core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
-            ui->ip_val.state = ui_toggle_idle;
-        }
+    if (ev->type == core.event && ev->user.code == EV_IO_EXEC)
+        return ui_brain_event_io(ui, state, (uintptr_t) ev->user.data1);
+
+    if ((ret = ui_link_event(&ui->ip_val, ev))) {
+        if (state->mod) core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
         return ret == ui_consume;
     }
 
@@ -196,7 +209,7 @@ static void ui_brain_render(
     ui_layout_next_row(layout);
 
     ui_label_render(&ui->ip, layout, renderer);
-    ui_toggle_render(&ui->ip_val, layout, renderer);
+    ui_link_render(&ui->ip_val, layout, renderer);
     ui_layout_next_row(layout);
 
     { // flags

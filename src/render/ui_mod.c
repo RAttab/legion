@@ -81,11 +81,13 @@ static void ui_mod_mode_swap(struct ui_mod *ui)
     if (ui->disassembly) {
         ui_str_setv(&ui->mode.str, "code", 4);
         ui_code_set_disassembly(&ui->code, ui->mod, ip);
+        ui->reset.disabled = true;
     }
 
     else {
         ui_str_setv(&ui->mode.str, "asm", 3);
         ui_code_set_code(&ui->code, ui->mod, ip);
+        ui->reset.disabled = false;
     }
 }
 
@@ -146,6 +148,11 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     case EV_MOD_SELECT: {
         mod_t id = (uintptr_t) ev->user.data1;
         ip_t ip = (uintptr_t) ev->user.data2;
+
+        if (ui->mod && id == ui->mod->id) {
+            ui_code_goto(&ui->code, ip);
+            return false;
+        }
 
         const struct mod *mod = mods_get(world_mods(core.state.world), id);
         assert(mod);

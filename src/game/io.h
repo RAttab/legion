@@ -44,6 +44,11 @@ legion_packed enum atom_io
 
     IO_LAUNCH,
 
+    IO_DBG_ATTACH,
+    IO_DBG_DETACH,
+    IO_DBG_STEP,
+    IO_DBG_RET,
+
     ATOM_IO_MAX,
 };
 

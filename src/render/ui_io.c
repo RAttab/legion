@@ -99,6 +99,10 @@ enum
     ui_io_scan,
     ui_io_result,
     ui_io_launch,
+    ui_io_dbg_attach,
+    ui_io_dbg_detach,
+    ui_io_dbg_step,
+    ui_io_dbg_ret,
 
     ui_io_max,
 };
@@ -139,9 +143,13 @@ struct ui_io *ui_io_new(void)
             [ui_io_prog] = ui_io_cmd2(font, IO_PROG,     "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
             [ui_io_set] = ui_io_cmd2(font, IO_SET,       "index: ", "value: "),
-            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
             [ui_io_scan] = ui_io_cmd2(font, IO_SCAN,     "coord: ", "item:  "),
             [ui_io_result] = ui_io_cmd0(font, IO_RESULT),
+            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
+            [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),
+            [ui_io_dbg_detach] = ui_io_cmd0(font, IO_DBG_DETACH),
+            [ui_io_dbg_step] = ui_io_cmd0(font, IO_DBG_STEP),
+            [ui_io_dbg_ret] = ui_io_cmd0(font, IO_DBG_RET),
         },
     };
 
@@ -248,6 +256,9 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 
     bool ok = chunk_io(chunk, cmd->id, 0, ui->id, cmd->args, args);
     assert(ok);
+
+    core_push_event(EV_STATE_UPDATE, 0, 0);
+    core_push_event(EV_IO_EXEC, cmd->id, 0);
 }
 
 bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
