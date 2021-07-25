@@ -37,15 +37,17 @@ static void lisp_disasm_out(
     disasm->line = text_insert(&disasm->text, disasm->line);
 }
 
-#define lisp_disasm_read_into(disasm, _ptr)                             \
-    ({                                                                  \
-        bool ok = disasm->in.it + sizeof(val) <= disasm->in.end;        \
-        if (likely(ok)) {                                               \
-            typeof(_ptr) ptr = (_ptr);                                  \
-            memcpy(ptr, disasm->in.it, sizeof(*ptr));                   \
-            disasm->in.it += sizeof(*ptr);                              \
-        }                                                               \
-        ok;                                                             \
+#define lisp_disasm_read_into(_dasm, _ptr)                      \
+    ({                                                          \
+        struct disasm *dasm = (_dasm);                          \
+        typeof(_ptr) ptr = (_ptr);                              \
+                                                                \
+        bool ok = dasm->in.it + sizeof(*ptr) <= dasm->in.end;   \
+        if (likely(ok)) {                                       \
+            memcpy(ptr, dasm->in.it, sizeof(*ptr));             \
+            dasm->in.it += sizeof(*ptr);                        \
+        }                                                       \
+        ok;                                                     \
     })
 
 static ip_t lisp_disasm_ip(struct disasm *disasm)
@@ -67,8 +69,8 @@ static bool lisp_disasm_lit(struct disasm *disasm, const char *op)
     word_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
-    char buf[2+16] = {'0','x'};
-    str_utox(val, buf+2, sizeof(buf)-2);
+    char buf[2+16+1] = {0}; buf[0] = '0'; buf[1] ='x';
+    str_utox(val, buf+2, sizeof(buf)-2-1);
 
     lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
@@ -81,8 +83,9 @@ static bool lisp_disasm_len(struct disasm *disasm, const char *op)
     uint8_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
-    char buf[3] = {0};
-    str_utoa(val, buf, sizeof(buf));
+    char buf[3+1] = {0};
+    str_utoa(val, buf, sizeof(buf)-1);
+
     lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
@@ -94,8 +97,9 @@ static bool lisp_disasm_reg(struct disasm *disasm, const char *op)
     uint8_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
-    char buf[1+3] = {'$'};
-    str_utoa(val, buf+1, sizeof(buf)-1);
+    char buf[1+3+1] = {0}; buf[0] = '$';
+    str_utoa(val, buf+1, sizeof(buf)-1-1);
+
     lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
@@ -107,8 +111,9 @@ static bool lisp_disasm_off(struct disasm *disasm, const char *op)
     ip_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
-    char buf[2+8] = {'0','x'};
-    str_utox(val, buf+2, sizeof(buf)-2);
+    char buf[2+8+1] = {0}; buf[0] = '0'; buf[1] = 'x';
+    str_utox(val, buf+2, sizeof(buf)-2-1);
+
     lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
@@ -117,11 +122,12 @@ static bool lisp_disasm_mod(struct disasm *disasm, const char *op)
 {
     ip_t ip = lisp_disasm_ip(disasm);
 
-    ip_t val = 0;
+    word_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
-    char buf[1+8] = {'0','x'};
-    str_utox(val, buf+2, sizeof(buf)-2);
+    char buf[2+16+1] = {0}; buf[0] = '0'; buf[1] = 'x';
+    str_utox(val, buf+3, sizeof(buf)-2-1);
+
     lisp_disasm_out(disasm, ip, op, sizeof(buf), buf);
     return true;
 }
@@ -153,7 +159,9 @@ struct text mod_disasm(const struct mod *mod)
     lisp_disasm_outc(&disasm, "(asm");
 
     while (disasm.in.it < disasm.in.end) {
-        if (!lisp_disasm_op(&disasm, *disasm.in.it)) goto fail;
+        enum op_code op = 0;
+        if (!lisp_disasm_read_into(&disasm, &op)) goto fail;
+        if (!lisp_disasm_op(&disasm, op)) goto fail;
     }
 
     lisp_disasm_outc(&disasm, ")");

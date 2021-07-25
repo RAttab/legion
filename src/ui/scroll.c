@@ -32,7 +32,6 @@ void ui_scroll_free(struct ui_scroll *scroll)
 
 void ui_scroll_move(struct ui_scroll *scroll, ssize_t inc)
 {
-    if (scroll->total <= scroll->visible) return;
     if (inc > 0 || scroll->first) scroll->first += inc;
     scroll->first = legion_min(scroll->first, scroll->total - 1);
 }
@@ -110,7 +109,7 @@ struct ui_layout ui_scroll_render(
 
     struct dim dim = make_dim(scroll->w.dim.w - ui_scroll_width, scroll->w.dim.h);
     struct ui_layout inner = ui_layout_new(scroll->w.pos, dim);
-    if (scroll->visible >= scroll->total) return inner;
+    if (!scroll->first && scroll->visible >= scroll->total) return inner;
 
     rgba_render(rgba_white(), renderer);
 

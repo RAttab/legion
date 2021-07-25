@@ -436,6 +436,7 @@ struct ui_code
 
     struct text text;
     const struct mod *mod;
+    bool disassembly;
 
     struct
     {
@@ -458,8 +459,11 @@ struct ui_code ui_code_new(struct dim, struct font *);
 void ui_code_free(struct ui_code *);
 
 void ui_code_clear(struct ui_code *);
-void ui_code_set(struct ui_code *, const struct mod *, ip_t);
+void ui_code_set_code(struct ui_code *, const struct mod *, ip_t);
+void ui_code_set_disassembly(struct ui_code *, const struct mod *, ip_t);
 
+ip_t ui_code_ip(struct ui_code *);
+void ui_code_goto(struct ui_code *, ip_t);
 void ui_code_indent(struct ui_code *);
 
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);

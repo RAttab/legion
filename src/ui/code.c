@@ -26,6 +26,7 @@ struct ui_code ui_code_new(struct dim dim, struct font *font)
         .font = font,
         .focused = false,
         .cols = 1,
+        .disassembly = false,
     };
 
     text_init(&code.text);
@@ -47,10 +48,51 @@ void ui_code_clear(struct ui_code *code)
     text_clear(&code->text);
 }
 
-void ui_code_set(struct ui_code *code, const struct mod *mod, ip_t ip)
+ip_t ui_code_ip(struct ui_code *code)
+{
+    if (code->disassembly) return code->carret.line->user;
+    return mod_byte(code->mod, code->carret.row, code->carret.col);
+}
+
+void ui_code_goto(struct ui_code *code, ip_t ip)
+{
+    if (code->disassembly) {
+        while (code->carret.line->next && code->carret.line->next->user <= ip) {
+            code->carret.line = code->carret.line->next;
+            code->carret.row++;
+        }
+    }
+
+    else {
+        struct mod_index index = mod_index(code->mod, ip);
+        for (size_t i = 0; i < index.row && code->carret.line->next; ++i) {
+            code->carret.line = code->carret.line->next;
+        }
+        code->carret.row = index.row;
+        code->carret.col = index.col;
+    }
+
+    code->view.top = code->carret.row;
+    code->view.line = code->carret.line;
+    for (size_t i = 0; i < 5 && code->view.line->prev; ++i) {
+        code->view.line = code->view.line->prev;
+        code->view.top--;
+    }
+    ui_code_view_update(code);
+}
+
+static void ui_code_set(
+        struct ui_code *code, const struct mod *mod, ip_t ip, bool disassembly)
 {
     code->mod = mod;
-    text_from_str(&code->text, mod->src, mod->src_len);
+    code->disassembly = disassembly;
+
+    if (!disassembly) text_from_str(&code->text, mod->src, mod->src_len);
+    else {
+        text_clear(&code->text);
+        code->text = mod_disasm(code->mod);
+    }
+
     ui_scroll_update(&code->scroll, code->text.lines);
 
     code->carret.line = code->text.first;
@@ -59,21 +101,17 @@ void ui_code_set(struct ui_code *code, const struct mod *mod, ip_t ip)
     code->view.line = code->text.first;
     code->view.init = true;
 
-    if (ip) {
-        struct mod_index index = mod_index(code->mod, ip);
-        for (size_t i = 0; i < index.row && code->carret.line->next; ++i) {
-            code->carret.line = code->carret.line->next;
-        }
-        code->carret.row = index.row;
-        code->carret.col = index.col;
+    if (ip) ui_code_goto(code, ip);
+}
 
-        code->view.top = code->carret.row;
-        code->view.line = code->carret.line;
-        for (size_t i = 0; i < 5 && code->view.line->prev; ++i) {
-            code->view.line = code->view.line->prev;
-            code->view.top--;
-        }
-    }
+void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)
+{
+    ui_code_set(code, mod, ip, false);
+}
+
+void ui_code_set_disassembly(struct ui_code *code, const struct mod *mod, ip_t ip)
+{
+    ui_code_set(code, mod, ip, true);
 }
 
 void ui_code_indent(struct ui_code *code)
@@ -268,7 +306,8 @@ void ui_code_render(
 
             if (!col) {
                 char str[4] = {0};
-                str_utoa(row, str, sizeof(str));
+                if (!code->disassembly) str_utoa(row, str, sizeof(str));
+                else str_utox(line->user, str, sizeof(str));
 
                 struct rgba fg = rgba_gray(0x88);
                 SDL_Point pos = pos_as_point(w.pos);
@@ -399,6 +438,7 @@ static enum ui_ret ui_code_event_move(struct ui_code *code, int hori, int vert)
 
 static enum ui_ret ui_code_event_ins(struct ui_code *code, char key, uint16_t mod)
 {
+    if (code->disassembly) return ui_nil;
     if (mod & (KMOD_CTRL | KMOD_ALT)) return ui_nil;
     if (mod & KMOD_SHIFT) key = str_keycode_shift(key);
 
@@ -421,6 +461,8 @@ static enum ui_ret ui_code_event_ins(struct ui_code *code, char key, uint16_t mo
 
 static enum ui_ret ui_code_event_delete(struct ui_code *code)
 {
+    if (code->disassembly) return ui_nil;
+
     struct line_ret ret =
         line_delete(&code->text, code->carret.line, code->carret.col);
     assert(ret.index == code->carret.col);
@@ -436,6 +478,8 @@ static enum ui_ret ui_code_event_delete(struct ui_code *code)
 
 static enum ui_ret ui_code_event_backspace(struct ui_code *code)
 {
+    if (code->disassembly) return ui_nil;
+
     struct line_ret ret =
         line_backspace(&code->text, code->carret.line, code->carret.col);
     code->carret.col = ret.index;

@@ -18,10 +18,11 @@ struct ui_mod
 {
     mod_t id;
     const struct mod *mod;
+    bool disassembly;
 
     struct ui_panel panel;
     struct ui_button compile, publish;
-    struct ui_button indent;
+    struct ui_button mode, indent;
     struct ui_button reset;
     struct ui_code code;
 };
@@ -46,11 +47,16 @@ struct ui_mod *ui_mod_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_v(6 + symbol_cap + 5)),
         .compile = ui_button_new(font, ui_str_c("compile")),
         .publish = ui_button_new(font, ui_str_c("publish")),
+        .mode = ui_button_new(font, ui_str_v(4)),
         .indent = ui_button_new(font, ui_str_c("indent")),
         .reset = ui_button_new(font, ui_str_c("reset")),
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
     };
     ui->panel.state = ui_panel_hidden;
+
+    ui->disassembly = false;
+    ui_str_setv(&ui->mode.str, "asm", 3);
+
     return ui;
 }
 
@@ -59,10 +65,28 @@ void ui_mod_free(struct ui_mod *ui)
     ui_panel_free(&ui->panel);
     ui_button_free(&ui->compile);
     ui_button_free(&ui->publish);
+    ui_button_free(&ui->mode);
     ui_button_free(&ui->indent);
     ui_button_free(&ui->reset);
     ui_code_free(&ui->code);
     free(ui);
+}
+
+static void ui_mod_mode_swap(struct ui_mod *ui)
+{
+    ui->disassembly = !ui->disassembly;
+
+    ip_t ip = ui_code_ip(&ui->code);
+
+    if (ui->disassembly) {
+        ui_str_setv(&ui->mode.str, "code", 4);
+        ui_code_set_disassembly(&ui->code, ui->mod, ip);
+    }
+
+    else {
+        ui_str_setv(&ui->mode.str, "asm", 3);
+        ui_code_set_code(&ui->code, ui->mod, ip);
+    }
 }
 
 static void ui_mod_update(struct ui_mod *ui, const struct mod *mod, ip_t ip)
@@ -70,10 +94,18 @@ static void ui_mod_update(struct ui_mod *ui, const struct mod *mod, ip_t ip)
     assert(mod);
 
     ui->mod = mod;
-    ui_code_set(&ui->code, mod, ip);
     ui->publish.disabled = mod->errs_len > 0;
-}
 
+    if (!mod->errs_len) ui->mode.disabled = false;
+    else {
+        ui->mode.disabled = true;
+        ui->disassembly = false;
+        ui_str_setv(&ui->mode.str, "code", 4);
+    }
+
+    if (!ui->disassembly) ui_code_set_code(&ui->code, mod, ip);
+    else ui_code_set_disassembly(&ui->code, mod, ip);
+}
 
 static void ui_mod_title(struct ui_mod *ui)
 {
@@ -92,6 +124,7 @@ static const struct mod *ui_mod_compile(struct ui_mod *ui)
             len, buffer,
             world_mods(core.state.world),
             world_atoms(core.state.world));
+
 
     free(buffer);
     return mod;
@@ -166,6 +199,11 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         return ret == ui_consume;
     }
 
+    if ((ret = ui_button_event(&ui->mode, ev))) {
+        ui_mod_mode_swap(ui);
+        return ret == ui_consume;
+    }
+
     if ((ret = ui_button_event(&ui->indent, ev))) {
         ui_code_indent(&ui->code);
         return ret == ui_consume;
@@ -190,10 +228,16 @@ void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 
     ui_button_render(&ui->compile, &layout, renderer);
     ui_button_render(&ui->publish, &layout, renderer);
+
     ui_layout_sep_x(&layout, 6);
+
+    ui_button_render(&ui->mode, &layout, renderer);
     ui_button_render(&ui->indent, &layout, renderer);
+
     ui_layout_right(&layout, &ui->reset.w);
+
     ui_button_render(&ui->reset, &layout, renderer);
+
     ui_layout_next_row(&layout);
     ui_layout_sep_y(&layout, font->glyph_h);
 
