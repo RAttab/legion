@@ -276,7 +276,7 @@ static ip_t lisp_ip(struct lisp *lisp)
 // index
 // -----------------------------------------------------------------------------
 
-static void lisp_index(struct lisp *lisp)
+static void lisp_index_at(struct lisp *lisp, const struct token *token)
 {
     ip_t ip = lisp_ip(lisp);
     size_t prev = lisp->index.len - 1;
@@ -295,10 +295,15 @@ static void lisp_index(struct lisp *lisp)
         lisp->index.len++;
     }
 
-    index->row = lisp->token.row;
-    index->col = lisp->token.col;
-    index->len = lisp->token.len;
+    index->row = token->row;
+    index->col = token->col;
+    index->len = token->len;
     index->ip = lisp_ip(lisp);
+}
+
+static void lisp_index(struct lisp *lisp)
+{
+    lisp_index_at(lisp, &lisp->token);
 }
 
 

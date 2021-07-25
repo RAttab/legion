@@ -57,6 +57,7 @@ ip_t ui_code_ip(struct ui_code *code)
 void ui_code_goto(struct ui_code *code, ip_t ip)
 {
     if (code->disassembly) {
+        code->carret.line = code->text.first;
         while (code->carret.line->next && code->carret.line->next->user <= ip) {
             code->carret.line = code->carret.line->next;
             code->carret.row++;
@@ -104,6 +105,7 @@ static void ui_code_set(
     code->view.init = true;
 
     if (ip) ui_code_goto(code, ip);
+    else ui_code_view_update(code);
 }
 
 void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)

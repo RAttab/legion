@@ -37,7 +37,7 @@ static bool lisp_stmt(struct lisp *lisp)
     case token_open: {
         lisp->depth++;
         struct token *token = lisp_expect(lisp, token_symb);
-        lisp_index(lisp);
+        lisp_index_at(lisp, token);
 
         struct htable_ret ret = {0};
         uint64_t key = token_symb_hash(token);
@@ -50,21 +50,25 @@ static bool lisp_stmt(struct lisp *lisp)
     }
 
     case token_num: {
+        lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSH);
         lisp_write_value(lisp, token->val.num);
         return true;
     }
     case token_atom: {
+        lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSH);
         lisp_write_value(lisp, atoms_atom(lisp->atoms, &token->val.symb));
         return true;
     }
     case token_reg: {
+        lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSHR);
         lisp_write_value(lisp, (uint8_t) token->val.num);
         return true;
     }
     case token_symb: {
+        lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSHR);
         lisp_write_value(lisp, lisp_reg(lisp, &token->val.symb));
         return true;
@@ -167,6 +171,7 @@ static void lisp_call_mod(struct lisp *lisp, word_t mod)
     reg_t args = 0;
     while (lisp_stmt(lisp)) ++args;
     if (args > 4) lisp_err(lisp, "too many arguments: %u > 4", (unsigned) args);
+    lisp_index_at(lisp, &token);
 
     lisp_regs_t ctx = {0};
     memcpy(ctx, lisp->symb.regs, sizeof(ctx));
@@ -222,6 +227,7 @@ static void lisp_fn_call(struct lisp *lisp)
 
 static void lisp_fn_defun(struct lisp *lisp)
 {
+    struct token index = lisp->token;
     if (lisp->depth > 1) lisp_err(lisp, "nested function");
 
     // since we can have top level instructions, we don't want to actually
@@ -252,6 +258,7 @@ static void lisp_fn_defun(struct lisp *lisp)
     }
 
     lisp_stmts(lisp);
+    lisp_index_at(lisp, &index);
 
     // our return value is above the return ip on the stack. Swaping the two
     // ensures that we can call RET and that the return value will be on top of
@@ -269,10 +276,11 @@ static void lisp_fn_defun(struct lisp *lisp)
 
 static void lisp_fn_load(struct lisp *lisp)
 {
+    struct token index = lisp->token;
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing load mod argument"); return; }
 
+    lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_LOAD);
-
     lisp_expect_close(lisp);
 }
 
@@ -313,6 +321,7 @@ static void lisp_fn_let(struct lisp *lisp)
             lisp_goto_close(lisp);
             break;
         }
+        struct token index_reg = *token;
 
         uint64_t key = token_symb_hash(lisp_expect(lisp, token_symb));
 
@@ -320,6 +329,8 @@ static void lisp_fn_let(struct lisp *lisp)
             lisp_err(lisp, "missing statement");
             continue;
         }
+
+        lisp_index_at(lisp, &index_reg);
 
         reg_t reg = lisp_reg_alloc(lisp, key);
         lisp_write_op(lisp, OP_POPR);
@@ -495,6 +506,8 @@ static void lisp_fn_for(struct lisp *lisp)
 
 static void lisp_fn_set(struct lisp *lisp)
 {
+    struct token index = lisp->token;
+
     struct token *token = lisp_expect(lisp, token_symb);
     if (!token) { lisp_goto_close(lisp); return; }
     reg_t reg = lisp_reg(lisp, &token->val.symb);
@@ -504,6 +517,7 @@ static void lisp_fn_set(struct lisp *lisp)
         return;
     }
 
+    lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_POPR);
     lisp_write_value(lisp, reg);
 
@@ -512,11 +526,14 @@ static void lisp_fn_set(struct lisp *lisp)
 
 static void lisp_fn_id(struct lisp *lisp)
 {
+    struct token index = lisp->token;
+
     if (!lisp_stmt(lisp)) { // type
         lisp_err(lisp, "missing type argument");
         return;
     }
 
+    lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_PUSH);
     lisp_write_value(lisp, (word_t) 24);
     lisp_write_op(lisp, OP_BSL);
@@ -526,6 +543,7 @@ static void lisp_fn_id(struct lisp *lisp)
         return;
     }
 
+    lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_ADD);
 
     lisp_expect_close(lisp);
@@ -569,8 +587,11 @@ static void lisp_fn_mod(struct lisp *lisp)
 // without adding a vm instruction to do so :/
 static void lisp_fn_io(struct lisp *lisp)
 {
+    struct token token = lisp->token;
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing op argument"); return; }
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing dst argument"); return; }
+
+    lisp_index_at(lisp, &token);
     lisp_write_op(lisp, OP_SWAP);
     lisp_write_op(lisp, OP_PACK);
 
@@ -580,6 +601,7 @@ static void lisp_fn_io(struct lisp *lisp)
     if (len > vm_io_cap)
         lisp_err(lisp, "too many io arguments: %zu > %u", len, vm_io_cap);
 
+    lisp_index_at(lisp, &token);
     lisp_write_op(lisp, OP_IO);
     lisp_write_value(lisp, (uint8_t) len);
 }
@@ -587,11 +609,16 @@ static void lisp_fn_io(struct lisp *lisp)
 
 static void lisp_fn_sub(struct lisp *lisp)
 {
+    struct token index = lisp->token;
+
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing first argument"); return; }
 
-    if (!lisp_stmt(lisp))
+    if (!lisp_stmt(lisp)) {
+        lisp_index_at(lisp, &index);
         lisp_write_op(lisp, OP_NEG);
+    }
     else {
+        lisp_index_at(lisp, &index);
         lisp_write_op(lisp, OP_SUB);
         lisp_expect_close(lisp);
     }
@@ -611,10 +638,14 @@ static void lisp_fn_yield(struct lisp *lisp)
 
 static void lisp_fn_assert(struct lisp *lisp)
 {
+    struct token index = lisp->token;
+
     if (!lisp_stmt(lisp)) {
         lisp_err(lisp, "missing predicate");
         return;
     }
+
+    lisp_index_at(lisp, &index);
 
     lisp_write_op(lisp, OP_JNZ);
     ip_t jmp_false = lisp_skip(lisp, sizeof(jmp_false));
@@ -639,31 +670,44 @@ static void lisp_fn_0(struct lisp *lisp, enum op_code op, const char *str)
 
 static void lisp_fn_1(struct lisp *lisp, enum op_code op, const char *str)
 {
+    struct token index = lisp->token;
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing argument", str);  return; }
+
+    lisp_index_at(lisp, &index);
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }
 
 static void lisp_fn_2(struct lisp *lisp, enum op_code op, const char *str)
 {
+    struct token index = lisp->token;
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing first argument", str); return; }
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing second argument", str); return; }
+
+    lisp_index_at(lisp, &index);
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }
 
 static void lisp_fn_n(struct lisp *lisp, enum op_code op, const char *str)
 {
+    struct token index = lisp->token;
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing first argument", str); return; }
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing second argument", str); return; }
 
-    do { lisp_write_value(lisp, op); } while (lisp_stmt(lisp));
+    do {
+        lisp_index_at(lisp, &index);
+        lisp_write_value(lisp, op);
+    } while (lisp_stmt(lisp));
 }
 
 static void lisp_fn_compare(struct lisp *lisp, enum op_code op, const char *str)
 {
+    struct token index = lisp->token;
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing first argument", str); return; }
     if (!lisp_stmt(lisp)) { lisp_err(lisp, "%s: missing second argument", str); return; }
+
+    lisp_index_at(lisp, &index);
 
     // gotta swap before the compare as the lisp semantics differ from the vm
     // semantics
