@@ -54,7 +54,5 @@
   (boot/wait (id !item_assembly_1 1)))
 
 (defun boot/wait (id)
-  (while
-      (if (= (io !io_status id) !io_ok)
-	  (if (<= (head) 1) (fault) (/= (head) 0)))
+  (while (if (= (io !io_status id) !io_ok) (/= (head) 0))
     (yield)))
