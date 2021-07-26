@@ -10,41 +10,38 @@
   (io !io_prog (id !item_printer_1 1) !item_frame)
   (io !io_prog (id !item_printer_1 2) !item_circuit)
 
-  (io !io_prog (id !item_assembly_1 1) !item_extract_1
-      (* n (- !item_elem_k !item_elem_a)))
-
-  (io !io_item (id !item_deploy 1) !item_extract_1)
-
-  (boot/wait (id !item_assembly_1 1))
-
-  (let ((items (- !item_elem_k !item_elem_a))
+  (let ((items (+ 1 (- !item_elem_k !item_elem_a)))
 	(total (* items n)))
+
+    (io !io_prog (id !item_assembly_1 1) !item_extract_1 total)
+    (io !io_item (id !item_deploy 1) !item_extract_1)
+
+    (boot/wait (id !item_assembly_1 1))
+
     (for (i 0) (< i total) (+ i 1)
 	 (io !io_prog (id !item_extract_1 (+ i 1)) (+ !item_elem_a (/ i n))))))
 
 (defun boot/printers (n)
-  (io !io_prog (id !item_assembly_1 1) !item_printer_1
-      (* n (- !item_neural !item_frame)))
-
-  (io !io_item (id !item_deploy 1) !item_printer_1)
-
-  (boot/wait (id !item_assembly_1 1))
-
-  (let ((items (- !item_neural !item_frame))
+  (let ((items (+ 1 (- !item_neural !item_frame)))
 	(total (* items n)))
+
+    (io !io_prog (id !item_assembly_1 1) !item_printer_1 total)
+    (io !io_item (id !item_deploy 1) !item_printer_1)
+
+    (boot/wait (id !item_assembly_1 1))
+
     (for (i 0) (<= i total) (+ i 1)
 	 (io !io_prog (id !item_printer_1 (+ i 1)) (+ !item_elem_a (/ i n))))))
 
 (defun boot/assemblers (n)
-  (io !io_prog (id !item_assembly_1 1) !item_assembly_1
-      (* n (- !item_databank !item_servo)))
-
-  (io !io_item (id !item_deploy 1) !item_assembly_1)
-
-  (boot/wait (id !item_assembly_1 1))
-
-  (let ((items (- !item_databank !item_servo))
+  (let ((items (+ 1 (- !item_databank !item_servo)))
 	(total (* items n)))
+
+    (io !io_prog (id !item_assembly_1 1) !item_assembly_1 total)
+    (io !io_item (id !item_deploy 1) !item_assembly_1)
+
+    (boot/wait (id !item_assembly_1 1))
+
     (for (i 0) (<= i total) (+ i 1)
 	 (io !io_prog (id !item_assembly_1 (+ i 2)) (+ !item_elem_a (/ i n))))))
 
