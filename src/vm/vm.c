@@ -151,6 +151,8 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
     }
 
     static const void *opcodes[] = {
+        [OP_NOOP]   = &&op_noop,
+
         [OP_PUSH]   = &&op_push,
         [OP_PUSHR]  = &&op_pushr,
         [OP_PUSHF]  = &&op_pushf,
@@ -265,6 +267,8 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
         const void *label = opcodes[opcode];
         if (unlikely(!label)) { vm->flags |= FLAG_FAULT_CODE; return 0; }
         goto *label;
+
+      op_noop: { continue; }
 
       op_push: { vm_push(vm_code(word_t)); continue; }
       op_pushr: { vm_push(vm->regs[vm_code(reg_t)]); continue; }
@@ -448,8 +452,8 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
       op_unpack: {
             uint32_t msb = 0, lsb = 0;
             vm_unpack(vm_pop(), &msb, &lsb);
-            vm_push(lsb);
             vm_push(msb);
+            vm_push(lsb);
             continue;
         }
     }

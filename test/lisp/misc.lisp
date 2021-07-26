@@ -3,9 +3,9 @@
 
 (misc/id
  ()
- ((id 1 2)
+ ((assert (= 0x01000002 (id 1 2)))
   (yield))
- (sp:1 #0:0x01000002))
+ (sp:0 flags:0))
 
 
 ;; ##########################################################
@@ -32,8 +32,9 @@
 
 (misc/set
  ()
- ((let ((a 1)) (set a 2) a))
- ($0:2 sp:1 #0:2))
+ ((assert (= 2 (let ((a 1)) (set a 2) a)))
+  (yield))
+ ($0:2 sp:0 flags:0))
 
 
 ;; ##########################################################
@@ -49,9 +50,9 @@
 
 (misc/tsc
  ()
- ((tsc)
+ ((assert (> (tsc) 0))
   (yield))
- (sp:1))
+ (sp:0 flags:0))
 
 (misc/fault
  ()
@@ -60,12 +61,15 @@
 
 (misc/pack
  ()
- ((pack 1 2)
+ ((assert (= 0x0000000200000001 (pack 1 2)))
   (yield))
- (sp:1 #0:0x0000000200000001))
+ (sp:0 flags:0))
 
 (misc/unpack
  ()
- ((unpack (pack 1 2))
+ ((let ((top (unpack (pack 1 2)))
+	(bot (head)))
+    (assert (= top 1))
+    (assert (= bot 2)))
   (yield))
- (sp:2 #0:1 #1:2))
+ (sp:0 flags:0))

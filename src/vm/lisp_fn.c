@@ -87,9 +87,20 @@ static void lisp_stmts(struct lisp *lisp)
         return;
     }
 
-    while (lisp_stmt(lisp)) {
-        lisp_write_op(lisp, OP_SWAP);
-        lisp_write_op(lisp, OP_POP);
+    // If we don't use the return of the previous statment we need to pop it out
+    // of the stack. Since we can't peek the next token, the simplest solution
+    // is to SWAP & POP after the statement executes but that leaves garbage on
+    // the stack which is problematic for our small vms.
+    //
+    // Instead we introduce a NOOP after every statement and overwrite it with a
+    // POP if we need to discard the return value.
+    while (true) {
+        ip_t noop = lisp_ip(lisp);
+        lisp_write_op(lisp, OP_NOOP);
+
+        if (!lisp_stmt(lisp)) break;
+
+        lisp_write_value_at(lisp, noop, (enum op_code) OP_POP);
     }
 }
 
@@ -518,7 +529,11 @@ static void lisp_fn_set(struct lisp *lisp)
     }
 
     lisp_index_at(lisp, &index);
+
     lisp_write_op(lisp, OP_POPR);
+    lisp_write_value(lisp, reg);
+
+    lisp_write_op(lisp, OP_PUSHR);
     lisp_write_value(lisp, reg);
 
     lisp_expect_close(lisp);
@@ -652,6 +667,9 @@ static void lisp_fn_assert(struct lisp *lisp)
 
     lisp_write_op(lisp, OP_FAULT);
     lisp_write_value_at(lisp, jmp_false, lisp_ip(lisp));
+
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) 0);
 
     lisp_expect_close(lisp);
 }

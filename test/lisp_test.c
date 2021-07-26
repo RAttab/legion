@@ -252,6 +252,16 @@ void token_goto_close(struct file *file)
         ok;                                                             \
     })
 
+
+#define check_flag(flag, _tval_, _texp_)                                \
+    ({                                                                  \
+        uint8_t _val_ = (_tval_) & (flag);                              \
+        uint8_t _exp_ = (_texp_) & (flag);                              \
+        bool ok = _val_ == _exp_;                                       \
+        if (!ok) dbg("<%s> val:%x != exp:%x", #flag, _val_, _exp_);     \
+        ok;                                                             \
+    })
+
 #define field(str)                                                      \
     ({                                                                  \
         struct symbol symbol = make_symbol_len((str), sizeof(str));     \
@@ -387,11 +397,20 @@ bool check_mod(
             word_t exp = token_word(file, atoms);
             if (key == field("S")) ok = check_u64("S", vm->specs.stack, exp) && ok;
             else if (key == field("C")) ok = check_u64("C", vm->specs.speed, exp) && ok;
-            else if (key == field("flags")) ok = check_u64("flags", vm->flags, exp) && ok;
             else if (key == field("io")) ok = check_u64("io", vm->io, exp) && ok;
             else if (key == field("ior")) ok = check_u64("ior", vm->ior, exp) && ok;
             else if (key == field("sp")) ok = check_u64("sp", vm->sp, exp) && ok;
             else if (key == field("ret")) ok = check_u64("ret", ret, exp) && ok;
+            else if (key == field("flags")) {
+                ok = check_flag(FLAG_IO, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_SUSPENDED, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_FAULT_USER, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_FAULT_REG, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_FAULT_STACK, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_FAULT_CODE, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_FAULT_MATH, vm->flags, exp) && ok;
+                ok = check_flag(FLAG_FAULT_IO, vm->flags, exp) && ok;
+            }
 
             break;
         }
