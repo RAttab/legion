@@ -106,3 +106,9 @@ inline void *alloc_cache(size_t n)
         fprintf(stderr, "%s:%u: " _fmt_ "\n", __FILE__, __LINE__, __VA_ARGS__); \
     } while (false)
 
+
+#define dbg0(_str_)                                                     \
+    do {                                                                \
+        fprintf(stderr, "%s:%u: " _str_ "\n", __FILE__, __LINE__);      \
+    } while (false)
+

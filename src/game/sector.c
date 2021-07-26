@@ -106,6 +106,11 @@ struct sector *sector_gen(struct world *world, struct coord coord)
 
 void sector_free(struct sector *sector)
 {
+    for(struct htable_bucket *it = htable_next(&sector->chunks, NULL);
+        it; it = htable_next(&sector->chunks, it))
+        chunk_free((void *) it->value);
+    htable_reset(&sector->chunks);
+    htable_reset(&sector->index);
     free(sector);
 }
 

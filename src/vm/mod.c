@@ -164,7 +164,7 @@ ip_t mod_byte(const struct mod *mod, size_t row, size_t col)
         if (row < next->row && col < next->col)
             return mod->index[i].ip;
     }
-    assert(false);
+    return mod->len;
 }
 
 size_t mod_dump(const struct mod *mod, char *dst, size_t len)
@@ -276,7 +276,8 @@ struct mod_entry
 
 struct mods *mods_new(void)
 {
-    return calloc(1, sizeof(struct mods));
+    struct mods *mods = calloc(1, sizeof(struct mods));
+    return mods;
 }
 
 void mods_free(struct mods *mods)
@@ -287,8 +288,8 @@ void mods_free(struct mods *mods)
         free((struct mod_entry *) it->value);
     htable_reset(&mods->by_id);
 
-    for (htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
-        free((struct mod *) it->value);
+    for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
+        mod_free((struct mod *) it->value);
     htable_reset(&mods->by_mod);
 
     free(mods);

@@ -70,6 +70,7 @@ void active_free(struct active *active)
     if (!active) return;
     free(active->arena);
     free(active->ports);
+    free(active);
 }
 
 void active_delete(struct active *active, id_t id)

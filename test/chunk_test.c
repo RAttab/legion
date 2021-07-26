@@ -33,6 +33,9 @@ void test_active_list(void)
     assert(*(it = active_next(&list, NULL)) == p0);
     assert(*(it = active_next(&list, it)) == p1);
     assert(!active_next(&list, it));
+
+    active_free(p0);
+    active_free(p1);
 }
 
 
@@ -93,6 +96,8 @@ void test_ports_2on1(void)
         chunk_step(chunk);
         assert(chunk_ports_consume(chunk, dst) == item);
     }
+
+    chunk_free(chunk);
 }
 
 void test_ports_1on2(void)
@@ -126,6 +131,8 @@ void test_ports_1on2(void)
         assert(chunk_ports_consume(chunk, dst0) == item);
         assert(chunk_ports_consume(chunk, dst1) == ITEM_NIL);
     }
+
+    chunk_free(chunk);
 }
 
 int main(int argc, char **argv)

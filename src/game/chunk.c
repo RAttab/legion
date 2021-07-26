@@ -40,7 +40,6 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->star = *star;
     chunk->requested = ring32_reserve(16);
     chunk->shuttles = ring64_reserve(2);
-    htable_reset(&chunk->provided);
     return chunk;
 }
 
@@ -50,7 +49,14 @@ void chunk_free(struct chunk *chunk)
     for (; it; it = active_next(&chunk->active, it)) active_free(*it);
     ring32_free(chunk->requested);
     ring64_free(chunk->shuttles);
+
+    for (struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+         it; it = htable_next(&chunk->provided, it))
+    {
+        ring32_free((void *) it->value);
+    }
     htable_reset(&chunk->provided);
+
     free(chunk);
 }
 

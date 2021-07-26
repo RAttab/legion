@@ -61,3 +61,11 @@ inline struct vec64 *vec64_sort(struct vec64 *vec)
     }
     qsort(vec->vals, vec->len, sizeof(vec->vals[0]), cmp);
 }
+
+inline bool vec64_eq(const struct vec64 *lhs, const struct vec64 *rhs)
+{
+    if (lhs->len != rhs->len) return false;
+    for (size_t i = 0; i < lhs->len; ++i)
+        if (lhs->vals[i] != rhs->vals[i]) return false;
+    return true;
+}

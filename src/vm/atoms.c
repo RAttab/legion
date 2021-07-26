@@ -41,11 +41,11 @@ enum
 struct atoms *atoms_new(void)
 {
     struct atoms *atoms = calloc(1, sizeof(*atoms));
-    atoms->id = 1;
+    atoms->id = 1UL << 31;
 
     atoms->base = alloc_cache(atoms_default_cap * sizeof(*atoms->base));
     atoms->end = atoms->base + atoms_default_cap;
-    atoms->it = atoms->base + atoms->id; // htable can't index 0
+    atoms->it = atoms->base + 1; // htable can't index 0
 
     htable_reserve(&atoms->istr, atoms_default_cap);
     htable_reserve(&atoms->iword, atoms_default_cap);
@@ -76,18 +76,18 @@ struct atoms *atoms_load(struct save *save)
         cap_str *= atoms_cap_str_mul;
     }
 
+    if (atoms->base) free(atoms->base);
     atoms->base = alloc_cache(cap * sizeof(*atoms->base));
     atoms->end = atoms->base + cap;
     atoms->it = atoms->base + len;
-    save_read(save, atoms->base, atoms->it - atoms->base);
-
+    save_read(save, atoms->base, (atoms->it - atoms->base) * sizeof(*atoms->it));
 
     htable_reserve(&atoms->iword, cap);
     htable_reserve(&atoms->istr, cap_str);
 
-    for (struct atom_data *it = atoms->base; it < atoms->end; it++) {
+    for (struct atom_data *it = atoms->base + 1; it < atoms->it; it++) {
         it->next = 0;
-        uint64_t index = (it - atoms->base) / sizeof(*it);
+        uint64_t index = it - atoms->base;
 
         struct htable_ret ret = htable_put(&atoms->iword, it->word, index);
         assert(ret.ok);
@@ -113,11 +113,11 @@ struct atoms *atoms_load(struct save *save)
 void atoms_save(struct atoms *atoms, struct save *save)
 {
     save_write_magic(save, save_magic_atoms);
-    size_t len = (atoms->it - atoms->base) / sizeof(*atoms->it);
+    size_t len = atoms->it - atoms->base;
 
     save_write_value(save, atoms->id);
     save_write_value(save, len);
-    save_write(save, atoms->base, atoms->it - atoms->base);
+    save_write(save, atoms->base, (atoms->it - atoms->base) * sizeof(*atoms->it));
 
     save_write_magic(save, save_magic_atoms);
 }
@@ -146,7 +146,7 @@ static void atoms_expand(struct atoms *atoms)
 {
     if (likely(atoms->it < atoms->end)) return;
 
-    size_t old = (atoms->end - atoms->base) / sizeof(*atoms->base);
+    size_t old = atoms->end - atoms->base;
     size_t new = old * atoms_cap_mul;
 
     atoms->base = realloc(atoms->base, new * sizeof(*atoms->base));
@@ -160,7 +160,7 @@ static void atoms_grow_index(struct atoms *atoms)
     htable_reset(&atoms->istr);
     htable_reserve(&atoms->istr, end);
 
-    size_t len = (atoms->it - atoms->base) / sizeof(*atoms->base);
+    size_t len = atoms->it - atoms->base;
     for (size_t i = 0; i < len; ++i) {
         struct atom_data *data = &atoms->base[i];
         data->next = 0;
@@ -272,4 +272,17 @@ word_t atoms_parse(struct atoms *atoms, const char *it, size_t len)
     struct symbol symbol = {0};
     if (!symbol_parse(it, end - it, &symbol)) return -1;
     return atoms_atom(atoms, &symbol);
+}
+
+struct vec64 *atoms_list(struct atoms *atoms)
+{
+    struct vec64 *list = vec64_reserve(atoms->iword.len);
+
+    for (struct htable_bucket *it = htable_next(&atoms->iword, NULL);
+         it; it = htable_next(&atoms->iword, it))
+    {
+        list = vec64_append(list, it->key);
+    }
+
+    return list;
 }

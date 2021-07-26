@@ -10,8 +10,8 @@ declare -a SRC
 SRC=(ui render game vm utils)
 
 declare -a TEST
-TEST=(coord text lisp chunk)
-#TEST=(lisp)
+TEST=(coord text lisp chunk save)
+# TEST=(save)
 
 CC=${CC:-gcc}
 

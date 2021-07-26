@@ -46,11 +46,11 @@
   (let ((items (- !item_databank !item_servo))
 	(total (* items n)))
     (for (i 0) (<= i total) (+ i 1)
-	 (io !io_prog (id !item_assymbly_1 (+ i 2)) (+ !item_elem_a (/ i n))))))
+	 (io !io_prog (id !item_assembly_1 (+ i 2)) (+ !item_elem_a (/ i n))))))
 
 (defun boot/workers (n)
   (io !io_prog (id !item_assembly_1 1) !item_worker n)
-  (io !io_item (id !item_deploy 1) !item_worker_1)
+  (io !io_item (id !item_deploy 1) !item_worker)
   (boot/wait (id !item_assembly_1 1)))
 
 (defun boot/wait (id)

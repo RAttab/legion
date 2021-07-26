@@ -28,8 +28,6 @@ struct world *world_new(void)
     struct world *world = calloc(1, sizeof(*world));
 
     world->atoms = atoms_new();
-    atoms_register_game(world->atoms);
-
     world->mods = mods_new();
     lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
@@ -39,13 +37,15 @@ struct world *world_new(void)
 
 void world_free(struct world *world)
 {
-    struct htable_bucket *it = htable_next(&world->sectors, NULL);
-    for (; it; it = htable_next(&world->sectors, it))
+    for (struct htable_bucket *it = htable_next(&world->sectors, NULL);
+         it; it = htable_next(&world->sectors, it))
         sector_free((struct sector *) it->value);
     htable_reset(&world->sectors);
+
     lanes_free(&world->lanes);
     mods_free(world->mods);
     atoms_free(world->atoms);
+
     free(world);
 }
 
@@ -56,8 +56,12 @@ struct world *world_load(struct save *save)
     struct world *world = world_new();
     save_read_into(save, &world->time);
 
+    atoms_free(world->atoms);
     if (!(world->atoms = atoms_load(save))) goto fail;
+
+    mods_free(world->mods);
     if (!(world->mods = mods_load(save))) goto fail;
+
     if (!lanes_load(&world->lanes, world, save)) goto fail;
 
     uint32_t sectors = save_read_type(save, uint32_t);
@@ -118,6 +122,7 @@ void world_step(struct world *world)
 
 struct coord world_populate(struct world *world)
 {
+    atoms_register_game(world->atoms);
     mods_populate(world->mods, world->atoms);
 
     struct rng rng = rng_make(0);

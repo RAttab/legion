@@ -141,3 +141,5 @@ bool atoms_set(struct atoms *, const struct symbol *, word_t id);
 word_t atoms_atom(struct atoms *, const struct symbol *);
 bool atoms_str(struct atoms *, word_t id, struct symbol *dst);
 word_t atoms_parse(struct atoms *, const char *str, size_t len);
+
+struct vec64 *atoms_list(struct atoms *);
