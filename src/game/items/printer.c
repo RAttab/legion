@@ -43,7 +43,9 @@ static void printer_load(void *state, struct chunk *chunk)
 static void printer_step_eof(struct printer *printer)
 {
     if (printer->loops != loops_inf) printer->loops--;
-    if (printer->loops) printer->prog = prog_packed_it_zero(printer->prog);
+
+    if (!printer->loops) printer->prog = 0;
+    else printer->prog = prog_packed_it_zero(printer->prog);
 }
 
 static void printer_step_input(
@@ -119,8 +121,7 @@ static void printer_io_prog(
     if (prog_id != (enum item) prog_id) return;
 
     const struct prog *prog = prog_fetch(prog_id);
-    if (!prog) return;
-    if (prog_host(prog) != id_item(printer->id)) return;
+    if (!prog || prog_host(prog) != id_item(printer->id)) return;
 
     printer_io_reset(printer, chunk);
     printer->prog = prog_pack(prog_id, 0, prog);

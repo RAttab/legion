@@ -43,7 +43,9 @@ static void extract_load(void *state, struct chunk *chunk)
 static void extract_step_eof(struct extract *extract)
 {
     if (extract->loops != loops_inf) extract->loops--;
-    if (extract->loops) extract->prog = prog_packed_it_zero(extract->prog);
+
+    if (!extract->loops) extract->prog = 0;
+    else extract->prog = prog_packed_it_zero(extract->prog);
 }
 
 static void extract_step_input(
@@ -120,8 +122,8 @@ static void extract_io_prog(
     if (prog_id != (enum item) prog_id) return;
 
     const struct prog *prog = prog_fetch(prog_id);
-    if (!prog) return;
-    
+    if (!prog || prog->host != id_item(extract->id)) return;
+
     extract_io_reset(extract, chunk);
     extract->prog = prog_pack(prog_id, 0, prog);
     extract->loops = loops_io(len > 1 ? args[1] : loops_inf);
