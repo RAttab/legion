@@ -191,6 +191,25 @@ void line_setf(struct text *text, struct line *line, size_t cap, const char *fmt
     text->bytes += delta;
 }
 
+static struct line *line_replace_tabs(struct text *text, struct line *line)
+{
+    char *it = line->c;
+    char *end = it + line->len;
+    while (it < end && *it == '\t') it++;
+
+    size_t len = it - line->c;
+    size_t spaces = len * 8;
+    if (!len) return line;
+
+    line = line_realloc(text, line, line->len + spaces - len);
+    memmove(line->c + spaces, line->c + len, line->len);
+    memset(line->c, ' ', spaces);
+
+    line->len += spaces - len;
+    text->bytes += spaces - len;
+    return line;
+}
+
 
 // -----------------------------------------------------------------------------
 // text
@@ -294,9 +313,7 @@ size_t text_to_str(const struct text *text, char *dst, size_t len)
         memcpy(dst, it->c, it->len);
         dst += it->len;
 
-        *dst = '\n';
-        dst++;
-
+        if (it->next) { *dst = '\n'; dst++; }
         written += to_write;
     }
 
@@ -318,9 +335,12 @@ void text_from_str(struct text *text, const char *src, size_t len)
         while (src < end && *src != '\n') src++;
 
         line->len = src - start;
+        text->bytes += line->len;
+
         line = line_realloc(text, line, line->len);
         memcpy(line->c, start, line->len);
-        text->bytes += line->len;
+
+        line = line_replace_tabs(text, line);
 
         if (*src == '\n') {
             line = text_insert(text, line);
