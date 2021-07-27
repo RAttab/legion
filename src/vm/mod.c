@@ -64,40 +64,49 @@ void mod_free(const struct mod *mod)
 struct mod *mod_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_mod)) return NULL;
+    struct mod *mod = NULL;
 
     mod_t id = save_read_type(save, typeof(id));
-    uint32_t code_len = save_read_type(save, typeof(code_len));
-    uint32_t src_len = save_read_type(save, typeof(src_len));
-    uint32_t pub_len = save_read_type(save, typeof(pub_len));
-    uint32_t index_len = save_read_type(save, typeof(index_len));
 
-    size_t total_bytes = sizeof(struct mod) + code_len + src_len + pub_len + index_len;
-    struct mod *mod = alloc_cache(align_cache(total_bytes));
+    uint32_t code_len = save_read_type(save, typeof(code_len));
+    size_t code_bytes = code_len * sizeof(*mod->code);
+
+    uint32_t src_len = save_read_type(save, typeof(src_len));
+    size_t src_bytes = src_len * sizeof(*mod->src);
+
+    uint32_t pub_len = save_read_type(save, typeof(pub_len));
+    size_t pub_bytes = pub_len * sizeof(*mod->pub);
+
+    uint32_t index_len = save_read_type(save, typeof(index_len));
+    size_t index_bytes = index_len * sizeof(*mod->index);
+
+    size_t total_bytes = sizeof(*mod) + code_bytes + src_bytes + pub_bytes + index_bytes;
+    mod = alloc_cache(align_cache(total_bytes));
     mod->id = id;
 
     void *it = mod + 1;
 
     mod->len = code_len;
-    save_read(save, it, code_len);
-    it += code_len;
+    save_read(save, it, code_bytes);
+    it += code_bytes;
 
     mod->src_len = src_len;
     mod->src = it;
-    save_read(save, it, src_len);
-    it += src_len;
+    save_read(save, it, src_bytes);
+    it += src_bytes;
 
     mod->pub_len = pub_len;
     mod->pub = it;
-    save_read(save, it, pub_len);
-    it += pub_len;
+    save_read(save, it, pub_bytes);
+    it += pub_bytes;
 
     mod->errs_len = 0;
     mod->errs = it;
 
     mod->index_len = index_len;
     mod->index = it;
-    save_read(save, it, index_len);
-    it += index_len;
+    save_read(save, it, index_bytes);
+    it += index_bytes;
 
     assert(it == ((void *) mod) + total_bytes);
 
@@ -115,10 +124,10 @@ void mod_save(const struct mod *mod, struct save *save)
     save_write_value(save, mod->src_len);
     save_write_value(save, mod->pub_len);
     save_write_value(save, mod->index_len);
-    save_write(save, mod->code, mod->len);
-    save_write(save, mod->src, mod->src_len);
-    save_write(save, mod->pub, mod->pub_len);
-    save_write(save, mod->index, mod->index_len);
+    save_write(save, mod->code, mod->len * sizeof(*mod->code));
+    save_write(save, mod->src, mod->src_len * sizeof(*mod->src));
+    save_write(save, mod->pub, mod->pub_len * sizeof(*mod->pub));
+    save_write(save, mod->index, mod->index_len * sizeof(*mod->index));
     save_write_magic(save, save_magic_mod);
 }
 
