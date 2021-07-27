@@ -233,6 +233,8 @@ static void brain_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, 0, NULL); return; }
     case IO_STATUS: { brain_io_status(brain, chunk, src); return; }
     case IO_STATE: { brain_io_state(brain, len, args); return; }
+    case IO_COORD: { vm_push(&brain->vm, coord_to_id(chunk_star(chunk)->coord)); return; }
+
     case IO_MOD: { brain_io_mod(brain, chunk, len, args); return; }
     case IO_RESET: { brain_io_reset(brain); return; }
     case IO_VAL: { brain_io_val(brain, len, args); return; }
@@ -255,7 +257,7 @@ static void brain_io(
 const struct active_config *brain_config(enum item item)
 {
     static const word_t io_list[] = {
-        IO_PING, IO_STATUS, IO_STATE,
+        IO_PING, IO_STATUS, IO_STATE, IO_COORD,
         IO_MOD, IO_RESET,
         IO_VAL, IO_SEND, IO_RECV,
         IO_DBG_ATTACH, IO_DBG_DETACH, IO_DBG_BREAK, IO_DBG_STEP,

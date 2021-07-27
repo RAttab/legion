@@ -27,6 +27,8 @@ legion_packed enum atom_io
     IO_STATUS,
     IO_STATE,
 
+    IO_COORD,
+
     IO_RESET,
     IO_ITEM,
     IO_PROG,
