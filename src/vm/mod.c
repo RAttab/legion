@@ -163,17 +163,22 @@ struct mod_index mod_index(const struct mod *mod, ip_t ip)
     for (size_t i = 0; i < mod->index_len; ++i) {
         if (ip < mod->index[i+1].ip) return mod->index[i];
     }
-    assert(false);
+
+    return mod->index[mod->index_len-1];
 }
 
 ip_t mod_byte(const struct mod *mod, size_t row, size_t col)
 {
-    for (size_t i = 0; i < mod->index_len; ++i) {
-        struct mod_index *next = &mod->index[i+1];
-        if (row < next->row && col < next->col)
-            return mod->index[i].ip;
+    const struct mod_index *it = mod->index;
+    const struct mod_index *end = it + mod->index_len;
+
+    while (it < end) {
+        if (row == it->row && col >= it->col && col < it->col + it->len)
+            return it->ip;
+        it++;
     }
-    return mod->len;
+
+    return mod->index[mod->index_len-1].ip;
 }
 
 size_t mod_dump(const struct mod *mod, char *dst, size_t len)

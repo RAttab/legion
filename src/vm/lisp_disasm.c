@@ -31,8 +31,8 @@ static void lisp_disasm_out(
 {
     disasm->line->user = ip;
 
-    if (!arg_len) line_setf(&disasm->text, disasm->line, 32, "  (%s)\n", op);
-    else line_setf(&disasm->text, disasm->line, 32, "  (%s %s)\n", op, arg);
+    if (!arg_len) line_setf(&disasm->text, disasm->line, 32, "  (%s)", op);
+    else line_setf(&disasm->text, disasm->line, 32, "  (%s %s)", op, arg);
 
     disasm->line = text_insert(&disasm->text, disasm->line);
 }

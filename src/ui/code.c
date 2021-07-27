@@ -106,8 +106,7 @@ static void ui_code_set(
     code->view.line = code->text.first;
     code->view.init = true;
 
-    if (ip) ui_code_goto(code, ip);
-    else ui_code_view_update(code);
+    ui_code_goto(code, ip);
 }
 
 void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)
