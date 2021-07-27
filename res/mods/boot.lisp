@@ -6,6 +6,8 @@
 (boot/printer 4)
 (boot/assembler 2)
 
+(boot/legion 10)
+
 
 (defun boot/extract (n)
   (let ((current  (boot/count !item_extract_1)))
@@ -103,12 +105,44 @@
   (+ id n))
 
 
+(defun boot/legion (n)
+  (let ((id (boot/count !item_assembly_1)))
+
+    (io !io_prog (id !item_assembly_1 1) !item_assembly_1 7)
+    (io !io_item (id !item_deploy 1) !item_assembly_1)
+    (boot/wait (id !item_assembly_1 1))
+
+    (set id (boot/assembly-set id 1 !item_extract_1))
+    (set id (boot/assembly-set id 1 !item_printer_1))
+    (set id (boot/assembly-set id 1 !item_assembly_1))
+    (set id (boot/assembly-set id 1 !item_db_1))
+    (set id (boot/assembly-set id 1 !item_brain_1))
+    (set id (boot/assembly-set id 1 !item_worker)))
+
+  (io !io_item (id !item_deploy 1) !item_legion_1)
+  (io !io_prog (id !item_assembly_1 1) !item_legion_1 n)
+  (io !io_scan (id !item_scanner_1 1) (boot/coord))
+  (boot/wait (id !item_assembly_1 1))
+
+  (for (i 0) (< i n) (+ i 1)
+       (io !io_mod (id !item_legion_1 (+ i 1)) (mod))
+       (io !io_launch (id !item_legion_1 (+ i 1)) (boot/scan-result))))
+
+
 (defun boot/wait (id)
   (while (if (= (io !io_status id) !io_ok) (/= (head) 0))
     (yield)))
 
-(defun boot/count (item)
+(defun boot/scan-result ()
+  (let ((coord 0))
+    (while (not coord)
+      (set coord (progn (io !io_result (id !item_scanner_1 1)) (head))))))
+
+(defun boot/coord ()
   (assert (= !io_ok (io !io_coord 0)))
-  (let ((coord (head))) (io !io_scan (id !item_scanner_1 1) coord item))
+  (head))
+
+(defun boot/count (item)
+  (io !io_scan (id !item_scanner_1 1) (boot/coord) item)
   (io !io_result (id !item_scanner_1 1))
   (head))
