@@ -94,15 +94,15 @@ enum { brain_msg_cap = 4 };
 struct legion_packed brain
 {
     id_t id;
-    uint8_t debug;
+
     legion_pad(3);
+    uint8_t debug;
+    ip_t breakpoint;
 
     id_t msg_src;
     uint8_t msg_len;
     legion_pad(3);
     word_t msg[brain_msg_cap];
-
-    legion_pad(4);
 
     mod_t mod_id;
     const struct mod *mod;

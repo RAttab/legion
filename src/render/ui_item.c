@@ -256,14 +256,18 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
+    struct font *font = ui_item_font();
+
     ui_button_render(&ui->io, &layout, renderer);
     ui_layout_next_row(&layout);
+
+    ui_layout_sep_y(&layout, font->glyph_h);
 
     ui_label_render(&ui->id_lbl, &layout, renderer);
     ui_link_render(&ui->id_val, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_layout_sep_y(&layout, ui_item_font()->glyph_h);
+    ui_layout_sep_y(&layout, font->glyph_h);
 
     switch(id_item(ui->id))
     {

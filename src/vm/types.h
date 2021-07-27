@@ -29,6 +29,8 @@ typedef int64_t word_t;
 typedef uint8_t reg_t;
 
 typedef uint32_t ip_t;
+static const ip_t IP_NIL = UINT32_MAX;
+
 typedef uint32_t mod_t;
 typedef uint16_t mod_id_t;
 typedef uint16_t mod_ver_t;

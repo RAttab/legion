@@ -45,6 +45,7 @@ struct legion_packed vm
 static_assert(sizeof(struct vm) == 6*8);
 
 // These macros are needed in enum computation so can't be functions
+#define vm_speed(speed) (1 << ((speed) + 1))
 #define vm_stack_len(stack) (2 + (8 * (stack)))
 #define vm_len(stack) (sizeof(struct vm) + vm_stack_len(stack) * sizeof(word_t))
 

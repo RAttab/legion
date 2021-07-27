@@ -45,7 +45,7 @@ void vm_free(struct vm *vm)
 void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)
 {
     vm->specs.stack = vm_stack_len(stack);
-    vm->specs.speed = 1 << (speed + 1);
+    vm->specs.speed = vm_speed(speed);
 }
 
 void vm_suspend(struct vm *vm)

@@ -101,8 +101,8 @@ enum
     ui_io_launch,
     ui_io_dbg_attach,
     ui_io_dbg_detach,
+    ui_io_dbg_break,
     ui_io_dbg_step,
-    ui_io_dbg_ret,
 
     ui_io_max,
 };
@@ -148,8 +148,8 @@ struct ui_io *ui_io_new(void)
             [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
             [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),
             [ui_io_dbg_detach] = ui_io_cmd0(font, IO_DBG_DETACH),
+            [ui_io_dbg_break] = ui_io_cmd1(font, IO_DBG_BREAK, "ip:    "),
             [ui_io_dbg_step] = ui_io_cmd0(font, IO_DBG_STEP),
-            [ui_io_dbg_ret] = ui_io_cmd0(font, IO_DBG_RET),
         },
     };
 

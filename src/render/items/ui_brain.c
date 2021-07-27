@@ -12,8 +12,13 @@
 
 struct ui_brain
 {
+    struct ui_label debug, debug_val;
+    struct ui_label breakpoint;
+    struct ui_link breakpoint_val;
     struct ui_label msg, msg_src, msg_index, msg_val;
-    struct ui_label mod, mod_val;
+    struct ui_label mod;
+    struct ui_link mod_val;
+    struct ui_label ver, ver_val;
     struct ui_label spec, spec_stack, spec_speed, spec_sep;
     struct ui_label io, io_val, ior, ior_val;
     struct ui_label tsc, tsc_val;
@@ -32,13 +37,20 @@ static void ui_brain_init(struct ui_brain *ui)
     enum { u8_len = 2, u16_len = 4, u32_len = 8, u64_len = 16 };
 
     *ui = (struct ui_brain) {
-        .msg = ui_label_new(font, ui_str_c("msg:  ")),
+        .debug = ui_label_new(font, ui_str_c("debug: ")),
+        .debug_val = ui_label_new(font, ui_str_v(8)),
+        .breakpoint = ui_label_new(font, ui_str_c("break: ")),
+        .breakpoint_val = ui_link_new(font, ui_str_v(8)),
+
+        .msg = ui_label_new(font, ui_str_c("msg: ")),
         .msg_src = ui_label_new(font, ui_str_v(id_str_len)),
         .msg_index = ui_label_new(font, ui_str_v(u8_len)),
         .msg_val = ui_label_new(font, ui_str_v(u64_len)),
 
-        .mod = ui_label_new(font, ui_str_c("mod:  ")),
-        .mod_val = ui_label_new(font, ui_str_v(symbol_cap)),
+        .mod = ui_label_new(font, ui_str_c("mod: ")),
+        .mod_val = ui_link_new(font, ui_str_v(symbol_cap)),
+        .ver = ui_label_new(font, ui_str_c("ver: ")),
+        .ver_val = ui_label_new(font, ui_str_v(u16_len)),
 
         .spec = ui_label_new(font, ui_str_c("stack: ")),
         .spec_stack = ui_label_new(font, ui_str_v(u8_len)),
@@ -75,13 +87,20 @@ static void ui_brain_init(struct ui_brain *ui)
 
 static void ui_brain_free(struct ui_brain *ui)
 {
+    ui_label_free(&ui->debug);
+    ui_label_free(&ui->debug_val);
+    ui_label_free(&ui->breakpoint);
+    ui_link_free(&ui->breakpoint_val);
+
     ui_label_free(&ui->msg);
     ui_label_free(&ui->msg_src);
     ui_label_free(&ui->msg_index);
     ui_label_free(&ui->msg_val);
 
     ui_label_free(&ui->mod);
-    ui_label_free(&ui->mod_val);
+    ui_link_free(&ui->mod_val);
+    ui_label_free(&ui->ver);
+    ui_label_free(&ui->ver_val);
 
     ui_label_free(&ui->spec);
     ui_label_free(&ui->spec_stack);
@@ -114,14 +133,30 @@ static void ui_brain_free(struct ui_brain *ui)
 
 static void ui_brain_update(struct ui_brain *ui, struct brain *state)
 {
+    if (state->debug) {
+        ui_str_setc(&ui->debug_val.str, "attached");
+        ui->debug_val.fg = rgba_green();
+    }
+    else {
+        ui_str_setc(&ui->debug_val.str, "detached");
+        ui->debug_val.fg = rgba_gray(0x88);
+    }
+
+    if (state->breakpoint == IP_NIL) ui_str_setc(&ui->breakpoint_val.str, "nil");
+    else ui_str_set_hex(&ui->breakpoint_val.str, state->breakpoint);
+
     if (!state->msg_src) ui_str_setc(&ui->msg_src.str, "nil");
     else ui_str_set_id(&ui->msg_src.str, state->msg_src);
 
-    if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
+    if (!state->mod) {
+        ui_str_setc(&ui->mod_val.str, "nil");
+        ui_str_setc(&ui->ver_val.str, "nil");
+    }
     else {
         struct symbol mod = {0};
         mods_name(world_mods(core.state.world), mod_id(state->mod->id), &mod);
         ui_str_set_symbol(&ui->mod_val.str, &mod);
+        ui_str_set_hex(&ui->ver_val.str, mod_ver(state->mod->id));
     }
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
@@ -139,8 +174,7 @@ static bool ui_brain_event_io(
     (void) ui;
 
     if (!state->mod) return false;
-    if (io != IO_DBG_ATTACH && io != IO_DBG_STEP && io != IO_DBG_RET)
-        return false;
+    if (io != IO_DBG_ATTACH && io != IO_DBG_STEP) return false;
 
     core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
     return true;
@@ -154,8 +188,21 @@ static bool ui_brain_event(
     if (ev->type == core.event && ev->user.code == EV_IO_EXEC)
         return ui_brain_event_io(ui, state, (uintptr_t) ev->user.data1);
 
+    if ((ret = ui_link_event(&ui->breakpoint_val, ev))) {
+        if (state->mod && state->breakpoint != IP_NIL)
+            core_push_event(EV_MOD_SELECT, state->mod->id, state->breakpoint);
+        return ret == ui_consume;
+    }
+
+    if ((ret = ui_link_event(&ui->mod_val, ev))) {
+        if (state->mod)
+            core_push_event(EV_MOD_SELECT, state->mod->id, 0);
+        return ret == ui_consume;
+    }
+
     if ((ret = ui_link_event(&ui->ip_val, ev))) {
-        if (state->mod) core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+        if (state->mod)
+            core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
         return ret == ui_consume;
     }
 
@@ -169,6 +216,15 @@ static void ui_brain_render(
         struct ui_layout *layout, SDL_Renderer *renderer)
 {
     struct font *font = ui_item_font();
+
+    ui_label_render(&ui->debug, layout, renderer);
+    ui_label_render(&ui->debug_val, layout, renderer);
+    ui_layout_next_row(layout);
+    ui_label_render(&ui->breakpoint, layout, renderer);
+    ui_link_render(&ui->breakpoint_val, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_layout_sep_y(layout, font->glyph_h);
 
     { // msg
         ui_label_render(&ui->msg, layout, renderer);
@@ -189,8 +245,13 @@ static void ui_brain_render(
     }
 
     ui_label_render(&ui->mod, layout, renderer);
-    ui_label_render(&ui->mod_val, layout, renderer);
+    ui_link_render(&ui->mod_val, layout, renderer);
     ui_layout_next_row(layout);
+    ui_label_render(&ui->ver, layout, renderer);
+    ui_label_render(&ui->ver_val, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_layout_sep_y(layout, font->glyph_h);
 
     ui_label_render(&ui->spec, layout, renderer);
     ui_label_render(&ui->spec_stack, layout, renderer);
@@ -272,13 +333,11 @@ static void ui_brain_render(
         size_t last = ui_scroll_last(&ui->scroll);
 
         for (size_t i = first; i < last; ++i) {
-            size_t sp = state->vm.sp - i - 1;
-
-            ui_str_set_u64(&ui->stack_index.str, sp);
+            ui_str_set_u64(&ui->stack_index.str, i);
             ui_label_render(&ui->stack_index, &inner, renderer);
             ui_layout_sep_x(&inner, font->glyph_w);
 
-            ui_str_set_hex(&ui->stack_val.str, state->vm.stack[sp]);
+            ui_str_set_hex(&ui->stack_val.str, state->vm.stack[i]);
             ui_label_render(&ui->stack_val, &inner, renderer);
             ui_layout_next_row(&inner);
         }
