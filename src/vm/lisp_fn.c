@@ -362,11 +362,14 @@ static void lisp_fn_let(struct lisp *lisp)
 
 static void lisp_fn_if(struct lisp *lisp)
 {
+    struct token index = lisp->token;
+
     if (!lisp_stmt(lisp)) { // predicate
         lisp_err(lisp, "missing predicate-clause");
         return;
     }
 
+    lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_JZ);
     ip_t jmp_else = lisp_skip(lisp, sizeof(ip_t));
 
@@ -375,6 +378,7 @@ static void lisp_fn_if(struct lisp *lisp)
         return;
     }
 
+    lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_JMP);
     ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
     lisp_write_value_at(lisp, jmp_else, lisp_ip(lisp));
@@ -386,6 +390,56 @@ static void lisp_fn_if(struct lisp *lisp)
         lisp_write_value(lisp, (word_t) 0);
     }
     else lisp_expect_close(lisp);
+
+    lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
+}
+
+static void lisp_fn_when(struct lisp *lisp)
+{
+    struct token index = lisp->token;
+
+    if (!lisp_stmt(lisp)) { // predicate
+        lisp_err(lisp, "missing predicate-clause");
+        return;
+    }
+    lisp_index_at(lisp, &index);
+
+    lisp_write_op(lisp, OP_JZ);
+    ip_t jmp_else = lisp_skip(lisp, sizeof(ip_t));
+
+    lisp_stmts(lisp);
+    lisp_index_at(lisp, &index);
+    lisp_write_op(lisp, OP_JMP);
+    ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
+
+    lisp_write_value_at(lisp, jmp_else, lisp_ip(lisp));
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) 0);
+
+    lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
+}
+
+static void lisp_fn_unless(struct lisp *lisp)
+{
+    struct token index = lisp->token;
+
+    if (!lisp_stmt(lisp)) { // predicate
+        lisp_err(lisp, "missing predicate-clause");
+        return;
+    }
+    lisp_index_at(lisp, &index);
+
+    lisp_write_op(lisp, OP_JNZ);
+    ip_t jmp_else = lisp_skip(lisp, sizeof(ip_t));
+
+    lisp_stmts(lisp);
+    lisp_index_at(lisp, &index);
+    lisp_write_op(lisp, OP_JMP);
+    ip_t jmp_end = lisp_skip(lisp, sizeof(ip_t));
+
+    lisp_write_value_at(lisp, jmp_else, lisp_ip(lisp));
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) 0);
 
     lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
 }
@@ -804,6 +858,8 @@ static void lisp_fn_register(void)
     register_fn(asm);
     register_fn(let);
     register_fn(if);
+    register_fn(when);
+    register_fn(unless);
     register_fn(while);
     register_fn(for);
 

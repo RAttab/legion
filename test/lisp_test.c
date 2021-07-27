@@ -17,6 +17,8 @@
 #include <dirent.h>
 
 
+enum { debug = false };
+
 // -----------------------------------------------------------------------------
 // file
 // -----------------------------------------------------------------------------
@@ -284,7 +286,7 @@ void print_title(struct file *file)
 
     size_t len = snprintf(title, sizeof(title), "[ %s ]", token.value.s.c);
     title[len] = '=';
-    if (false) dbg("%s", title);
+    if (debug) dbg("%s", title);
 }
 
 struct vm *read_vm(struct file *file, struct atoms *atoms)

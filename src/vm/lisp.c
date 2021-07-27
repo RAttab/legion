@@ -338,7 +338,13 @@ static reg_t lisp_reg_alloc(struct lisp *lisp, uint64_t key)
 static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
 {
     if (!key) return;
-    assert(lisp->symb.regs[reg] == key);
+
+    if (lisp->symb.regs[reg] != key) {
+        lisp_err(lisp, "register mismatch: %u -> %lx != %lx",
+                reg, lisp->symb.regs[reg], key);
+        return;
+    }
+
     lisp->symb.regs[reg] = 0;
 }
 

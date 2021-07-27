@@ -21,7 +21,7 @@
 
 
 ;; ##########################################################
-;; if
+;; branch
 
 (flow/if-true
  ()
@@ -45,6 +45,26 @@
  ()
  ((assert (= 2 (if 0 1 2)))
   (yield))
+ (sp:0 flags:0))
+
+(flow/when-true
+ ()
+ ((assert (= 1 (when 1 0 1))))
+ (sp:0 flags:0))
+
+(flow/when-false
+ ()
+ ((assert (= 0 (when 0 0 1))))
+ (sp:0 flags:0))
+
+(flow/unless-true
+ ()
+ ((assert (= 0 (unless 1 0 1))))
+ (sp:0 flags:0))
+
+(flow/unless-false
+ ()
+ ((assert (= 1 (unless 0 0 1))))
  (sp:0 flags:0))
 
 
