@@ -215,8 +215,10 @@ static void lisp_call_mod(struct lisp *lisp, word_t mod)
         lisp_write_value(lisp, (mod_t) 0);
     }
 
-    for (reg_t reg = 0; reg < 4; ++reg) {
+    for (size_t i = 0; i < 4; ++i) {
+        reg_t reg = 4 - i - 1;
         if (!ctx[reg]) continue;
+
         lisp_write_op(lisp, OP_SWAP); // ret value is on top of the stack
         lisp_write_op(lisp, OP_POPR);
         lisp_write_value(lisp, reg);

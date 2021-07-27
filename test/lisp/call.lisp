@@ -44,10 +44,18 @@
 ;; ##########################################################
 ;; context
 
-(call/ctx-save
+(call/ctx-save-inner
  ()
  ((defun inner (a b) (- a b))
   (defun outer (a b) (inner a b))
+  (assert (= 8 (outer 10 2)))
+  (yield))
+ (sp:0 flags:0))
+
+(call/ctx-save-outer
+ ()
+ ((defun inner (a b))
+  (defun outer (a b) (inner 1 1) (- a b))
   (assert (= 8 (outer 10 2)))
   (yield))
  (sp:0 flags:0))
