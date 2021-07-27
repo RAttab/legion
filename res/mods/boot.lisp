@@ -31,11 +31,13 @@
     (boot/wait (id !item_assembly_1 1))
 
     (for (i 0) (<= i total) (+ i 1)
-	 (io !io_prog (id !item_printer_1 (+ i 1)) (+ !item_elem_a (/ i n))))))
+	 (io !io_prog (id !item_printer_1 (+ i 1)) (+ !item_frame (/ i n))))))
 
 (defun boot/assemblers (n)
   (let ((items (+ 1 (- !item_databank !item_servo)))
 	(total (* items n)))
+
+    (io !io_prog (id !item_assembly_1 2) !item_servo)
 
     (io !io_prog (id !item_assembly_1 1) !item_assembly_1 total)
     (io !io_item (id !item_deploy 1) !item_assembly_1)
@@ -43,7 +45,7 @@
     (boot/wait (id !item_assembly_1 1))
 
     (for (i 0) (<= i total) (+ i 1)
-	 (io !io_prog (id !item_assembly_1 (+ i 2)) (+ !item_elem_a (/ i n))))))
+	 (io !io_prog (id !item_assembly_1 (+ i 2)) (+ !item_servo (/ i n))))))
 
 (defun boot/workers (n)
   (io !io_prog (id !item_assembly_1 1) !item_worker n)
