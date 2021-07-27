@@ -461,7 +461,7 @@ static void lisp_label_unknown(struct lisp *lisp)
 
             struct symbol *symbol = (void *) ret.value;
             lisp_err_at(lisp, req->row, req->col, req->len,
-                    "unknown label: %s (%lx)", symbol->c, it->value);
+                    "unknown function or label: %s (%lx)", symbol->c, it->value);
 
             struct lisp_req *next = req->next;
             free(req);

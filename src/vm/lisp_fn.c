@@ -320,6 +320,11 @@ static void lisp_fn_asm(struct lisp *lisp)
     while (lisp_stmt(lisp));
 }
 
+static void lisp_fn_progn(struct lisp *lisp)
+{
+    lisp_stmts(lisp);
+}
+
 static void lisp_fn_let(struct lisp *lisp)
 {
     struct token *token = lisp_expect(lisp, token_open);
@@ -856,6 +861,7 @@ static void lisp_fn_register(void)
 
     register_fn(head);
     register_fn(asm);
+    register_fn(progn);
     register_fn(let);
     register_fn(if);
     register_fn(when);
