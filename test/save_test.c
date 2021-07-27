@@ -18,7 +18,7 @@
 
 void check(const char *path)
 {
-    enum { attempts = 2, steps = 100 };
+    enum { attempts = 5, steps = 100 };
 
     prog_load();
     mod_compiler_init();
