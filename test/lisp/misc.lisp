@@ -88,3 +88,13 @@
     (assert (= bot 2)))
   (yield))
  (sp:0 flags:0))
+
+(misc/mod-self
+ ()
+ ((assert (= 2 (band (mod) 0xFFFF))))
+ (sp:0 flags:0))
+
+(misc/mod-other
+ ()
+ ((assert (= 2 (band (mod misc/mod-self) 0xFFFF))))
+ (sp:0 flags:0))

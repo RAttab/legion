@@ -351,7 +351,7 @@
 (vm/call-mod
  (S:1)
  ((asm (CALL 0x100000002)))
- (ret:1 sp:1 #0:0x9))
+ (ret:1 sp:1))
 
 (vm/ret
  (S:1)

@@ -625,11 +625,30 @@ static void lisp_fn_id(struct lisp *lisp)
     lisp_expect_close(lisp);
 }
 
+static void lisp_mod_self(struct lisp *lisp)
+{
+    assert(lisp->token.type == token_close);
+
+    const struct mod *mod = mods_latest(lisp->mods, lisp->mod_id);
+    if (!mod) { lisp_err(lisp, "unregistered mod: id=%x", lisp->mod_id); return; }
+
+    mod_t id = make_mod(lisp->mod_id, mod_ver(mod->id) + 1);
+
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) id);
+
+    lisp->depth--;
+}
+
 // dynamic version of lisp_parse_mod
 static void lisp_fn_mod(struct lisp *lisp)
 {
-    struct token *token = lisp_expect(lisp, token_symb);
-    if (!token) { lisp_goto_close(lisp); return; }
+    struct token *token = lisp_next(lisp);
+    if (token->type == token_close) { lisp_mod_self(lisp); return; }
+    if (!lisp_assert_token(lisp, token, token_symb)) {
+        lisp_goto_close(lisp);
+        return;
+    }
 
     mod_id_t mod_id = mods_find(lisp->mods, &token->val.symb);
     if (!mod_id) {

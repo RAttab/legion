@@ -522,6 +522,16 @@ struct mods_list *mods_list(struct mods *mods)
 
 static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *path)
 {
+    size_t dot = 0, slash = 0;
+    for (size_t i = 0; path[i]; ++i) {
+        if (path[i] == '/') slash = i;
+        if (path[i] == '.') dot = i;
+    }
+    assert(slash < dot);
+
+    struct symbol name = make_symbol_len(path + slash + 1, dot - slash - 1);
+    mod_id_t id = mod_id(mods_register(mods, &name));
+
     struct mod *mod = NULL;
     {
         int fd = open(path, O_RDONLY);
@@ -534,7 +544,7 @@ static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *p
         char *base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
         if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
 
-        mod = mod_compile(strnlen(base, len), base, mods, atoms);
+        mod = mod_compile(id, base, strnlen(base, len), mods, atoms);
         if (mod->errs_len) {
             for (size_t i = 0; i < mod->errs_len; ++i) {
                 struct mod_err *err = &mod->errs[i];
@@ -545,17 +555,6 @@ static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *p
         munmap(base, len);
         close(fd);
     }
-
-    size_t dot = 0, slash = 0;
-    for (size_t i = 0; path[i]; ++i) {
-        if (path[i] == '/') slash = i;
-        if (path[i] == '.') dot = i;
-    }
-    assert(slash < dot);
-
-    struct symbol name = make_symbol_len(path + slash + 1, dot - slash - 1);
-
-    mod_id_t id = mod_id(mods_register(mods, &name));
     mods_set(mods, id, mod);
 }
 

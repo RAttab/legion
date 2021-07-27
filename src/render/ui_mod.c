@@ -123,7 +123,7 @@ static const struct mod *ui_mod_compile(struct ui_mod *ui)
     text_to_str(&ui->code.text, buffer, len);
 
     const struct mod *mod = mod_compile(
-            len, buffer,
+            mod_id(ui->id), buffer, len,
             world_mods(core.state.world),
             world_atoms(core.state.world));
 

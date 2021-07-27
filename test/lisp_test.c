@@ -17,8 +17,6 @@
 #include <dirent.h>
 
 
-enum { debug = false };
-
 // -----------------------------------------------------------------------------
 // file
 // -----------------------------------------------------------------------------
@@ -276,19 +274,6 @@ void token_goto_close(struct file *file)
 // dsl
 // -----------------------------------------------------------------------------
 
-void print_title(struct file *file)
-{
-    struct token token = token_expect(file, token_symbol);
-
-    char title[80];
-    memset(title, '=', sizeof(title));
-    title[sizeof(title) - 1] = 0;
-
-    size_t len = snprintf(title, sizeof(title), "[ %s ]", token.value.s.c);
-    title[len] = '=';
-    if (debug) dbg("%s", title);
-}
-
 struct vm *read_vm(struct file *file, struct atoms *atoms)
 {
     token_expect(file, token_open);
@@ -334,17 +319,23 @@ struct vm *read_vm(struct file *file, struct atoms *atoms)
     return vm;
 }
 
-const struct mod *read_mod(struct file *file, struct mods *mods, struct atoms *atoms)
+const struct mod *read_mod(
+        struct file *file, const struct symbol *name,
+        struct mods *mods, struct atoms *atoms)
 {
     token_expect(file, token_open);
 
     const char *first = file->it;
     token_goto_close(file);
     assert(!file_eof(file));
-
     size_t len = (file->it - first) - 1;
-    const struct mod *mod = mod_compile(len, first, mods, atoms);
-    if (mod && !mod->errs_len) return mod;
+
+    mod_t id = mods_register(mods, name);
+    const struct mod *mod = mod_compile(mod_id(id), first, len, mods, atoms);
+    if (mod && !mod->errs_len) {
+        mods_set(mods, mod_id(id), mod);
+        return mod;
+    }
 
     for (size_t i = 0; i < mod->errs_len; ++i) {
         const struct mod_err *err = mod->errs + i;
@@ -357,6 +348,7 @@ const struct mod *read_mod(struct file *file, struct mods *mods, struct atoms *a
 
 bool check_mod(
         struct file *file,
+        const struct symbol *name,
         struct vm *vm,
         const struct mod *mod,
         struct atoms *atoms)
@@ -422,14 +414,19 @@ bool check_mod(
     }
 
     if (!ok) {
+        char title[80] = {0};
+        ssize_t len = snprintf(title, sizeof(title), "[ %s ]", name->c);
+        memset(title + len, '=', sizeof(title) - len - 1);
+        dbg("%s", title);
+
         char buffer[s_page_len] = {0};
-        dbg("\n<src>\n%s\n\n", mod->src);
+        dbg("\n<src>\n%s\n", mod->src);
 
         mod_dump(mod, buffer, sizeof(buffer));
         dbg("<bytecode:%x:%u>\n%s\n", (unsigned) mod->id, mod->len, buffer);
 
         vm_dbg(vm, buffer, sizeof(buffer));
-        dbg("<ret>\n%sret:   %x\n\n", buffer, ret);
+        dbg("<ret>\n%sret:   %x\n", buffer, ret);
     }
 
     return ok;
@@ -449,17 +446,16 @@ bool check_file(const char *path)
         if (token.type == token_nil) break;
         assert(token.type == token_open);
 
-        print_title(&file);
+        struct symbol name = token_expect(&file, token_symbol).value.s;
 
         struct vm *vm = read_vm(&file, atoms);
-        const struct mod *mod = read_mod(&file, mods, atoms);
+        const struct mod *mod = read_mod(&file, &name, mods, atoms);
         if (!mod) { ok = false; token_goto_close(&file); continue; }
 
-        ok = check_mod(&file, vm, mod, atoms) && ok;
+        ok = check_mod(&file, &name, vm, mod, atoms) && ok;
         token_expect(&file, token_close);
 
         vm_free(vm);
-        mod_free(mod);
     }
 
     mods_free(mods);
