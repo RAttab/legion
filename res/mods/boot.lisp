@@ -8,19 +8,21 @@
 
 (boot/legion 10)
 
+;; -----------------------------------------------------------------------------
+;; extract
+;; -----------------------------------------------------------------------------
 
 (defun boot/extract (n)
-  (let ((current  (boot/count !item_extract_1)))
-    (when (> 2 current) (set n (- n (/ current 6))))
+  (let ((items 6)
+	(current (boot/count !item_extract_1)))
     (when (<= 2 current)
       (io !io_prog (id !item_extract_1 1) !item_elem_a)
       (io !io_prog (id !item_extract_1 2) !item_elem_f)
       (io !io_prog (id !item_printer_1 1) !item_frame)
-      (io !io_prog (id !item_printer_1 2) !item_circuit)))
-  (io !io_item (id !item_deploy 1) !item_extract_1)
+      (io !io_prog (id !item_printer_1 2) !item_circuit))
 
-  (let ((items 6))
-    (io !io_prog (id !item_assembly_1 1) !item_extract_1 (* items n)))
+    (io !io_item (id !item_deploy 1) !item_extract_1)
+    (io !io_prog (id !item_assembly_1 1) !item_extract_1 (- current (* items n))))
 
   (boot/wait (id !item_assembly_1 1))
 
@@ -37,17 +39,19 @@
   (+ id n))
 
 
+;; -----------------------------------------------------------------------------
+;; printer
+;; -----------------------------------------------------------------------------
 
 (defun boot/printer (n)
-  (let ((current  (boot/count !item_printer_1)))
-    (when (> 2 current) (set n (- n (/ current 5)))
-	  (when (<= 2 current)
-	    (io !io_prog (id !item_printer_1 1) !item_circuit)
-	    (io !io_prog (id !item_printer_1 2) !item_gear))))
-  (io !io_item (id !item_deploy 1) !item_printer_1)
+  (let ((items 5)
+	(current (boot/count !item_printer_1)))
+    (when (<= 2 current)
+      (io !io_prog (id !item_printer_1 1) !item_circuit)
+      (io !io_prog (id !item_printer_1 2) !item_gear))
 
-  (let ((items 5))
-    (io !io_prog (id !item_assembly_1 1) !item_printer_1 (* items n)))
+    (io !io_item (id !item_deploy 1) !item_printer_1)
+    (io !io_prog (id !item_assembly_1 1) !item_printer_1 (- current (* items n))))
 
   (boot/wait (id !item_assembly_1 1))
 
@@ -63,11 +67,15 @@
   (+ id n))
 
 
+;; -----------------------------------------------------------------------------
+;; assembler
+;; -----------------------------------------------------------------------------
 
 (defun boot/assembler (n)
-  (let ((current  (boot/count !item_assembly_1)))
-    (when (> 2 current) (set n (- n (/ current 9))))
-    (when (<= 2 current)
+  (let ((items 9)
+	(current-asm (boot/count !item_assembly_1))
+	(current-work (boot/count !item_worker)))
+    (when (<= 2 current-asm)
       (io !io_prog (id !item_assembly_1 1) !item_deploy)
       (io !io_item (id !item_deploy 1) !item_deploy)
       (boot/wait (id !item_assembly_1 1))
@@ -78,13 +86,13 @@
       (boot/wait (id !item_assembly_1 1))
 
       (io !io_prog (id !item_assembly_1 3) !item_servo)
-      (io !io_prog (id !item_assembly_1 4) !item_thruster)))
+      (io !io_prog (id !item_assembly_1 4) !item_thruster))
 
-  (io !io_prog (id !item_assembly_1 1) !item_worker (* n 20))
-  (io !io_item (id !item_deploy 1) !item_worker)
+    (io !io_prog (id !item_assembly_1 1) !item_worker (- current-work (* n 20)))
+    (io !io_item (id !item_deploy 1) !item_worker)
 
-  (io !io_prog (id !item_assembly_2 1) !item_assembly_1 (* n 9))
-  (io !io_item (id !item_deploy 1) !item_assembly_1)
+    (io !io_prog (id !item_assembly_2 1) !item_assembly_1 (- current-asm (* n items)))
+    (io !io_item (id !item_deploy 1) !item_assembly_1))
 
   (boot/wait (id !item_assembly_1 1))
   (boot/wait (id !item_assembly_1 2))
@@ -104,6 +112,10 @@
   (for (i 0) (< i n) (+ i 1) (io !io_prog (id !item_assembly_1 (+ id i)) item))
   (+ id n))
 
+
+;; -----------------------------------------------------------------------------
+;; legion
+;; -----------------------------------------------------------------------------
 
 (defun boot/legion (n)
   (let ((id (boot/count !item_assembly_1)))
@@ -128,6 +140,10 @@
        (io !io_mod (id !item_legion_1 (+ i 1)) (mod))
        (io !io_launch (id !item_legion_1 (+ i 1)) (boot/scan-result))))
 
+
+;; -----------------------------------------------------------------------------
+;; utils
+;; -----------------------------------------------------------------------------
 
 (defun boot/wait (id)
   (while (if (= (io !io_status id) !io_ok) (/= (head) 0))
