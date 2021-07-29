@@ -21,9 +21,9 @@ static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id);
 
 enum
 {
-    brain_stack_s = 0,
-    brain_stack_m = 1,
-    brain_stack_l = 2,
+    brain_stack_s = 1,
+    brain_stack_m = 2,
+    brain_stack_l = 4,
 
     brain_speed_s = 2,
     brain_speed_m = 4,

@@ -34,7 +34,7 @@ void check(const char *path)
 
         word_t arg = mod->id;
         struct chunk *chunk = world_chunk(old, coord);
-        bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN_2, 1), 1, &arg);
+        bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN_1, 1), 1, &arg);
         assert(ok);
     }
 
