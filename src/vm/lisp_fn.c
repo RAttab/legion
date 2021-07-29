@@ -184,26 +184,26 @@ static void lisp_call_mod(struct lisp *lisp, word_t mod)
     if (args > 4) lisp_err(lisp, "too many arguments: %u > 4", (unsigned) args);
     lisp_index_at(lisp, &token);
 
-    lisp_regs_t ctx = {0};
-    memcpy(ctx, lisp->symb.regs, sizeof(ctx));
+    reg_t regs = 0;
+    for (; regs < 4 && lisp->symb.regs[regs]; regs++);
 
-    for (reg_t reg = 0; reg < 4; ++reg) {
-        bool has_arg = reg < args;
-        bool has_reg = ctx[reg];
+    reg_t common = legion_min(regs, args);
+    for (reg_t reg = 0; reg < common; ++reg) {
+        lisp_write_op(lisp, OP_ARG0 + reg);
+        lisp_write_value(lisp, (reg_t) (args - reg - 1));
+    }
 
-        if (has_arg && has_reg) {
-            lisp_write_op(lisp, OP_ARG0 + reg);
-            lisp_write_value(lisp, (reg_t) (args - reg - 1));
-        }
-        else if (has_arg && !has_reg) {
+    if (args > regs) {
+        for (reg_t i = 0; i < (args - common); ++i) {
             lisp_write_op(lisp, OP_POPR);
-            lisp_write_value(lisp, reg);
+            lisp_write_value(lisp, (reg_t) (args - i - 1));
         }
-        else if (!has_arg && has_reg) {
+    }
+    else if (regs > args) {
+        for (reg_t reg = common; reg < regs; ++reg) {
             lisp_write_op(lisp, OP_PUSHR);
             lisp_write_value(lisp, reg);
         }
-        else break;
     }
 
     lisp_write_op(lisp, OP_CALL);
@@ -215,13 +215,10 @@ static void lisp_call_mod(struct lisp *lisp, word_t mod)
         lisp_write_value(lisp, (mod_t) 0);
     }
 
-    for (size_t i = 0; i < 4; ++i) {
-        reg_t reg = 4 - i - 1;
-        if (!ctx[reg]) continue;
-
+    for (reg_t i = 0; i < regs; ++i) {
         lisp_write_op(lisp, OP_SWAP); // ret value is on top of the stack
         lisp_write_op(lisp, OP_POPR);
-        lisp_write_value(lisp, reg);
+        lisp_write_value(lisp, (reg_t) (regs - i - 1));
     }
 }
 
@@ -258,19 +255,18 @@ static void lisp_fn_defun(struct lisp *lisp)
 
     struct token *token = NULL;
     for (reg_t reg = 0; (token = lisp_next(lisp))->type != token_close; ++reg) {
-        if (token->type != token_symb) {
-            lisp_err(lisp, "unexpected token in argument list: %s != %s",
-                    token_type_str(token->type), token_type_str(token_symb));
+        if (!lisp_assert_token(lisp, token, token_symb)) {
             lisp_goto_close(lisp);
             break;
         }
 
-        if (reg >= 4) lisp_err(lisp, "too many parameters: %u > 4", reg);
-
-        lisp->symb.regs[reg] = token_symb_hash(token);
+        if (reg < 4) lisp->symb.regs[reg] = token_symb_hash(token);
+        else lisp_err(lisp, "too many parameters: %u > 4", reg + 1);
     }
 
     lisp_stmts(lisp);
+
+    for (reg_t reg = 0; reg < 4; ++reg) lisp->symb.regs[reg] = 0;
     lisp_index_at(lisp, &index);
 
     // our return value is above the return ip on the stack. Swaping the two
