@@ -7,4 +7,5 @@
 /* #include "utils/qtree.c" */
 #include "utils/rng.c"
 #include "utils/str.c"
+#include "utils/ring.c"
 #include "utils/text.c"

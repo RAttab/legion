@@ -47,33 +47,8 @@ inline uint32_t ring32_pop(struct ring32 *ring)
     return val;
 }
 
-static struct ring32 *ring32_push(struct ring32 *ring, uint32_t val)
-{
-    if (unlikely(ring32_len(ring) == ring->cap)) {
-        struct ring32 *new = ring32_reserve(ring->cap * 2);
-        while (!ring32_empty(ring)) ring32_push(new, ring32_pop(ring));
-        free(ring);
-        ring = new;
-    }
-
-    if (unlikely(ring->head == UINT16_MAX)) {
-        ring->tail %= ring->cap;
-        ring->head = ring->head % ring->cap + ring->cap;
-    }
-
-    ring->vals[ring->head % ring->cap] = val;
-    ring->head++;
-    return ring;
-}
-
-static size_t ring32_replace(struct ring32 *ring, uint32_t old, uint32_t new)
-{
-    size_t n = 0;
-    for (size_t i = 0; i < ring->cap; ++i) {
-        if (ring->vals[i] == old) { ring->vals[i] = new; n++; }
-    }
-    return n;
-}
+struct ring32 *ring32_push(struct ring32 *, uint32_t val);
+size_t ring32_replace(struct ring32 *, uint32_t old, uint32_t new);
 
 
 // -----------------------------------------------------------------------------
@@ -113,21 +88,4 @@ inline uint64_t ring64_pop(struct ring64 *ring)
     return val;
 }
 
-static struct ring64 *ring64_push(struct ring64 *ring, uint64_t val)
-{
-    if (unlikely(ring64_len(ring) == ring->cap)) {
-        struct ring64 *new = ring64_reserve(ring->cap * 2);
-        while (!ring64_empty(ring)) ring64_push(new, ring64_pop(ring));
-        free(ring);
-        ring = new;
-    }
-
-    if (unlikely(ring->head == UINT16_MAX)) {
-        ring->tail %= ring->cap;
-        ring->head = ring->head % ring->cap + ring->cap;
-    }
-
-    ring->vals[ring->head % ring->cap] = val;
-    ring->head++;
-    return ring;
-}
+struct ring64 *ring64_push(struct ring64 *, uint64_t val);
