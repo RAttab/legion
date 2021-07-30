@@ -99,7 +99,10 @@ static void cursor_event(SDL_Event *event)
     {
     case SDL_MOUSEMOTION: {
         core.cursor.point.x += event->motion.xrel;
+        core.cursor.point.x = legion_max(0, legion_min(core.rect.w, core.cursor.point.x));
+
         core.cursor.point.y += event->motion.yrel;
+        core.cursor.point.y = legion_max(0, legion_min(core.rect.h, core.cursor.point.y));
         break;
     }
     }
