@@ -34,9 +34,10 @@ struct ui_star
     struct ui_toggles control_list, factory_list;
 
     struct ui_label workers, workers_val;
+    struct ui_label queue, queue_val;
     struct ui_label idle, idle_val;
     struct ui_label fail, fail_val;
-    struct ui_label queue, queue_val;
+    struct ui_label clean, clean_val;
 };
 
 static struct font *ui_star_font(void) { return font_mono6; }
@@ -85,12 +86,14 @@ struct ui_star *ui_star_new(void)
 
         .workers = ui_label_new(font, ui_str_c("workers: ")),
         .workers_val = ui_label_new(font, ui_str_v(10)),
+        .queue = ui_label_new(font, ui_str_c("- queue: ")),
+        .queue_val = ui_label_new(font, ui_str_v(10)),
         .idle = ui_label_new(font, ui_str_c("- idle:  ")),
         .idle_val = ui_label_new(font, ui_str_v(10)),
         .fail = ui_label_new(font, ui_str_c("- fail:  ")),
         .fail_val = ui_label_new(font, ui_str_v(10)),
-        .queue = ui_label_new(font, ui_str_c("- queue: ")),
-        .queue_val = ui_label_new(font, ui_str_v(10)),
+        .clean = ui_label_new(font, ui_str_c("- clean: ")),
+        .clean_val = ui_label_new(font, ui_str_v(10)),
     };
 
     ui->panel.state = ui_panel_hidden;
@@ -113,12 +116,14 @@ void ui_star_free(struct ui_star *ui) {
     ui_toggles_free(&ui->factory_list);
     ui_label_free(&ui->workers);
     ui_label_free(&ui->workers_val);
+    ui_label_free(&ui->queue);
+    ui_label_free(&ui->queue_val);
     ui_label_free(&ui->idle);
     ui_label_free(&ui->idle_val);
     ui_label_free(&ui->fail);
     ui_label_free(&ui->fail_val);
-    ui_label_free(&ui->queue);
-    ui_label_free(&ui->queue_val);
+    ui_label_free(&ui->clean);
+    ui_label_free(&ui->clean_val);
     free(ui);
 }
 
@@ -202,9 +207,10 @@ static void ui_star_update(struct ui_star *ui)
     {
         struct workers workers = chunk_workers(chunk);
         ui_str_set_u64(&ui->workers_val.str, workers.count);
+        ui_str_set_u64(&ui->queue_val.str, workers.queue);
         ui_str_set_u64(&ui->idle_val.str, workers.idle);
         ui_str_set_u64(&ui->fail_val.str, workers.fail);
-        ui_str_set_u64(&ui->queue_val.str, workers.queue);
+        ui_str_set_u64(&ui->clean_val.str, workers.clean);
     }
 }
 
@@ -388,6 +394,10 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_label_render(&ui->workers_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
+        ui_label_render(&ui->queue, &layout, renderer);
+        ui_label_render(&ui->queue_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+
         ui_label_render(&ui->idle, &layout, renderer);
         ui_label_render(&ui->idle_val, &layout, renderer);
         ui_layout_next_row(&layout);
@@ -396,8 +406,8 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_label_render(&ui->fail_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        ui_label_render(&ui->queue, &layout, renderer);
-        ui_label_render(&ui->queue_val, &layout, renderer);
+        ui_label_render(&ui->clean, &layout, renderer);
+        ui_label_render(&ui->clean_val, &layout, renderer);
         ui_layout_next_row(&layout);
     }
 }

@@ -66,6 +66,15 @@ static struct ring32 *ring32_push(struct ring32 *ring, uint32_t val)
     return ring;
 }
 
+static size_t ring32_replace(struct ring32 *ring, uint32_t old, uint32_t new)
+{
+    size_t n = 0;
+    for (size_t i = 0; i < ring->cap; ++i) {
+        if (ring->vals[i] == old) { ring->vals[i] = new; n++; }
+    }
+    return n;
+}
+
 
 // -----------------------------------------------------------------------------
 // ring64

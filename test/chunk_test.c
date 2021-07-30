@@ -135,6 +135,73 @@ void test_ports_1on2(void)
     chunk_free(chunk);
 }
 
+void test_ports_reset(void)
+{
+    struct star star = {0};
+    struct chunk *chunk = chunk_alloc(NULL, &star);
+
+    enum item item = ITEM_ELEM_A;
+    id_t src = make_id(ITEM_EXTRACT_1, 1);
+    id_t dst = make_id(ITEM_PRINTER_1, 1);
+
+    chunk_create(chunk, id_item(src));
+    chunk_create(chunk, id_item(dst));
+    chunk_create(chunk, ITEM_WORKER);
+    chunk_step(chunk);
+
+    for (size_t i = 0; i < 3; ++i) {
+        chunk_ports_produce(chunk, src, item);
+        chunk_ports_request(chunk, dst, item);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == item);
+        assert(chunk_workers(chunk).queue == 0);
+
+        chunk_ports_produce(chunk, src, item);
+        chunk_ports_reset(chunk, src);
+        chunk_ports_request(chunk, dst, item);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == ITEM_NIL);
+        assert(chunk_workers(chunk).queue == 1);
+        assert(chunk_workers(chunk).clean == 1);
+        assert(chunk_workers(chunk).fail == 1);
+
+        chunk_ports_produce(chunk, src, item);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == item);
+        assert(chunk_workers(chunk).queue == 0);
+
+        chunk_ports_produce(chunk, src, item);
+        chunk_ports_request(chunk, dst, item);
+        chunk_ports_reset(chunk, dst);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == ITEM_NIL);
+        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).clean == 1);
+        assert(chunk_workers(chunk).fail == 0);
+
+        chunk_ports_request(chunk, dst, item);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == item);
+        assert(chunk_workers(chunk).queue == 0);
+
+        chunk_ports_produce(chunk, src, item);
+        chunk_ports_request(chunk, dst, item);
+        chunk_ports_reset(chunk, src);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == ITEM_NIL);
+        assert(chunk_workers(chunk).queue == 1);
+        assert(chunk_workers(chunk).clean == 1);
+        assert(chunk_workers(chunk).fail == 1);
+
+        chunk_ports_reset(chunk, dst);
+        chunk_step(chunk);
+        assert(chunk_ports_consume(chunk, dst) == ITEM_NIL);
+        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).clean == 1);
+        assert(chunk_workers(chunk).fail == 0);
+    }
+}
+
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
@@ -143,6 +210,7 @@ int main(int argc, char **argv)
     test_ports_1on1();
     test_ports_2on1();
     test_ports_1on2();
+    test_ports_reset();
 
     return 0;
 }

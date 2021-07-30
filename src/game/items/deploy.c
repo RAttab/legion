@@ -45,7 +45,6 @@ static void deploy_step(void *state, struct chunk *chunk)
     chunk_create(chunk, deploy->item);
     
     deploy->waiting = false;
-
     if (deploy->loops != loops_inf) --deploy->loops;
     if (!deploy->loops) deploy->item = 0;
 }
@@ -73,10 +72,10 @@ static void deploy_io_item(
         struct deploy *deploy, struct chunk *chunk, size_t len, const word_t *args)
 {
     if (len < 1) return;
+    if (args[0] >= ITEM_MAX) return;
 
-    word_t item = args[0];
-    if (item != (enum item) item) return;
-    if (!item_is_active(item)) return;
+    enum item item = args[0];
+    if (!item_is_active(item) && !item_is_logistics(item)) return;
 
     deploy_io_reset(deploy, chunk);
     deploy->item = item;

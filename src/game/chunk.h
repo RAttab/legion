@@ -33,7 +33,7 @@ struct world *chunk_world(struct chunk *);
 struct star *chunk_star(struct chunk *);
 bool chunk_harvest(struct chunk *, enum item item);
 
-struct workers { uint16_t count, idle, fail, queue; };
+struct workers { uint16_t count, queue, idle, fail, clean; };
 struct workers chunk_workers(struct chunk *);
 
 struct vec64 *chunk_list(struct chunk *);
