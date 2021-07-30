@@ -182,9 +182,15 @@ static void brain_io_mod(
 
 static void brain_io_reset(struct brain *brain)
 {
+    brain->debug = 0;
+    brain->breakpoint = 0;
+
+    brain->msg_len = 0;
+
     brain->mod = NULL;
     brain->mod_id = 0;
-    brain->msg_len = 0;
+
+    vm_reset(&brain->vm);
 }
 
 static void brain_io_val(struct brain *brain, size_t len, const word_t *args)
