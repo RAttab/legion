@@ -44,7 +44,7 @@
 ;; -----------------------------------------------------------------------------
 
 (defun boot/printer (n)
-  (let ((items 5)
+  (let ((items 6)
 	(current (boot/count !item_printer_1)))
     (when (<= current 2)
       (io !io_prog (id !item_printer_1 1) !item_circuit)
@@ -60,7 +60,8 @@
     (set id (boot/printer-set id n !item_gear))
     (set id (boot/printer-set id n !item_circuit))
     (set id (boot/printer-set id n !item_neural))
-    (set id (boot/printer-set id n !item_fuel))))
+    (set id (boot/printer-set id n !item_fuel))
+    (set id (boot/printer-set id n !item_bonding))))
 
 (defun boot/printer-set (id n item)
   (for (i 0) (< i n) (+ i 1) (io !io_prog (id !item_printer_1 (+ id i)) item))
@@ -99,7 +100,7 @@
       (boot/wait (id !item_assembly_1 1))
       (boot/wait (id !item_assembly_1 2))))
 
-  (let ((id 5))
+  (let ((id 3))
     (set id (boot/assembly-set id n !item_servo))
     (set id (boot/assembly-set id n !item_thruster))
     (set id (boot/assembly-set id n !item_propulsion))
@@ -120,11 +121,14 @@
 ;; -----------------------------------------------------------------------------
 
 (defun boot/legion (n)
-  (let ((items 7)
-	(id (boot/count !item_assembly_1)))
+  (io !io_reset (id !item_deploy 1))
+  (io !io_reset (id !item_deploy 2))
+
+  (let ((items 6)
+	(id (+ (boot/count !item_assembly_1) 1)))
 
     (io !io_prog (id !item_assembly_1 1) !item_assembly_1 items)
-    (io !io_item (id !item_deploy 1) !item_assembly_1)
+    (io !io_item (id !item_deploy 1) !item_assembly_1 items)
     (boot/wait (id !item_assembly_1 1))
 
     (set id (boot/assembly-set id 1 !item_extract_1))
@@ -136,9 +140,9 @@
 
   (io !io_item (id !item_deploy 1) !item_legion_1)
   (io !io_prog (id !item_assembly_1 1) !item_legion_1 n)
-  (io !io_scan (id !item_scanner_1 1) (boot/coord))
   (boot/wait (id !item_assembly_1 1))
 
+  (io !io_scan (id !item_scanner_1 1) (boot/coord))
   (for (i 0) (< i n) (+ i 1)
        (io !io_mod (id !item_legion_1 (+ i 1)) (mod))
        (io !io_launch (id !item_legion_1 (+ i 1)) (boot/scan-result))))
