@@ -132,8 +132,9 @@ inline bool item_is_active(enum item item)
 }
 
 
-enum { item_str_len = 4 };
-size_t item_str(enum item, size_t len, char *dst);
+enum { item_str_len = 16 };
+size_t item_str(enum item, char *dst, size_t len);
+const char *item_str_c(enum item);
 
 
 // -----------------------------------------------------------------------------
@@ -147,7 +148,7 @@ inline enum item id_item(id_t id) { return id >> 24; }
 inline uint32_t id_bot(id_t id) { return id & ((1 << 24) - 1); }
 
 enum { id_str_len = item_str_len+1+6 };
-size_t id_str(id_t id, size_t len, char *dst);
+size_t id_str(id_t id, char *dst, size_t len);
 
 
 // -----------------------------------------------------------------------------

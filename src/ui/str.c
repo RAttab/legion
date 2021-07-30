@@ -110,13 +110,13 @@ void ui_str_set_scaled(struct ui_str *str, uint64_t val)
 void ui_str_set_id(struct ui_str *str, id_t val)
 {
     assert(str->cap);
-    str->len = id_str(val, str->cap, (char *) str->str);
+    str->len = id_str(val, (char *) str->str, str->cap);
 }
 
 void ui_str_set_item(struct ui_str *str, enum item val)
 {
     assert(str->cap);
-    str->len = item_str(val, str->cap, (char *) str->str);
+    str->len = item_str(val, (char *) str->str, str->cap);
 }
 
 void ui_str_set_coord(struct ui_str *str, struct coord val)

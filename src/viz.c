@@ -154,7 +154,7 @@ void viz_dot(struct viz *viz)
     char label[item_str_len] = {0};
     for (enum item it = 0; it < ITEM_MAX; ++it) {
         if (!set_test(viz->items, it)) continue;
-        item_str(it, sizeof(label), label);
+        item_str(it, label, sizeof(label));
         viz_writef(viz, "subgraph { \"%02x\" [label=\"%02x:%s\"] }\n", it, it, label);
     }
 
