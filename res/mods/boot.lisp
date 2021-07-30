@@ -74,28 +74,23 @@
 	(current-asm (- (boot/count !item_assembly_1) 2)) ;; we always reserve 2
 	(current-work (boot/count !item_worker)))
     (when (<= current-asm 2)
-      (io !io_prog (id !item_assembly_1 1) !item_deploy 1)
-      (io !io_item (id !item_deploy 1) !item_deploy)
-      (boot/wait (id !item_assembly_1 1))
-
-      (io !io_prog (id !item_assembly_1 1) !item_assembly_1 4)
+      (io !io_prog (id !item_assembly_1 1) !item_assembly_1 3)
       (io !io_prog (id !item_assembly_1 2) !item_servo)
       (io !io_item (id !item_deploy 1) !item_assembly_1)
       (boot/wait (id !item_assembly_1 1))
 
       (io !io_prog (id !item_assembly_1 3) !item_servo)
-      (io !io_prog (id !item_assembly_1 4) !item_servo)
-      (io !io_prog (id !item_assembly_1 5) !item_thruster)
-      (io !io_prog (id !item_assembly_1 6) !item_core))
+      (io !io_prog (id !item_assembly_1 4) !item_thruster)
+      (io !io_prog (id !item_assembly_1 5) !item_core))
 
     (when (< current-asm (* n items))
       (io !io_prog (id !item_assembly_1 1) !item_worker (- (* n 10) current-work))
       (io !io_item (id !item_deploy 1) !item_worker)
       (boot/wait (id !item_assembly_1 1))
 
-      (io !io_prog (id !item_assembly_1 2) !item_assembly_1 (- (* n items) current-asm))
-      (io !io_item (id !item_deploy 2) !item_assembly_1)
-      (boot/wait (id !item_assembly_1 2))))
+      (io !io_prog (id !item_assembly_1 1) !item_assembly_1 (- (* n items) current-asm 3))
+      (io !io_item (id !item_deploy 1) !item_assembly_1)
+      (boot/wait (id !item_assembly_1 1))))
 
   (let ((id 3))
     (set id (boot/assembly-set id n !item_servo))
@@ -121,13 +116,14 @@
   (io !io_reset (id !item_deploy 1))
   (io !io_reset (id !item_deploy 2))
 
-  (let ((items 6)
+  (let ((items 7)
 	(id (+ (boot/count !item_assembly_1) 1)))
 
     (io !io_prog (id !item_assembly_1 1) !item_assembly_1 items)
     (io !io_item (id !item_deploy 1) !item_assembly_1 items)
     (boot/wait (id !item_assembly_1 1))
 
+    (set id (boot/assembly-set id 1 !item_deploy))
     (set id (boot/assembly-set id 1 !item_extract_1))
     (set id (boot/assembly-set id 1 !item_printer_1))
     (set id (boot/assembly-set id 1 !item_assembly_1))
