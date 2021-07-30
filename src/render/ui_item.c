@@ -81,7 +81,7 @@ struct ui_item *ui_item_new(void)
 
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {
-        .panel = ui_panel_title(pos, dim, ui_str_v(id_str_len + 8)),
+        .panel = ui_panel_title(pos, dim, ui_str_c("item")),
         .io = ui_button_new(font, ui_str_c("<< io")),
         .id_lbl = ui_label_new(font, ui_str_c("id: ")),
         .id_val = ui_link_new(font, ui_str_v(id_str_len)),
@@ -137,12 +137,6 @@ static void ui_item_update(struct ui_item *ui)
     if (!ok) { // item was deleted so close the panel
         core_push_event(EV_ITEM_CLEAR, 0, 0);
         return;
-    }
-
-    {
-        char str[id_str_len];
-        id_str(ui->id, sizeof(str), str);
-        ui_str_setf(&ui->panel.title.str, "item - %s", str);
     }
 
     switch(id_item(ui->id))

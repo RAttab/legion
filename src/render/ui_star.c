@@ -63,7 +63,7 @@ struct ui_star *ui_star_new(void)
 
     struct ui_star *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_star) {
-        .panel = ui_panel_title(pos, dim, ui_str_v(coord_str_len + 8)),
+        .panel = ui_panel_title(pos, dim, ui_str_c("star")),
 
         .coord = ui_label_new(font, ui_str_c("coord: ")),
         .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
@@ -156,12 +156,6 @@ static void ui_star_update_list(
 
 static void ui_star_update(struct ui_star *ui)
 {
-    {
-        char str[coord_str_len+1] = {0};
-        coord_str(ui->star.coord, str, sizeof(str));
-        ui_str_setf(&ui->panel.title.str, "star - %s", str);
-    }
-
     ui_str_set_coord(&ui->coord_val.str, ui->star.coord);
 
     struct chunk *chunk = world_chunk(core.state.world, ui->star.coord);
