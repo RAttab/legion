@@ -76,10 +76,13 @@ static void printer_step_input(
 static void printer_step_output(
         struct printer *printer, struct chunk *chunk, enum item item)
 {
-    if (!chunk_ports_produce(chunk, printer->id, item)) {
-        printer->waiting = true;
+    if (!printer->waiting) {
+        printer->waiting = chunk_ports_produce(chunk, printer->id, item);
+        assert(printer->waiting);
         return;
     }
+
+    if (!chunk_ports_consumed(chunk, printer->id)) return;
 
     printer->prog = prog_packed_it_inc(printer->prog);
     printer->waiting = false;

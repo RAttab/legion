@@ -77,13 +77,20 @@ static void extract_step_output(
         struct extract *extract, struct chunk *chunk, enum item item)
 {
     if (!extract->waiting) {
-        if (!chunk_harvest(chunk, item))
-            extract->prog = prog_packed_it_zero(extract->prog);
+        if (!chunk_harvest(chunk, item)) {
+            extract_reset(extract, chunk);
+            return;
+        }
+
+        extract->waiting = chunk_ports_produce(chunk, extract->id, item);
+        assert(extract->waiting);
+        return;
     }
 
-    if (chunk_ports_produce(chunk, extract->id, item))
-        extract->prog = prog_packed_it_inc(extract->prog);
-    else extract->waiting = true;
+    if (!chunk_ports_consumed(chunk, extract->id)) return;
+
+    extract->prog = prog_packed_it_inc(extract->prog);
+    extract->waiting = false;
 }
 
 static void extract_step(void *state, struct chunk *chunk)

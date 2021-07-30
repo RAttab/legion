@@ -57,5 +57,6 @@ bool chunk_lanes_dock(struct chunk *, enum item *item, uint32_t *data);
 
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, enum item);
+bool chunk_ports_consumed(struct chunk *, id_t);
 void chunk_ports_request(struct chunk *, id_t, enum item);
 enum item chunk_ports_consume(struct chunk *, id_t);

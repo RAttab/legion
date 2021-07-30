@@ -313,6 +313,12 @@ bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
     return true;
 }
 
+bool chunk_ports_consumed(struct chunk *chunk, id_t id)
+{
+    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    return ports && ports->out == ITEM_NIL;
+}
+
 void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 {
     struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
