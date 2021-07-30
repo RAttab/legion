@@ -707,12 +707,13 @@ static void lisp_fn_sub(struct lisp *lisp)
     if (!lisp_stmt(lisp)) {
         lisp_index_at(lisp, &index);
         lisp_write_op(lisp, OP_NEG);
+        return;
     }
-    else {
+
+    do {
         lisp_index_at(lisp, &index);
         lisp_write_op(lisp, OP_SUB);
-        lisp_expect_close(lisp);
-    }
+    } while (lisp_stmt(lisp));
 }
 
 

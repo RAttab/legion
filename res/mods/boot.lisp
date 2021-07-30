@@ -80,19 +80,20 @@
       (io !io_item (id !item_deploy 1) !item_deploy)
       (boot/wait (id !item_assembly_1 1))
 
-      (io !io_prog (id !item_assembly_1 1) !item_assembly_1 2)
+      (io !io_prog (id !item_assembly_1 1) !item_assembly_1 3)
       (io !io_prog (id !item_assembly_1 2) !item_servo)
       (io !io_item (id !item_deploy 1) !item_assembly_1)
       (boot/wait (id !item_assembly_1 1))
 
       (io !io_prog (id !item_assembly_1 3) !item_servo)
-      (io !io_prog (id !item_assembly_1 4) !item_thruster))
+      (io !io_prog (id !item_assembly_1 4) !item_thruster)
+      (io !io_prog (id !item_assembly_1 5) !item_core))
 
     (when (< current-asm (* n items))
-      (io !io_prog (id !item_assembly_1 1) !item_worker (- (* n 20) current-work))
+      (io !io_prog (id !item_assembly_1 1) !item_worker (- (* n 10) current-work))
       (io !io_item (id !item_deploy 1) !item_worker)
 
-      (io !io_prog (id !item_assembly_1 2) !item_assembly_1 (- (* n items) current-asm))
+      (io !io_prog (id !item_assembly_1 2) !item_assembly_1 (- (* n items) current-asm 3))
       (io !io_item (id !item_deploy 2) !item_assembly_1)
 
       (boot/wait (id !item_assembly_1 1))
@@ -119,9 +120,10 @@
 ;; -----------------------------------------------------------------------------
 
 (defun boot/legion (n)
-  (let ((id (boot/count !item_assembly_1)))
+  (let ((items 7)
+	(id (boot/count !item_assembly_1)))
 
-    (io !io_prog (id !item_assembly_1 1) !item_assembly_1 7)
+    (io !io_prog (id !item_assembly_1 1) !item_assembly_1 items)
     (io !io_item (id !item_deploy 1) !item_assembly_1)
     (boot/wait (id !item_assembly_1 1))
 
