@@ -35,16 +35,24 @@ static void printer_load(void *state, struct chunk *chunk)
     printer->prog = prog_packed_ptr_update(printer->prog, prog);
 }
 
+static void printer_reset(struct printer *printer, struct chunk *chunk)
+{
+    chunk_ports_reset(chunk, printer->id);
+    printer->waiting = false;
+    printer->loops = 0;
+    printer->prog = 0;
+}
+
 
 // -----------------------------------------------------------------------------
 // step
 // -----------------------------------------------------------------------------
 
-static void printer_step_eof(struct printer *printer)
+static void printer_step_eof(struct printer *printer, struct chunk *chunk)
 {
     if (printer->loops != loops_inf) printer->loops--;
 
-    if (!printer->loops) printer->prog = 0;
+    if (!printer->loops) printer_reset(printer, chunk);
     else printer->prog = prog_packed_it_zero(printer->prog);
 }
 
@@ -86,7 +94,7 @@ static void printer_step(void *state, struct chunk *chunk)
 
     struct prog_ret ret = prog_at(prog, prog_packed_it(printer->prog));
     switch (ret.state) {
-    case prog_eof: { printer_step_eof(printer); return; }
+    case prog_eof: { printer_step_eof(printer, chunk); return; }
     case prog_input: { printer_step_input(printer, chunk, ret.item); return; }
     case prog_output: { printer_step_output(printer, chunk, ret.item); return; }
     default: { assert(false); }
@@ -104,14 +112,6 @@ static void printer_io_status(struct printer *printer, struct chunk *chunk, id_t
     chunk_io(chunk, IO_STATE, printer->id, src, 1, &value);
 }
 
-static void printer_io_reset(struct printer *printer, struct chunk *chunk)
-{
-    chunk_ports_reset(chunk, printer->id);
-    printer->waiting = false;
-    printer->loops = 0;
-    printer->prog = 0;
-}
-
 static void printer_io_prog(
         struct printer *printer, struct chunk *chunk, size_t len, const word_t *args)
 {
@@ -123,7 +123,7 @@ static void printer_io_prog(
     const struct prog *prog = prog_fetch(prog_id);
     if (!prog || prog_host(prog) != id_item(printer->id)) return;
 
-    printer_io_reset(printer, chunk);
+    printer_reset(printer, chunk);
     printer->prog = prog_pack(prog_id, 0, prog);
     printer->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
@@ -138,7 +138,7 @@ static void printer_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, printer->id, src, 0, NULL); return; }
     case IO_STATUS: { printer_io_status(printer, chunk, src); return; }
     case IO_PROG: { printer_io_prog(printer, chunk, len, args); return; }
-    case IO_RESET: { printer_io_reset(printer, chunk); return; }
+    case IO_RESET: { printer_reset(printer, chunk); return; }
     default: { return; }
     }
 }

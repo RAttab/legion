@@ -23,6 +23,15 @@ static void deploy_init(void *state, id_t id, struct chunk *chunk)
 }
 
 
+static void deploy_reset(struct deploy *deploy, struct chunk *chunk)
+{
+    chunk_ports_reset(chunk, deploy->id);
+    deploy->item = 0;
+    deploy->loops = 0;
+    deploy->waiting = false;
+}
+
+
 // -----------------------------------------------------------------------------
 // deploy
 // -----------------------------------------------------------------------------
@@ -46,7 +55,7 @@ static void deploy_step(void *state, struct chunk *chunk)
     
     deploy->waiting = false;
     if (deploy->loops != loops_inf) --deploy->loops;
-    if (!deploy->loops) deploy->item = 0;
+    if (!deploy->loops) deploy_reset(deploy, chunk);
 }
 
 
@@ -60,14 +69,6 @@ static void deploy_io_status(struct deploy *deploy, struct chunk *chunk, id_t sr
     chunk_io(chunk, IO_STATE, deploy->id, src, 1, &value);
 }
 
-static void deploy_io_reset(struct deploy *deploy, struct chunk *chunk)
-{
-    chunk_ports_reset(chunk, deploy->id);
-    deploy->item = 0;
-    deploy->loops = 0;
-    deploy->waiting = false;
-}
-
 static void deploy_io_item(
         struct deploy *deploy, struct chunk *chunk, size_t len, const word_t *args)
 {
@@ -77,7 +78,7 @@ static void deploy_io_item(
     enum item item = args[0];
     if (!item_is_active(item) && !item_is_logistics(item)) return;
 
-    deploy_io_reset(deploy, chunk);
+    deploy_reset(deploy, chunk);
     deploy->item = item;
     deploy->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
@@ -92,7 +93,7 @@ static void deploy_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, deploy->id, src, 0, NULL); return; }
     case IO_STATUS: { deploy_io_status(deploy, chunk, src); return; }
     case IO_ITEM: { deploy_io_item(deploy, chunk, len, args); return; }
-    case IO_RESET: { deploy_io_reset(deploy, chunk); return; }
+    case IO_RESET: { deploy_reset(deploy, chunk); return; }
     default: { return; }
     }
 }

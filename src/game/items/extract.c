@@ -35,16 +35,24 @@ static void extract_load(void *state, struct chunk *chunk)
     extract->prog = prog_packed_ptr_update(extract->prog, prog);
 }
 
+static void extract_reset(struct extract *extract, struct chunk *chunk)
+{
+    chunk_ports_reset(chunk, extract->id);
+    extract->waiting = false;
+    extract->loops = 0;
+    extract->prog = 0;
+}
+
 
 // -----------------------------------------------------------------------------
 // step
 // -----------------------------------------------------------------------------
 
-static void extract_step_eof(struct extract *extract)
+static void extract_step_eof(struct extract *extract, struct chunk *chunk)
 {
     if (extract->loops != loops_inf) extract->loops--;
 
-    if (!extract->loops) extract->prog = 0;
+    if (!extract->loops) extract_reset(extract, chunk);
     else extract->prog = prog_packed_it_zero(extract->prog);
 }
 
@@ -87,7 +95,7 @@ static void extract_step(void *state, struct chunk *chunk)
 
     struct prog_ret ret = prog_at(prog, prog_packed_it(extract->prog));
     switch (ret.state) {
-    case prog_eof: { extract_step_eof(extract); return; }
+    case prog_eof: { extract_step_eof(extract, chunk); return; }
     case prog_input: { extract_step_input(extract, chunk, ret.item); return; }
     case prog_output: { extract_step_output(extract, chunk, ret.item); return; }
     default: { assert(false); }
@@ -105,14 +113,6 @@ static void extract_io_status(struct extract *extract, struct chunk *chunk, id_t
     chunk_io(chunk, IO_STATE, extract->id, src, 1, &value);
 }
 
-static void extract_io_reset(struct extract *extract, struct chunk *chunk)
-{
-    chunk_ports_reset(chunk, extract->id);
-    extract->waiting = false;
-    extract->loops = 0;
-    extract->prog = 0;
-}
-
 static void extract_io_prog(
         struct extract *extract, struct chunk *chunk, size_t len, const word_t *args)
 {
@@ -124,7 +124,7 @@ static void extract_io_prog(
     const struct prog *prog = prog_fetch(prog_id);
     if (!prog || prog->host != id_item(extract->id)) return;
 
-    extract_io_reset(extract, chunk);
+    extract_reset(extract, chunk);
     extract->prog = prog_pack(prog_id, 0, prog);
     extract->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
@@ -139,7 +139,7 @@ static void extract_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, extract->id, src, 0, NULL); return; }
     case IO_STATUS: { extract_io_status(extract, chunk, src); return; }
     case IO_PROG: { extract_io_prog(extract, chunk, len, args); return; }
-    case IO_RESET: { extract_io_reset(extract, chunk); return; }
+    case IO_RESET: { extract_reset(extract, chunk); return; }
     default: { return; }
     }
 }
