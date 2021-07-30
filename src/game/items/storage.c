@@ -34,7 +34,7 @@ static void storage_step(void *state, struct chunk *chunk)
 
     enum item ret = 0;
     if (!storage->waiting) {
-        if (storage->count < UINT16_MAX) {
+        if (storage->count < storage_max) {
             chunk_ports_request(chunk, storage->id, storage->item);
             storage->waiting = true;
         }

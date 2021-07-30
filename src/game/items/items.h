@@ -74,12 +74,15 @@ static_assert(sizeof(struct printer) == 16);
 // storage
 // -----------------------------------------------------------------------------
 
+enum { storage_max = UINT8_MAX };
+
 struct legion_packed storage
 {
     id_t id;
-    enum item item;
     bool waiting;
-    uint16_t count;
+    enum item item;
+    uint8_t count;
+    legion_pad(1);
 };
 
 static_assert(sizeof(struct storage) == 8);
