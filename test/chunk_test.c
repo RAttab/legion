@@ -154,7 +154,7 @@ void test_ports_reset(void)
         chunk_ports_request(chunk, dst, item);
         chunk_step(chunk);
         assert(chunk_ports_consume(chunk, dst) == item);
-        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_reset(chunk, src);
@@ -168,21 +168,21 @@ void test_ports_reset(void)
         chunk_ports_produce(chunk, src, item);
         chunk_step(chunk);
         assert(chunk_ports_consume(chunk, dst) == item);
-        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
         chunk_ports_reset(chunk, dst);
         chunk_step(chunk);
         assert(chunk_ports_consume(chunk, dst) == ITEM_NIL);
-        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).queue == 1);
         assert(chunk_workers(chunk).clean == 1);
         assert(chunk_workers(chunk).fail == 0);
 
         chunk_ports_request(chunk, dst, item);
         chunk_step(chunk);
         assert(chunk_ports_consume(chunk, dst) == item);
-        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
@@ -196,7 +196,7 @@ void test_ports_reset(void)
         chunk_ports_reset(chunk, dst);
         chunk_step(chunk);
         assert(chunk_ports_consume(chunk, dst) == ITEM_NIL);
-        assert(chunk_workers(chunk).queue == 0);
+        assert(chunk_workers(chunk).queue == 1);
         assert(chunk_workers(chunk).clean == 1);
         assert(chunk_workers(chunk).fail == 0);
     }

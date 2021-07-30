@@ -349,6 +349,7 @@ static void chunk_ports_step(struct chunk *chunk)
     chunk->workers.idle = 0;
     chunk->workers.fail = 0;
     chunk->workers.clean = 0;
+    chunk->workers.queue = ring32_len(chunk->requested);
 
     for (size_t i = 0; i < chunk->workers.count; ++i) {
 
@@ -389,6 +390,4 @@ static void chunk_ports_step(struct chunk *chunk)
         chunk->workers.fail++;
         continue;
     }
-
-    chunk->workers.queue = ring32_len(chunk->requested);
 }
