@@ -127,9 +127,10 @@ struct star *chunk_star(struct chunk *chunk)
 bool chunk_harvest(struct chunk *chunk, enum item item)
 {
     assert(item >= ITEM_NATURAL_FIRST && item < ITEM_SYNTH_FIRST);
-    if (!chunk->star.elems[item]) return false;
 
-    chunk->star.elems[item]--;
+    size_t i = item - ITEM_NATURAL_FIRST;
+    if (!chunk->star.elems[i]) return false;
+    chunk->star.elems[i]--;
     return true;
 }
 
