@@ -158,8 +158,8 @@ bool map_event(struct map *map, SDL_Event *event)
                         .h = px, .w = px,
                     });
 
-            const struct star *star = world_star(core.state.world, rect);
-            if (star) core_push_event(EV_STAR_SELECT, (uintptr_t) star, 0);
+            const struct star *star = world_star_in(core.state.world, rect);
+            if (star) core_push_event(EV_STAR_SELECT, coord_to_id(star->coord), 0);
         }
 
         break;

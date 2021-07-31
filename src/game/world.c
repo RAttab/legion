@@ -194,23 +194,28 @@ struct sector *world_sector(struct world *world, struct coord sector)
     return value;
 }
 
-const struct star *world_star(struct world *world, struct rect rect)
+const struct star *world_star_in(struct world *world, struct rect rect)
 {
     // Very likely that the center of the rectangle is the right place to look
     // so make a first initial guess.
     struct sector *sector = world_sector(world, rect_center(&rect));
-    const struct star *star = sector_star(sector, rect);
+    const struct star *star = sector_star_in(sector, rect);
     if (star) return star;
 
     // Alright so our guess didn't work out so time for an exhaustive search.
     struct coord it = rect_next_sector(rect, coord_nil());
     for (; !coord_is_nil(it); it = rect_next_sector(rect, it)) {
         sector = world_sector(world, rect_center(&rect));
-        star = sector_star(sector, rect);
+        star = sector_star_in(sector, rect);
         if (star) return star;
     }
 
     return NULL;
+}
+
+const struct star *world_star_at(struct world *world, struct coord coord)
+{
+    return sector_star_at(world_sector(world, coord), coord);
 }
 
 struct world_render_it world_render_it(struct world *world, struct rect viewport)

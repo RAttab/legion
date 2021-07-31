@@ -185,13 +185,19 @@ struct chunk *sector_chunk(struct sector *sector, struct coord coord)
     return ret.ok ? (void *) ret.value : NULL;
 }
 
-const struct star *sector_star(struct sector *sector, struct rect rect)
+const struct star *sector_star_in(struct sector *sector, struct rect rect)
 {
     for (size_t i = 0; i < sector->stars_len; ++i) {
         struct star *star = &sector->stars[i];
         if (rect_contains(&rect, star->coord)) return star;
     }
     return NULL;
+}
+
+const struct star *sector_star_at(struct sector *sector, struct coord coord)
+{
+    struct htable_ret ret = htable_get(&sector->index, coord_to_id(coord));
+    return ret.ok ? (struct star *) ret.value : NULL;
 }
 
 void sector_step(struct sector *sector)

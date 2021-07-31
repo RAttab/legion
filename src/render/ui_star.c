@@ -17,6 +17,7 @@
 
 struct ui_star
 {
+    struct coord id;
     struct star star;
 
     struct ui_panel panel;
@@ -156,10 +157,14 @@ static void ui_star_update_list(
 
 static void ui_star_update(struct ui_star *ui)
 {
-    ui_str_set_coord(&ui->coord_val.str, ui->star.coord);
+    ui_str_set_coord(&ui->coord_val.str, ui->id);
 
-    struct chunk *chunk = world_chunk(core.state.world, ui->star.coord);
+    struct chunk *chunk = world_chunk(core.state.world, ui->id);
     if (!chunk) {
+        const struct star *star = world_star_at(core.state.world, ui->id);
+        assert(star);
+        ui->star = *star;
+
         ui_toggles_resize(&ui->control_list, 0);
         ui_scroll_update(&ui->control_scroll, 0);
         ui_toggles_resize(&ui->factory_list, 0);
@@ -171,6 +176,8 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_u64(&ui->queue_val.str, 0);
         return;
     }
+
+    ui->star = *chunk_star(chunk);
 
     {
         static const enum item filter[] = {
@@ -215,14 +222,13 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
 
     case EV_STATE_LOAD: {
         ui->panel.state = ui_panel_hidden;
-        ui->star = (struct star) {0};
+        ui->id = coord_nil();
         ui->selected = 0;
         return false;
     }
 
     case EV_STAR_SELECT: {
-        const struct star *new = ev->user.data1;
-        ui->star = *new;
+        ui->id = id_to_coord((uint64_t) ev->user.data1);
         ui_star_update(ui);
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
@@ -230,7 +236,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_STAR_CLEAR: {
-        ui->star = (struct star) {0};
+        ui->id = coord_nil();
         ui->panel.state = ui_panel_hidden;
         core_push_event(EV_FOCUS_PANEL, 0, 0);
         return true;

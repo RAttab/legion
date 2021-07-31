@@ -63,7 +63,8 @@ void sector_save(struct sector *, struct save *);
 struct chunk *sector_chunk(struct sector *, struct coord coord);
 struct chunk *sector_chunk_alloc(struct sector *, struct coord coord);
 
-const struct star *sector_star(struct sector *, struct rect);
+const struct star *sector_star_in(struct sector *, struct rect);
+const struct star *sector_star_at(struct sector *, struct coord coord);
 
 void sector_step(struct sector *);
 ssize_t sector_scan(struct sector *, struct coord, enum item);
