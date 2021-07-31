@@ -98,20 +98,23 @@ struct legion_packed brain
 {
     id_t id;
 
-    legion_pad(3);
-    uint8_t debug;
     ip_t breakpoint;
+    bool debug;
+
+    legion_pad(2);
+
+    bool mod_fault;
+    mod_t mod_id;
+    const struct mod *mod;
 
     id_t msg_src;
     uint8_t msg_len;
     legion_pad(3);
     word_t msg[brain_msg_cap];
 
-    mod_t mod_id;
-    const struct mod *mod;
-
     struct vm vm;
 };
+
 static_assert(sizeof(struct brain) == s_cache_line + sizeof(struct vm));
 
 

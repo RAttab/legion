@@ -68,11 +68,9 @@ static void brain_load(void *state, struct chunk *chunk)
 
 static void brain_mod(struct brain *brain, struct chunk *chunk, mod_t id)
 {
-    const struct mod *mod = mods_get(world_mods(chunk_world(chunk)), id);
-    if (!mod) return;
-
-    brain->mod = mod;
     brain->mod_id = id;
+    brain->mod = id ? mods_get(world_mods(chunk_world(chunk)), id) : NULL;
+    brain->mod_fault = id && !brain->mod;
 }
 
 static uint8_t brain_speed(struct brain *brain)
@@ -119,6 +117,7 @@ static void brain_step_io(
     bool ok = false;
     switch (atom) {
     case IO_RECV: { ok = brain_step_recv(brain, len - 1, io + 1); break; }
+    case IO_COORD: { vm_push(&brain->vm, coord_to_id(chunk_star(chunk)->coord)); break; }
     default: { ok = chunk_io(chunk, atom, brain->id, dst, len - 1, io + 1); break; }
     }
 
@@ -129,7 +128,7 @@ static void brain_step_io(
 
 static void brain_vm_step(struct brain *brain, struct chunk *chunk)
 {
-    if (!brain->mod) return;
+    if (!brain->mod || brain->mod_fault) return;
 
     mod_t mod = vm_exec(&brain->vm, brain->mod);
     if (brain->vm.ip == brain->breakpoint) brain->debug = true;
@@ -137,10 +136,11 @@ static void brain_vm_step(struct brain *brain, struct chunk *chunk)
     if (mod == VM_FAULT) return;
     if (mod) { brain_mod(brain, chunk, mod); return; }
 
-    if (!vm_io(&brain->vm)) return;
-    vm_io_buf_t io = {0};
-    size_t len = vm_io_read(&brain->vm, io);
-    if (len) brain_step_io(brain, chunk, len, io);
+    if (vm_io(&brain->vm)) {
+        vm_io_buf_t io = {0};
+        size_t len = vm_io_read(&brain->vm, io);
+        if (len) brain_step_io(brain, chunk, len, io);
+    }
 }
 
 static void brain_step(void *state, struct chunk *chunk)
@@ -237,9 +237,10 @@ static void brain_io(
 
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, 0, NULL); return; }
+    case IO_PONG: { return; } // the return value of chunk_io is all we really need.
+
     case IO_STATUS: { brain_io_status(brain, chunk, src); return; }
     case IO_STATE: { brain_io_state(brain, len, args); return; }
-    case IO_COORD: { vm_push(&brain->vm, coord_to_id(chunk_star(chunk)->coord)); return; }
 
     case IO_MOD: { brain_io_mod(brain, chunk, len, args); return; }
     case IO_RESET: { brain_io_reset(brain); return; }

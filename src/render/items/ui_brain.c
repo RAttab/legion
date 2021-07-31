@@ -18,7 +18,8 @@ struct ui_brain
     struct ui_label msg, msg_src, msg_index, msg_val;
     struct ui_label mod;
     struct ui_link mod_val;
-    struct ui_label ver, ver_val;
+    struct ui_label mod_ver, mod_ver_val;
+    struct ui_label mod_fault, mod_fault_val;
     struct ui_label spec, spec_stack, spec_speed, spec_sep;
     struct ui_label io, io_val, ior, ior_val;
     struct ui_label tsc, tsc_val;
@@ -49,8 +50,10 @@ static void ui_brain_init(struct ui_brain *ui)
 
         .mod = ui_label_new(font, ui_str_c("mod: ")),
         .mod_val = ui_link_new(font, ui_str_v(symbol_cap)),
-        .ver = ui_label_new(font, ui_str_c("ver: ")),
-        .ver_val = ui_label_new(font, ui_str_v(u16_len)),
+        .mod_ver = ui_label_new(font, ui_str_c("ver: ")),
+        .mod_ver_val = ui_label_new(font, ui_str_v(u16_len)),
+        .mod_fault = ui_label_new(font, ui_str_c("failt: ")),
+        .mod_fault_val = ui_label_new(font, ui_str_v(8)),
 
         .spec = ui_label_new(font, ui_str_c("stack: ")),
         .spec_stack = ui_label_new(font, ui_str_v(u8_len)),
@@ -99,8 +102,10 @@ static void ui_brain_free(struct ui_brain *ui)
 
     ui_label_free(&ui->mod);
     ui_link_free(&ui->mod_val);
-    ui_label_free(&ui->ver);
-    ui_label_free(&ui->ver_val);
+    ui_label_free(&ui->mod_ver);
+    ui_label_free(&ui->mod_ver_val);
+    ui_label_free(&ui->mod_fault);
+    ui_label_free(&ui->mod_fault_val);
 
     ui_label_free(&ui->spec);
     ui_label_free(&ui->spec_stack);
@@ -150,13 +155,22 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
 
     if (!state->mod) {
         ui_str_setc(&ui->mod_val.str, "nil");
-        ui_str_setc(&ui->ver_val.str, "nil");
+        ui_str_setc(&ui->mod_ver_val.str, "nil");
     }
     else {
         struct symbol mod = {0};
         mods_name(world_mods(core.state.world), mod_id(state->mod->id), &mod);
         ui_str_set_symbol(&ui->mod_val.str, &mod);
-        ui_str_set_hex(&ui->ver_val.str, mod_ver(state->mod->id));
+        ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod->id));
+    }
+
+    if (state->mod_fault) {
+        ui_str_setc(&ui->mod_fault.str, "true");
+        ui->mod_fault.fg = rgba_red();
+    }
+    else {
+        ui_str_setc(&ui->mod_fault.str, "nil");
+        ui->mod_fault.fg = rgba_gray(0x33);
     }
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
@@ -247,8 +261,11 @@ static void ui_brain_render(
     ui_label_render(&ui->mod, layout, renderer);
     ui_link_render(&ui->mod_val, layout, renderer);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->ver, layout, renderer);
-    ui_label_render(&ui->ver_val, layout, renderer);
+    ui_label_render(&ui->mod_ver, layout, renderer);
+    ui_label_render(&ui->mod_ver_val, layout, renderer);
+    ui_layout_next_row(layout);
+    ui_label_render(&ui->mod_fault, layout, renderer);
+    ui_label_render(&ui->mod_fault_val, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, font->glyph_h);
