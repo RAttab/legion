@@ -26,10 +26,9 @@
       (io !io_prog (id !item_printer_1 1) !item_frame)
       (io !io_prog (id !item_printer_1 2) !item_circuit))
 
-    (io !io_item (id !item_deploy 1) !item_extract_1)
-    (io !io_prog (id !item_assembly_1 1) !item_extract_1 (- (* items n) current)))
-
-  (boot/wait (id !item_assembly_1 1))
+    (io !io_prog (id !item_assembly_1 1) !item_extract_1 (- (* items n) current))
+    (io !io_item (id !item_deploy 1) !item_extract_1 (- (* items n) current))
+    (boot/wait (id !item_deploy 1)))
 
   (let ((id 1))
     (set id (boot/extract-set id n !item_elem_a))
@@ -55,10 +54,9 @@
       (io !io_prog (id !item_printer_1 1) !item_circuit)
       (io !io_prog (id !item_printer_1 2) !item_gear))
 
-    (io !io_item (id !item_deploy 1) !item_printer_1)
-    (io !io_prog (id !item_assembly_1 1) !item_printer_1 (- (* items n) current)))
-
-  (boot/wait (id !item_assembly_1 1))
+    (io !io_prog (id !item_assembly_1 1) !item_printer_1 (- (* items n) current))
+    (io !io_item (id !item_deploy 1) !item_printer_1 (- (* items n) current))
+    (boot/wait (id !item_deploy 1)))
 
   (let ((id 1))
     (set id (boot/printer-set id n !item_frame))
@@ -84,8 +82,8 @@
     (when (<= current-asm 2)
       (io !io_prog (id !item_assembly_1 1) !item_assembly_1 3)
       (io !io_prog (id !item_assembly_1 2) !item_servo)
-      (io !io_item (id !item_deploy 1) !item_assembly_1)
-      (boot/wait (id !item_assembly_1 1))
+      (io !io_item (id !item_deploy 1) !item_assembly_1 3)
+      (boot/wait (id !item_deploy 1))
 
       (io !io_prog (id !item_assembly_1 3) !item_servo)
       (io !io_prog (id !item_assembly_1 4) !item_thruster)
@@ -93,12 +91,12 @@
 
     (when (< current-asm (* n items))
       (io !io_prog (id !item_assembly_1 1) !item_worker (- (* n 10) current-work))
-      (io !io_item (id !item_deploy 1) !item_worker)
-      (boot/wait (id !item_assembly_1 1))
+      (io !io_item (id !item_deploy 1) !item_worker (- (* n 10) current-work))
+      (boot/wait (id !item_deploy 1))
 
       (io !io_prog (id !item_assembly_1 1) !item_assembly_1 (- (* n items) current-asm 3))
-      (io !io_item (id !item_deploy 1) !item_assembly_1)
-      (boot/wait (id !item_assembly_1 1))))
+      (io !io_item (id !item_deploy 1) !item_assembly_1 (- (* n items) current-asm 3))
+      (boot/wait (id !item_deploy 1))))
 
   (let ((id 3))
     (set id (boot/assembly-set id n !item_servo))
@@ -123,13 +121,13 @@
 (defun boot/launch ()
   (io !io_prog (id !item_assembly_1 1) !item_scanner_1 2)
   (io !io_item (id !item_deploy 1) !item_scanner_1 2)
-  (boot/wait (id !item_assembly_1 1))
+  (boot/wait (id !item_deploy 1))
 
-  (io !io_prog (id !item_assembly_1 2) !item_brain_1 1)
-  (io !io_item (id !item_deploy 1) !item_assembly_1 1)
-  (boot/wait (id !item_assembly_1 1))
+  (io !io_prog (id !item_assembly_1 1) !item_brain_1 1)
+  (io !io_item (id !item_deploy 1) !item_brain_1 1)
+  (boot/wait (id !item_deploy 1))
 
-  (io !io_mod (id !item_brain_1 2) (mod launch 2)))
+  (assert (= (io !io_mod (id !item_brain_1 2) (mod launch 2)) !io_ok)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -142,7 +140,7 @@
 
     (io !io_prog (id !item_assembly_1 1) !item_assembly_1 items)
     (io !io_item (id !item_deploy 1) !item_assembly_1 items)
-    (boot/wait (id !item_assembly_1 1))
+    (boot/wait (id !item_deploy 1))
 
     (set id (boot/assembly-set id 1 !item_deploy))
     (set id (boot/assembly-set id 1 !item_extract_1))
@@ -153,9 +151,9 @@
     (set id (boot/assembly-set id 1 !item_brain_1))
     (set id (boot/assembly-set id 1 !item_worker)))
 
-  (io !io_item (id !item_deploy 1) !item_legion_1)
   (io !io_prog (id !item_assembly_1 1) !item_legion_1 n)
-  (boot/wait (id !item_assembly_1 1)))
+  (io !io_item (id !item_deploy 1) !item_legion_1 n)
+  (boot/wait (id !item_deploy 1)))
 
 
 ;; -----------------------------------------------------------------------------
