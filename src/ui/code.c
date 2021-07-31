@@ -114,7 +114,19 @@ static void ui_code_set(
     code->view.line = code->text.first;
     code->view.init = true;
 
-    ui_code_goto(code, ip);
+    if (ip) ui_code_goto(code, ip);
+    else {
+        code->carret.row = code->carret.col = 0;
+        code->carret.line = code->text.first;
+
+        code->view.top = code->carret.row;
+        code->view.line = code->carret.line;
+        ui_code_view_update(code);
+
+        code->mark.row = 0;
+        code->mark.col = 0;
+        code->mark.len = 0;
+    }
 }
 
 void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)
