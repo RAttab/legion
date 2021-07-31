@@ -137,7 +137,7 @@
 ;; -----------------------------------------------------------------------------
 
 (defun boot/legion (n)
-  (let ((items 7)
+  (let ((items 8)
 	(id (+ (boot/count !item_assembly_1) 1)))
 
     (io !io_prog (id !item_assembly_1 1) !item_assembly_1 items)
@@ -148,6 +148,7 @@
     (set id (boot/assembly-set id 1 !item_extract_1))
     (set id (boot/assembly-set id 1 !item_printer_1))
     (set id (boot/assembly-set id 1 !item_assembly_1))
+    (set id (boot/assembly-set id 1 !item_scanner_1))
     (set id (boot/assembly-set id 1 !item_db_1))
     (set id (boot/assembly-set id 1 !item_brain_1))
     (set id (boot/assembly-set id 1 !item_worker)))
