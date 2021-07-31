@@ -19,7 +19,6 @@ struct ring32 *ring32_push(struct ring32 *ring, uint32_t val)
     }
 
     if (unlikely(ring->head == UINT16_MAX)) {
-        dbg0("ring.limit");
         ring->tail %= ring->cap;
         ring->head %= ring->cap;
     }
