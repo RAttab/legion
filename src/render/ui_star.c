@@ -250,6 +250,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_ITEM_CLEAR: {
+        ui->selected = 0;
         ui_toggles_clear(&ui->control_list);
         ui_toggles_clear(&ui->factory_list);
         return false;
