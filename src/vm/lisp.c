@@ -131,7 +131,7 @@ static char lisp_in_inc(struct lisp *lisp)
     if (unlikely(lisp_eof(lisp))) return 0;
 
     if (*lisp->in.it == '\n') { lisp->in.row++; lisp->in.col = 0; }
-    else { lisp->in.col++; }
+    else { lisp->in.col += *lisp->in.it == '\t' ? 8 : 1; } // fucking emacs...
 
     lisp->in.it++;
     return *lisp->in.it;

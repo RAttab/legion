@@ -90,11 +90,14 @@ static struct token *lisp_next(struct lisp *lisp)
         while(!lisp_eof(lisp) && symbol_char(*lisp->in.it)) lisp_in_inc(lisp);
 
         token->len = lisp->in.it - first;
-        if (unlikely(token->len > symbol_cap)) {
+        if (unlikely(token->len > symbol_cap))
             lisp_err(lisp, "symbol is too long: %u > %u", token->len, symbol_cap);
-            token->len = symbol_cap;
-        }
+
         token->val.symb = make_symbol_len(first, token->len);
+
+        // This suck but without it index is undershot by one due to the ! that
+        // we skip at the start...
+        if (token->type == token_atom) token->len++;
         break;
     }
 
@@ -124,8 +127,8 @@ static struct token *lisp_next(struct lisp *lisp)
             break;
         }
 
-        token->len = 2;
 
+        const char *first = lisp->in.it;
         char c = lisp_in_inc(lisp);
         lisp_in_inc(lisp);
 
@@ -134,6 +137,7 @@ static struct token *lisp_next(struct lisp *lisp)
             c = '0';
         }
 
+        token->len = lisp->in.it - first;
         token->val.num = c - '0';
         break;
     }
