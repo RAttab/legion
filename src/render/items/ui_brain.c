@@ -52,7 +52,7 @@ static void ui_brain_init(struct ui_brain *ui)
         .mod_val = ui_link_new(font, ui_str_v(symbol_cap)),
         .mod_ver = ui_label_new(font, ui_str_c("ver: ")),
         .mod_ver_val = ui_label_new(font, ui_str_v(u16_len)),
-        .mod_fault = ui_label_new(font, ui_str_c("failt: ")),
+        .mod_fault = ui_label_new(font, ui_str_c("fault: ")),
         .mod_fault_val = ui_label_new(font, ui_str_v(8)),
 
         .spec = ui_label_new(font, ui_str_c("stack: ")),
@@ -165,12 +165,12 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
     }
 
     if (state->mod_fault) {
-        ui_str_setc(&ui->mod_fault.str, "true");
-        ui->mod_fault.fg = rgba_red();
+        ui_str_setc(&ui->mod_fault_val.str, "true");
+        ui->mod_fault_val.fg = rgba_red();
     }
     else {
-        ui_str_setc(&ui->mod_fault.str, "nil");
-        ui->mod_fault.fg = rgba_gray(0x33);
+        ui_str_setc(&ui->mod_fault_val.str, "nil");
+        ui->mod_fault_val.fg = rgba_gray(0x33);
     }
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
