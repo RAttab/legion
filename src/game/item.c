@@ -178,7 +178,7 @@ void atoms_register_game(struct atoms *atoms)
     reg_atom(IO_SEND);
     reg_atom(IO_RECV);
     reg_atom(IO_SCAN);
-    reg_atom(IO_RESULT);
+    reg_atom(IO_SCAN_VAL);
     reg_atom(IO_LAUNCH);
     reg_atom(IO_DBG_ATTACH);
     reg_atom(IO_DBG_DETACH);

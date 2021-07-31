@@ -42,7 +42,7 @@ legion_packed enum atom_io
     IO_RECV,
 
     IO_SCAN,
-    IO_RESULT,
+    IO_SCAN_VAL,
 
     IO_LAUNCH,
 

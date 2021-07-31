@@ -14,12 +14,15 @@
 // scanner
 // -----------------------------------------------------------------------------
 
+static const word_t scanner_empty = -1;
+
 static void scanner_init(void *state, id_t id, struct chunk *chunk)
 {
     struct scanner *scanner = state;
     (void) chunk;
 
     scanner->id = id;
+    scanner->result = scanner_empty;
 }
 
 static uint64_t scanner_div(enum item item)
@@ -33,6 +36,15 @@ static uint64_t scanner_div(enum item item)
     }
 }
 
+static void scanner_reset(struct scanner *scanner)
+{
+    scanner->state = scanner_idle;
+    scanner->result = scanner_empty;
+    scanner->work.left = 0;
+    scanner->work.cap = 0;
+}
+
+
 // -----------------------------------------------------------------------------
 // step
 // -----------------------------------------------------------------------------
@@ -42,19 +54,13 @@ static void scanner_step(void *state, struct chunk *chunk)
     struct scanner *scanner = state;
 
     if (scanner->state == scanner_idle) return;
+    if (scanner->result != scanner_empty) return;
     if (scanner->work.left) { scanner->work.left--; return; }
-    if (scanner->result) return;
 
-    if (scanner->state == scanner_wide) {
+    if (scanner->state == scanner_wide)
         scanner->result = coord_to_id(world_scan_next(chunk_world(chunk), &scanner->type.wide));
-        if (!scanner->result) scanner->state = scanner_idle;
-        else scanner->work.left = scanner->work.cap;
-    }
-    else {
-        scanner->result = world_scan(chunk_world(chunk),
-                scanner->type.target.coord, scanner->type.target.item);
-        scanner->state = scanner_idle;
-    }
+    else scanner->result = world_scan(chunk_world(chunk),
+            scanner->type.target.coord, scanner->type.target.item);
 }
 
 
@@ -65,23 +71,16 @@ static void scanner_step(void *state, struct chunk *chunk)
 static void scanner_io_status(struct scanner *scanner, struct chunk *chunk, id_t src)
 {
     word_t target = 0;
-    if (scanner->state == scanner_wide)
-        target = coord_to_id(scanner->type.wide.coord);
-    else if (scanner->state == scanner_target)
-        target = coord_to_id(scanner->type.target.coord);
 
-    word_t value[] = { target, scanner->state };
-    chunk_io(chunk, IO_STATE, scanner->id, src, array_len(value), value);
+    switch (scanner->state) {
+    case scanner_idle: { target = 0; break; }
+    case scanner_wide: { target = coord_to_id(scanner->type.wide.coord); break; }
+    case scanner_target: { target = coord_to_id(scanner->type.target.coord); break; }
+    default: { assert(false); }
+    }
+
+    chunk_io(chunk, IO_STATE, scanner->id, src, 1, &target);
 }
-
-static void scanner_io_reset(struct scanner *scanner)
-{
-    scanner->state = scanner_idle;
-    scanner->work.left = 0;
-    scanner->work.cap = 0;
-    scanner->result = 0;
-}
-
 
 static void scanner_io_scan(
         struct scanner *scanner, struct chunk *chunk, size_t len, const word_t *args)
@@ -110,15 +109,20 @@ static void scanner_io_scan(
     uint64_t delta = coord_dist(chunk_star(chunk)->coord, coord);
     delta /= scanner_div(id_item(scanner->id));
 
-    if (delta >= UINT8_MAX) { scanner_io_reset(scanner); return; }
+    if (delta >= UINT8_MAX) { scanner_reset(scanner); return; }
     scanner->work.cap = scanner->work.left = delta;
-    scanner->result = 0;
+    scanner->result = scanner_empty;
 }
 
-static void scanner_io_result(struct scanner *scanner, struct chunk *chunk, id_t src)
+static void scanner_io_scan_val(struct scanner *scanner, struct chunk *chunk, id_t src)
 {
     chunk_io(chunk, IO_VAL, scanner->id, src, 1, &scanner->result);
-    scanner->result = 0;
+
+    if (!scanner->result) scanner_reset(scanner);
+    else {
+        scanner->work.left = scanner->work.cap;
+        scanner->result = scanner_empty;
+    }
 }
 
 static void scanner_io(
@@ -131,8 +135,8 @@ static void scanner_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, scanner->id, src, 0, NULL); return; }
     case IO_STATUS: { scanner_io_status(scanner, chunk, src); return; }
     case IO_SCAN: { scanner_io_scan(scanner, chunk, len, args); return; }
-    case IO_RESULT: { scanner_io_result(scanner, chunk, src); return; }
-    case IO_RESET: { scanner_io_reset(scanner); return; }
+    case IO_SCAN_VAL: { scanner_io_scan_val(scanner, chunk, src); return; }
+    case IO_RESET: { scanner_reset(scanner); return; }
     default: { return; }
     }
 }
@@ -146,7 +150,7 @@ const struct active_config *scanner_config(enum item item)
 {
     (void) item;
     static const word_t io_list[] = {
-        IO_PING, IO_STATUS, IO_SCAN, IO_RESULT, IO_RESET
+        IO_PING, IO_STATUS, IO_SCAN, IO_SCAN_VAL, IO_RESET
     };
 
     static const struct active_config config = {
