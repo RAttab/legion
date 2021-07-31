@@ -37,6 +37,7 @@ const enum item *legion_cargo(enum item type)
             ITEM_PRINTER_1,
             ITEM_ASSEMBLY_1,
             ITEM_ASSEMBLY_1,
+            ITEM_SCANNER_1,
             ITEM_DB_1,
             ITEM_BRAIN_1,
             ITEM_NIL,
