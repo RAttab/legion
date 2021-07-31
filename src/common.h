@@ -59,6 +59,14 @@
             __x <= __y ? __x : __y;                                     \
         })
 
+#define legion_bound(_val, _lo, _hi)            \
+    ({                                          \
+        typeof(_val) val = (_val);              \
+        typeof(_lo) lo = (_lo);                 \
+        typeof(_hi) hi = (_hi);                 \
+        val < lo ? lo : (val > hi ? hi : val);  \
+    })
+
 #define legion_xchg(_ptr, _val) ({              \
             typeof(_val) val = (_val);          \
             typeof(_ptr) ptr = (_ptr);          \

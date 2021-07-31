@@ -64,6 +64,10 @@ void ui_code_goto(struct ui_code *code, ip_t ip)
             code->carret.line = code->carret.line->next;
             code->carret.row++;
         }
+
+        code->mark.row = code->carret.row;
+        code->mark.col = 0;
+        code->mark.len = code->carret.line->len;
     }
 
     else {
@@ -75,6 +79,10 @@ void ui_code_goto(struct ui_code *code, ip_t ip)
 
         code->carret.row = index.row;
         code->carret.col = index.col;
+
+        code->mark.row = index.row;
+        code->mark.col = index.col;
+        code->mark.len = index.len;
     }
 
     code->view.top = code->carret.row;
@@ -327,6 +335,26 @@ void ui_code_render(
         ui_layout_add(&inner, &w);
 
         size_t len = legion_min(line->len - col, code->cols);
+
+        // mark
+        if (code->mark.row == row) {
+            size_t start = 0, end = code->cols;
+
+            if (!code->disassembly) {
+                start = legion_bound(code->mark.col, col, col + len);
+                end = legion_bound(code->mark.col + code->mark.len, col, col + len);
+            }
+
+            if (start != end) {
+                rgba_render(make_rgba(0x00, 0x77, 0x00, 0xFF), renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                    .x = w.pos.x + (start * font->glyph_w),
+                                    .y = w.pos.y,
+                                    .w = (end - start) * font->glyph_w,
+                                    .h = font->glyph_h,
+                                }));
+            }
+        }
 
         // code text
         {

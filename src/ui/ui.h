@@ -451,6 +451,8 @@ struct ui_code
         size_t row, col;
         struct line *line;
     } carret;
+
+    struct { size_t row, col, len; } mark;
 };
 
 enum { ui_code_num_len = 4 };
