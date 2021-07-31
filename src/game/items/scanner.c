@@ -57,10 +57,15 @@ static void scanner_step(void *state, struct chunk *chunk)
     if (scanner->result != scanner_empty) return;
     if (scanner->work.left) { scanner->work.left--; return; }
 
+    struct world *world = chunk_world(chunk);
+
     if (scanner->state == scanner_wide)
-        scanner->result = coord_to_id(world_scan_next(chunk_world(chunk), &scanner->type.wide));
-    else scanner->result = world_scan(chunk_world(chunk),
-            scanner->type.target.coord, scanner->type.target.item);
+        scanner->result = coord_to_id(world_scan_next(world, &scanner->type.wide));
+    else {
+        ssize_t ret = world_scan(world, scanner->type.target.coord, scanner->type.target.item);
+        scanner->result = ret < 0 ? 0 : ret;
+    }
+
 }
 
 
@@ -118,10 +123,31 @@ static void scanner_io_scan_val(struct scanner *scanner, struct chunk *chunk, id
 {
     chunk_io(chunk, IO_VAL, scanner->id, src, 1, &scanner->result);
 
-    if (!scanner->result) scanner_reset(scanner);
-    else {
+    switch (scanner->state)
+    {
+
+    case scanner_idle: { break; }
+
+    case scanner_target: {
+        if (scanner->result != scanner_empty)
+            scanner_reset(scanner);
+        break;
+    }
+
+    case scanner_wide: {
+        if (scanner->result == scanner_empty) break;
+
+        if (!scanner->result) {
+            scanner_reset(scanner);
+            break;
+        }
+
         scanner->work.left = scanner->work.cap;
         scanner->result = scanner_empty;
+        break;
+    }
+
+    default: { assert(false); }
     }
 }
 
