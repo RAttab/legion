@@ -1,9 +1,17 @@
+;; Bootstraps a basic factory infrastructure along a few instances of
+;; !item_legion_1 that are sent to other stars in the sector via
+;; (launch 2).
+
+
 (boot/extract 2)
 (boot/printer 2)
 (boot/extract 4)
 (boot/printer 4)
 (boot/assembler 2)
-(boot/legion 10)
+
+(boot/launch)
+(boot/legion 5)
+
 
 ;; -----------------------------------------------------------------------------
 ;; extract
@@ -71,7 +79,7 @@
 
 (defun boot/assembler (n)
   (let ((items 9)
-	(current-asm (- (boot/count !item_assembly_1) 2)) ;; we always reserve 2
+	(current-asm (- (boot/count !item_assembly_1) 2)) ; we always reserve 2 assemblers for our internal needs
 	(current-work (boot/count !item_worker)))
     (when (<= current-asm 2)
       (io !io_prog (id !item_assembly_1 1) !item_assembly_1 3)
@@ -109,13 +117,26 @@
 
 
 ;; -----------------------------------------------------------------------------
+;; launch
+;; -----------------------------------------------------------------------------
+
+(defun boot/launch ()
+  (io !io_prog (id !item_assembly_1 1) !item_scanner_1 2)
+  (io !io_item (id !item_deploy 1) !item_scanner_1 2)
+  (boot/wait (id !item_assembly_1 1))
+
+  (io !io_prog (id !item_assembly_1 2) !item_brain_1 1)
+  (io !io_item (id !item_deploy 1) !item_assembly_1 1)
+  (boot/wait (id !item_assembly_1 1))
+
+  (io !io_mod (id !item_brain_1 2) (mod launch 2)))
+
+
+;; -----------------------------------------------------------------------------
 ;; legion
 ;; -----------------------------------------------------------------------------
 
 (defun boot/legion (n)
-  (io !io_reset (id !item_deploy 1))
-  (io !io_reset (id !item_deploy 2))
-
   (let ((items 7)
 	(id (+ (boot/count !item_assembly_1) 1)))
 
@@ -133,12 +154,7 @@
 
   (io !io_item (id !item_deploy 1) !item_legion_1)
   (io !io_prog (id !item_assembly_1 1) !item_legion_1 n)
-  (boot/wait (id !item_assembly_1 1))
-
-  (io !io_scan (id !item_scanner_1 1) (boot/coord))
-  (for (i 0) (< i n) (+ i 1)
-       (io !io_mod (id !item_legion_1 (+ i 1)) (mod))
-       (io !io_launch (id !item_legion_1 (+ i 1)) (boot/scan-result))))
+  (boot/wait (id !item_assembly_1 1)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -149,11 +165,6 @@
   (while (if (= (io !io_status id) !io_ok) (/= (head) 0))
     (yield)))
 
-(defun boot/scan-result ()
-  (let ((coord 0))
-    (while (not coord)
-      (set coord (progn (io !io_result (id !item_scanner_1 1)) (head))))))
-
 (defun boot/coord ()
   (assert (= (io !io_coord 0) !io_ok))
   (head))
@@ -161,5 +172,5 @@
 (defun boot/count (item)
   (let ((coord (boot/coord)))
     (io !io_scan (id !item_scanner_1 1) coord item)
-    (io !io_result (id !item_scanner_1 1))
+    (io !io_scan_val (id !item_scanner_1 1))
     (head)))
