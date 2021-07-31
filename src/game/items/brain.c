@@ -114,7 +114,7 @@ static void brain_step_io(
         return;
     }
 
-    bool ok = false;
+    bool ok = true;
     switch (atom) {
     case IO_RECV: { ok = brain_step_recv(brain, len - 1, io + 1); break; }
     case IO_COORD: { vm_push(&brain->vm, coord_to_id(chunk_star(chunk)->coord)); break; }
