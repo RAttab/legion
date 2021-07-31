@@ -621,26 +621,24 @@ static void lisp_fn_id(struct lisp *lisp)
     lisp_expect_close(lisp);
 }
 
-static void lisp_mod_self(struct lisp *lisp)
-{
-    assert(lisp->token.type == token_close);
-
-    const struct mod *mod = mods_latest(lisp->mods, lisp->mod_id);
-    if (!mod) { lisp_err(lisp, "unregistered mod: id=%x", lisp->mod_id); return; }
-
-    mod_t id = make_mod(lisp->mod_id, mod_ver(mod->id) + 1);
-
-    lisp_write_op(lisp, OP_PUSH);
-    lisp_write_value(lisp, (word_t) id);
-
-    lisp->depth--;
-}
-
 // dynamic version of lisp_parse_mod
 static void lisp_fn_mod(struct lisp *lisp)
 {
     struct token *token = lisp_next(lisp);
-    if (token->type == token_close) { lisp_mod_self(lisp); return; }
+
+    // self-referencial mod
+    if (token->type == token_close) {
+        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_id);
+        assert(mod);
+        mod_t id = make_mod(lisp->mod_id, mod_ver(mod->id) + 1);
+
+        lisp_write_op(lisp, OP_PUSH);
+        lisp_write_value(lisp, (word_t) id);
+
+        lisp_assert_close(lisp, token);
+        return;
+    }
+
     if (!lisp_assert_token(lisp, token, token_symb)) {
         lisp_goto_close(lisp);
         return;
@@ -653,21 +651,19 @@ static void lisp_fn_mod(struct lisp *lisp)
         return;
     }
 
-    mod_ver_t mod_ver = 0;
+    mod_t id = 0;
     if ((token = lisp_next(lisp))->type == token_num) {
-        mod_ver = token->val.num;
+        id = make_mod(mod_id, token->val.num);
         token = lisp_next(lisp);
     }
-
-    const struct mod *mod = mods_get(lisp->mods, make_mod(mod_id, mod_ver));
-    if (!mod) {
-        lisp_err(lisp, "unregistered mod or mod version: id=%x ver=%x",
-                mod_id, mod_ver);
-        return;
+    else {
+        const struct mod *mod = mods_latest(lisp->mods, mod_id);
+        assert(mod);
+        id = mod->id;
     }
 
     lisp_write_op(lisp, OP_PUSH);
-    lisp_write_value(lisp, (word_t) mod->id);
+    lisp_write_value(lisp, (word_t) id);
 
     lisp_assert_close(lisp, token);
 }
