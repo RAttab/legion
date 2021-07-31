@@ -5,10 +5,11 @@
 
 #include "vm/vm.h"
 #include "game/save.h"
-#include "utils/htable.h"
+#include "utils/fs.h"
 #include "utils/bits.h"
 #include "utils/log.h"
 #include "utils/str.h"
+#include "utils/htable.h"
 
 
 // -----------------------------------------------------------------------------
@@ -511,16 +512,15 @@ struct mods_list *mods_list(struct mods *mods)
 
 
 // -----------------------------------------------------------------------------
-// persist
+// populate
 // -----------------------------------------------------------------------------
 
 #include <sys/mman.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <dirent.h>
 
-static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *path)
+
+static struct symbol mods_file_symbol(const char *path)
 {
     size_t dot = 0, slash = 0;
     for (size_t i = 0; path[i]; ++i) {
@@ -529,18 +529,28 @@ static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *p
     }
     assert(slash < dot);
 
-    struct symbol name = make_symbol_len(path + slash + 1, dot - slash - 1);
-    mod_id_t id = mod_id(mods_register(mods, &name));
+    return make_symbol_len(path + slash + 1, dot - slash - 1);
+}
+
+static void mods_file_register(struct mods *mods, const char *path)
+{
+    struct symbol name = mods_file_symbol(path);
+    mods_register(mods, &name);
+}
+
+static void mods_file_compile(
+        struct mods *mods, struct atoms *atoms, const char *path)
+{
+    struct symbol name = mods_file_symbol(path);
+    mod_id_t id = mods_find(mods, &name);
+    assert(id);
 
     struct mod *mod = NULL;
     {
         int fd = open(path, O_RDONLY);
         if (fd < 0) fail_errno("file not found: %s", path);
 
-        struct stat stat = {0};
-        if (fstat(fd, &stat) < 0) fail_errno("failed to stat: %s", path);
-
-        size_t len = stat.st_size;
+        size_t len = file_len(fd);
         char *base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
         if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
 
@@ -558,21 +568,21 @@ static void mods_load_path(struct mods *mods, struct atoms *atoms, const char *p
     mods_set(mods, id, mod);
 }
 
+// If we have cyclic module reference (it happens and it's useful) we need to
+// register before we compile.
 void mods_populate(struct mods *mods, struct atoms *atoms)
 {
     const char *path = "res/mods";
 
-    DIR *dir = opendir(path);
-    if (!dir) fail_errno("can't open dir: %s", path);
-
-    struct dirent *entry = NULL;
-    while ((entry = readdir(dir))) {
-        if (entry->d_name[0] == '.') continue;
-
-        char file[PATH_MAX];
-        snprintf(file, sizeof(file), "%s/%s", path, entry->d_name);
-
-        mods_load_path(mods, atoms, file);
+    {
+        struct dir_it *it = dir_it(path);
+        while (dir_it_next(it)) mods_file_register(mods, dir_it_path(it));
+        dir_it_free(it);
     }
-    closedir(dir);
+
+    {
+        struct dir_it *it = dir_it(path);
+        while (dir_it_next(it)) mods_file_compile(mods, atoms, dir_it_path(it));
+        dir_it_free(it);
+    }
 }
