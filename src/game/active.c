@@ -86,6 +86,8 @@ void active_delete(struct active *active, id_t id)
         struct vec64 *vec = (void *) active->free;
         vec->vals[index / 64] |= 1ULL << (index % 64);
     }
+
+    active->count--;
 }
 
 inline bool active_deleted(struct active *active, size_t index)
