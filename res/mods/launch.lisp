@@ -7,11 +7,12 @@
       (coord-star -1)
       (legion 0))
 
-  (io !io_scan scanner-star coord-self)
+  (assert (= (io !io_scan scanner-star coord-self) !io_ok))
 
   (while 1
     (set legion (launch/legion coord-self))
-    (set coord-star (progn (io !io_scan_val scanner-star) (head)))
+    (set coord-star (progn (assert (= (io !io_scan_val scanner-star) !io_ok))
+			   (head)))
     (when (and (> legion 0) (/= coord-star -1))
       (when (= (launch/count coord-star !item_brain_1) 0)
 	(assert (= (io !io_mod legion (mod boot 2)) !io_ok))
@@ -19,8 +20,10 @@
 
 (defun launch/count (coord item)
   (let ((val -1) (scanner (id !item_scanner_1 3)))
-    (io !io_scan scanner coord item)
-    (while (= val -1) (set val (progn (io !io_scan_val scanner) (head))))
+    (assert (= (io !io_scan scanner coord item) !io_ok))
+    (while (= val -1)
+      (set val (progn (assert (= (io !io_scan_val scanner) !io_ok))
+			      (head))))
     val))
 
 (defun launch/legion (coord-self)
