@@ -142,7 +142,12 @@ static enum item tapes_assert_item(
 {
     assert(token_assert(tok, token, token_symbol));
     word_t item = atoms_atom(atoms, &token->value.s);
-    assert(item > 0 && item < ITEM_MAX);
+
+    if (item <= 0 || item >= ITEM_MAX) {
+        tapes_err(tok->err_ctx, "invalid item atom: %s", token->value.s.c);
+        assert(false);
+    }
+
     return item;
 }
 
