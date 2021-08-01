@@ -322,7 +322,6 @@ size_t text_to_str(const struct text *text, char *dst, size_t len)
 
 void text_from_str(struct text *text, const char *src, size_t len)
 {
-    if (!len) return;
     text_clear(text);
     text_init(text);
     text->bytes = 0;

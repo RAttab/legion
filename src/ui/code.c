@@ -105,6 +105,7 @@ static void ui_code_set(
         text_clear(&code->text);
         code->text = mod_disasm(code->mod);
     }
+    assert(code->text.first);
 
     ui_scroll_update(&code->scroll, code->text.lines);
 
@@ -160,10 +161,12 @@ static struct line *ui_code_view_update(struct ui_code *code)
     code->scroll.first = code->view.top;
     ui_scroll_update(&code->scroll, code->text.lines);
 
+    code->view.cols = 0;
     code->view.bot = code->view.top;
-    struct line *line = code->view.line;
 
     size_t visible = code->scroll.visible;
+    struct line *line = code->view.line;
+
     while (visible) {
         size_t rows = u64_ceil_div(line->len, code->cols);
         if (rows >= visible) {
