@@ -26,3 +26,17 @@ const char *dir_it_path(struct dir_it *);
 // -----------------------------------------------------------------------------
 
 size_t file_len(int fd);
+
+
+// -----------------------------------------------------------------------------
+// mfile
+// -----------------------------------------------------------------------------
+
+struct mfile
+{
+    const char *ptr;
+    size_t len;
+};
+
+struct mfile mfile_open(const char *path);
+void mfile_close(struct mfile *);

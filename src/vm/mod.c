@@ -516,11 +516,6 @@ struct mods_list *mods_list(struct mods *mods)
 // populate
 // -----------------------------------------------------------------------------
 
-#include <sys/mman.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-
 static struct symbol mods_file_symbol(const char *path)
 {
     size_t dot = 0, slash = 0;
@@ -548,26 +543,18 @@ static void mods_file_compile(
     assert(maj);
 
     struct mod *mod = NULL;
-    {
-        int fd = open(path, O_RDONLY);
-        if (fd < 0) fail_errno("file not found: %s", path);
+    struct mfile file = mfile_open(path);
 
-        size_t len = file_len(fd);
-        char *base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-        if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
-
-        mod = mod_compile(maj, base, strnlen(base, len), mods, atoms);
-        if (mod->errs_len) {
-            for (size_t i = 0; i < mod->errs_len; ++i) {
-                struct mod_err *err = &mod->errs[i];
-                dbg("%s:%u:%u: %s", path, err->row+1, err->col+1, err->str);
-            }
+    mod = mod_compile(maj, file.ptr, file.len, mods, atoms);
+    if (mod->errs_len) {
+        for (size_t i = 0; i < mod->errs_len; ++i) {
+            struct mod_err *err = &mod->errs[i];
+            dbg("%s:%u:%u: %s", path, err->row+1, err->col+1, err->str);
         }
-
-        munmap(base, len);
-        close(fd);
     }
+
     mods_set(mods, maj, mod);
+    mfile_close(&file);
 }
 
 // If we have cyclic module reference (it happens and it's useful) we need to

@@ -6,9 +6,12 @@
 #include "utils/fs.h"
 #include "utils/log.h"
 
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 
 // -----------------------------------------------------------------------------
@@ -79,4 +82,27 @@ size_t file_len(int fd)
     struct stat stat = {0};
     if (fstat(fd, &stat) < 0) fail_errno("failed to stat: %d", fd);
     return stat.st_size;
+}
+
+// -----------------------------------------------------------------------------
+// mfile
+// -----------------------------------------------------------------------------
+
+struct mfile mfile_open(const char *path)
+{
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) fail_errno("file not found: %s", path);
+
+    struct mfile file = {0};
+    file.len = file_len(fd);
+    file.ptr = mmap(0, file.len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    if (file.ptr == MAP_FAILED) fail_errno("failed to mmap: %s", path);
+
+    close(fd);
+    return file;
+}
+
+void mfile_close(struct mfile *file)
+{
+    munmap((void *) file->ptr, file->len);
 }
