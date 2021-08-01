@@ -6,5 +6,6 @@
 #include "vm/vm.c"
 #include "vm/mod.c"
 #include "vm/lisp.c"
+#include "vm/token.c"
 #include "vm/atoms.c"
 #include "vm/symbol.c"

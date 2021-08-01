@@ -1,80 +1,90 @@
-;; ##########################################################
+;; ==========================================================
 ;; Systemy tests
 
 (vm/preempt
- (S:1 C:1)
- ((asm (PUSH 1)
+ (vm (S 1) (C 1))
+ (mod
+  (asm (PUSH 1)
        (PUSH 2)
        (YIELD)))
- (sp:1 #0:1))
+ (check (sp 1) (s 0 1)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; push/pop
 
 (vm/push
- (S:1)
- ((asm (PUSH 1)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 1)
        (YIELD)))
- (sp:1 $0:0 #0:1))
+ (check (sp 1) (s 0 1)))
 
 (vm/pushr
- (S:1 $0:12)
- ((asm (PUSHR $0)
+ (vm (S 1) (r 0 12))
+ (mod
+  (asm (PUSHR $0)
        (YIELD)))
- (sp:1 $0:12 #0:12))
+ (check (sp 1) (r 0 12) (s 0 12)))
 
 (vm/pushf
- (S:1 flags:1)
- ((asm (PUSHF)
+ (vm (S 1) (flags 0x1))
+ (mod
+  (asm (PUSHF)
        (YIELD)))
- (flags:1 sp:1 #0:1))
+ (check (flags 0x1) (sp 1) (s 0 1)))
 
 (vm/pop
- (S:1)
- ((asm (PUSH 1)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 1)
        (POP)
        (YIELD)))
- (sp:0))
+ (check (sp 0)))
 
 (vm/popr
- (S:1)
- ((asm (PUSH 1)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 1)
        (POPR $0)
        (YIELD)))
- (sp:0 $0:1))
+ (check (sp 0) (r 0 1)))
 
 (vm/dupe
- (S:2)
- ((asm (PUSH 1)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 1)
        (DUPE)
        (YIELD)))
- (sp:2 #0:1 #1:1))
+ (check (sp 2) (s 0 1) (s 1 1)))
 
 (vm/swap
- (S:2)
- ((asm (PUSH 1)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 1)
        (PUSH 2)
        (SWAP)
        (YIELD)))
- (sp:2 #0:2 #1:1))
+ (check (sp 2) (s 0 2) (s 1 1)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; boolean
 
 (vm/not
- (S:2)
- ((asm (PUSH 0x123456789aBcDeF0)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0x123456789aBcDeF0)
        (NOT)
        (PUSH 0)
        (NOT)
        (YIELD)))
- (sp:2 #0:0 #1:1))
+ (check (sp 2) (s 0 0) (s 1 1)))
 
 (vm/and
- (S:5)
- ((asm (PUSH 1)
+ (vm (S 5))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (AND)
        (PUSH 1)
@@ -87,11 +97,16 @@
        (PUSH 0)
        (AND)
        (YIELD)))
- (sp:4 #0:1 #1:0 #2:0 #3:0))
+ (check (sp 4)
+	(s 0 1)
+	(s 1 0)
+	(s 2 0)
+	(s 3 0)))
 
 (vm/or
- (S:5)
- ((asm (PUSH 1)
+ (vm (S 5))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (OR)
        (PUSH 1)
@@ -104,166 +119,195 @@
        (PUSH 0)
        (OR)
        (YIELD)))
- (sp:4 #0:1 #1:1 #2:1 #3:0))
+ (check (sp 4)
+	(s 0 1)
+	(s 1 1)
+	(s 2 1)
+	(s 3 0)))
 
 (vm/xor
-  (S:5)
-  ((asm (PUSH 1)
-	(PUSH 1)
-	(XOR)
-	(PUSH 1)
-	(PUSH 0)
-	(XOR)
-	(PUSH 0)
-	(PUSH 1)
-	(XOR)
-	(PUSH 0)
-	(PUSH 0)
-	(XOR)
-	(YIELD)))
-  (#0:0 #1:1 #2:1 #3:0))
+ (vm (S 5))
+ (mod
+  (asm (PUSH 1)
+       (PUSH 1)
+       (XOR)
+       (PUSH 1)
+       (PUSH 0)
+       (XOR)
+       (PUSH 0)
+       (PUSH 1)
+       (XOR)
+       (PUSH 0)
+       (PUSH 0)
+       (XOR)
+       (YIELD)))
+ (check (sp 4)
+	(s 0 0)
+	(s 1 1)
+	(s 2 1)
+	(s 3 0)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; binary
 
 (vm/bnot
- (S:1)
- ((asm (PUSH 0xFF00FF00FF00FF00)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 0xFF00FF00FF00FF00)
        (BNOT)
        (YIELD)))
- (sp:1 #0:0x00ff00ff00ff00ff))
+ (check (sp 1) (s 0 0x00ff00ff00ff00ff)))
 
 (vm/band
- (S:2)
- ((asm (PUSH 0xFF00FF00FF00FF00)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 0xF0F0F0F0F0F0F0F0)
        (BAND)
        (YIELD)))
- (sp:1 #0:0xf000f000f000f000))
+ (check (sp 1) (s 0 0xf000f000f000f000)))
 
 (vm/bor
- (S:2)
- ((asm (PUSH 0xFF00FF00FF00FF00)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 0xF0F0F0F0F0F0F0F0)
        (BOR)
        (YIELD)))
- (sp:1 #0:0xfff0fff0fff0fff0))
+ (check (sp 1) (s 0 0xfff0fff0fff0fff0)))
 
 (vm/bxor
- (S:2)
- ((asm (PUSH 0xFF00FF00FF00FF00)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 0xF0F0F0F0F0F0F0F0)
        (BXOR)
        (YIELD)))
- (sp:1 #0:0x0ff00ff00ff00ff0))
+ (check (sp 1) (s 0 0x0ff00ff00ff00ff0)))
 
 (vm/bsl
- (S:2)
- ((asm (PUSH 0xFF00FF00FF00FF00)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 4)
        (BSL)
        (YIELD)))
- (sp:1 #0:0xf00ff00ff00ff000))
+ (check (sp 1) (s 0 0xf00ff00ff00ff000)))
 
 (vm/bsr
- (S:2)
- ((asm (PUSH 0xFF00FF00FF00FF00)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0xFF00FF00FF00FF00)
        (PUSH 4)
        (BSR)
        (YIELD)))
- (sp:1 #0:0x0ff00ff00ff00ff0))
+ (check (sp 1) (s 0 0x0ff00ff00ff00ff0)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; math
 
 (vm/neg
- (S:2)
- ((asm (PUSH -1)
+ (vm (S 2))
+ (mod
+  (asm (PUSH -1)
        (NEG)
        (PUSH 1)
        (NEG)
        (YIELD)))
- (sp:2 #0:1 #1:-1))
+ (check (sp 2) (s 0 1) (s 1 -1)))
 
 (vm/add
- (S:2)
- ((asm (PUSH 1)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (ADD)
        (YIELD)))
- (sp:1 #0:2))
+ (check (sp 1) (s 0 2)))
 
 (vm/sub
- (S:2)
- ((asm (PUSH 3)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 3)
        (PUSH 2)
        (SUB)
        (YIELD)))
- (sp:1 #0:1))
+ (check (sp 1) (s 0 1)))
 
 (vm/mul
- (S:2)
- ((asm (PUSH 2)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 2)
        (PUSH 3)
        (MUL)
        (YIELD)))
- (sp:1 #0:6))
+ (check (sp 1) (s 0 6)))
 
 (vm/lmul
- (S:2)
- ((asm (PUSH 0x7FFFFFFFFFFFFFFF)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0x7FFFFFFFFFFFFFFF)
        (PUSH 0xF)
        (LMUL)
        (YIELD)))
- (sp:2 #0:0x7FFFFFFFFFFFFFF1 #1:0x7))
+ (check (sp 2) (s 0 0x7FFFFFFFFFFFFFF1) (s 1 0x7)))
 
 (vm/div
- (S:2)
- ((asm (PUSH 6)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 6)
        (PUSH 3)
        (DIV)
        (YIELD)))
- (sp:1 #0:2))
+ (check (sp 1) (s 0 2)))
 
 (vm/rem
- (S:2)
- ((asm (PUSH 5)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 5)
        (PUSH 3)
        (REM)
        (YIELD)))
- (sp:1 #0:2))
+ (check (sp 1) (s 0 2)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; comp
 
 (vm/eq
- (S:3)
- ((asm (PUSH 1)
+ (vm (S 3))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (EQ)
        (PUSH 1)
        (PUSH 2)
        (EQ)
        (YIELD)))
- (sp:2 #0:1 #1:0))
+ (check (sp 2)
+	(s 0 1)
+	(s 1 0)))
 
 (vm/ne
- (S:3)
- ((asm (PUSH 1)
+ (vm (S 3))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (NE)
        (PUSH 1)
        (PUSH 2)
        (NE)
        (YIELD)))
- (sp:2 #0:0 #1:1))
+ (check (sp 2)
+	(s 0 0)
+	(s 1 1)))
 
 (vm/gt
- (S:4)
- ((asm (PUSH 1)
+ (vm (S 4))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (GT)
        (PUSH 1)
@@ -273,11 +317,15 @@
        (PUSH 1)
        (GT)
        (YIELD)))
- (sp:3 #0:0 #1:1 #2:0))
+ (check (sp 3)
+	(s 0 0)
+	(s 1 1)
+	(s 2 0)))
 
 (vm/ge
- (S:4)
- ((asm (PUSH 1)
+ (vm (S 4))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (GE)
        (PUSH 1)
@@ -287,11 +335,15 @@
        (PUSH 1)
        (GE)
        (YIELD)))
- (sp:3 #0:1 #1:1 #2:0))
+ (check (sp 3)
+	(s 0 1)
+	(s 1 1)
+	(s 2 0)))
 
 (vm/lt
- (S:4)
- ((asm (PUSH 1)
+ (vm (S 4))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (LT)
        (PUSH 1)
@@ -301,11 +353,15 @@
        (PUSH 1)
        (LT)
        (YIELD)))
- (sp:3 #0:0 #1:0 #2:1))
+ (check (sp 3)
+	(s 0 0)
+	(s 1 0)
+	(s 2 1)))
 
 (vm/le
- (S:4)
- ((asm (PUSH 1)
+ (vm (S 4))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (LE)
        (PUSH 1)
@@ -315,11 +371,15 @@
        (PUSH 1)
        (LE)
        (YIELD)))
- (sp:3 #0:1 #1:0 #2:1))
+ (check (sp 3)
+	(s 0 1)
+	(s 1 0)
+	(s 2 1)))
 
 (vm/cmp
- (S:4)
- ((asm (PUSH 1)
+ (vm (S 4))
+ (mod
+  (asm (PUSH 1)
        (PUSH 1)
        (CMP)
        (PUSH 1)
@@ -329,55 +389,65 @@
        (PUSH 1)
        (CMP)
        (YIELD)))
- (sp:3 #0:0 #1:2 #2:-2))
+ (check (sp 3)
+	(s 0 0)
+	(s 1 2)
+	(s 2 -2)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; jmp
 
 (vm/load
- (S:1)
- ((asm (PUSH 1)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 1)
        (LOAD)))
- (ret:1 ip:0 sp:0))
+ (check (ret 1) (ip 0) (sp 0)))
 
 (vm/call
- (S:1)
- ((asm (CALL fn)
+ (vm (S 1))
+ (mod
+  (asm (CALL fn)
        (@ fn)
        (YIELD)))
- (ret:0 sp:1 #0:0x9))
+ (check (ret 0) (sp 1) (s 0 0x9)))
 
 (vm/call-mod
- (S:1)
- ((asm (CALL 0x100000002)))
- (ret:1 sp:1))
+ (vm (S 1))
+ (mod
+  (asm (CALL 0x100000002)))
+ (check (ret 1) (sp 1)))
 
 (vm/ret
- (S:1)
- ((asm (CALL fn)
+ (vm (S 1))
+ (mod
+  (asm (CALL fn)
        (YIELD)
        (@ fn)
        (RET)))
- (ret:0 sp:0))
+ (check (ret 0) (sp 0)))
 
 (vm/ret-mod
- (S:1)
- ((asm (PUSH 0x100000002)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 0x100000002)
        (RET)))
- (ret:1 ip:2 sp:0))
+ (check (ret 1) (ip 2) (sp 0)))
 
 (vm/jmp
- (S:1)
- ((asm (JMP out)
+ (vm (S 1))
+ (mod
+  (asm (JMP out)
        (PUSH 0xffffffff)
        (@ out)
        (YIELD)))
- (ret:0 sp:0))
+ (check (ret 0) (sp 0)))
 
 (vm/jz
- (S:1)
- ((asm (PUSH 1)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 1)
        (JZ fail)
        (PUSH 0)
 
@@ -388,11 +458,12 @@
        (PUSH 0xffffffff)
        (@ ok)
        (YIELD)))
- (sp:0))
+ (check (sp 0)))
 
 (vm/jnz
- (S:1)
- ((asm (PUSH 0)
+ (vm (S 1))
+ (mod
+  (asm (PUSH 0)
        (JNZ fail)
 
        (PUSH 1)
@@ -403,69 +474,78 @@
        (PUSH 0xffffffff)
        (@ ok)
        (YIELD)))
- (sp:0))
+ (check (sp 0)))
 
 (vm/back-ref
- (S:1)
- ((asm (JMP next)
+ (vm (S 1))
+ (mod
+  (asm (JMP next)
        (@ back)
        (PUSH 1)
        (YIELD)
        (@ next)
        (JMP back)))
- (sp:1 #0:1))
+ (check (sp 1) (s 0 1)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; io
 
 (vm/io
- (S:2)
- ((asm (PUSH !io_nil)
+ (vm (S 2))
+ (mod
+  (asm (PUSH !io_nil)
        (PUSH 1)
        (IO 2)
        (YIELD)))
- (flags:0x1 io:2 ior:0xff sp:2 #0:!io_nil #1:1))
+ (check (flags 0x1) (io 2) (ior 0xff)
+	(sp 2) (s 0 !io_nil) (s 1 1)))
 
 (vm/ios
- (S:3)
- ((asm (PUSH !io_nil)
+ (vm (S 3))
+ (mod
+  (asm (PUSH !io_nil)
        (PUSH 1)
        (PUSH 2)
        (IOS)
        (YIELD)))
- (flags:0x1 io:2 ior:0 sp:2 #0:!io_nil #1:1))
+ (check (flags 0x1) (io 2) (ior 0)
+	(sp 2) (s 0 !io_nil) (s 1 1)))
 
 (vm/ior
- (S:3)
- ((asm (PUSH !io_nil)
+ (vm (S 3))
+ (mod
+  (asm (PUSH !io_nil)
        (PUSH 1)
        (PUSH 2)
        (POPR $0)
        (IOR $0)
        (YIELD)))
- (flags:0x1 io:2 ior:1 $0:2 sp:2 #0:!io_nil #1:1))
+ (check (flags 0x1) (io 2) (ior 1) (r 0 2) (sp 2) (s 0 !io_nil) (s 1 1)))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; misc
 
 (vm/fault
- (S:0)
- ((asm (FAULT)))
- (flags:0x4 ret:0xFFFFFFFF))
+ (vm (S 0))
+ (mod
+  (asm (FAULT)))
+ (check (flags 0x4) (ret 0xFFFFFFFF)))
 
 (vm/pack
- (S:2)
- ((asm (PUSH 1)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 1)
        (PUSH 2)
        (PACK)
        (YIELD)))
- (sp:1 #0:0x200000001))
+ (check (sp 1) (s 0 0x200000001)))
 
 (vm/unpack
- (S:2)
- ((asm (PUSH 0x200000001)
+ (vm (S 2))
+ (mod
+  (asm (PUSH 0x200000001)
        (UNPACK)
        (YIELD)))
- (sp:2 #0:2 #1:1))
+ (check (sp 2) (s 0 2) (s 1 1)))

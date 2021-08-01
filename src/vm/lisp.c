@@ -5,54 +5,12 @@
 
 #include "common.h"
 #include "vm/mod.h"
+#include "vm/token.h"
 #include "vm/atoms.h"
 #include "vm/symbol.h"
 #include "utils/str.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
-
-
-// -----------------------------------------------------------------------------
-// token
-// -----------------------------------------------------------------------------
-
-enum token_type
-{
-    token_nil = 0,
-    token_open,
-    token_close,
-    token_atom,
-    token_symb,
-    token_num,
-    token_reg,
-};
-
-struct token
-{
-    uint32_t row, col, len;
-    union { struct symbol symb; word_t num; } val;
-    enum token_type type;
-};
-
-
-static uint64_t token_symb_hash(struct token *token)
-{
-    return symbol_hash(&token->val.symb);
-}
-
-static const char *token_type_str(enum token_type type)
-{
-    switch (type) {
-    case token_nil: { return "eof"; }
-    case token_open: { return "open"; }
-    case token_close: { return "close"; }
-    case token_atom: { return "atom"; }
-    case token_symb: { return "symbol"; }
-    case token_num: { return "number"; }
-    case token_reg: { return "register"; }
-    default: { assert(false); }
-    }
-}
 
 
 // -----------------------------------------------------------------------------
@@ -76,15 +34,9 @@ struct lisp
     struct atoms *atoms;
 
     size_t depth;
-    struct token token;
 
-    struct
-    {
-        size_t row, col;
-        const char *base;
-        const char *end;
-        const char *it;
-    } in;
+    struct token token;
+    struct tokenizer in;
 
     struct
     {
@@ -120,24 +72,6 @@ struct lisp
         struct mod_index *list;
     } index;
 };
-
-
-// -----------------------------------------------------------------------------
-// in
-// -----------------------------------------------------------------------------
-
-static bool lisp_eof(struct lisp *lisp) { return lisp->in.it >= lisp->in.end; }
-
-static char lisp_in_inc(struct lisp *lisp)
-{
-    if (unlikely(lisp_eof(lisp))) return 0;
-
-    if (*lisp->in.it == '\n') { lisp->in.row++; lisp->in.col = 0; }
-    else { lisp->in.col += *lisp->in.it == '\t' ? 8 : 1; } // fucking emacs...
-
-    lisp->in.it++;
-    return *lisp->in.it;
-}
 
 
 // -----------------------------------------------------------------------------
@@ -199,12 +133,61 @@ static void lisp_err(struct lisp *lisp, const char *fmt, ...)
     lisp_err_ins(lisp, &err);
 }
 
+legion_printf(2, 3)
+static void lisp_err_token(void *ctx, const char *fmt, ...)
+{
+    struct lisp *lisp = ctx;
+
+    struct mod_err err = {
+        .row = lisp->token.row,
+        .col = lisp->token.col,
+        .len = lisp->token.len,
+    };
+
+    va_list args;
+    va_start(args, fmt);
+    (void) vsnprintf(err.str, mod_err_cap, fmt, args);
+    va_end(args);
+
+    lisp_err_ins(lisp, &err);
+}
+
+
+// -----------------------------------------------------------------------------
+// in
+// -----------------------------------------------------------------------------
+
 static void lisp_goto_close(struct lisp *lisp)
 {
-    for (size_t depth = 1; depth && !lisp_eof(lisp); lisp_in_inc(lisp)) {
-        if (*lisp->in.it == '(') depth++;
-        if (*lisp->in.it == ')') depth--;
-    }
+    token_goto_close(&lisp->in);
+}
+
+static struct token *lisp_next(struct lisp *lisp)
+{
+    return token_next(&lisp->in, &lisp->token);
+}
+
+static struct token *lisp_assert_token(
+        struct lisp *lisp, struct token *token, enum token_type exp)
+{
+    return token_assert(&lisp->in, token, exp);
+}
+
+static struct token *lisp_expect(struct lisp *lisp, enum token_type exp)
+{
+    return token_expect(&lisp->in, &lisp->token, exp);
+}
+
+static void lisp_assert_close(struct lisp *lisp, struct token *token)
+{
+    if (!lisp_assert_token(lisp, token, token_close))
+        lisp_goto_close(lisp);
+    lisp->depth--;
+}
+
+static void lisp_expect_close(struct lisp *lisp)
+{
+    lisp_assert_close(lisp, lisp_next(lisp));
 }
 
 
@@ -390,9 +373,9 @@ static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, ip_t ip
 
 static ip_t lisp_jmp(struct lisp *lisp, const struct token *token)
 {
-    assert(token->type == token_symb);
+    assert(token->type == token_symbol);
 
-    const struct symbol *symbol = &token->val.symb;
+    const struct symbol *symbol = &token->value.s;
     uint64_t key = symbol_hash(symbol);
 
     struct htable_ret ret = htable_get(&lisp->symb.jmp, key);
@@ -488,7 +471,6 @@ static void lisp_register_fn(uint64_t key, lisp_fn_t fn)
     assert(ret.ok);
 }
 
-#include "vm/lisp_token.c"
 #include "vm/lisp_fn.c"
 #include "vm/lisp_asm.c"
 #include "vm/lisp_disasm.c"
@@ -513,10 +495,8 @@ struct mod *mod_compile(
     lisp.mod_maj = mod_maj;
     lisp.mods = mods;
     lisp.atoms = atoms;
-    lisp.in.it = src;
-    lisp.in.base = src;
-    lisp.in.end = src + len;
     lisp.symb.fn = htable_clone(&lisp_fn);
+    token_init(&lisp.in, src, len, lisp_err_token, &lisp);
 
     {
         lisp_stmts(&lisp);

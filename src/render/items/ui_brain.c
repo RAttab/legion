@@ -327,7 +327,7 @@ static void ui_brain_render(
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < 4; ++i) {
-            ui_str_set_u64(&ui->regs_index.str, i+1);
+            ui_str_set_u64(&ui->regs_index.str, i);
             ui_label_render(&ui->regs_index, layout, renderer);
             ui_layout_sep_x(layout, font->glyph_w);
 

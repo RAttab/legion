@@ -36,6 +36,14 @@ inline uint64_t symbol_hash(const struct symbol *symbol)
     return hash;
 }
 
+#define symbol_hash_c(str)                                              \
+    ({                                                                  \
+        static_assert(__builtin_constant_p(str));                       \
+        struct symbol symbol = make_symbol_len((str), sizeof(str));     \
+        uint64_t hash = symbol_hash(&symbol);                           \
+        hash;                                                           \
+    })
+
 inline int symbol_cmp(const struct symbol *lhs, const struct symbol *rhs)
 {
     int ret = memcmp(lhs->c, rhs->c, legion_min(lhs->len, rhs->len));

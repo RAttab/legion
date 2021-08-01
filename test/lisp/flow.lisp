@@ -1,132 +1,78 @@
-;; ##########################################################
+;; ==========================================================
 ;; progn
 
 (flow/progn-1
- ()
- ((assert (= 1 (progn 1))))
- (sp:0 flags:0))
+ (mod (assert (= 1 (progn 1)))))
 
 (flow/progn-n
- ()
- ((assert (= 5 (progn 1 2 3 4 5))))
- (sp:0 flags:0))
+ (mod (assert (= 5 (progn 1 2 3 4 5)))))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; let
 
 (flow/let-0
- ()
- ((assert (= 1 (let () 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 1 (let () 1)))))
 
 (flow/let-2
- ()
- ((assert (= 3 (let ((a 1) (b 2)) (+ a b))))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 3 (let ((a 1) (b 2)) (+ a b))))))
 
 (flow/let-stmts
- ()
- ((assert (= 1 (let ((a 1)) 0 a)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 1 (let ((a 1)) 0 a)))))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; branch
 
 (flow/if-true
- ()
- ((assert (= 1 (if 1 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 1 (if 1 1)))))
 
 (flow/if-false
- ()
- ((assert (= 0 (if 0 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 0 (if 0 1)))))
 
 (flow/if-else-true
- ()
- ((assert (= 1 (if 1 1 2)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 1 (if 1 1 2)))))
 
 (flow/if-else-false
- ()
- ((assert (= 2 (if 0 1 2)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 2 (if 0 1 2)))))
 
 (flow/when-true
- ()
- ((assert (= 1 (when 1 0 1))))
- (sp:0 flags:0))
+ (mod (assert (= 1 (when 1 0 1)))))
 
 (flow/when-false
- ()
- ((assert (= 0 (when 0 0 1))))
- (sp:0 flags:0))
+ (mod (assert (= 0 (when 0 0 1)))))
 
 (flow/unless-true
- ()
- ((assert (= 0 (unless 1 0 1))))
- (sp:0 flags:0))
+ (mod (assert (= 0 (unless 1 0 1)))))
 
 (flow/unless-false
- ()
- ((assert (= 1 (unless 0 0 1))))
- (sp:0 flags:0))
+ (mod (assert (= 1 (unless 0 0 1)))))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; while
 
 (flow/while-nil
- ()
- ((assert (= 0 (while (< (tsc) 30))))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 0 (while (< (tsc) 30))))))
 
 (flow/while-basic
- ()
- ((assert (= 1 (while (< (tsc) 30) 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 1 (while (< (tsc) 30) 1)))))
 
 (flow/while-false
- ()
- ((assert (= 0 (while 0 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 0 (while 0 1)))))
 
 
-;; ##########################################################
+;; ==========================================================
 ;; for
 
 (flow/for-nil
- ()
- ((assert (= 0 (for (i (tsc)) (< i 30) (tsc))))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 0 (for (i (tsc)) (< i 30) (tsc))))))
 
 (flow/for-true
- ()
- ((assert (= 1 (for (i (tsc)) (< i 30) (tsc) 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 1 (for (i (tsc)) (< i 30) (tsc) 1)))))
 
 (flow/for-false
- ()
- ((assert (= 0 (for (i 0) 0 0 1)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 0 (for (i 0) 0 0 1)))))
 
 (flow/for-n
- ()
- ((assert (= 4 (for (i 0) (< i 5) (+ i 1) i)))
-  (yield))
- (sp:0 flags:0))
+ (mod (assert (= 4 (for (i 0) (< i 5) (+ i 1) i)))))

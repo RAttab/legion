@@ -36,11 +36,11 @@ static bool lisp_stmt(struct lisp *lisp)
     }
     case token_open: {
         lisp->depth++;
-        struct token *token = lisp_expect(lisp, token_symb);
+        struct token *token = lisp_expect(lisp, token_symbol);
         lisp_index_at(lisp, token);
 
         struct htable_ret ret = {0};
-        uint64_t key = token_symb_hash(token);
+        uint64_t key = symbol_hash(&token->value.s);
 
         if ((ret = htable_get(&lisp->symb.fn, key)).ok)
             ((lisp_fn_t) ret.value)(lisp);
@@ -49,28 +49,28 @@ static bool lisp_stmt(struct lisp *lisp)
         return true;
     }
 
-    case token_num: {
+    case token_number: {
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSH);
-        lisp_write_value(lisp, token->val.num);
+        lisp_write_value(lisp, token->value.w);
         return true;
     }
     case token_atom: {
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSH);
-        lisp_write_value(lisp, atoms_atom(lisp->atoms, &token->val.symb));
+        lisp_write_value(lisp, atoms_atom(lisp->atoms, &token->value.s));
         return true;
     }
     case token_reg: {
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSHR);
-        lisp_write_value(lisp, (uint8_t) token->val.num);
+        lisp_write_value(lisp, (uint8_t) token->value.w);
         return true;
     }
-    case token_symb: {
+    case token_symbol: {
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSHR);
-        lisp_write_value(lisp, lisp_reg(lisp, &token->val.symb));
+        lisp_write_value(lisp, lisp_reg(lisp, &token->value.s));
         return true;
     }
 
@@ -126,7 +126,7 @@ static word_t lisp_parse_call(struct lisp *lisp)
 {
     struct token *token = lisp_next(lisp);
 
-    if (likely(token->type == token_symb) || token->type == token_num)
+    if (likely(token->type == token_symbol) || token->type == token_number)
         return 0;
 
     if (!lisp_assert_token(lisp, token, token_open))
@@ -134,19 +134,19 @@ static word_t lisp_parse_call(struct lisp *lisp)
 
     const struct mod *mod = NULL;
     {
-        token = lisp_expect(lisp, token_symb);
+        token = lisp_expect(lisp, token_symbol);
         if (!token) { lisp_goto_close(lisp); return -1; }
 
-        mod_maj_t mod_maj = mods_find(lisp->mods, &token->val.symb);
+        mod_maj_t mod_maj = mods_find(lisp->mods, &token->value.s);
         if (!mod_maj) {
-            lisp_err(lisp, "unknown mod: %s", token->val.symb.c);
+            lisp_err(lisp, "unknown mod: %s", token->value.s.c);
             lisp_goto_close(lisp);
             return -1;
         }
 
         mod = mods_latest(lisp->mods, mod_maj);
         if (!mod) {
-            lisp_err(lisp, "unknown mod: %s (%x)", token->val.symb.c, mod_maj);
+            lisp_err(lisp, "unknown mod: %s (%x)", token->value.s.c, mod_maj);
             lisp_goto_close(lisp);
             return -1;
         }
@@ -155,11 +155,11 @@ static word_t lisp_parse_call(struct lisp *lisp)
     token = lisp_next(lisp);
 
     ip_t ip = 0;
-    if (token->type == token_symb) {
-        ip = mod_pub(mod, token_symb_hash(token));
+    if (token->type == token_symbol) {
+        ip = mod_pub(mod, symbol_hash(&token->value.s));
         if (ip == MOD_PUB_UNKNOWN) {
             lisp_err(lisp, "unknown public symbol in mod: %s in %x",
-                    token->val.symb.c, mod->id);
+                    token->value.s.c, mod->id);
             lisp_goto_close(lisp);
             return -1;
         }
@@ -246,21 +246,21 @@ static void lisp_fn_defun(struct lisp *lisp)
     ip_t skip = lisp_skip(lisp, sizeof(ip_t));
 
     {
-        struct token *token = lisp_expect(lisp, token_symb);
+        struct token *token = lisp_expect(lisp, token_symbol);
         if (!token) { lisp_goto_close(lisp); return; }
-        lisp_label(lisp, &token->val.symb);
+        lisp_label(lisp, &token->value.s);
     }
 
     if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp); return; }
 
     struct token *token = NULL;
     for (reg_t reg = 0; (token = lisp_next(lisp))->type != token_close; ++reg) {
-        if (!lisp_assert_token(lisp, token, token_symb)) {
+        if (!lisp_assert_token(lisp, token, token_symbol)) {
             lisp_goto_close(lisp);
             break;
         }
 
-        if (reg < 4) lisp->symb.regs[reg] = token_symb_hash(token);
+        if (reg < 4) lisp->symb.regs[reg] = symbol_hash(&token->value.s);
         else lisp_err(lisp, "too many parameters: %u > 4", reg + 1);
     }
 
@@ -337,7 +337,7 @@ static void lisp_fn_let(struct lisp *lisp)
         }
         struct token index_reg = *token;
 
-        uint64_t key = token_symb_hash(lisp_expect(lisp, token_symb));
+        uint64_t key = symbol_hash(&lisp_expect(lisp, token_symbol)->value.s);
 
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing statement");
@@ -494,14 +494,14 @@ static void lisp_fn_for(struct lisp *lisp)
             return;
         }
 
-        struct token *token = lisp_expect(lisp, token_symb);
+        struct token *token = lisp_expect(lisp, token_symbol);
         if (!token) {
             lisp_goto_close(lisp);
             lisp_goto_close(lisp);
             return;
         }
 
-        key = token_symb_hash(token);
+        key = symbol_hash(&token->value.s);
         reg = lisp_reg_alloc(lisp, key);
 
         if (!lisp_stmt(lisp)) {
@@ -576,9 +576,9 @@ static void lisp_fn_set(struct lisp *lisp)
 {
     struct token index = lisp->token;
 
-    struct token *token = lisp_expect(lisp, token_symb);
+    struct token *token = lisp_expect(lisp, token_symbol);
     if (!token) { lisp_goto_close(lisp); return; }
-    reg_t reg = lisp_reg(lisp, &token->val.symb);
+    reg_t reg = lisp_reg(lisp, &token->value.s);
 
     if (!lisp_stmt(lisp)) {
         lisp_err(lisp, "missing set value");
@@ -639,21 +639,21 @@ static void lisp_fn_mod(struct lisp *lisp)
         return;
     }
 
-    if (!lisp_assert_token(lisp, token, token_symb)) {
+    if (!lisp_assert_token(lisp, token, token_symbol)) {
         lisp_goto_close(lisp);
         return;
     }
 
-    mod_maj_t mod_maj = mods_find(lisp->mods, &token->val.symb);
+    mod_maj_t mod_maj = mods_find(lisp->mods, &token->value.s);
     if (!mod_maj) {
-        lisp_err(lisp, "unknown mod: %s", token->val.symb.c);
+        lisp_err(lisp, "unknown mod: %s", token->value.s.c);
         lisp_goto_close(lisp);
         return;
     }
 
     mod_t id = 0;
-    if ((token = lisp_next(lisp))->type == token_num) {
-        id = make_mod(mod_maj, token->val.num);
+    if ((token = lisp_next(lisp))->type == token_number) {
+        id = make_mod(mod_maj, token->value.w);
         token = lisp_next(lisp);
     }
     else {
