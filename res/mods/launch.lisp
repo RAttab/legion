@@ -16,7 +16,13 @@
 			   (head)))
 
     (when (and (> legion 0) (and (/= coord-star -1) (/= coord-star 0)))
-      (when (= (launch/count coord-star !item_brain_1) 0)
+      (when (and (= (launch/count coord-star !item_brain_1) 0)
+		 (> (launch/count coord-star !item_elem_a) 10000)
+		 (> (launch/count coord-star !item_elem_b) 5000)
+		 (> (launch/count coord-star !item_elem_c) 2000)
+		 (> (launch/count coord-star !item_elem_d) 2000)
+		 (> (launch/count coord-star !item_elem_f) 5000)
+		 (> (launch/count coord-star !item_elem_g) 5000))
 	(assert (= (io !io_mod legion (mod boot 2)) !io_ok))
 	(assert (= (io !io_launch legion coord-star) !io_ok))))))
 
