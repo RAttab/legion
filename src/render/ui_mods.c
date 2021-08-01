@@ -68,7 +68,7 @@ static void ui_mods_update(struct ui_mods *ui)
     for (size_t i = 0; i < list->len; ++i) {
         struct ui_toggle *toggle = &ui->toggles.items[i];
         ui_str_set_symbol(&toggle->str, &list->items[i].str);
-        toggle->user = list->items[i].id;
+        toggle->user = list->items[i].maj;
     }
 
     ui_str_setf(&ui->panel.title.str, "mods(%zu)", list->len);
@@ -101,7 +101,7 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 
     case EV_MOD_SELECT: {
         mod_t mod = (uintptr_t) ev->user.data1;
-        ui_toggles_select(&ui->toggles, mod_id(mod));
+        ui_toggles_select(&ui->toggles, mod_maj(mod));
 
         if (ui->panel.state == ui_panel_hidden) {
             ui->panel.state = ui_panel_visible;
@@ -132,8 +132,10 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
         struct symbol name = {0};
         if (ui_input_get_symbol(&ui->new_val, &name)) {
             mod_t mod = mods_register(world_mods(core.state.world), &name);
-            ui_mods_update(ui);
-            core_push_event(EV_MOD_SELECT, mod, 0);
+            if (mod) {
+                ui_mods_update(ui);
+                core_push_event(EV_MOD_SELECT, mod, 0);
+            }
         }
         return ret;
     }

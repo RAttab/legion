@@ -71,7 +71,7 @@ struct lisp_req
 
 struct lisp
 {
-    mod_id_t mod_id;
+    mod_maj_t mod_maj;
     struct mods *mods;
     struct atoms *atoms;
 
@@ -505,12 +505,12 @@ void mod_compiler_init(void)
 }
 
 struct mod *mod_compile(
-        mod_id_t id,
+        mod_maj_t mod_maj,
         const char *src, size_t len,
         struct mods *mods, struct atoms *atoms)
 {
     struct lisp lisp = {0};
-    lisp.mod_id = id;
+    lisp.mod_maj = mod_maj;
     lisp.mods = mods;
     lisp.atoms = atoms;
     lisp.in.it = src;

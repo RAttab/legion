@@ -1,12 +1,12 @@
 ;; ##########################################################
 ;; assert
 
-(misc/assert
+(misc/assert-false
  ()
  ((assert 0))
  (flags:04))
 
-(misc/assert
+(misc/assert-true
  ()
  ((assert 1)
   (yield))

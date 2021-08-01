@@ -159,7 +159,7 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
     }
     else {
         struct symbol mod = {0};
-        mods_name(world_mods(core.state.world), mod_id(state->mod->id), &mod);
+        mods_name(world_mods(core.state.world), mod_maj(state->mod->id), &mod);
         ui_str_set_symbol(&ui->mod_val.str, &mod);
         ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod->id));
     }

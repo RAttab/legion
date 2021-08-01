@@ -112,7 +112,7 @@ static void ui_mod_update(struct ui_mod *ui, const struct mod *mod, ip_t ip)
 static void ui_mod_title(struct ui_mod *ui)
 {
     struct symbol name = {0};
-    mods_name(world_mods(core.state.world), mod_id(ui->id), &name);
+    mods_name(world_mods(core.state.world), mod_maj(ui->id), &name);
     ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_ver(ui->id));
 }
 
@@ -123,7 +123,7 @@ static const struct mod *ui_mod_compile(struct ui_mod *ui)
     text_to_str(&ui->code.text, buffer, len);
 
     const struct mod *mod = mod_compile(
-            mod_id(ui->id), buffer, len,
+            mod_maj(ui->id), buffer, len,
             world_mods(core.state.world),
             world_atoms(core.state.world));
 
@@ -200,7 +200,7 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
         assert(ui->mod->errs_len == 0);
-        ui->id = mods_set(world_mods(core.state.world), mod_id(ui->id), ui->mod);
+        ui->id = mods_set(world_mods(core.state.world), mod_maj(ui->id), ui->mod);
         ui->publish.disabled = true;
         ui_mod_title(ui);
         return ret == ui_consume;

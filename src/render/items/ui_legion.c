@@ -49,7 +49,7 @@ static void ui_legion_update(struct ui_legion *ui, struct legion *state)
     if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
         struct symbol mod = {0};
-        mods_name(world_mods(core.state.world), mod_id(state->mod), &mod);
+        mods_name(world_mods(core.state.world), mod_maj(state->mod), &mod);
         ui_str_set_symbol(&ui->mod_val.str, &mod);
     }
 

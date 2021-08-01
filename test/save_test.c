@@ -69,7 +69,7 @@ void check(const char *path)
         struct mods_list *new_mods = mods_list(world_mods(new));
         assert(old_mods->len == new_mods->len);
         for (size_t i = 0; i < old_mods->len; ++i) {
-            assert(old_mods->items[i].id == new_mods->items[i].id);
+            assert(old_mods->items[i].maj == new_mods->items[i].maj);
             assert(symbol_eq(&old_mods->items[i].str, &new_mods->items[i].str));
         }
         free(old_mods);

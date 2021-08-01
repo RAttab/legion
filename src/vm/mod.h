@@ -18,15 +18,16 @@ struct save;
 struct text;
 struct atoms;
 
-typedef uint16_t mod_id_t;
+typedef uint16_t mod_maj_t;
 typedef uint16_t mod_ver_t;
 
-inline mod_t make_mod(mod_id_t id, mod_ver_t ver)
+inline mod_t make_mod(mod_maj_t maj, mod_ver_t ver)
 {
-    assert(!(id >> 15)); return id << 16 | ver;
+    assert(!(maj >> 15));
+    return maj << 16 | ver;
 }
 
-inline mod_id_t mod_id(mod_t mod) { return mod >> 16; }
+inline mod_maj_t mod_maj(mod_t mod) { return mod >> 16; }
 inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
 
 
@@ -111,7 +112,7 @@ inline size_t mod_len(const struct mod *mod)
 
 void mod_compiler_init(void);
 struct mod *mod_compile(
-        mod_id_t, const char *src, size_t len, struct mods *, struct atoms *);
+        mod_maj_t, const char *src, size_t len, struct mods *, struct atoms *);
 struct text mod_disasm(const struct mod *);
 
 size_t mod_dump(const struct mod *, char *dst, size_t len);
@@ -135,17 +136,17 @@ struct mods *mods_load(struct save *);
 void mods_save(const struct mods *, struct save *);
 
 mod_t mods_register(struct mods *, const struct symbol *name);
-bool mods_name(struct mods *, mod_id_t, struct symbol *dst);
+bool mods_name(struct mods *, mod_maj_t, struct symbol *dst);
 
-mod_t mods_set(struct mods *, mod_id_t, const struct mod *);
+mod_t mods_set(struct mods *, mod_maj_t, const struct mod *);
 const struct mod *mods_get(struct mods *, mod_t);
-const struct mod *mods_latest(struct mods *, mod_id_t);
+const struct mod *mods_latest(struct mods *, mod_maj_t);
 
-mod_id_t mods_find(struct mods *, const struct symbol *name);
+mod_maj_t mods_find(struct mods *, const struct symbol *name);
 
 const struct mod *mods_parse(struct mods *, const char *it, size_t len);
 
-struct mods_item { mod_id_t id; struct symbol str; };
+struct mods_item { mod_maj_t maj; struct symbol str; };
 struct mods_list
 {
     size_t len;

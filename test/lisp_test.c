@@ -332,9 +332,11 @@ const struct mod *read_mod(
     size_t len = (file->it - first) - 1;
 
     mod_t id = mods_register(mods, name);
-    const struct mod *mod = mod_compile(mod_id(id), first, len, mods, atoms);
+    assert(id);
+
+    const struct mod *mod = mod_compile(mod_maj(id), first, len, mods, atoms);
     if (mod && !mod->errs_len) {
-        mods_set(mods, mod_id(id), mod);
+        mods_set(mods, mod_maj(id), mod);
         return mod;
     }
 

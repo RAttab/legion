@@ -137,16 +137,16 @@ static word_t lisp_parse_call(struct lisp *lisp)
         token = lisp_expect(lisp, token_symb);
         if (!token) { lisp_goto_close(lisp); return -1; }
 
-        mod_id_t mod_id = mods_find(lisp->mods, &token->val.symb);
-        if (!mod_id) {
+        mod_maj_t mod_maj = mods_find(lisp->mods, &token->val.symb);
+        if (!mod_maj) {
             lisp_err(lisp, "unknown mod: %s", token->val.symb.c);
             lisp_goto_close(lisp);
             return -1;
         }
 
-        mod = mods_latest(lisp->mods, mod_id);
+        mod = mods_latest(lisp->mods, mod_maj);
         if (!mod) {
-            lisp_err(lisp, "unknown mod: %s (%x)", token->val.symb.c, mod_id);
+            lisp_err(lisp, "unknown mod: %s (%x)", token->val.symb.c, mod_maj);
             lisp_goto_close(lisp);
             return -1;
         }
@@ -628,9 +628,9 @@ static void lisp_fn_mod(struct lisp *lisp)
 
     // self-referencial mod
     if (token->type == token_close) {
-        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_id);
+        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
         assert(mod);
-        mod_t id = make_mod(lisp->mod_id, mod_ver(mod->id) + 1);
+        mod_t id = make_mod(lisp->mod_maj, mod_ver(mod->id) + 1);
 
         lisp_write_op(lisp, OP_PUSH);
         lisp_write_value(lisp, (word_t) id);
@@ -644,8 +644,8 @@ static void lisp_fn_mod(struct lisp *lisp)
         return;
     }
 
-    mod_id_t mod_id = mods_find(lisp->mods, &token->val.symb);
-    if (!mod_id) {
+    mod_maj_t mod_maj = mods_find(lisp->mods, &token->val.symb);
+    if (!mod_maj) {
         lisp_err(lisp, "unknown mod: %s", token->val.symb.c);
         lisp_goto_close(lisp);
         return;
@@ -653,11 +653,11 @@ static void lisp_fn_mod(struct lisp *lisp)
 
     mod_t id = 0;
     if ((token = lisp_next(lisp))->type == token_num) {
-        id = make_mod(mod_id, token->val.num);
+        id = make_mod(mod_maj, token->val.num);
         token = lisp_next(lisp);
     }
     else {
-        const struct mod *mod = mods_latest(lisp->mods, mod_id);
+        const struct mod *mod = mods_latest(lisp->mods, mod_maj);
         assert(mod);
         id = mod->id;
     }

@@ -275,14 +275,14 @@ size_t mod_hexdump(const struct mod *mod, char *dst, size_t len)
 
 struct mods
 {
-    mod_id_t id;
-    struct htable by_id;
+    mod_maj_t maj;
+    struct htable by_maj;
     struct htable by_mod;
 };
 
 struct mod_entry
 {
-    mod_id_t id;
+    mod_maj_t maj;
     mod_ver_t ver;
 
     struct symbol str;
@@ -299,9 +299,9 @@ void mods_free(struct mods *mods)
 {
     struct htable_bucket *it = NULL;
 
-    for (it = htable_next(&mods->by_id, NULL); it; it = htable_next(&mods->by_id, it))
+    for (it = htable_next(&mods->by_maj, NULL); it; it = htable_next(&mods->by_maj, it))
         free((struct mod_entry *) it->value);
-    htable_reset(&mods->by_id);
+    htable_reset(&mods->by_maj);
 
     for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
         mod_free((struct mod *) it->value);
@@ -315,7 +315,7 @@ struct mods *mods_load(struct save *save)
     if (!save_read_magic(save, save_magic_mods)) return NULL;
 
     struct mods *mods = mods_new();
-    save_read_into(save, &mods->id);
+    save_read_into(save, &mods->maj);
 
     size_t mod_len = save_read_type(save, typeof(mods->by_mod.len));
     htable_reserve(&mods->by_mod, mod_len);
@@ -327,19 +327,19 @@ struct mods *mods_load(struct save *save)
         assert(ret.ok);
     }
 
-    size_t id_len = save_read_type(save, typeof(mods->by_id.len));
-    htable_reserve(&mods->by_id, id_len);
+    size_t id_len = save_read_type(save, typeof(mods->by_maj.len));
+    htable_reserve(&mods->by_maj, id_len);
     for (size_t i = 0; i < id_len; ++i) {
         struct mod_entry *entry = calloc(1, sizeof(*entry));
-        save_read_into(save, &entry->id);
+        save_read_into(save, &entry->maj);
         save_read_into(save, &entry->ver);
         if (!save_read_symbol(save, &entry->str)) goto fail;
 
-        struct htable_ret ret = htable_get(&mods->by_mod, make_mod(entry->id, entry->ver));
+        struct htable_ret ret = htable_get(&mods->by_mod, make_mod(entry->maj, entry->ver));
         if (!ret.ok) goto fail;
         entry->mod = (struct mod *) ret.value;
 
-        ret = htable_put(&mods->by_id, entry->id, (uintptr_t) entry);
+        ret = htable_put(&mods->by_maj, entry->maj, (uintptr_t) entry);
         assert(ret.ok);
     }
 
@@ -354,7 +354,7 @@ struct mods *mods_load(struct save *save)
 void mods_save(const struct mods *mods, struct save *save)
 {
     save_write_magic(save, save_magic_mods);
-    save_write_value(save, mods->id);
+    save_write_value(save, mods->maj);
 
     struct htable_bucket *it = NULL;
 
@@ -362,10 +362,10 @@ void mods_save(const struct mods *mods, struct save *save)
     for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
         mod_save((const struct mod *) it->value, save);
 
-    save_write_value(save, mods->by_id.len);
-    for (it = htable_next(&mods->by_id, NULL); it; it = htable_next(&mods->by_id, it)) {
+    save_write_value(save, mods->by_maj.len);
+    for (it = htable_next(&mods->by_maj, NULL); it; it = htable_next(&mods->by_maj, it)) {
         const struct mod_entry *entry = (const void *) it->value;
-        save_write_value(save, entry->id);
+        save_write_value(save, entry->maj);
         save_write_value(save, entry->ver);
         save_write_symbol(save, &entry->str);
     }
@@ -376,16 +376,18 @@ void mods_save(const struct mods *mods, struct save *save)
 
 mod_t mods_register(struct mods *mods, const struct symbol *name)
 {
+    if (mods_find(mods, name)) return 0;
+
     struct mod_entry *entry = calloc(1, sizeof(*entry));
-    entry->id = ++mods->id;
+    entry->maj = ++mods->maj;
     entry->str = *name;
 
-    mod_t mod = make_mod(entry->id, ++entry->ver);
+    mod_t mod = make_mod(entry->maj, ++entry->ver);
     entry->mod = mod_nil(mod);
 
     struct htable_ret ret = {0};
 
-    ret = htable_put(&mods->by_id, entry->id, (uintptr_t) entry);
+    ret = htable_put(&mods->by_maj, entry->maj, (uintptr_t) entry);
     assert(ret.ok);
 
     ret = htable_put(&mods->by_mod, mod, (uintptr_t) entry->mod);
@@ -394,11 +396,11 @@ mod_t mods_register(struct mods *mods, const struct symbol *name)
     return mod;
 }
 
-bool mods_name(struct mods *mods, mod_id_t id, struct symbol *dst)
+bool mods_name(struct mods *mods, mod_maj_t maj, struct symbol *dst)
 {
-    if (!id) return false;
+    if (!maj) return false;
 
-    struct htable_ret ret = htable_get(&mods->by_id, id);
+    struct htable_ret ret = htable_get(&mods->by_maj, maj);
     if (!ret.ok) return false;
 
     struct mod_entry *entry = (void *) ret.value;
@@ -406,12 +408,12 @@ bool mods_name(struct mods *mods, mod_id_t id, struct symbol *dst)
     return true;
 }
 
-mod_t mods_set(struct mods *mods, mod_id_t id, const struct mod *mod)
+mod_t mods_set(struct mods *mods, mod_maj_t maj, const struct mod *mod)
 {
-    assert(id);
+    assert(maj);
     assert(!mod->errs_len);
 
-    struct htable_ret ret = htable_get(&mods->by_id, id);
+    struct htable_ret ret = htable_get(&mods->by_maj, maj);
     if (!ret.ok) return 0;
 
     struct mod_entry *entry = (void *) ret.value;
@@ -420,37 +422,36 @@ mod_t mods_set(struct mods *mods, mod_id_t id, const struct mod *mod)
 
     // a bit dirty but this is the only time where we actually want to change
     // something in mod.
-    ((struct mod *) mod)->id = make_mod(id, entry->ver);
+    ((struct mod *) mod)->id = make_mod(maj, entry->ver);
     ret = htable_put(&mods->by_mod, mod->id, (uintptr_t) mod);
     assert(ret.ok);
 
     return mod->id;
 }
 
-const struct mod *mods_latest(struct mods *mods, mod_id_t id)
+const struct mod *mods_latest(struct mods *mods, mod_maj_t maj)
 {
-    if (!id) return NULL;
+    if (!maj) return NULL;
 
-    struct htable_ret ret = htable_get(&mods->by_id, id);
+    struct htable_ret ret = htable_get(&mods->by_maj, maj);
     return ret.ok ? ((struct mod_entry *) ret.value)->mod : NULL;
 }
 
 const struct mod *mods_get(struct mods *mods, mod_t id)
 {
     if (!id) return NULL;
-    if (!mod_ver(id)) return mods_latest(mods, mod_id(id));
+    if (!mod_ver(id)) return mods_latest(mods, mod_maj(id));
 
     struct htable_ret ret = htable_get(&mods->by_mod, id);
     return ret.ok ? (struct mod *) ret.value : NULL;
 }
 
-
-mod_id_t mods_find(struct mods *mods, const struct symbol *name)
+mod_maj_t mods_find(struct mods *mods, const struct symbol *name)
 {
-    struct htable_bucket *it = htable_next(&mods->by_id, NULL);
-    for (; it; it = htable_next(&mods->by_id, it)) {
+    struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
+    for (; it; it = htable_next(&mods->by_maj, it)) {
         struct mod_entry *entry = (void *) it->value;
-        if (symbol_eq(name, &entry->str)) return entry->id;
+        if (symbol_eq(name, &entry->str)) return entry->maj;
     }
     return 0;
 }
@@ -466,8 +467,8 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     if (!symbol_parse(it, end - it, &symbol)) return NULL;
     it += symbol.len;
 
-    mod_id_t mod_id = mods_find(mods, &symbol);
-    if (!mod_id) return NULL;
+    mod_maj_t mod_maj = mods_find(mods, &symbol);
+    if (!mod_maj) return NULL;
 
     it += str_skip_spaces(it, end - it);
 
@@ -483,19 +484,19 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
         mod_ver = value;
     }
 
-    return mods_get(mods, make_mod(mod_id, mod_ver));
+    return mods_get(mods, make_mod(mod_maj, mod_ver));
 }
 
 struct mods_list *mods_list(struct mods *mods)
 {
     struct mods_list *ret = calloc(1,
-            sizeof(*ret) + mods->by_id.len * sizeof(ret->items[0]));
-    ret->len = mods->by_id.len;
+            sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
+    ret->len = mods->by_maj.len;
 
-    struct htable_bucket *it = htable_next(&mods->by_id, NULL);
-    for (size_t i = 0; it; it = htable_next(&mods->by_id, it), i++) {
+    struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
+    for (size_t i = 0; it; it = htable_next(&mods->by_maj, it), i++) {
         struct mod_entry *entry = (void *) it->value;
-        ret->items[i].id = entry->id;
+        ret->items[i].maj = entry->maj;
         memcpy(&ret->items[i].str, &entry->str, sizeof(entry->str));
     }
 
@@ -535,15 +536,16 @@ static struct symbol mods_file_symbol(const char *path)
 static void mods_file_register(struct mods *mods, const char *path)
 {
     struct symbol name = mods_file_symbol(path);
-    mods_register(mods, &name);
+    mod_maj_t maj = mods_register(mods, &name);
+    assert(maj);
 }
 
 static void mods_file_compile(
         struct mods *mods, struct atoms *atoms, const char *path)
 {
     struct symbol name = mods_file_symbol(path);
-    mod_id_t id = mods_find(mods, &name);
-    assert(id);
+    mod_maj_t maj = mods_find(mods, &name);
+    assert(maj);
 
     struct mod *mod = NULL;
     {
@@ -554,7 +556,7 @@ static void mods_file_compile(
         char *base = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
         if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
 
-        mod = mod_compile(id, base, strnlen(base, len), mods, atoms);
+        mod = mod_compile(maj, base, strnlen(base, len), mods, atoms);
         if (mod->errs_len) {
             for (size_t i = 0; i < mod->errs_len; ++i) {
                 struct mod_err *err = &mod->errs[i];
@@ -565,7 +567,7 @@ static void mods_file_compile(
         munmap(base, len);
         close(fd);
     }
-    mods_set(mods, id, mod);
+    mods_set(mods, maj, mod);
 }
 
 // If we have cyclic module reference (it happens and it's useful) we need to
