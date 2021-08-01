@@ -228,7 +228,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_STAR_SELECT: {
-        ui->id = id_to_coord((uint64_t) ev->user.data1);
+        ui->id = id_to_coord((uintptr_t) ev->user.data1);
         ui_star_update(ui);
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);

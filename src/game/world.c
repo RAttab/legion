@@ -136,16 +136,12 @@ struct coord world_populate(struct world *world)
             size_t index = rng_uni(&rng, 0, sector->stars_len);
             star = &sector->stars[index];
 
-            if (star->elems[ITEM_ELEM_A] < 1000) continue;
-            if (star->elems[ITEM_ELEM_B] < 1000) continue;
-            if (star->elems[ITEM_ELEM_C] < 1000) continue;
-            if (star->elems[ITEM_ELEM_D] < 1000) continue;
-            if (star->elems[ITEM_ELEM_F] < 1000) continue;
-            if (star->elems[ITEM_ELEM_G] < 1000) continue;
-
-            size_t sum = 0;
-            for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) sum += star->elems[i];
-            if (sum < 1 << 16) continue;
+            if (star->elems[ITEM_ELEM_A - ITEM_NATURAL_FIRST] < 20000) continue;
+            if (star->elems[ITEM_ELEM_B - ITEM_NATURAL_FIRST] < 20000) continue;
+            if (star->elems[ITEM_ELEM_C - ITEM_NATURAL_FIRST] < 20000) continue;
+            if (star->elems[ITEM_ELEM_D - ITEM_NATURAL_FIRST] < 20000) continue;
+            if (star->elems[ITEM_ELEM_F - ITEM_NATURAL_FIRST] < 20000) continue;
+            if (star->elems[ITEM_ELEM_G - ITEM_NATURAL_FIRST] < 20000) continue;
 
             struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
             assert(chunk);
