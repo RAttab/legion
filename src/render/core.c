@@ -203,7 +203,6 @@ void core_init()
     if (core.event == (uint32_t) -1) sdl_fail();
 
     fonts_init(core.renderer);
-    sprites_init(core.renderer);
     state_init();
     cursor_init();
     ui_init();
