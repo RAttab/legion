@@ -232,14 +232,14 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
         ui_star_update(ui);
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
-        return true;
+        return false;
     }
 
     case EV_STAR_CLEAR: {
         ui->id = coord_nil();
         ui->panel.state = ui_panel_hidden;
         core_push_event(EV_FOCUS_PANEL, 0, 0);
-        return true;
+        return false;
     }
 
     case EV_ITEM_SELECT: {
