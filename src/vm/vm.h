@@ -6,12 +6,20 @@
 #pragma once
 
 #include "common.h"
-#include "vm/types.h"
+
+struct mod;
 
 
 // -----------------------------------------------------------------------------
-// vm
+// types
 // -----------------------------------------------------------------------------
+
+typedef int64_t word_t;
+typedef uint8_t reg_t;
+typedef uint32_t mod_t; // see mod.h for the full definition
+
+typedef uint32_t ip_t;
+static const ip_t IP_NIL = UINT32_MAX;
 
 enum flags
 {
@@ -24,6 +32,11 @@ enum flags
     FLAG_FAULT_MATH  = 1 << 6,
     FLAG_FAULT_IO    = 1 << 7,
 };
+
+
+// -----------------------------------------------------------------------------
+// vm
+// -----------------------------------------------------------------------------
 
 struct legion_packed vm
 {

@@ -5,6 +5,7 @@
 
 #include "ui/ui.h"
 #include "vm/mod.h"
+#include "vm/atoms.h"
 #include "game/world.h"
 #include "render/font.h"
 #include "utils/str.h"

@@ -9,8 +9,8 @@
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"
-#include "vm/types.h"
 #include "vm/mod.h"
+#include "vm/atoms.h"
 #include "utils/vec.h"
 
 #include <unistd.h>

@@ -4,10 +4,11 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
 #include "game/chunk.h"
 #include "game/active.h"
+#include "vm/atoms.h"
+#include "render/ui.h"
+#include "ui/ui.h"
 
 // -----------------------------------------------------------------------------
 // cmd

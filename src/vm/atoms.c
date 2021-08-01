@@ -6,7 +6,7 @@
    hash table. Need to improve
 */
 
-#include "vm/types.h"
+#include "vm/atoms.h"
 #include "utils/htable.h"
 
 

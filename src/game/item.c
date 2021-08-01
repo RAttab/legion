@@ -5,7 +5,8 @@
 
 #include "game/item.h"
 #include "game/io.h"
-#include "vm/vm.h"
+#include "vm/atoms.h"
+#include "vm/symbol.h"
 #include "utils/str.h"
 
 

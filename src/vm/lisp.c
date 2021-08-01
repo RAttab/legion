@@ -5,6 +5,8 @@
 
 #include "common.h"
 #include "vm/mod.h"
+#include "vm/atoms.h"
+#include "vm/symbol.h"
 #include "utils/str.h"
 #include "utils/vec.h"
 #include "utils/htable.h"

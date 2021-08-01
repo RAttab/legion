@@ -5,8 +5,9 @@
 
 #include "common.h"
 #include "game/item.h"
-#include "vm/mod.h"
 #include "vm/vm.h"
+#include "vm/mod.h"
+#include "vm/atoms.h"
 #include "utils/str.h"
 #include "utils/log.h"
 

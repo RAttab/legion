@@ -6,11 +6,28 @@
 #pragma once
 
 #include "common.h"
-#include "vm/types.h"
+#include "vm/vm.h"
+#include "vm/symbol.h"
+
+// -----------------------------------------------------------------------------
+// types
+// -----------------------------------------------------------------------------
 
 struct mods;
 struct save;
 struct text;
+struct atoms;
+
+typedef uint16_t mod_id_t;
+typedef uint16_t mod_ver_t;
+
+inline mod_t make_mod(mod_id_t id, mod_ver_t ver)
+{
+    assert(!(id >> 15)); return id << 16 | ver;
+}
+
+inline mod_id_t mod_id(mod_t mod) { return mod >> 16; }
+inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
 
 
 // -----------------------------------------------------------------------------
