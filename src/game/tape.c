@@ -53,11 +53,43 @@ struct tape_ret tape_at(const struct tape *tape, tape_it_t it)
 static struct
 {
     const struct tape *index[ITEM_MAX];
+    struct tape_stats stats[ITEM_MAX];
 } tapes;
 
 const struct tape *tapes_get(enum item id)
 {
-    return id < ITEM_MAX ? tapes.index[id] : 0;
+    return id < ITEM_MAX ? tapes.index[id] : NULL;
+}
+
+const struct tape_stats *tapes_stats(enum item id)
+{
+    return tapes_get(id) ? &tapes.stats[id] : NULL;
+}
+
+static const struct tape_stats *tapes_stats_for(enum item id)
+{
+    const struct tape *tape = tapes_get(id);
+    if (!tape) return NULL;
+
+    struct tape_stats *stats = &tapes.stats[id];
+    if (stats->rank) return stats;
+
+    if (!tape->inputs) {
+        stats->rank = 1;
+        if (id >= ITEM_NATURAL_FIRST && id < ITEM_SYNTH_FIRST)
+            stats->elems[id - ITEM_NATURAL_FIRST] = 1;
+        return stats;
+    }
+
+    for (size_t i = 0; i < tape->inputs; ++i) {
+        const struct tape_stats *input = tapes_stats_for(tape->tape[i]);
+        stats->rank = legion_max(stats->rank, input->rank + 1);
+
+        for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i)
+            stats->elems[i] += input->elems[i];
+    }
+
+    return stats;
 }
 
 
@@ -223,4 +255,7 @@ void tapes_populate(void)
         tapes_load_file(dir_it_path(it), atoms);
 
     dir_it_free(it);
+
+    for (enum item item = 0; item < ITEM_MAX; ++item)
+        (void) tapes_stats_for(item);
 }

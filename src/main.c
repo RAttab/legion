@@ -6,13 +6,31 @@
 #include "common.h"
 #include "render/core.h"
 
+// -----------------------------------------------------------------------------
+// implementations
+// -----------------------------------------------------------------------------
+
+#include "viz.c"
+#include "stats.c"
+
+// -----------------------------------------------------------------------------
+// main
+// -----------------------------------------------------------------------------
+
 int main(int argc, char **argv)
 {
-    (void) argc, (void) argv;
+    if (argc == 1) {
+        core_init();
+        core_run();
+        core_close();
+        return 0;
+    }
 
-    core_init();
-    core_run();
-    core_close();
+    if (argc == 2) {
+        if (!strcmp(argv[1], "--viz")) return viz_run(argc, argv);
+        if (!strcmp(argv[1], "--stats")) return stats_run(argc, argv);
+    }
 
-    return 0;
+    assert(false);
+    return 1;
 }

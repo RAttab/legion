@@ -60,7 +60,6 @@ void set_union(struct set *lhs, struct set *rhs)
 // graph
 // -----------------------------------------------------------------------------
 
-
 struct viz
 {
     struct set *items;
@@ -182,7 +181,7 @@ void viz_output(struct viz *viz)
     write(1, viz->first, viz->it - viz->first);
 }
 
-int main(int argc, char **argv)
+int viz_run(int argc, char **argv)
 {
     (void) argc, (void) argv;
     tapes_populate();

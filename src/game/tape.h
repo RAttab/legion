@@ -38,6 +38,13 @@ struct tape_ret tape_at(const struct tape *, tape_it_t index);
 void tapes_populate(void);
 const struct tape *tapes_get(enum item id);
 
+struct tape_stats
+{
+    size_t rank;
+    uint16_t elems[ITEMS_NATURAL_LEN];
+};
+const struct tape_stats *tapes_stats(enum item id);
+
 
 // -----------------------------------------------------------------------------
 // packed

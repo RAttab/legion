@@ -44,10 +44,11 @@ for obj in "${SRC[@]}"; do OBJ="$OBJ ${obj}.o"; done
 ar rcs liblegion.a $OBJ
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
-$CC -o "viz" "${PREFIX}/src/viz.c" $LIBS $CFLAGS
 cp -r "${PREFIX}/res" .
 
-./viz | dot -Tsvg > progs.svg
+./legion --viz | dot -Tsvg > tapes.svg
+./legion --stats > stats.lisp
+
 parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
 
 if [ -z "${VALGRIND}" ]; then
