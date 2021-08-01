@@ -9,9 +9,9 @@
 #include "render/sprites.h"
 #include "render/map.h"
 #include "render/ui.h"
+#include "game/tape.h"
 #include "game/coord.h"
 #include "game/world.h"
-#include "game/prog.h"
 #include "vm/mod.h"
 #include "utils/log.h"
 #include "utils/time.h"
@@ -186,7 +186,7 @@ static void ui_render(SDL_Renderer *renderer)
 void core_init()
 {
     mod_compiler_init();
-    prog_load();
+    tape_load();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 

@@ -27,12 +27,12 @@ static void extract_load(void *state, struct chunk *chunk)
     struct extract *extract = state;
     (void) chunk;
 
-    enum item id = prog_packed_id(extract->prog);
+    enum item id = tape_packed_id(extract->tape);
     if (!id) return;
 
-    const struct prog *prog = prog_fetch(id);
-    assert(prog);
-    extract->prog = prog_packed_ptr_update(extract->prog, prog);
+    const struct tape *tape = tape_fetch(id);
+    assert(tape);
+    extract->tape = tape_packed_ptr_update(extract->tape, tape);
 }
 
 static void extract_reset(struct extract *extract, struct chunk *chunk)
@@ -40,7 +40,7 @@ static void extract_reset(struct extract *extract, struct chunk *chunk)
     chunk_ports_reset(chunk, extract->id);
     extract->waiting = false;
     extract->loops = 0;
-    extract->prog = 0;
+    extract->tape = 0;
 }
 
 
@@ -53,7 +53,7 @@ static void extract_step_eof(struct extract *extract, struct chunk *chunk)
     if (extract->loops != loops_inf) extract->loops--;
 
     if (!extract->loops) extract_reset(extract, chunk);
-    else extract->prog = prog_packed_it_zero(extract->prog);
+    else extract->tape = tape_packed_it_zero(extract->tape);
 }
 
 static void extract_step_input(
@@ -70,7 +70,7 @@ static void extract_step_input(
     assert(consumed == item);
 
     extract->waiting = false;
-    extract->prog = prog_packed_it_inc(extract->prog);
+    extract->tape = tape_packed_it_inc(extract->tape);
 }
 
 static void extract_step_output(
@@ -89,7 +89,7 @@ static void extract_step_output(
 
     if (!chunk_ports_consumed(chunk, extract->id)) return;
 
-    extract->prog = prog_packed_it_inc(extract->prog);
+    extract->tape = tape_packed_it_inc(extract->tape);
     extract->waiting = false;
 }
 
@@ -97,14 +97,14 @@ static void extract_step(void *state, struct chunk *chunk)
 {
     struct extract *extract = state;
 
-    const struct prog *prog = prog_packed_ptr(extract->prog);
-    if (!prog) return;
+    const struct tape *tape = tape_packed_ptr(extract->tape);
+    if (!tape) return;
 
-    struct prog_ret ret = prog_at(prog, prog_packed_it(extract->prog));
+    struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
     switch (ret.state) {
-    case prog_eof: { extract_step_eof(extract, chunk); return; }
-    case prog_input: { extract_step_input(extract, chunk, ret.item); return; }
-    case prog_output: { extract_step_output(extract, chunk, ret.item); return; }
+    case tape_eof: { extract_step_eof(extract, chunk); return; }
+    case tape_input: { extract_step_input(extract, chunk, ret.item); return; }
+    case tape_output: { extract_step_output(extract, chunk, ret.item); return; }
     default: { assert(false); }
     }
 }
@@ -116,23 +116,23 @@ static void extract_step(void *state, struct chunk *chunk)
 
 static void extract_io_status(struct extract *extract, struct chunk *chunk, id_t src)
 {
-    word_t value = vm_pack(extract->loops, prog_packed_id(extract->prog));
+    word_t value = vm_pack(extract->loops, tape_packed_id(extract->tape));
     chunk_io(chunk, IO_STATE, extract->id, src, 1, &value);
 }
 
-static void extract_io_prog(
+static void extract_io_tape(
         struct extract *extract, struct chunk *chunk, size_t len, const word_t *args)
 {
     if (len < 1) return;
 
-    word_t prog_id = args[0];
-    if (prog_id != (enum item) prog_id) return;
+    word_t tape_id = args[0];
+    if (tape_id != (enum item) tape_id) return;
 
-    const struct prog *prog = prog_fetch(prog_id);
-    if (!prog || prog->host != id_item(extract->id)) return;
+    const struct tape *tape = tape_fetch(tape_id);
+    if (!tape || tape->host != id_item(extract->id)) return;
 
     extract_reset(extract, chunk);
-    extract->prog = prog_pack(prog_id, 0, prog);
+    extract->tape = tape_pack(tape_id, 0, tape);
     extract->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
 
@@ -145,7 +145,7 @@ static void extract_io(
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, extract->id, src, 0, NULL); return; }
     case IO_STATUS: { extract_io_status(extract, chunk, src); return; }
-    case IO_PROG: { extract_io_prog(extract, chunk, len, args); return; }
+    case IO_TAPE: { extract_io_tape(extract, chunk, len, args); return; }
     case IO_RESET: { extract_reset(extract, chunk); return; }
     default: { return; }
     }
@@ -159,7 +159,7 @@ static void extract_io(
 const struct active_config *extract_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_PROG, IO_RESET };
+    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_TAPE, IO_RESET };
 
     static const struct active_config config = {
         .size = sizeof(struct extract),

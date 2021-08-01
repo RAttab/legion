@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "game/item.h"
+#include "game/tape.h"
 #include "game/active.h"
 
 
@@ -47,7 +48,7 @@ struct legion_packed extract
     loops_t loops;
     bool waiting;
     legion_pad(1);
-    prog_packed_t prog;
+    tape_packed_t tape;
 };
 
 static_assert(sizeof(struct extract) == 16);
@@ -64,7 +65,7 @@ struct legion_packed printer
     loops_t loops;
     bool waiting;
     legion_pad(1);
-    prog_packed_t prog;
+    tape_packed_t tape;
 };
 
 static_assert(sizeof(struct printer) == 16);

@@ -7,9 +7,7 @@
 
 #include "common.h"
 #include "game/item.h"
-#include "game/prog.h"
 #include "game/world.h"
-#include "vm/vm.h"
 
 struct chunk;
 

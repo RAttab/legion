@@ -1,4 +1,4 @@
-/* ui_prog.c
+/* ui_tape.c
    Rémi Attab (remi.attab@gmail.com), 08 Jul 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -6,23 +6,23 @@
 // included in ui_item.c
 
 // -----------------------------------------------------------------------------
-// prog
+// tape
 // -----------------------------------------------------------------------------
 
-struct ui_prog
+struct ui_tape
 {
-    struct ui_label prog, prog_val;
+    struct ui_label tape, tape_val;
     struct ui_scroll scroll;
     struct ui_label index, in, out;
 };
 
-static void ui_prog_init(struct ui_prog *ui)
+static void ui_tape_init(struct ui_tape *ui)
 {
     struct font *font = ui_item_font();
 
-    *ui = (struct ui_prog) {
-        .prog = ui_label_new(font, ui_str_c("prog:  ")),
-        .prog_val = ui_label_new(font, ui_str_v(item_str_len)),
+    *ui = (struct ui_tape) {
+        .tape = ui_label_new(font, ui_str_c("tape:  ")),
+        .tape_val = ui_label_new(font, ui_str_v(item_str_len)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .index = ui_label_new(font, ui_str_v(2)),
@@ -36,10 +36,10 @@ static void ui_prog_init(struct ui_prog *ui)
     ui->out.fg = rgba_blue();
 }
 
-static void ui_prog_free(struct ui_prog *ui)
+static void ui_tape_free(struct ui_tape *ui)
 {
-    ui_label_free(&ui->prog);
-    ui_label_free(&ui->prog_val);
+    ui_label_free(&ui->tape);
+    ui_label_free(&ui->tape_val);
 
     ui_scroll_free(&ui->scroll);
     ui_label_free(&ui->index);
@@ -47,17 +47,17 @@ static void ui_prog_free(struct ui_prog *ui)
     ui_label_free(&ui->out);
 }
 
-static void ui_prog_update(struct ui_prog *ui, prog_packed_t state)
+static void ui_tape_update(struct ui_tape *ui, tape_packed_t state)
 {
-    const struct prog *prog = prog_packed_ptr(state);
-    if (!prog) ui_str_setc(&ui->prog_val.str, "nil");
-    else ui_str_set_item(&ui->prog_val.str, prog_id(prog));
+    const struct tape *tape = tape_packed_ptr(state);
+    if (!tape) ui_str_setc(&ui->tape_val.str, "nil");
+    else ui_str_set_item(&ui->tape_val.str, tape_id(tape));
     
-    ui_scroll_update(&ui->scroll, prog ? prog_len(prog) : 0);
+    ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
 }
 
-static bool ui_prog_event(
-        struct ui_prog *ui, prog_packed_t state, const SDL_Event *ev)
+static bool ui_tape_event(
+        struct ui_tape *ui, tape_packed_t state, const SDL_Event *ev)
 {
     (void) state;
     
@@ -66,14 +66,14 @@ static bool ui_prog_event(
     return false;
 }
 
-static void ui_prog_render(
-        struct ui_prog *ui, prog_packed_t state,
+static void ui_tape_render(
+        struct ui_tape *ui, tape_packed_t state,
         struct ui_layout *layout, SDL_Renderer *renderer)
 {
     struct font *font = ui_item_font();
 
-    ui_label_render(&ui->prog, layout, renderer);
-    ui_label_render(&ui->prog_val, layout, renderer);
+    ui_label_render(&ui->tape, layout, renderer);
+    ui_label_render(&ui->tape_val, layout, renderer);
     ui_layout_next_row(layout);
 
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
@@ -87,20 +87,20 @@ static void ui_prog_render(
         ui_label_render(&ui->index, &inner, renderer);
         ui_layout_sep_x(&inner, font->glyph_w);
 
-        const struct prog *prog = prog_packed_ptr(state);
-        struct prog_ret ret = prog_at(prog, i);
+        const struct tape *tape = tape_packed_ptr(state);
+        struct tape_ret ret = tape_at(tape, i);
 
         struct ui_label *label = NULL;
         switch (ret.state)
         {
-        case prog_input: { label = &ui->in; break; }
-        case prog_output: { label = &ui->out; break; }
-        case prog_eof:
+        case tape_input: { label = &ui->in; break; }
+        case tape_output: { label = &ui->out; break; }
+        case tape_eof:
         default: { assert(false); }
         }
 
         ui_str_set_item(&label->str, ret.item);
-        label->bg = i == prog_packed_it(state) ? rgba_gray(0x44) : rgba_nil();
+        label->bg = i == tape_packed_it(state) ? rgba_gray(0x44) : rgba_nil();
         ui_label_render(label, &inner, renderer);
 
         ui_layout_next_row(&inner);

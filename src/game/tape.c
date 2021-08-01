@@ -1,9 +1,9 @@
-/* program.c
+/* tape.c
    Rémi Attab (remi.attab@gmail.com), 02 Jun 2021
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "prog.h"
+#include "tape.h"
 
 
 #include "render/core.h"
@@ -18,10 +18,10 @@
 
 
 // -----------------------------------------------------------------------------
-// prog
+// tape
 // -----------------------------------------------------------------------------
 
-struct prog
+struct tape
 {
     enum item id;
     enum item host;
@@ -30,21 +30,21 @@ struct prog
 };
 
 
-enum item prog_id(const struct prog *prog) { return prog->id; }
-enum item prog_host(const struct prog *prog) { return prog->host; }
-size_t prog_len(const struct prog *prog) { return prog->inputs + prog->outputs; }
+enum item tape_id(const struct tape *tape) { return tape->id; }
+enum item tape_host(const struct tape *tape) { return tape->host; }
+size_t tape_len(const struct tape *tape) { return tape->inputs + tape->outputs; }
 
-struct prog_ret prog_at(const struct prog *prog, prog_it_t it)
+struct tape_ret tape_at(const struct tape *tape, tape_it_t it)
 {
-    struct prog_ret ret = { .state = prog_eof };
+    struct tape_ret ret = { .state = tape_eof };
 
-    if (it < prog->inputs) {
-        ret.state = prog_input;
-        ret.item = prog->tape[it];
+    if (it < tape->inputs) {
+        ret.state = tape_input;
+        ret.item = tape->tape[it];
     }
-    else if (it < prog->inputs + prog->outputs) {
-        ret.state = prog_output;
-        ret.item = prog->tape[it];
+    else if (it < tape->inputs + tape->outputs) {
+        ret.state = tape_output;
+        ret.item = tape->tape[it];
     }
 
     return ret;
@@ -57,16 +57,16 @@ struct prog_ret prog_at(const struct prog *prog, prog_it_t it)
 
 static struct
 {
-    struct prog *index[ITEM_MAX];
-} progs;
+    struct tape *index[ITEM_MAX];
+} tapes;
 
 
-const struct prog *prog_fetch(enum item prog)
+const struct tape *tape_fetch(enum item tape)
 {
-    return progs.index[prog];
+    return tapes.index[tape];
 }
 
-static const char *prog_hex(
+static const char *tape_hex(
         const char *it, const char *end, uint64_t *ret, size_t bytes)
 {
     size_t len = bytes * 2;
@@ -84,15 +84,15 @@ static const char *prog_hex(
     return it;
 }
 
-static const char *prog_hex8(const char *it, const char *end, uint8_t *ret)
+static const char *tape_hex8(const char *it, const char *end, uint8_t *ret)
 {
     uint64_t value = 0;
-    it = prog_hex(it, end, &value, sizeof(*ret));
+    it = tape_hex(it, end, &value, sizeof(*ret));
     *ret = value;
     return it;
 }
 
-static const char *prog_expect(const char *it, const char *end, char exp)
+static const char *tape_expect(const char *it, const char *end, char exp)
 {
     assert(it < end);
     assert(*it == exp);
@@ -103,7 +103,7 @@ static const char *prog_expect(const char *it, const char *end, char exp)
 // 00:00<00,00,00,00>00,00.
 // 00:00<00,00,00,00.
 // 00:00>00,00,00,00.
-static struct prog *prog_read(const char *it, const char *end)
+static struct tape *tape_read(const char *it, const char *end)
 {
     size_t line_len = end - it;
     assert(line_len > 5);
@@ -112,52 +112,52 @@ static struct prog *prog_read(const char *it, const char *end)
     size_t tape_len = (line_len / 3) - 2;
     assert(tape_len >= 1);
 
-    struct prog *prog = calloc(1, sizeof(*prog) + tape_len * sizeof(prog->tape[0]));
+    struct tape *tape = calloc(1, sizeof(*tape) + tape_len * sizeof(tape->tape[0]));
 
-    it = prog_hex8(it, end, &prog->host);
-    it = prog_expect(it, end, ':');
-    it = prog_hex8(it, end, &prog->id);
+    it = tape_hex8(it, end, &tape->host);
+    it = tape_expect(it, end, ':');
+    it = tape_hex8(it, end, &tape->id);
 
     size_t index = 0;
-    enum prog_state state = prog_eof;
+    enum tape_state state = tape_eof;
 
     while (it < end) {
         switch (*it) {
         case '<': {
-            assert(state == prog_eof);
-            state = prog_input;
+            assert(state == tape_eof);
+            state = tape_input;
             break;
         }
         case '>': {
-            assert(state != prog_output);
-            state = prog_output;
-            prog->inputs = index;
+            assert(state != tape_output);
+            state = tape_output;
+            tape->inputs = index;
             break;
         }
         case '.': {
-            assert(state != prog_eof);
-            prog->outputs = index - prog->inputs;
+            assert(state != tape_eof);
+            tape->outputs = index - tape->inputs;
             goto out;
         }
-        case ',': { assert(state != prog_eof); break; }
+        case ',': { assert(state != tape_eof); break; }
         default: { assert(false); }
         }
 
-        it = prog_hex8(it+1, end, &prog->tape[index]);
+        it = tape_hex8(it+1, end, &tape->tape[index]);
         index++;
     }
 
   out:
-    assert(state != prog_eof);
-    assert(prog->inputs + prog->outputs > 0);
-    return prog;
+    assert(state != tape_eof);
+    assert(tape->inputs + tape->outputs > 0);
+    return tape;
 }
 
 
-void prog_load()
+void tape_load()
 {
     char path[PATH_MAX] = {0};
-    core_path_res("progs.db", path, sizeof(path));
+    core_path_res("tapes.db", path, sizeof(path));
 
     int fd = open(path, O_RDONLY);
     if (fd == -1) fail_errno("failed to open: %s", path);
@@ -176,11 +176,11 @@ void prog_load()
         while (*it != '\n' && it < end) it++;
 
         if (it != line) {
-            struct prog *prog = prog_read(line, it);
-            assert(prog);
+            struct tape *tape = tape_read(line, it);
+            assert(tape);
 
-            assert(!progs.index[prog->id]);
-            progs.index[prog->id] = prog;
+            assert(!tapes.index[tape->id]);
+            tapes.index[tape->id] = tape;
         }
         it++;
     }

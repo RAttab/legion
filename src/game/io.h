@@ -31,7 +31,7 @@ legion_packed enum atom_io
 
     IO_RESET,
     IO_ITEM,
-    IO_PROG,
+    IO_TAPE,
     IO_MOD,
 
     IO_GET,

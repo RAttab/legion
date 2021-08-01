@@ -93,7 +93,7 @@ enum
 {
     ui_io_reset = 0,
     ui_io_item,
-    ui_io_prog,
+    ui_io_tape,
     ui_io_mod,
     ui_io_set,
     ui_io_scan,
@@ -140,7 +140,7 @@ struct ui_io *ui_io_new(void)
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
             [ui_io_item] = ui_io_cmd2(font, IO_ITEM,     "item:  ", "loops: "),
-            [ui_io_prog] = ui_io_cmd2(font, IO_PROG,     "id:    ", "loops: "),
+            [ui_io_tape] = ui_io_cmd2(font, IO_TAPE,     "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
             [ui_io_set] = ui_io_cmd2(font, IO_SET,       "index: ", "value: "),
             [ui_io_scan] = ui_io_cmd2(font, IO_SCAN,     "coord: ", "item:  "),

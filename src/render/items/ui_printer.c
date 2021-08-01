@@ -13,7 +13,7 @@ struct ui_printer
 {
     struct ui_label loops, loops_val;
     struct ui_label state, state_val;
-    struct ui_prog prog;
+    struct ui_tape tape;
 };
 
 static void ui_printer_init(struct ui_printer *ui)
@@ -28,12 +28,12 @@ static void ui_printer_init(struct ui_printer *ui)
         .state_val = ui_label_new(font, ui_str_v(8)),
     };
 
-    ui_prog_init(&ui->prog);
+    ui_tape_init(&ui->tape);
 }
 
 static void ui_printer_free(struct ui_printer *ui)
 {
-    ui_prog_free(&ui->prog);
+    ui_tape_free(&ui->tape);
 
     ui_label_free(&ui->loops);
     ui_label_free(&ui->loops_val);
@@ -50,13 +50,13 @@ static void ui_printer_update(struct ui_printer *ui, struct printer *state)
 
     ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
 
-    ui_prog_update(&ui->prog, state->prog);
+    ui_tape_update(&ui->tape, state->tape);
 }
 
 static bool ui_printer_event(
         struct ui_printer *ui, struct printer *state, const SDL_Event *ev)
 {
-    return ui_prog_event(&ui->prog, state->prog, ev);
+    return ui_tape_event(&ui->tape, state->tape, ev);
 }
 
 static void ui_printer_render(
@@ -74,5 +74,5 @@ static void ui_printer_render(
     ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, font->glyph_h);
-    ui_prog_render(&ui->prog, state->prog, layout, renderer);
+    ui_tape_render(&ui->tape, state->tape, layout, renderer);
 }

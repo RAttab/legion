@@ -17,7 +17,7 @@
 
 static struct font *ui_item_font(void) { return font_mono6; }
 
-#include "render/items/ui_prog.c"
+#include "render/items/ui_tape.c"
 #include "render/items/ui_deploy.c"
 #include "render/items/ui_extract.c"
 #include "render/items/ui_printer.c"

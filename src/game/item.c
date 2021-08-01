@@ -170,7 +170,7 @@ void atoms_register_game(struct atoms *atoms)
     reg_atom(IO_COORD);
     reg_atom(IO_RESET);
     reg_atom(IO_ITEM);
-    reg_atom(IO_PROG);
+    reg_atom(IO_TAPE);
     reg_atom(IO_MOD);
     reg_atom(IO_GET);
     reg_atom(IO_SET);

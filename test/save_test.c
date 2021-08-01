@@ -6,7 +6,7 @@
 #include "common.h"
 #include "game/io.h"
 #include "game/save.h"
-#include "game/prog.h"
+#include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"
 #include "vm/types.h"
@@ -20,7 +20,7 @@ void check(const char *path)
 {
     enum { attempts = 5, steps = 100 };
 
-    prog_load();
+    tape_load();
     mod_compiler_init();
     struct world *old = world_new();
     struct coord coord = world_populate(old);

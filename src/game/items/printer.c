@@ -27,12 +27,12 @@ static void printer_load(void *state, struct chunk *chunk)
     struct printer *printer = state;
     (void) chunk;
 
-    enum item id = prog_packed_id(printer->prog);
+    enum item id = tape_packed_id(printer->tape);
     if (!id) return;
 
-    const struct prog *prog = prog_fetch(id);
-    assert(prog);
-    printer->prog = prog_packed_ptr_update(printer->prog, prog);
+    const struct tape *tape = tape_fetch(id);
+    assert(tape);
+    printer->tape = tape_packed_ptr_update(printer->tape, tape);
 }
 
 static void printer_reset(struct printer *printer, struct chunk *chunk)
@@ -40,7 +40,7 @@ static void printer_reset(struct printer *printer, struct chunk *chunk)
     chunk_ports_reset(chunk, printer->id);
     printer->waiting = false;
     printer->loops = 0;
-    printer->prog = 0;
+    printer->tape = 0;
 }
 
 
@@ -53,7 +53,7 @@ static void printer_step_eof(struct printer *printer, struct chunk *chunk)
     if (printer->loops != loops_inf) printer->loops--;
 
     if (!printer->loops) printer_reset(printer, chunk);
-    else printer->prog = prog_packed_it_zero(printer->prog);
+    else printer->tape = tape_packed_it_zero(printer->tape);
 }
 
 static void printer_step_input(
@@ -69,7 +69,7 @@ static void printer_step_input(
     if (!consumed) return;
     assert(consumed == item);
 
-    printer->prog = prog_packed_it_inc(printer->prog);
+    printer->tape = tape_packed_it_inc(printer->tape);
     printer->waiting = false;
 }
 
@@ -84,7 +84,7 @@ static void printer_step_output(
 
     if (!chunk_ports_consumed(chunk, printer->id)) return;
 
-    printer->prog = prog_packed_it_inc(printer->prog);
+    printer->tape = tape_packed_it_inc(printer->tape);
     printer->waiting = false;
 }
 
@@ -92,14 +92,14 @@ static void printer_step(void *state, struct chunk *chunk)
 {
     struct printer *printer = state;
 
-    const struct prog *prog = prog_packed_ptr(printer->prog);
-    if (!prog) return;
+    const struct tape *tape = tape_packed_ptr(printer->tape);
+    if (!tape) return;
 
-    struct prog_ret ret = prog_at(prog, prog_packed_it(printer->prog));
+    struct tape_ret ret = tape_at(tape, tape_packed_it(printer->tape));
     switch (ret.state) {
-    case prog_eof: { printer_step_eof(printer, chunk); return; }
-    case prog_input: { printer_step_input(printer, chunk, ret.item); return; }
-    case prog_output: { printer_step_output(printer, chunk, ret.item); return; }
+    case tape_eof: { printer_step_eof(printer, chunk); return; }
+    case tape_input: { printer_step_input(printer, chunk, ret.item); return; }
+    case tape_output: { printer_step_output(printer, chunk, ret.item); return; }
     default: { assert(false); }
     }
 }
@@ -111,23 +111,23 @@ static void printer_step(void *state, struct chunk *chunk)
 
 static void printer_io_status(struct printer *printer, struct chunk *chunk, id_t src)
 {
-    word_t value = vm_pack(printer->loops, prog_packed_id(printer->prog));
+    word_t value = vm_pack(printer->loops, tape_packed_id(printer->tape));
     chunk_io(chunk, IO_STATE, printer->id, src, 1, &value);
 }
 
-static void printer_io_prog(
+static void printer_io_tape(
         struct printer *printer, struct chunk *chunk, size_t len, const word_t *args)
 {
     if (len < 1) return;
 
-    word_t prog_id = args[0];
-    if (prog_id != (enum item) prog_id) return;
+    word_t tape_id = args[0];
+    if (tape_id != (enum item) tape_id) return;
 
-    const struct prog *prog = prog_fetch(prog_id);
-    if (!prog || prog_host(prog) != id_item(printer->id)) return;
+    const struct tape *tape = tape_fetch(tape_id);
+    if (!tape || tape_host(tape) != id_item(printer->id)) return;
 
     printer_reset(printer, chunk);
-    printer->prog = prog_pack(prog_id, 0, prog);
+    printer->tape = tape_pack(tape_id, 0, tape);
     printer->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
 
@@ -140,7 +140,7 @@ static void printer_io(
     switch(io) {
     case IO_PING: { chunk_io(chunk, IO_PONG, printer->id, src, 0, NULL); return; }
     case IO_STATUS: { printer_io_status(printer, chunk, src); return; }
-    case IO_PROG: { printer_io_prog(printer, chunk, len, args); return; }
+    case IO_TAPE: { printer_io_tape(printer, chunk, len, args); return; }
     case IO_RESET: { printer_reset(printer, chunk); return; }
     default: { return; }
     }
@@ -154,7 +154,7 @@ static void printer_io(
 const struct active_config *printer_config(enum item item)
 {
     (void) item;
-    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_PROG, IO_RESET };
+    static const word_t io_list[] = { IO_PING, IO_STATUS, IO_TAPE, IO_RESET };
 
     static const struct active_config config = {
         .size = sizeof(struct printer),

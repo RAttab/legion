@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "game/prog.h"
+#include "game/tape.h"
 #include "game/item.h"
 #include "utils/htable.h"
 
@@ -92,17 +92,17 @@ void viz_graph(struct viz *viz)
     htable_reserve(&viz->graph, 0xFF);
 
     for (enum item item = 0; item < 0xFF; ++item) {
-        const struct prog *prog = prog_fetch(item);
-        if (!prog) continue;
+        const struct tape *tape = tape_fetch(item);
+        if (!tape) continue;
         set_put(viz->items, item);
 
         size_t i = 0;
-        for (struct prog_ret ret = prog_at(prog, i);
-             ret.state != prog_eof; ++i, ret = prog_at(prog, i))
+        for (struct tape_ret ret = tape_at(tape, i);
+             ret.state != tape_eof; ++i, ret = tape_at(tape, i))
         {
             set_put(viz->items, ret.item);
-            if (ret.state == prog_input) set_put(inputs, ret.item);
-            if (ret.state == prog_output) set_put(outputs, ret.item);
+            if (ret.state == tape_input) set_put(inputs, ret.item);
+            if (ret.state == tape_output) set_put(outputs, ret.item);
         }
 
         for (enum item it = set_next(inputs, set_nil);
@@ -185,7 +185,7 @@ void viz_output(struct viz *viz)
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
-    prog_load();
+    tape_load();
 
     struct viz viz = {0};
     viz_graph(&viz);

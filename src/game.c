@@ -8,7 +8,7 @@
 #include "game/lanes.c"
 #include "game/sector.c"
 #include "game/world.c"
-#include "game/prog.c"
+#include "game/tape.c"
 #include "game/chunk.c"
 #include "game/active.c"
 #include "game/save.c"
