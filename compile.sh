@@ -37,10 +37,11 @@ LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
 
-parallel $CC -c -o "{}.o" "${PREFIX}/src/{}.c" $CFLAGS ::: ${SRC[@]}
+mkdir -p "obj"
+parallel $CC -c -o "obj/{}.o" "${PREFIX}/src/{}.c" $CFLAGS ::: ${SRC[@]}
 
 OBJ=""
-for obj in "${SRC[@]}"; do OBJ="$OBJ ${obj}.o"; done
+for obj in "${SRC[@]}"; do OBJ="$OBJ obj/${obj}.o"; done
 ar rcs liblegion.a $OBJ
 
 $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
@@ -49,10 +50,11 @@ cp -r "${PREFIX}/res" .
 ./legion --viz | dot -Tsvg > tapes.svg
 ./legion --stats > stats.lisp
 
-parallel $CC -o "test_{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
+mkdir -p "test"
+parallel $CC -o "test/{}" "${PREFIX}/test/{}_test.c" $LIBS $CFLAGS ::: ${TEST[@]}
 
 if [ -z "${VALGRIND}" ]; then
-    parallel "./test_{}" "${PREFIX}" ::: ${TEST[@]}
+    parallel "./test/{}" "${PREFIX}" ::: ${TEST[@]}
 else
     parallel valgrind \
         --leak-check=full \
@@ -60,5 +62,5 @@ else
         --trace-children=yes \
         --error-exitcode=1 \
         --suppressions="${PREFIX}/legion.supp" \
-        "./test_{}" "${PREFIX}" ::: ${TEST[@]}
+        "./test/{}" "${PREFIX}" ::: ${TEST[@]}
 fi
