@@ -20,7 +20,7 @@ void check(const char *path)
 {
     enum { attempts = 5, steps = 100 };
 
-    tape_load();
+    tapes_populate();
     mod_compiler_init();
     struct world *old = world_new();
     struct coord coord = world_populate(old);

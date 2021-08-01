@@ -30,7 +30,7 @@ static void printer_load(void *state, struct chunk *chunk)
     enum item id = tape_packed_id(printer->tape);
     if (!id) return;
 
-    const struct tape *tape = tape_fetch(id);
+    const struct tape *tape = tapes_get(id);
     assert(tape);
     printer->tape = tape_packed_ptr_update(printer->tape, tape);
 }
@@ -123,7 +123,7 @@ static void printer_io_tape(
     word_t tape_id = args[0];
     if (tape_id != (enum item) tape_id) return;
 
-    const struct tape *tape = tape_fetch(tape_id);
+    const struct tape *tape = tapes_get(tape_id);
     if (!tape || tape_host(tape) != id_item(printer->id)) return;
 
     printer_reset(printer, chunk);

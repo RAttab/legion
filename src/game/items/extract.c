@@ -30,7 +30,7 @@ static void extract_load(void *state, struct chunk *chunk)
     enum item id = tape_packed_id(extract->tape);
     if (!id) return;
 
-    const struct tape *tape = tape_fetch(id);
+    const struct tape *tape = tapes_get(id);
     assert(tape);
     extract->tape = tape_packed_ptr_update(extract->tape, tape);
 }
@@ -128,7 +128,7 @@ static void extract_io_tape(
     word_t tape_id = args[0];
     if (tape_id != (enum item) tape_id) return;
 
-    const struct tape *tape = tape_fetch(tape_id);
+    const struct tape *tape = tapes_get(tape_id);
     if (!tape || tape->host != id_item(extract->id)) return;
 
     extract_reset(extract, chunk);

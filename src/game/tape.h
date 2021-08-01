@@ -30,13 +30,13 @@ struct tape_ret
     enum item item;
 };
 
-void tape_load();
-const struct tape *tape_fetch(enum item tape);
-
 enum item tape_id(const struct tape *);
 size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
 struct tape_ret tape_at(const struct tape *, tape_it_t index);
+
+void tapes_populate(void);
+const struct tape *tapes_get(enum item id);
 
 
 // -----------------------------------------------------------------------------

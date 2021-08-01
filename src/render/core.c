@@ -186,7 +186,7 @@ static void ui_render(SDL_Renderer *renderer)
 void core_init()
 {
     mod_compiler_init();
-    tape_load();
+    tapes_populate();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 

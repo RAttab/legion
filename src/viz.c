@@ -92,7 +92,7 @@ void viz_graph(struct viz *viz)
     htable_reserve(&viz->graph, 0xFF);
 
     for (enum item item = 0; item < 0xFF; ++item) {
-        const struct tape *tape = tape_fetch(item);
+        const struct tape *tape = tapes_get(item);
         if (!tape) continue;
         set_put(viz->items, item);
 
@@ -185,7 +185,7 @@ void viz_output(struct viz *viz)
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
-    tape_load();
+    tapes_populate();
 
     struct viz viz = {0};
     viz_graph(&viz);
