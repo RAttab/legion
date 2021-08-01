@@ -154,13 +154,20 @@ static void ui_brain_update(struct ui_brain *ui, struct brain *state)
     else ui_str_set_id(&ui->msg_src.str, state->msg_src);
 
     if (!state->mod) {
+        ui->mod_val.fg = rgba_gray(0x33);
         ui_str_setc(&ui->mod_val.str, "nil");
+
+        ui->mod_ver_val.fg = rgba_gray(0x33);
         ui_str_setc(&ui->mod_ver_val.str, "nil");
     }
     else {
         struct symbol mod = {0};
         mods_name(world_mods(core.state.world), mod_maj(state->mod->id), &mod);
+
+        ui->mod_val.fg = rgba_white();
         ui_str_set_symbol(&ui->mod_val.str, &mod);
+
+        ui->mod_ver_val.fg = rgba_white();
         ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod->id));
     }
 

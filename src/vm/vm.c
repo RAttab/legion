@@ -419,7 +419,7 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
       op_jz:  { ip_t dst = vm_code(ip_t); if (!vm_pop()) vm->ip = dst; continue; }
       op_jnz: { ip_t dst = vm_code(ip_t); if ( vm_pop()) vm->ip = dst; continue; }
 
-      op_reset: { vm_reset(vm); return 0; }
+      op_reset: { vm_reset(vm); return VM_RESET; }
       op_yield: { return 0; }
       op_tsc: { vm_push(vm->tsc); continue; }
       op_fault: { vm->flags |= FLAG_FAULT_USER; return VM_FAULT; }

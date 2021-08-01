@@ -83,6 +83,19 @@ static uint8_t brain_speed(struct brain *brain)
     }
 }
 
+static void brain_reset(struct brain *brain)
+{
+    brain->debug = 0;
+    brain->breakpoint = 0;
+
+    brain->msg_len = 0;
+
+    brain->mod = NULL;
+    brain->mod_id = 0;
+
+    vm_reset(&brain->vm);
+}
+
 
 // -----------------------------------------------------------------------------
 // step
@@ -134,6 +147,7 @@ static void brain_vm_step(struct brain *brain, struct chunk *chunk)
     if (brain->vm.ip == brain->breakpoint) brain->debug = true;
 
     if (mod == VM_FAULT) return;
+    if (mod == VM_RESET) { brain_reset(brain); return; }
     if (mod) { brain_mod(brain, chunk, mod); return; }
 
     if (vm_io(&brain->vm)) {
@@ -178,19 +192,6 @@ static void brain_io_mod(
 
     vm_reset(&brain->vm);
     brain_mod(brain, chunk, id);
-}
-
-static void brain_io_reset(struct brain *brain)
-{
-    brain->debug = 0;
-    brain->breakpoint = 0;
-
-    brain->msg_len = 0;
-
-    brain->mod = NULL;
-    brain->mod_id = 0;
-
-    vm_reset(&brain->vm);
 }
 
 static void brain_io_val(struct brain *brain, size_t len, const word_t *args)
@@ -243,7 +244,7 @@ static void brain_io(
     case IO_STATE: { brain_io_state(brain, len, args); return; }
 
     case IO_MOD: { brain_io_mod(brain, chunk, len, args); return; }
-    case IO_RESET: { brain_io_reset(brain); return; }
+    case IO_RESET: { brain_reset(brain); return; }
     case IO_VAL: { brain_io_val(brain, len, args); return; }
     case IO_SEND: { brain_io_send(brain, src, len, args); return; }
 
