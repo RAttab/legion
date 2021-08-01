@@ -668,10 +668,6 @@ static void lisp_fn_mod(struct lisp *lisp)
     lisp_assert_close(lisp, token);
 }
 
-// This function is awkward because we execute the argument in the reverse order
-// that we want them. While we can fix the header, the actual arguments to the
-// io command need to be written in reverse order. This is not really fixable
-// without adding a vm instruction to do so :/
 static void lisp_fn_io(struct lisp *lisp)
 {
     struct token token = lisp->token;
