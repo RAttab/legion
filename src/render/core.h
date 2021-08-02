@@ -33,6 +33,9 @@ enum event
 
     EV_MAP_GOTO,
 
+    EV_FACTORY_SELECT,
+    EV_FACTORY_CLOSE,
+
     EV_MODS_TOGGLE,
 
     EV_MOD_SELECT,
