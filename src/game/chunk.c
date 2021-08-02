@@ -351,6 +351,7 @@ static void chunk_ports_step(struct chunk *chunk)
     chunk->workers.fail = 0;
     chunk->workers.clean = 0;
     chunk->workers.queue = ring32_len(chunk->requested);
+    chunk->workers.ops->len = 0;
 
     for (size_t i = 0; i < chunk->workers.count; ++i) {
 
@@ -380,8 +381,9 @@ static void chunk_ports_step(struct chunk *chunk)
         struct ports *out = active_ports(active_index(&chunk->active, id_item(src)), src);
         assert(out && out->out == in->in);
 
-        in->in_state = ports_received;
         out->out = ITEM_NIL;
+        in->in_state = ports_received;
+        vec64_append(chunk->wrokers.ops, ((uint64_t) src << 32) | dst);
         continue;
 
       nomatch:

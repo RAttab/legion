@@ -33,9 +33,6 @@ struct world *chunk_world(struct chunk *);
 struct star *chunk_star(struct chunk *);
 bool chunk_harvest(struct chunk *, enum item item);
 
-struct workers { uint16_t count, queue, idle, fail, clean; };
-struct workers chunk_workers(struct chunk *);
-
 struct vec64 *chunk_list(struct chunk *);
 struct vec64 *chunk_list_filter(struct chunk *, const enum item *filter, size_t len);
 void *chunk_get(struct chunk *, id_t);
@@ -60,3 +57,17 @@ bool chunk_ports_produce(struct chunk *, id_t, enum item);
 bool chunk_ports_consumed(struct chunk *, id_t);
 void chunk_ports_request(struct chunk *, id_t, enum item);
 enum item chunk_ports_consume(struct chunk *, id_t);
+
+struct workers
+{
+    uint16_t count, queue, idle, fail, clean;
+    struct vec64 *ops;
+};
+
+struct workers chunk_workers(struct chunk *);
+inline void chunk_workers_ops(uint64_t val, id_t *src, id_t *dst)
+{
+    *src = val >> 32;
+    *dst = val & ((1ULL << 32) - 1);
+}
+
