@@ -74,7 +74,7 @@ inline enum item tape_packed_id(tape_packed_t packed)
     return packed >> 56;
 }
 
-inline enum item tape_packed_it(tape_packed_t packed)
+inline tape_it_t tape_packed_it(tape_packed_t packed)
 {
     return (packed >> 48) & 0xFF;
 }

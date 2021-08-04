@@ -16,14 +16,21 @@
 // types
 // -----------------------------------------------------------------------------
 
-struct box
+struct legion_packed box
 {
     id_t id;
     uint16_t row, col;
+
     loops_t loops;
-    enum item in, out;
     enum item target;
+
+    legion_pad(1);
+
+    enum item in, out;
+    tape_it_t tape_it, tape_len;
 };
+
+static_assert(sizeof(struct box) == 16);
 
 #define vecx_type struct box
 #define vecx_name vec_box
@@ -47,13 +54,15 @@ struct factory
     struct htable index;
     struct workers workers;
 
-    scale_t scale;
     struct pos pos;
     struct dim inner, margin, pad, total, in, out;
 
     SDL_Texture *tex;
     SDL_Rect tex_rect;
-    struct ui_label ui_id, ui_item, ui_loops, ui_sep;
+
+    struct ui_label ui_id;
+    struct ui_label ui_target, ui_loops, ui_loops_val;
+    struct ui_label ui_tape_in, ui_tape_out, ui_tape_num, ui_tape_of;
 
     bool active;
     bool panning, panned;
@@ -68,17 +77,23 @@ struct factory *factory_new(void)
 
     *factory = (struct factory) {
         .active = false,
-        .scale = scale_init(),
 
         .ui_id = ui_label_new(font, ui_str_v(id_str_len)),
-        .ui_item = ui_label_new(font, ui_str_v(item_str_len)),
-        .ui_sep = ui_label_new(font, ui_str_c(" x")),
-        .ui_loops = ui_label_new(font, ui_str_v(3)),
+        .ui_target = ui_label_new(font, ui_str_v(item_str_len)),
+        .ui_loops = ui_label_new(font, ui_str_c("x")),
+        .ui_loops_val = ui_label_new(font, ui_str_v(3)),
+        .ui_tape_in = ui_label_new(font, ui_str_v(item_str_len)),
+        .ui_tape_out = ui_label_new(font, ui_str_v(item_str_len)),
+        .ui_tape_num = ui_label_new(font, ui_str_v(3)),
+        .ui_tape_of = ui_label_new(font, ui_str_c("/")),
 
         .inner = make_dim(id_str_len * font->glyph_w, 3 * font->glyph_h),
         .margin = make_dim(5, 5),
         .pad = make_dim(20, 20),
     };
+
+    factory->ui_tape_in.fg = rgba_green();
+    factory->ui_tape_out.fg = rgba_blue();
 
     factory->total = make_dim(
             factory->inner.w + 2*factory->margin.w + 2*factory->pad.w,
@@ -111,9 +126,13 @@ struct factory *factory_new(void)
 void factory_free(struct factory *factory)
 {
     ui_label_free(&factory->ui_id);
-    ui_label_free(&factory->ui_item);
+    ui_label_free(&factory->ui_target);
     ui_label_free(&factory->ui_loops);
-    ui_label_free(&factory->ui_sep);
+    ui_label_free(&factory->ui_loops_val);
+    ui_label_free(&factory->ui_tape_in);
+    ui_label_free(&factory->ui_tape_out);
+    ui_label_free(&factory->ui_tape_num);
+    ui_label_free(&factory->ui_tape_of);
 
     for (size_t i = 0; i < vec64_len(factory->grid); ++i)
         vec16_free((struct vec16 *) factory->grid->vals[i]);
@@ -136,6 +155,7 @@ static bool factory_make_box(
         struct factory *factory, uint16_t index, struct chunk *chunk, id_t id)
 {
     struct box *box = &factory->boxes->vals[index];
+    box->tape_len = 0;
 
     switch (id_item(id))
     {
@@ -184,6 +204,8 @@ static bool factory_make_box(
         default: { break; }
         }
 
+        box->tape_it = tape_packed_it(extract->tape);
+        box->tape_len = tape_len(tape);
         break;
     }
 
@@ -206,6 +228,8 @@ static bool factory_make_box(
         default: { break; }
         }
 
+        box->tape_it = tape_packed_it(printer->tape);
+        box->tape_len = tape_len(tape);
         break;
     }
 
@@ -236,7 +260,7 @@ static void factory_update(struct factory *factory)
     assert(!coord_is_nil(factory->star));
 
     struct chunk *chunk = world_chunk(core.state.world, factory->star);
-    assert(chunk);
+    if (!chunk) return;
 
     for (size_t i = 0; i < vec64_len(factory->grid); ++i) {
         struct vec16 *row = (void *) factory->grid->vals[i];
@@ -325,11 +349,6 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
     switch (ev->type)
     {
 
-    case SDL_MOUSEWHEEL: {
-        factory->scale = scale_inc(factory->scale, -ev->wheel.y);
-        return true;
-    }
-
     case SDL_MOUSEMOTION: {
         if (!factory->panning) return false;
         factory->pos.x -= ev->motion.xrel;
@@ -388,25 +407,32 @@ static void factory_render_box(
     ui_label_render(&factory->ui_id, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    factory->ui_item.fg = rgba_white();
-    ui_str_set_item(&factory->ui_item.str, box->target);
-    ui_label_render(&factory->ui_item, &layout, renderer);
+    ui_str_set_item(&factory->ui_target.str, box->target);
+    ui_label_render(&factory->ui_target, &layout, renderer);
     if (box->loops != loops_inf) {
-        ui_label_render(&factory->ui_sep, &layout, renderer);
-        ui_str_set_u64(&factory->ui_loops.str, box->loops);
         ui_label_render(&factory->ui_loops, &layout, renderer);
+        ui_str_set_u64(&factory->ui_loops_val.str, box->loops);
+        ui_label_render(&factory->ui_loops_val, &layout, renderer);
     }
     ui_layout_next_row(&layout);
 
     if (box->in) {
-        factory->ui_item.fg = rgba_green();
-        ui_str_set_item(&factory->ui_item.str, box->in);
-        ui_label_render(&factory->ui_item, &layout, renderer);
+        ui_str_set_item(&factory->ui_tape_in.str, box->in);
+        ui_label_render(&factory->ui_tape_in, &layout, renderer);
     }
     else if (box->out) {
-        factory->ui_item.fg = rgba_blue();
-        ui_str_set_item(&factory->ui_item.str, box->out);
-        ui_label_render(&factory->ui_item, &layout, renderer);
+        ui_str_set_item(&factory->ui_tape_out.str, box->out);
+        ui_label_render(&factory->ui_tape_out, &layout, renderer);
+    }
+
+    if ((box->in || box->out) && box->tape_len) {
+        ui_str_set_u64(&factory->ui_tape_num.str, box->tape_it+1);
+        ui_label_render(&factory->ui_tape_num, &layout, renderer);
+
+        ui_label_render(&factory->ui_tape_of, &layout, renderer);
+
+        ui_str_set_u64(&factory->ui_tape_num.str, box->tape_len);
+        ui_label_render(&factory->ui_tape_num, &layout, renderer);
     }
 
     sdl_err(SDL_SetRenderTarget(renderer, NULL));
@@ -436,7 +462,7 @@ static void factory_render_op(
             dst->col*factory->total.w + factory->in.w - factory->pos.x,
             dst->row*factory->total.h + factory->in.h - factory->pos.y);
 
-    rgba_render(rgba_white(), renderer);
+    rgba_render(rgba_gray(0x88), renderer);
     sdl_err(SDL_RenderDrawLine(renderer, src_pos.x, src_pos.y, dst_pos.x, dst_pos.y));
 }
 
