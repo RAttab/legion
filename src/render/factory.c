@@ -47,6 +47,7 @@ struct factory
     struct htable index;
     struct workers workers;
 
+    scale_t scale;
     struct pos pos;
     struct dim inner, margin, pad, total, in, out;
 
@@ -67,6 +68,7 @@ struct factory *factory_new(void)
 
     *factory = (struct factory) {
         .active = false,
+        .scale = scale_init(),
 
         .ui_id = ui_label_new(font, ui_str_v(id_str_len)),
         .ui_item = ui_label_new(font, ui_str_v(item_str_len)),
@@ -75,7 +77,7 @@ struct factory *factory_new(void)
 
         .inner = make_dim(id_str_len * font->glyph_w, 3 * font->glyph_h),
         .margin = make_dim(5, 5),
-        .pad = make_dim(10, 10),
+        .pad = make_dim(20, 20),
     };
 
     factory->total = make_dim(
@@ -124,6 +126,7 @@ void factory_free(struct factory *factory)
     SDL_DestroyTexture(factory->tex);
     free(factory);
 }
+
 
 // -----------------------------------------------------------------------------
 // events
@@ -288,6 +291,32 @@ static bool factory_event_user(struct factory *factory, SDL_Event *ev)
     }
 }
 
+static struct box *factory_cursor_box(struct factory *factory)
+{
+    SDL_Point point = core.cursor.point;
+    point.x += factory->pos.x;
+    point.y += factory->pos.y;
+
+    ssize_t row = point.y / factory->total.h;
+    if (row < 0 || row >= (ssize_t) vec64_len(factory->grid)) return NULL;
+    struct vec16* vec = (void *) factory->grid->vals[row];
+
+    ssize_t col = point.x / factory->total.w;
+    if (col < 0 || col >= (ssize_t) vec16_len(vec)) return NULL;
+    struct box *box = &factory->boxes->vals[vec->vals[col]];
+
+    return box;
+}
+
+static bool factory_event_click(struct factory *factory)
+{
+    struct box *box = factory_cursor_box(factory);
+    if (!box) return false;
+
+    core_push_event(EV_ITEM_SELECT, box->id, coord_to_id(factory->star));
+    return true;
+}
+
 bool factory_event(struct factory *factory, SDL_Event *ev)
 {
     if (ev->type == core.event && factory_event_user(factory, ev)) return true;
@@ -295,6 +324,11 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
 
     switch (ev->type)
     {
+
+    case SDL_MOUSEWHEEL: {
+        factory->scale = scale_inc(factory->scale, -ev->wheel.y);
+        return true;
+    }
 
     case SDL_MOUSEMOTION: {
         if (!factory->panning) return false;
@@ -308,7 +342,7 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
         SDL_MouseButtonEvent *b = &ev->button;
         if (b->button != SDL_BUTTON_LEFT) return false;
         factory->panning = true;
-        return true;
+        return factory_event_click(factory);
     }
 
     case SDL_MOUSEBUTTONUP: {
@@ -316,7 +350,7 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
         if (b->button != SDL_BUTTON_LEFT) return false;
         factory->panning = false;
         factory->panned = false;
-        return true;
+        return false;
     }
 
     default: { return false; }
@@ -329,7 +363,7 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
 // -----------------------------------------------------------------------------
 
 static void factory_render_box(
-        struct factory *factory, struct box *box, SDL_Renderer *renderer)
+        struct factory *factory, struct box *box, bool select, SDL_Renderer *renderer)
 {
     sdl_err(SDL_SetRenderTarget(renderer, factory->tex));
     sdl_err(SDL_SetTextureBlendMode(factory->tex, SDL_BLENDMODE_BLEND));
@@ -340,7 +374,7 @@ static void factory_render_box(
         .h = factory->inner.h + 2*factory->margin.h,
     };
 
-    rgba_render(rgba_gray(0x11), renderer);
+    rgba_render(rgba_gray(select ? 0x22 : 0x11), renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     rgba_render(rgba_gray(0x44), renderer);
@@ -354,18 +388,15 @@ static void factory_render_box(
     ui_label_render(&factory->ui_id, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    {
-        factory->ui_item.fg = rgba_white();
-        ui_str_set_item(&factory->ui_item.str, box->target);
-        ui_label_render(&factory->ui_item, &layout, renderer);
+    factory->ui_item.fg = rgba_white();
+    ui_str_set_item(&factory->ui_item.str, box->target);
+    ui_label_render(&factory->ui_item, &layout, renderer);
+    if (box->loops != loops_inf) {
         ui_label_render(&factory->ui_sep, &layout, renderer);
-
-        if (box->loops == loops_inf) ui_str_setc(&factory->ui_loops.str, "INF");
-        else ui_str_set_u64(&factory->ui_loops.str, box->loops);
+        ui_str_set_u64(&factory->ui_loops.str, box->loops);
         ui_label_render(&factory->ui_loops, &layout, renderer);
-
-        ui_layout_next_row(&layout);
     }
+    ui_layout_next_row(&layout);
 
     if (box->in) {
         factory->ui_item.fg = rgba_green();
@@ -423,12 +454,14 @@ void factory_render(struct factory *factory, SDL_Renderer *renderer)
     size_t rows = i64_ceil_div(core.rect.h, factory->total.h);
     size_t cols = i64_ceil_div(core.rect.w, factory->total.w);
 
-    for (size_t i = row; i < rows && i < vec64_len(factory->grid); ++i) {
+    struct box *cursor = factory_cursor_box(factory);
+
+    for (size_t i = row; i < row + rows && i < vec64_len(factory->grid); ++i) {
         struct vec16 *vec = (void *) factory->grid->vals[i];
 
-        for (size_t j = col; j < cols && j < vec16_len(vec); ++j) {
+        for (size_t j = col; j < col + cols && j < vec16_len(vec); ++j) {
             struct box *box = &factory->boxes->vals[vec->vals[j]];
-            factory_render_box(factory, box, renderer);
+            factory_render_box(factory, box, box == cursor, renderer);
 
             SDL_Rect rect = {
                 .x = j*factory->total.w - factory->pos.x,

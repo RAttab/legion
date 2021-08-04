@@ -250,9 +250,17 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_ITEM_SELECT: {
+        struct coord coord = id_to_coord((uintptr_t) ev->user.data2);
+        if (!coord_eq(coord, ui->id)) {
+            ui->id = coord;
+            ui_star_update(ui);
+        }
+
         ui->selected = (uintptr_t) ev->user.data1;
         ui_toggles_select(&ui->control_list, ui->selected);
         ui_toggles_select(&ui->factory_list, ui->selected);
+
+        ui->panel.state = ui_panel_visible;
         return false;
     }
 
@@ -279,7 +287,10 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_star_event_user(ui, ev)) return false;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) {
+        if (ret == ui_consume) core_push_event(EV_STAR_CLEAR, 0, 0);
+        return ret == ui_consume;
+    }
 
     if ((ret = ui_button_event(&ui->view, ev))) {
         core_push_event(EV_FACTORY_SELECT, coord_to_id(ui->id), 0);
