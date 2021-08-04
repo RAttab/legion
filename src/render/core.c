@@ -7,7 +7,6 @@
 
 #include "render/font.h"
 #include "render/sprites.h"
-#include "render/map.h"
 #include "render/ui.h"
 #include "game/tape.h"
 #include "game/coord.h"
@@ -129,6 +128,7 @@ static void ui_init(void)
     ui_clipboard_init(&core.ui.board);
 
     core.ui.map = map_new();
+    core.ui.factory = factory_new();
     core.ui.topbar = ui_topbar_new();
     core.ui.mods = ui_mods_new();
     core.ui.mod = ui_mod_new();
@@ -145,6 +145,7 @@ static void ui_close()
     ui_star_free(core.ui.star);
     ui_item_free(core.ui.item);
     ui_io_free(core.ui.io);
+    factory_free(core.ui.factory);
     map_free(core.ui.map);
 
     ui_clipboard_free(&core.ui.board);
@@ -164,12 +165,14 @@ static void ui_event(SDL_Event *event)
     if (ui_star_event(core.ui.star, event)) return;
     if (ui_item_event(core.ui.item, event)) return;
     if (ui_io_event(core.ui.io, event)) return;
+    if (factory_event(core.ui.factory, event)) return;
     if (map_event(core.ui.map, event)) return;
 }
 
 static void ui_render(SDL_Renderer *renderer)
 {
     map_render(core.ui.map, renderer);
+    factory_render(core.ui.factory, renderer);
     ui_topbar_render(core.ui.topbar, renderer);
     ui_mods_render(core.ui.mods, renderer);
     ui_mod_render(core.ui.mod, renderer);

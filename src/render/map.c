@@ -3,8 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "map.h"
-
+#include "render/ui.h"
 #include "render/color.h"
 #include "render/core.h"
 #include "game/world.h"
@@ -25,8 +24,8 @@ struct map
     SDL_Rect tex_star;
     SDL_Rect tex_active;
 
-    bool panning;
-    bool panned;
+    bool active;
+    bool panning, panned;
 };
 
 enum { px_star = 1 << 10 };
@@ -51,6 +50,7 @@ struct map *map_new(void)
         .pos = core.state.home,
         .scale = scale_init(),
         .tex = NULL,
+        .active = true,
         .panning = false,
         .panned = false,
     };
@@ -113,8 +113,12 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
     case EV_MAP_GOTO: {
         map->pos = id_to_coord((uintptr_t) ev->user.data1);
         map->scale = map_scale_default;
-        return true;
+        return false;
     }
+
+    case EV_STATE_LOAD:
+    case EV_FACTORY_CLOSE: { map->active = true; return false; }
+    case EV_FACTORY_SELECT: { map->active = false; return false; }
 
     default: { return false; }
     }
@@ -123,6 +127,7 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
 bool map_event(struct map *map, SDL_Event *event)
 {
     if (event->type == core.event) return map_event_user(map, event);
+    if (!map->active) return false;
 
     switch (event->type)
     {
@@ -299,8 +304,10 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer);
 
 void map_render(struct map *map, SDL_Renderer *renderer)
 {
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &core.rect);
+    if (!map->active) return;
+
+    rgba_render(rgba_black(), renderer);
+    sdl_err(SDL_RenderFillRect(renderer, &core.rect));
 
     if (map->scale >= map_thresh_sector_low && map->scale < map_thresh_sector_high)
         map_render_sectors(map, renderer);

@@ -7,7 +7,36 @@
 
 #include "common.h"
 #include "ui/ui.h"
+#include "game/coord.h"
 #include "SDL.h"
+
+
+// -----------------------------------------------------------------------------
+// map
+// -----------------------------------------------------------------------------
+
+struct map;
+
+struct map *map_new(void);
+void map_free(struct map *);
+void map_render(struct map *, SDL_Renderer *);
+bool map_event(struct map *, SDL_Event *);
+
+scale_t map_scale(struct map *);
+struct coord map_project_coord(struct map *, SDL_Point);
+struct rect map_project_coord_rect(struct map *, const SDL_Rect *);
+SDL_Point map_project_sdl(struct map *, struct coord);
+
+
+// -----------------------------------------------------------------------------
+// factory
+// -----------------------------------------------------------------------------
+
+struct factory;
+struct factory *factory_new(void);
+void factory_free(struct factory *);
+void factory_render(struct factory *, SDL_Renderer *);
+bool factory_event(struct factory *, SDL_Event *);
 
 
 // -----------------------------------------------------------------------------

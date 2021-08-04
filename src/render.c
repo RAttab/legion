@@ -8,6 +8,7 @@
 #include "render/font.c"
 #include "render/sprites.c"
 #include "render/map.c"
+#include "render/factory.c"
 #include "render/ui_topbar.c"
 #include "render/ui_mods.c"
 #include "render/ui_mod.c"

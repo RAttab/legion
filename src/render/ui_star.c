@@ -22,6 +22,7 @@ struct ui_star
 
     struct ui_panel panel;
 
+    struct ui_button view;
     struct ui_label coord;
     struct ui_link coord_val;
 
@@ -66,6 +67,8 @@ struct ui_star *ui_star_new(void)
     *ui = (struct ui_star) {
         .panel = ui_panel_title(pos, dim, ui_str_c("star")),
 
+        .view = ui_button_new(font, ui_str_c("<< view")),
+
         .coord = ui_label_new(font, ui_str_c("coord: ")),
         .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
 
@@ -99,11 +102,15 @@ struct ui_star *ui_star_new(void)
 
     ui->panel.state = ui_panel_hidden;
     ui->control.disabled = true;
+    ui->view.w.dim.w = ui_layout_inf;
     return ui;
 }
 
 void ui_star_free(struct ui_star *ui) {
     ui_panel_free(&ui->panel);
+    ui_button_free(&ui->view);
+    ui_label_free(&ui->coord);
+    ui_link_free(&ui->coord_val);
     ui_label_free(&ui->power);
     ui_label_free(&ui->power_val);
     ui_label_free(&ui->elem);
@@ -269,10 +276,15 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
 
 bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_star_event_user(ui, ev)) return true;
+    if (ev->type == core.event && ui_star_event_user(ui, ev)) return false;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+
+    if ((ret = ui_button_event(&ui->view, ev))) {
+        core_push_event(EV_FACTORY_SELECT, coord_to_id(ui->id), 0);
+        return ret == ui_consume;
+    }
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
         ui_clipboard_copy_hex(&core.ui.board, coord_to_id(ui->star.coord));
@@ -333,6 +345,11 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     if (ui_layout_is_nil(&layout)) return;
 
     struct font *font = ui_star_font();
+
+    ui_button_render(&ui->view, &layout, renderer);
+    ui_layout_next_row(&layout);
+
+    ui_layout_sep_y(&layout, font->glyph_h);
 
     ui_label_render(&ui->coord, &layout, renderer);
     ui_link_render(&ui->coord_val, &layout, renderer);

@@ -40,6 +40,7 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->star = *star;
     chunk->requested = ring32_reserve(16);
     chunk->shuttles = ring64_reserve(2);
+    chunk->workers.ops = vec64_reserve(1);
     return chunk;
 }
 
@@ -47,6 +48,7 @@ void chunk_free(struct chunk *chunk)
 {
     active_it_t it = active_next(&chunk->active, NULL);
     for (; it; it = active_next(&chunk->active, it)) active_free(*it);
+    vec64_free(chunk->workers.ops);
     ring32_free(chunk->requested);
     ring64_free(chunk->shuttles);
 
@@ -69,6 +71,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     star_load(&chunk->star, save);
 
     save_read_into(save, &chunk->workers.count);
+    chunk->workers.ops = vec64_reserve(chunk->workers.count);
     chunk->requested = save_read_ring32(save);
     chunk->shuttles = save_read_ring64(save);
 
@@ -166,6 +169,11 @@ struct vec64* chunk_list_filter(
         active_list(active_index(&chunk->active, filter[i]), ids);
 
     return ids;
+}
+
+void *chunk_get(struct chunk *chunk, id_t id)
+{
+    return active_get(active_index(&chunk->active, id_item(id)), id);
 }
 
 bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
@@ -383,7 +391,10 @@ static void chunk_ports_step(struct chunk *chunk)
 
         out->out = ITEM_NIL;
         in->in_state = ports_received;
-        vec64_append(chunk->wrokers.ops, ((uint64_t) src << 32) | dst);
+
+        chunk->workers.ops =
+            vec64_append(chunk->workers.ops, ((uint64_t) src << 32) | dst);
+
         continue;
 
       nomatch:

@@ -79,6 +79,7 @@ struct core
         struct ui_clipboard board;
 
         struct map *map;
+        struct factory *factory;
         struct ui_topbar *topbar;
         struct ui_mods *mods;
         struct ui_mod *mod;
