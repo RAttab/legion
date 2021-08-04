@@ -47,7 +47,6 @@ struct factory
     struct htable index;
     struct workers workers;
 
-    scale_t scale;
     struct pos pos;
     struct dim inner, margin, pad, total, in, out;
 
@@ -68,7 +67,6 @@ struct factory *factory_new(void)
 
     *factory = (struct factory) {
         .active = false,
-        .scale = scale_init(),
 
         .ui_id = ui_label_new(font, ui_str_v(id_str_len)),
         .ui_item = ui_label_new(font, ui_str_v(item_str_len)),
@@ -298,21 +296,11 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
     switch (ev->type)
     {
 
-    case SDL_MOUSEWHEEL: {
-        factory->scale = scale_inc(factory->scale, -ev->wheel.y);
-        return true;
-    }
-
     case SDL_MOUSEMOTION: {
-        if (factory->panning) {
-            int64_t xrel = scale_mult(factory->scale, ev->motion.xrel);
-            factory->pos.x -= xrel;
-
-            int64_t yrel = scale_mult(factory->scale, ev->motion.yrel);
-            factory->pos.y -= yrel;
-
-            factory->panned = true;
-        }
+        if (!factory->panning) return false;
+        factory->pos.x -= ev->motion.xrel;
+        factory->pos.y -= ev->motion.yrel;
+        factory->panned = true;
         return false;
     }
 
