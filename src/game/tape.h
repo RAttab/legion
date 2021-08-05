@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "game/item.h"
+#include "utils/bits.h"
 
 
 // -----------------------------------------------------------------------------
@@ -34,16 +35,6 @@ enum item tape_id(const struct tape *);
 size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
 struct tape_ret tape_at(const struct tape *, tape_it_t index);
-
-void tapes_populate(void);
-const struct tape *tapes_get(enum item id);
-
-struct tape_stats
-{
-    size_t rank;
-    uint16_t elems[ITEMS_NATURAL_LEN];
-};
-const struct tape_stats *tapes_stats(enum item id);
 
 
 // -----------------------------------------------------------------------------
@@ -88,3 +79,67 @@ inline tape_packed_t tape_packed_it_zero(tape_packed_t packed)
 {
     return packed & (~(0xFFUL << 48));
 }
+
+
+// -----------------------------------------------------------------------------
+// tape_set
+// -----------------------------------------------------------------------------
+
+struct tape_set { uint64_t s[4]; };
+static_assert(sizeof(struct tape_set) * 8 >= ITEM_MAX);
+
+inline bool tape_set_empty(const struct tape_set *set)
+{
+    for (size_t i = 0; i < array_len(set->s); ++i)
+        if (set->s[i]) return false;
+    return true;
+}
+
+inline bool tape_set_check(const struct tape_set *set, enum item item)
+{
+    return set->s[item / 64] & (1ULL << (item % 64));
+}
+
+inline void tape_set_put(struct tape_set *set, enum item item)
+{
+    set->s[item / 64] |= 1ULL << (item % 64);
+}
+
+inline enum item tape_set_next(const struct tape_set *set, enum item first)
+{
+    uint64_t mask = (1ULL << ((first+1) % 64)) - 1;
+    for (size_t i = first / 64; i < array_len(set->s); ++i) {
+        uint64_t x = set->s[i] & ~mask;
+        if (x) return u64_ctz(x) + i * 64;
+        mask = 0;
+    }
+    return ITEM_NIL;
+}
+
+inline void tape_set_union(struct tape_set *set, const struct tape_set *other)
+{
+    for (size_t i = 0; i < array_len(set->s); ++i)
+        set->s[i] |= other->s[i];
+}
+
+inline void tape_set_intersect(struct tape_set *set, const struct tape_set *other)
+{
+    for (size_t i = 0; i < array_len(set->s); ++i)
+        set->s[i] &= other->s[i];
+}
+
+
+// -----------------------------------------------------------------------------
+// tapes
+// -----------------------------------------------------------------------------
+
+void tapes_populate(void);
+const struct tape *tapes_get(enum item id);
+
+struct tape_stats
+{
+    size_t rank;
+    struct tape_set reqs;
+    uint16_t elems[ITEMS_NATURAL_LEN];
+};
+const struct tape_stats *tapes_stats(enum item id);

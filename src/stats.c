@@ -35,6 +35,14 @@ int stats_run(int argc, char **argv)
             atoms_str(atoms, ITEM_NATURAL_FIRST + i, &sym);
             fprintf(stdout, "\n  (%s %u)", sym.c, stats->elems[i]);
         }
+
+        for (enum item it = tape_set_next(&stats->reqs, 0);
+             it; it = tape_set_next(&stats->reqs, it))
+        {
+            atoms_str(atoms, it, &sym);
+            fprintf(stdout, "\n  (req %s)", sym.c);
+        }
+
         fprintf(stdout, ")\n\n");
     }
 

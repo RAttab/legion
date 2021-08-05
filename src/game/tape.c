@@ -87,6 +87,9 @@ static const struct tape_stats *tapes_stats_for(enum item id)
 
         for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i)
             stats->elems[i] += input->elems[i];
+
+        tape_set_union(&stats->reqs, &input->reqs);
+        tape_set_put(&stats->reqs, tape->tape[i]);
     }
 
     return stats;
