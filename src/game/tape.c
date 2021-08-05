@@ -20,6 +20,7 @@ struct tape
 {
     enum item id;
     enum item host;
+    uint8_t bits;
     uint8_t inputs, outputs;
     enum item tape[];
 };
@@ -27,6 +28,7 @@ struct tape
 
 enum item tape_id(const struct tape *tape) { return tape->id; }
 enum item tape_host(const struct tape *tape) { return tape->host; }
+uint8_t tape_bits(const struct tape *tape) { return tape->bits; }
 size_t tape_len(const struct tape *tape) { return tape->inputs + tape->outputs; }
 
 struct tape_ret tape_at(const struct tape *tape, tape_it_t it)
@@ -156,7 +158,7 @@ static void tapes_vec_push(
 }
 
 static struct tape *tapes_vec_output(
-        struct tapes_vec *vec, enum item id, enum item host)
+        struct tapes_vec *vec, enum item id, enum item host, uint8_t bits)
 {
     size_t len = vec->it * sizeof(vec->tape[0]);
     struct tape *tape = calloc(1, sizeof(*tape) + len);
@@ -164,6 +166,7 @@ static struct tape *tapes_vec_output(
     *tape = (struct tape) {
         .id = id,
         .host = host,
+        .bits = bits,
         .inputs = vec->in,
         .outputs = vec->out
     };
@@ -197,6 +200,7 @@ static void tapes_load_tape(
 {
     enum item id = tapes_expect_item(tok, atoms);
 
+    uint8_t bits = 0;
     enum tapes_type type = tapes_nil;
     struct tapes_vec vec = {0};
     struct token token = {0};
@@ -206,6 +210,15 @@ static void tapes_load_tape(
 
         assert(token_expect(tok, &token, token_symbol));
         uint64_t hash = symbol_hash(&token.value.s);
+
+        if (hash == symbol_hash_c("bits")) {
+            token_expect(tok, &token, token_number);
+            assert(token.value.w > 0 && token.value.w <= 64);
+            bits = token.value.w;
+
+            token_expect(tok, &token, token_close);
+            continue;
+        }
 
         if (hash == symbol_hash_c("in")) type = tapes_in;
         else if (hash == symbol_hash_c("out")) type = tapes_out;
@@ -217,7 +230,7 @@ static void tapes_load_tape(
         }
     }
 
-    tapes.index[id] = tapes_vec_output(&vec, id, host);
+    tapes.index[id] = tapes_vec_output(&vec, id, host, bits);
 }
 
 static void tapes_load_file(const char *path, struct atoms *atoms)

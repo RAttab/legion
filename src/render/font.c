@@ -85,9 +85,9 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
     for (size_t i = 0; i < charmap_len; ++i) {
         ft_err(FT_Load_Char(face, charmap_start + i, FT_LOAD_RENDER));
         FT_Glyph_Metrics *metrics = &face->glyph->metrics;
-        width = u64_max(width, metrics->width);
-        ascender = i64_max(ascender, metrics->horiBearingY);
-        descender = i64_max(descender, metrics->height - metrics->horiBearingY);
+        width = legion_max(width, metrics->width);
+        ascender = legion_max(ascender, metrics->horiBearingY);
+        descender = legion_max(descender, metrics->height - metrics->horiBearingY);
     }
     font->glyph_w = i64_ceil_div(width, 64);
     font->glyph_h = i64_ceil_div(ascender + descender, 64);

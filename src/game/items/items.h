@@ -9,6 +9,7 @@
 #include "game/item.h"
 #include "game/tape.h"
 #include "game/active.h"
+#include "utils/rng.h"
 
 
 // -----------------------------------------------------------------------------
@@ -178,3 +179,28 @@ struct legion_packed scanner
 };
 
 static_assert(sizeof(struct scanner) == 32);
+
+
+// -----------------------------------------------------------------------------
+// research
+// -----------------------------------------------------------------------------
+
+enum legion_packed research_state
+{
+    research_idle = 0,
+    research_waiting = 1,
+    research_working = 2,
+};
+
+struct legion_packed research
+{
+    id_t id;
+
+    enum item item;
+    enum research_state state;
+    struct { uint8_t left; uint8_t cap; } work;
+
+    struct rng rng;
+};
+
+static_assert(sizeof(struct research) == 16);

@@ -2,7 +2,7 @@
    Rémi Attab (remi.attab@gmail.com), 25 Feb 2016
    FreeBSD-style copyright and disclaimer apply
 
-   Xorshift random number generator for testing and statsd sampling
+   Xorshift random number generator
 
    See George Marsaglia (2003). Xorshift RNGs.  DOI: 10.18637/jss.v008.i14
      http://www.jstatsoft.org/article/view/v008i14
@@ -29,7 +29,6 @@ struct rng rng_make(uint64_t seed)
     assert(rng.x);
     return rng;
 }
-
 
 
 // -----------------------------------------------------------------------------

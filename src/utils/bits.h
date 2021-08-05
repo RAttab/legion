@@ -24,6 +24,18 @@ inline size_t u64_ctz(uint64_t x) { return likely(x) ? __builtin_ctzl(x) : 0; }
 // math
 // -----------------------------------------------------------------------------
 
+// Implemented as taking one step of the PCG PRNG with the value to hash as the
+// state. PCG has a few extra steps to prime the state but whatever.
+inline uint64_t hash_u64(uint64_t value)
+{
+    //ref: pcg_oneseq_64_step_r
+    value = value * 6364136223846793005ULL + 1442695040888963407ULL;
+
+    // ref: pcg_output_rxs_m_xs_64_64
+    value = ((value >> ((value >> 59U) + 5U)) ^ value) * 12605985483714917081ULL;
+    return (value >> 43u) ^ value;
+}
+
 inline int64_t i64_ceil_div(int64_t x, int64_t d)
 {
 
@@ -35,39 +47,9 @@ inline int64_t u64_ceil_div(uint64_t x, uint64_t d)
     return (d && x) ? (x - 1) / d + 1 : 1;
 }
 
-inline uint32_t u32_min(uint32_t x, uint32_t y)
-{
-    return x <= y ? x : y;
-}
-
-inline uint32_t u32_max(uint32_t x, uint32_t y)
-{
-    return x >= y ? x : y;
-}
-
-inline int64_t i64_min(int64_t x, int64_t y)
-{
-    return x <= y ? x : y;
-}
-
-inline int64_t i64_max(int64_t x, int64_t y)
-{
-    return x >= y ? x : y;
-}
-
-inline uint64_t u64_min(uint64_t x, uint64_t y)
-{
-    return x <= y ? x : y;
-}
-
-inline uint64_t u64_max(uint64_t x, uint64_t y)
-{
-    return x >= y ? x : y;
-}
-
 inline int64_t i64_clamp(int64_t x, int64_t min, int64_t max)
 {
-    return i64_min(i64_max(x, min), max);
+    return legion_min(legion_max(x, min), max);
 }
 
 inline size_t align_cache(size_t sz)

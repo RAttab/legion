@@ -95,6 +95,7 @@ enum legion_packed item
     ITEM_SCANNER_1    = 0xBB,
     ITEM_SCANNER_2    = 0xBC,
     ITEM_SCANNER_3    = 0xBD,
+    ITEM_RESEARCH     = 0xBF,
     ITEM_DB_1         = 0xC0,
     ITEM_DB_2         = 0xC1,
     ITEM_DB_3         = 0xC2,

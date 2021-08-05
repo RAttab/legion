@@ -51,6 +51,10 @@ legion_packed enum atom_io
     IO_DBG_BREAK,
     IO_DBG_STEP,
 
+    IO_LEARN,
+    IO_TAPE_DATA,
+    IO_TAPE_AT,
+
     ATOM_IO_MAX,
 };
 

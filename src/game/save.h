@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+struct htable;
 struct ring32;
 struct ring64;
 struct vec64;
@@ -87,6 +88,9 @@ void save_read(struct save *, void *dst, size_t len);
 
 void save_write_magic(struct save *, enum save_magic);
 bool save_read_magic(struct save *, enum save_magic exp);
+
+void save_write_htable(struct save *, const struct htable *);
+bool save_read_htable(struct save *, struct htable *);
 
 void save_write_vec64(struct save *, const struct vec64 *);
 struct vec64 *save_read_vec64(struct save *);

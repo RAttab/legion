@@ -66,20 +66,23 @@ inline struct vecx_name *vecx_fn(copy) (struct vecx_name *old)
     return new;
 }
 
-inline struct vecx_name *vecx_fn(sort) (struct vecx_name *vec)
+#ifdef vecx_sort
+inline void vecx_fn(sort) (struct vecx_name *vec)
 {
     // gcc extension
     int cmp(const void *l, const void *r) {
-        uint64_t lhs = *((uint64_t *) l);
-        uint64_t rhs = *((uint64_t *) r);
+        vecx_type lhs = *((vecx_type *) l);
+        vecx_type rhs = *((vecx_type *) r);
         return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
     }
     qsort(vec->vals, vec->len, sizeof(vec->vals[0]), cmp);
 }
+#endif
 
 #undef vecx_fn_concat
 #undef vecx_fn_eval
 #undef vecx_fn
 
+#undef vecx_sort
 #undef vecx_type
 #undef vecx_name

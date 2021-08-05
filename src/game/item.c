@@ -185,6 +185,9 @@ void atoms_register_game(struct atoms *atoms)
     reg_atom(IO_DBG_DETACH);
     reg_atom(IO_DBG_BREAK);
     reg_atom(IO_DBG_STEP);
+    reg_atom(IO_LEARN);
+    reg_atom(IO_TAPE_DATA);
+    reg_atom(IO_TAPE_AT);
 
     // Natural
     reg_atom(ITEM_ELEM_A);
@@ -254,6 +257,7 @@ void atoms_register_game(struct atoms *atoms)
     reg_atom(ITEM_SCANNER_1);
     reg_atom(ITEM_SCANNER_2);
     reg_atom(ITEM_SCANNER_3);
+    reg_atom(ITEM_RESEARCH);
     reg_atom(ITEM_DB_1);
     reg_atom(ITEM_DB_2);
     reg_atom(ITEM_DB_3);

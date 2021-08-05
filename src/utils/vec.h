@@ -11,6 +11,7 @@
 
 #define vecx_type uint64_t
 #define vecx_name vec64
+#define vecx_sort
 #include "utils/vecx.h"
 
 inline bool vec64_eq(const struct vec64 *lhs, const struct vec64 *rhs)

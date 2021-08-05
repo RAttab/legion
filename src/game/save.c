@@ -255,6 +255,41 @@ bool save_read_magic(struct save *save, enum save_magic exp)
 }
 
 
+void save_write_htable(struct save *save, const struct htable *ht)
+{
+    save_write_magic(save, save_magic_htable);
+    save_write_value(save, (uint64_t) ht->len);
+
+    for (struct htable_bucket *it = htable_next(ht, NULL);
+         it; it = htable_next(ht, it))
+    {
+        save_write_value(save, it->key);
+        save_write_value(save, it->value);
+    }
+
+    save_write_magic(save, save_magic_htable);
+}
+
+bool save_read_htable(struct save *save, struct htable *ht)
+{
+    if (!save_read_magic(save, save_magic_htable)) return false;
+
+    size_t len = save_read_type(save, uint64_t);
+    htable_reset(ht);
+    htable_reserve(ht, len);
+
+    for (size_t i = 0; i < len; ++i) {
+        struct htable_bucket bucket = {0};
+        save_read_into(save, &bucket.key);
+        save_read_into(save, &bucket.value);
+
+        struct htable_ret ret = htable_put(ht, bucket.key, bucket.value);
+        assert(ret.ok);
+    }
+
+    return save_read_magic(save, save_magic_htable);
+}
+
 
 void save_write_vec64(struct save *save, const struct vec64 *vec)
 {

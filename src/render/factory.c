@@ -233,6 +233,17 @@ static bool factory_make_box(
         break;
     }
 
+    case ITEM_RESEARCH: {
+        struct research *research = chunk_get(chunk, id);
+        if (!research->item) return false;
+        *box = (struct box) {
+            .id = research->id,
+            .target = research->item,
+            .in = research->state == research_waiting ? research->item : 0,
+        };
+        break;
+    }
+
     default: { assert(false); }
     }
 
@@ -268,7 +279,7 @@ static void factory_update(struct factory *factory)
     }
 
     static const enum item filter[] = {
-        ITEM_DEPLOY, ITEM_STORAGE,
+        ITEM_DEPLOY, ITEM_STORAGE, ITEM_RESEARCH,
         ITEM_EXTRACT_1, ITEM_EXTRACT_2, ITEM_EXTRACT_3,
         ITEM_PRINTER_1, ITEM_PRINTER_2, ITEM_PRINTER_3,
         ITEM_ASSEMBLY_1, ITEM_ASSEMBLY_2, ITEM_ASSEMBLY_3,

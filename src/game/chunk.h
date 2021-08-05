@@ -46,6 +46,12 @@ bool chunk_io(
         struct chunk *,
         enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args);
 
+uint64_t chunk_known(struct chunk *, enum item);
+uint64_t chunk_known_bits(struct chunk *, enum item);
+struct tape_set chunk_known_list(struct chunk *);
+enum item chunk_learn(struct chunk *, uint64_t hash);
+void chunk_learn_bit(struct chunk *, enum item, uint64_t bit);
+
 ssize_t chunk_scan(struct chunk *, enum item);
 
 void chunk_lanes_launch(struct chunk *, struct coord dst, enum item item, uint32_t data);
