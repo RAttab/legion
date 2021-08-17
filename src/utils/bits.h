@@ -19,10 +19,19 @@ inline size_t u64_log2(uint64_t x) { return likely(x) ? 63 - u64_clz(x) : 0; }
 
 inline size_t u64_ctz(uint64_t x) { return likely(x) ? __builtin_ctzl(x) : 0; }
 
+// -----------------------------------------------------------------------------
+// hash
+// -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// math
-// -----------------------------------------------------------------------------
+// FNV-1a hash implementation: http://isthe.com/chongo/tech/comp/fnv/
+inline uint64_t hash_str(const char *key, size_t len)
+{
+    uint64_t hash = 0xcbf29ce484222325;
+    for (size_t i = 0; i < len; ++i)
+        hash = (hash ^ key[i]) * 0x100000001b3;
+
+    return hash;
+}
 
 // Implemented as taking one step of the PCG PRNG with the value to hash as the
 // state. PCG has a few extra steps to prime the state but whatever.
@@ -35,6 +44,11 @@ inline uint64_t hash_u64(uint64_t value)
     value = ((value >> ((value >> 59U) + 5U)) ^ value) * 12605985483714917081ULL;
     return (value >> 43u) ^ value;
 }
+
+
+// -----------------------------------------------------------------------------
+// math
+// -----------------------------------------------------------------------------
 
 inline int64_t i64_ceil_div(int64_t x, int64_t d)
 {

@@ -3,7 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "htable.h"
+#include "utils/htable.h"
+#include "utils/bits.h"
 
 
 // -----------------------------------------------------------------------------
@@ -11,25 +12,6 @@
 // -----------------------------------------------------------------------------
 
 enum { htable_window = 8 };
-
-
-// -----------------------------------------------------------------------------
-// hash
-// -----------------------------------------------------------------------------
-
-// xorshift - need to compare against fnv-1a
-static inline uint64_t hash_key(uint64_t key)
-{
-    // We xor the seed with a randomly chosen number to avoid ending up with a 0
-    // state which would be bad.
-    key ^= UINT64_C(0xedef335f00e170b3);
-    key ^= key >> 12;
-    key ^= key << 25;
-    key ^= key >> 27;
-    key *= UINT64_C(2685821657736338717);
-    assert(key); // can't be 0
-    return key;
-}
 
 
 // -----------------------------------------------------------------------------
@@ -47,7 +29,7 @@ static bool table_put(
         uint64_t key, uint64_t value)
 {
     assert(key);
-    uint64_t hash = hash_key(key);
+    uint64_t hash = hash_u64(key);
 
     for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &table[(hash + i) % cap];
@@ -107,7 +89,7 @@ struct htable_ret htable_get(struct htable *ht, uint64_t key)
 {
     assert(key);
 
-    uint64_t hash = hash_key(key);
+    uint64_t hash = hash_u64(key);
     htable_resize(ht, htable_window);
 
     for (size_t i = 0; i < htable_window; ++i) {
@@ -127,7 +109,7 @@ struct htable_ret htable_try_put(struct htable *ht, uint64_t key, uint64_t value
 {
     assert(key);
 
-    uint64_t hash = hash_key(key);
+    uint64_t hash = hash_u64(key);
     htable_resize(ht, htable_window);
 
     for (size_t i = 0; i < htable_window; ++i) {
@@ -160,7 +142,7 @@ struct htable_ret htable_xchg(struct htable *ht, uint64_t key, uint64_t value)
 {
     assert(key);
 
-    uint64_t hash = hash_key(key);
+    uint64_t hash = hash_u64(key);
     htable_resize(ht, htable_window);
 
     for (size_t i = 0; i < htable_window; ++i) {
@@ -179,7 +161,7 @@ struct htable_ret htable_del(struct htable *ht, uint64_t key)
 {
     assert(key);
 
-    uint64_t hash = hash_key(key);
+    uint64_t hash = hash_u64(key);
     htable_resize(ht, htable_window);
 
     for (size_t i = 0; i < htable_window; ++i) {
