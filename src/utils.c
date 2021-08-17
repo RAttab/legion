@@ -9,3 +9,4 @@
 #include "utils/ring.c"
 #include "utils/text.c"
 #include "utils/htable.c"
+#include "utils/heap.c"
