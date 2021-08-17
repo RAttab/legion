@@ -4,6 +4,7 @@
 */
 
 #include "utils/heap.h"
+#include "utils/bits.h"
 #include "game/save.h"
 
 #include <sys/mman.h>
@@ -41,9 +42,9 @@ heap_index_t heap_index(struct heap *heap, const void *ptr)
 
 static size_t heap_class(struct heap *heap, size_t size)
 {
-    assert(size % 8 == 0);
-    assert(size / 8 < array_len(heap->free));
-    return size / 8;
+    size_t class = u64_ceil_div(size, 8);
+    assert(class < array_len(heap->free));
+    return class;
 }
 
 static void heap_grow(struct heap *heap, size_t class)
@@ -79,7 +80,7 @@ static void heap_grow(struct heap *heap, size_t class)
     }
 }
 
-heap_index_t heap_alloc(struct heap *heap, size_t size)
+heap_index_t heap_new(struct heap *heap, size_t size)
 {
     const size_t class = heap_class(heap, size);
 
@@ -93,7 +94,7 @@ heap_index_t heap_alloc(struct heap *heap, size_t size)
     return index;
 }
 
-void heap_free(struct heap *heap, heap_index_t index, size_t size)
+void heap_del(struct heap *heap, heap_index_t index, size_t size)
 {
     assert(index % 8 == 0);
     assert(index < heap->len);

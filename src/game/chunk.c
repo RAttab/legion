@@ -202,9 +202,10 @@ void chunk_create(struct chunk *chunk, enum item item)
     active_create(active_index_create(&chunk->active, item));
 }
 
-void chunk_create_from(struct chunk *chunk, enum item item, uint32_t data)
+void chunk_create_from(
+        struct chunk *chunk, enum item item, const word_t *data, size_t len)
 {
-    active_create_from(active_index_create(&chunk->active, item), chunk, data);
+    active_create_from(active_index_create(&chunk->active, item), chunk, data, len);
 }
 
 void chunk_delete(struct chunk *chunk, id_t id)
@@ -312,22 +313,28 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
 // lanes
 // -----------------------------------------------------------------------------
 
-void chunk_lanes_launch(struct chunk *chunk,
-        struct coord dst, enum item type, uint32_t data)
+void chunk_lanes_launch(
+        struct chunk *chunk,
+        enum item type,
+        struct coord dst,
+        const word_t *data, size_t len)
 {
-    world_lanes_launch(chunk->world, chunk->star.coord, dst, type, data);
+    world_lanes_launch(chunk->world, type, chunk->star.coord, dst, data, len);
 }
 
-void chunk_lanes_arrive(struct chunk *chunk, enum item item, uint32_t data)
+void chunk_lanes_arrive(
+        struct chunk *chunk, enum item item, const word_t *data, size_t len)
 {
     switch (item)
     {
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
-        chunk_create_from(chunk, item, data);
+        chunk_create_from(chunk, item, data, len);
         break;
     }
     case ITEM_SHUTTLE_1...ITEM_SHUTTLE_3: {
-        uint64_t value = (((uint64_t) item) << 32) | data;
+        assert(len == 1);
+        assert(data[0] > 0 && data[0] <= UINT8_MAX);
+        uint64_t value = (((uint64_t) item) << 8) | data[0];
         chunk->shuttles = ring64_push(chunk->shuttles, value);
         break;
     }
@@ -335,13 +342,13 @@ void chunk_lanes_arrive(struct chunk *chunk, enum item item, uint32_t data)
     }
 }
 
-bool chunk_lanes_dock(struct chunk *chunk, enum item *item, uint32_t *data)
+bool chunk_lanes_dock(struct chunk *chunk, enum item *item, uint8_t *count)
 {
     if (ring64_empty(chunk->shuttles)) return false;
 
     uint64_t value = ring64_pop(chunk->shuttles);
-    *item = value >> 32;
-    *data = value & ((1ULL << 32) - 1);
+    *item = value >> 8;
+    *count = value & ((1ULL << 8) - 1);
     return true;
 }
 

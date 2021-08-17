@@ -226,9 +226,13 @@ ssize_t sector_scan(struct sector *sector, struct coord coord, enum item item)
 }
 
 
-void sector_lanes_arrive(struct sector *sector,
-        struct coord dst, enum item type, uint32_t data)
+
+void sector_lanes_arrive(
+        struct sector *sector,
+        enum item type,
+        struct coord dst,
+        const word_t *data, size_t len)
 {
     struct chunk *chunk = sector_chunk_alloc(sector, dst);
-    if (chunk) chunk_lanes_arrive(chunk, type, data);
+    chunk_lanes_arrive(chunk, type, data, len);
 }

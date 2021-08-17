@@ -37,9 +37,9 @@ struct vec64 *chunk_list(struct chunk *);
 struct vec64 *chunk_list_filter(struct chunk *, const enum item *filter, size_t len);
 void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
-void chunk_create(struct chunk *, enum item);
-void chunk_create_from(struct chunk *, enum item, uint32_t data);
 void chunk_delete(struct chunk *, id_t id);
+void chunk_create(struct chunk *, enum item);
+void chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len);
 
 void chunk_step(struct chunk *);
 bool chunk_io(
@@ -54,9 +54,10 @@ void chunk_learn_bit(struct chunk *, enum item, uint64_t bit);
 
 ssize_t chunk_scan(struct chunk *, enum item);
 
-void chunk_lanes_launch(struct chunk *, struct coord dst, enum item item, uint32_t data);
-void chunk_lanes_arrive(struct chunk *, enum item item, uint32_t data);
-bool chunk_lanes_dock(struct chunk *, enum item *item, uint32_t *data);
+void chunk_lanes_launch(
+        struct chunk *, enum item item, struct coord dst, const word_t *data, size_t len);
+bool chunk_lanes_dock(struct chunk *, enum item *item, uint8_t *count);
+void chunk_lanes_arrive(struct chunk *, enum item, const word_t *data, size_t len);
 
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, enum item);
@@ -76,4 +77,3 @@ inline void chunk_workers_ops(uint64_t val, id_t *src, id_t *dst)
     *src = val >> 32;
     *dst = val & ((1ULL << 32) - 1);
 }
-

@@ -16,10 +16,11 @@ struct chunk;
 // active_config
 // -----------------------------------------------------------------------------
 
-typedef void (*make_fn_t) (void *state, id_t id, struct chunk *, uint32_t data);
 typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
 typedef void (*step_fn_t) (void *state, struct chunk *);
 typedef void (*load_fn_t) (void *state, struct chunk *);
+typedef void (*make_fn_t) (
+        void *state, id_t id, struct chunk *, const word_t *data, size_t len);
 typedef void (*io_fn_t) (
         void *state, struct chunk *,
         enum atom_io io, id_t src, size_t len, const word_t *args);
@@ -28,11 +29,13 @@ struct active_config
 {
     size_t size;
 
-    make_fn_t make;
     init_fn_t init;
-    load_fn_t load;
     step_fn_t step;
+    load_fn_t load;
+    make_fn_t make;
     io_fn_t io;
+
+    size_t travel;
 
     size_t io_list_len;
     const word_t *io_list;
@@ -84,7 +87,7 @@ struct ports *active_ports(struct active *active, id_t id);
 
 bool active_copy(struct active *, id_t id, void *dst, size_t len);
 void active_create(struct active *);
-void active_create_from(struct active *, struct chunk *, uint32_t data);
+void active_create_from(struct active *, struct chunk *, const word_t *data, size_t len);
 void active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);

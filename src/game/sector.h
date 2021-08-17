@@ -9,6 +9,7 @@
 #include "game/save.h"
 #include "game/item.h"
 #include "game/coord.h"
+#include "vm/vm.h"
 #include "utils/htable.h"
 
 struct chunk;
@@ -69,5 +70,8 @@ const struct star *sector_star_at(struct sector *, struct coord coord);
 void sector_step(struct sector *);
 ssize_t sector_scan(struct sector *, struct coord, enum item);
 
-void sector_lanes_arrive(struct sector *,
-        struct coord dst, enum item type, uint32_t data);
+void sector_lanes_arrive(
+        struct sector *,
+        enum item type,
+        struct coord dst,
+        const word_t *data, size_t len);

@@ -11,7 +11,10 @@
 #include "game/sector.h"
 
 struct mods;
+struct hset;
+
 typedef uint32_t world_ts_t;
+typedef int64_t world_ts_delta_t;
 
 // -----------------------------------------------------------------------------
 // world
@@ -59,8 +62,14 @@ struct coord world_scan_next(struct world *, struct world_scan_it *);
 
 ssize_t world_scan(struct world *, struct coord, enum item);
 
-struct vec64 *world_lanes_list(struct world *, struct coord key);
-void world_lanes_launch(struct world *,
-        struct coord src, struct coord dst, enum item type, uint32_t data);
-void world_lanes_arrive(struct world *,
-        struct coord dst, enum item type, uint32_t data);
+const struct hset *world_lanes_list(struct world *, struct coord key);
+void world_lanes_launch(
+        struct world *,
+        enum item type,
+        struct coord src, struct coord dst,
+        const word_t *data, size_t len);
+void world_lanes_arrive(
+        struct world *,
+        enum item type,
+        struct coord dst,
+        const word_t *data, size_t len);

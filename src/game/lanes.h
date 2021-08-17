@@ -8,8 +8,10 @@
 #include "common.h"
 #include "game/coord.h"
 #include "game/world.h"
+#include "utils/heap.h"
 
-struct vec64;
+struct hset;
+
 
 // -----------------------------------------------------------------------------
 // lanes
@@ -21,6 +23,7 @@ struct lanes
 
     struct htable lanes;
     struct htable index;
+    struct heap data;
 };
 
 void lanes_init(struct lanes *, struct world *);
@@ -29,9 +32,13 @@ void lanes_free(struct lanes *);
 bool lanes_load(struct lanes *, struct world *, struct save *);
 void lanes_save(struct lanes *, struct save *);
 
-struct vec64 *lanes_list(struct lanes *, struct coord key);
+world_ts_delta_t lanes_travel(enum item type, struct coord src, struct coord dst);
+const struct hset *lanes_list(struct lanes *, struct coord key);
 
-void lanes_launch(struct lanes *,
-        struct coord src, struct coord dst, enum item type, uint32_t data);
+void lanes_launch(
+        struct lanes *,
+        enum item type,
+        struct coord src, struct coord dst,
+        const word_t *data, size_t len);
 
 void lanes_step(struct lanes *);

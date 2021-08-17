@@ -262,7 +262,8 @@ void active_create(struct active *active)
 
 // This creation function is not used for replication (...yet) which means that
 // we don't need to defer the creation (... yet)
-void active_create_from(struct active *active, struct chunk *chunk, uint32_t data)
+void active_create_from(
+        struct active *active, struct chunk *chunk, const word_t *data, size_t len)
 {
     assert(active->config->make);
 
@@ -275,7 +276,7 @@ void active_create_from(struct active *active, struct chunk *chunk, uint32_t dat
 
     id_t id = make_id(active->type, index+1);
     void *item = active->arena + (index * active->size);
-    active->config->make(item, id, chunk, data);
+    active->config->make(item, id, chunk, data, len);
     active->count++;
 }
 
