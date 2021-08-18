@@ -49,16 +49,30 @@ const enum item *legion_cargo(enum item type)
     };
 }
 
-static void legion_make(void *state, id_t id, struct chunk *chunk, uint32_t data)
+static void legion_make(
+        void *state, id_t id, struct chunk *chunk, const word_t *data, size_t len)
 {
     (void) state;
 
-    chunk_delete(chunk, id);
+    word_t src = len >= 1 ? data[0] : 0;
+    word_t mod = len >= 2 ? data[1] : 0;
+
     for (const enum item *it = legion_cargo(id_item(id)); *it; ++it) {
-        if (data && *it >= ITEM_BRAIN_1 && *it <= ITEM_BRAIN_3)
-            chunk_create_from(chunk, *it, data);
-        else chunk_create(chunk, *it);
+
+        switch (*it) {
+        case ITEM_BRAIN_1...ITEM_BRAIN_3: {
+            chunk_create_from(chunk, *it, &mod, src ? 1 : 0);
+            break;
+        }
+        case ITEM_DB_1...ITEM_DB_3: {
+            chunk_create_from(chunk, *it, &src, mod ? 1 : 0);
+            break;
+        }
+        default: { chunk_create(chunk, *it); }
+        }
     }
+
+    chunk_delete(chunk, id);
 }
 
 // -----------------------------------------------------------------------------
@@ -94,7 +108,12 @@ static void legion_io_launch(
     struct coord dst = id_to_coord(args[0]);
     if (coord_is_nil(dst)) return;
 
-    chunk_lanes_launch(chunk, dst, id_item(legion->id), legion->mod);
+    const word_t data[] = {
+        coord_to_id(chunk_star(chunk)->coord),
+        legion->mod,
+    };
+
+    chunk_lanes_launch(chunk, id_item(legion->id), dst, data, array_len(data));
     chunk_delete(chunk, legion->id);
 }
 
@@ -128,6 +147,7 @@ const struct active_config *legion_config(enum item item)
 
     static const struct active_config config = {
         .size = sizeof(struct legion),
+        .travel = 100,
         .init = legion_init,
         .make = legion_make,
         .io = legion_io,

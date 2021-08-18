@@ -22,19 +22,38 @@ enum
     db_len_l = 7 + 8 * 2,
 };
 
+static size_t db_len(enum item type)
+{
+    switch (type) {
+    case ITEM_DB_1: { return db_len_s; }
+    case ITEM_DB_2: { return db_len_m; }
+    case ITEM_DB_3: { return db_len_l; }
+    default: { assert(false); }
+    }
+}
+
 static void db_init(void *state, id_t id, struct chunk *chunk)
 {
     struct db *db = state;
     (void) chunk;
 
     db->id = id;
-    switch (id_item(id)) {
-    case ITEM_DB_1:   { db->len = db_len_s; break; }
-    case ITEM_DB_2:  { db->len = db_len_m; break; }
-    case ITEM_DB_3: { db->len = db_len_l; break; }
-    default: { assert(false); }
-    }
+    db->len = db_len(id_item(id));
 }
+
+static void db_make(
+        void *state, id_t id, struct chunk *chunk, const word_t *data, size_t len)
+{
+    struct db *db = state;
+    db_init(db, id, chunk);
+
+    if (len < 1) return;
+
+    len = legion_min(len, db_len(id_item(id)));
+    for (size_t i = 0; i < len; ++i)
+        db->data[i] = data[i];
+}
+
 
 // -----------------------------------------------------------------------------
 // io
@@ -95,6 +114,7 @@ const struct active_config *db_config(enum item item)
         static const struct active_config config = {
             .size = sizeof(struct db) + db_len_s * sizeof(word_t),
             .init = db_init,
+            .make = db_make,
             .step = NULL,
             .io = db_io,
             .io_list = io_list,
@@ -107,6 +127,7 @@ const struct active_config *db_config(enum item item)
         static const struct active_config config = {
             .size = sizeof(struct db) + db_len_m * sizeof(word_t),
             .init = db_init,
+            .make = db_make,
             .step = NULL,
             .io = db_io,
             .io_list = io_list,
@@ -119,6 +140,7 @@ const struct active_config *db_config(enum item item)
         static const struct active_config config = {
             .size = sizeof(struct db) + db_len_l * sizeof(word_t),
             .init = db_init,
+            .make = db_make,
             .step = NULL,
             .io = db_io,
             .io_list = io_list,

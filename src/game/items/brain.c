@@ -50,11 +50,16 @@ static void brain_init(void *state, id_t id, struct chunk *chunk)
     }
 }
 
-static void brain_make(void *state, id_t id, struct chunk *chunk, uint32_t data)
+static void brain_make(
+        void *state, id_t id, struct chunk *chunk, const word_t *data, size_t len)
 {
     struct brain *brain = state;
     brain_init(brain, id, chunk);
-    brain_mod(brain, chunk, data);
+
+    if (len < 1) return;
+    if (data[0] <= 0 || data[0] > UINT32_MAX) return;
+
+    brain_mod(brain, chunk, data[0]);
 }
 
 static void brain_load(void *state, struct chunk *chunk)
