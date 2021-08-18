@@ -10,8 +10,7 @@ declare -a SRC
 SRC=(ui render game vm utils)
 
 declare -a TEST
-TEST=(coord ring text lisp chunk save)
-# TEST=(ring)
+: ${TEST:="coord ring text lisp chunk lanes save"}
 
 CC=${CC:-gcc}
 
