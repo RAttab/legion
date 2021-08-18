@@ -7,7 +7,7 @@
 #include "render/color.h"
 #include "render/core.h"
 #include "game/world.h"
-#include "utils/vec.h"
+#include "utils/hset.h"
 #include "utils/log.h"
 
 
@@ -246,14 +246,14 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
 static void map_render_lanes(
         struct map *map, SDL_Renderer *renderer, struct coord star)
 {
-    struct vec64 *lanes = world_lanes_list(core.state.world, star);
+    const struct hset *lanes = world_lanes_list(core.state.world, star);
     if (!lanes || !lanes->len) return;
 
+    SDL_Point src = map_project_sdl(map, star);
     rgba_render(rgba_gray_a(0xAA, 0xAA), renderer);
 
-    SDL_Point src = map_project_sdl(map, star);
-    for (size_t i = 0; i < lanes->len; ++i) {
-        SDL_Point dst = map_project_sdl(map, id_to_coord(lanes->vals[i]));
+    for (hset_it_t it = hset_next(lanes, NULL); it; it = hset_next(lanes, it)) {
+        SDL_Point dst = map_project_sdl(map, id_to_coord(*it));
         sdl_err(SDL_RenderDrawLine(renderer, src.x, src.y, dst.x, dst.y));
     }
 }
