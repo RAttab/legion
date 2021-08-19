@@ -1,0 +1,54 @@
+/* io.h
+   Rémi Attab (remi.attab@gmail.com), 23 Nov 2020
+   FreeBSD-style copyright and disclaimer apply
+*/
+
+#pragma once
+
+#include "common.h"
+
+// -----------------------------------------------------------------------------
+// io
+// -----------------------------------------------------------------------------
+
+legion_packed enum io
+{
+    // We place the IO namespace right after the item namespace
+    IO_MIN = 1 << 8,
+
+    // Generic
+    IO_NIL    = IO_MIN,
+    IO_OK     = IO_MIN + 0x01,
+    IO_FAIL   = IO_MIN + 0x02,
+    IO_PING   = IO_MIN + 0x03,
+    IO_PONG   = IO_MIN + 0x04,
+    IO_STATUS = IO_MIN + 0x05,
+    IO_STATE  = IO_MIN + 0x06,
+    IO_RESET  = IO_MIN + 0x07,
+    IO_ITEM   = IO_MIN + 0x08,
+    IO_TAPE   = IO_MIN + 0x09,
+    IO_MOD    = IO_MIN + 0x0A,
+
+    // Brain
+    IO_COORD      = IO_MIN + 0x10,
+    IO_SEND       = IO_MIN + 0x11,
+    IO_RECV       = IO_MIN + 0x12,
+    IO_DBG_ATTACH = IO_MIN + 0x13,
+    IO_DBG_DETACH = IO_MIN + 0x14,
+    IO_DBG_BREAK  = IO_MIN + 0x15,
+    IO_DBG_STEP   = IO_MIN + 0x16,
+
+    // Misc
+    IO_GET       = IO_MIN + 0x20,
+    IO_SET       = IO_MIN + 0x22,
+    IO_VAL       = IO_MIN + 0x23,
+    IO_SCAN      = IO_MIN + 0x24,
+    IO_SCAN_VAL  = IO_MIN + 0x25,
+    IO_LAUNCH    = IO_MIN + 0x26,
+    IO_LEARN     = IO_MIN + 0x27,
+    IO_TAPE_DATA = IO_MIN + 0x28,
+    IO_TAPE_AT   = IO_MIN + 0x29,
+
+    IO_MAX,
+    IO_LEN = IO_MAX - IO_MIN,
+};
