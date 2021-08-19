@@ -233,6 +233,15 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
         return false;
     }
 
+    case EV_STAR_SELECT: {
+        struct coord new = id_to_coord((uintptr_t) ev->user.data1);
+        if (!coord_eq(ui->star, new)) {
+            ui->panel.state = ui_panel_hidden;
+            ui->id = 0;
+        }
+        return false;
+    }
+
     case EV_STAR_CLEAR: // fallthrough
     case EV_ITEM_CLEAR: {
         ui->panel.state = ui_panel_hidden;
