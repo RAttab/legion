@@ -270,12 +270,17 @@ static void factory_update(struct factory *factory)
     if (!factory->active) return;
     assert(!coord_is_nil(factory->star));
 
-    struct chunk *chunk = world_chunk(core.state.world, factory->star);
-    if (!chunk) return;
-
     for (size_t i = 0; i < vec64_len(factory->grid); ++i) {
         struct vec16 *row = (void *) factory->grid->vals[i];
         if (row) row->len = 0;
+    }
+
+    struct chunk *chunk = world_chunk(core.state.world, factory->star);
+    if (!chunk) {
+        factory->boxes->len = 0;
+        factory->workers.ops->len = 0;
+        htable_reset(&factory->index);
+        return;
     }
 
     static const enum item filter[] = {
