@@ -292,21 +292,16 @@ void chunk_learn_bit(struct chunk *chunk, enum item item, uint64_t bit)
 
 ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
-    switch (item)
-    {
-    case ITEM_WORKER: { return chunk->workers.count; }
-    case ITEM_BULLET: { return ring64_len(chunk->shuttles); }
+    if (item == ITEM_WORKER) return chunk->workers.count;
+    if (item == ITEM_BULLET) return ring64_len(chunk->shuttles);
 
-    case ITEM_NATURAL_FIRST...ITEM_SYNTH_FIRST: {
+    if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
-    }
 
-    case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
+    if (item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST)
         return active_count(active_index(&chunk->active, item));
-    }
 
-    default: { return -1; }
-    }
+    return -1;
 }
 
 // -----------------------------------------------------------------------------

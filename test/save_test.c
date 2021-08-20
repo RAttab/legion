@@ -4,13 +4,14 @@
 */
 
 #include "common.h"
-#include "game/io.h"
+#include "vm/mod.h"
+#include "vm/atoms.h"
 #include "game/save.h"
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
+#include "items/io.h"
+#include "items/config.h"
 #include "utils/vec.h"
 
 #include <unistd.h>
@@ -20,6 +21,7 @@ void check(const char *path)
 {
     enum { attempts = 5, steps = 100 };
 
+    im_populate();
     tapes_populate();
     mod_compiler_init();
     struct world *old = world_new();
@@ -34,7 +36,7 @@ void check(const char *path)
 
         word_t arg = mod->id;
         struct chunk *chunk = world_chunk(old, coord);
-        bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN_1, 1), 1, &arg);
+        bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN_1, 1), &arg, 1);
         assert(ok);
     }
 

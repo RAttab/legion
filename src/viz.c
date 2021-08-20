@@ -6,6 +6,7 @@
 #include "common.h"
 #include "game/tape.h"
 #include "items/item.h"
+#include "items/config.h"
 #include "utils/htable.h"
 
 #include <stdarg.h>
@@ -184,6 +185,8 @@ void viz_output(struct viz *viz)
 int viz_run(int argc, char **argv)
 {
     (void) argc, (void) argv;
+
+    im_populate();
     tapes_populate();
 
     struct viz viz = {0};

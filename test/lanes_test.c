@@ -8,6 +8,7 @@
 #include "game/sector.h"
 #include "game/chunk.h"
 #include "game/lanes.h"
+#include "items/config.h"
 #include "utils/hset.h"
 
 // -----------------------------------------------------------------------------
@@ -78,6 +79,8 @@ void test_basics(void)
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
+
+    im_populate();
 
     test_basics();
 

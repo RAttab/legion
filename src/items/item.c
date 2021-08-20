@@ -12,7 +12,7 @@
 
 inline size_t item_str(enum item item, char *dst, size_t len)
 {
-    const struct im_config *config = im_config(item);
+    const struct im_config *config = im_config_assert(item);
 
     len = legion_min(len-1, config->str_len);
     memcpy(dst, im_config(item)->str, len);

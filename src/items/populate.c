@@ -123,7 +123,7 @@ static struct im_config im_configs[ITEM_MAX] =
 const struct im_config *im_config(enum item item)
 {
     assert(item < ITEM_MAX);
-    if (!item || im_configs[item].type) return NULL;
+    if (item && !im_configs[item].type) return NULL;
     return &im_configs[item];
 }
 
@@ -219,7 +219,8 @@ void im_populate(void)
 
 void im_populate_atoms(struct atoms *atoms)
 {
-    for (size_t i = 0; i < ITEM_MAX; ++i) {
+    // !item_nil can't be registered as it has the value 0
+    for (size_t i = 1; i < ITEM_MAX; ++i) {
         struct im_config *config = &im_configs[i];
         if (i && !config->type) continue;
 

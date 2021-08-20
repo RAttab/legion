@@ -4,11 +4,12 @@
 */
 
 #include "common.h"
-#include "game/item.h"
 #include "vm/vm.h"
 #include "vm/mod.h"
 #include "vm/token.h"
 #include "vm/atoms.h"
+#include "items/item.h"
+#include "items/config.h"
 #include "utils/str.h"
 #include "utils/log.h"
 
@@ -303,7 +304,7 @@ bool check_file(const char *path)
 {
     struct mods *mods = mods_new();
     struct atoms *atoms = atoms_new();
-    atoms_register_game(atoms);
+    im_populate_atoms(atoms);
 
     struct file *file = file_open(path);
 
@@ -381,6 +382,7 @@ bool check_dir(const char *path)
 
 int main(int argc, char **argv)
 {
+    im_populate();
     mod_compiler_init();
 
     char path[PATH_MAX];

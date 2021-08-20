@@ -7,6 +7,7 @@
 #include "game/chunk.h"
 #include "game/sector.h"
 #include "game/active.h"
+#include "items/config.h"
 
 
 void test_active_list(void)
@@ -205,6 +206,8 @@ void test_ports_reset(void)
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
+
+    im_populate();
 
     test_active_list();
     test_ports_1on1();
