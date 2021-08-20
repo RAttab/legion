@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/tape.h"
-#include "game/item.h"
+#include "items/item.h"
 #include "utils/htable.h"
 
 #include <stdarg.h>

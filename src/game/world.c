@@ -4,9 +4,10 @@
 */
 
 #include "game/world.h"
-#include "game/active.h"
-#include "game/items/items.h"
 #include "vm/mod.h"
+#include "vm/atoms.h"
+#include "items/config.h"
+#include "items/legion/legion.h"
 
 
 // -----------------------------------------------------------------------------
@@ -122,7 +123,7 @@ void world_step(struct world *world)
 
 struct coord world_populate(struct world *world)
 {
-    atoms_register_game(world->atoms);
+    im_populate_atoms(world->atoms);
     mods_populate(world->mods, world->atoms);
 
     struct rng rng = rng_make(0);
@@ -136,17 +137,17 @@ struct coord world_populate(struct world *world)
             size_t index = rng_uni(&rng, 0, sector->stars_len);
             star = &sector->stars[index];
 
-            if (star->elems[ITEM_ELEM_A - ITEM_NATURAL_FIRST] < 20000) continue;
-            if (star->elems[ITEM_ELEM_B - ITEM_NATURAL_FIRST] < 20000) continue;
-            if (star->elems[ITEM_ELEM_C - ITEM_NATURAL_FIRST] < 20000) continue;
-            if (star->elems[ITEM_ELEM_D - ITEM_NATURAL_FIRST] < 20000) continue;
-            if (star->elems[ITEM_ELEM_F - ITEM_NATURAL_FIRST] < 20000) continue;
-            if (star->elems[ITEM_ELEM_G - ITEM_NATURAL_FIRST] < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_A) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_B) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_C) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_D) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_F) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_G) < 20000) continue;
 
             struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
             assert(chunk);
 
-            for (const enum item *it = legion_cargo(ITEM_LEGION_1); *it; it++)
+            for (const enum item *it = im_legion_cargo(ITEM_LEGION_1); *it; it++)
                 chunk_create(chunk, *it);
             chunk_create(chunk, ITEM_LEGION_1);
 

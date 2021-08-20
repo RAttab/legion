@@ -186,7 +186,7 @@ struct vec64* chunk_list_filter(
     return ids;
 }
 
-void *chunk_get(struct chunk *chunk, id_t id)
+const void *chunk_get(struct chunk *chunk, id_t id)
 {
     return active_get(active_index(&chunk->active, id_item(id)), id);
 }
@@ -224,7 +224,7 @@ void chunk_step(struct chunk *chunk)
 
 bool chunk_io(
         struct chunk *chunk,
-        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
+        enum io io, id_t src, id_t dst, const word_t *args, size_t len)
 {
     if (!item_is_active(id_item(dst))) return false;
     struct active *active = active_index(&chunk->active, id_item(dst));
@@ -295,7 +295,7 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     switch (item)
     {
     case ITEM_WORKER: { return chunk->workers.count; }
-    case ITEM_SHUTTLE_1...ITEM_SHUTTLE_3: { return ring64_len(chunk->shuttles); }
+    case ITEM_BULLET: { return ring64_len(chunk->shuttles); }
 
     case ITEM_NATURAL_FIRST...ITEM_SYNTH_FIRST: {
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
@@ -331,7 +331,7 @@ void chunk_lanes_arrive(
         chunk_create_from(chunk, item, data, len);
         break;
     }
-    case ITEM_SHUTTLE_1...ITEM_SHUTTLE_3: {
+    case ITEM_BULLET: {
         assert(len == 1);
         assert(data[0] > 0 && data[0] <= UINT8_MAX);
         uint64_t value = (((uint64_t) item) << 8) | data[0];

@@ -4,7 +4,7 @@
 */
 
 #include "game/active.h"
-#include "game/items/items.h"
+#include "items/config.h"
 
 
 // -----------------------------------------------------------------------------
@@ -22,6 +22,7 @@ void active_list_save(active_list_t *list, struct save *save)
     for (size_t i = 0; i < array_len(*list); ++i)
         active_save((*list)[i], save);
 }
+
 
 // -----------------------------------------------------------------------------
 // active
@@ -41,9 +42,9 @@ legion_packed struct active
     struct ports *ports;
     uint64_t free;
 
-    step_fn_t step;
-    io_fn_t io;
-    const struct active_config *config;
+    im_gm_step_t step;
+    im_gm_io_t io;
+    legion_pad(8);
 };
 
 static_assert(sizeof(struct active) == s_cache_line);
@@ -51,15 +52,14 @@ static_assert(sizeof(struct active) == s_cache_line);
 
 struct active *active_alloc(enum item type)
 {
-    const struct active_config *config = active_config(type);
+    const struct im_config *config = im_config_assert(type);
 
     struct active *active = calloc(1, sizeof(*active));
     *active = (struct active) {
         .type = type,
         .size = config->size,
-        .step = config->step,
-        .io = config->io,
-        .config = config,
+        .step = config->gm.step,
+        .io = config->gm.io,
     };
 
     return active;
@@ -146,9 +146,12 @@ struct active *active_load(enum item type, struct chunk *chunk, struct save *sav
     if (active->cap < 64) save_read_into(save, &active->free);
     else active->free = (uintptr_t) save_read_vec64(save);
 
-    for (size_t i = 0; i < len; ++i) {
-        if (!active->config->load || active_deleted(active, i)) continue;
-        active->config->load(active->arena + (i * active->size), chunk);
+    const struct im_config *config = im_config_assert(active->type);
+    if (config->gm.load) {
+        for (size_t i = 0; i < len; ++i) {
+            if (active_deleted(active, i)) continue;
+            config->gm.load(active->arena + (i * active->size), chunk);
+        }
     }
 
     return active;
@@ -265,7 +268,8 @@ void active_create(struct active *active)
 void active_create_from(
         struct active *active, struct chunk *chunk, const word_t *data, size_t len)
 {
-    assert(active->config->make);
+    const struct im_config *config = im_config_assert(active->type);
+    assert(config->gm.make);
 
     size_t index = 0;
     if (!active_recycle(active, &index)) {
@@ -276,7 +280,8 @@ void active_create_from(
 
     id_t id = make_id(active->type, index+1);
     void *item = active->arena + (index * active->size);
-    active->config->make(item, id, chunk, data, len);
+
+    config->gm.make(item, chunk, id, data, len);
     active->count++;
 }
 
@@ -301,8 +306,9 @@ void active_step(struct active *active, struct chunk *chunk)
 
         id_t id = make_id(active->type, index+1);
         void *item = active->arena + (index * active->size);
+        const struct im_config *config = im_config_assert(active->type);
 
-        active->config->init(item, id, chunk);
+        config->gm.init(item, chunk, id);
         active->create--;
         active->count++;
     }
@@ -310,45 +316,11 @@ void active_step(struct active *active, struct chunk *chunk)
 
 bool active_io(
         struct active *active, struct chunk *chunk,
-        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args)
+        enum io io, id_t src, id_t dst, size_t len, const word_t *args)
 {
     void *state = active_get(active, dst);
     if (!state) return false;
 
-    active->io(state, chunk, io, src, len, args);
+    active->io(state, chunk, io, src, args, len);
     return true;
-}
-
-
-
-// -----------------------------------------------------------------------------
-// config
-// -----------------------------------------------------------------------------
-
-#include "game/items/brain.c"
-#include "game/items/db.c"
-#include "game/items/deploy.c"
-#include "game/items/extract.c"
-#include "game/items/legion.c"
-#include "game/items/printer.c"
-#include "game/items/storage.c"
-#include "game/items/scanner.c"
-#include "game/items/research.c"
-
-
-const struct active_config *active_config(enum item item)
-{
-    switch (item)
-    {
-    case ITEM_DEPLOY:                       return deploy_config(item);
-    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:   return extract_config(item);
-    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:  return printer_config(item);
-    case ITEM_STORAGE:                      return storage_config(item);
-    case ITEM_SCANNER_1...ITEM_SCANNER_3:   return scanner_config(item);
-    case ITEM_RESEARCH:                     return research_config(item);
-    case ITEM_DB_1...ITEM_DB_3:             return db_config(item);
-    case ITEM_BRAIN_1...ITEM_BRAIN_3:       return brain_config(item);
-    case ITEM_LEGION_1...ITEM_LEGION_3:     return legion_config(item);
-    default: { assert(false); }
-    }
 }

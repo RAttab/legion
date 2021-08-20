@@ -3,14 +3,19 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/io.h"
-#include "game/item.h"
+#include "items/io.h"
+#include "items/item.h"
 #include "game/chunk.h"
 #include "game/coord.h"
-#include "game/items/items.h"
 #include "render/ui.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
+
+#include "items/deploy/deploy.h"
+#include "items/extract/extract.h"
+#include "items/printer/printer.h"
+#include "items/research/research.h"
+#include "items/storage/storage.h"
 
 // -----------------------------------------------------------------------------
 // types
@@ -161,7 +166,9 @@ static bool factory_make_box(
     {
 
     case ITEM_DEPLOY: {
-        struct deploy *deploy = chunk_get(chunk, id);
+        const struct im_deploy *deploy = chunk_get(chunk, id);
+        assert(deploy);
+
         if (!deploy->item) return false;
         *box = (struct box) {
             .id = deploy->id,
@@ -173,7 +180,9 @@ static bool factory_make_box(
     }
 
     case ITEM_STORAGE: {
-        struct storage *storage = chunk_get(chunk, id);
+        const struct im_storage *storage = chunk_get(chunk, id);
+        assert(storage);
+
         if (!storage->item) return false;
         *box = (struct box) {
             .id = storage->id,
@@ -186,7 +195,9 @@ static bool factory_make_box(
 
 
     case ITEM_EXTRACT_1...ITEM_EXTRACT_3: {
-        struct extract *extract = chunk_get(chunk, id);
+        const struct im_extract *extract = chunk_get(chunk, id);
+        assert(extract);
+
         if (!extract->tape) return false;
 
         *box = (struct box) {
@@ -210,7 +221,9 @@ static bool factory_make_box(
     }
 
     case ITEM_PRINTER_1...ITEM_ASSEMBLY_3: {
-        struct printer *printer = chunk_get(chunk, id);
+        const struct im_printer *printer = chunk_get(chunk, id);
+        assert(printer);
+
         if (!printer->tape) return false;
 
         *box = (struct box) {
@@ -234,12 +247,14 @@ static bool factory_make_box(
     }
 
     case ITEM_RESEARCH: {
-        struct research *research = chunk_get(chunk, id);
+        const struct im_research *research = chunk_get(chunk, id);
+        assert(research);
+
         if (!research->item) return false;
         *box = (struct box) {
             .id = research->id,
             .target = research->item,
-            .in = research->state == research_waiting ? research->item : 0,
+            .in = research->state == im_research_waiting ? research->item : 0,
         };
         break;
     }

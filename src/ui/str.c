@@ -6,8 +6,9 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
+#include "game/id.h"
+#include "items/item.h"
 #include "utils/str.h"
-#include "game/item.h"
 
 #include <stdarg.h>
 

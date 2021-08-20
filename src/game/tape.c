@@ -260,7 +260,7 @@ static void tapes_load_file(const char *path, struct atoms *atoms)
 void tapes_populate(void)
 {
     struct atoms *atoms = atoms_new();
-    atoms_register_game(atoms);
+    im_populate_atoms(atoms);
 
     char path[PATH_MAX] = {0};
     core_path_res("tapes", path, sizeof(path));

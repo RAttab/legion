@@ -7,7 +7,7 @@
 #include "render/ui.h"
 #include "ui/ui.h"
 #include "game/chunk.h"
-#include "game/item.h"
+#include "items/item.h"
 #include "utils/vec.h"
 
 

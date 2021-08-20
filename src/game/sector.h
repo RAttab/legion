@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "game/save.h"
-#include "game/item.h"
+#include "items/item.h"
 #include "game/coord.h"
 #include "vm/vm.h"
 #include "utils/htable.h"
@@ -38,6 +38,12 @@ static_assert(sizeof(struct star) == 4 * 8 + 2);
 void star_gen(struct star *, struct coord);
 bool star_load(struct star *, struct save *);
 void star_save(struct star *, struct save *);
+
+inline uint16_t star_elem(struct star *star, enum item item)
+{
+    assert(item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST);
+    return star->elems[item - ITEM_NATURAL_FIRST];
+}
 
 // -----------------------------------------------------------------------------
 // sector

@@ -6,44 +6,11 @@
 #pragma once
 
 #include "common.h"
-#include "game/item.h"
+#include "items/io.h"
+#include "items/item.h"
 #include "game/world.h"
 
 struct chunk;
-
-
-// -----------------------------------------------------------------------------
-// active_config
-// -----------------------------------------------------------------------------
-
-typedef void (*init_fn_t) (void *state, id_t id, struct chunk *);
-typedef void (*step_fn_t) (void *state, struct chunk *);
-typedef void (*load_fn_t) (void *state, struct chunk *);
-typedef void (*make_fn_t) (
-        void *state, id_t id, struct chunk *, const word_t *data, size_t len);
-typedef void (*io_fn_t) (
-        void *state, struct chunk *,
-        enum atom_io io, id_t src, size_t len, const word_t *args);
-
-struct active_config
-{
-    size_t size;
-
-    init_fn_t init;
-    step_fn_t step;
-    load_fn_t load;
-    make_fn_t make;
-    io_fn_t io;
-
-    size_t travel;
-
-    size_t io_list_len;
-    const word_t *io_list;
-};
-
-enum { item_state_len_max = s_cache_line * 4 };
-
-const struct active_config *active_config(enum item);
 
 
 // -----------------------------------------------------------------------------
@@ -92,7 +59,7 @@ void active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
-        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args);
+        enum io io, id_t src, id_t dst, size_t len, const word_t *args);
 
 
 // -----------------------------------------------------------------------------

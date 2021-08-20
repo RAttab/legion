@@ -4,8 +4,8 @@
 */
 
 #include "game/lanes.h"
-#include "game/item.h"
-#include "game/active.h"
+#include "items/item.h"
+#include "items/config.h"
 #include "utils/hset.h"
 
 // -----------------------------------------------------------------------------
@@ -278,7 +278,7 @@ void lanes_save(struct lanes *lanes, struct save *save)
 
 world_ts_delta_t lanes_travel(enum item type, struct coord src, struct coord dst)
 {
-    const struct active_config *config = active_config(type);
+    const struct im_config *config = im_config_assert(type);
     if (!config->travel) return -1;
 
     return coord_dist(src, dst) / config->travel;

@@ -5,11 +5,13 @@
 
 #pragma once
 
+#include "common.h"
+
 // -----------------------------------------------------------------------------
 // item
 // -----------------------------------------------------------------------------
 
-enum item
+enum legion_packed item
 {
     ITEM_NIL = 0x00,
 
@@ -48,7 +50,7 @@ enum item
     ITEM_ELEM_X = 0x18,
     ITEM_ELEM_Y = 0x19,
     ITEM_ELEM_Z = 0x1A,
-    ITEM_ELEM_LAST,
+    ITEM_SYNTH_LAST,
 
 
     // -------------------------------------------------------------------------
@@ -57,18 +59,21 @@ enum item
 
     ITEM_PASSIVE_FIRST = 0x20,
 
-    ITEM_FRAME         = 0x20,
-    ITEM_LOGIC         = 0x21,
-    ITEM_NEURON        = 0x22,
-    ITEM_BOND          = 0x23,
-    ITEM_MAGNET        = 0x24,
-    ITEM_NUCLEAR       = 0x25,
-    ITEM_ROBOTICS      = 0x26,
-    ITEM_CORE          = 0x27,
-    ITEM_CAPACITOR     = 0x28,
-    ITEM_MATRIX        = 0x29,
-    ITEM_MAGNET_FIELD  = 0x2A,
-    ITEM_HULL          = 0x2B,
+    ITEM_FRAME      = ITEM_PASSIVE_FIRST + 0x01,
+    ITEM_GEAR       = ITEM_PASSIVE_FIRST + 0x02,
+    ITEM_FUEL       = ITEM_PASSIVE_FIRST + 0x03,
+    ITEM_BONDING    = ITEM_PASSIVE_FIRST + 0x04,
+    ITEM_CIRCUIT    = ITEM_PASSIVE_FIRST + 0x06,
+    ITEM_NEURAL     = ITEM_PASSIVE_FIRST + 0x07,
+    ITEM_SERVO      = ITEM_PASSIVE_FIRST + 0x10,
+    ITEM_THRUSTER   = ITEM_PASSIVE_FIRST + 0x11,
+    ITEM_PROPULSION = ITEM_PASSIVE_FIRST + 0x12,
+    ITEM_PLATE      = ITEM_PASSIVE_FIRST + 0x13,
+    ITEM_SHIELDING  = ITEM_PASSIVE_FIRST + 0x14,
+    ITEM_HULL_1     = ITEM_PASSIVE_FIRST + 0x1A,
+    ITEM_CORE       = ITEM_PASSIVE_FIRST + 0x20,
+    ITEM_MATRIX     = ITEM_PASSIVE_FIRST + 0x21,
+    ITEM_DATABANK   = ITEM_PASSIVE_FIRST + 0x22,
 
     ITEM_PASSIVE_LAST,
 
@@ -79,24 +84,30 @@ enum item
 
     ITEM_ACTIVE_FIRST = 0x80,
 
-    ITEM_DEPLOY   = 0x80,
-    ITEM_EXTRACT  = 0x81,
-    ITEM_PRINTER  = 0x82,
-    ITEM_ASSEMBLY = 0x83,
-    ITEM_BRAIN    = 0x84,
-    ITEM_MEMORY   = 0x85,
-    ITEM_SCANNER  = 0x86,
-    ITEM_LEGION   = 0x87,
-    ITEM_LAB      = 0x88,
-
-    ITEM_CODENSER    = 0x90,
-    ITEM_COLIDER     = 0x91,
-    ITEM_PORT        = 0x92,
-    ITEM_SOLAR       = 0x93,
-    ITEM_CAPACITOR   = 0x94,
-    ITEM_TRANSMIT    = 0x95,
-    ITEM_RECEIVE     = 0x96,
-    ITEM_AUTO_DEPLOY = 0x97,
+    ITEM_DEPLOY     = ITEM_ACTIVE_FIRST + 0x00,
+    ITEM_EXTRACT_1  = ITEM_ACTIVE_FIRST + 0x01,
+    ITEM_EXTRACT_2  = ITEM_ACTIVE_FIRST + 0x02,
+    ITEM_EXTRACT_3  = ITEM_ACTIVE_FIRST + 0x03,
+    ITEM_PRINTER_1  = ITEM_ACTIVE_FIRST + 0x04,
+    ITEM_PRINTER_2  = ITEM_ACTIVE_FIRST + 0x05,
+    ITEM_PRINTER_3  = ITEM_ACTIVE_FIRST + 0x06,
+    ITEM_ASSEMBLY_1 = ITEM_ACTIVE_FIRST + 0x07,
+    ITEM_ASSEMBLY_2 = ITEM_ACTIVE_FIRST + 0x08,
+    ITEM_ASSEMBLY_3 = ITEM_ACTIVE_FIRST + 0x09,
+    ITEM_STORAGE    = ITEM_ACTIVE_FIRST + 0x0A,
+    ITEM_SCANNER_1  = ITEM_ACTIVE_FIRST + 0x0B,
+    ITEM_SCANNER_2  = ITEM_ACTIVE_FIRST + 0x0C,
+    ITEM_SCANNER_3  = ITEM_ACTIVE_FIRST + 0x0D,
+    ITEM_RESEARCH   = ITEM_ACTIVE_FIRST + 0x0F,
+    ITEM_DB_1       = ITEM_ACTIVE_FIRST + 0x10,
+    ITEM_DB_2       = ITEM_ACTIVE_FIRST + 0x11,
+    ITEM_DB_3       = ITEM_ACTIVE_FIRST + 0x12,
+    ITEM_BRAIN_1    = ITEM_ACTIVE_FIRST + 0x13,
+    ITEM_BRAIN_2    = ITEM_ACTIVE_FIRST + 0x14,
+    ITEM_BRAIN_3    = ITEM_ACTIVE_FIRST + 0x15,
+    ITEM_LEGION_1   = ITEM_ACTIVE_FIRST + 0x16,
+    ITEM_LEGION_2   = ITEM_ACTIVE_FIRST + 0x17,
+    ITEM_LEGION_3   = ITEM_ACTIVE_FIRST + 0x18,
 
     ITEM_ACTIVE_LAST,
 
@@ -106,8 +117,8 @@ enum item
     // -------------------------------------------------------------------------
 
     ITEM_LOGISTICS_FIRST = 0xF0,
-    ITEM_WORKER          = 0xF0,
-    ITEM_BULLET          = 0xF1,
+    ITEM_WORKER          = ITEM_LOGISTICS_FIRST + 0x00,
+    ITEM_BULLET          = ITEM_LOGISTICS_FIRST + 0x01,
     ITEM_LOGISTICS_LAST,
 
 
@@ -115,6 +126,10 @@ enum item
 };
 
 static_assert(sizeof(enum item) == 1);
+static_assert(ITEM_NATURAL_LAST <= ITEM_SYNTH_FIRST);
+static_assert(ITEM_SYNTH_LAST   <= ITEM_PASSIVE_FIRST);
+static_assert(ITEM_PASSIVE_LAST <= ITEM_ACTIVE_FIRST);
+static_assert(ITEM_ACTIVE_LAST  <= ITEM_LOGISTICS_FIRST);
 
 
 // -----------------------------------------------------------------------------
@@ -123,8 +138,8 @@ static_assert(sizeof(enum item) == 1);
 
 enum
 {
-    ITEMS_NATURAL_LEN   = ITEM_SYNTH_FIRST    - ITEM_NATURAL_FIRST,
-    ITEMS_SYNTH_LEN     = ITEM_ELEM_LAST      - ITEM_SYNTH_FIRST,
+    ITEMS_NATURAL_LEN   = ITEM_NATURAL_LAST   - ITEM_NATURAL_FIRST,
+    ITEMS_SYNTH_LEN     = ITEM_SYNTH_LAST     - ITEM_SYNTH_FIRST,
     ITEMS_PASSIVE_LEN   = ITEM_PASSIVE_LAST   - ITEM_PASSIVE_FIRST,
     ITEMS_ACTIVE_LEN    = ITEM_ACTIVE_LAST    - ITEM_ACTIVE_FIRST,
     ITEMS_LOGISTICS_LEN = ITEM_LOGISTICS_LAST - ITEM_LOGISTICS_FIRST,
@@ -149,16 +164,5 @@ inline bool item_is_logistics(enum item item)
 
 enum { item_str_len = 16 };
 
-inline size_t item_str(enum item item, char *dst, size_t len)
-{
-    const struct im_config *config = im_config(item);
-    size_t len = legion_min(len-1, config->str_len);
-    memcpy(dst, im_config(item)->str, len);
-    dst[len] = 0;
-    return len;
-}
-
-inline const char *item_str_c(enum item item)
-{
-    return im_config(item)->str;
-}
+size_t item_str(enum item item, char *dst, size_t len);
+const char *item_str_c(enum item item);

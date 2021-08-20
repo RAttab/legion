@@ -30,7 +30,7 @@ static struct ui_io_arg ui_io_arg(struct font *font, const char *arg)
 
 struct ui_io_cmd
 {
-    enum atom_io id;
+    enum io id;
     bool active;
 
     struct ui_label name;
@@ -40,7 +40,7 @@ struct ui_io_cmd
 };
 
 static struct ui_io_cmd ui_io_cmd(
-        struct font *font, enum atom_io id, size_t args)
+        struct font *font, enum io id, size_t args)
 {
     struct ui_io_cmd cmd = {
         .id = id,
@@ -61,13 +61,13 @@ static struct ui_io_cmd ui_io_cmd(
     return cmd;
 }
 
-static struct ui_io_cmd ui_io_cmd0(struct font *font, enum atom_io id)
+static struct ui_io_cmd ui_io_cmd0(struct font *font, enum io id)
 {
     return ui_io_cmd(font, id, 0);
 }
 
 static struct ui_io_cmd ui_io_cmd1(
-        struct font *font, enum atom_io id, const char *arg)
+        struct font *font, enum io id, const char *arg)
 {
     struct ui_io_cmd cmd = ui_io_cmd(font, id, 1);
     cmd.arg[0] = ui_io_arg(font, arg);
@@ -75,7 +75,7 @@ static struct ui_io_cmd ui_io_cmd1(
 }
 
 static struct ui_io_cmd ui_io_cmd2(
-        struct font *font, enum atom_io id, const char *arg0, const char *arg1)
+        struct font *font, enum io id, const char *arg0, const char *arg1)
 {
     struct ui_io_cmd cmd = ui_io_cmd(font, id, 2);
     cmd.arg[0] = ui_io_arg(font, arg0);
@@ -186,7 +186,7 @@ static void ui_io_update(struct ui_io *ui)
 {
     ui_str_set_id(&ui->target_val.str, ui->id);
 
-    const struct active_config *config = active_config(id_item(ui->id));
+    const struct im_config *config = im_config_assert(id_item(ui->id));
     ui->list = config->io_list;
     ui->list_len = config->io_list_len;
 
@@ -266,7 +266,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
         if (ui_input_get_u64(&cmd->arg[i].val, &val)) args[i] = val;
     }
 
-    bool ok = chunk_io(chunk, cmd->id, 0, ui->id, cmd->args, args);
+    bool ok = chunk_io(chunk, cmd->id, 0, ui->id, args, cmd->args);
     assert(ok);
 
     core_push_event(EV_STATE_UPDATE, 0, 0);

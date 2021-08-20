@@ -7,8 +7,8 @@
 
 #include "common.h"
 #include "game/save.h"
-#include "game/item.h"
-#include "game/io.h"
+#include "items/item.h"
+#include "items/io.h"
 #include "vm/vm.h"
 
 struct star;
@@ -35,7 +35,7 @@ bool chunk_harvest(struct chunk *, enum item item);
 
 struct vec64 *chunk_list(struct chunk *);
 struct vec64 *chunk_list_filter(struct chunk *, const enum item *filter, size_t len);
-void *chunk_get(struct chunk *, id_t);
+const void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 void chunk_delete(struct chunk *, id_t id);
 void chunk_create(struct chunk *, enum item);
@@ -43,8 +43,7 @@ void chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len
 
 void chunk_step(struct chunk *);
 bool chunk_io(
-        struct chunk *,
-        enum atom_io io, id_t src, id_t dst, size_t len, const word_t *args);
+        struct chunk *, enum io io, id_t src, id_t dst, const word_t *args, size_t len);
 
 uint64_t chunk_known(struct chunk *, enum item);
 uint64_t chunk_known_bits(struct chunk *, enum item);

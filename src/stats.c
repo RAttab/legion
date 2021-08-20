@@ -5,7 +5,10 @@
 
 #include "common.h"
 #include "vm/atoms.h"
-#include "game/item.h"
+#include "items/item.h"
+
+#include "items/config.h"
+
 #include "game/tape.h"
 
 // -----------------------------------------------------------------------------
@@ -17,10 +20,11 @@ int stats_run(int argc, char **argv)
     (void) argc, (void) argv;
 
     tapes_populate();
+    im_populate();
 
     struct symbol sym = {0};
     struct atoms *atoms = atoms_new();
-    atoms_register_game(atoms);
+    im_populate_atoms(atoms);
 
     for (enum item id = 0; id < ITEM_MAX; ++id) {
         const struct tape_stats *stats = tapes_stats(id);

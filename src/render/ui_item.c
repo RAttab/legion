@@ -7,69 +7,25 @@
 #include "render/ui.h"
 #include "ui/ui.h"
 #include "game/chunk.h"
-#include "game/active.h"
-#include "game/items/items.h"
-
-
-// -----------------------------------------------------------------------------
-// global
-// -----------------------------------------------------------------------------
-
-static struct font *ui_item_font(void) { return font_mono6; }
-
-#include "render/items/ui_tape.c"
-#include "render/items/ui_deploy.c"
-#include "render/items/ui_extract.c"
-#include "render/items/ui_printer.c"
-#include "render/items/ui_storage.c"
-#include "render/items/ui_scanner.c"
-#include "render/items/ui_research.c"
-#include "render/items/ui_brain.c"
-#include "render/items/ui_db.c"
-#include "render/items/ui_legion.c"
-
+#include "items/config.h"
 
 // -----------------------------------------------------------------------------
 // core
 // -----------------------------------------------------------------------------
 
-union ui_item_state
-{
-    struct deploy deploy;
-    struct extract extract;
-    struct printer printer;
-    struct storage storage;
-    struct scanner scanner;
-    struct research research;
-    struct brain brain;
-    struct db db;
-    struct legion legion;
-
-    // Some item have flexible sizes so we need to ensure enough room for all of
-    // em.
-    uint8_t _cap[item_state_len_max];
-};
+static struct font *ui_item_font(void) { return font_mono6; }
 
 struct ui_item
 {
     id_t id;
     struct coord star;
-    union ui_item_state state;
 
     struct ui_panel panel;
     struct ui_button io;
     struct ui_label id_lbl;
     struct ui_link id_val;
 
-    struct ui_deploy deploy;
-    struct ui_extract extract;
-    struct ui_printer printer;
-    struct ui_storage storage;
-    struct ui_scanner scanner;
-    struct ui_research research;
-    struct ui_brain brain;
-    struct ui_db db;
-    struct ui_legion legion;
+    void *states[ITEMS_ACTIVE_LEN];
 };
 
 struct ui_item *ui_item_new(void)
@@ -91,18 +47,13 @@ struct ui_item *ui_item_new(void)
     };
 
     ui->io.w.dim.w = ui_layout_inf;
-
-    ui_deploy_init(&ui->deploy);
-    ui_extract_init(&ui->extract);
-    ui_printer_init(&ui->printer);
-    ui_storage_init(&ui->storage);
-    ui_scanner_init(&ui->scanner);
-    ui_research_init(&ui->research);
-    ui_brain_init(&ui->brain);
-    ui_db_init(&ui->db);
-    ui_legion_init(&ui->legion);
-
     ui->panel.state = ui_panel_hidden;
+
+    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
+        const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
+        if (config) ui->states[i] = config->ui.alloc(font);
+    }
+
     return ui;
 }
 
@@ -112,21 +63,25 @@ void ui_item_free(struct ui_item *ui)
     ui_button_free(&ui->io);
     ui_label_free(&ui->id_lbl);
     ui_link_free(&ui->id_val);
-    ui_deploy_free(&ui->deploy);
-    ui_extract_free(&ui->extract);
-    ui_printer_free(&ui->printer);
-    ui_storage_free(&ui->storage);
-    ui_scanner_free(&ui->scanner);
-    ui_research_free(&ui->research);
-    ui_brain_free(&ui->brain);
-    ui_db_free(&ui->db);
-    ui_legion_free(&ui->legion);
+
+    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
+        const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
+        if (config) config->ui.free(ui->states[i]);
+    }
+
     free(ui);
 }
 
 int16_t ui_item_width(struct ui_item *ui)
 {
     return ui->panel.w.dim.w;
+}
+
+static void *ui_item_state(struct ui_item *ui, id_t id)
+{
+    void *state =  ui->states[id_item(id) - ITEM_ACTIVE_FIRST];
+    assert(state);
+    return state;
 }
 
 static void ui_item_update(struct ui_item *ui)
@@ -138,34 +93,10 @@ static void ui_item_update(struct ui_item *ui)
     struct chunk *chunk = world_chunk(core.state.world, ui->star);
     assert(chunk);
 
-    bool ok = chunk_copy(chunk, ui->id, &ui->state, sizeof(ui->state));
-    if (!ok) { // item was deleted so close the panel
-        core_push_event(EV_ITEM_CLEAR, 0, 0);
-        return;
-    }
+    void *state = ui_item_state(ui, ui->id);
+    const struct im_config *config = im_config_assert(id_item(ui->id));
 
-    switch(id_item(ui->id))
-    {
-    case ITEM_DEPLOY:
-        return ui_deploy_update(&ui->deploy, &ui->state.deploy);
-    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
-        return ui_extract_update(&ui->extract, &ui->state.extract);
-    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
-        return ui_printer_update(&ui->printer, &ui->state.printer);
-    case ITEM_STORAGE:
-        return ui_storage_update(&ui->storage, &ui->state.storage);
-    case ITEM_SCANNER_1...ITEM_SCANNER_3:
-        return ui_scanner_update(&ui->scanner, &ui->state.scanner);
-    case ITEM_RESEARCH:
-        return ui_research_update(&ui->research, &ui->state.research, chunk);
-    case ITEM_BRAIN_1...ITEM_BRAIN_3:
-        return ui_brain_update(&ui->brain, &ui->state.brain);
-    case ITEM_DB_1...ITEM_DB_3:
-        return ui_db_update(&ui->db, &ui->state.db);
-    case ITEM_LEGION_1...ITEM_LEGION_3:
-        return ui_legion_update(&ui->legion, &ui->state.legion);
-    default: { assert(false && "unsuported type in ui update"); }
-    }
+    config->ui.update(state, chunk, ui->id);
 }
 
 static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
@@ -242,31 +173,11 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
         return true;
     }
 
-    bool done = false;
-    switch(id_item(ui->id))
-    {
-    case ITEM_DEPLOY:
-        { done = ui_deploy_event(&ui->deploy, &ui->state.deploy, ev); break; }
-    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
-        { done = ui_extract_event(&ui->extract, &ui->state.extract, ev); break; }
-    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
-        { done = ui_printer_event(&ui->printer, &ui->state.printer, ev); break; }
-    case ITEM_STORAGE:
-        { done = ui_storage_event(&ui->storage, &ui->state.storage, ev); break; }
-    case ITEM_SCANNER_1...ITEM_SCANNER_3:
-        { done = ui_scanner_event(&ui->scanner, &ui->state.scanner, ev); break; }
-    case ITEM_RESEARCH:
-        { done = ui_research_event(&ui->research, &ui->state.research, ev); break; }
-    case ITEM_BRAIN_1...ITEM_BRAIN_3:
-        { done = ui_brain_event(&ui->brain, &ui->state.brain, ev); break; }
-    case ITEM_DB_1...ITEM_DB_3:
-        { done = ui_db_event(&ui->db, &ui->state.db, ev); break; }
-    case ITEM_LEGION_1...ITEM_LEGION_3:
-        { done = ui_legion_event(&ui->legion, &ui->state.legion, ev); break; }
-    default: { assert(false && "unsuported type in ui update"); }
-    }
+    void *state = ui_item_state(ui, ui->id);
+    const struct im_config *config = im_config_assert(id_item(ui->id));
+    if (config->ui.event && config->ui.event(state, ev)) return true;
 
-    return done ? done : ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(&ui->panel, ev);
 }
 
 void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
@@ -287,26 +198,7 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     ui_layout_sep_y(&layout, font->glyph_h);
 
-    switch(id_item(ui->id))
-    {
-    case ITEM_DEPLOY:
-        return ui_deploy_render(&ui->deploy, &ui->state.deploy, &layout, renderer);
-    case ITEM_EXTRACT_1...ITEM_EXTRACT_3:
-        return ui_extract_render(&ui->extract, &ui->state.extract, &layout, renderer);
-    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3:
-        return ui_printer_render(&ui->printer, &ui->state.printer, &layout, renderer);
-    case ITEM_STORAGE:
-        return ui_storage_render(&ui->storage, &ui->state.storage, &layout, renderer);
-    case ITEM_SCANNER_1...ITEM_SCANNER_3:
-        return ui_scanner_render(&ui->scanner, &ui->state.scanner, &layout, renderer);
-    case ITEM_RESEARCH:
-        return ui_research_render(&ui->research, &ui->state.research, &layout, renderer);
-    case ITEM_BRAIN_1...ITEM_BRAIN_3:
-        return ui_brain_render(&ui->brain, &ui->state.brain, &layout, renderer);
-    case ITEM_DB_1...ITEM_DB_3:
-        return ui_db_render(&ui->db, &ui->state.db, &layout, renderer);
-    case ITEM_LEGION_1...ITEM_LEGION_3:
-        return ui_legion_render(&ui->legion, &ui->state.legion, &layout, renderer);
-    default: { assert(false && "unsuported type in ui update"); }
-    }
+    void *state = ui_item_state(ui, ui->id);
+    const struct im_config *config = im_config_assert(id_item(ui->id));
+    config->ui.render(state, &layout, renderer);
 }

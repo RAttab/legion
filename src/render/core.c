@@ -11,6 +11,7 @@
 #include "game/tape.h"
 #include "game/coord.h"
 #include "game/world.h"
+#include "items/config.h"
 #include "vm/mod.h"
 #include "utils/log.h"
 #include "utils/time.h"
@@ -190,6 +191,7 @@ void core_init()
 {
     mod_compiler_init();
     tapes_populate();
+    im_populate();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 

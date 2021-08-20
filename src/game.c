@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/item.c"
+#include "game/id.c"
 #include "game/coord.c"
 #include "game/lanes.c"
 #include "game/sector.c"
