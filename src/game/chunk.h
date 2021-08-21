@@ -46,12 +46,6 @@ void chunk_step(struct chunk *);
 bool chunk_io(
         struct chunk *, enum io io, id_t src, id_t dst, const word_t *args, size_t len);
 
-uint64_t chunk_known(struct chunk *, enum item);
-uint64_t chunk_known_bits(struct chunk *, enum item);
-struct tape_set chunk_known_list(struct chunk *);
-enum item chunk_learn(struct chunk *, uint64_t hash);
-void chunk_learn_bit(struct chunk *, enum item, uint64_t bit);
-
 ssize_t chunk_scan(struct chunk *, enum item);
 
 void chunk_lanes_launch(

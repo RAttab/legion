@@ -38,16 +38,19 @@ legion_packed enum io
     IO_DBG_BREAK  = IO_MIN + 0x15,
     IO_DBG_STEP   = IO_MIN + 0x16,
 
+    // Lab
+    IO_TAPE_AT    = IO_MIN + 0x20,
+    IO_TAPE_KNOWN = IO_MIN + 0x21,
+    IO_ITEM_BITS  = IO_MIN + 0x22,
+    IO_ITEM_KNOWN = IO_MIN + 0x23,
+
     // Misc
-    IO_GET       = IO_MIN + 0x20,
-    IO_SET       = IO_MIN + 0x22,
-    IO_VAL       = IO_MIN + 0x23,
-    IO_SCAN      = IO_MIN + 0x24,
-    IO_SCAN_VAL  = IO_MIN + 0x25,
-    IO_LAUNCH    = IO_MIN + 0x26,
-    IO_LEARN     = IO_MIN + 0x27,
-    IO_TAPE_DATA = IO_MIN + 0x28,
-    IO_TAPE_AT   = IO_MIN + 0x29,
+    IO_GET      = IO_MIN + 0x80,
+    IO_SET      = IO_MIN + 0x81,
+    IO_VAL      = IO_MIN + 0x82,
+    IO_SCAN     = IO_MIN + 0x83,
+    IO_SCAN_VAL = IO_MIN + 0x84,
+    IO_LAUNCH   = IO_MIN + 0x85,
 
     IO_MAX,
     IO_LEN = IO_MAX - IO_MIN,

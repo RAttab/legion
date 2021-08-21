@@ -34,7 +34,6 @@ struct tape_ret
 enum item tape_id(const struct tape *);
 size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
-uint8_t tape_bits(const struct tape *);
 struct tape_ret tape_at(const struct tape *, tape_it_t index);
 
 
@@ -89,45 +88,20 @@ inline tape_packed_t tape_packed_it_zero(tape_packed_t packed)
 struct tape_set { uint64_t s[4]; };
 static_assert(sizeof(struct tape_set) * 8 >= ITEM_MAX);
 
-inline bool tape_set_empty(const struct tape_set *set)
-{
-    for (size_t i = 0; i < array_len(set->s); ++i)
-        if (set->s[i]) return false;
-    return true;
-}
+size_t tape_set_len(const struct tape_set *);
+bool tape_set_empty(const struct tape_set *);
 
-inline bool tape_set_check(const struct tape_set *set, enum item item)
-{
-    return set->s[item / 64] & (1ULL << (item % 64));
-}
+bool tape_set_check(const struct tape_set *, enum item);
+void tape_set_put(struct tape_set *, enum item);
 
-inline void tape_set_put(struct tape_set *set, enum item item)
-{
-    set->s[item / 64] |= 1ULL << (item % 64);
-}
+struct tape_set tape_set_invert(struct tape_set *);
+enum item tape_set_next(const struct tape_set *, enum item);
 
-inline enum item tape_set_next(const struct tape_set *set, enum item first)
-{
-    uint64_t mask = (1ULL << ((first+1) % 64)) - 1;
-    for (size_t i = first / 64; i < array_len(set->s); ++i) {
-        uint64_t x = set->s[i] & ~mask;
-        if (x) return u64_ctz(x) + i * 64;
-        mask = 0;
-    }
-    return ITEM_NIL;
-}
+void tape_set_union(struct tape_set *, const struct tape_set *);
+size_t tape_set_intersect(const struct tape_set *, const struct tape_set *);
 
-inline void tape_set_union(struct tape_set *set, const struct tape_set *other)
-{
-    for (size_t i = 0; i < array_len(set->s); ++i)
-        set->s[i] |= other->s[i];
-}
-
-inline void tape_set_intersect(struct tape_set *set, const struct tape_set *other)
-{
-    for (size_t i = 0; i < array_len(set->s); ++i)
-        set->s[i] &= other->s[i];
-}
+void tape_set_save(const struct tape_set *, struct save *);
+bool tape_set_load(struct tape_set *, struct save *);
 
 
 // -----------------------------------------------------------------------------
@@ -137,10 +111,10 @@ inline void tape_set_intersect(struct tape_set *set, const struct tape_set *othe
 void tapes_populate(void);
 const struct tape *tapes_get(enum item id);
 
-struct tape_stats
+struct tape_info
 {
     size_t rank;
     struct tape_set reqs;
     uint16_t elems[ITEMS_NATURAL_LEN];
 };
-const struct tape_stats *tapes_stats(enum item id);
+const struct tape_info *tapes_info(enum item id);

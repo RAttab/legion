@@ -1,4 +1,4 @@
-/* research_ui.c
+/* lab_ui.c
    Rémi Attab (remi.attab@gmail.com), 05 Aug 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -7,10 +7,10 @@
 
 
 // -----------------------------------------------------------------------------
-// research
+// lab
 // -----------------------------------------------------------------------------
 
-struct ui_research
+struct ui_lab
 {
     uint8_t bits;
     uint64_t known;
@@ -24,11 +24,11 @@ struct ui_research
 };
 
 
-static void *ui_research_alloc(struct font *font)
+static void *ui_lab_alloc(struct font *font)
 {
-    struct ui_research *ui = calloc(1, sizeof(*ui));
+    struct ui_lab *ui = calloc(1, sizeof(*ui));
 
-    *ui = (struct ui_research) {
+    *ui = (struct ui_lab) {
         .margin = make_dim(5, 5),
         .font = font,
 
@@ -50,9 +50,9 @@ static void *ui_research_alloc(struct font *font)
 }
 
 
-static void ui_research_free(void *_ui)
+static void ui_lab_free(void *_ui)
 {
-    struct ui_research *ui = _ui;
+    struct ui_lab *ui = _ui;
 
     ui_label_free(&ui->item);
     ui_label_free(&ui->item_val);
@@ -71,37 +71,35 @@ static void ui_research_free(void *_ui)
 }
 
 
-static void ui_research_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
 {
-    struct ui_research *ui = _ui;
+    struct ui_lab *ui = _ui;
+    struct world *world = chunk_world(chunk);
 
-    const struct im_research *state = chunk_get(chunk, id);
+    const struct im_lab *state = chunk_get(chunk, id);
     assert(state);
 
     ui_str_set_item(&ui->item_val.str, state->item);
 
     if (state->item) {
-        const struct tape *tape = tapes_get(state->item);
-        assert(tape);
-
-        ui->bits = tape_bits(tape);
-        ui->known = chunk_known_bits(chunk, state->item);
+        ui->bits = im_config_assert(state->item)->lab_bits;
+        ui->known = world_lab_learned_bits(world, state->item);
     }
     else ui->bits = ui->known = 0;
 
     switch (state->state)
     {
-    case im_research_idle: {
+    case im_lab_idle: {
         ui_str_setc(&ui->state_val.str, "idle");
         ui->state_val.fg = rgba_gray(0x88);
         break;
     }
-    case im_research_waiting: {
+    case im_lab_waiting: {
         ui_str_setc(&ui->state_val.str, "waiting");
         ui->state_val.fg = rgba_blue();
         break;
     }
-    case im_research_working: {
+    case im_lab_working: {
         ui_str_setc(&ui->state_val.str, "working");
         ui->state_val.fg = rgba_green();
         break;
@@ -110,16 +108,16 @@ static void ui_research_update(void *_ui, struct chunk *chunk, id_t id)
     }
 
     ui_str_set_u64(&ui->work_left.str, state->work.left);
-    if (state->state != im_research_idle)
+    if (state->state != im_lab_idle)
         ui_str_set_u64(&ui->work_cap.str, state->work.cap);
     else ui_str_setc(&ui->work_cap.str, "inf");
 }
 
 
-static void ui_research_render(
+static void ui_lab_render(
         void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_research *ui = _ui;
+    struct ui_lab *ui = _ui;
 
     ui_label_render(&ui->item, layout, renderer);
     ui_label_render(&ui->item_val, layout, renderer);

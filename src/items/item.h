@@ -98,7 +98,7 @@ enum legion_packed item
     ITEM_SCANNER_1  = ITEM_ACTIVE_FIRST + 0x0B,
     ITEM_SCANNER_2  = ITEM_ACTIVE_FIRST + 0x0C,
     ITEM_SCANNER_3  = ITEM_ACTIVE_FIRST + 0x0D,
-    ITEM_RESEARCH   = ITEM_ACTIVE_FIRST + 0x0F,
+    ITEM_LAB        = ITEM_ACTIVE_FIRST + 0x0F,
     ITEM_DB_1       = ITEM_ACTIVE_FIRST + 0x10,
     ITEM_DB_2       = ITEM_ACTIVE_FIRST + 0x11,
     ITEM_DB_3       = ITEM_ACTIVE_FIRST + 0x12,
@@ -139,6 +139,7 @@ static_assert(ITEM_ACTIVE_LAST  <= ITEM_LOGISTICS_FIRST);
 typedef const enum item *im_list_t;
 extern im_list_t im_list_control;
 extern im_list_t im_list_factory;
+extern im_list_t im_list_t0;
 
 enum
 {

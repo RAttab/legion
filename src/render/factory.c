@@ -12,11 +12,6 @@
 #include "utils/vec.h"
 #include "utils/htable.h"
 
-#include "items/deploy/deploy.h"
-#include "items/extract/extract.h"
-#include "items/printer/printer.h"
-#include "items/research/research.h"
-#include "items/storage/storage.h"
 
 // -----------------------------------------------------------------------------
 // types
@@ -155,7 +150,7 @@ static bool factory_make_flow(
     
     if (!config->im.flow(state, flow)) return false;
 
-    size_t rank = tapes_stats(flow->target)->rank;
+    size_t rank = tapes_info(flow->target)->rank;
     if (id_item(flow->id) == ITEM_DEPLOY) rank++;
     flow->row = rank - 1;
 

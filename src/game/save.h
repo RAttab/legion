@@ -39,6 +39,8 @@ enum legion_packed save_magic
 
     save_magic_lanes = 0x40,
     save_magic_lane = 0x41,
+
+    save_magic_tape_set = 0x50,
 };
 
 static_assert(sizeof(enum save_magic) == 1);

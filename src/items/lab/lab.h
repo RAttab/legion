@@ -1,4 +1,4 @@
-/* research.h
+/* lab.h
    Rémi Attab (remi.attab@gmail.com), 20 Aug 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -14,27 +14,27 @@ struct im_config;
 
 
 // -----------------------------------------------------------------------------
-// research
+// lab
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_research_state
+enum legion_packed im_lab_state
 {
-    im_research_idle = 0,
-    im_research_waiting = 1,
-    im_research_working = 2,
+    im_lab_idle = 0,
+    im_lab_waiting = 1,
+    im_lab_working = 2,
 };
 
-struct legion_packed im_research
+struct legion_packed im_lab
 {
     id_t id;
 
     enum item item;
-    enum im_research_state state;
+    enum im_lab_state state;
     struct { uint8_t left; uint8_t cap; } work;
 
     struct rng rng;
 };
 
-static_assert(sizeof(struct im_research) == 16);
+static_assert(sizeof(struct im_lab) == 16);
 
-void im_research_config(struct im_config *);
+void im_lab_config(struct im_config *);

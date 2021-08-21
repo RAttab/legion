@@ -25,9 +25,6 @@ struct chunk
     struct star star;
     active_list_t active;
 
-    struct tape_set known;
-    struct htable research;
-
     // ports
     struct htable provided;
     struct ring32 *requested;
@@ -51,8 +48,6 @@ void chunk_free(struct chunk *chunk)
 {
     active_it_t it = active_next(&chunk->active, NULL);
     for (; it; it = active_next(&chunk->active, it)) active_free(*it);
-
-    htable_reset(&chunk->research);
 
     for (struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
@@ -79,10 +74,6 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     save_read_into(save, &chunk->workers.count);
     chunk->workers.ops = vec64_reserve(chunk->workers.count);
     chunk->shuttles = save_read_ring64(save);
-
-    for (size_t i = 0; i < array_len(chunk->known.s); ++i)
-        save_read_into(save, &chunk->known.s[i]);
-    if (!save_read_htable(save, &chunk->research)) goto fail;
 
     chunk->requested = save_read_ring32(save);
     size_t len = save_read_type(save, typeof(chunk->provided.len));
@@ -114,10 +105,6 @@ void chunk_save(struct chunk *chunk, struct save *save)
     star_save(&chunk->star, save);
     save_write_value(save, chunk->workers.count);
     save_write_ring64(save, chunk->shuttles);
-
-    for (size_t i = 0; i < array_len(chunk->known.s); ++i)
-        save_write_value(save, chunk->known.s[i]);
-    save_write_htable(save, &chunk->research);
 
     save_write_ring32(save, chunk->requested);
     save_write_value(save, chunk->provided.len);
@@ -228,60 +215,6 @@ bool chunk_io(
     if (!item_is_active(id_item(dst))) return false;
     struct active *active = active_index(&chunk->active, id_item(dst));
     return active_io(active, chunk, io, src, dst, len, args);
-}
-
-
-// -----------------------------------------------------------------------------
-// research
-// -----------------------------------------------------------------------------
-
-uint64_t chunk_known(struct chunk *chunk, enum item item)
-{
-    if (!tape_set_check(&chunk->known, item)) return 0;
-    return hash_u64(item);
-}
-
-uint64_t chunk_known_bits(struct chunk *chunk, enum item item)
-{
-    struct htable_ret ret = htable_get(&chunk->research, item);
-    return ret.ok ? ret.value : 0;
-}
-
-struct tape_set chunk_known_list(struct chunk *chunk)
-{
-    return chunk->known;
-}
-
-enum item chunk_learn(struct chunk *chunk, uint64_t hash)
-{
-    for (enum item item = ITEM_NIL; item < ITEM_MAX; ++item) {
-        if (hash_u64(item) != hash) continue;
-        tape_set_put(&chunk->known, item);
-        return item;
-    }
-    return ITEM_NIL;
-}
-
-void chunk_learn_bit(struct chunk *chunk, enum item item, uint64_t bit)
-{
-    if (tape_set_check(&chunk->known, item)) return;
-
-    struct htable_ret ret = htable_get(&chunk->research, item);
-    uint64_t current = ret.ok ? ret.value : 0;
-
-    uint8_t bits = tape_bits(tapes_get(item));
-    current |= 1ULL << (bit % bits);
-
-    const uint64_t done = (1ULL << bits) - 1;
-    if (current == done) {
-        tape_set_check(&chunk->known, item);
-        htable_del(&chunk->research, item);
-        return;
-    }
-
-    if (ret.ok) ret = htable_xchg(&chunk->research, item, current);
-    else ret = htable_put(&chunk->research, item, current);
-    assert(ret.ok);
 }
 
 

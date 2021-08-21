@@ -40,6 +40,10 @@ const struct star *world_star_in(struct world *, struct rect);
 const struct star *world_star_at(struct world *, struct coord);
 
 
+// -----------------------------------------------------------------------------
+// render
+// -----------------------------------------------------------------------------
+
 struct world_render_it
 {
     struct rect rect;
@@ -57,10 +61,20 @@ struct legion_packed world_scan_it
     uint64_t index;
 };
 
+
+// -----------------------------------------------------------------------------
+// scan
+// -----------------------------------------------------------------------------
+
 struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);
 
 ssize_t world_scan(struct world *, struct coord, enum item);
+
+
+// -----------------------------------------------------------------------------
+// lanes
+// -----------------------------------------------------------------------------
 
 const struct hset *world_lanes_list(struct world *, struct coord key);
 void world_lanes_launch(
@@ -73,3 +87,18 @@ void world_lanes_arrive(
         enum item type,
         struct coord dst,
         const word_t *data, size_t len);
+
+
+// -----------------------------------------------------------------------------
+// lab
+// -----------------------------------------------------------------------------
+
+bool world_lab_known(struct world *, enum item);
+struct tape_set world_lab_known_list(struct world *);
+
+void world_lab_learn(struct world *, enum item);
+bool world_lab_learned(struct world *, enum item);
+struct tape_set world_lab_learned_list(struct world *);
+
+uint64_t world_lab_learned_bits(struct world *, enum item);
+void world_lab_learn_bit(struct world *, enum item, uint8_t bit);

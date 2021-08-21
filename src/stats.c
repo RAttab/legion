@@ -27,21 +27,21 @@ int stats_run(int argc, char **argv)
     im_populate_atoms(atoms);
 
     for (enum item id = 0; id < ITEM_MAX; ++id) {
-        const struct tape_stats *stats = tapes_stats(id);
-        if (!stats) continue;
+        const struct tape_info *info = tapes_info(id);
+        if (!info) continue;
 
         atoms_str(atoms, id, &sym);
-        fprintf(stdout, "(%s\n  (rank %zu)", sym.c, stats->rank);
+        fprintf(stdout, "(%s\n  (rank %zu)", sym.c, info->rank);
 
         for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {
-            if (!stats->elems[i]) continue;
+            if (!info->elems[i]) continue;
 
             atoms_str(atoms, ITEM_NATURAL_FIRST + i, &sym);
-            fprintf(stdout, "\n  (%s %u)", sym.c, stats->elems[i]);
+            fprintf(stdout, "\n  (%s %u)", sym.c, info->elems[i]);
         }
 
-        for (enum item it = tape_set_next(&stats->reqs, 0);
-             it; it = tape_set_next(&stats->reqs, it))
+        for (enum item it = tape_set_next(&info->reqs, 0);
+             it; it = tape_set_next(&info->reqs, it))
         {
             atoms_str(atoms, it, &sym);
             fprintf(stdout, "\n  (req %s)", sym.c);
