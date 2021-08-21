@@ -60,18 +60,22 @@ void test_basics(void)
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
+        world_lanes_launch(world, item, dst, src, NULL, 0);
+        check_hset(world_lanes_list(world, src), coord_to_u64(dst));
+        check_hset(world_lanes_list(world, dst), coord_to_u64(src));
+
         world_ts_delta_t wait = lanes_travel(item, src, dst);
         for (world_ts_delta_t i = 0; i < wait; ++i) world_step(world);
 
         check_hset_nil(world_lanes_list(world, src));
         check_hset_nil(world_lanes_list(world, dst));
 
-        struct chunk *chunk = sector_chunk(sector, dst);
-        assert(chunk);
+        struct chunk *chunk_src = sector_chunk(sector, src);
+        struct chunk *chunk_dst = sector_chunk(sector, dst);
+        assert(chunk_src && chunk_dst);
 
-        ssize_t ret = chunk_scan(chunk, ITEM_BRAIN_1);
-        assert(ret >= 0);
-        assert((size_t) ret > iteration);
+        assert(chunk_scan(chunk_src, ITEM_BRAIN_1) > (ssize_t) iteration);
+        assert(chunk_scan(chunk_dst, ITEM_BRAIN_1) > (ssize_t) iteration);
     }
 }
 

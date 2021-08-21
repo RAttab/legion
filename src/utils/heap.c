@@ -42,9 +42,16 @@ heap_index_t heap_index(struct heap *heap, const void *ptr)
 
 static size_t heap_class(struct heap *heap, size_t size)
 {
-    size_t class = u64_ceil_div(size, 8);
+    assert(size);
+    size_t class = u64_ceil_div(size, 8) - 1;
     assert(class < array_len(heap->free));
     return class;
+}
+
+static size_t heap_class_len(struct heap *heap, size_t class)
+{
+    assert(class < array_len(heap->free));
+    return (class + 1) * 8;
 }
 
 static void heap_grow(struct heap *heap, size_t class)
@@ -69,14 +76,17 @@ static void heap_grow(struct heap *heap, size_t class)
         }
     }
 
-    heap_index_t *it = heap->data + heap->len;
+    size_t size = heap_class_len(heap, class);
+
+    void *it = heap->data + heap->len;
     heap->len += s_page_len;
-    const heap_index_t *end = heap->data + heap->len;
+    const void *end = heap->data + heap->len;
 
     heap->free[class] = heap_index(heap, it);
-    for (; it < end; it++) {
-        const heap_index_t *next = it + 1;
-        *it = next < end ? heap_index(heap, next) : heap_nil;
+    while (it < end) {
+        void *next = it + size;
+        *((heap_index_t *)it) = next < end ? heap_index(heap, next) : heap_nil;
+        it = next;
     }
 }
 
@@ -91,6 +101,8 @@ heap_index_t heap_new(struct heap *heap, size_t size)
     heap->free[class] = *((heap_index_t *) ptr);
     memset(ptr, 0, size);
 
+    assert(index < heap->len);
+    assert(index % 8 == 0);
     return index;
 }
 
