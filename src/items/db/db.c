@@ -42,9 +42,9 @@ void im_db_config(struct im_config *config)
     default: { assert(false); }
     }
 
-    config->gm.init = im_db_init;
-    config->gm.make = im_db_make;
-    config->gm.io = im_db_io;
+    config->im.init = im_db_init;
+    config->im.make = im_db_make;
+    config->im.io = im_db_io;
 
     config->ui.alloc = ui_db_alloc;
     config->ui.free = ui_db_free;

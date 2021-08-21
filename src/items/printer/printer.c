@@ -23,11 +23,11 @@ void im_printer_config(struct im_config *config)
 {
     config->size = sizeof(struct im_printer);
 
-    config->gm.init = im_printer_init;
-    config->gm.load = im_printer_load;
-    config->gm.step = im_printer_step;
-    config->gm.io = im_printer_io;
-    config->gm.flow = im_printer_flow;
+    config->im.init = im_printer_init;
+    config->im.load = im_printer_load;
+    config->im.step = im_printer_step;
+    config->im.io = im_printer_io;
+    config->im.flow = im_printer_flow;
 
     config->ui.alloc = ui_printer_alloc;
     config->ui.free = ui_printer_free;

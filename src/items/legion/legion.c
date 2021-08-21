@@ -24,9 +24,9 @@ void im_legion_config(struct im_config *config)
     config->size = sizeof(struct im_legion);
     config->travel = 100,
 
-    config->gm.init = im_legion_init;
-    config->gm.make = im_legion_make;
-    config->gm.io = im_legion_io;
+    config->im.init = im_legion_init;
+    config->im.make = im_legion_make;
+    config->im.io = im_legion_io;
 
     config->ui.alloc = ui_legion_alloc;
     config->ui.free = ui_legion_free;

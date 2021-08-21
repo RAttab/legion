@@ -23,9 +23,9 @@ void im_scanner_config(struct im_config *config)
 {
     config->size = sizeof(struct im_scanner);
 
-    config->gm.init = im_scanner_init;
-    config->gm.step = im_scanner_step;
-    config->gm.io = im_scanner_io;
+    config->im.init = im_scanner_init;
+    config->im.step = im_scanner_step;
+    config->im.io = im_scanner_io;
 
     config->ui.alloc = ui_scanner_alloc;
     config->ui.free = ui_scanner_free;

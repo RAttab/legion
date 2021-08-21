@@ -51,11 +51,11 @@ void im_brain_config(struct im_config *config)
     default: { assert(false); }
     }
 
-    config->gm.init = im_brain_init;
-    config->gm.make = im_brain_make;
-    config->gm.step = im_brain_step;
-    config->gm.load = im_brain_load;
-    config->gm.io = im_brain_io;
+    config->im.init = im_brain_init;
+    config->im.make = im_brain_make;
+    config->im.step = im_brain_step;
+    config->im.load = im_brain_load;
+    config->im.io = im_brain_io;
 
     config->ui.alloc = ui_brain_alloc;
     config->ui.free = ui_brain_free;

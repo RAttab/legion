@@ -23,11 +23,11 @@ void im_extract_config(struct im_config *config)
 {
     config->size = sizeof(struct im_extract);
 
-    config->gm.init = im_extract_init;
-    config->gm.load = im_extract_load;
-    config->gm.step = im_extract_step;
-    config->gm.io = im_extract_io;
-    config->gm.flow = im_extract_flow;
+    config->im.init = im_extract_init;
+    config->im.load = im_extract_load;
+    config->im.step = im_extract_step;
+    config->im.io = im_extract_io;
+    config->im.flow = im_extract_flow;
 
     config->ui.alloc = ui_extract_alloc;
     config->ui.free = ui_extract_free;

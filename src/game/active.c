@@ -42,8 +42,8 @@ legion_packed struct active
     struct ports *ports;
     uint64_t free;
 
-    im_gm_step_t step;
-    im_gm_io_t io;
+    im_step_t step;
+    im_io_t io;
     legion_pad(8);
 };
 
@@ -58,8 +58,8 @@ struct active *active_alloc(enum item type)
     *active = (struct active) {
         .type = type,
         .size = config->size,
-        .step = config->gm.step,
-        .io = config->gm.io,
+        .step = config->im.step,
+        .io = config->im.io,
     };
 
     return active;
@@ -147,10 +147,10 @@ struct active *active_load(enum item type, struct chunk *chunk, struct save *sav
     else active->free = (uintptr_t) save_read_vec64(save);
 
     const struct im_config *config = im_config_assert(active->type);
-    if (config->gm.load) {
+    if (config->im.load) {
         for (size_t i = 0; i < len; ++i) {
             if (active_deleted(active, i)) continue;
-            config->gm.load(active->arena + (i * active->size), chunk);
+            config->im.load(active->arena + (i * active->size), chunk);
         }
     }
 
@@ -269,7 +269,7 @@ void active_create_from(
         struct active *active, struct chunk *chunk, const word_t *data, size_t len)
 {
     const struct im_config *config = im_config_assert(active->type);
-    assert(config->gm.make);
+    assert(config->im.make);
 
     size_t index = 0;
     if (!active_recycle(active, &index)) {
@@ -281,7 +281,7 @@ void active_create_from(
     id_t id = make_id(active->type, index+1);
     void *item = active->arena + (index * active->size);
 
-    config->gm.make(item, chunk, id, data, len);
+    config->im.make(item, chunk, id, data, len);
     active->count++;
 }
 
@@ -308,7 +308,7 @@ void active_step(struct active *active, struct chunk *chunk)
         void *item = active->arena + (index * active->size);
         const struct im_config *config = im_config_assert(active->type);
 
-        config->gm.init(item, chunk, id);
+        config->im.init(item, chunk, id);
         active->create--;
         active->count++;
     }

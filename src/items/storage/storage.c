@@ -23,10 +23,10 @@ void im_storage_config(struct im_config *config)
 {
     config->size = sizeof(struct im_storage);
 
-    config->gm.init = im_storage_init;
-    config->gm.step = im_storage_step;
-    config->gm.io = im_storage_io;
-    config->gm.flow = im_storage_flow;
+    config->im.init = im_storage_init;
+    config->im.step = im_storage_step;
+    config->im.io = im_storage_io;
+    config->im.flow = im_storage_flow;
 
     config->ui.alloc = ui_storage_alloc;
     config->ui.free = ui_storage_free;
