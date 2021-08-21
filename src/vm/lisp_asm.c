@@ -21,9 +21,25 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
     struct token *token = lisp_next(lisp);
 
     word_t val = 0;
-    switch (token->type) {
+    switch (token->type)
+    {
+
     case token_number: { val = token->value.w; break; }
-    case token_atom: { val = atoms_atom(lisp->atoms, &token->value.s); break; }
+
+    case token_atom: {
+        val = atoms_get(lisp->atoms, &token->value.s);
+        if (!val) {
+            lisp_err(lisp, "unregistered atom '%s'", token->value.s.c);
+            return;
+        }
+        break;
+    }
+
+    case token_atom_make: {
+        val = atoms_make(lisp->atoms, &token->value.s);
+        break;
+    }
+
     default: {
         lisp_err(lisp, "unexpected token: %s != %s | %s",
                 token_type_str(token->type),

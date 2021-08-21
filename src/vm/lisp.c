@@ -208,7 +208,7 @@ static void lisp_ensure(struct lisp *lisp, size_t len)
     lisp->out.it = lisp->out.base + pos;
 }
 
-static void lisp_write(struct lisp *lisp, size_t len, const void *data)
+static void lisp_write(struct lisp *lisp, const void *data, size_t len)
 {
     lisp_ensure(lisp, len);
     memcpy(lisp->out.it, data, len);
@@ -218,28 +218,28 @@ static void lisp_write(struct lisp *lisp, size_t len, const void *data)
 // `sizeof(enum op_code) != sizeof(OP_XXX)` so gotta do it manually.
 static void lisp_write_op(struct lisp *lisp, enum op_code op)
 {
-    lisp_write(lisp, sizeof(op), &op);
+    lisp_write(lisp, &op, sizeof(op));
 }
 
 #define lisp_write_value(lisp, _value)                  \
     do {                                                \
-        typeof(_value) value = (_value);                \
-        lisp_write(lisp, sizeof(value), &value);        \
+        typeof(_value) v = (_value);                    \
+        lisp_write(lisp, &v, sizeof(v));                \
     } while (false)
 
 
 static void lisp_write_at(
-        struct lisp *lisp, ip_t pos, size_t len, const void *data)
+        struct lisp *lisp, ip_t pos, const void *data, size_t len)
 {
     uint8_t *it = lisp->out.base + pos;
     assert(it + len < lisp->out.end);
     memcpy(it, data, len);
 }
 
-#define lisp_write_value_at(lisp, at, _value)           \
-    do {                                                \
-        typeof(_value) value = (_value);                \
-        lisp_write_at(lisp, at, sizeof(value), &value); \
+#define lisp_write_value_at(lisp, at, _value)   \
+    do {                                        \
+        typeof(_value) v = (_value);            \
+        lisp_write_at(lisp, at, &v, sizeof(v)); \
     } while (false)
 
 

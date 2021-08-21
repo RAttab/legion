@@ -24,7 +24,8 @@ struct atoms *atoms_load(struct save *);
 void atoms_save(struct atoms *, struct save *);
 
 bool atoms_set(struct atoms *, const struct symbol *, word_t id);
-word_t atoms_atom(struct atoms *, const struct symbol *);
+word_t atoms_get(struct atoms *, const struct symbol *);
+word_t atoms_make(struct atoms *, const struct symbol *);
 bool atoms_str(struct atoms *, word_t id, struct symbol *dst);
 word_t atoms_parse(struct atoms *, const char *str, size_t len);
 

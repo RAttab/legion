@@ -34,6 +34,7 @@ static bool lisp_stmt(struct lisp *lisp)
         else lisp->depth--;
         return false;
     }
+
     case token_open: {
         lisp->depth++;
         struct token *token = lisp_expect(lisp, token_symbol);
@@ -55,18 +56,34 @@ static bool lisp_stmt(struct lisp *lisp)
         lisp_write_value(lisp, token->value.w);
         return true;
     }
+
     case token_atom: {
+        word_t value = atoms_get(lisp->atoms, &token->value.s);
+        if (!value) {
+            lisp_err(lisp, "unregistered atom '%s'", token->value.s.c);
+            return true;
+        }
+
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSH);
-        lisp_write_value(lisp, atoms_atom(lisp->atoms, &token->value.s));
+        lisp_write_value(lisp, value);
         return true;
     }
+
+    case token_atom_make: {
+        lisp_index(lisp);
+        lisp_write_op(lisp, OP_PUSH);
+        lisp_write_value(lisp, atoms_make(lisp->atoms, &token->value.s));
+        return true;
+    }
+
     case token_reg: {
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSHR);
         lisp_write_value(lisp, (uint8_t) token->value.w);
         return true;
     }
+
     case token_symbol: {
         lisp_index(lisp);
         lisp_write_op(lisp, OP_PUSHR);

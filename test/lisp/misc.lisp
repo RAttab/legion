@@ -6,14 +6,27 @@
  (check (flags 0x04)))
 
 (misc/assert-true
- (mod (assert 1)))
+ (mod (assert 1))
+ (check))
+
+;; ==========================================================
+;; atoms
+
+(misc/atoms
+ (mod (assert (= !alice 0x80000000))
+      (assert (= &alice 0x80000000))
+      (assert (= !bob 0x80000001))
+      (assert (= &bob 0x80000001))
+      (assert (= &alice 0x80000000)))
+ (check))
 
 
 ;; ==========================================================
 ;; fn
 
 (misc/id
- (mod (assert (= 0x01000002 (id 1 2)))))
+ (mod (assert (= 0x01000002 (id 1 2))))
+ (check))
 
 
 ;; ==========================================================
@@ -55,24 +68,29 @@
  (check (sp 0) (r 0 0) (ip 0)))
 
 (misc/tsc
- (mod (assert (> (tsc) 0))))
+ (mod (assert (> (tsc) 0)))
+ (check))
 
 (misc/fault
  (mod (fault))
  (check (flags 0x04)))
 
 (misc/pack
- (mod (assert (= 0x0000000200000001 (pack 1 2)))))
+ (mod (assert (= 0x0000000200000001 (pack 1 2))))
+ (check))
 
 (misc/unpack
  (mod
   (let ((top (unpack (pack 1 2)))
 	(bot (head)))
     (assert (= top 1))
-    (assert (= bot 2)))))
+    (assert (= bot 2))))
+ (check))
 
 (misc/mod-self
- (mod (assert (= 2 (band (mod) 0xFFFF)))))
+ (mod (assert (= 2 (band (mod) 0xFFFF))))
+ (check))
 
 (misc/mod-other
- (mod (assert (= 2 (band (mod misc/mod-self) 0xFFFF)))))
+ (mod (assert (= 2 (band (mod misc/mod-self) 0xFFFF))))
+ (check))

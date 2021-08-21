@@ -20,6 +20,7 @@ enum token_type
     token_open,
     token_close,
     token_atom,
+    token_atom_make,
     token_symbol,
     token_number,
     token_reg,

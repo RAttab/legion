@@ -84,10 +84,12 @@ word_t token_word(struct tokenizer *tok, struct atoms *atoms)
     struct token token = {0};
     switch (token_next(tok, &token)->type) {
     case token_number: { return token.value.w; }
-    case token_atom: { return atoms_atom(atoms, &token.value.s); }
+    case token_atom: { return atoms_get(atoms, &token.value.s); }
+    case token_atom_make: { return atoms_make(atoms, &token.value.s); }
     default: { token_assert(tok, &token, token_number); assert(false); }
     }
 }
+
 
 // -----------------------------------------------------------------------------
 // field
@@ -269,7 +271,7 @@ bool check_mod(
     }
 
     {
-        word_t exp = flags.type == field_flags ? flags.value : 0;
+        uint8_t exp = flags.type == field_flags ? flags.value : 0;
         ok = check_flag(FLAG_IO, vm->flags, exp) && ok;
         ok = check_flag(FLAG_SUSPENDED, vm->flags, exp) && ok;
         ok = check_flag(FLAG_FAULT_USER, vm->flags, exp) && ok;
@@ -342,7 +344,6 @@ bool check_file(const char *path)
                 assert(token_expect(tok, &token, token_close));
             }
             else assert(false);
-
         }
 
         vm_free(vm);

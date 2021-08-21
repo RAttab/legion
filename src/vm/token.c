@@ -18,6 +18,7 @@ const char *token_type_str(enum token_type type)
     case token_open: { return "open"; }
     case token_close: { return "close"; }
     case token_atom: { return "atom"; }
+    case token_atom_make: { return "atom_make"; }
     case token_symbol: { return "symbol"; }
     case token_number: { return "number"; }
     case token_reg: { return "register"; }
@@ -124,7 +125,8 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     switch (*tok->it) {
     case '(': { token->type = token_open; break; }
     case ')': { token->type = token_close; break; }
-    case '!': { token->type = token_atom; break; }
+    case '&': { token->type = token_atom; break; }
+    case '!': { token->type = token_atom_make; break; }
     case '$': { token->type = token_reg; break; }
     case '0'...'9': { token->type = token_number; break; }
 
@@ -156,9 +158,11 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     case token_close: { token->len = 1; token_inc(tok); break; }
 
     case token_atom:
-    case token_symbol: {
+    case token_atom_make:
+    case token_symbol:
+    {
         const char *first = tok->it;
-        if (token->type == token_atom) { token_inc(tok); first++; }
+        if (token->type != token_symbol) { token_inc(tok); first++; }
 
         while(!token_eof(tok) && symbol_char(*tok->it)) token_inc(tok);
 
@@ -170,12 +174,13 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
 
         // This suck but without it index is undershot by one due to the ! that
         // we skip at the start...
-        if (token->type == token_atom) token->len++;
+        if (token->type != token_symbol) token->len++;
 
         break;
     }
 
-    case token_number: {
+    case token_number:
+    {
         const char *first = tok->it;
         while (!token_eof(tok) && str_is_number(*tok->it)) token_inc(tok);
         token->len = tok->it - first;
@@ -194,7 +199,8 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
         break;
     }
 
-    case token_reg: {
+    case token_reg:
+    {
         if (unlikely(token_eof(tok))) {
             token_err(tok, "invalid register value: %s", "eof");
             token->type = token_nil;

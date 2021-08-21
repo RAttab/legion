@@ -494,34 +494,34 @@
 (vm/io
  (vm (S 2))
  (mod
-  (asm (PUSH !io_nil)
+  (asm (PUSH &io_nil)
        (PUSH 1)
        (IO 2)
        (YIELD)))
  (check (flags 0x1) (io 2) (ior 0xff)
-	(sp 2) (s 0 !io_nil) (s 1 1)))
+	(sp 2) (s 0 &io_nil) (s 1 1)))
 
 (vm/ios
  (vm (S 3))
  (mod
-  (asm (PUSH !io_nil)
+  (asm (PUSH &io_nil)
        (PUSH 1)
        (PUSH 2)
        (IOS)
        (YIELD)))
  (check (flags 0x1) (io 2) (ior 0)
-	(sp 2) (s 0 !io_nil) (s 1 1)))
+	(sp 2) (s 0 &io_nil) (s 1 1)))
 
 (vm/ior
  (vm (S 3))
  (mod
-  (asm (PUSH !io_nil)
+  (asm (PUSH &io_nil)
        (PUSH 1)
        (PUSH 2)
        (POPR $0)
        (IOR $0)
        (YIELD)))
- (check (flags 0x1) (io 2) (ior 1) (r 0 2) (sp 2) (s 0 !io_nil) (s 1 1)))
+ (check (flags 0x1) (io 2) (ior 1) (r 0 2) (sp 2) (s 0 &io_nil) (s 1 1)))
 
 
 ;; ==========================================================

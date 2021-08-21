@@ -242,7 +242,14 @@ bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word_t id)
     return atoms_chain(atoms, prev, symbol, id)->word;
 }
 
-word_t atoms_atom(struct atoms *atoms, const struct symbol *symbol)
+word_t atoms_get(struct atoms *atoms, const struct symbol *symbol)
+{
+    struct atom_data *prev = NULL;
+    struct atom_data *data = atoms_find(atoms, symbol, &prev);
+    return data ? data->word : 0;
+}
+
+word_t atoms_make(struct atoms *atoms, const struct symbol *symbol)
 {
     struct atom_data *prev = NULL;
     struct atom_data *data = atoms_find(atoms, symbol, &prev);
@@ -266,12 +273,20 @@ word_t atoms_parse(struct atoms *atoms, const char *it, size_t len)
     const char *end = it + len;
     it += str_skip_spaces(it, end - it);
 
-    if (*it != '!') return -1;
+    bool make = false;
+    switch (*it) {
+    case '!': { make = true; break; }
+    case '&': { make = false; break; }
+    default: { return -1; }
+    }
     it++;
 
     struct symbol symbol = {0};
     if (!symbol_parse(it, end - it, &symbol)) return -1;
-    return atoms_atom(atoms, &symbol);
+
+    return make ?
+        atoms_make(atoms, &symbol) :
+        atoms_get(atoms, &symbol);
 }
 
 struct vec64 *atoms_list(struct atoms *atoms)
