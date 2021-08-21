@@ -40,7 +40,7 @@ struct factory
     struct coord star;
 
     struct vec64 *grid;
-    struct vec_flow *flowes;
+    struct vec_flow *flows;
     struct htable index;
     struct workers workers;
 
@@ -129,7 +129,7 @@ void factory_free(struct factory *factory)
     vec64_free(factory->grid);
 
     vec64_free(factory->workers.ops);
-    vec_flow_free(factory->flowes);
+    vec_flow_free(factory->flows);
     htable_reset(&factory->index);
 
     SDL_DestroyTexture(factory->tex);
@@ -144,16 +144,16 @@ void factory_free(struct factory *factory)
 static bool factory_make_flow(
         struct factory *factory, uint16_t index, struct chunk *chunk, id_t id)
 {
-    struct flow *flow = &factory->flowes->vals[index];
+    struct flow *flow = &factory->flows->vals[index];
     flow->tape_len = 0;
 
     const void *state = chunk_get(chunk, id);
     assert(state);
 
     const struct im_config *config = im_config_assert(id_item(id));
-    assert(config->gm.flow);
+    assert(config->im.flow);
     
-    if (!config->gm.flow(state, flow)) return false;
+    if (!config->im.flow(state, flow)) return false;
 
     size_t rank = tapes_stats(flow->target)->rank;
     if (id_item(flow->id) == ITEM_DEPLOY) rank++;
@@ -185,8 +185,8 @@ static void factory_update(struct factory *factory)
 
     struct chunk *chunk = world_chunk(core.state.world, factory->star);
     if (!chunk) {
-        factory->flowes->len = 0;
-        factory->workers.ops->len = 0;
+        if (factory->flows) factory->flows->len = 0;
+        if (factory->workers.ops) factory->workers.ops->len = 0;
         htable_reset(&factory->index);
         return;
     }
@@ -199,15 +199,15 @@ static void factory_update(struct factory *factory)
     };
     struct vec64 *ids = chunk_list_filter(chunk, filter, array_len(filter));
 
-    factory->flowes = vec_flow_grow(factory->flowes, ids->len);
-    factory->flowes->len = 0;
+    factory->flows = vec_flow_grow(factory->flows, ids->len);
+    factory->flows->len = 0;
 
     htable_reset(&factory->index);
     htable_reserve(&factory->index, vec64_len(ids));
 
     for (size_t i = 0; i < vec64_len(ids); ++i) {
-        if (factory_make_flow(factory, factory->flowes->len, chunk, ids->vals[i]))
-            factory->flowes->len++;
+        if (factory_make_flow(factory, factory->flows->len, chunk, ids->vals[i]))
+            factory->flows->len++;
     }
 
     factory->workers = chunk_workers(chunk);
@@ -251,7 +251,7 @@ static struct flow *factory_cursor_flow(struct factory *factory)
 
     ssize_t col = point.x / factory->total.w;
     if (col < 0 || col >= (ssize_t) vec16_len(vec)) return NULL;
-    struct flow *flow = &factory->flowes->vals[vec->vals[col]];
+    struct flow *flow = &factory->flows->vals[vec->vals[col]];
 
     return flow;
 }
@@ -410,7 +410,7 @@ void factory_render(struct factory *factory, SDL_Renderer *renderer)
         struct vec16 *vec = (void *) factory->grid->vals[i];
 
         for (size_t j = col; j < col + cols && j < vec16_len(vec); ++j) {
-            struct flow *flow = &factory->flowes->vals[vec->vals[j]];
+            struct flow *flow = &factory->flows->vals[vec->vals[j]];
             factory_render_flow(factory, flow, flow == cursor, renderer);
 
             SDL_Rect rect = {
