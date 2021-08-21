@@ -144,9 +144,9 @@ int16_t ui_star_width(const struct ui_star *ui)
 static void ui_star_update_list(
         struct ui_star *ui, struct chunk *chunk,
         struct ui_toggles *toggles, struct ui_scroll *scroll,
-        const enum item *filter, size_t len)
+        im_list_t filter)
 {
-    struct vec64 *ids = chunk_list_filter(chunk, filter, len);
+    struct vec64 *ids = chunk_list_filter(chunk, filter);
     ui_toggles_resize(toggles, ids->len);
     ui_scroll_update(scroll, ids->len);
 
@@ -185,32 +185,8 @@ static void ui_star_update(struct ui_star *ui)
     }
 
     ui->star = *chunk_star(chunk);
-
-    {
-        static const enum item filter[] = {
-            ITEM_SCANNER_1, ITEM_SCANNER_2, ITEM_SCANNER_3,
-            ITEM_DB_1, ITEM_DB_2, ITEM_DB_3,
-            ITEM_BRAIN_1, ITEM_BRAIN_2, ITEM_BRAIN_3,
-            ITEM_LEGION_1, ITEM_LEGION_2, ITEM_LEGION_3,
-        };
-        ui_star_update_list(
-                ui, chunk,
-                &ui->control_list, &ui->control_scroll,
-                filter, array_len(filter));
-    }
-
-    {
-        static const enum item filter[] = {
-            ITEM_DEPLOY, ITEM_STORAGE,
-            ITEM_EXTRACT_1, ITEM_EXTRACT_2, ITEM_EXTRACT_3,
-            ITEM_PRINTER_1, ITEM_PRINTER_2, ITEM_PRINTER_3,
-            ITEM_ASSEMBLY_1, ITEM_ASSEMBLY_2, ITEM_ASSEMBLY_3,
-        };
-        ui_star_update_list(
-                ui, chunk,
-                &ui->factory_list, &ui->factory_scroll,
-                filter, array_len(filter));
-    }
+    ui_star_update_list(ui, chunk, &ui->control_list, &ui->control_scroll, im_list_control);
+    ui_star_update_list(ui, chunk, &ui->factory_list, &ui->factory_scroll, im_list_factory);
 
     {
         struct workers workers = chunk_workers(chunk);

@@ -35,7 +35,7 @@ struct star *chunk_star(struct chunk *);
 bool chunk_harvest(struct chunk *, enum item item);
 
 struct vec64 *chunk_list(struct chunk *);
-struct vec64 *chunk_list_filter(struct chunk *, const enum item *filter, size_t len);
+struct vec64 *chunk_list_filter(struct chunk *, im_list_t filter);
 const void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 void chunk_delete(struct chunk *, id_t id);

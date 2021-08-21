@@ -136,6 +136,10 @@ static_assert(ITEM_ACTIVE_LAST  <= ITEM_LOGISTICS_FIRST);
 // Categories
 // -----------------------------------------------------------------------------
 
+typedef const enum item *im_list_t;
+extern im_list_t im_list_control;
+extern im_list_t im_list_factory;
+
 enum
 {
     ITEMS_NATURAL_LEN   = ITEM_NATURAL_LAST   - ITEM_NATURAL_FIRST,

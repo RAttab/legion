@@ -120,6 +120,29 @@ static struct im_config im_configs[ITEM_MAX] =
 #undef im_init_cfg
 
 
+const enum item im_list_control_arr[] =
+{
+    ITEM_SCANNER_1, ITEM_SCANNER_2, ITEM_SCANNER_3,
+    ITEM_DB_1, ITEM_DB_2, ITEM_DB_3,
+    ITEM_BRAIN_1, ITEM_BRAIN_2, ITEM_BRAIN_3,
+    ITEM_LEGION_1, ITEM_LEGION_2, ITEM_LEGION_3,
+    0,
+};
+im_list_t im_list_control = im_list_control_arr;
+
+
+const enum item im_list_factory_arr[] =
+{
+    ITEM_DEPLOY, ITEM_STORAGE,
+    ITEM_EXTRACT_1, ITEM_EXTRACT_2, ITEM_EXTRACT_3,
+    ITEM_PRINTER_1, ITEM_PRINTER_2, ITEM_PRINTER_3,
+    ITEM_ASSEMBLY_1, ITEM_ASSEMBLY_2, ITEM_ASSEMBLY_3,
+    ITEM_RESEARCH,
+    0,
+};
+im_list_t im_list_factory = im_list_factory_arr;
+
+
 const struct im_config *im_config(enum item item)
 {
     assert(item < ITEM_MAX);

@@ -172,16 +172,15 @@ struct vec64* chunk_list(struct chunk *chunk)
     return ids;
 }
 
-struct vec64* chunk_list_filter(
-        struct chunk *chunk, const enum item *filter, size_t len)
+struct vec64* chunk_list_filter(struct chunk *chunk, im_list_t filter)
 {
     size_t sum = 0;
-    for (size_t i = 0; i < len; ++i)
-        sum += active_count(active_index(&chunk->active, filter[i]));
+    for (im_list_t it = filter; *it; it++)
+        sum += active_count(active_index(&chunk->active, *it));
 
     struct vec64 *ids = vec64_reserve(sum);
-    for (size_t i = 0; i < len; ++i)
-        active_list(active_index(&chunk->active, filter[i]), ids);
+    for (im_list_t it = filter; *it; it++)
+        active_list(active_index(&chunk->active, *it), ids);
 
     return ids;
 }

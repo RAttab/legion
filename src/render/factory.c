@@ -191,14 +191,7 @@ static void factory_update(struct factory *factory)
         return;
     }
 
-    static const enum item filter[] = {
-        ITEM_DEPLOY, ITEM_STORAGE, ITEM_RESEARCH,
-        ITEM_EXTRACT_1, ITEM_EXTRACT_2, ITEM_EXTRACT_3,
-        ITEM_PRINTER_1, ITEM_PRINTER_2, ITEM_PRINTER_3,
-        ITEM_ASSEMBLY_1, ITEM_ASSEMBLY_2, ITEM_ASSEMBLY_3,
-    };
-    struct vec64 *ids = chunk_list_filter(chunk, filter, array_len(filter));
-
+    struct vec64 *ids = chunk_list_filter(chunk, im_list_factory);
     factory->flows = vec_flow_grow(factory->flows, ids->len);
     factory->flows->len = 0;
 
