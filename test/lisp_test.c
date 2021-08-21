@@ -10,6 +10,7 @@
 #include "vm/atoms.h"
 #include "items/item.h"
 #include "items/config.h"
+#include "utils/fs.h"
 #include "utils/str.h"
 #include "utils/log.h"
 
@@ -24,23 +25,23 @@
 // token
 // -----------------------------------------------------------------------------
 
-struct file
+struct ctx
 {
     const char *path;
-    struct tokenizer tok;
+    const struct tokenizer *tok;
 };
 
 legion_printf(2, 3)
-void file_err(void *ctx, const char *fmt, ...)
+void ctx_err(void *_ctx, const char *fmt, ...)
 {
-    struct file *file = ctx;
+    struct ctx *ctx = _ctx;
 
     char str[256] = {0};
     char *it = str;
     char *end = str + sizeof(str);
 
     it += snprintf(str, end - it, "%s:%zu:%zu: ",
-            file->path, file->tok.row+1, file->tok.col+1);
+            ctx->path, ctx->tok->row+1, ctx->tok->col+1);
 
     va_list args;
     va_start(args, fmt);
@@ -50,33 +51,6 @@ void file_err(void *ctx, const char *fmt, ...)
     *it = '\n'; it++;
 
     write(2, str, it - str);
-}
-
-struct file *file_open(const char *path)
-{
-    int fd = open(path, O_RDONLY);
-    if (fd < 0) fail_errno("file not found: %s", path);
-
-    struct stat stat = {0};
-    if (fstat(fd, &stat) < 0) fail_errno("failed to stat: %s", path);
-
-    size_t len = stat.st_size;
-    const char *base = mmap(0, len, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (base == MAP_FAILED) fail_errno("failed to mmap: %s", path);
-
-    struct file *file = calloc(1, sizeof(*file));
-    file->path = path;
-
-    token_init(&file->tok, base, len, file_err, file);
-
-    close(fd);
-    return file;
-}
-
-void file_close(struct file *file)
-{
-    munmap((void *) file->tok.base, file->tok.end - file->tok.base);
-    free(file);
 }
 
 word_t token_word(struct tokenizer *tok, struct atoms *atoms)
@@ -308,40 +282,42 @@ bool check_file(const char *path)
     struct atoms *atoms = atoms_new();
     im_populate_atoms(atoms);
 
-    struct file *file = file_open(path);
+    struct tokenizer tok = {0};
+    struct mfile mem = mfile_open(path);
+    struct ctx ctx = { .path = path, .tok = &tok };
+    token_init(&tok, mem.ptr, mem.len, ctx_err, &ctx);
 
     bool ok = true;
     struct token token = {0};
-    struct tokenizer *tok = &file->tok;
 
-    while (!token_eof(tok)) {
+    while (!token_eof(&tok)) {
 
-        token_next(tok, &token);
+        token_next(&tok, &token);
         if (token.type == token_nil) break;
-        assert(token_assert(tok, &token, token_open));
+        assert(token_assert(&tok, &token, token_open));
 
         const struct mod *mod = NULL;
         struct vm *vm = vm_alloc(4, 6);
 
-        assert(token_expect(tok, &token, token_symbol));
+        assert(token_expect(&tok, &token, token_symbol));
         struct symbol name = token.value.s;
 
-        while (token_next(tok, &token)->type != token_close) {
-            assert(token_assert(tok, &token, token_open));
+        while (token_next(&tok, &token)->type != token_close) {
+            assert(token_assert(&tok, &token, token_open));
 
-            assert(token_expect(tok, &token, token_symbol));
+            assert(token_expect(&tok, &token, token_symbol));
             uint64_t hash = symbol_hash(&token.value.s);
 
             if (hash == symbol_hash_c("vm")) {
-                setup_vm(tok, vm, atoms);
-                assert(token_expect(tok, &token, token_close));
+                setup_vm(&tok, vm, atoms);
+                assert(token_expect(&tok, &token, token_close));
             }
             else if (hash == symbol_hash_c("mod")) {
-                mod = read_mod(tok, &name, mods, atoms);
+                mod = read_mod(&tok, &name, mods, atoms);
             }
             else if (hash == symbol_hash_c("check")) {
-                ok = check_mod(tok, &name, vm, mod, atoms) && ok;
-                assert(token_expect(tok, &token, token_close));
+                ok = check_mod(&tok, &name, vm, mod, atoms) && ok;
+                assert(token_expect(&tok, &token, token_close));
             }
             else assert(false);
         }
@@ -349,7 +325,7 @@ bool check_file(const char *path)
         vm_free(vm);
     }
 
-    file_close(file);
+    mfile_close(&mem);
     mods_free(mods);
     atoms_free(atoms);
     return ok;
@@ -357,21 +333,13 @@ bool check_file(const char *path)
 
 bool check_dir(const char *path)
 {
-    DIR *dir = opendir(path);
-    if (!dir) fail_errno("can't open dir: %s", path);
+    struct dir_it *it = dir_it(path);
 
     bool ok = true;
+    while (dir_it_next(it))
+        ok = check_file(dir_it_path(it)) && ok;
 
-    struct dirent *entry = NULL;
-    while ((entry = readdir(dir))) {
-        if (entry->d_name[0] == '.') continue;
-
-        char file[PATH_MAX];
-        snprintf(file, sizeof(file), "%s/%s", path, entry->d_name);
-
-        ok = check_file(file) && ok;
-    }
-    closedir(dir);
+    dir_it_free(it);
 
     return ok;
 }
