@@ -367,7 +367,10 @@ struct coord world_populate(struct world *world)
     im_populate_atoms(world->atoms);
     mods_populate(world->mods, world->atoms);
 
-    for (im_list_t it = im_list_t0; it; it++)
+    for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
+        tape_set_put(&world->known, it);
+
+    for (im_list_t it = im_list_t0; *it; it++)
         tape_set_put(&world->known, *it);
 
     struct rng rng = rng_make(0);

@@ -96,15 +96,16 @@ static void im_lab_io_item(
         const word_t *args, size_t len)
 {
     if (len < 1) return;
-    if (args[0] < 0 || args[0] >= ITEM_MAX) return;
 
     enum item item = args[0];
-    im_lab_reset(lab, chunk);
+    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
+    if (!world_lab_known(chunk_world(chunk), item)) return;
 
     struct world *world = chunk_world(chunk);
     const struct im_config *config = im_config(item);
     if (!config || world_lab_learned(world, item)) return;
 
+    im_lab_reset(lab, chunk);
     lab->item = item;
     lab->work.cap = config->lab_work;
 }

@@ -74,8 +74,9 @@ static void im_storage_io_item(
 {
     if (len < 1) return;
 
-    word_t item = args[0];
-    if (item != (enum item) item) return;
+    enum item item = args[0];
+    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
+    if (!world_lab_known(chunk_world(chunk), item)) return;
     if (item == storage->item) return;
 
     im_storage_io_reset(storage, chunk);

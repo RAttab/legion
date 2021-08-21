@@ -121,14 +121,15 @@ static void im_printer_io_tape(
 {
     if (len < 1) return;
 
-    word_t tape_id = args[0];
-    if (tape_id != (enum item) tape_id) return;
+    enum item item = args[0];
+    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
+    if (!world_lab_known(chunk_world(chunk), item)) return;
 
-    const struct tape *tape = tapes_get(tape_id);
+    const struct tape *tape = tapes_get(item);
     if (!tape || tape_host(tape) != id_item(printer->id)) return;
 
     im_printer_reset(printer, chunk);
-    printer->tape = tape_pack(tape_id, 0, tape);
+    printer->tape = tape_pack(item, 0, tape);
     printer->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
 

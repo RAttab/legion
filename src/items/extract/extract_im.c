@@ -127,14 +127,15 @@ static void im_extract_io_tape(
 {
     if (len < 1) return;
 
-    word_t tape_id = args[0];
-    if (tape_id != (enum item) tape_id) return;
+    enum item item = args[0];
+    if (args[0] < ITEM_NATURAL_FIRST || args[0] >= ITEM_NATURAL_LAST) return;
+    if (!world_lab_known(chunk_world(chunk), item)) return;
 
-    const struct tape *tape = tapes_get(tape_id);
+    const struct tape *tape = tapes_get(item);
     if (!tape || tape_host(tape) != id_item(extract->id)) return;
 
     im_extract_reset(extract, chunk);
-    extract->tape = tape_pack(tape_id, 0, tape);
+    extract->tape = tape_pack(item, 0, tape);
     extract->loops = loops_io(len > 1 ? args[1] : loops_inf);
 }
 
