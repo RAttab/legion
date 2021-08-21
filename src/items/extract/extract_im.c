@@ -7,6 +7,7 @@
 #include "game/chunk.h"
 #include "game/tape.h"
 #include "items/io.h"
+#include "items/types.h"
 
 
 // -----------------------------------------------------------------------------
@@ -164,3 +165,33 @@ static const word_t im_extract_io_list[] =
     IO_TAPE,
     IO_RESET,
 };
+
+
+// -----------------------------------------------------------------------------
+// flow
+// -----------------------------------------------------------------------------
+
+static bool im_extract_flow(const void *state, struct flow *flow)
+{
+    const struct im_extract *extract = state;
+    if (!extract->tape) return false;
+
+    *flow = (struct flow) {
+        .id = extract->id,
+        .loops = extract->loops,
+        .target = tape_packed_id(extract->tape),
+    };
+
+    const struct tape *tape = tape_packed_ptr(extract->tape);
+    struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
+
+    switch (ret.state) {
+    case tape_input: { flow->in = ret.item; break; }
+    case tape_output: { flow->out = ret.item; break; }
+    default: { break; }
+    }
+
+    flow->tape_it = tape_packed_it(extract->tape);
+    flow->tape_len = tape_len(tape);
+    return true;
+}

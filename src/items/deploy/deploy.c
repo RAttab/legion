@@ -26,6 +26,7 @@ void im_deploy_config(struct im_config *config)
     config->gm.init = im_deploy_init;
     config->gm.step = im_deploy_step;
     config->gm.io = im_deploy_io;
+    config->gm.flow = im_deploy_flow;
 
     config->ui.alloc = ui_deploy_alloc;
     config->ui.free = ui_deploy_free;

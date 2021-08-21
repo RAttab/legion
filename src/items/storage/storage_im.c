@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "items/io.h"
+#include "items/types.h"
 #include "game/chunk.h"
 
 
@@ -110,3 +111,22 @@ static const word_t im_storage_io_list[] =
     IO_ITEM,
     IO_RESET,
 };
+
+
+// -----------------------------------------------------------------------------
+// flow
+// -----------------------------------------------------------------------------
+
+static bool im_storage_flow(const void *state, struct flow *flow)
+{
+    const struct im_storage *storage = state;
+    if (!storage->item) return false;
+
+    *flow = (struct flow) {
+        .id = storage->id,
+        .loops = storage->count,
+        .target = storage->item,
+        .in = storage->item,
+    };
+    return true;
+}

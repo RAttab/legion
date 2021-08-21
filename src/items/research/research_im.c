@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "items/io.h"
+#include "items/types.h"
 #include "game/chunk.h"
 
 
@@ -192,3 +193,21 @@ static const word_t im_research_io_list[] =
     IO_TAPE_DATA,
     IO_TAPE_AT,
 };
+
+
+// -----------------------------------------------------------------------------
+// flow
+// -----------------------------------------------------------------------------
+
+static bool im_research_flow(const void *state, struct flow *flow)
+{
+    const struct im_research *research = state;
+    if (!research->item) return false;
+    *flow = (struct flow) {
+        .id = research->id,
+        .target = research->item,
+        .in = research->state == im_research_waiting ? research->item : 0,
+    };
+
+    return true;
+}

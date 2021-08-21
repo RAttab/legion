@@ -3,10 +3,11 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/io.h"
-#include "items/item.h"
 #include "game/chunk.h"
 #include "game/coord.h"
+#include "items/io.h"
+#include "items/item.h"
+#include "items/types.h"
 #include "render/ui.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
@@ -21,24 +22,8 @@
 // types
 // -----------------------------------------------------------------------------
 
-struct legion_packed box
-{
-    id_t id;
-    uint16_t row, col;
-
-    loops_t loops;
-    enum item target;
-
-    legion_pad(1);
-
-    enum item in, out;
-    tape_it_t tape_it, tape_len;
-};
-
-static_assert(sizeof(struct box) == 16);
-
-#define vecx_type struct box
-#define vecx_name vec_box
+#define vecx_type struct flow
+#define vecx_name vec_flow
 #include "utils/vecx.h"
 
 #define vecx_type uint16_t
@@ -55,7 +40,7 @@ struct factory
     struct coord star;
 
     struct vec64 *grid;
-    struct vec_box *boxes;
+    struct vec_flow *flowes;
     struct htable index;
     struct workers workers;
 
@@ -144,7 +129,7 @@ void factory_free(struct factory *factory)
     vec64_free(factory->grid);
 
     vec64_free(factory->workers.ops);
-    vec_box_free(factory->boxes);
+    vec_flow_free(factory->flowes);
     htable_reset(&factory->index);
 
     SDL_DestroyTexture(factory->tex);
@@ -156,125 +141,33 @@ void factory_free(struct factory *factory)
 // events
 // -----------------------------------------------------------------------------
 
-static bool factory_make_box(
+static bool factory_make_flow(
         struct factory *factory, uint16_t index, struct chunk *chunk, id_t id)
 {
-    struct box *box = &factory->boxes->vals[index];
-    box->tape_len = 0;
+    struct flow *flow = &factory->flowes->vals[index];
+    flow->tape_len = 0;
 
-    switch (id_item(id))
-    {
+    const void *state = chunk_get(chunk, id);
+    assert(state);
 
-    case ITEM_DEPLOY: {
-        const struct im_deploy *deploy = chunk_get(chunk, id);
-        assert(deploy);
+    const struct im_config *config = im_config_assert(id_item(id));
+    assert(config->gm.flow);
+    
+    if (!config->gm.flow(state, flow)) return false;
 
-        if (!deploy->item) return false;
-        *box = (struct box) {
-            .id = deploy->id,
-            .loops = deploy->loops,
-            .target = deploy->item,
-            .in = deploy->item,
-        };
-        break;
-    }
-
-    case ITEM_STORAGE: {
-        const struct im_storage *storage = chunk_get(chunk, id);
-        assert(storage);
-
-        if (!storage->item) return false;
-        *box = (struct box) {
-            .id = storage->id,
-            .loops = storage->count,
-            .target = storage->item,
-            .in = storage->item,
-        };
-        break;
-    }
-
-
-    case ITEM_EXTRACT_1...ITEM_EXTRACT_3: {
-        const struct im_extract *extract = chunk_get(chunk, id);
-        assert(extract);
-
-        if (!extract->tape) return false;
-
-        *box = (struct box) {
-            .id = extract->id,
-            .loops = extract->loops,
-            .target = tape_packed_id(extract->tape),
-        };
-
-        const struct tape *tape = tape_packed_ptr(extract->tape);
-        struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
-
-        switch (ret.state) {
-        case tape_input: { box->in = ret.item; break; }
-        case tape_output: { box->out = ret.item; break; }
-        default: { break; }
-        }
-
-        box->tape_it = tape_packed_it(extract->tape);
-        box->tape_len = tape_len(tape);
-        break;
-    }
-
-    case ITEM_PRINTER_1...ITEM_ASSEMBLY_3: {
-        const struct im_printer *printer = chunk_get(chunk, id);
-        assert(printer);
-
-        if (!printer->tape) return false;
-
-        *box = (struct box) {
-            .id = printer->id,
-            .loops = printer->loops,
-            .target = tape_packed_id(printer->tape),
-        };
-
-        const struct tape *tape = tape_packed_ptr(printer->tape);
-        struct tape_ret ret = tape_at(tape, tape_packed_it(printer->tape));
-
-        switch (ret.state) {
-        case tape_input: { box->in = ret.item; break; }
-        case tape_output: { box->out = ret.item; break; }
-        default: { break; }
-        }
-
-        box->tape_it = tape_packed_it(printer->tape);
-        box->tape_len = tape_len(tape);
-        break;
-    }
-
-    case ITEM_RESEARCH: {
-        const struct im_research *research = chunk_get(chunk, id);
-        assert(research);
-
-        if (!research->item) return false;
-        *box = (struct box) {
-            .id = research->id,
-            .target = research->item,
-            .in = research->state == im_research_waiting ? research->item : 0,
-        };
-        break;
-    }
-
-    default: { assert(false); }
-    }
-
-    size_t rank = tapes_stats(box->target)->rank;
-    if (id_item(box->id) == ITEM_DEPLOY) rank++;
-    box->row = rank - 1;
+    size_t rank = tapes_stats(flow->target)->rank;
+    if (id_item(flow->id) == ITEM_DEPLOY) rank++;
+    flow->row = rank - 1;
 
     factory->grid = vec64_grow(factory->grid, rank);
     while (vec64_len(factory->grid) < rank)
         factory->grid = vec64_append(factory->grid, 0);
 
-    struct vec16 **vec = (void *) &factory->grid->vals[box->row];
-    box->col = vec16_len(*vec);
+    struct vec16 **vec = (void *) &factory->grid->vals[flow->row];
+    flow->col = vec16_len(*vec);
     *vec = vec16_append(*vec, index);
 
-    struct htable_ret ret = htable_put(&factory->index, box->id, (uintptr_t) box);
+    struct htable_ret ret = htable_put(&factory->index, flow->id, (uintptr_t) flow);
     assert(ret.ok);
 
     return true;
@@ -292,7 +185,7 @@ static void factory_update(struct factory *factory)
 
     struct chunk *chunk = world_chunk(core.state.world, factory->star);
     if (!chunk) {
-        factory->boxes->len = 0;
+        factory->flowes->len = 0;
         factory->workers.ops->len = 0;
         htable_reset(&factory->index);
         return;
@@ -306,15 +199,15 @@ static void factory_update(struct factory *factory)
     };
     struct vec64 *ids = chunk_list_filter(chunk, filter, array_len(filter));
 
-    factory->boxes = vec_box_grow(factory->boxes, ids->len);
-    factory->boxes->len = 0;
+    factory->flowes = vec_flow_grow(factory->flowes, ids->len);
+    factory->flowes->len = 0;
 
     htable_reset(&factory->index);
     htable_reserve(&factory->index, vec64_len(ids));
 
     for (size_t i = 0; i < vec64_len(ids); ++i) {
-        if (factory_make_box(factory, factory->boxes->len, chunk, ids->vals[i]))
-            factory->boxes->len++;
+        if (factory_make_flow(factory, factory->flowes->len, chunk, ids->vals[i]))
+            factory->flowes->len++;
     }
 
     factory->workers = chunk_workers(chunk);
@@ -346,7 +239,7 @@ static bool factory_event_user(struct factory *factory, SDL_Event *ev)
     }
 }
 
-static struct box *factory_cursor_box(struct factory *factory)
+static struct flow *factory_cursor_flow(struct factory *factory)
 {
     SDL_Point point = core.cursor.point;
     point.x += factory->pos.x;
@@ -358,17 +251,17 @@ static struct box *factory_cursor_box(struct factory *factory)
 
     ssize_t col = point.x / factory->total.w;
     if (col < 0 || col >= (ssize_t) vec16_len(vec)) return NULL;
-    struct box *box = &factory->boxes->vals[vec->vals[col]];
+    struct flow *flow = &factory->flowes->vals[vec->vals[col]];
 
-    return box;
+    return flow;
 }
 
 static bool factory_event_click(struct factory *factory)
 {
-    struct box *box = factory_cursor_box(factory);
-    if (!box) return false;
+    struct flow *flow = factory_cursor_flow(factory);
+    if (!flow) return false;
 
-    core_push_event(EV_ITEM_SELECT, box->id, coord_to_id(factory->star));
+    core_push_event(EV_ITEM_SELECT, flow->id, coord_to_id(factory->star));
     return true;
 }
 
@@ -412,8 +305,8 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
 // render
 // -----------------------------------------------------------------------------
 
-static void factory_render_box(
-        struct factory *factory, struct box *box, bool select, SDL_Renderer *renderer)
+static void factory_render_flow(
+        struct factory *factory, struct flow *flow, bool select, SDL_Renderer *renderer)
 {
     sdl_err(SDL_SetRenderTarget(renderer, factory->tex));
     sdl_err(SDL_SetTextureBlendMode(factory->tex, SDL_BLENDMODE_BLEND));
@@ -434,35 +327,35 @@ static void factory_render_box(
             make_pos(rect.x + factory->margin.w, rect.y + factory->margin.h),
             make_dim(factory->inner.w, factory->inner.h));
 
-    ui_str_set_id(&factory->ui_id.str, box->id);
+    ui_str_set_id(&factory->ui_id.str, flow->id);
     ui_label_render(&factory->ui_id, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_str_set_item(&factory->ui_target.str, box->target);
+    ui_str_set_item(&factory->ui_target.str, flow->target);
     ui_label_render(&factory->ui_target, &layout, renderer);
-    if (box->loops != loops_inf) {
+    if (flow->loops != loops_inf) {
         ui_label_render(&factory->ui_loops, &layout, renderer);
-        ui_str_set_u64(&factory->ui_loops_val.str, box->loops);
+        ui_str_set_u64(&factory->ui_loops_val.str, flow->loops);
         ui_label_render(&factory->ui_loops_val, &layout, renderer);
     }
     ui_layout_next_row(&layout);
 
-    if (box->in) {
-        ui_str_set_item(&factory->ui_tape_in.str, box->in);
+    if (flow->in) {
+        ui_str_set_item(&factory->ui_tape_in.str, flow->in);
         ui_label_render(&factory->ui_tape_in, &layout, renderer);
     }
-    else if (box->out) {
-        ui_str_set_item(&factory->ui_tape_out.str, box->out);
+    else if (flow->out) {
+        ui_str_set_item(&factory->ui_tape_out.str, flow->out);
         ui_label_render(&factory->ui_tape_out, &layout, renderer);
     }
 
-    if ((box->in || box->out) && box->tape_len) {
-        ui_str_set_u64(&factory->ui_tape_num.str, box->tape_it+1);
+    if ((flow->in || flow->out) && flow->tape_len) {
+        ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_it+1);
         ui_label_render(&factory->ui_tape_num, &layout, renderer);
 
         ui_label_render(&factory->ui_tape_of, &layout, renderer);
 
-        ui_str_set_u64(&factory->ui_tape_num.str, box->tape_len);
+        ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_len);
         ui_label_render(&factory->ui_tape_num, &layout, renderer);
     }
 
@@ -478,11 +371,11 @@ static void factory_render_op(
     chunk_workers_ops(op, &src_id, &dst_id);
 
     ret = htable_get(&factory->index, src_id);
-    struct box *src = (struct box *) ret.value;
+    struct flow *src = (struct flow *) ret.value;
     assert(ret.ok);
 
     ret = htable_get(&factory->index, dst_id);
-    struct box *dst = (struct box *) ret.value;
+    struct flow *dst = (struct flow *) ret.value;
     assert(ret.ok);
 
     struct pos src_pos = make_pos(
@@ -511,14 +404,14 @@ void factory_render(struct factory *factory, SDL_Renderer *renderer)
     size_t rows = i64_ceil_div(core.rect.h, factory->total.h);
     size_t cols = i64_ceil_div(core.rect.w, factory->total.w);
 
-    struct box *cursor = factory_cursor_box(factory);
+    struct flow *cursor = factory_cursor_flow(factory);
 
     for (size_t i = row; i < row + rows && i < vec64_len(factory->grid); ++i) {
         struct vec16 *vec = (void *) factory->grid->vals[i];
 
         for (size_t j = col; j < col + cols && j < vec16_len(vec); ++j) {
-            struct box *box = &factory->boxes->vals[vec->vals[j]];
-            factory_render_box(factory, box, box == cursor, renderer);
+            struct flow *flow = &factory->flowes->vals[vec->vals[j]];
+            factory_render_flow(factory, flow, flow == cursor, renderer);
 
             SDL_Rect rect = {
                 .x = j*factory->total.w - factory->pos.x,

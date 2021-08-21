@@ -5,6 +5,7 @@
 
 #include "items/io.h"
 #include "items/item.h"
+#include "items/types.h"
 #include "game/chunk.h"
 
 
@@ -110,3 +111,22 @@ static const word_t im_deploy_io_list[] =
     IO_ITEM,
     IO_RESET
 };
+
+
+// -----------------------------------------------------------------------------
+// flow
+// -----------------------------------------------------------------------------
+
+static bool im_deploy_flow(const void *state, struct flow *flow)
+{
+    const struct im_deploy *deploy = state;
+    if (!deploy->item) return false;
+
+    *flow = (struct flow) {
+        .id = deploy->id,
+        .loops = deploy->loops,
+        .target = deploy->item,
+        .in = deploy->item,
+    };
+    return true;
+}

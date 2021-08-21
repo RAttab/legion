@@ -12,6 +12,7 @@
 
 #include "SDL.h"
 
+struct flow;
 struct font;
 struct chunk;
 struct atoms;
@@ -32,6 +33,7 @@ typedef void (*im_gm_load_t) (void *state, struct chunk *);
 typedef void (*im_gm_step_t) (void *state, struct chunk *);
 typedef void (*im_gm_io_t) (
         void *state, struct chunk *, enum io, id_t src, const word_t *args, size_t len);
+typedef bool (*im_gm_flow_t) (const void *state, struct flow *);
 
 typedef void *(*im_ui_alloc_t)  (struct font *);
 typedef void  (*im_ui_free_t)   (void *state);
@@ -65,6 +67,7 @@ struct im_config
         im_gm_load_t load;
         im_gm_step_t step;
         im_gm_io_t io;
+        im_gm_flow_t flow;
     } gm;
 
     struct

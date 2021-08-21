@@ -26,6 +26,7 @@ void im_research_config(struct im_config *config)
     config->gm.init = im_research_init;
     config->gm.step = im_research_step;
     config->gm.io = im_research_io;
+    config->gm.flow = im_research_flow;
 
     config->ui.alloc = ui_research_alloc;
     config->ui.free = ui_research_free;

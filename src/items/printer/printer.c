@@ -27,6 +27,7 @@ void im_printer_config(struct im_config *config)
     config->gm.load = im_printer_load;
     config->gm.step = im_printer_step;
     config->gm.io = im_printer_io;
+    config->gm.flow = im_printer_flow;
 
     config->ui.alloc = ui_printer_alloc;
     config->ui.free = ui_printer_free;
