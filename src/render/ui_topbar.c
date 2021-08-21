@@ -102,7 +102,7 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
-        core_push_event(EV_MAP_GOTO, coord_to_id(core.state.home), 0);
+        core_push_event(EV_MAP_GOTO, coord_to_u64(core.state.home), 0);
         return ret == ui_consume;
     }
 

@@ -118,7 +118,7 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     }
 
     case EV_STAR_SELECT: {
-        struct coord new = id_to_coord((uintptr_t) ev->user.data1);
+        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new)) {
             ui->panel.state = ui_panel_hidden;
             ui->id = 0;
@@ -134,7 +134,7 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
 
     case EV_ITEM_SELECT: {
         ui->id = (uintptr_t) ev->user.data1;
-        ui->star = id_to_coord((uintptr_t) ev->user.data2);
+        ui->star = coord_from_u64((uintptr_t) ev->user.data2);
         ui_item_update(ui);
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
@@ -164,7 +164,7 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->io, ev))) {
-        core_push_event(EV_IO_TOGGLE, ui->id, coord_to_id(ui->star));
+        core_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
         return true;
     }
 

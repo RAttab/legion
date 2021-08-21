@@ -58,7 +58,7 @@ static void im_scanner_step(void *state, struct chunk *chunk)
     struct world *world = chunk_world(chunk);
 
     if (scanner->state == im_scanner_wide)
-        scanner->result = coord_to_id(world_scan_next(world, &scanner->type.wide));
+        scanner->result = coord_to_u64(world_scan_next(world, &scanner->type.wide));
     else {
         ssize_t ret = world_scan(
                 world, scanner->type.target.coord, scanner->type.target.item);
@@ -78,8 +78,8 @@ static void im_scanner_io_status(
 
     switch (scanner->state) {
     case im_scanner_idle: { target = 0; break; }
-    case im_scanner_wide: { target = coord_to_id(scanner->type.wide.coord); break; }
-    case im_scanner_target: { target = coord_to_id(scanner->type.target.coord); break; }
+    case im_scanner_wide: { target = coord_to_u64(scanner->type.wide.coord); break; }
+    case im_scanner_target: { target = coord_to_u64(scanner->type.target.coord); break; }
     default: { assert(false); }
     }
 
@@ -93,7 +93,7 @@ static void im_scanner_io_scan(
     if (len < 1) return;
     if (len >= 2 && !args[1]) len = 1;
 
-    struct coord coord = id_to_coord(args[0]);
+    struct coord coord = coord_from_u64(args[0]);
 
     if (len < 2) {
         coord = coord_sector(coord);

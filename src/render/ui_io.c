@@ -228,13 +228,13 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
 
     case EV_ITEM_SELECT: {
         ui->id = (uintptr_t) ev->user.data1;
-        ui->star = id_to_coord((uintptr_t) ev->user.data2);
+        ui->star = coord_from_u64((uintptr_t) ev->user.data2);
         ui_io_update(ui);
         return false;
     }
 
     case EV_STAR_SELECT: {
-        struct coord new = id_to_coord((uintptr_t) ev->user.data1);
+        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new)) {
             ui->panel.state = ui_panel_hidden;
             ui->id = 0;

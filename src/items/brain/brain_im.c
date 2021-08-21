@@ -115,7 +115,7 @@ static void im_brain_step_io(
     bool ok = true;
     switch (atom) {
     case IO_RECV: { ok = im_brain_step_recv(brain, io + 1, len - 1); break; }
-    case IO_COORD: { vm_push(&brain->vm, coord_to_id(chunk_star(chunk)->coord)); break; }
+    case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }
     }
 

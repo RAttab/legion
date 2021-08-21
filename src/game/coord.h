@@ -34,10 +34,13 @@ enum
 static_assert(coord_top_bits + coord_area_bits + coord_sector_bits == 32);
 
 
-legion_packed struct coord
+struct legion_packed coord
 {
     uint32_t x, y;
 };
+
+static_assert(sizeof(struct coord) == 8);
+
 
 inline struct coord make_coord(uint32_t x, uint32_t y)
 {
@@ -93,12 +96,12 @@ inline uint64_t coord_dist(struct coord base, struct coord target)
     return sqrt(dx*dx + dy*dy);
 }
 
-inline uint64_t coord_to_id(struct coord coord)
+inline uint64_t coord_to_u64(struct coord coord)
 {
     return (((uint64_t) coord.x) << 32) | coord.y;
 }
 
-inline struct coord id_to_coord(uint64_t id)
+inline struct coord coord_from_u64(uint64_t id)
 {
     return (struct coord) {
         .x = id >> 32,

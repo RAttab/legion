@@ -106,11 +106,11 @@ static void im_legion_io_launch(
 {
     if (len < 1) return;
 
-    struct coord dst = id_to_coord(args[0]);
+    struct coord dst = coord_from_u64(args[0]);
     if (coord_is_nil(dst)) return;
 
     const word_t data[] = {
-        coord_to_id(chunk_star(chunk)->coord),
+        coord_to_u64(chunk_star(chunk)->coord),
         legion->mod,
     };
 

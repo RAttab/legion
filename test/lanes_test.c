@@ -57,8 +57,8 @@ void test_basics(void)
 
     for (size_t iteration = 0; iteration < 5; ++iteration) {
         world_lanes_launch(world, item, src, dst, NULL, 0);
-        check_hset(world_lanes_list(world, src), coord_to_id(dst));
-        check_hset(world_lanes_list(world, dst), coord_to_id(src));
+        check_hset(world_lanes_list(world, src), coord_to_u64(dst));
+        check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
         world_ts_delta_t wait = lanes_travel(item, src, dst);
         for (world_ts_delta_t i = 0; i < wait; ++i) world_step(world);

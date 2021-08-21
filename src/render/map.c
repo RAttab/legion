@@ -111,7 +111,7 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
     {
 
     case EV_MAP_GOTO: {
-        map->pos = id_to_coord((uintptr_t) ev->user.data1);
+        map->pos = coord_from_u64((uintptr_t) ev->user.data1);
         map->scale = map_scale_default;
         return false;
     }
@@ -164,7 +164,7 @@ bool map_event(struct map *map, SDL_Event *event)
                     });
 
             const struct star *star = world_star_in(core.state.world, rect);
-            if (star) core_push_event(EV_STAR_SELECT, coord_to_id(star->coord), 0);
+            if (star) core_push_event(EV_STAR_SELECT, coord_to_u64(star->coord), 0);
         }
 
         break;
@@ -253,7 +253,7 @@ static void map_render_lanes(
     rgba_render(rgba_gray_a(0xAA, 0xAA), renderer);
 
     for (hset_it_t it = hset_next(lanes, NULL); it; it = hset_next(lanes, it)) {
-        SDL_Point dst = map_project_sdl(map, id_to_coord(*it));
+        SDL_Point dst = map_project_sdl(map, coord_from_u64(*it));
         sdl_err(SDL_RenderDrawLine(renderer, src.x, src.y, dst.x, dst.y));
     }
 }

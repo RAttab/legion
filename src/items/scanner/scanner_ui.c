@@ -128,7 +128,7 @@ static bool ui_scanner_event(void *_ui, const SDL_Event *ev)
         default: { abort(); }
         }
 
-        ui_clipboard_copy_hex(&core.ui.board, coord_to_id(coord));
+        ui_clipboard_copy_hex(&core.ui.board, coord_to_u64(coord));
         return ret == ui_consume;
     }
 

@@ -13,7 +13,7 @@
 
 void star_gen(struct star *star, struct coord coord)
 {
-    struct rng rng = rng_make(coord_to_id(coord));
+    struct rng rng = rng_make(coord_to_u64(coord));
 
     star->coord = coord;
     star->state = star_untouched;
@@ -72,7 +72,7 @@ static struct sector *sector_new(struct world *world, size_t stars)
 struct sector *sector_gen(struct world *world, struct coord coord)
 {
     coord = coord_sector(coord);
-    struct rng rng = rng_make(coord_to_id(coord));
+    struct rng rng = rng_make(coord_to_u64(coord));
 
     double delta_max = ((double) coord_mid) * coord_mid;
     double delta = coord_dist_2(coord, coord_center());
@@ -90,12 +90,12 @@ struct sector *sector_gen(struct world *world, struct coord coord)
     for (size_t i = 0; i < stars; ++i) {
         struct star *star = &sector->stars[i];
 
-        struct coord pos = id_to_coord(rng_step(&rng));
+        struct coord pos = coord_from_u64(rng_step(&rng));
         pos.x = coord.x | (pos.x & coord_sector_mask);
         pos.y = coord.y | (pos.y & coord_sector_mask);
 
         struct htable_ret ret =
-            htable_put(&sector->index, coord_to_id(pos), (uintptr_t) star);
+            htable_put(&sector->index, coord_to_u64(pos), (uintptr_t) star);
         if (!ret.ok) continue;
 
         star_gen(star, pos);
@@ -128,7 +128,7 @@ struct sector *sector_load(struct world *world, struct save *save)
         struct chunk *chunk = chunk_load(world, save);
         if (!chunk) goto fail;
 
-        uint64_t id = coord_to_id(chunk_star(chunk)->coord);
+        uint64_t id = coord_to_u64(chunk_star(chunk)->coord);
 
         struct htable_ret ret = htable_get(&sector->index, id);
         if (!ret.ok) goto fail;
@@ -161,7 +161,7 @@ void sector_save(struct sector *sector, struct save *save)
 
 struct chunk *sector_chunk_alloc(struct sector *sector, struct coord coord)
 {
-    uint64_t id = coord_to_id(coord);
+    uint64_t id = coord_to_u64(coord);
 
     struct chunk *chunk = sector_chunk(sector, coord);
     if (likely(chunk != NULL)) return chunk;
@@ -180,7 +180,7 @@ struct chunk *sector_chunk_alloc(struct sector *sector, struct coord coord)
 
 struct chunk *sector_chunk(struct sector *sector, struct coord coord)
 {
-    uint64_t id = coord_to_id(coord);
+    uint64_t id = coord_to_u64(coord);
     struct htable_ret ret = htable_get(&sector->chunks, id);
     return ret.ok ? (void *) ret.value : NULL;
 }
@@ -196,7 +196,7 @@ const struct star *sector_star_in(struct sector *sector, struct rect rect)
 
 const struct star *sector_star_at(struct sector *sector, struct coord coord)
 {
-    struct htable_ret ret = htable_get(&sector->index, coord_to_id(coord));
+    struct htable_ret ret = htable_get(&sector->index, coord_to_u64(coord));
     return ret.ok ? (struct star *) ret.value : NULL;
 }
 
@@ -209,7 +209,7 @@ void sector_step(struct sector *sector)
 
 ssize_t sector_scan(struct sector *sector, struct coord coord, enum item item)
 {
-    uint64_t id = coord_to_id(coord);
+    uint64_t id = coord_to_u64(coord);
 
     struct htable_ret ret = htable_get(&sector->index, id);
     if (!ret.ok) return -1;

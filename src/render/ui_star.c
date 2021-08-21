@@ -211,7 +211,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_STAR_SELECT: {
-        ui->id = id_to_coord((uintptr_t) ev->user.data1);
+        ui->id = coord_from_u64((uintptr_t) ev->user.data1);
         ui_star_update(ui);
         ui->panel.state = ui_panel_visible;
         core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
@@ -226,7 +226,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_ITEM_SELECT: {
-        struct coord coord = id_to_coord((uintptr_t) ev->user.data2);
+        struct coord coord = coord_from_u64((uintptr_t) ev->user.data2);
         if (!coord_eq(coord, ui->id)) {
             ui->id = coord;
             ui_star_update(ui);
@@ -269,12 +269,12 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->view, ev))) {
-        core_push_event(EV_FACTORY_SELECT, coord_to_id(ui->id), 0);
+        core_push_event(EV_FACTORY_SELECT, coord_to_u64(ui->id), 0);
         return ret == ui_consume;
     }
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
-        ui_clipboard_copy_hex(&core.ui.board, coord_to_id(ui->star.coord));
+        ui_clipboard_copy_hex(&core.ui.board, coord_to_u64(ui->star.coord));
         return ret == ui_consume;
     }
 
@@ -305,7 +305,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         if ((ret = ui_toggles_event(&ui->control_list, ev, &ui->control_scroll, &toggle, NULL))) {
             enum event type = toggle->state == ui_toggle_selected ?
                 EV_ITEM_SELECT : EV_ITEM_CLEAR;
-            core_push_event(type, toggle->user, coord_to_id(ui->star.coord));
+            core_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
             return true;
         }
     }
@@ -318,7 +318,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         if ((ret = ui_toggles_event(&ui->factory_list, ev, &ui->factory_scroll, &toggle, NULL))) {
             enum event type = toggle->state == ui_toggle_selected ?
                 EV_ITEM_SELECT : EV_ITEM_CLEAR;
-            core_push_event(type, toggle->user, coord_to_id(ui->star.coord));
+            core_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
             return true;
         }
     }

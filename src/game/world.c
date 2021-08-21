@@ -72,7 +72,7 @@ struct world *world_load(struct save *save)
         struct sector *sector = sector_load(world, save);
         if (!sector) goto fail;
 
-        uint64_t id = coord_to_id(sector->coord);
+        uint64_t id = coord_to_u64(sector->coord);
         struct htable_ret ret = htable_put(&world->sectors, id, (uintptr_t) sector);
         assert(ret.ok);
     }
@@ -128,7 +128,7 @@ struct coord world_populate(struct world *world)
 
     struct rng rng = rng_make(0);
     while (true) {
-        struct coord coord = id_to_coord(rng_step(&rng));
+        struct coord coord = coord_from_u64(rng_step(&rng));
         struct sector *sector = world_sector(world, coord);
         if (sector->stars_len < 100) continue;
 
@@ -179,7 +179,7 @@ struct chunk *world_chunk(struct world *world, struct coord coord)
 struct sector *world_sector(struct world *world, struct coord sector)
 {
     struct coord coord = coord_sector(sector);
-    uint64_t id = coord_to_id(coord);
+    uint64_t id = coord_to_u64(coord);
 
     struct htable_ret ret = htable_get(&world->sectors, id);
     if (ret.ok) return (struct sector *) ret.value;

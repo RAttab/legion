@@ -219,7 +219,7 @@ static bool factory_event_user(struct factory *factory, SDL_Event *ev)
 
     case EV_FACTORY_SELECT: {
         factory->active = true;
-        factory->star = id_to_coord((uintptr_t) ev->user.data1);
+        factory->star = coord_from_u64((uintptr_t) ev->user.data1);
         factory->pos = make_pos(0, -20);
         factory_update(factory);
         return false;
@@ -254,7 +254,7 @@ static bool factory_event_click(struct factory *factory)
     struct flow *flow = factory_cursor_flow(factory);
     if (!flow) return false;
 
-    core_push_event(EV_ITEM_SELECT, flow->id, coord_to_id(factory->star));
+    core_push_event(EV_ITEM_SELECT, flow->id, coord_to_u64(factory->star));
     return true;
 }
 

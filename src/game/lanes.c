@@ -203,16 +203,16 @@ void lanes_free(struct lanes *lanes)
 
 static uint64_t lanes_key(struct coord src, struct coord dst)
 {
-    return coord_to_id(src) ^ coord_to_id(dst);
+    return coord_to_u64(src) ^ coord_to_u64(dst);
 }
 
 static void lanes_index_put(struct lanes *lanes, struct coord key, struct coord val)
 {
-    uint64_t key64 = coord_to_id(key);
+    uint64_t key64 = coord_to_u64(key);
     struct htable_ret ret = htable_get(&lanes->index, key64);
 
     struct hset *old = (void *) ret.value;
-    struct hset *new = hset_put(old, coord_to_id(val));
+    struct hset *new = hset_put(old, coord_to_u64(val));
     if (old == new) return;
 
     if (old) ret = htable_xchg(&lanes->index, key64, (uintptr_t) new);
@@ -222,12 +222,12 @@ static void lanes_index_put(struct lanes *lanes, struct coord key, struct coord 
 
 static void lanes_index_del(struct lanes *lanes, struct coord key, struct coord val)
 {
-    uint64_t key64 = coord_to_id(key);
+    uint64_t key64 = coord_to_u64(key);
     struct htable_ret ret = htable_get(&lanes->index, key64);
     assert(ret.ok);
 
     struct hset *set = (void *) ret.value;
-    bool ok = hset_del(set, coord_to_id(val));
+    bool ok = hset_del(set, coord_to_u64(val));
     assert(ok);
 
     if (!set->len) {
@@ -286,7 +286,7 @@ world_ts_delta_t lanes_travel(enum item type, struct coord src, struct coord dst
 
 const struct hset *lanes_list(struct lanes *lanes, struct coord key)
 {
-    struct htable_ret ret = htable_get(&lanes->index, coord_to_id(key));
+    struct htable_ret ret = htable_get(&lanes->index, coord_to_u64(key));
     return (void *) ret.value;
 }
 
