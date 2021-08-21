@@ -176,6 +176,7 @@ const enum item im_list_t0_arr[] =
     ITEM_DB_1,
     ITEM_BRAIN_1,
     ITEM_LEGION_1,
+    ITEM_WORKER,
 
     0,
 };
