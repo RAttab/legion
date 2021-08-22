@@ -10,11 +10,11 @@
 #include "items/config.h"
 
 #include "items/brain/brain.h"
-#include "items/db/db.h"
 #include "items/deploy/deploy.h"
 #include "items/extract/extract.h"
 #include "items/lab/lab.h"
 #include "items/legion/legion.h"
+#include "items/memory/memory.h"
 #include "items/printer/printer.h"
 #include "items/scanner/scanner.h"
 #include "items/storage/storage.h"
@@ -73,48 +73,45 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_ELEM_Y, "elem.Y", bits_s, work_s),
     im_init(ITEM_ELEM_Z, "elem.Z", bits_s, work_s),
 
-    // Passive
-    im_init(ITEM_FRAME,      "frame",      bits_s, work_s),
-    im_init(ITEM_GEAR,       "gear",       bits_s, work_s),
-    im_init(ITEM_FUEL,       "fuel",       bits_s, work_s),
-    im_init(ITEM_BONDING,    "bonding",    bits_s, work_s),
-    im_init(ITEM_CIRCUIT,    "circuit",    bits_s, work_s),
-    im_init(ITEM_NEURAL,     "neural",     bits_s, work_s),
-    im_init(ITEM_SERVO,      "servo",      bits_s, work_s),
-    im_init(ITEM_THRUSTER,   "thruster",   bits_s, work_s),
-    im_init(ITEM_PROPULSION, "propulsion", bits_s, work_s),
-    im_init(ITEM_PLATE,      "plate",      bits_s, work_s),
-    im_init(ITEM_SHIELDING,  "shielding",  bits_s, work_s),
-    im_init(ITEM_HULL_1,     "hull_1",     bits_s, work_s),
-    im_init(ITEM_CORE,       "core",       bits_s, work_s),
-    im_init(ITEM_MATRIX,     "matrix",     bits_s, work_s),
-    im_init(ITEM_DATABANK,   "databank",   bits_s, work_s),
+    // Passive - T0
+    im_init(ITEM_FRAME,        "frame",        bits_s, work_s),
+    im_init(ITEM_LOGIC,        "logic",        bits_s, work_s),
+    im_init(ITEM_GEAR,         "gear",         bits_s, work_s),
+    im_init(ITEM_NEURON,       "neuron",       bits_s, work_s),
+    im_init(ITEM_BOND,         "bond",         bits_s, work_s),
+    im_init(ITEM_MAGNET,       "magnet",       bits_s, work_s),
+    im_init(ITEM_NUCLEAR,      "nuclear",      bits_s, work_s),
+    im_init(ITEM_ROBOTICS,     "robotics",     bits_s, work_s),
+    im_init(ITEM_CORE,         "core",         bits_s, work_s),
+    im_init(ITEM_CAPACITOR,    "capacitor",    bits_s, work_s),
+    im_init(ITEM_MATRIX,       "matrix",       bits_s, work_s),
+    im_init(ITEM_MAGNET_FIELD, "magnet_field", bits_s, work_s),
+    im_init(ITEM_HULL,         "hull",         bits_s, work_s),
+    // Passive - T1
+    im_init(ITEM_LIQUID_FRAME, "liquid",       bits_m, work_m),
+    im_init(ITEM_RADIATION,    "radiation",    bits_m, work_m),
+    im_init(ITEM_ANTENNA,      "antenna",      bits_m, work_m),
+    im_init(ITEM_ACCELERATOR,  "accelerator",  bits_m, work_m),
 
-    // Active
-    im_init_cfg(ITEM_DEPLOY,     "deploy",     bits_s, work_s, im_deploy_config),
-    im_init_cfg(ITEM_EXTRACT_1,  "extract_1",  bits_s, work_s, im_extract_config),
-    im_init_cfg(ITEM_EXTRACT_2,  "extract_2",  bits_s, work_s, im_extract_config),
-    im_init_cfg(ITEM_EXTRACT_3,  "extract_3",  bits_s, work_s, im_extract_config),
-    im_init_cfg(ITEM_PRINTER_1,  "printer_1",  bits_s, work_s, im_printer_config),
-    im_init_cfg(ITEM_PRINTER_2,  "printer_2",  bits_s, work_s, im_printer_config),
-    im_init_cfg(ITEM_PRINTER_3,  "printer_3",  bits_s, work_s, im_printer_config),
-    im_init_cfg(ITEM_ASSEMBLY_1, "assembly_1", bits_s, work_s, im_printer_config),
-    im_init_cfg(ITEM_ASSEMBLY_2, "assembly_2", bits_s, work_s, im_printer_config),
-    im_init_cfg(ITEM_ASSEMBLY_3, "assembly_3", bits_s, work_s, im_printer_config),
-    im_init_cfg(ITEM_STORAGE,    "storage",    bits_s, work_s, im_storage_config),
-    im_init_cfg(ITEM_SCANNER_1,  "scanner_1",  bits_s, work_s, im_scanner_config),
-    im_init_cfg(ITEM_SCANNER_2,  "scanner_2",  bits_s, work_s, im_scanner_config),
-    im_init_cfg(ITEM_SCANNER_3,  "scanner_3",  bits_s, work_s, im_scanner_config),
-    im_init_cfg(ITEM_LAB,        "lab",        bits_s, work_s, im_lab_config),
-    im_init_cfg(ITEM_DB_1,       "db_1",       bits_s, work_s, im_db_config),
-    im_init_cfg(ITEM_DB_2,       "db_2",       bits_s, work_s, im_db_config),
-    im_init_cfg(ITEM_DB_3,       "db_3",       bits_s, work_s, im_db_config),
-    im_init_cfg(ITEM_BRAIN_1,    "brain_1",    bits_s, work_s, im_brain_config),
-    im_init_cfg(ITEM_BRAIN_2,    "brain_2",    bits_s, work_s, im_brain_config),
-    im_init_cfg(ITEM_BRAIN_3,    "brain_3",    bits_s, work_s, im_brain_config),
-    im_init_cfg(ITEM_LEGION_1,   "legion_1",   bits_s, work_s, im_legion_config),
-    im_init_cfg(ITEM_LEGION_2,   "legion_2",   bits_s, work_s, im_legion_config),
-    im_init_cfg(ITEM_LEGION_3,   "legion_3",   bits_s, work_s, im_legion_config),
+    // Active - T0
+    im_init_cfg(ITEM_DEPLOY,       "deploy",    bits_s, work_s, im_deploy_config),
+    im_init_cfg(ITEM_EXTRACT,      "extract",   bits_s, work_s, im_extract_config),
+    im_init_cfg(ITEM_PRINTER,      "printer",   bits_s, work_s, im_printer_config),
+    im_init_cfg(ITEM_ASSEMBLY,     "assembly",  bits_s, work_s, im_printer_config),
+    im_init_cfg(ITEM_MEMORY,       "memory",    bits_s, work_s, im_memory_config),
+    im_init_cfg(ITEM_BRAIN,        "brain",     bits_s, work_s, im_brain_config),
+    im_init_cfg(ITEM_SCANNER,      "scanner",   bits_s, work_s, im_scanner_config),
+    im_init_cfg(ITEM_LEGION,       "legion",    bits_s, work_s, im_legion_config),
+    im_init_cfg(ITEM_LAB,          "lab",       bits_s, work_s, im_lab_config),
+    // Active - T1
+    /* im_init_cfg(ITEM_SOLAR,        "solar",     bits_m, work_m, im_solar_config), */
+    im_init_cfg(ITEM_STORAGE,      "storage",   bits_m, work_m, im_storage_config),
+    /* im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config), */
+    /* im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_condenser_config), */
+    /* im_init_cfg(ITEM_ENERGY_STORE, "energy",    bits_m, work_m, im_energy_store_config), */
+    /* im_init_cfg(ITEM_AUTO_DEPLOY,  "auto",      bits_m, work_m, im_auto_deploy_config), */
+    /* im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config), */
+    /* im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config), */
 
     // Logistics
     im_init(ITEM_WORKER, "worker", bits_s, work_s),
@@ -127,10 +124,10 @@ static struct im_config im_configs[ITEM_MAX] =
 
 const enum item im_list_control_arr[] =
 {
-    ITEM_SCANNER_1, ITEM_SCANNER_2, ITEM_SCANNER_3,
-    ITEM_DB_1, ITEM_DB_2, ITEM_DB_3,
-    ITEM_BRAIN_1, ITEM_BRAIN_2, ITEM_BRAIN_3,
-    ITEM_LEGION_1, ITEM_LEGION_2, ITEM_LEGION_3,
+    ITEM_MEMORY,
+    ITEM_BRAIN,
+    ITEM_SCANNER,
+    ITEM_LEGION,
     0,
 };
 im_list_t im_list_control = im_list_control_arr;
@@ -138,49 +135,14 @@ im_list_t im_list_control = im_list_control_arr;
 
 const enum item im_list_factory_arr[] =
 {
-    ITEM_DEPLOY, ITEM_STORAGE,
-    ITEM_EXTRACT_1, ITEM_EXTRACT_2, ITEM_EXTRACT_3,
-    ITEM_PRINTER_1, ITEM_PRINTER_2, ITEM_PRINTER_3,
-    ITEM_ASSEMBLY_1, ITEM_ASSEMBLY_2, ITEM_ASSEMBLY_3,
+    ITEM_DEPLOY,
+    ITEM_EXTRACT,
+    ITEM_PRINTER,
+    ITEM_ASSEMBLY,
     ITEM_LAB,
     0,
 };
 im_list_t im_list_factory = im_list_factory_arr;
-
-
-const enum item im_list_t0_arr[] =
-{
-    ITEM_FRAME,
-    ITEM_GEAR,
-    ITEM_FUEL,
-    ITEM_BONDING,
-    ITEM_CIRCUIT,
-    ITEM_NEURAL,
-    ITEM_SERVO,
-    ITEM_THRUSTER,
-    ITEM_PROPULSION,
-    ITEM_PLATE,
-    ITEM_SHIELDING,
-    ITEM_HULL_1,
-    ITEM_CORE,
-    ITEM_MATRIX,
-    ITEM_DATABANK,
-
-    ITEM_DEPLOY,
-    ITEM_STORAGE,
-    ITEM_EXTRACT_1,
-    ITEM_PRINTER_1,
-    ITEM_ASSEMBLY_1,
-    ITEM_LAB,
-    ITEM_SCANNER_1,
-    ITEM_DB_1,
-    ITEM_BRAIN_1,
-    ITEM_LEGION_1,
-    ITEM_WORKER,
-
-    0,
-};
-im_list_t im_list_t0 = im_list_t0_arr;
 
 
 const struct im_config *im_config(enum item item)

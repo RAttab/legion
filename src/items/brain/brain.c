@@ -14,19 +14,18 @@
 
 enum
 {
-    im_brain_stack_s = 1,
-    im_brain_stack_m = 2,
-    im_brain_stack_l = 4,
-    im_brain_stack_max = im_brain_stack_l,
+    im_brain_stack_base = 1,
+    im_brain_stack_volume = 3,
+    im_brain_stack_dense = 1,
+    im_brain_stack_max = im_brain_stack_volume,
 
-    im_brain_speed_s = 2,
-    im_brain_speed_m = 4,
-    im_brain_speed_l = 6,
+    im_brain_speed_base = 2,
+    im_brain_speed_volume = 2,
+    im_brain_speed_dense = 4,
 
-    im_brain_len_s = sizeof(struct im_brain) + vm_len(im_brain_stack_s),
-    im_brain_len_m = sizeof(struct im_brain) + vm_len(im_brain_stack_m),
-    im_brain_len_l = sizeof(struct im_brain) + vm_len(im_brain_stack_l),
-
+    im_brain_len_base = sizeof(struct im_brain) + vm_len(im_brain_stack_base),
+    im_brain_len_volume = sizeof(struct im_brain) + vm_len(im_brain_stack_volume),
+    im_brain_len_dense = sizeof(struct im_brain) + vm_len(im_brain_stack_dense),
 };
 
 
@@ -45,9 +44,7 @@ enum
 void im_brain_config(struct im_config *config)
 {
     switch(config->type) {
-    case ITEM_BRAIN_1: { config->size = im_brain_len_s; break; }
-    case ITEM_BRAIN_2: { config->size = im_brain_len_m; break; }
-    case ITEM_BRAIN_3: { config->size = im_brain_len_l; break; }
+    case ITEM_BRAIN: { config->size = im_brain_len_base; break; }
     default: { assert(false); }
     }
 

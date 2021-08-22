@@ -1,4 +1,4 @@
-/* db_ui.c
+/* memory_ui.c
    Rémi Attab (remi.attab@gmail.com), 24 Jun 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -7,10 +7,10 @@
 
 
 // -----------------------------------------------------------------------------
-// db
+// memory
 // -----------------------------------------------------------------------------
 
-struct ui_db
+struct ui_memory
 {
     struct font *font;
 
@@ -19,15 +19,15 @@ struct ui_db
     struct ui_label data_index, data_val;
 
     size_t state_len;
-    struct im_db state;
+    struct im_memory state;
 };
 
-static void *ui_db_alloc(struct font *font)
+static void *ui_memory_alloc(struct font *font)
 {
-    size_t data_len = im_db_len_max * sizeof(word_t);
-    struct ui_db *ui = calloc(1, sizeof(*ui) + data_len);
+    size_t data_len = im_memory_len_max * sizeof(word_t);
+    struct ui_memory *ui = calloc(1, sizeof(*ui) + data_len);
 
-    *ui = (struct ui_db) {
+    *ui = (struct ui_memory) {
         .font = font,
 
         .size = ui_label_new(font, ui_str_c("size: ")),
@@ -46,9 +46,9 @@ static void *ui_db_alloc(struct font *font)
     return ui;
 }
 
-static void ui_db_free(void *_ui)
+static void ui_memory_free(void *_ui)
 {
-    struct ui_db *ui = _ui;
+    struct ui_memory *ui = _ui;
 
     ui_label_free(&ui->size);
     ui_label_free(&ui->size_val);
@@ -60,10 +60,10 @@ static void ui_db_free(void *_ui)
     free(ui);
 }
 
-static void ui_db_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_memory_update(void *_ui, struct chunk *chunk, id_t id)
 {
-    struct ui_db *ui = _ui;
-    const struct im_db *state = &ui->state;
+    struct ui_memory *ui = _ui;
+    const struct im_memory *state = &ui->state;
 
     bool ok = chunk_copy(chunk, id, &ui->state, ui->state_len);
     assert(ok);
@@ -72,9 +72,9 @@ static void ui_db_update(void *_ui, struct chunk *chunk, id_t id)
     ui_scroll_update(&ui->scroll, state->len);
 }
 
-static bool ui_db_event(void *_ui, const SDL_Event *ev)
+static bool ui_memory_event(void *_ui, const SDL_Event *ev)
 {
-    struct ui_db *ui = _ui;
+    struct ui_memory *ui = _ui;
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
@@ -82,11 +82,11 @@ static bool ui_db_event(void *_ui, const SDL_Event *ev)
     return false;
 }
 
-static void ui_db_render(
+static void ui_memory_render(
         void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_db *ui = _ui;
-    const struct im_db *state = &ui->state;
+    struct ui_memory *ui = _ui;
+    const struct im_memory *state = &ui->state;
 
     ui_label_render(&ui->size, layout, renderer);
     ui_label_render(&ui->size_val, layout, renderer);

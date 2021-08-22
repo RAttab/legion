@@ -24,20 +24,20 @@ const enum item *im_legion_cargo(enum item type)
 {
     switch (type)
     {
-    case ITEM_LEGION_1: {
+    case ITEM_LEGION: {
         static const enum item cargo[] = {
             ITEM_WORKER,
             ITEM_WORKER,
             ITEM_DEPLOY,
-            ITEM_EXTRACT_1,
-            ITEM_EXTRACT_1,
-            ITEM_PRINTER_1,
-            ITEM_PRINTER_1,
-            ITEM_ASSEMBLY_1,
-            ITEM_ASSEMBLY_1,
-            ITEM_SCANNER_1,
-            ITEM_DB_1,
-            ITEM_BRAIN_1,
+            ITEM_EXTRACT,
+            ITEM_EXTRACT,
+            ITEM_PRINTER,
+            ITEM_PRINTER,
+            ITEM_ASSEMBLY,
+            ITEM_ASSEMBLY,
+            ITEM_SCANNER,
+            ITEM_MEMORY,
+            ITEM_BRAIN,
             ITEM_NIL,
         };
         return cargo;
@@ -58,14 +58,8 @@ static void im_legion_make(
     for (const enum item *it = im_legion_cargo(id_item(id)); *it; ++it) {
 
         switch (*it) {
-        case ITEM_BRAIN_1...ITEM_BRAIN_3: {
-            chunk_create_from(chunk, *it, &mod, src ? 1 : 0);
-            break;
-        }
-        case ITEM_DB_1...ITEM_DB_3: {
-            chunk_create_from(chunk, *it, &src, mod ? 1 : 0);
-            break;
-        }
+        case ITEM_BRAIN:  { chunk_create_from(chunk, *it, &mod, src ? 1 : 0);  break; }
+        case ITEM_MEMORY: { chunk_create_from(chunk, *it, &src, mod ? 1 : 0);  break; }
         default: { chunk_create(chunk, *it); }
         }
     }

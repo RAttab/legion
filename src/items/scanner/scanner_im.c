@@ -27,9 +27,7 @@ static uint64_t im_scanner_div(enum item item)
 {
     switch (item)
     {
-    case ITEM_SCANNER_1: { return 1000; }
-    case ITEM_SCANNER_2: { return 100000; }
-    case ITEM_SCANNER_3: { return 10000000; }
+    case ITEM_SCANNER: { return 1000; }
     default: { abort(); }
     }
 }

@@ -370,8 +370,11 @@ struct coord world_populate(struct world *world)
     for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
         tape_set_put(&world->known, it);
 
-    for (im_list_t it = im_list_t0; *it; it++)
-        tape_set_put(&world->known, *it);
+    tape_set_put(&world->known, ITEM_LEGION);
+    tape_set_union(&world->known, &tapes_info(ITEM_LEGION)->reqs);
+
+    tape_set_put(&world->known, ITEM_LAB);
+    tape_set_union(&world->known, &tapes_info(ITEM_LAB)->reqs);
 
     struct rng rng = rng_make(0);
     while (true) {
@@ -388,15 +391,15 @@ struct coord world_populate(struct world *world)
             if (star_elem(star, ITEM_ELEM_B) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_C) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_D) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_E) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_F) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_G) < 20000) continue;
 
             struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
             assert(chunk);
 
-            for (const enum item *it = im_legion_cargo(ITEM_LEGION_1); *it; it++)
+            for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++)
                 chunk_create(chunk, *it);
-            chunk_create(chunk, ITEM_LEGION_1);
+            chunk_create(chunk, ITEM_LEGION);
 
             return star->coord;
         }

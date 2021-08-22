@@ -23,9 +23,7 @@ static void im_brain_init(void *state, struct chunk *chunk, id_t id)
     brain->id = id;
 
     switch (id_item(id)) {
-    case ITEM_BRAIN_1: { vm_init(&brain->vm, im_brain_stack_s, im_brain_speed_s); break; }
-    case ITEM_BRAIN_2: { vm_init(&brain->vm, im_brain_stack_m, im_brain_speed_s); break; }
-    case ITEM_BRAIN_3: { vm_init(&brain->vm, im_brain_stack_l, im_brain_speed_s); break; }
+    case ITEM_BRAIN: { vm_init(&brain->vm, im_brain_stack_base, im_brain_speed_base); break; }
     default: { assert(false); }
     }
 }
@@ -61,9 +59,7 @@ static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_t id)
 static uint8_t im_brain_speed(struct im_brain *brain)
 {
     switch (id_item(brain->id)) {
-    case ITEM_BRAIN_1: { return vm_speed(im_brain_speed_s); }
-    case ITEM_BRAIN_2: { return vm_speed(im_brain_speed_m); }
-    case ITEM_BRAIN_3: { return vm_speed(im_brain_speed_l); }
+    case ITEM_BRAIN: { return vm_speed(im_brain_speed_base); }
     default: { assert(false); }
     }
 }

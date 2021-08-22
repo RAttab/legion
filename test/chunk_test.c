@@ -14,8 +14,8 @@ void test_active_list(void)
 {
     active_it_t it = 0;
     active_list_t list = {0};
-    enum item i0 = ITEM_EXTRACT_1;
-    enum item i1 = ITEM_PRINTER_1;
+    enum item i0 = ITEM_EXTRACT;
+    enum item i1 = ITEM_PRINTER;
 
     assert(!active_index(&list, i0));
     assert(!active_index(&list, i1));
@@ -46,8 +46,8 @@ void test_ports_1on1(void)
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
     enum item item = ITEM_ELEM_A;
-    id_t src = make_id(ITEM_EXTRACT_1, 1);
-    id_t dst = make_id(ITEM_PRINTER_1, 1);
+    id_t src = make_id(ITEM_EXTRACT, 1);
+    id_t dst = make_id(ITEM_PRINTER, 1);
 
     chunk_create(chunk, id_item(src));
     chunk_create(chunk, id_item(dst));
@@ -75,9 +75,9 @@ void test_ports_2on1(void)
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
     enum item item = ITEM_ELEM_A;
-    id_t src0 = make_id(ITEM_EXTRACT_1, 1);
-    id_t src1 = make_id(ITEM_EXTRACT_1, 2);
-    id_t dst = make_id(ITEM_PRINTER_1, 1);
+    id_t src0 = make_id(ITEM_EXTRACT, 1);
+    id_t src1 = make_id(ITEM_EXTRACT, 2);
+    id_t dst = make_id(ITEM_PRINTER, 1);
 
     chunk_create(chunk, id_item(src0));
     chunk_create(chunk, id_item(src1));
@@ -107,9 +107,9 @@ void test_ports_1on2(void)
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
     enum item item = ITEM_ELEM_A;
-    id_t src = make_id(ITEM_EXTRACT_1, 1);
-    id_t dst0 = make_id(ITEM_PRINTER_1, 1);
-    id_t dst1 = make_id(ITEM_PRINTER_1, 2);
+    id_t src = make_id(ITEM_EXTRACT, 1);
+    id_t dst0 = make_id(ITEM_PRINTER, 1);
+    id_t dst1 = make_id(ITEM_PRINTER, 2);
 
     chunk_create(chunk, id_item(src));
     chunk_create(chunk, id_item(dst0));
@@ -142,8 +142,8 @@ void test_ports_reset(void)
     struct chunk *chunk = chunk_alloc(NULL, &star);
 
     enum item item = ITEM_ELEM_A;
-    id_t src = make_id(ITEM_EXTRACT_1, 1);
-    id_t dst = make_id(ITEM_PRINTER_1, 1);
+    id_t src = make_id(ITEM_EXTRACT, 1);
+    id_t dst = make_id(ITEM_PRINTER, 1);
 
     chunk_create(chunk, id_item(src));
     chunk_create(chunk, id_item(dst));

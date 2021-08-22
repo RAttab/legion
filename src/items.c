@@ -8,11 +8,11 @@
 #include "items/populate.c"
 
 #include "items/brain/brain.c"
-#include "items/db/db.c"
 #include "items/deploy/deploy.c"
 #include "items/extract/extract.c"
 #include "items/lab/lab.c"
 #include "items/legion/legion.c"
+#include "items/memory/memory.c"
 #include "items/printer/printer.c"
 #include "items/scanner/scanner.c"
 #include "items/storage/storage.c"

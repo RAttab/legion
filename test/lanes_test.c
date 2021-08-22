@@ -51,7 +51,7 @@ void test_basics(void)
     struct world *world = world_new();
     struct sector *sector = world_sector(world, coord_center());
 
-    enum item item = ITEM_LEGION_1;
+    enum item item = ITEM_LEGION;
     struct coord src = sector->stars[0].coord;
     struct coord dst = sector->stars[1].coord;
 
@@ -74,8 +74,8 @@ void test_basics(void)
         struct chunk *chunk_dst = sector_chunk(sector, dst);
         assert(chunk_src && chunk_dst);
 
-        assert(chunk_scan(chunk_src, ITEM_BRAIN_1) > (ssize_t) iteration);
-        assert(chunk_scan(chunk_dst, ITEM_BRAIN_1) > (ssize_t) iteration);
+        assert(chunk_scan(chunk_src, ITEM_BRAIN) > (ssize_t) iteration);
+        assert(chunk_scan(chunk_dst, ITEM_BRAIN) > (ssize_t) iteration);
     }
 }
 
