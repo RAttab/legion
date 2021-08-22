@@ -76,7 +76,7 @@ bool ui_input_get_u64(struct ui_input *input, uint64_t *ret)
     const char *end = it + input->buf.len;
     it += str_skip_spaces(it, end - it);
 
-    if (*it == '!') {
+    if (*it == '!' || *it == '&') {
         struct atoms *atoms = world_atoms(core.state.world);
         word_t atom = atoms_parse(atoms, it, end - it);
         if (atom == -1) return false;
