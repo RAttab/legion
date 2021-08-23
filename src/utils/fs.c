@@ -94,7 +94,10 @@ struct mfile mfile_open(const char *path)
     if (fd < 0) fail_errno("file not found: %s", path);
 
     struct mfile file = {0};
+
     file.len = file_len(fd);
+    if (!file.len) fail("unable to mmap empty file: %s", path);
+
     file.ptr = mmap(0, file.len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if (file.ptr == MAP_FAILED) fail_errno("failed to mmap: %s", path);
 
