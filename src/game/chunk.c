@@ -74,6 +74,8 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     chunk->world = world;
     star_load(&chunk->star, save);
 
+    if (!energy_load(&chunk->energy, save)) goto fail;
+
     save_read_into(save, &chunk->workers.count);
     chunk->workers.ops = vec64_reserve(chunk->workers.count);
     chunk->shuttles = save_read_ring64(save);
@@ -106,6 +108,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_magic(save, save_magic_chunk);
 
     star_save(&chunk->star, save);
+    energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
     save_write_ring64(save, chunk->shuttles);
 

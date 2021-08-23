@@ -32,6 +32,7 @@ enum legion_packed save_magic
 
     save_magic_chunk = 0x20,
     save_magic_active = 0x21,
+    save_magic_energy = 0x22,
 
     save_magic_mods = 0x30,
     save_magic_mod = 0x31,

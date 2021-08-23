@@ -70,7 +70,7 @@ size_t str_scaled(uint64_t val, char *dst, size_t len)
     static const char units[] = "ukMG?";
 
     size_t unit = 0;
-    while (val > 1000) {
+    while (val >= 1000) {
         val /= 1000;
         unit++;
     }
