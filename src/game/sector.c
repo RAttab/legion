@@ -18,8 +18,8 @@ void star_gen(struct star *star, struct coord coord)
     star->coord = coord;
     star->state = star_untouched;
 
-    star->power = 1U << rng_uni(&rng, 1, 16);
-    star->power += rng_uni(&rng, 1, star->power);
+    star->energy = 1U << rng_uni(&rng, 1, 16);
+    star->energy += rng_uni(&rng, 1, star->energy);
 
     size_t planets = rng_norm(&rng, 1, 16);
     for (size_t planet = 0; planet < planets; ++planet) {
@@ -37,7 +37,7 @@ bool star_load(struct star *star, struct save *save)
     if (!save_read_magic(save, save_magic_star)) return false;
     save_read_into(save, &star->coord);
     save_read_into(save, &star->state);
-    save_read_into(save, &star->power);
+    save_read_into(save, &star->energy);
     save_read_into(save, &star->elems);
     return save_read_magic(save, save_magic_star);
 }
@@ -47,7 +47,7 @@ void star_save(struct star *star, struct save *save)
     save_write_magic(save, save_magic_star);
     save_write_value(save, star->coord);
     save_write_value(save, star->state);
-    save_write_value(save, star->power);
+    save_write_value(save, star->energy);
     save_write_from(save, &star->elems);
     save_write_magic(save, save_magic_star);
 }

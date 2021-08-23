@@ -16,6 +16,7 @@ struct flow;
 struct font;
 struct chunk;
 struct atoms;
+struct energy;
 struct im_config;
 struct ui_layout;
 
@@ -30,7 +31,7 @@ typedef void (*im_init_t) (void *state, struct chunk *, id_t id);
 typedef void (*im_make_t) (
         void *state, struct chunk *, id_t id, const word_t *data, size_t len);
 typedef void (*im_load_t) (void *state, struct chunk *);
-typedef void (*im_step_t) (void *state, struct chunk *);
+typedef void (*im_step_t) (void *state, struct chunk *, struct energy *);
 typedef void (*im_io_t) (
         void *state, struct chunk *, enum io, id_t src, const word_t *args, size_t len);
 typedef bool (*im_flow_t) (const void *state, struct flow *);

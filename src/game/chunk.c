@@ -8,6 +8,7 @@
 #include "game/world.h"
 #include "game/sector.h"
 #include "game/active.h"
+#include "game/energy.h"
 #include "utils/vec.h"
 #include "utils/ring.h"
 #include "utils/htable.h"
@@ -28,6 +29,8 @@ struct chunk
     // ports
     struct htable provided;
     struct ring32 *requested;
+
+    struct energy energy;
 
     struct workers workers;
     struct ring64 *shuttles;
@@ -182,15 +185,30 @@ bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
     return active_copy(active_index(&chunk->active, id_item(id)), id, dst, len);
 }
 
+static bool chunk_create_logistics(struct chunk *chunk, enum item item)
+{
+    if (likely(!item_is_logistics(item))) return false;
+
+    switch (item) {
+    case ITEM_WORKER:       { chunk->workers.count++; return true; }
+    case ITEM_SOLAR:        { chunk->energy.solar++; return true; }
+    case ITEM_KWHEEL:       { chunk->energy.kwheel++; return true; }
+    case ITEM_ENERGY_STORE: { chunk->energy.store++; return true; }
+    default: { assert(false); }
+    }
+}
+
 void chunk_create(struct chunk *chunk, enum item item)
 {
-    if (item == ITEM_WORKER) { chunk->workers.count++; return; }
+    if (chunk_create_logistics(chunk, item)) return;
     active_create(active_index_create(&chunk->active, item));
 }
 
 void chunk_create_from(
         struct chunk *chunk, enum item item, const word_t *data, size_t len)
 {
+
+    if (chunk_create_logistics(chunk, item)) { assert(!len); return; }
     active_create_from(active_index_create(&chunk->active, item), chunk, data, len);
 }
 
@@ -201,11 +219,15 @@ void chunk_delete(struct chunk *chunk, id_t id)
 
 void chunk_step(struct chunk *chunk)
 {
+    energy_step_begin(&chunk->energy, &chunk->star);
+
     active_it_t it = active_next(&chunk->active, NULL);
     for (; it; it = active_next(&chunk->active, it))
-        active_step(*it, chunk);
+        active_step(*it, chunk, &chunk->energy);
 
     chunk_ports_step(chunk);
+
+    energy_step_end(&chunk->energy);
 }
 
 bool chunk_io(
@@ -215,6 +237,15 @@ bool chunk_io(
     if (!item_is_active(id_item(dst))) return false;
     struct active *active = active_index(&chunk->active, id_item(dst));
     return active_io(active, chunk, io, src, dst, len, args);
+}
+
+// -----------------------------------------------------------------------------
+// energy
+// -----------------------------------------------------------------------------
+
+const struct energy *chunk_energy(struct chunk *chunk)
+{
+    return &chunk->energy;
 }
 
 

@@ -93,7 +93,7 @@ static void im_extract_step_output(
     extract->waiting = false;
 }
 
-static void im_extract_step(void *state, struct chunk *chunk)
+static void im_extract_step(void *state, struct chunk *chunk, struct energy *)
 {
     struct im_extract *extract = state;
 

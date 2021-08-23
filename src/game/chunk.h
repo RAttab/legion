@@ -16,6 +16,7 @@ struct star;
 struct vec64;
 struct world;
 struct coord;
+struct energy;
 
 
 // -----------------------------------------------------------------------------
@@ -42,22 +43,30 @@ void chunk_delete(struct chunk *, id_t id);
 void chunk_create(struct chunk *, enum item);
 void chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len);
 
+
 void chunk_step(struct chunk *);
 bool chunk_io(
         struct chunk *, enum io io, id_t src, id_t dst, const word_t *args, size_t len);
 
+
+const struct energy *chunk_energy(struct chunk *);
+
+
 ssize_t chunk_scan(struct chunk *, enum item);
+
 
 void chunk_lanes_launch(
         struct chunk *, enum item item, struct coord dst, const word_t *data, size_t len);
 bool chunk_lanes_dock(struct chunk *, enum item *item, uint8_t *count);
 void chunk_lanes_arrive(struct chunk *, enum item, const word_t *data, size_t len);
 
+
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, enum item);
 bool chunk_ports_consumed(struct chunk *, id_t);
 void chunk_ports_request(struct chunk *, id_t, enum item);
 enum item chunk_ports_consume(struct chunk *, id_t);
+
 
 struct workers
 {

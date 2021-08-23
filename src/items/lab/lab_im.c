@@ -37,7 +37,7 @@ static void im_lab_reset(struct im_lab *lab, struct chunk *chunk)
 // step
 // -----------------------------------------------------------------------------
 
-static void im_lab_step(void *state, struct chunk *chunk)
+static void im_lab_step(void *state, struct chunk *chunk, struct energy *)
 {
     struct im_lab *lab = state;
     if (lab->item == ITEM_NIL) return;

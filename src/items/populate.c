@@ -85,7 +85,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_CORE,         "core",         bits_s, work_s),
     im_init(ITEM_CAPACITOR,    "capacitor",    bits_s, work_s),
     im_init(ITEM_MATRIX,       "matrix",       bits_s, work_s),
-    im_init(ITEM_MAGNET_FIELD, "magnet_field", bits_s, work_s),
+    im_init(ITEM_MAGNET_FIELD, "magnet-field", bits_s, work_s),
     im_init(ITEM_HULL,         "hull",         bits_s, work_s),
     // Passive - T1
     im_init(ITEM_LIQUID_FRAME, "liquid",       bits_m, work_m),
@@ -104,18 +104,19 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_LEGION,       "legion",    bits_s, work_s, im_legion_config),
     im_init_cfg(ITEM_LAB,          "lab",       bits_s, work_s, im_lab_config),
     // Active - T1
-    /* im_init_cfg(ITEM_SOLAR,        "solar",     bits_m, work_m, im_solar_config), */
     im_init_cfg(ITEM_STORAGE,      "storage",   bits_m, work_m, im_storage_config),
     /* im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config), */
     /* im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_condenser_config), */
-    /* im_init_cfg(ITEM_ENERGY_STORE, "energy",    bits_m, work_m, im_energy_store_config), */
     /* im_init_cfg(ITEM_AUTO_DEPLOY,  "auto",      bits_m, work_m, im_auto_deploy_config), */
     /* im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config), */
     /* im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config), */
 
     // Logistics
-    im_init(ITEM_WORKER, "worker", bits_s, work_s),
-    im_init(ITEM_BULLET, "bullet", bits_s, work_s),
+    im_init(ITEM_WORKER,       "worker",       bits_s, work_s),
+    im_init(ITEM_BULLET,       "bullet",       bits_s, work_s),
+    im_init(ITEM_SOLAR,        "solar",        bits_s, work_s),
+    im_init(ITEM_KWHEEL,       "k-wheel",      bits_s, work_s),
+    im_init(ITEM_ENERGY_STORE, "energy-store", bits_s, work_s),
 };
 
 #undef im_init

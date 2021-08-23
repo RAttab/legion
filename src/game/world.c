@@ -387,6 +387,7 @@ struct coord world_populate(struct world *world)
             size_t index = rng_uni(&rng, 0, sector->stars_len);
             star = &sector->stars[index];
 
+            if (star->energy < 10000) continue;
             if (star_elem(star, ITEM_ELEM_A) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_B) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_C) < 20000) continue;

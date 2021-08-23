@@ -87,7 +87,7 @@ static void im_printer_step_output(
     printer->waiting = false;
 }
 
-static void im_printer_step(void *state, struct chunk *chunk)
+static void im_printer_step(void *state, struct chunk *chunk, struct energy *)
 {
     struct im_printer *printer = state;
 

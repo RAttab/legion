@@ -28,7 +28,7 @@ enum legion_packed star_state
 struct legion_packed star
 {
     struct coord coord;
-    uint16_t power;
+    uint16_t energy;
     enum star_state state;
     legion_pad(1);
     uint16_t elems[ITEMS_NATURAL_LEN];
@@ -39,11 +39,12 @@ void star_gen(struct star *, struct coord);
 bool star_load(struct star *, struct save *);
 void star_save(struct star *, struct save *);
 
-inline uint16_t star_elem(struct star *star, enum item item)
+inline uint16_t star_elem(const struct star *star, enum item item)
 {
     assert(item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST);
     return star->elems[item - ITEM_NATURAL_FIRST];
 }
+
 
 // -----------------------------------------------------------------------------
 // sector

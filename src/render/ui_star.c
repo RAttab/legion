@@ -7,6 +7,7 @@
 #include "render/ui.h"
 #include "ui/ui.h"
 #include "game/chunk.h"
+#include "game/energy.h"
 #include "items/item.h"
 #include "utils/vec.h"
 
@@ -14,6 +15,23 @@
 // -----------------------------------------------------------------------------
 // star
 // -----------------------------------------------------------------------------
+
+struct ui_star_workers
+{
+    struct ui_label workers, workers_val;
+    struct ui_label queue, queue_val;
+    struct ui_label idle, idle_val;
+    struct ui_label fail, fail_val;
+    struct ui_label clean, clean_val;
+};
+
+struct ui_star_energy
+{
+    bool show;
+    struct ui_label name, count;
+    struct ui_label prod, prod_val;
+    struct ui_label total, total_val;
+};
 
 struct ui_star
 {
@@ -26,7 +44,7 @@ struct ui_star
     struct ui_label coord;
     struct ui_link coord_val;
 
-    struct ui_label power, power_val;
+    struct ui_label energy, energy_val;
     struct ui_label elem, elem_val;
 
     struct ui_button control, factory, logistic;
@@ -35,11 +53,16 @@ struct ui_star
     struct ui_scroll control_scroll, factory_scroll;
     struct ui_toggles control_list, factory_list;
 
-    struct ui_label workers, workers_val;
-    struct ui_label queue, queue_val;
-    struct ui_label idle, idle_val;
-    struct ui_label fail, fail_val;
-    struct ui_label clean, clean_val;
+    struct ui_star_workers workers;
+
+    struct ui_label need, need_val;
+    struct ui_label consumed, consumed_val;
+    struct ui_label produced, produced_val;
+    struct ui_label stored, stored_val;
+    struct ui_star_energy solar;
+    struct ui_star_energy kwheel;
+    struct ui_star_energy store;
+
 };
 
 static struct font *ui_star_font(void) { return font_mono6; }
@@ -72,8 +95,8 @@ struct ui_star *ui_star_new(void)
         .coord = ui_label_new(font, ui_str_c("coord: ")),
         .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
 
-        .power = ui_label_new(font, ui_str_c("power: ")),
-        .power_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .energy = ui_label_new(font, ui_str_c("energy: ")),
+        .energy_val = ui_label_new(font, ui_str_v(str_scaled_len)),
 
         .elem = ui_label_new(font, ui_str_c(ui_star_elems[0])),
         .elem_val = ui_label_new(font, ui_str_v(str_scaled_len)),
@@ -88,16 +111,54 @@ struct ui_star *ui_star_new(void)
         .factory_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .factory_list = ui_toggles_new(font, ui_str_v(id_str_len)),
 
-        .workers = ui_label_new(font, ui_str_c("workers: ")),
-        .workers_val = ui_label_new(font, ui_str_v(10)),
-        .queue = ui_label_new(font, ui_str_c("- queue: ")),
-        .queue_val = ui_label_new(font, ui_str_v(10)),
-        .idle = ui_label_new(font, ui_str_c("- idle:  ")),
-        .idle_val = ui_label_new(font, ui_str_v(10)),
-        .fail = ui_label_new(font, ui_str_c("- fail:  ")),
-        .fail_val = ui_label_new(font, ui_str_v(10)),
-        .clean = ui_label_new(font, ui_str_c("- clean: ")),
-        .clean_val = ui_label_new(font, ui_str_v(10)),
+        .workers = (struct ui_star_workers) {
+            .workers = ui_label_new(font, ui_str_c("workers: ")),
+            .workers_val = ui_label_new(font, ui_str_v(10)),
+            .queue = ui_label_new(font, ui_str_c("- queue: ")),
+            .queue_val = ui_label_new(font, ui_str_v(10)),
+            .idle = ui_label_new(font, ui_str_c("- idle:  ")),
+            .idle_val = ui_label_new(font, ui_str_v(10)),
+            .fail = ui_label_new(font, ui_str_c("- fail:  ")),
+            .fail_val = ui_label_new(font, ui_str_v(10)),
+            .clean = ui_label_new(font, ui_str_c("- clean: ")),
+            .clean_val = ui_label_new(font, ui_str_v(10)),
+        },
+
+        .need = ui_label_new(font, ui_str_c("- need:     ")),
+        .need_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .consumed = ui_label_new(font, ui_str_c("- consumed: ")),
+        .consumed_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .produced = ui_label_new(font, ui_str_c("- produced: ")),
+        .produced_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .stored = ui_label_new(font, ui_str_c("- stored:   ")),
+        .stored_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+
+        .solar = (struct ui_star_energy) {
+            .name = ui_label_new(font, ui_str_c("solar:        ")),
+            .count = ui_label_new(font, ui_str_v(10)),
+            .prod = ui_label_new(font, ui_str_c("- production: ")),
+            .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+            .total = ui_label_new(font, ui_str_c("- total:      ")),
+            .total_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        },
+
+        .kwheel = (struct ui_star_energy) {
+            .name = ui_label_new(font, ui_str_c("k-wheel:      ")),
+            .count = ui_label_new(font, ui_str_v(10)),
+            .prod = ui_label_new(font, ui_str_c("- production: ")),
+            .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+            .total = ui_label_new(font, ui_str_c("- total:      ")),
+            .total_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        },
+
+        .store = (struct ui_star_energy) {
+            .name = ui_label_new(font, ui_str_c("store:      ")),
+            .count = ui_label_new(font, ui_str_v(10)),
+            .prod = ui_label_new(font, ui_str_c("- capacity: ")),
+            .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+            .total = ui_label_new(font, ui_str_c("- total:    ")),
+            .total_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        },
     };
 
     ui->panel.state = ui_panel_hidden;
@@ -109,29 +170,64 @@ struct ui_star *ui_star_new(void)
 void ui_star_free(struct ui_star *ui) {
     ui_panel_free(&ui->panel);
     ui_button_free(&ui->view);
+
     ui_label_free(&ui->coord);
     ui_link_free(&ui->coord_val);
-    ui_label_free(&ui->power);
-    ui_label_free(&ui->power_val);
+    ui_label_free(&ui->energy);
+    ui_label_free(&ui->energy_val);
     ui_label_free(&ui->elem);
     ui_label_free(&ui->elem_val);
+
     ui_button_free(&ui->control);
     ui_button_free(&ui->factory);
     ui_button_free(&ui->logistic);
+
     ui_scroll_free(&ui->control_scroll);
     ui_scroll_free(&ui->factory_scroll);
     ui_toggles_free(&ui->control_list);
     ui_toggles_free(&ui->factory_list);
-    ui_label_free(&ui->workers);
-    ui_label_free(&ui->workers_val);
-    ui_label_free(&ui->queue);
-    ui_label_free(&ui->queue_val);
-    ui_label_free(&ui->idle);
-    ui_label_free(&ui->idle_val);
-    ui_label_free(&ui->fail);
-    ui_label_free(&ui->fail_val);
-    ui_label_free(&ui->clean);
-    ui_label_free(&ui->clean_val);
+
+    ui_label_free(&ui->workers.workers);
+    ui_label_free(&ui->workers.workers_val);
+    ui_label_free(&ui->workers.queue);
+    ui_label_free(&ui->workers.queue_val);
+    ui_label_free(&ui->workers.idle);
+    ui_label_free(&ui->workers.idle_val);
+    ui_label_free(&ui->workers.fail);
+    ui_label_free(&ui->workers.fail_val);
+    ui_label_free(&ui->workers.clean);
+    ui_label_free(&ui->workers.clean_val);
+
+    ui_label_free(&ui->need);
+    ui_label_free(&ui->need_val);
+    ui_label_free(&ui->consumed);
+    ui_label_free(&ui->consumed_val);
+    ui_label_free(&ui->produced);
+    ui_label_free(&ui->produced_val);
+    ui_label_free(&ui->stored);
+    ui_label_free(&ui->stored_val);
+
+    ui_label_free(&ui->solar.name);
+    ui_label_free(&ui->solar.count);
+    ui_label_free(&ui->solar.prod);
+    ui_label_free(&ui->solar.prod_val);
+    ui_label_free(&ui->solar.total);
+    ui_label_free(&ui->solar.total_val);
+
+    ui_label_free(&ui->kwheel.name);
+    ui_label_free(&ui->kwheel.count);
+    ui_label_free(&ui->kwheel.prod);
+    ui_label_free(&ui->kwheel.prod_val);
+    ui_label_free(&ui->kwheel.total);
+    ui_label_free(&ui->kwheel.total_val);
+
+    ui_label_free(&ui->store.name);
+    ui_label_free(&ui->store.count);
+    ui_label_free(&ui->store.prod);
+    ui_label_free(&ui->store.prod_val);
+    ui_label_free(&ui->store.total);
+    ui_label_free(&ui->store.total_val);
+
     free(ui);
 }
 
@@ -177,10 +273,19 @@ static void ui_star_update(struct ui_star *ui)
         ui_toggles_resize(&ui->factory_list, 0);
         ui_scroll_update(&ui->factory_scroll, 0);
 
-        ui_str_set_u64(&ui->workers_val.str, 0);
-        ui_str_set_u64(&ui->idle_val.str, 0);
-        ui_str_set_u64(&ui->fail_val.str, 0);
-        ui_str_set_u64(&ui->queue_val.str, 0);
+        ui_str_set_u64(&ui->workers.workers_val.str, 0);
+        ui_str_set_u64(&ui->workers.idle_val.str, 0);
+        ui_str_set_u64(&ui->workers.fail_val.str, 0);
+        ui_str_set_u64(&ui->workers.queue_val.str, 0);
+
+        ui_str_set_scaled(&ui->need_val.str, 0);
+        ui_str_set_scaled(&ui->consumed_val.str, 0);
+        ui_str_set_scaled(&ui->produced_val.str, 0);
+        ui_str_set_scaled(&ui->stored_val.str, 0);
+
+        ui->solar.show = false;
+        ui->kwheel.show = false;
+        ui->store.show = false;
         return;
     }
 
@@ -190,11 +295,37 @@ static void ui_star_update(struct ui_star *ui)
 
     {
         struct workers workers = chunk_workers(chunk);
-        ui_str_set_u64(&ui->workers_val.str, workers.count);
-        ui_str_set_u64(&ui->queue_val.str, workers.queue);
-        ui_str_set_u64(&ui->idle_val.str, workers.idle);
-        ui_str_set_u64(&ui->fail_val.str, workers.fail);
-        ui_str_set_u64(&ui->clean_val.str, workers.clean);
+        ui_str_set_u64(&ui->workers.workers_val.str, workers.count);
+        ui_str_set_u64(&ui->workers.queue_val.str, workers.queue);
+        ui_str_set_u64(&ui->workers.idle_val.str, workers.idle);
+        ui_str_set_u64(&ui->workers.fail_val.str, workers.fail);
+        ui_str_set_u64(&ui->workers.clean_val.str, workers.clean);
+    }
+
+    {
+        struct energy energy = *chunk_energy(chunk);
+        ui_str_set_scaled(&ui->need_val.str, energy.need);
+        ui_str_set_scaled(&ui->consumed_val.str, energy.consumed);
+        ui_str_set_scaled(&ui->produced_val.str, energy.produced);
+        ui_str_set_scaled(&ui->stored_val.str, energy.current);
+
+        ui->solar.show = energy.solar;
+        ui_str_set_u64(&ui->solar.count.str, energy.solar);
+        ui_str_set_scaled(&ui->solar.total_val.str, energy_prod_solar(&energy, &ui->star));
+        energy.solar = 1;
+        ui_str_set_scaled(&ui->solar.prod_val.str, energy_prod_solar(&energy, &ui->star));
+
+        ui->kwheel.show = energy.kwheel;
+        ui_str_set_u64(&ui->kwheel.count.str, energy.kwheel);
+        ui_str_set_scaled(&ui->kwheel.total_val.str, energy_prod_kwheel(&energy, &ui->star));
+        energy.kwheel = 1;
+        ui_str_set_scaled(&ui->kwheel.prod_val.str, energy_prod_kwheel(&energy, &ui->star));
+
+        ui->store.show = energy.store;
+        ui_str_set_u64(&ui->store.count.str, energy.store);
+        ui_str_set_scaled(&ui->store.total_val.str, energy_store(&energy));
+        energy.store = 1;
+        ui_str_set_scaled(&ui->store.prod_val.str, energy_store(&energy));
     }
 }
 
@@ -343,12 +474,12 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     ui_layout_next_row(&layout);
 
     {
-        ui_label_render(&ui->power, &layout, renderer);
+        ui_label_render(&ui->energy, &layout, renderer);
 
-        uint32_t value = ui->star.power;
-        ui_str_set_scaled(&ui->power_val.str, value);
-        ui->power_val.fg = rgba_gray(0x11 * u64_log2(value));
-        ui_label_render(&ui->power_val, &layout, renderer);
+        uint32_t value = ui->star.energy;
+        ui_str_set_scaled(&ui->energy_val.str, value);
+        ui->energy_val.fg = rgba_gray(0x11 * u64_log2(value));
+        ui_label_render(&ui->energy_val, &layout, renderer);
 
         ui_layout_next_row(&layout);
         ui_layout_sep_y(&layout, font->glyph_h);
@@ -395,24 +526,76 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     }
 
     if (ui->logistic.disabled) {
-        ui_label_render(&ui->workers, &layout, renderer);
-        ui_label_render(&ui->workers_val, &layout, renderer);
+        ui_label_render(&ui->workers.workers, &layout, renderer);
+        ui_label_render(&ui->workers.workers_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->workers.queue, &layout, renderer);
+        ui_label_render(&ui->workers.queue_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->workers.idle, &layout, renderer);
+        ui_label_render(&ui->workers.idle_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->workers.fail, &layout, renderer);
+        ui_label_render(&ui->workers.fail_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->workers.clean, &layout, renderer);
+        ui_label_render(&ui->workers.clean_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        ui_label_render(&ui->queue, &layout, renderer);
-        ui_label_render(&ui->queue_val, &layout, renderer);
+        ui_layout_sep_y(&layout, font->glyph_h);
+
+        ui_label_render(&ui->energy, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->need, &layout, renderer);
+        ui_label_render(&ui->need_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->consumed, &layout, renderer);
+        ui_label_render(&ui->consumed_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->produced, &layout, renderer);
+        ui_label_render(&ui->produced_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->stored, &layout, renderer);
+        ui_label_render(&ui->stored_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        ui_label_render(&ui->idle, &layout, renderer);
-        ui_label_render(&ui->idle_val, &layout, renderer);
-        ui_layout_next_row(&layout);
+        if (ui->solar.show) {
+            ui_layout_sep_y(&layout, font->glyph_h);
+            ui_label_render(&ui->solar.name, &layout, renderer);
+            ui_label_render(&ui->solar.count, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->solar.prod, &layout, renderer);
+            ui_label_render(&ui->solar.prod_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->solar.total, &layout, renderer);
+            ui_label_render(&ui->solar.total_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+        }
 
-        ui_label_render(&ui->fail, &layout, renderer);
-        ui_label_render(&ui->fail_val, &layout, renderer);
-        ui_layout_next_row(&layout);
+        if (ui->kwheel.show) {
+            ui_layout_sep_y(&layout, font->glyph_h);
+            ui_label_render(&ui->kwheel.name, &layout, renderer);
+            ui_label_render(&ui->kwheel.count, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->kwheel.prod, &layout, renderer);
+            ui_label_render(&ui->kwheel.prod_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->kwheel.total, &layout, renderer);
+            ui_label_render(&ui->kwheel.total_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+        }
 
-        ui_label_render(&ui->clean, &layout, renderer);
-        ui_label_render(&ui->clean_val, &layout, renderer);
-        ui_layout_next_row(&layout);
+        if (ui->store.show) {
+            ui_layout_sep_y(&layout, font->glyph_h);
+            ui_label_render(&ui->store.name, &layout, renderer);
+            ui_label_render(&ui->store.count, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->store.prod, &layout, renderer);
+            ui_label_render(&ui->store.prod_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->store.total, &layout, renderer);
+            ui_label_render(&ui->store.total_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+        }
     }
 }
