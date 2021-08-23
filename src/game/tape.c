@@ -20,6 +20,7 @@ struct tape
 {
     enum item id;
     enum item host;
+    energy_t energy;
     uint8_t inputs, outputs;
     enum item tape[];
 };
@@ -27,6 +28,7 @@ struct tape
 
 enum item tape_id(const struct tape *tape) { return tape->id; }
 enum item tape_host(const struct tape *tape) { return tape->host; }
+energy_t tape_energy(const struct tape *tape) { return tape->energy; }
 size_t tape_len(const struct tape *tape) { return tape->inputs + tape->outputs; }
 
 struct tape_ret tape_at(const struct tape *tape, tape_it_t it)
@@ -44,6 +46,7 @@ struct tape_ret tape_at(const struct tape *tape, tape_it_t it)
 
     return ret;
 }
+
 
 // -----------------------------------------------------------------------------
 // tape_set
@@ -233,7 +236,7 @@ static void tapes_vec_push(
 }
 
 static struct tape *tapes_vec_output(
-        struct tapes_vec *vec, enum item id, enum item host)
+        struct tapes_vec *vec, enum item id, enum item host, energy_t energy)
 {
     size_t len = vec->it * sizeof(vec->tape[0]);
     struct tape *tape = calloc(1, sizeof(*tape) + len);
@@ -241,6 +244,7 @@ static struct tape *tapes_vec_output(
     *tape = (struct tape) {
         .id = id,
         .host = host,
+        .energy = energy,
         .inputs = vec->in,
         .outputs = vec->out
     };
@@ -272,6 +276,7 @@ static enum item tapes_expect_item(struct tokenizer *tok, struct atoms *atoms)
 static void tapes_load_tape(
         enum item host, struct tokenizer *tok, struct atoms *atoms)
 {
+    energy_t energy = 0;
     enum item id = tapes_expect_item(tok, atoms);
 
     enum tapes_type type = tapes_nil;
@@ -286,6 +291,12 @@ static void tapes_load_tape(
 
         if (hash == symbol_hash_c("in")) type = tapes_in;
         else if (hash == symbol_hash_c("out")) type = tapes_out;
+        else if (hash == symbol_hash_c("energy")) {
+            assert(token_expect(tok, &token, token_number));
+            energy = token.value.w;
+            assert(token_expect(tok, &token, token_close));
+            continue;
+        }
         else assert(false);
 
         while (token_next(tok, &token)->type != token_close) {
@@ -294,7 +305,7 @@ static void tapes_load_tape(
         }
     }
 
-    tapes.index[id] = tapes_vec_output(&vec, id, host);
+    tapes.index[id] = tapes_vec_output(&vec, id, host, energy);
 }
 
 static void tapes_load_file(const char *path, struct atoms *atoms)

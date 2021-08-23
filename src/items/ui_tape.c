@@ -4,6 +4,7 @@
 */
 
 #include "items/ui_tape.h"
+#include "utils/str.h"
 
 // -----------------------------------------------------------------------------
 // tape
@@ -14,8 +15,11 @@ void ui_tape_init(struct ui_tape *ui, struct font *font)
     *ui = (struct ui_tape) {
         .font = font,
 
-        .tape = ui_label_new(font, ui_str_c("tape:  ")),
+        .tape = ui_label_new(font, ui_str_c("tape:   ")),
         .tape_val = ui_label_new(font, ui_str_v(item_str_len)),
+
+        .energy = ui_label_new(font, ui_str_c("energy: ")),
+        .energy_val = ui_label_new(font, ui_str_v(str_scaled_len)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .index = ui_label_new(font, ui_str_v(2)),
@@ -34,6 +38,9 @@ void ui_tape_free(struct ui_tape *ui)
     ui_label_free(&ui->tape);
     ui_label_free(&ui->tape_val);
 
+    ui_label_free(&ui->energy);
+    ui_label_free(&ui->energy_val);
+
     ui_scroll_free(&ui->scroll);
     ui_label_free(&ui->index);
     ui_label_free(&ui->in);
@@ -43,8 +50,12 @@ void ui_tape_free(struct ui_tape *ui)
 void ui_tape_update(struct ui_tape *ui, tape_packed_t state)
 {
     const struct tape *tape = tape_packed_ptr(state);
+
     if (!tape) ui_str_setc(&ui->tape_val.str, "nil");
     else ui_str_set_item(&ui->tape_val.str, tape_id(tape));
+
+    if (!tape) ui_str_setc(&ui->energy_val.str, "nil");
+    else ui_str_set_scaled(&ui->energy_val.str, tape_energy(tape));
 
     ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
 }
@@ -65,6 +76,10 @@ void ui_tape_render(
 {
     ui_label_render(&ui->tape, layout, renderer);
     ui_label_render(&ui->tape_val, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_label_render(&ui->energy, layout, renderer);
+    ui_label_render(&ui->energy_val, layout, renderer);
     ui_layout_next_row(layout);
 
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);

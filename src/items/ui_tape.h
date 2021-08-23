@@ -20,6 +20,7 @@ struct ui_tape
 {
     struct font *font;
     struct ui_label tape, tape_val;
+    struct ui_label energy, energy_val;
     struct ui_scroll scroll;
     struct ui_label index, in, out;
 };

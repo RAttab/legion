@@ -93,12 +93,14 @@ static void im_extract_step_output(
     extract->waiting = false;
 }
 
-static void im_extract_step(void *state, struct chunk *chunk, struct energy *)
+static void im_extract_step(
+        void *state, struct chunk *chunk, struct energy *energy)
 {
     struct im_extract *extract = state;
 
     const struct tape *tape = tape_packed_ptr(extract->tape);
     if (!tape) return;
+    if (!energy_consume(energy, tape_energy(tape))) return;
 
     struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
     switch (ret.state) {
