@@ -88,7 +88,8 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_MAGNET_FIELD, "magnet-field", bits_s, work_s),
     im_init(ITEM_HULL,         "hull",         bits_s, work_s),
     // Passive - T1
-    im_init(ITEM_LIQUID_FRAME, "liquid",       bits_m, work_m),
+    im_init(ITEM_CAPTOR,       "captor",       bits_m, work_m),
+    im_init(ITEM_LIQUID_FRAME, "liquid_frame", bits_m, work_m),
     im_init(ITEM_RADIATION,    "radiation",    bits_m, work_m),
     im_init(ITEM_ANTENNA,      "antenna",      bits_m, work_m),
     im_init(ITEM_ACCELERATOR,  "accelerator",  bits_m, work_m),
@@ -106,8 +107,8 @@ static struct im_config im_configs[ITEM_MAX] =
     // Active - T1
     im_init_cfg(ITEM_STORAGE,      "storage",   bits_m, work_m, im_storage_config),
     /* im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config), */
-    /* im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_condenser_config), */
-    /* im_init_cfg(ITEM_AUTO_DEPLOY,  "auto",      bits_m, work_m, im_auto_deploy_config), */
+    im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_extract_config),
+    /* im_init_cfg(ITEM_AUTO_DEPLOY,  "auto-deploy",      bits_m, work_m, im_auto_deploy_config), */
     /* im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config), */
     /* im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config), */
 
