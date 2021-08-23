@@ -87,14 +87,13 @@ static void im_printer_step_output(
     printer->waiting = false;
 }
 
-static void im_printer_step(
-        void *state, struct chunk *chunk, struct energy *energy)
+static void im_printer_step(void *state, struct chunk *chunk)
 {
     struct im_printer *printer = state;
 
     const struct tape *tape = tape_packed_ptr(printer->tape);
     if (!tape) return;
-    if (!energy_consume(energy, tape_energy(tape))) return;
+    if (!energy_consume(chunk_energy(chunk), tape_energy(tape))) return;
 
     struct tape_ret ret = tape_at(tape, tape_packed_it(printer->tape));
     switch (ret.state) {

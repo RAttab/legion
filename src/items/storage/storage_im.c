@@ -26,7 +26,7 @@ static void im_storage_init(void *state, struct chunk *chunk, id_t id)
 // step
 // -----------------------------------------------------------------------------
 
-static void im_storage_step(void *state, struct chunk *chunk, struct energy *)
+static void im_storage_step(void *state, struct chunk *chunk)
 {
     struct im_storage *storage = state;
     if (!storage->item) return;

@@ -35,7 +35,7 @@ static void im_deploy_reset(struct im_deploy *deploy, struct chunk *chunk)
 // step
 // -----------------------------------------------------------------------------
 
-static void im_deploy_step(void *state, struct chunk *chunk, struct energy *)
+static void im_deploy_step(void *state, struct chunk *chunk)
 {
     struct im_deploy *deploy = state;
     if (!deploy->item) return;

@@ -223,7 +223,7 @@ void chunk_step(struct chunk *chunk)
 
     active_it_t it = active_next(&chunk->active, NULL);
     for (; it; it = active_next(&chunk->active, it))
-        active_step(*it, chunk, &chunk->energy);
+        active_step(*it, chunk);
 
     chunk_ports_step(chunk);
 
@@ -243,7 +243,7 @@ bool chunk_io(
 // energy
 // -----------------------------------------------------------------------------
 
-const struct energy *chunk_energy(struct chunk *chunk)
+struct energy *chunk_energy(struct chunk *chunk)
 {
     return &chunk->energy;
 }

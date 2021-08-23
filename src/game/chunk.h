@@ -49,7 +49,7 @@ bool chunk_io(
         struct chunk *, enum io io, id_t src, id_t dst, const word_t *args, size_t len);
 
 
-const struct energy *chunk_energy(struct chunk *);
+struct energy *chunk_energy(struct chunk *);
 
 
 ssize_t chunk_scan(struct chunk *, enum item);

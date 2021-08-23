@@ -58,7 +58,7 @@ void active_create(struct active *);
 void active_create_from(struct active *, struct chunk *, const word_t *data, size_t len);
 void active_delete(struct active *, id_t id);
 
-void active_step(struct active *, struct chunk *, struct energy *);
+void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
         enum io io, id_t src, id_t dst, size_t len, const word_t *args);
 

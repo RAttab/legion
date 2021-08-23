@@ -138,7 +138,7 @@ static void im_brain_vm_step(struct im_brain *brain, struct chunk *chunk)
     }
 }
 
-static void im_brain_step(void *state, struct chunk *chunk, struct energy *)
+static void im_brain_step(void *state, struct chunk *chunk)
 {
     struct im_brain *brain = state;
     if (brain->debug) return;

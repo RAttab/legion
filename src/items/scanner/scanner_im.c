@@ -45,7 +45,7 @@ static void im_scanner_reset(struct im_scanner *scanner)
 // step
 // -----------------------------------------------------------------------------
 
-static void im_scanner_step(void *state, struct chunk *chunk, struct energy *)
+static void im_scanner_step(void *state, struct chunk *chunk)
 {
     struct im_scanner *scanner = state;
 

@@ -286,14 +286,14 @@ void active_create_from(
 }
 
 void active_step(
-        struct active *active, struct chunk *chunk, struct energy *energy)
+        struct active *active, struct chunk *chunk)
 {
     if (!active) return;
 
     if (active->step) {
         for (size_t i = 0; i < active->len; ++i) {
             if (active_deleted(active, i)) continue;
-            active->step(active->arena + (i * active->size), chunk, energy);
+            active->step(active->arena + (i * active->size), chunk);
         }
     }
 
