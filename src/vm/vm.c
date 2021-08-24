@@ -7,12 +7,6 @@
 #include "vm/op.h"
 #include "vm/mod.h"
 
-#ifdef VM_DEBUG
-# define vm_assert(p) assert(p)
-#else
-# define vm_assert(p)
-#endif
-
 // -----------------------------------------------------------------------------
 // flags
 // -----------------------------------------------------------------------------
@@ -215,7 +209,10 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
 
 #define vm_code(arg_type_t)                                             \
     ({                                                                  \
-        vm_assert(off + sizeof(arg_type_t) <= mod->len);                \
+        if (unlikely(vm->ip + sizeof(arg_type_t) > mod->len)) {         \
+            vm->flags |= FLAG_FAULT_CODE;                               \
+            return VM_FAULT;                                            \
+        }                                                               \
         arg_type_t arg = *((const arg_type_t *) (mod->code + vm->ip));  \
         vm->ip += sizeof(arg_type_t);                                   \
         arg;                                                            \
