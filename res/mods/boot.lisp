@@ -7,7 +7,9 @@
 (build-printer 4)
 (build-assembly 2)
 
+(boot-lab 4)
 (launch-legion)
+
 (build-legion 3)
 
 
@@ -105,6 +107,24 @@
 
 
 ;; -----------------------------------------------------------------------------
+;; lab
+;; -----------------------------------------------------------------------------
+
+(defun boot-lab (n)
+  (io &io_tape (id &item_assembly 1) &item_lab n)
+  (io &io_item (id &item_deploy 1) &item_lab n)
+  (wait (id &item_deploy 1))
+
+  (io &io_tape (id &item_assembly 1) &item_brain 1)
+  (io &io_item (id &item_deploy 1) &item_brain 1)
+  (wait (id &item_deploy 1))
+
+  (let ((id-brain (id &item_brain (count &item_brain))))
+    (assert (= (io &io_mod id-brain (mod lab 2)) &io_ok))
+    (assert (= (io &io_send id-brain !lab_count n) &io_ok))))
+
+
+;; -----------------------------------------------------------------------------
 ;; launch
 ;; -----------------------------------------------------------------------------
 
@@ -117,7 +137,8 @@
   (io &io_item (id &item_deploy 1) &item_brain 1)
   (wait (id &item_deploy 1))
 
-  (assert (= (io &io_mod (id &item_brain 2) (mod launch 2)) &io_ok)))
+  (let ((id-brain (id &item_brain (count &item_brain))))
+    (assert (= (io &io_mod id-brain (mod launch 2)) &io_ok))))
 
 
 ;; -----------------------------------------------------------------------------
@@ -125,7 +146,7 @@
 ;; -----------------------------------------------------------------------------
 
 (defun build-legion (n)
-  (let ((items 7)
+  (let ((items 9)
 	(id (+ (count &item_assembly) 1)))
 
     (io &io_tape (id &item_assembly 1) &item_assembly items)
@@ -138,9 +159,10 @@
     (set id (set-assembly id 1 &item_assembly))
     (set id (set-assembly id 1 &item_scanner))
     (set id (set-assembly id 1 &item_brain))
-    (set id (set-assembly id 1 &item_worker)))
+    (set id (set-assembly id 1 &item_worker))
+    (set id (set-assembly id 1 &item_lab))
+    (set id (set-assembly id 1 &item_legion)))
 
-  (io &io_tape (id &item_assembly 1) &item_legion n)
   (io &io_item (id &item_deploy 1) &item_legion n)
   (wait (id &item_deploy 1)))
 

@@ -63,7 +63,7 @@ static void im_memory_io_get(
         word_t index = args[0];
         if (index >= 0 && index < memory->len) val = memory->data[index];
     }
-    chunk_io(chunk, IO_VAL, memory->id, src, &val, 1);
+    chunk_io(chunk, IO_RETURN, memory->id, src, &val, 1);
 }
 
 static void im_memory_io_set(struct im_memory *memory, const word_t *args, size_t len)

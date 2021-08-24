@@ -177,6 +177,7 @@ static struct io_config io_configs[IO_LEN] =
     io_init(IO_NIL),
     io_init(IO_OK),
     io_init(IO_FAIL),
+    io_init(IO_RETURN),
     io_init(IO_PING),
     io_init(IO_PONG),
     io_init(IO_STATUS),
@@ -187,6 +188,7 @@ static struct io_config io_configs[IO_LEN] =
     io_init(IO_MOD),
 
     // Brain
+    io_init(IO_ID),
     io_init(IO_COORD),
     io_init(IO_SEND),
     io_init(IO_RECV),
@@ -204,7 +206,6 @@ static struct io_config io_configs[IO_LEN] =
     // Misc
     io_init(IO_GET),
     io_init(IO_SET),
-    io_init(IO_VAL),
     io_init(IO_SCAN),
     io_init(IO_SCAN_VAL),
     io_init(IO_LAUNCH),

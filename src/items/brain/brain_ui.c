@@ -24,7 +24,7 @@ struct ui_brain
     struct ui_label breakpoint;
     struct ui_link breakpoint_val;
 
-    struct ui_label msg, msg_src, msg_index, msg_val;
+    struct ui_label msg, msg_len, msg_index, msg_val;
 
     struct ui_label spec, spec_stack, spec_speed, spec_sep;
     struct ui_label io, io_val, ior, ior_val;
@@ -65,7 +65,7 @@ static void *ui_brain_alloc(struct font *font)
         .breakpoint_val = ui_link_new(font, ui_str_v(8)),
 
         .msg = ui_label_new(font, ui_str_c("msg: ")),
-        .msg_src = ui_label_new(font, ui_str_v(id_str_len)),
+        .msg_len = ui_label_new(font, ui_str_v(3)),
         .msg_index = ui_label_new(font, ui_str_v(u8_len)),
         .msg_val = ui_label_new(font, ui_str_v(u64_len)),
 
@@ -123,7 +123,7 @@ static void ui_brain_free(void *_ui)
     ui_link_free(&ui->breakpoint_val);
 
     ui_label_free(&ui->msg);
-    ui_label_free(&ui->msg_src);
+    ui_label_free(&ui->msg_len);
     ui_label_free(&ui->msg_index);
     ui_label_free(&ui->msg_val);
 
@@ -205,8 +205,8 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     if (state->breakpoint == IP_NIL) ui_str_setc(&ui->breakpoint_val.str, "nil");
     else ui_str_set_hex(&ui->breakpoint_val.str, state->breakpoint);
 
-    if (!state->msg_src) ui_str_setc(&ui->msg_src.str, "nil");
-    else ui_str_set_id(&ui->msg_src.str, state->msg_src);
+    if (!state->msg_len) ui_str_setc(&ui->msg_len.str, "nil");
+    else ui_str_set_u64(&ui->msg_len.str, state->msg_len);
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
     ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
@@ -290,7 +290,7 @@ static void ui_brain_render(
 
     { // msg
         ui_label_render(&ui->msg, layout, renderer);
-        ui_label_render(&ui->msg_src, layout, renderer);
+        ui_label_render(&ui->msg_len, layout, renderer);
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < im_brain_msg_cap; ++i) {

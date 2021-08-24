@@ -122,7 +122,7 @@ static void im_scanner_io_scan(
 static void im_scanner_io_scan_val(
         struct im_scanner *scanner, struct chunk *chunk, id_t src)
 {
-    chunk_io(chunk, IO_VAL, scanner->id, src, &scanner->result, 1);
+    chunk_io(chunk, IO_RETURN, scanner->id, src, &scanner->result, 1);
 
     switch (scanner->state)
     {

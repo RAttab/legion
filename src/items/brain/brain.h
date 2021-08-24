@@ -23,18 +23,18 @@ struct legion_packed im_brain
 {
     id_t id;
 
-    ip_t breakpoint;
-    bool debug;
+    mod_t mod_id;
+    const struct mod *mod;
+    bool mod_fault;
 
     legion_pad(2);
 
-    bool mod_fault;
-    mod_t mod_id;
-    const struct mod *mod;
+    bool debug;
+    ip_t breakpoint;
 
-    id_t msg_src;
+    legion_pad(7);
+
     uint8_t msg_len;
-    legion_pad(3);
     word_t msg[im_brain_msg_cap];
 
     struct vm vm;

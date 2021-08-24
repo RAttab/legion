@@ -82,16 +82,15 @@ static void im_brain_reset(struct im_brain *brain)
 // step
 // -----------------------------------------------------------------------------
 
-static bool im_brain_step_recv(struct im_brain *brain, const word_t *args, size_t len)
+static bool im_brain_step_recv(struct im_brain *brain)
 {
-    (void) args, (void) len;
+    if (!brain->msg_len) return false;
     assert(brain->msg_len <= im_brain_msg_cap);
 
     for (size_t i = 0; i < brain->msg_len; ++i)
         vm_push(&brain->vm, brain->msg[brain->msg_len - i - 1]);
-    vm_push(&brain->vm, vm_pack(brain->msg_src, brain->msg_len));
+    vm_push(&brain->vm, brain->msg_len);
 
-    brain->msg_src = 0;
     brain->msg_len = 0;
     return true;
 }
@@ -109,9 +108,13 @@ static void im_brain_step_io(
     }
 
     bool ok = true;
-    switch (atom) {
-    case IO_RECV: { ok = im_brain_step_recv(brain, io + 1, len - 1); break; }
+    switch (atom)
+    {
+    case IO_RECV: { ok = im_brain_step_recv(brain); break; }
+
+    case IO_ID: { vm_push(&brain->vm, brain->id); break; }
     case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
+
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }
     }
 
@@ -151,20 +154,23 @@ static void im_brain_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_brain_io_status(struct im_brain *brain, struct chunk *chunk, id_t src)
+static void im_brain_io_status(
+        struct im_brain *brain, struct chunk *chunk, id_t src)
 {
     word_t value = vm_pack(brain->msg_len, brain->mod_id);
     chunk_io(chunk, IO_STATE, brain->id, src, &value, 1);
 }
 
-static void im_brain_io_state(struct im_brain *brain, const word_t *args, size_t len)
+static void im_brain_io_state(
+        struct im_brain *brain, const word_t *args, size_t len)
 {
     for (size_t i = 0; i < len; ++i)
         vm_push(&brain->vm, args[i]);
 }
 
 static void im_brain_io_mod(
-        struct im_brain *brain, struct chunk *chunk, const word_t *args, size_t len)
+        struct im_brain *brain, struct chunk *chunk,
+        const word_t *args, size_t len)
 {
     if (len < 1) return;
 
@@ -175,7 +181,8 @@ static void im_brain_io_mod(
     im_brain_mod(brain, chunk, id);
 }
 
-static void im_brain_io_val(struct im_brain *brain, const word_t *args, size_t len)
+static void im_brain_io_return(
+        struct im_brain *brain, const word_t *args, size_t len)
 {
     (void) len;
     if (len < 1) return;
@@ -184,16 +191,16 @@ static void im_brain_io_val(struct im_brain *brain, const word_t *args, size_t l
 }
 
 static void im_brain_io_send(
-        struct im_brain *brain, id_t src, const word_t *args, size_t len)
+        struct im_brain *brain, const word_t *args, size_t len)
 {
     if (len > im_brain_msg_cap) return;
 
-    brain->msg_src = src;
     brain->msg_len = len;
     memcpy(brain->msg, args, len * sizeof(*args));
 }
 
-static void im_brain_io_dbg_break(struct im_brain *brain, const word_t *args, size_t len)
+static void im_brain_io_dbg_break(
+        struct im_brain *brain, const word_t *args, size_t len)
 {
     if (len < 1) return;
     if (args[0] > UINT32_MAX || args[0] < 0) return;
@@ -220,17 +227,18 @@ static void im_brain_io(
 
     switch(io)
     {
+    case IO_RETURN: { im_brain_io_return(brain, args, len); return; }
+
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, NULL, 0); return; }
     case IO_PONG: { return; } // the return value of chunk_io is all we really need.
 
     case IO_STATUS: { im_brain_io_status(brain, chunk, src); return; }
     case IO_STATE: { im_brain_io_state(brain, args, len); return; }
 
-    case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
     case IO_RESET: { im_brain_reset(brain); return; }
+    case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
 
-    case IO_VAL: { im_brain_io_val(brain, args, len); return; }
-    case IO_SEND: { im_brain_io_send(brain, src, args, len); return; }
+    case IO_SEND: { im_brain_io_send(brain, args, len); return; }
 
     case IO_DBG_ATTACH: { brain->debug = true; return; }
     case IO_DBG_DETACH: { brain->debug = false; return; }
@@ -243,18 +251,20 @@ static void im_brain_io(
 
 static const word_t im_brain_io_list[] =
 {
+    IO_RETURN,
+
     IO_PING,
     IO_PONG,
 
     IO_STATUS,
     IO_STATE,
 
+    IO_RESET,
+    IO_MOD,
+
+    IO_ID,
     IO_COORD,
 
-    IO_MOD,
-    IO_RESET,
-
-    IO_VAL,
     IO_SEND,
     IO_RECV,
 
