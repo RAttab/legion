@@ -87,7 +87,10 @@ struct tape_set tape_set_invert(struct tape_set *set)
 
 enum item tape_set_next(const struct tape_set *set, enum item first)
 {
-    uint64_t mask = (1ULL << ((first+1) % 64)) - 1;
+    if (first == ITEM_MAX) return ITEM_NIL;
+    first++;
+
+    uint64_t mask = (1ULL << (first % 64)) - 1;
     for (size_t i = first / 64; i < array_len(set->s); ++i) {
         uint64_t x = set->s[i] & ~mask;
         if (x) return u64_ctz(x) + i * 64;

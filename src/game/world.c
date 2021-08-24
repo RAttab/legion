@@ -305,6 +305,7 @@ void world_lab_learn(struct world *world, enum item item)
     struct tape_set todo = tape_set_invert(&world->known);
     for (enum item it = tape_set_next(&todo, 0); it; it = tape_set_next(&todo, it)) {
         const struct tape_info *info = tapes_info(it);
+        if (!info) continue;
 
         size_t intersect = tape_set_intersect(&world->learned, &info->reqs);
         if (intersect == tape_set_len(&info->reqs))
@@ -348,8 +349,10 @@ void world_lab_learn_bit(struct world *world, enum item item, uint8_t bit)
 
     const uint64_t mask = (1ULL << bits) - 1;
     if (value != mask) {
-        ret = htable_put(&world->research, item, value);
+        if (ret.ok) ret = htable_xchg(&world->research, item, value);
+        else ret = htable_put(&world->research, item, value);
         assert(ret.ok);
+        return;
     }
 
     world_lab_learn(world, item);
@@ -367,6 +370,7 @@ struct coord world_populate(struct world *world)
     im_populate_atoms(world->atoms);
     mods_populate(world->mods, world->atoms);
 
+    tape_set_put(&world->known, ITEM_NIL);
     for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
         tape_set_put(&world->known, it);
 

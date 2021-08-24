@@ -52,8 +52,9 @@ static void im_lab_step(void *state, struct chunk *chunk)
     }
 
     case im_lab_waiting: {
-        enum item item = chunk_ports_consume(chunk, lab->id);
-        assert(item == lab->item);
+        enum item consumed = chunk_ports_consume(chunk, lab->id);
+        if (!consumed) return;
+        assert(consumed == lab->item);
 
         lab->work.left = lab->work.cap;
         lab->state = im_lab_working;
@@ -152,12 +153,12 @@ static void im_lab_io_tape_known(
     enum item item = args[0];
 
     word_t known = world_lab_known(chunk_world(chunk), item) ? 1 : 0;
-    chunk_io(chunk, IO_TAPE_AT, lab->id, src, &known, 1);
+    chunk_io(chunk, IO_TAPE_KNOWN, lab->id, src, &known, 1);
     return;
 
   fail:
     word_t fail = 0;
-    chunk_io(chunk, IO_TAPE_AT, lab->id, src, &fail, 1);
+    chunk_io(chunk, IO_TAPE_KNOWN, lab->id, src, &fail, 1);
 }
 
 static void im_lab_io_item_bits(
@@ -170,12 +171,12 @@ static void im_lab_io_item_bits(
     enum item item = args[0];
 
     word_t bits = world_lab_learned_bits(chunk_world(chunk), item);
-    chunk_io(chunk, IO_TAPE_AT, lab->id, src, &bits, 1);
+    chunk_io(chunk, IO_ITEM_BITS, lab->id, src, &bits, 1);
     return;
 
   fail:
     word_t fail = 0;
-    chunk_io(chunk, IO_TAPE_AT, lab->id, src, &fail, 1);
+    chunk_io(chunk, IO_ITEM_BITS, lab->id, src, &fail, 1);
 }
 
 static void im_lab_io_item_known(
@@ -188,12 +189,12 @@ static void im_lab_io_item_known(
     enum item item = args[0];
 
     word_t known = world_lab_learned(chunk_world(chunk), item) ? 1 : 0;
-    chunk_io(chunk, IO_TAPE_AT, lab->id, src, &known, 1);
+    chunk_io(chunk, IO_ITEM_KNOWN, lab->id, src, &known, 1);
     return;
 
   fail:
     word_t fail = 0;
-    chunk_io(chunk, IO_TAPE_AT, lab->id, src, &fail, 1);
+    chunk_io(chunk, IO_ITEM_KNOWN, lab->id, src, &fail, 1);
 }
 
 static void im_lab_io(
@@ -247,6 +248,7 @@ static bool im_lab_flow(const void *state, struct flow *flow)
         .id = lab->id,
         .target = lab->item,
         .in = lab->state == im_lab_waiting ? lab->item : 0,
+        .rank = tapes_info(lab->item)->rank + 1,
     };
 
     return true;

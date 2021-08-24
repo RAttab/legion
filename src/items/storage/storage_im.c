@@ -128,6 +128,7 @@ static bool im_storage_flow(const void *state, struct flow *flow)
         .loops = storage->count,
         .target = storage->item,
         .in = storage->item,
+        .rank = tapes_info(storage->item)->rank,
     };
     return true;
 }

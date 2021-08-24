@@ -35,8 +35,7 @@ struct legion_packed flow
 
     loops_t loops;
     enum item target;
-
-    legion_pad(1);
+    uint8_t rank;
 
     enum item in, out;
     tape_it_t tape_it, tape_len;

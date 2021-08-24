@@ -150,12 +150,9 @@ static bool factory_make_flow(
     
     if (!config->im.flow(state, flow)) return false;
 
-    size_t rank = tapes_info(flow->target)->rank;
-    if (id_item(flow->id) == ITEM_DEPLOY) rank++;
-    flow->row = rank - 1;
-
-    factory->grid = vec64_grow(factory->grid, rank);
-    while (vec64_len(factory->grid) < rank)
+    flow->row = flow->rank - 1;
+    factory->grid = vec64_grow(factory->grid, flow->rank);
+    while (vec64_len(factory->grid) < flow->rank)
         factory->grid = vec64_append(factory->grid, 0);
 
     struct vec16 **vec = (void *) &factory->grid->vals[flow->row];

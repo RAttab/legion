@@ -178,10 +178,12 @@ static bool im_extract_flow(const void *state, struct flow *flow)
     const struct im_extract *extract = state;
     if (!extract->tape) return false;
 
+    enum item target = tape_packed_id(extract->tape);
     *flow = (struct flow) {
         .id = extract->id,
         .loops = extract->loops,
-        .target = tape_packed_id(extract->tape),
+        .target = target,
+        .rank = tapes_info(target)->rank,
     };
 
     const struct tape *tape = tape_packed_ptr(extract->tape);

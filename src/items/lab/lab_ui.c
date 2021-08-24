@@ -135,12 +135,12 @@ static void ui_lab_render(
 
     ui_label_render(&ui->total, layout, renderer);
 
-    {
+    if (ui->bits) {
         struct ui_widget w = ui_widget_new(ui_layout_inf, ui->font->glyph_h);
         ui_layout_add(layout, &w);
-        rgba_render(rgba_white(), renderer);
 
         SDL_Rect rect = ui_widget_rect(&w);
+        rgba_render(rgba_white(), renderer);
         sdl_err(SDL_RenderDrawRect(renderer, &rect));
 
         rect = (SDL_Rect) {
@@ -151,8 +151,8 @@ static void ui_lab_render(
         };
 
         for (size_t i = 0; i < ui->bits; ++i, rect.x += rect.w) {
-            if (!(ui->bits & (1ULL << i))) continue;
-            sdl_err(SDL_RenderDrawRect(renderer, &rect));
+            if (!(ui->known & (1ULL << i))) continue;
+            sdl_err(SDL_RenderFillRect(renderer, &rect));
         }
     }
 }

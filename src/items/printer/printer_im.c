@@ -172,10 +172,12 @@ static bool im_printer_flow(const void *state, struct flow *flow)
     const struct im_printer *printer = state;
     if (!printer->tape) return false;
 
+    enum item target = tape_packed_id(printer->tape);
     *flow = (struct flow) {
         .id = printer->id,
         .loops = printer->loops,
-        .target = tape_packed_id(printer->tape),
+        .target = target,
+        .rank = tapes_info(target)->rank,
     };
 
     const struct tape *tape = tape_packed_ptr(printer->tape);
