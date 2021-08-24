@@ -109,4 +109,54 @@
       item_captor)
   (out item_energy_store))
 
+ ;; (item_auto_deploy
+ ;;  (energy 1)
+ ;;  (in item_liquid_frame
+ ;;      item_core
+ ;;      item_deploy
+ ;;      item_core
+ ;;      item_liquid_frame)
+ ;;  (out item_auto_deploy))
+
+ ;; (item_transmitor
+ ;;  (energy 1)
+ ;;  (in item_radiation
+ ;;      item_radiation
+ ;;      item_antenna
+ ;;      item_antenna
+ ;;      item_antenna
+ ;;      item_antenna
+ ;;      item_antenna)
+ ;;  (out item_transmitor))
+
+ ;; (item_receptor
+ ;;  (energy 1)
+ ;;  (in item_antenna
+ ;;      item_antenna
+ ;;      item_antenna
+ ;;      item_antenna
+ ;;      item_antenna
+ ;;      item_radiation
+ ;;      item_radiation)
+ ;;  (out item_receptor))
+
+ (item_accelerator
+  (energy 1)
+  (in item_liquid_frame
+      item_magnet_field
+      item_magnet_field
+      item_magnet_field
+      item_liquid_frame)
+  (out item_accelerator))
+
+ ;; (item_collider
+ ;;  (energy 1)
+ ;;  (in item_lab
+ ;;      item_accelerator
+ ;;      item_accelerator
+ ;;      item_accelerator
+ ;;      item_accelerator
+ ;;      item_accelerator
+ ;;      item_lab)
+ ;;  (out item_collider))
  )
