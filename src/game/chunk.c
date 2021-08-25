@@ -29,6 +29,7 @@ struct chunk
     // ports
     struct htable provided;
     struct ring32 *requested;
+    struct ring32 *storage;
 
     struct energy energy;
 
@@ -42,6 +43,7 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->world = world;
     chunk->star = *star;
     chunk->requested = ring32_reserve(16);
+    chunk->storage = ring32_reserve(1);
     chunk->shuttles = ring64_reserve(2);
     chunk->workers.ops = vec64_reserve(1);
     return chunk;
@@ -59,6 +61,7 @@ void chunk_free(struct chunk *chunk)
     }
     htable_reset(&chunk->provided);
     ring32_free(chunk->requested);
+    ring32_free(chunk->storage);
 
     vec64_free(chunk->workers.ops);
     ring64_free(chunk->shuttles);
@@ -81,8 +84,9 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     chunk->shuttles = save_read_ring64(save);
 
     chunk->requested = save_read_ring32(save);
-    size_t len = save_read_type(save, typeof(chunk->provided.len));
+    chunk->storage = save_read_ring32(save);
 
+    size_t len = save_read_type(save, typeof(chunk->provided.len));
     htable_reserve(&chunk->provided, len);
     for (size_t i = 0; i < len; ++i) {
         enum item item = save_read_type(save, typeof(item));
@@ -113,6 +117,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_ring64(save, chunk->shuttles);
 
     save_write_ring32(save, chunk->requested);
+    save_write_ring32(save, chunk->storage);
     save_write_value(save, chunk->provided.len);
     struct htable_bucket *it = htable_next(&chunk->provided, NULL);
     for (; it; it = htable_next(&chunk->provided, it)) {
@@ -379,7 +384,9 @@ void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
     ports->in = item;
     ports->in_state = ports_requested;
 
-    chunk->requested = ring32_push(chunk->requested, id);
+    if (id_item(id) == ITEM_STORAGE)
+        chunk->storage = ring32_push(chunk->storage, id);
+    else chunk->requested = ring32_push(chunk->requested, id);
 }
 
 enum item chunk_ports_consume(struct chunk *chunk, id_t id)
@@ -394,56 +401,68 @@ enum item chunk_ports_consume(struct chunk *chunk, id_t id)
     return ret;
 }
 
+static bool chunk_ports_step_queue(
+        struct chunk *chunk, struct ring32 *requested, id_t *stop)
+{
+    if (ring32_empty(requested)) return false;
+    if (*stop && *stop == ring32_peek(requested)) return false;
+
+    id_t dst = ring32_pop(requested);
+    if (!dst)  { chunk->workers.clean++; return true; }
+
+    struct ports *in = active_ports(active_index(&chunk->active, id_item(dst)), dst);
+    assert(in && in->in_state == ports_requested);
+
+    struct htable_ret hret = htable_get(&chunk->provided, in->in);
+    if (!hret.ok) goto nomatch;
+
+    struct ring32 *provided = (struct ring32 *) hret.value;
+    assert(provided);
+    if (ring32_empty(provided)) goto nomatch;
+
+    id_t src = ring32_pop(provided);
+    if (!src) { chunk->workers.clean++; goto nomatch; }
+    if (src == dst) goto nomatch; // storage can assign to self
+
+    struct ports *out = active_ports(active_index(&chunk->active, id_item(src)), src);
+    assert(out && out->out == in->in);
+
+    out->out = ITEM_NIL;
+    in->in_state = ports_received;
+
+    chunk->workers.ops =
+        vec64_append(chunk->workers.ops, ((uint64_t) src << 32) | dst);
+
+    return true;
+
+  nomatch:
+    struct ring32 *rret = ring32_push(requested, dst);
+    assert(rret == requested);
+    if (!*stop) *stop = dst;
+    chunk->workers.fail++;
+    return true;
+
+}
+
 static void chunk_ports_step(struct chunk *chunk)
 {
-    id_t fail = 0;
     chunk->workers.idle = 0;
     chunk->workers.fail = 0;
     chunk->workers.clean = 0;
     chunk->workers.queue = ring32_len(chunk->requested);
     chunk->workers.ops->len = 0;
 
-    for (size_t i = 0; i < chunk->workers.count; ++i) {
+    size_t worker = 0;
 
-        if (ring32_empty(chunk->requested) ||
-                (fail && fail == ring32_peek(chunk->requested)))
-        {
-            chunk->workers.idle = chunk->workers.count - i;
-            break;
-        }
-
-        id_t dst = ring32_pop(chunk->requested);
-        if (!dst)  { chunk->workers.clean++; continue; }
-
-        struct ports *in = active_ports(active_index(&chunk->active, id_item(dst)), dst);
-        assert(in && in->in_state == ports_requested);
-
-        struct htable_ret hret = htable_get(&chunk->provided, in->in);
-        if (!hret.ok) goto nomatch;
-
-        struct ring32 *provided = (struct ring32 *) hret.value;
-        assert(provided);
-        if (ring32_empty(provided)) goto nomatch;
-
-        id_t src = ring32_pop(provided);
-        if (!src) { chunk->workers.clean++; goto nomatch; }
-
-        struct ports *out = active_ports(active_index(&chunk->active, id_item(src)), src);
-        assert(out && out->out == in->in);
-
-        out->out = ITEM_NIL;
-        in->in_state = ports_received;
-
-        chunk->workers.ops =
-            vec64_append(chunk->workers.ops, ((uint64_t) src << 32) | dst);
-
-        continue;
-
-      nomatch:
-        struct ring32 *rret = ring32_push(chunk->requested, dst);
-        assert(rret == chunk->requested);
-        if (!fail) fail = dst;
-        chunk->workers.fail++;
-        continue;
+    id_t stop = 0;
+    for (; worker < chunk->workers.count; ++worker) {
+        if (!chunk_ports_step_queue(chunk, chunk->requested, &stop)) break;
     }
+
+    stop = 0;
+    for (; worker < chunk->workers.count; ++worker) {
+        if (!chunk_ports_step_queue(chunk, chunk->storage, &stop)) break;
+    }
+
+    chunk->workers.idle = chunk->workers.count - worker;
 }

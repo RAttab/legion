@@ -130,6 +130,10 @@ const enum item im_list_control_arr[] =
     ITEM_BRAIN,
     ITEM_SCANNER,
     ITEM_LEGION,
+
+    ITEM_TRANSMIT,
+    ITEM_RECEIVE,
+
     0,
 };
 im_list_t im_list_control = im_list_control_arr;
@@ -142,6 +146,12 @@ const enum item im_list_factory_arr[] =
     ITEM_PRINTER,
     ITEM_ASSEMBLY,
     ITEM_LAB,
+
+    ITEM_STORAGE,
+    ITEM_PORT,
+    ITEM_CONDENSER,
+    ITEM_AUTO_DEPLOY,
+
     0,
 };
 im_list_t im_list_factory = im_list_factory_arr;
