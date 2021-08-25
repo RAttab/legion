@@ -46,7 +46,9 @@ void chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len
 
 void chunk_step(struct chunk *);
 bool chunk_io(
-        struct chunk *, enum io io, id_t src, id_t dst, const word_t *args, size_t len);
+        struct chunk *,
+        enum io io, id_t src, id_t dst,
+        const word_t *args, size_t len);
 
 
 struct energy *chunk_energy(struct chunk *);
@@ -55,10 +57,13 @@ struct energy *chunk_energy(struct chunk *);
 ssize_t chunk_scan(struct chunk *, enum item);
 
 
-void chunk_lanes_launch(
-        struct chunk *, enum item item, struct coord dst, const word_t *data, size_t len);
-bool chunk_lanes_dock(struct chunk *, enum item *item, uint8_t *count);
+bool chunk_lanes_dock(struct chunk *, word_t *data);
 void chunk_lanes_arrive(struct chunk *, enum item, const word_t *data, size_t len);
+void chunk_lanes_launch(
+        struct chunk *,
+        enum item item, size_t speed,
+        struct coord dst,
+        const word_t *data, size_t len);
 
 
 void chunk_ports_reset(struct chunk *, id_t);

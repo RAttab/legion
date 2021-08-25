@@ -79,7 +79,7 @@ ssize_t world_scan(struct world *, struct coord, enum item);
 const struct hset *world_lanes_list(struct world *, struct coord key);
 void world_lanes_launch(
         struct world *,
-        enum item type,
+        enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len);
 void world_lanes_arrive(

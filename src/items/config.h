@@ -59,7 +59,6 @@ struct im_config
     im_config_t init;
 
     size_t size;
-    size_t travel;
 
     uint8_t lab_bits;
     uint8_t lab_work;

@@ -52,6 +52,7 @@ legion_packed enum io
     IO_SCAN     = IO_MIN + 0x82,
     IO_SCAN_VAL = IO_MIN + 0x83,
     IO_LAUNCH   = IO_MIN + 0x85,
+    IO_TARGET   = IO_MIN + 0x86,
 
     IO_MAX,
     IO_LEN = IO_MAX - IO_MIN,

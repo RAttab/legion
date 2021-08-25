@@ -16,6 +16,8 @@ struct im_config;
 // legion
 // -----------------------------------------------------------------------------
 
+enum { im_legion_speed = 100 };
+
 struct legion_packed im_legion
 {
     id_t id;

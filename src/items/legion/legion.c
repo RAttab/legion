@@ -22,7 +22,6 @@
 void im_legion_config(struct im_config *config)
 {
     config->size = sizeof(struct im_legion);
-    config->travel = 100,
 
     config->im.init = im_legion_init;
     config->im.make = im_legion_make;

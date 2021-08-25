@@ -15,6 +15,7 @@
 #include "items/lab/lab.h"
 #include "items/legion/legion.h"
 #include "items/memory/memory.h"
+#include "items/port/port.h"
 #include "items/printer/printer.h"
 #include "items/scanner/scanner.h"
 #include "items/storage/storage.h"
@@ -106,7 +107,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_LAB,          "lab",       bits_s, work_s, im_lab_config),
     // Active - T1
     im_init_cfg(ITEM_STORAGE,      "storage",   bits_m, work_m, im_storage_config),
-    /* im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config), */
+    im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config),
     im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_extract_config),
     /* im_init_cfg(ITEM_AUTO_DEPLOY,  "auto-deploy",      bits_m, work_m, im_auto_deploy_config), */
     /* im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config), */
@@ -219,6 +220,7 @@ static struct io_config io_configs[IO_LEN] =
     io_init(IO_SCAN),
     io_init(IO_SCAN_VAL),
     io_init(IO_LAUNCH),
+    io_init(IO_TARGET),
 };
 
 #undef io_init

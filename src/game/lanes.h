@@ -32,12 +32,12 @@ void lanes_free(struct lanes *);
 bool lanes_load(struct lanes *, struct world *, struct save *);
 void lanes_save(struct lanes *, struct save *);
 
-world_ts_delta_t lanes_travel(enum item type, struct coord src, struct coord dst);
+world_ts_delta_t lanes_travel(size_t speed, struct coord src, struct coord dst);
 const struct hset *lanes_list(struct lanes *, struct coord key);
 
 void lanes_launch(
         struct lanes *,
-        enum item type,
+        enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len);
 

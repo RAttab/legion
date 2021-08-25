@@ -108,7 +108,8 @@ static void im_legion_io_launch(
         legion->mod,
     };
 
-    chunk_lanes_launch(chunk, id_item(legion->id), dst, data, array_len(data));
+    chunk_lanes_launch(
+            chunk, id_item(legion->id), im_legion_speed, dst, data, array_len(data));
     chunk_delete(chunk, legion->id);
 }
 

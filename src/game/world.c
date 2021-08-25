@@ -266,11 +266,11 @@ const struct hset *world_lanes_list(struct world *world, struct coord key)
 
 void world_lanes_launch(
         struct world *world,
-        enum item type,
+        enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len)
 {
-    lanes_launch(&world->lanes, type, src, dst, data, len);
+    lanes_launch(&world->lanes, type, speed, src, dst, data, len);
 }
 
 void world_lanes_arrive(

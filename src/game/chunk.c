@@ -34,7 +34,7 @@ struct chunk
     struct energy energy;
 
     struct workers workers;
-    struct ring64 *shuttles;
+    struct ring64 *bullets;
 };
 
 struct chunk *chunk_alloc(struct world *world, const struct star *star)
@@ -44,7 +44,7 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->star = *star;
     chunk->requested = ring32_reserve(16);
     chunk->storage = ring32_reserve(1);
-    chunk->shuttles = ring64_reserve(2);
+    chunk->bullets = ring64_reserve(2);
     chunk->workers.ops = vec64_reserve(1);
     return chunk;
 }
@@ -64,7 +64,7 @@ void chunk_free(struct chunk *chunk)
     ring32_free(chunk->storage);
 
     vec64_free(chunk->workers.ops);
-    ring64_free(chunk->shuttles);
+    ring64_free(chunk->bullets);
 
     free(chunk);
 }
@@ -81,7 +81,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     save_read_into(save, &chunk->workers.count);
     chunk->workers.ops = vec64_reserve(chunk->workers.count);
-    chunk->shuttles = save_read_ring64(save);
+    chunk->bullets = save_read_ring64(save);
 
     chunk->requested = save_read_ring32(save);
     chunk->storage = save_read_ring32(save);
@@ -114,7 +114,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     star_save(&chunk->star, save);
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
-    save_write_ring64(save, chunk->shuttles);
+    save_write_ring64(save, chunk->bullets);
 
     save_write_ring32(save, chunk->requested);
     save_write_ring32(save, chunk->storage);
@@ -202,6 +202,13 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
     case ITEM_SOLAR:        { chunk->energy.solar++; return true; }
     case ITEM_KWHEEL:       { chunk->energy.kwheel++; return true; }
     case ITEM_ENERGY_STORE: { chunk->energy.store++; return true; }
+
+    case ITEM_BULLET: {
+        word_t cargo = 0;
+        chunk_lanes_arrive(chunk, item, &cargo, 1);
+        return true;
+    }
+
     default: { assert(false); }
     }
 }
@@ -264,7 +271,7 @@ struct energy *chunk_energy(struct chunk *chunk)
 ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) return chunk->workers.count;
-    if (item == ITEM_BULLET) return ring64_len(chunk->shuttles);
+    if (item == ITEM_BULLET) return ring64_len(chunk->bullets);
 
     if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
@@ -279,15 +286,6 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
 // lanes
 // -----------------------------------------------------------------------------
 
-void chunk_lanes_launch(
-        struct chunk *chunk,
-        enum item type,
-        struct coord dst,
-        const word_t *data, size_t len)
-{
-    world_lanes_launch(chunk->world, type, chunk->star.coord, dst, data, len);
-}
-
 void chunk_lanes_arrive(
         struct chunk *chunk, enum item item, const word_t *data, size_t len)
 {
@@ -299,23 +297,27 @@ void chunk_lanes_arrive(
     }
     case ITEM_BULLET: {
         assert(len == 1);
-        assert(data[0] > 0 && data[0] <= UINT8_MAX);
-        uint64_t value = (((uint64_t) item) << 8) | data[0];
-        chunk->shuttles = ring64_push(chunk->shuttles, value);
+        chunk->bullets = ring64_push(chunk->bullets, data[0]);
         break;
     }
     default: { assert(false); }
     }
 }
 
-bool chunk_lanes_dock(struct chunk *chunk, enum item *item, uint8_t *count)
+bool chunk_lanes_dock(struct chunk *chunk, word_t *data)
 {
-    if (ring64_empty(chunk->shuttles)) return false;
-
-    uint64_t value = ring64_pop(chunk->shuttles);
-    *item = value >> 8;
-    *count = value & ((1ULL << 8) - 1);
+    if (ring64_empty(chunk->bullets)) return false;
+    *data = ring64_pop(chunk->bullets);
     return true;
+}
+
+void chunk_lanes_launch(
+        struct chunk *chunk,
+        enum item type, size_t speed,
+        struct coord dst,
+        const word_t *data, size_t len)
+{
+    world_lanes_launch(chunk->world, type, speed, chunk->star.coord, dst, data, len);
 }
 
 
@@ -379,6 +381,7 @@ void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 {
     struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
     if (!ports) return;
+    if (ports->in_state == ports_requested && ports->in == item) return;
 
     assert(ports->in_state == ports_nil);
     ports->in = item;

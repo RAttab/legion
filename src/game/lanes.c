@@ -276,12 +276,9 @@ void lanes_save(struct lanes *lanes, struct save *save)
     save_write_magic(save, save_magic_lanes);
 }
 
-world_ts_delta_t lanes_travel(enum item type, struct coord src, struct coord dst)
+world_ts_delta_t lanes_travel(size_t speed, struct coord src, struct coord dst)
 {
-    const struct im_config *config = im_config_assert(type);
-    if (!config->travel) return -1;
-
-    return coord_dist(src, dst) / config->travel;
+    return coord_dist(src, dst) / speed;
 }
 
 const struct hset *lanes_list(struct lanes *lanes, struct coord key)
@@ -292,7 +289,7 @@ const struct hset *lanes_list(struct lanes *lanes, struct coord key)
 
 void lanes_launch(
         struct lanes *lanes,
-        enum item type,
+        enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len)
 {
@@ -321,7 +318,7 @@ void lanes_launch(
         memcpy(data_ptr->data, data, len * sizeof(*data));
     }
 
-    world_ts_delta_t travel = lanes_travel(type, src, dst);
+    world_ts_delta_t travel = lanes_travel(speed, src, dst);
     assert(travel > 0);
 
     lane_push(lane, world_time(lanes->world) + travel, data_index);

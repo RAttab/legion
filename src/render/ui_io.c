@@ -96,14 +96,17 @@ enum
     ui_io_item,
     ui_io_tape,
     ui_io_mod,
-    ui_io_set,
-    ui_io_scan,
-    ui_io_result,
-    ui_io_launch,
+
     ui_io_dbg_attach,
     ui_io_dbg_detach,
     ui_io_dbg_break,
     ui_io_dbg_step,
+
+    ui_io_set,
+    ui_io_scan,
+    ui_io_scan_val,
+    ui_io_launch,
+    ui_io_target,
 
     ui_io_max,
 };
@@ -143,19 +146,19 @@ struct ui_io *ui_io_new(void)
             [ui_io_item] = ui_io_cmd2(font, IO_ITEM,     "item:  ", "loops: "),
             [ui_io_tape] = ui_io_cmd2(font, IO_TAPE,     "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
-            [ui_io_set] = ui_io_cmd2(font, IO_SET,       "index: ", "value: "),
-            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN,     "coord: ", "item:  "),
-            [ui_io_result] = ui_io_cmd0(font, IO_SCAN_VAL),
-            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
+
             [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),
             [ui_io_dbg_detach] = ui_io_cmd0(font, IO_DBG_DETACH),
             [ui_io_dbg_break] = ui_io_cmd1(font, IO_DBG_BREAK, "ip:    "),
             [ui_io_dbg_step] = ui_io_cmd0(font, IO_DBG_STEP),
+
+            [ui_io_set] = ui_io_cmd2(font, IO_SET,       "index: ", "value: "),
+            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN,     "coord: ", "item:  "),
+            [ui_io_scan_val] = ui_io_cmd0(font, IO_SCAN_VAL),
+            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
+            [ui_io_target] = ui_io_cmd1(font, IO_TARGET, "dest:  "),
         },
     };
-
-    for (size_t i = 0; i < ui_io_max; ++i) {
-    }
 
     ui->panel.state = ui_panel_hidden;
     return ui;

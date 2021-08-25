@@ -53,6 +53,8 @@ struct ui_star
     struct ui_scroll control_scroll, factory_scroll;
     struct ui_toggles control_list, factory_list;
 
+    struct ui_label bullets, bullets_val;
+
     struct ui_star_workers workers;
 
     struct ui_label need, need_val;
@@ -110,6 +112,9 @@ struct ui_star *ui_star_new(void)
 
         .factory_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .factory_list = ui_toggles_new(font, ui_str_v(id_str_len)),
+
+        .bullets = ui_label_new(font, ui_str_c("bullets: ")),
+        .bullets_val = ui_label_new(font, ui_str_v(10)),
 
         .workers = (struct ui_star_workers) {
             .workers = ui_label_new(font, ui_str_c("workers: ")),
@@ -273,6 +278,8 @@ static void ui_star_update(struct ui_star *ui)
         ui_toggles_resize(&ui->factory_list, 0);
         ui_scroll_update(&ui->factory_scroll, 0);
 
+        ui_str_set_u64(&ui->bullets_val.str, 0);
+
         ui_str_set_u64(&ui->workers.workers_val.str, 0);
         ui_str_set_u64(&ui->workers.idle_val.str, 0);
         ui_str_set_u64(&ui->workers.fail_val.str, 0);
@@ -292,6 +299,8 @@ static void ui_star_update(struct ui_star *ui)
     ui->star = *chunk_star(chunk);
     ui_star_update_list(ui, chunk, &ui->control_list, &ui->control_scroll, im_list_control);
     ui_star_update_list(ui, chunk, &ui->factory_list, &ui->factory_scroll, im_list_factory);
+
+    ui_str_set_u64(&ui->bullets_val.str, chunk_scan(chunk, ITEM_BULLET));
 
     {
         struct workers workers = chunk_workers(chunk);
@@ -526,6 +535,12 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     }
 
     if (ui->logistic.disabled) {
+        ui_label_render(&ui->bullets, &layout, renderer);
+        ui_label_render(&ui->bullets_val, &layout, renderer);
+        ui_layout_next_row(&layout);
+
+        ui_layout_sep_y(&layout, font->glyph_h);
+
         ui_label_render(&ui->workers.workers, &layout, renderer);
         ui_label_render(&ui->workers.workers_val, &layout, renderer);
         ui_layout_next_row(&layout);

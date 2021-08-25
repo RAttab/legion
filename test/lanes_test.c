@@ -51,20 +51,21 @@ void test_basics(void)
     struct world *world = world_new();
     struct sector *sector = world_sector(world, coord_center());
 
+    size_t speed = 100;
     enum item item = ITEM_LEGION;
     struct coord src = sector->stars[0].coord;
     struct coord dst = sector->stars[1].coord;
 
     for (size_t iteration = 0; iteration < 5; ++iteration) {
-        world_lanes_launch(world, item, src, dst, NULL, 0);
+        world_lanes_launch(world, item, speed, src, dst, NULL, 0);
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
-        world_lanes_launch(world, item, dst, src, NULL, 0);
+        world_lanes_launch(world, item, speed, dst, src, NULL, 0);
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
-        world_ts_delta_t wait = lanes_travel(item, src, dst);
+        world_ts_delta_t wait = lanes_travel(speed, src, dst);
         for (world_ts_delta_t i = 0; i < wait; ++i) world_step(world);
 
         check_hset_nil(world_lanes_list(world, src));
