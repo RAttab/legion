@@ -105,6 +105,8 @@ static void im_port_io_item(
     if (!item) port->want.count = 0;
     else if (len >= 2 && args[1] > 0)
         port->want.count = legion_min(args[1], UINT8_MAX);
+
+    chunk_ports_reset(chunk, port->id);
 }
 
 static void im_port_io_target(
@@ -154,13 +156,15 @@ static const word_t im_port_io_list[] =
 static bool im_port_flow(const void *state, struct flow *flow)
 {
     const struct im_port *port = state;
-    if (!port->has.item) return false;
+    if (coord_is_nil(port->target)) return false;
+
+    const struct tape_info *info = tapes_info(port->has.item);
 
     *flow = (struct flow) {
         .id = port->id,
         .loops = port->want.count,
         .target = port->want.item,
-        .rank = tapes_info(port->has.item)->rank,
+        .rank = info ? info->rank : 1,
     };
 
     if (port->want.item == port->has.item)
