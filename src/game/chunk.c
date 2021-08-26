@@ -291,15 +291,18 @@ void chunk_lanes_arrive(
 {
     switch (item)
     {
+
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
         chunk_create_from(chunk, item, data, len);
         break;
     }
+
     case ITEM_BULLET: {
-        assert(len == 1);
-        chunk->bullets = ring64_push(chunk->bullets, data[0]);
+        word_t cargo = len == 1 ? data[0] : 0;
+        chunk->bullets = ring64_push(chunk->bullets, cargo);
         break;
     }
+
     default: { assert(false); }
     }
 }
