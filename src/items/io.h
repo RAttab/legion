@@ -46,6 +46,11 @@ legion_packed enum io
     IO_ITEM_BITS  = IO_MIN + 0x22,
     IO_ITEM_KNOWN = IO_MIN + 0x23,
 
+    // TX/RX
+    IO_CHANNEL       = IO_MIN + 0x30,
+    IO_TRANSMIT      = IO_MIN + 0x31,
+    IO_RECEIVE       = IO_MIN + 0x32,
+
     // Misc
     IO_GET      = IO_MIN + 0x80,
     IO_SET      = IO_MIN + 0x81,

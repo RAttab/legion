@@ -17,8 +17,10 @@
 #include "items/memory/memory.h"
 #include "items/port/port.h"
 #include "items/printer/printer.h"
+#include "items/receive/receive.h"
 #include "items/scanner/scanner.h"
 #include "items/storage/storage.h"
+#include "items/transmit/transmit.h"
 
 
 // -----------------------------------------------------------------------------
@@ -110,8 +112,9 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config),
     im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_extract_config),
     /* im_init_cfg(ITEM_AUTO_DEPLOY,  "auto-deploy",      bits_m, work_m, im_auto_deploy_config), */
-    /* im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config), */
-    /* im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config), */
+    im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config),
+    im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config),
+    im_init_cfg(ITEM_COLLIDER,     "collider",   bits_m, work_m, im_printer_config),
 
     // Logistics
     im_init(ITEM_WORKER,       "worker",       bits_s, work_s),
@@ -119,6 +122,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_SOLAR,        "solar",        bits_s, work_s),
     im_init(ITEM_KWHEEL,       "k-wheel",      bits_s, work_s),
     im_init(ITEM_ENERGY_STORE, "energy-store", bits_s, work_s),
+    im_init(ITEM_DATA,         "data",         bits_s, work_s),
 };
 
 #undef im_init
@@ -152,6 +156,7 @@ const enum item im_list_factory_arr[] =
     ITEM_PORT,
     ITEM_CONDENSER,
     ITEM_AUTO_DEPLOY,
+    ITEM_COLLIDER,
 
     0,
 };
@@ -213,6 +218,11 @@ static struct io_config io_configs[IO_LEN] =
     io_init(IO_TAPE_KNOWN),
     io_init(IO_ITEM_BITS),
     io_init(IO_ITEM_KNOWN),
+
+    // Tx/Rx
+    io_init(IO_CHANNEL),
+    io_init(IO_TRANSMIT),
+    io_init(IO_RECEIVE),
 
     // Misc
     io_init(IO_GET),

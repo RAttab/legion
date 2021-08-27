@@ -85,7 +85,7 @@ void world_lanes_launch(
 void world_lanes_arrive(
         struct world *,
         enum item type,
-        struct coord dst,
+        struct coord src, struct coord dst,
         const word_t *data, size_t len);
 
 

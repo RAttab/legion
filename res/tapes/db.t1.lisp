@@ -73,18 +73,18 @@
       item_magnet_field)
   (out item_storage))
 
- ;; (item_port
- ;;  (in item_magnet_field
- ;;      item_magnet_field
- ;;      item_captor
- ;;      item_frame
- ;;      item_storage
- ;;      item_storage
- ;;      item_frame
- ;;      item_captor
- ;;      item_magnet_field
- ;;      item_magnet_field)
- ;;  (out item_port))
+ (item_port
+  (in item_magnet_field
+      item_magnet_field
+      item_captor
+      item_frame
+      item_storage
+      item_storage
+      item_frame
+      item_captor
+      item_magnet_field
+      item_magnet_field)
+  (out item_port))
 
  (item_bullet
   (in item_hull
@@ -118,30 +118,41 @@
  ;;      item_liquid_frame)
  ;;  (out item_auto_deploy))
 
- ;; (item_transmitor
- ;;  (energy 1)
- ;;  (in item_radiation
- ;;      item_radiation
- ;;      item_antenna
- ;;      item_antenna
- ;;      item_antenna
- ;;      item_antenna
- ;;      item_antenna)
- ;;  (out item_transmitor))
+ (item_antenna
+  (energy 10)
+  (in item_liquid_frame
+      item_radiation
+      item_radiation
+      item_radiation
+      item_liquid_frame
+      item_liquid_frame
+      item_liquid_frame)
+  (out item_transmit))
 
- ;; (item_receptor
- ;;  (energy 1)
- ;;  (in item_antenna
- ;;      item_antenna
- ;;      item_antenna
- ;;      item_antenna
- ;;      item_antenna
- ;;      item_radiation
- ;;      item_radiation)
- ;;  (out item_receptor))
+ (item_transmit
+  (energy 20)
+  (in item_memory
+      item_memory
+      item_antenna
+      item_antenna
+      item_antenna
+      item_antenna
+      item_antenna)
+  (out item_transmit))
+
+ (item_receive
+  (energy 20)
+  (in item_antenna
+      item_antenna
+      item_antenna
+      item_antenna
+      item_antenna
+      item_memory
+      item_memory)
+  (out item_receive))
 
  (item_accelerator
-  (energy 1)
+  (energy 20)
   (in item_liquid_frame
       item_magnet_field
       item_magnet_field
@@ -149,14 +160,14 @@
       item_liquid_frame)
   (out item_accelerator))
 
- ;; (item_collider
- ;;  (energy 1)
- ;;  (in item_lab
- ;;      item_accelerator
- ;;      item_accelerator
- ;;      item_accelerator
- ;;      item_accelerator
- ;;      item_accelerator
- ;;      item_lab)
- ;;  (out item_collider))
+ (item_collider
+  (energy 30)
+  (in item_lab
+      item_accelerator
+      item_accelerator
+      item_accelerator
+      item_accelerator
+      item_accelerator
+      item_lab)
+  (out item_collider))
  )

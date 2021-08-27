@@ -199,6 +199,14 @@ static void im_brain_io_send(
     memcpy(brain->msg, args, len * sizeof(*args));
 }
 
+static void im_brain_io_recv(
+        struct im_brain *brain, const word_t *args, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+        vm_push(&brain->vm, args[len - i - 1]);
+    vm_push(&brain->vm, len);
+}
+
 static void im_brain_io_dbg_break(
         struct im_brain *brain, const word_t *args, size_t len)
 {
@@ -239,6 +247,7 @@ static void im_brain_io(
     case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
 
     case IO_SEND: { im_brain_io_send(brain, args, len); return; }
+    case IO_RECV: { im_brain_io_recv(brain, args, len); return; }
 
     case IO_DBG_ATTACH: { brain->debug = true; return; }
     case IO_DBG_DETACH: { brain->debug = false; return; }

@@ -336,8 +336,9 @@ void lanes_step(struct lanes *lanes)
             heap_index_t data_index = lane_pop(lane);
             struct lane_data *data = heap_ptr(&lanes->data, data_index);
 
+            struct coord src = data->forward ? lane->src : lane->dst;
             struct coord dst = data->forward ? lane->dst : lane->src;
-            world_lanes_arrive(lanes->world, data->item, dst, data->data, data->len);
+            world_lanes_arrive(lanes->world, data->item, src, dst, data->data, data->len);
 
             heap_del(&lanes->data, data_index, lane_data_len(data->len));
         }

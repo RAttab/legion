@@ -276,10 +276,10 @@ void world_lanes_launch(
 void world_lanes_arrive(
         struct world *world,
         enum item type,
-        struct coord dst,
+        struct coord src, struct coord dst,
         const word_t *data, size_t len)
 {
-    sector_lanes_arrive(world_sector(world, dst), type, dst, data, len);
+    sector_lanes_arrive(world_sector(world, dst), type, src, dst, data, len);
 }
 
 // -----------------------------------------------------------------------------

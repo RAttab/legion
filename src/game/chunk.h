@@ -58,7 +58,12 @@ ssize_t chunk_scan(struct chunk *, enum item);
 
 
 bool chunk_lanes_dock(struct chunk *, word_t *data);
-void chunk_lanes_arrive(struct chunk *, enum item, const word_t *data, size_t len);
+void chunk_lanes_listen(struct chunk *, id_t, struct coord src, uint8_t chan);
+void chunk_lanes_unlisten(struct chunk *, id_t, struct coord src, uint8_t chan);
+void chunk_lanes_arrive(
+        struct chunk *,
+        enum item, struct coord src,
+        const word_t *data, size_t len);
 void chunk_lanes_launch(
         struct chunk *,
         enum item item, size_t speed,

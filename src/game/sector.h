@@ -80,5 +80,5 @@ ssize_t sector_scan(struct sector *, struct coord, enum item);
 void sector_lanes_arrive(
         struct sector *,
         enum item type,
-        struct coord dst,
+        struct coord src, struct coord dst,
         const word_t *data, size_t len);

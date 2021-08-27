@@ -9,6 +9,7 @@
 #include "game/sector.h"
 #include "game/active.h"
 #include "game/energy.h"
+#include "items/types.h"
 #include "utils/vec.h"
 #include "utils/ring.h"
 #include "utils/htable.h"
@@ -26,15 +27,17 @@ struct chunk
     struct star star;
     active_list_t active;
 
-    // ports
+    // Ports
     struct htable provided;
     struct ring32 *requested;
     struct ring32 *storage;
 
+    // Logistics
     struct energy energy;
-
     struct workers workers;
     struct ring64 *bullets;
+
+    struct htable listen;
 };
 
 struct chunk *chunk_alloc(struct world *world, const struct star *star)
@@ -66,6 +69,12 @@ void chunk_free(struct chunk *chunk)
     vec64_free(chunk->workers.ops);
     ring64_free(chunk->bullets);
 
+    for (struct htable_bucket *it = htable_next(&chunk->listen, NULL);
+         it; it = htable_next(&chunk->listen, it))
+    {
+        free((void *) it->value);
+    }
+
     free(chunk);
 }
 
@@ -75,29 +84,43 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     struct chunk *chunk = calloc(1, sizeof(*chunk));
     chunk->world = world;
+
     star_load(&chunk->star, save);
+    active_list_load(&chunk->active, chunk, save);
+
+    chunk->requested = save_read_ring32(save);
+    chunk->storage = save_read_ring32(save);
+    { // provided
+        size_t len = save_read_type(save, typeof(chunk->provided.len));
+        htable_reserve(&chunk->provided, len);
+        for (size_t i = 0; i < len; ++i) {
+            enum item item = save_read_type(save, typeof(item));
+
+            struct ring32 *ring = save_read_ring32(save);
+            if (!ring) goto fail;
+
+            struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
+            assert(ret.ok);
+        }
+    }
 
     if (!energy_load(&chunk->energy, save)) goto fail;
-
     save_read_into(save, &chunk->workers.count);
     chunk->workers.ops = vec64_reserve(chunk->workers.count);
     chunk->bullets = save_read_ring64(save);
 
-    chunk->requested = save_read_ring32(save);
-    chunk->storage = save_read_ring32(save);
+    { // listen
+        size_t len = save_read_type(save, typeof(chunk->listen.len));
+        htable_reserve(&chunk->listen, len);
+        for (size_t i = 0; i < len; ++i) {
+            uint64_t src = save_read_type(save, typeof(src));
 
-    size_t len = save_read_type(save, typeof(chunk->provided.len));
-    htable_reserve(&chunk->provided, len);
-    for (size_t i = 0; i < len; ++i) {
-        enum item item = save_read_type(save, typeof(item));
-        struct ring32 *ring = save_read_ring32(save);
-        if (!ring) goto fail;
-
-        struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
-        assert(ret.ok);
+            id_t *channels = calloc(im_channel_max, sizeof(*channels));
+            save_read(save, channels, im_channel_max * sizeof(*channels));
+            struct htable_ret ret = htable_put(&chunk->listen, src, (uintptr_t) channels);
+            assert(ret.ok);
+        }
     }
-
-    active_list_load(&chunk->active, chunk, save);
 
     if (!save_read_magic(save, save_magic_chunk)) goto fail;
     return chunk;
@@ -112,20 +135,29 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_magic(save, save_magic_chunk);
 
     star_save(&chunk->star, save);
-    energy_save(&chunk->energy, save);
-    save_write_value(save, chunk->workers.count);
-    save_write_ring64(save, chunk->bullets);
+    active_list_save(&chunk->active, save);
 
     save_write_ring32(save, chunk->requested);
     save_write_ring32(save, chunk->storage);
     save_write_value(save, chunk->provided.len);
-    struct htable_bucket *it = htable_next(&chunk->provided, NULL);
-    for (; it; it = htable_next(&chunk->provided, it)) {
+    for (struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+         it; it = htable_next(&chunk->provided, it))
+    {
         save_write_value(save, (enum item) it->key);
         save_write_ring32(save, (struct ring32 *) it->value);
     }
 
-    active_list_save(&chunk->active, save);
+    energy_save(&chunk->energy, save);
+    save_write_value(save, chunk->workers.count);
+    save_write_ring64(save, chunk->bullets);
+
+    save_write_value(save, chunk->listen.len);
+    for (struct htable_bucket *it = htable_next(&chunk->listen, NULL);
+         it; it = htable_next(&chunk->listen, it))
+    {
+        save_write_value(save, it->key);
+        save_write(save, (id_t *) it->value, im_channel_max * sizeof(id_t));
+    }
 
     save_write_magic(save, save_magic_chunk);
 }
@@ -205,7 +237,7 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
 
     case ITEM_BULLET: {
         word_t cargo = 0;
-        chunk_lanes_arrive(chunk, item, &cargo, 1);
+        chunk_lanes_arrive(chunk, item, coord_nil(), &cargo, 1);
         return true;
     }
 
@@ -272,6 +304,9 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) return chunk->workers.count;
     if (item == ITEM_BULLET) return ring64_len(chunk->bullets);
+    if (item == ITEM_SOLAR) return chunk->energy.solar;
+    if (item == ITEM_KWHEEL) return chunk->energy.kwheel;
+    if (item == ITEM_ENERGY_STORE) return chunk->energy.store;
 
     if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
@@ -286,8 +321,66 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
 // lanes
 // -----------------------------------------------------------------------------
 
+void chunk_lanes_listen(
+        struct chunk *chunk, id_t id, struct coord src, uint8_t chan)
+{
+    assert(chan < im_channel_max);
+
+    const uint64_t key = coord_to_u64(src);
+    struct htable_ret ret = htable_get(&chunk->listen, key);
+
+    id_t *channels = (void *) ret.value;
+    if (!ret.ok) {
+        channels = calloc(im_channel_max, sizeof(*channels));
+        ret = htable_put(&chunk->listen, key, (uintptr_t) channels);
+        assert(ret.ok);
+    }
+
+    if (!channels[chan]) channels[chan] = id;
+}
+
+void chunk_lanes_unlisten(
+        struct chunk *chunk, id_t id, struct coord src, uint8_t chan)
+{
+    assert(chan < im_channel_max);
+
+    const uint64_t key = coord_to_u64(src);
+    struct htable_ret ret = htable_get(&chunk->listen, key);
+    if (!ret.ok) return;
+
+    id_t *channels = (void *) ret.value;
+    if (channels[chan] != id) return;
+
+    channels[chan] = 0;
+
+    for (size_t i = 0; i < im_channel_max; ++i)
+        if (channels[i]) return;
+    free(channels);
+    ret = htable_del(&chunk->listen, key);
+    assert(ret.ok);
+}
+
+static void chunk_lanes_receive(
+        struct chunk *chunk, struct coord src, const word_t *data, size_t len)
+{
+    assert(len >= 1);
+
+    uint8_t packet_chan = 0, packet_len = 0;
+    im_packet_unpack(data[0], &packet_chan, &packet_len);
+
+    struct htable_ret ret = htable_get(&chunk->listen, coord_to_u64(src));
+    if (!ret.ok) return;
+
+    id_t dst = ((id_t *) ret.value)[packet_chan];
+    if (!dst) return;
+
+    chunk_io(chunk, IO_RECV, 0, dst, data, len);
+}
+
 void chunk_lanes_arrive(
-        struct chunk *chunk, enum item item, const word_t *data, size_t len)
+        struct chunk *chunk,
+        enum item item, struct coord src,
+        const word_t *data, size_t len)
 {
     switch (item)
     {
@@ -300,6 +393,11 @@ void chunk_lanes_arrive(
     case ITEM_BULLET: {
         word_t cargo = len == 1 ? data[0] : 0;
         chunk->bullets = ring64_push(chunk->bullets, cargo);
+        break;
+    }
+
+    case ITEM_DATA: {
+        chunk_lanes_receive(chunk, src, data, len);
         break;
     }
 
