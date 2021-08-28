@@ -11,7 +11,7 @@
 // io
 // -----------------------------------------------------------------------------
 
-legion_packed enum io
+enum legion_packed io
 {
     // We place the IO namespace right after the item namespace
     IO_MIN = 1 << 8,
@@ -62,3 +62,5 @@ legion_packed enum io
     IO_MAX,
     IO_LEN = IO_MAX - IO_MIN,
 };
+
+static_assert(sizeof(enum io) == 2);

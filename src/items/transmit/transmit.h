@@ -17,6 +17,8 @@ struct im_config;
 // transmit
 // -----------------------------------------------------------------------------
 
+enum { im_transmit_speed = 500 };
+
 struct legion_packed im_transmit
 {
     id_t id;

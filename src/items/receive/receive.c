@@ -31,7 +31,9 @@ enum
 
 void im_receive_config(struct im_config *config)
 {
-    config->size = sizeof(struct im_receive);
+    config->size =
+        sizeof(struct im_receive) +
+        sizeof(struct im_packet) * im_receive_buffer_max;
 
     config->im.init = im_receive_init;
     config->im.io = im_receive_io;

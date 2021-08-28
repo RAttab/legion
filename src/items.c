@@ -18,4 +18,5 @@
 #include "items/receive/receive.c"
 #include "items/scanner/scanner.c"
 #include "items/storage/storage.c"
+#include "items/test/test.c"
 #include "items/transmit/transmit.c"

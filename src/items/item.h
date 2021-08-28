@@ -100,6 +100,7 @@ enum legion_packed item
     ITEM_SCANNER  = ITEM_ACTIVE_FIRST + 0x06,
     ITEM_LEGION   = ITEM_ACTIVE_FIRST + 0x07,
     ITEM_LAB      = ITEM_ACTIVE_FIRST + 0x08,
+    ITEM_TEST     = ITEM_ACTIVE_FIRST + 0x0F, // Used in tests only.
 
     // T1
     ITEM_STORAGE      = ITEM_ACTIVE_FIRST + 0x10,
@@ -117,17 +118,24 @@ enum legion_packed item
     // Logistics
     // -------------------------------------------------------------------------
 
-    ITEM_LOGISTICS_FIRST = 0xF0,
+    ITEM_LOGISTICS_FIRST = 0xE0,
     ITEM_WORKER          = ITEM_LOGISTICS_FIRST + 0x00,
     ITEM_BULLET          = ITEM_LOGISTICS_FIRST + 0x01,
     ITEM_SOLAR           = ITEM_LOGISTICS_FIRST + 0x08,
     ITEM_KWHEEL          = ITEM_LOGISTICS_FIRST + 0x09,
-    ITEM_ENERGY_STORE    = ITEM_LOGISTICS_FIRST + 0x0A,
-    ITEM_DATA            = ITEM_LOGISTICS_FIRST + 0x0E, // FF would overflow MAX
+    ITEM_ENERGY_STORE    = ITEM_LOGISTICS_FIRST + 0x0F,
     ITEM_LOGISTICS_LAST,
 
+    // -------------------------------------------------------------------------
+    // SYS
+    // -------------------------------------------------------------------------
 
-    ITEM_MAX = ITEM_LOGISTICS_LAST,
+    ITEM_SYS_FIRST = 0xF0,
+    ITEM_DATA      = ITEM_SYS_FIRST + 0x00,
+    ITEM_SYS_LAST,
+
+
+    ITEM_MAX = ITEM_SYS_LAST,
 };
 
 static_assert(sizeof(enum item) == 1);

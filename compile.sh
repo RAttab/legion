@@ -11,7 +11,7 @@ declare -a SRC
 SRC=(items ui render game vm utils)
 
 declare -a TEST
-: ${TEST:="coord ring text lisp chunk lanes save world"}
+: ${TEST:="coord ring text lisp chunk lanes save world items"}
 
 TIMEFORMAT="%3R"
 TIME="eval time"

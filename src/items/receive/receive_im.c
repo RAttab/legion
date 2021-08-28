@@ -18,10 +18,8 @@ size_t im_receive_cap(const struct im_receive *)
     return 1;
 }
 
-static void im_receive_init(void *state, struct chunk *chunk, id_t id)
+static void im_receive_init(void *state, struct chunk *, id_t id)
 {
-    (void) chunk;
-
     struct im_receive *receive = state;
     receive->id = id;
 }

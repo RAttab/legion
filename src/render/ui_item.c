@@ -51,7 +51,7 @@ struct ui_item *ui_item_new(void)
 
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
         const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
-        if (config) ui->states[i] = config->ui.alloc(font);
+        if (config && config->ui.alloc) ui->states[i] = config->ui.alloc(font);
     }
 
     return ui;
@@ -66,7 +66,7 @@ void ui_item_free(struct ui_item *ui)
 
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
         const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
-        if (config) config->ui.free(ui->states[i]);
+        if (config && config->ui.free) config->ui.free(ui->states[i]);
     }
 
     free(ui);

@@ -14,10 +14,8 @@
 // transmit
 // -----------------------------------------------------------------------------
 
-static void im_transmit_init(void *state, struct chunk *chunk, id_t id)
+static void im_transmit_init(void *state, struct chunk *, id_t id)
 {
-    (void) chunk;
-
     struct im_transmit *transmit = state;
     transmit->id = id;
 }
@@ -70,8 +68,8 @@ static void im_transmit_io_transmit(
     packet[0] = im_packet_pack(transmit->channel, packet_len);
     memcpy(packet+1, args, packet_len * sizeof(packet[0]));
 
-    chunk_lanes_launch(
-            chunk, ITEM_DATA, packet_speed, transmit->target, packet, packet_len);
+    chunk_lanes_launch(chunk,
+            ITEM_DATA, packet_speed, transmit->target, packet, 1+packet_len);
 }
 
 static void im_transmit_io(

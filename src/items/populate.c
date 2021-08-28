@@ -20,6 +20,7 @@
 #include "items/receive/receive.h"
 #include "items/scanner/scanner.h"
 #include "items/storage/storage.h"
+#include "items/test/test.h"
 #include "items/transmit/transmit.h"
 
 
@@ -107,6 +108,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_SCANNER,      "scanner",   bits_s, work_s, im_scanner_config),
     im_init_cfg(ITEM_LEGION,       "legion",    bits_s, work_s, im_legion_config),
     im_init_cfg(ITEM_LAB,          "lab",       bits_s, work_s, im_lab_config),
+    im_init_cfg(ITEM_TEST,         "test",      bits_s, work_s, im_test_config),
     // Active - T1
     im_init_cfg(ITEM_STORAGE,      "storage",   bits_m, work_m, im_storage_config),
     im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config),
