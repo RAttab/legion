@@ -352,4 +352,6 @@ void tapes_populate(void)
 
     for (enum item item = 0; item < ITEM_MAX; ++item)
         (void) tapes_info_for(item);
+
+    atoms_free(atoms);
 }

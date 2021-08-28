@@ -55,6 +55,8 @@ void test_lab(void)
         check_learn_item(world, it);
     for (enum item it = ITEM_LOGISTICS_FIRST; it < ITEM_LOGISTICS_LAST; ++it)
         check_learn_item(world, it);
+
+    world_free(world);
 }
 
 

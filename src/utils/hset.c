@@ -49,20 +49,18 @@ static struct hset *hset_resize(struct hset *hs, size_t cap)
 
     struct hset *new = calloc(1, sizeof(*new) + new_cap * sizeof(new->set[0]));
     new->cap = new_cap;
+    if (!hs) return new;
 
-    if (hs) {
-        new->len = hs->len;
-
-        for (uint64_t *it = hs->set; it < hs->set + hs->cap; it++) {
-            if (!*it) continue;
-            if (!set_put(new, new_cap, *it)) {
-                free(new);
-                return hset_resize(hs, new_cap * 2);
-            }
-
-            free(hs);
+    new->len = hs->len;
+    for (uint64_t *it = hs->set; it < hs->set + hs->cap; it++) {
+        if (!*it) continue;
+        if (!set_put(new, new_cap, *it)) {
+            free(new);
+            return hset_resize(hs, new_cap * 2);
         }
     }
+
+    free(hs);
     return new;
 }
 

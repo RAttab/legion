@@ -74,6 +74,7 @@ void chunk_free(struct chunk *chunk)
     {
         free((void *) it->value);
     }
+    htable_reset(&chunk->listen);
 
     free(chunk);
 }

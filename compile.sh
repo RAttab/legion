@@ -16,7 +16,7 @@ declare -a TEST
 TIMEFORMAT="%3R"
 TIME="eval time"
 ECHO="eval echo -n"
-if [ -z "${PROFILE}" ]; then TIME=""; ECHO=""; fi
+if [ -z "${PROFILE}" ]; then TIME=""; ECHO=":"; fi
 
 CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm"
 CFLAGS="$CFLAGS -I${PREFIX}/src"
@@ -63,6 +63,7 @@ if [ -z "${VALGRIND}" ]; then
     $TIME parallel "./test/{}" "${PREFIX}" ::: ${TEST[@]}
 else
     $TIME parallel valgrind \
+        --quiet \
         --leak-check=full \
         --track-origins=yes \
         --trace-children=yes \

@@ -46,15 +46,16 @@ struct world *world_new(void)
 
 void world_free(struct world *world)
 {
+    atoms_free(world->atoms);
+    mods_free(world->mods);
+    lanes_free(&world->lanes);
+
     for (struct htable_bucket *it = htable_next(&world->sectors, NULL);
          it; it = htable_next(&world->sectors, it))
         sector_free((struct sector *) it->value);
     htable_reset(&world->sectors);
 
-    lanes_free(&world->lanes);
-    mods_free(world->mods);
-    atoms_free(world->atoms);
-
+    htable_reset(&world->research);
     free(world);
 }
 
@@ -281,6 +282,7 @@ void world_lanes_arrive(
 {
     sector_lanes_arrive(world_sector(world, dst), type, src, dst, data, len);
 }
+
 
 // -----------------------------------------------------------------------------
 // lab

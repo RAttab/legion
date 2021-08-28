@@ -208,7 +208,7 @@ static uint64_t lanes_key(struct coord src, struct coord dst)
 
 static void lanes_index_put(struct lanes *lanes, struct coord key, struct coord val)
 {
-    uint64_t key64 = coord_to_u64(key);
+    const uint64_t key64 = coord_to_u64(key);
     struct htable_ret ret = htable_get(&lanes->index, key64);
 
     struct hset *old = (void *) ret.value;
@@ -231,6 +231,7 @@ static void lanes_index_del(struct lanes *lanes, struct coord key, struct coord 
     assert(ok);
 
     if (!set->len) {
+        hset_free(set);
         ret = htable_del(&lanes->index, key64);
         assert(ret.ok);
     }

@@ -201,6 +201,8 @@ void test_ports_reset(void)
         assert(chunk_workers(chunk).clean == 1);
         assert(chunk_workers(chunk).fail == 0);
     }
+
+    chunk_free(chunk);
 }
 
 int main(int argc, char **argv)

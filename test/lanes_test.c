@@ -48,6 +48,7 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
     for (world_ts_delta_t i = 0; i < wait; ++i) world_step(world);
 }
 
+
 // -----------------------------------------------------------------------------
 // tests
 // -----------------------------------------------------------------------------
@@ -83,6 +84,8 @@ void test_basics(void)
         assert(chunk_scan(chunk_src, item) > (ssize_t) iteration);
         assert(chunk_scan(chunk_dst, item) > (ssize_t) iteration);
     }
+
+    world_free(world);
 }
 
 void test_speed(void)
@@ -117,6 +120,8 @@ void test_speed(void)
 
     assert(chunk_scan(chunk_dst, item_slow) == count);
     assert(chunk_scan(chunk_dst, item_fast) == count);
+
+    world_free(world);
 }
 
 
