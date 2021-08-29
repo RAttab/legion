@@ -27,11 +27,13 @@ int stats_run(int argc, char **argv)
     im_populate_atoms(atoms);
 
     for (enum item id = 0; id < ITEM_MAX; ++id) {
+        const struct tape *tape = tapes_get(id);
         const struct tape_info *info = tapes_info(id);
-        if (!info) continue;
+        if (!tape || !info) continue;
 
         atoms_str(atoms, id, &sym);
-        fprintf(stdout, "(%s\n  (rank %zu)", sym.c, info->rank);
+        fprintf(stdout, "(%s\n  (rank %zu)\n  (energy %zu)",
+                sym.c, info->rank, tape_energy(tape));
 
         for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {
             if (!info->elems[i]) continue;

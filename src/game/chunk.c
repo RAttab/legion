@@ -287,6 +287,7 @@ bool chunk_io(
     return active_io(active, chunk, io, src, dst, len, args);
 }
 
+
 // -----------------------------------------------------------------------------
 // energy
 // -----------------------------------------------------------------------------
@@ -309,6 +310,7 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     if (item == ITEM_KWHEEL) return chunk->energy.kwheel;
     if (item == ITEM_ENERGY_STORE) return chunk->energy.store;
 
+    if (item == ITEM_ENERGY) return chunk->star.energy;
     if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
 
