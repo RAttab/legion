@@ -69,8 +69,11 @@ static void im_memory_io_get(
 static void im_memory_io_set(struct im_memory *memory, const word_t *args, size_t len)
 {
     if (len < 2) return;
-    word_t index = args[0];
-    if (index < memory->len) memory->data[index] = args[1];
+
+    if (args[0] >= memory->len) return;
+    uint8_t index = args[0];
+
+    memory->data[index] = args[1];
 }
 
 static void im_memory_io(
