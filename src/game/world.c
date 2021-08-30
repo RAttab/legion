@@ -400,6 +400,8 @@ struct coord world_populate(struct world *world)
             if (star_elem(star, ITEM_ELEM_D) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_E) < 20000) continue;
             if (star_elem(star, ITEM_ELEM_F) < 20000) continue;
+            if (star_elem(star, ITEM_ELEM_G) < 2000) continue;
+            if (star_elem(star, ITEM_ELEM_H) < 2000) continue;
 
             struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
             assert(chunk);

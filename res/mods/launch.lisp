@@ -22,7 +22,9 @@
 		 (> (count coord-star &item_elem_c) 5000)
 		 (> (count coord-star &item_elem_d) 5000)
 		 (> (count coord-star &item_elem_e) 5000)
-		 (> (count coord-star &item_elem_f) 5000))
+		 (> (count coord-star &item_elem_f) 5000)
+		 (> (count coord-star &item_elem_g) 2000)
+		 (> (count coord-star &item_elem_h) 2000))
 
 	(assert (= (io &io_set (id &item_memory 1) mem-index coord-star) &io_ok))
 	(set mem-index (+ mem-index 1))
