@@ -45,6 +45,8 @@ struct lisp
         uint8_t *it;
     } out;
 
+    struct htable consts;
+
     struct
     {
         struct htable fn;
@@ -190,6 +192,11 @@ static void lisp_expect_close(struct lisp *lisp)
     lisp_assert_close(lisp, lisp_next(lisp));
 }
 
+static bool lisp_peek_close(struct lisp *lisp)
+{
+    return token_peek(&lisp->in, &lisp->token)->type == token_close;
+}
+
 
 // -----------------------------------------------------------------------------
 // out
@@ -297,6 +304,15 @@ static void lisp_index(struct lisp *lisp)
 // regs
 // -----------------------------------------------------------------------------
 
+static bool lisp_is_reg(struct lisp *lisp, const struct symbol *symbol)
+{
+    uint64_t key = symbol_hash(symbol);
+    for (reg_t reg = 0; reg < 4; ++reg) {
+        if (lisp->symb.regs[reg] == key) return true;
+    }
+    return false;
+}
+
 static reg_t lisp_reg(struct lisp *lisp, const struct symbol *symbol)
 {
     uint64_t key = symbol_hash(symbol);
@@ -333,6 +349,20 @@ static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
 
     lisp->symb.regs[reg] = 0;
 }
+
+
+// -----------------------------------------------------------------------------
+// consts
+// -----------------------------------------------------------------------------
+
+static word_t lisp_const(struct lisp *lisp, const struct symbol *symbol)
+{
+    uint64_t key = symbol_hash(symbol);
+    struct htable_ret ret = htable_get(&lisp->consts, key);
+    if (!ret.ok) lisp_err(lisp, "unknown constant: %s", symbol->c);
+    return ret.ok ? ret.value : 0;
+}
+
 
 // -----------------------------------------------------------------------------
 // pub
@@ -471,6 +501,7 @@ static void lisp_register_fn(uint64_t key, lisp_fn_t fn)
     assert(ret.ok);
 }
 
+#include "vm/lisp_eval.c"
 #include "vm/lisp_fn.c"
 #include "vm/lisp_asm.c"
 #include "vm/lisp_disasm.c"
@@ -484,6 +515,7 @@ void mod_compiler_init(void)
 {
     lisp_fn_register();
     lisp_asm_register();
+    lisp_eval_register();
 }
 
 struct mod *mod_compile(
@@ -519,6 +551,7 @@ struct mod *mod_compile(
     free(lisp.err.list);
     free(lisp.index.list);
     free(lisp.pub.list);
+    htable_reset(&lisp.consts);
     htable_reset(&lisp.symb.fn);
     htable_reset(&lisp.symb.req);
     htable_reset(&lisp.symb.jmp);

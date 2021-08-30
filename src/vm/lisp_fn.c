@@ -86,8 +86,14 @@ static bool lisp_stmt(struct lisp *lisp)
 
     case token_symbol: {
         lisp_index(lisp);
-        lisp_write_op(lisp, OP_PUSHR);
-        lisp_write_value(lisp, lisp_reg(lisp, &token->value.s));
+        if (lisp_is_reg(lisp, &token->value.s)) {
+            lisp_write_op(lisp, OP_PUSHR);
+            lisp_write_value(lisp, lisp_reg(lisp, &token->value.s));
+        }
+        else {
+            lisp_write_op(lisp, OP_PUSH);
+            lisp_write_value(lisp, lisp_const(lisp, &token->value.s));
+        }
         return true;
     }
 
@@ -336,6 +342,28 @@ static void lisp_fn_asm(struct lisp *lisp)
 static void lisp_fn_progn(struct lisp *lisp)
 {
     lisp_stmts(lisp);
+}
+
+static void lisp_fn_defconst(struct lisp *lisp)
+{
+    if (lisp->depth > 1) lisp_err(lisp, "nested defconst");
+
+    if (!lisp_expect(lisp, token_symbol)) { lisp_goto_close(lisp); return; }
+    struct token token = lisp->token;
+
+    word_t value = lisp_eval(lisp);
+
+    uint64_t key = symbol_hash(&token.value.s);
+    struct htable_ret ret = htable_put(&lisp->consts, key, value);
+    if (!ret.ok)
+        lisp_err(lisp, "redefinition of constant: %s", token.value.s.c);
+
+    lisp_expect_close(lisp);
+
+    // every statement must return a value on the stack even if it's at the
+    // top-level.
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, value);
 }
 
 static void lisp_fn_let(struct lisp *lisp)
@@ -638,7 +666,7 @@ static void lisp_fn_id(struct lisp *lisp)
     lisp_expect_close(lisp);
 }
 
-// dynamic version of lisp_parse_mod
+// Keep in sync with lisp_eval_mod
 static void lisp_fn_mod(struct lisp *lisp)
 {
     struct token *token = lisp_next(lisp);
@@ -839,6 +867,7 @@ static void lisp_fn_compare(struct lisp *lisp, enum op_code op, const char *str)
     define_fn_ops(bsr, BSR, 2)
 
     define_fn_ops(add, ADD, n)
+    // SUB -> lisp_fn_sub
     define_fn_ops(mul, MUL, n)
     define_fn_ops(lmul, LMUL, 2)
     define_fn_ops(div, DIV, 2)
@@ -887,6 +916,7 @@ static void lisp_fn_register(void)
     register_fn(head);
     register_fn(asm);
     register_fn(progn);
+    register_fn(defconst);
     register_fn(let);
     register_fn(if);
     register_fn(when);
