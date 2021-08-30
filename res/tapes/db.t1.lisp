@@ -128,7 +128,7 @@
       item_liquid_frame
       item_liquid_frame
       item_liquid_frame)
-  (out item_transmit))
+  (out item_antenna))
 
  (item_transmit
   (energy 20)
