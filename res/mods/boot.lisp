@@ -18,7 +18,7 @@
 (defconst antenna-count (+ legion-count 1))
 
 (defconst energy-target 1000)
-(defconst specs-solar-div 100)
+(defconst specs-solar-div 1000)
 
 
 ;; Elem - Extract
@@ -108,7 +108,7 @@
 
   (wait-tech &item_solar)
   (deploy-tape &item_assembly &item_solar assembly-count)
-  (deploy-item &item_solar (/ energy-target (/ (count &item_energy) specs-solar-div))))
+  (deploy-item &item_solar (+ (/ energy-target (/ (count &item_energy) specs-solar-div)) 1)))
 
 
 ;; Elem - Condenser

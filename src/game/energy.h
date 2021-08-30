@@ -16,8 +16,8 @@
 enum
 {
     energy_store_mul = 1000,
-    energy_solar_div = 100,
-    energy_kwheel_div = 1,
+    energy_solar_div = 1000,
+    energy_kwheel_div = 10,
 };
 
 
