@@ -66,15 +66,24 @@ static uint8_t im_brain_speed(struct im_brain *brain)
 
 static void im_brain_reset(struct im_brain *brain)
 {
-    brain->debug = 0;
-    brain->breakpoint = 0;
-
-    brain->msg_len = 0;
-
     brain->mod = NULL;
     brain->mod_id = 0;
 
+    brain->debug = 0;
+    brain->breakpoint = 0;
+
+    brain->msg = (struct im_packet) {0};
     vm_reset(&brain->vm);
+}
+
+static void im_brain_recv(
+        struct im_brain *brain, const word_t *args, size_t len)
+{
+    assert(len < im_packet_max);
+
+    for (size_t i = 0; i < len; ++i)
+        vm_push(&brain->vm, args[len - i - 1]);
+    vm_push(&brain->vm, len);
 }
 
 
@@ -84,14 +93,9 @@ static void im_brain_reset(struct im_brain *brain)
 
 static bool im_brain_step_recv(struct im_brain *brain)
 {
-    if (!brain->msg_len) return false;
-    assert(brain->msg_len <= im_brain_msg_cap);
-
-    for (size_t i = 0; i < brain->msg_len; ++i)
-        vm_push(&brain->vm, brain->msg[brain->msg_len - i - 1]);
-    vm_push(&brain->vm, brain->msg_len);
-
-    brain->msg_len = 0;
+    if (!brain->msg.len) return false;
+    im_brain_recv(brain, brain->msg.data, brain->msg.len);
+    brain->msg = (struct im_packet) {0};
     return true;
 }
 
@@ -157,7 +161,7 @@ static void im_brain_step(void *state, struct chunk *chunk)
 static void im_brain_io_status(
         struct im_brain *brain, struct chunk *chunk, id_t src)
 {
-    word_t value = vm_pack(brain->msg_len, brain->mod_id);
+    word_t value = vm_pack(brain->msg.len, brain->mod_id);
     chunk_io(chunk, IO_STATE, brain->id, src, &value, 1);
 }
 
@@ -193,18 +197,8 @@ static void im_brain_io_return(
 static void im_brain_io_send(
         struct im_brain *brain, const word_t *args, size_t len)
 {
-    if (len > im_brain_msg_cap) return;
-
-    brain->msg_len = len;
-    memcpy(brain->msg, args, len * sizeof(*args));
-}
-
-static void im_brain_io_recv(
-        struct im_brain *brain, const word_t *args, size_t len)
-{
-    for (size_t i = 0; i < len; ++i)
-        vm_push(&brain->vm, args[len - i - 1]);
-    vm_push(&brain->vm, len);
+    brain->msg.len = legion_min(len, (size_t) im_packet_max);
+    memcpy(brain->msg.data, args, brain->msg.len * sizeof(*args));
 }
 
 static void im_brain_io_dbg_break(
@@ -247,7 +241,7 @@ static void im_brain_io(
     case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
 
     case IO_SEND: { im_brain_io_send(brain, args, len); return; }
-    case IO_RECV: { im_brain_io_recv(brain, args, len); return; }
+    case IO_RECV: { im_brain_recv(brain, args, len); return; }
 
     case IO_DBG_ATTACH: { brain->debug = true; return; }
     case IO_DBG_DETACH: { brain->debug = false; return; }

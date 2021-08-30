@@ -205,8 +205,8 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     if (state->breakpoint == IP_NIL) ui_str_setc(&ui->breakpoint_val.str, "nil");
     else ui_str_set_hex(&ui->breakpoint_val.str, state->breakpoint);
 
-    if (!state->msg_len) ui_str_setc(&ui->msg_len.str, "nil");
-    else ui_str_set_u64(&ui->msg_len.str, state->msg_len);
+    if (!state->msg.len) ui_str_setc(&ui->msg_len.str, "nil");
+    else ui_str_set_u64(&ui->msg_len.str, state->msg.len);
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
     ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
@@ -293,12 +293,12 @@ static void ui_brain_render(
         ui_label_render(&ui->msg_len, layout, renderer);
         ui_layout_next_row(layout);
 
-        for (size_t i = 0; i < im_brain_msg_cap; ++i) {
+        for (size_t i = 0; i < im_packet_max; ++i) {
             ui_str_set_u64(&ui->msg_index.str, i);
             ui_label_render(&ui->msg_index, layout, renderer);
             ui_layout_sep_x(layout, ui->font->glyph_w);
 
-            ui_str_set_hex(&ui->msg_val.str, state->msg[i]);
+            ui_str_set_hex(&ui->msg_val.str, state->msg.data[i]);
             ui_label_render(&ui->msg_val, layout, renderer);
             ui_layout_next_row(layout);
         }

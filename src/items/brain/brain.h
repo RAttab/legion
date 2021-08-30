@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "game/id.h"
+#include "items/types.h"
 #include "vm/vm.h"
 #include "vm/mod.h"
 
@@ -16,8 +17,6 @@ struct im_config;
 // -----------------------------------------------------------------------------
 // brain
 // -----------------------------------------------------------------------------
-
-enum { im_brain_msg_cap = 4 };
 
 struct legion_packed im_brain
 {
@@ -32,10 +31,9 @@ struct legion_packed im_brain
     bool debug;
     ip_t breakpoint;
 
-    legion_pad(7);
+    legion_pad(8);
 
-    uint8_t msg_len;
-    word_t msg[im_brain_msg_cap];
+    struct im_packet msg;
 
     struct vm vm;
 };

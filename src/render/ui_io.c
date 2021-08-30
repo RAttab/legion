@@ -6,6 +6,7 @@
 #include "common.h"
 #include "game/chunk.h"
 #include "game/active.h"
+#include "items/types.h"
 #include "vm/atoms.h"
 #include "render/ui.h"
 #include "ui/ui.h"
@@ -35,7 +36,7 @@ struct ui_io_cmd
 
     struct ui_label name;
     size_t args;
-    struct ui_io_arg arg[2];
+    struct ui_io_arg arg[4];
     struct ui_button exec;
 };
 
@@ -83,6 +84,18 @@ static struct ui_io_cmd ui_io_cmd2(
     return cmd;
 }
 
+static struct ui_io_cmd ui_io_cmd4(
+        struct font *font, enum io id,
+        const char *arg0, const char *arg1, const char *arg2, const char *arg3)
+{
+    struct ui_io_cmd cmd = ui_io_cmd(font, id, 4);
+    cmd.arg[0] = ui_io_arg(font, arg0);
+    cmd.arg[1] = ui_io_arg(font, arg1);
+    cmd.arg[2] = ui_io_arg(font, arg2);
+    cmd.arg[3] = ui_io_arg(font, arg3);
+    return cmd;
+}
+
 
 // -----------------------------------------------------------------------------
 // io
@@ -97,6 +110,7 @@ enum
     ui_io_tape,
     ui_io_mod,
 
+    ui_io_send,
     ui_io_dbg_attach,
     ui_io_dbg_detach,
     ui_io_dbg_break,
@@ -147,6 +161,8 @@ struct ui_io *ui_io_new(void)
             [ui_io_tape] = ui_io_cmd2(font, IO_TAPE,     "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
 
+            [ui_io_send] = ui_io_cmd4(font, IO_SEND,
+                    "len:   ", "[0]:   ", "[1]:   ", "[2]:   "),
             [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),
             [ui_io_dbg_detach] = ui_io_cmd0(font, IO_DBG_DETACH),
             [ui_io_dbg_break] = ui_io_cmd1(font, IO_DBG_BREAK, "ip:    "),
@@ -259,15 +275,37 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     struct chunk *chunk = world_chunk(core.state.world, ui->star);
     assert(chunk);
 
+    size_t len = cmd->args;
     word_t args[cmd->args];
     memset(args, 0, sizeof(args));
 
-    uint64_t val = 0;
-    for (size_t i = 0; i < cmd->args; ++i) {
-        if (ui_input_get_u64(&cmd->arg[i].val, &val)) args[i] = val;
+    switch (cmd->id)
+    {
+    case IO_SEND: {
+        uint64_t val = 0;
+        if (ui_input_get_u64(&cmd->arg[0].val, &val))
+            len = legion_min(val, (size_t) im_packet_max);
+        else len = 0;
+
+        for (size_t i = 0; i < len; ++i) {
+            if (ui_input_get_u64(&cmd->arg[i+1].val, &val))
+                args[i] = val;
+        }
+        break;
     }
 
-    bool ok = chunk_io(chunk, cmd->id, 0, ui->id, args, cmd->args);
+    default: {
+        uint64_t val = 0;
+        for (size_t i = 0; i < cmd->args; ++i) {
+            if (ui_input_get_u64(&cmd->arg[i].val, &val))
+                args[i] = val;
+        }
+        break;
+    }
+    }
+
+    if (!len) return;
+    bool ok = chunk_io(chunk, cmd->id, 0, ui->id, args, len);
     assert(ok);
 
     core_push_event(EV_STATE_UPDATE, 0, 0);
