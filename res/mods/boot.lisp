@@ -55,6 +55,7 @@
   (deploy-tape &item_assembly &item_matrix n)
   (deploy-tape &item_assembly &item_magnet_field n)
   (deploy-tape &item_assembly &item_hull n)
+  ;; Not passive but requirements in other recipies
   (deploy-tape &item_assembly &item_memory n)
   (deploy-tape &item_assembly &item_worker n)
 
@@ -84,7 +85,6 @@
   (deploy-tape &item_assembly &item_assembly 1)
   (deploy-tape &item_assembly &item_scanner 1)
   (deploy-tape &item_assembly &item_brain 1)
-  (deploy-tape &item_assembly &item_lab 1)
   (deploy-item &item_legion n))
 
 
@@ -100,6 +100,7 @@
 
 ;; Elem - Condenser
 (let ((n 4))
+
   (wait-tech &item_condenser)
   (deploy-tape &item_condenser &item_elem_g n)
   (deploy-tape &item_condenser &item_elem_h n)
@@ -125,6 +126,17 @@
   (deploy-item &item_receive (+ n 1)))
 
 
+;; Finish - T1
+(progn
+  (wait-tech &item_storage)
+  (deploy-tape &item_assembly &item_storage 1)
+
+  (wait-tech &item_accelerator)
+  (deploy-tape &item_assembly &item_accelerator 2)
+
+  (deploy-tape &item_assembly &item_lab 1))
+
+
 ;; Spanning Tree
 (let ((n 2)) ;; must match antenna's count
   (while (count &item_legion))
@@ -138,8 +150,18 @@
 	 (assert (= (io &io_target (id &item_receive (+ i 1)) coord) &io_ok)))))
 
 
-;; Boot complete, switch to OS mode
-(load (mod os 2))
+;; OS
+(progn
+  ;; This brain is used as the execution thread for os.
+  (deploy-item &item_brain 1)
+  (deploy-item &item_memory 1)
+  (assert (= (io &io_set
+		 (id &item_memory (count &item_memory)) 0
+		 (id &item_brain (count &item_brain)))
+	     &io_ok))
+
+  ;; We're all done so time to switch
+  (load (mod os 2)))
 
 
 ;; -----------------------------------------------------------------------------

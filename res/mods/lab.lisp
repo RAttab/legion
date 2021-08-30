@@ -31,13 +31,13 @@
   ;; T1
   (lab n &item_captor)
   (lab n &item_solar)
-  (lab n &item_storage)
   (lab n &item_worker)
   (lab n &item_elem_g)
   (lab n &item_elem_h)
   (lab n &item_liquid_frame)
   (lab n &item_radiation)
   (lab n &item_antenna)
+  (lab n &item_storage)
   (lab n &item_accelerator)
   (lab n &item_lab))
 

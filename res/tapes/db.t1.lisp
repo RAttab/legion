@@ -95,8 +95,9 @@
 
  (item_condenser
   (in item_worker
-      item_radiation
-      item_radiation
+      item_nuclear
+      item_nuclear
+      item_nuclear
       item_worker)
   (out item_condenser))
 
