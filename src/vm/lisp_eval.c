@@ -143,6 +143,26 @@ static word_t lisp_eval_mod(struct lisp *lisp)
     return id;
 }
 
+// Need to ensure that the op is done on u64 to avoid shifting into the sign
+// bit.
+static word_t lisp_eval_bsl(struct lisp *lisp)
+{
+    uint64_t value = lisp_eval(lisp);
+    while (!lisp_peek_close(lisp))
+        value = value << lisp_eval(lisp);
+    return value;
+}
+
+// Need to ensure that the op is done on u64 to avoid issues with sign
+// extension.
+static word_t lisp_eval_bsr(struct lisp *lisp)
+{
+    uint64_t value = lisp_eval(lisp);
+    while (!lisp_peek_close(lisp))
+        value = value >> lisp_eval(lisp);
+    return value;
+}
+
 static word_t lisp_eval_sub(struct lisp *lisp)
 {
     word_t value = lisp_eval(lisp);
@@ -167,7 +187,7 @@ static word_t lisp_eval_pack(struct lisp *lisp)
     if (y < 0 || y > UINT32_MAX)
         lisp_err(lisp, "argument would be truncated: %lx", y);
 
-    return vm_pack(x, y);
+    return vm_pack(y, x);
 }
 
 
@@ -199,16 +219,16 @@ static word_t lisp_eval_pack(struct lisp *lisp)
         return value;                                   \
     }
 
-define_eval_ops_1(not,  !)
+    define_eval_ops_1(not,  !)
     define_eval_ops_n(and,  &&)
     define_eval_ops_n(or,   ||)
     define_eval_ops_n(xor,  ^)
-    define_eval_ops_1(bnot, !)
+    define_eval_ops_1(bnot, ~)
     define_eval_ops_n(band, &)
     define_eval_ops_n(bor,  |)
     define_eval_ops_n(bxor, ^)
-    define_eval_ops_2(bsl,  <<)
-    define_eval_ops_2(bsr,  >>)
+    // bsl -> lisp_eval_bsl
+    // bsr -> lisp_eval_bsr
 
     define_eval_ops_n(add, +)
     // sub -> lisp_eval_sub
