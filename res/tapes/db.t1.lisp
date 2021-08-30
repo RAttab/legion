@@ -1,7 +1,7 @@
 ;; -----------------------------------------------------------------------------
-;; extract
+;; condenser
 ;; -----------------------------------------------------------------------------
-(item_extract
+(item_condenser
  (item_elem_g (energy 1) (out item_elem_g))
  (item_elem_h (energy 1) (out item_elem_h)))
 
