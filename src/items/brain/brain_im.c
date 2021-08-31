@@ -21,6 +21,7 @@ static void im_brain_init(void *state, struct chunk *chunk, id_t id)
     (void) chunk;
 
     brain->id = id;
+    brain->breakpoint = IP_NIL;
 
     switch (id_item(id)) {
     case ITEM_BRAIN: { vm_init(&brain->vm, im_brain_stack_base, im_brain_speed_base); break; }
@@ -70,7 +71,7 @@ static void im_brain_reset(struct im_brain *brain)
     brain->mod_id = 0;
 
     brain->debug = 0;
-    brain->breakpoint = 0;
+    brain->breakpoint = IP_NIL;
 
     brain->msg = (struct im_packet) {0};
     vm_reset(&brain->vm);

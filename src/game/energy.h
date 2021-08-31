@@ -82,6 +82,7 @@ inline void energy_produce(struct energy *en, energy_t value)
 
 inline void energy_step_begin(struct energy *en, const struct star *star)
 {
+    en->need = 0;
     en->produced = 0;
     en->consumed = 0;
     energy_produce(en, energy_production(en, star));

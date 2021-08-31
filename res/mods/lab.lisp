@@ -37,6 +37,7 @@
   (lab n &item_liquid_frame)
   (lab n &item_radiation)
   (lab n &item_antenna)
+  (lab n &item_memory)
   (lab n &item_storage)
   (lab n &item_accelerator)
   (lab n &item_lab))
