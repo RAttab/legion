@@ -5,6 +5,8 @@
 
 // included in lisp.c
 
+#include "game/id.h"
+#include "items/item.h"
 
 // -----------------------------------------------------------------------------
 // index
@@ -190,6 +192,19 @@ static word_t lisp_eval_pack(struct lisp *lisp)
     return vm_pack(y, x);
 }
 
+static word_t lisp_eval_id(struct lisp *lisp)
+{
+    word_t type = lisp_eval(lisp);
+    if (type < 0 || type > ITEM_MAX)
+        lisp_err(lisp, "invalid item type: %lx", type);
+
+    word_t seq = lisp_eval(lisp);
+    if (seq < 0 || seq >= (1U << 24))
+        lisp_err(lisp, "invalid id sequence number: %lx", seq);
+
+    return make_id(type, seq);
+}
+
 
 // -----------------------------------------------------------------------------
 // ops
@@ -303,6 +318,7 @@ static void lisp_eval_register(void)
     register_fn(cmp);
 
     register_fn(pack);
+    register_fn(id);
 
 #undef register_fn_str
 #undef register_fn
