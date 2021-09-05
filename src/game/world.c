@@ -408,7 +408,6 @@ struct coord world_populate(struct world *world)
 
             for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++)
                 chunk_create(chunk, *it);
-            chunk_create(chunk, ITEM_LEGION);
 
             return star->coord;
         }
