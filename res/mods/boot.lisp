@@ -201,7 +201,7 @@
     (set-tape id n host tape)))
 
 (defun count (item)
-  (let ((coord (progn (assert (= (io &io_coord 0) &io_ok)) (head))))
+  (let ((coord (progn (assert (= (io &io_coord (self)) &io_ok)) (head))))
     (assert (= (io &io_scan (id &item_scanner 1) coord item) &io_ok))
     (assert (= (io &io_scan_val (id &item_scanner 1)) &io_ok))
     (head)))

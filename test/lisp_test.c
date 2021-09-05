@@ -203,7 +203,7 @@ const struct mod *read_mod(
 
     for (size_t i = 0; i < mod->errs_len; ++i) {
         const struct mod_err *err = mod->errs + i;
-        dbg("%u:%u:%u: %s", err->row, err->col, err->len, err->str);
+        dbg("%s:%u:%u:%u: %s", name->c, err->row, err->col, err->len, err->str);
     }
 
     return NULL;
@@ -216,9 +216,8 @@ bool check_mod(
         const struct mod *mod,
         struct atoms *atoms)
 {
-    if (!vm) return false;
+    if (!vm || !mod) return false;
     ip_t ret = vm_exec(vm, mod);
-
 
     bool ok = true;
     struct field field = {0};

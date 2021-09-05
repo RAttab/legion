@@ -37,7 +37,13 @@ static bool lisp_stmt(struct lisp *lisp)
 
     case token_open: {
         lisp->depth++;
+
         struct token *token = lisp_expect(lisp, token_symbol);
+        if (!token) {
+            lisp_goto_close(lisp);
+            return false;
+        }
+
         lisp_index_at(lisp, token);
 
         struct htable_ret ret = {0};
@@ -440,6 +446,88 @@ static void lisp_fn_if(struct lisp *lisp)
     lisp_write_value_at(lisp, jmp_end, lisp_ip(lisp));
 }
 
+static void lisp_fn_case(struct lisp *lisp)
+{
+    if (!lisp_stmt(lisp)) {
+        lisp_err(lisp, "missing value-clause");
+        lisp_goto_close(lisp);
+        return;
+    }
+
+    if (!lisp_expect(lisp, token_open)) {
+        lisp_goto_close(lisp);
+        return;
+    }
+
+    size_t len = 0;
+    ip_t jmp[32] = {0};
+    struct token *token = NULL;
+
+    while ((token = lisp_next(lisp))->type != token_close) {
+        if (len == array_len(jmp)) {
+            lisp_err(lisp, "too many case clauses: %zu >= %zu", len, array_len(jmp));
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
+        if (!lisp_assert_token(lisp, token, token_open)) {
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
+        lisp_write_op(lisp, OP_DUPE);
+
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing value for case-clause");
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
+        lisp_write_op(lisp, OP_EQ);
+        lisp_write_op(lisp, OP_JZ);
+        ip_t next = lisp_skip(lisp, sizeof(ip_t));
+
+        // Remove the case value
+        lisp_write_op(lisp, OP_POP);
+
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing statement for case-clause");
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
+        lisp_write_op(lisp, OP_JMP);
+        jmp[len] = lisp_skip(lisp, sizeof(ip_t));
+        len++;
+
+        lisp_write_value_at(lisp, next, lisp_ip(lisp));
+
+        if (!lisp_expect(lisp, token_close)) {
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+    }
+
+    // Remove the case value
+    lisp_write_op(lisp, OP_POP);
+
+    if (!lisp_peek_close(lisp)) lisp_stmt(lisp);
+    else {
+        lisp_write_op(lisp, OP_PUSH);
+        lisp_write_value(lisp, (word_t) 0);
+    }
+
+    for (size_t i = 0; i < len; ++i)
+        lisp_write_value_at(lisp, jmp[i], lisp_ip(lisp));
+
+    lisp_expect_close(lisp);
+}
+
 static void lisp_fn_when(struct lisp *lisp)
 {
     struct token index = lisp->token;
@@ -536,6 +624,7 @@ static void lisp_fn_for(struct lisp *lisp)
     {
         if (!lisp_expect(lisp, token_open)) {
             lisp_err(lisp, "missing init-clause");
+            lisp_goto_close(lisp);
             return;
         }
 
@@ -574,6 +663,7 @@ static void lisp_fn_for(struct lisp *lisp)
     {
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing predicate-clause");
+            lisp_goto_close(lisp);
             return;
         }
 
@@ -589,6 +679,7 @@ static void lisp_fn_for(struct lisp *lisp)
     {
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing increment-clause");
+            lisp_goto_close(lisp);
             return;
         }
 
@@ -663,6 +754,13 @@ static void lisp_fn_id(struct lisp *lisp)
     lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_ADD);
 
+    lisp_expect_close(lisp);
+}
+
+static void lisp_fn_self(struct lisp *lisp)
+{
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (word_t) 0);
     lisp_expect_close(lisp);
 }
 
@@ -919,6 +1017,7 @@ static void lisp_fn_register(void)
     register_fn(defconst);
     register_fn(let);
     register_fn(if);
+    register_fn(case);
     register_fn(when);
     register_fn(unless);
     register_fn(while);
@@ -926,6 +1025,7 @@ static void lisp_fn_register(void)
 
     register_fn(set);
     register_fn(id);
+    register_fn(self);
     register_fn(mod);
     register_fn(io);
 

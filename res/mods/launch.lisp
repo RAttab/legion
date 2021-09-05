@@ -7,11 +7,11 @@
       (legion 0)
       (mem-index 1))
 
-  (assert (= (io &io_scan scanner-star (progn (io &io_coord 0) (head))) &io_ok))
+  (assert (= (io &io_scan scanner-star (progn (io &io_coord (self)) (head))) &io_ok))
 
   (while (/= coord-star 0)
 
-    (set legion (legion (progn (io &io_coord 0) (head))))
+    (set legion (legion (progn (io &io_coord (self)) (head))))
     (set coord-star (progn (assert (= (io &io_scan_val scanner-star) &io_ok))
 			   (head)))
 
