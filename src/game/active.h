@@ -60,7 +60,7 @@ void active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
-        enum io io, id_t src, id_t dst, size_t len, const word_t *args);
+        enum io io, id_t src, id_t dst, const word_t *args, size_t len);
 
 
 // -----------------------------------------------------------------------------

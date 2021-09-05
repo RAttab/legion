@@ -317,7 +317,7 @@ void active_step(
 
 bool active_io(
         struct active *active, struct chunk *chunk,
-        enum io io, id_t src, id_t dst, size_t len, const word_t *args)
+        enum io io, id_t src, id_t dst, const word_t *args, size_t len)
 {
     void *state = active_get(active, dst);
     if (!state) return false;

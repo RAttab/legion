@@ -284,7 +284,7 @@ bool chunk_io(
 {
     if (!item_is_active(id_item(dst))) return false;
     struct active *active = active_index(&chunk->active, id_item(dst));
-    return active_io(active, chunk, io, src, dst, len, args);
+    return active_io(active, chunk, io, src, dst, args, len);
 }
 
 

@@ -80,7 +80,7 @@ static void im_brain_reset(struct im_brain *brain)
 static void im_brain_recv(
         struct im_brain *brain, const word_t *args, size_t len)
 {
-    assert(len < im_packet_max);
+    assert(len <= im_packet_max);
 
     for (size_t i = 0; i < len; ++i)
         vm_push(&brain->vm, args[len - i - 1]);

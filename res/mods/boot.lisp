@@ -68,6 +68,8 @@
   (deploy-tape &item_assembly &item_matrix assembly-count)
   (deploy-tape &item_assembly &item_magnet_field assembly-count)
   (deploy-tape &item_assembly &item_hull assembly-count)
+  (deploy-tape &item_assembly &item_memory assembly-count)
+  (deploy-tape &item_assembly &item_worker assembly-count)
 
   (assert (= (io &io_reset (id &item_assembly 2)) &io_ok)))
 
@@ -79,11 +81,7 @@
 
   (let ((id-brain (id &item_brain (count &item_brain))))
     (assert (= (io &io_mod id-brain (mod lab 2)) &io_ok))
-    (assert (= (io &io_send id-brain !lab_count lab-count) &io_ok)))
-
-  ;; Requirements for tape research
-  (deploy-tape &item_assembly &item_memory assembly-count)
-  (deploy-tape &item_assembly &item_worker assembly-count))
+    (assert (= (io &io_send id-brain !lab_count lab-count) &io_ok))))
 
 
 ;; Legions
