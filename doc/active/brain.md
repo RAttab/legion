@@ -7,8 +7,8 @@ Intelligent System Program (LISP).
 ## Hardware
 
 A brain is effectively a single core which executes LISP modules that have been
-compiled down to a simple assembly language. The specification of a core are as
-follows:
+compiled down to a simple bytecode representation. The specification of a core
+are as follows:
 
 - **word**: Signed 64 bit integer which is the only supported data type.
 
@@ -45,11 +45,11 @@ follows:
 
 - **command**: Word indicating which IO command to execute. An atom is provided
   for each IO command where the symbol of the atom correspond to the io commands
-  detailed below (eg. the ping io command uses the atom `!io_ping`).
+  detailed below (eg. the ping io command uses the atom `&io_ping`).
 
 - **id**: The target of the IO command which consists of the type of item and
   it's sequential id. These ids can be constructed using the `id` LISP statement
-  (eg. `(id !item_brain_1 1)`). To refer to yourself, the id `0` can be used.
+  (eg. `(id &item_brain 1)`). For self-references, `(self)` or `0` can be used.
 
 - **args**: The list of arguments for the IO command and the details are command
   dependent.
@@ -58,10 +58,10 @@ Here's a few typical IO invocations examples:
 
 ```lisp
 ; Ping a component to test whether it exists
-(io !io_ping (id !io_extract_1 1))
+(io &io_ping (id &io_extract 1))
 
 ; Configure an extractor to run the tape of element a.
-(io !io_item (id !io_extract_1 1) !item_elem_a)
+(io &io_item (id &io_extract 1) &item_elem_a)
 ```
 
 The return values of IO commands are pushed on top of the stack in this order
@@ -71,7 +71,7 @@ The return values of IO commands are pushed on top of the stack in this order
 > <result> | [values] | ...
 ```
 
-- **result**: Either the atom `!io_ok` or `!io_fail` which indicates whether the
+- **result**: Either the atom `&io_ok` or `&io_fail` which indicates whether the
   command was executed or not.
 
 - **values**: The values returned by the command if any. This is entirely
@@ -79,172 +79,218 @@ The return values of IO commands are pushed on top of the stack in this order
 
 Given that the result is at the top of the stack, it will always be treated as
 the return value of the IO command. Any additional values must be read using the
-special `head` LISP function. As an example:
+special `(head)` LISP function. As an example:
 
 ```lisp
-(let ((coord (progn
+; Get the coordinate of the current star and check the result.
+(assert (= (io &io_coord 0) &io_ok))
 
-               ; Get the coordinate of the current star and check the result
-               (assert (= (io !io_coord 0) !io_ok))
+; &io_coord return the coordinate on the stack which we access here.
+(let ((coord (head)))
 
-               ; !io_coord return the coordinate on the stack which we access here.
-               (head))))
-
-	; Use the coordinates from the previous io command to execute another io command
-	(io !io_scan (id !item_scanner_1 1) coord !item_elem_a))
+  ; Use the coordinates from the previous io command to execute another io command
+  (io &io_scan (id &item_scanner 1) coord &item_elem_a))
 ```
 
 The rest of this section will detail the IO commands supported by the Brain item.
 
+
 ### io_ping
 
 ```
-(io !io_ping <id>) -> (result)
+(io &io_ping <id>) -> (result)
 ```
 
-Purpose: Tests whether an item exists.
+**Purpose:** Tests whether an item exists.
 
-Example:
+**Example:**
 
 ```lisp
-(for (i 1) (i < 10) (+ i 1)
-  (when (= (io !io_ping (id !item_extract_1 i)) !io_ok)
-	(io !io_item (id !item_extract_1 i) !item_elem_a)))
+(for (i 1) (< i 10) (+ i 1)
+  (when (= (io &io_ping (id &item_extract i)) &io_ok)
+    (io &io_item (id &item_extract i) &item_elem_a)))
 ```
+
 
 ### io_status
 
 
 ```
-(io !io_status <id>) -> (result mod)
+(io &io_status <id>) -> (result mod)
 ```
 
-Purpose: Tests whtether the current brain is active by returning which module is
-currently running.
+**Purpose:** Tests whtether the current brain is active by returning which
+module is currently running.
 
-Example:
+**Example:**
 
 ```lisp
-(io !io_mod (id !item_brain_1 2)
-  (progn (io !io_status (id !item_brain_1 1)) (head)))
+(io &io_mod (id &item_brain 2)
+  (progn (io &io_status (id &item_brain 1)) (head)))
 ```
+
 
 ### io_mod
 
 ```
-(io !io_mod <id> <mod>) -> (result)
+(io &io_mod <id> <mod>) -> (result)
 ```
 
-Purpose: Reset the state of the brain and execute the provided module
+**Purpose:** Reset the state of the brain and execute the provided module
 
-Example:
+**Example:**
 
 ```lisp
-(io !io_mod (id !item_brain_1 2)
-  (progn (io !io_status (id !item_brain_1 1)) (head)))
+(io &io_mod (id &item_brain 2)
+  (progn (io &io_status (id &item_brain 1)) (head)))
 ```
+
 
 ### io_reset
 
 ```
-(io !io_reset <id>) -> (result)
+(io &io_reset <id>) -> (result)
 ```
 
-Purpose: Resets the state of the brain including the core, the inbox and debug
-state.
+**Purpose:** Resets the state of the brain including the core, the inbox and
+debug state.
 
-Example:
+**Example:**
 
 ```lisp
-(io !io_reset (id !item_brain_1 1))
+(io &io_reset (id &item_brain 1))
 ```
+
 
 ### io_coord
 
 ```
-(io !io_coord <id>) -> (result coord)
+(io &io_coord <id>) -> (result coord)
 ```
 
-Purpose: Returns coordinate of the star current star system.
+**Purpose:** Returns coordinate of the star current star system.
 
-Example:
+**Example:**
 
 ```lisp
-(let ((coord (progn (io !io_coord 0) (head))))
-	(io !io_scan (id !item_scanner_1 1) coord !item_elem_a))
+(let ((coord (progn (io &io_coord 0) (head))))
+  (io &io_scan (id &item_scanner 1) coord &item_elem_a))
 ```
+
 
 ### io_send
 
-TBD
+```
+(io &io_send <id> part-1 [part-2 [part-3]]) -> (result)
+```
+
+**Purpose:** Communication channel between brains within a single star
+system. Each brain has a mailbox capable of containing a single packet. A packet
+contains between 1 and 3 words inclusively represented by the arguments
+`part-1`, `part-2` and `part-3`.
+
+`&io_send` will create a packet and deposit it in the destination's mailbox. The
+packet can then in turned be read via the `&io_recv` command in the recipient.
+
+**Example:**
+
+```lisp
+(io &io_send (id &item_brain 2) !my_ping
+  (progn (io &io_id (self)) (head)))
+```
+
 
 ### io_recv
 
-TBD
+```
+(io &io_recv (self)) -> (result len [part-1 [part-2 [part-3]]])
+```
+
+**Purpose:** Communication channel between brains within a single star
+system. Each brain has a mailbox capable of containing a single packet. A packet
+contains between 1 and 3 words inclusively represented by the arguments
+`part-1`, `part-2` and `part-3`.
+
+`&io_recv` will read the mailbox and place the packet into the stack along with
+the size of the packet. If no packet are presents then the length will be 0.
+
+**Example:**
+
+```lisp
+(io &io_recv (self))
+(assert (= (head) 2))             ; len
+(assert (= (head) !my_ping))      ; part-1
+(let ((src (head)))               ; part-2
+  (io &io_send src !my_pong))
+```
+
 
 ### io_dbg_attach
 
 ```
-(io !io_dbg_attach <id>) -> (result)
+(io &io_dbg_attach <id>) -> (result)
 ```
 
 
-Purpose: Pauses the core for manual inspection and enables the use of
+**Purpose:** Pauses the core for manual inspection and enables the use of
 `io_dbg_step`. Note that this is generally used via the game interface and
 rarely through the LISP modules.
 
-Example:
+**Example:**
 
 ```lisp
-(let ((target (id !item_brain_1 2)))
-  (io !io_dbg_attach target)
-  (for (i 0) (< i 20) (+ i 1) (io !io_dbg_step target))
-  (io !io_dbg_detach target))
+(defconst target (id &item_brain 2))
+(io &io_dbg_attach target)
+(for (i 0) (< i 20) (+ i 1) (io &io_dbg_step target))
+(io &io_dbg_detach target)
 ```
+
 
 ### io_dbg_detach
 
 ```
-(io !io_dbg_attach <id>) -> (result)
+(io &io_dbg_attach <id>) -> (result)
 ```
 
-Purpose: Resume execution of the core.
+**Purpose:** Resume execution of the core.
 
-Example:
+**Example:**
 
 ```lisp
-(let ((target (id !item_brain_1 2)))
-  (io !io_dbg_attach target)
-  (for (i 0) (< i 20) (+ i 1) (io !io_dbg_step target))
-  (io !io_dbg_detach target))
+(defconst target (id &item_brain 2))
+(io &io_dbg_attach target)
+(for (i 0) (< i 20) (+ i 1) (io &io_dbg_step target))
+(io &io_dbg_detach target))
 ```
+
 
 ### io_dbg_break
 
 ```
-(io !io_dbg_break <id> <0 | ip>) -> (result)
+(io &io_dbg_break <id> <0 | ip>) -> (result)
 ```
 
-Purpose: Sets a breakpoint on a given instruction pointer (IP) and reduces the
-core speed to 1. When the IP of the core reaches the the breakpoint then the
-execution is paused for manual inspection. If a breakpoint of 0 is provided then
-the breakpoint is cleared and the speed of the core is reset to it's default
-value.
+**Purpose:** Sets a breakpoint on a given instruction pointer (IP) and reduces
+the core speed to 1. When the IP of the core reaches the the breakpoint then the
+pexecution is paused for manual inspection. If a breakpoint of 0 is provided
+then the breakpoint is cleared and the speed of the core is reset to it's
+default value.
+
 
 ### io_dbg_step
 
 ```
-(io !io_dbg_break <id>) -> (result)
+(io &io_dbg_break <id>) -> (result)
 ```
 
-Purpose: Executes a single instruction of the core. Only usable when the core
-has been paused via the `io_dbg_attach` or `io_dbg_break` command.
+**Purpose:** Executes a single instruction of the core. Only usable when the
+core has been paused via the `&io_dbg_attach` or `&io_dbg_break` command.
 
-Example:
+**Example:**
 
 ```lisp
-(let ((target (id !item_brain_1 2)))
-  (io !io_dbg_attach target)
-  (for (i 0) (< i 20) (+ i 1) (io !io_dbg_step target))
-  (io !io_dbg_detach target))
+(defconst target (id &item_brain 2))
+(io &io_dbg_attach target)
+(for (i 0) (< i 20) (+ i 1) (io &io_dbg_step target))
+(io &io_dbg_detach target))
 ```
