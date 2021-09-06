@@ -107,6 +107,8 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
         assert(ft_bitmap->pitch == (int)ft_bitmap->width);
         assert(ft_bitmap->width <= font->glyph_w);
         assert(ft_bitmap->rows <= font->glyph_h);
+        assert(ft_bitmap->pixel_mode == FT_PIXEL_MODE_GRAY);
+        assert(ft_bitmap->num_grays == 256);
 
         size_t pixels = ft_bitmap->rows * ft_bitmap->width;
         uint32_t sdl_bitmap[pixels];
