@@ -543,12 +543,13 @@ static bool chunk_ports_step_queue(
     return true;
 
   nomatch:
-    struct ring32 *rret = ring32_push(requested, dst);
-    assert(rret == requested);
-    if (!*stop) *stop = dst;
-    chunk->workers.fail++;
+    {
+        struct ring32 *rret = ring32_push(requested, dst);
+        assert(rret == requested);
+        if (!*stop) *stop = dst;
+        chunk->workers.fail++;
+    }
     return true;
-
 }
 
 static void chunk_ports_step(struct chunk *chunk)

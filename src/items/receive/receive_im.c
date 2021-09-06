@@ -13,14 +13,17 @@
 // receive
 // -----------------------------------------------------------------------------
 
-size_t im_receive_cap(const struct im_receive *)
+size_t im_receive_cap(const struct im_receive *receive)
 {
+    (void) receive;
     return 1;
 }
 
-static void im_receive_init(void *state, struct chunk *, id_t id)
+static void im_receive_init(void *state, struct chunk *chunk, id_t id)
 {
     struct im_receive *receive = state;
+    (void) chunk;
+
     receive->id = id;
 }
 

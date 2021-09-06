@@ -14,8 +14,10 @@
 // port
 // -----------------------------------------------------------------------------
 
-static void im_port_init(void *state, struct chunk *, id_t id)
+static void im_port_init(void *state, struct chunk *chunk, id_t id)
 {
+    (void) chunk;
+
     struct im_port *port = state;
     port->id = id;
 }

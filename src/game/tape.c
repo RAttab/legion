@@ -213,7 +213,8 @@ static void tapes_err(void *_ctx, const char *fmt, ...)
 
     *it = '\n'; it++;
 
-    write(2, str, it - str);
+    ssize_t ret = write(2, str, it - str);
+    assert(ret == (it - str));
 }
 
 

@@ -161,8 +161,8 @@ static void save_seal(struct save *save)
     if (fd == -1) fail_errno("unable open dir '%s' for file '%s'", save->dst, dst);
 
     (void) unlinkat(fd, bak, 0);
-    (void) linkat(fd, dst, fd, bak, 0);
-    (void) unlinkat(fd, dst, 0);
+    if (!linkat(fd, dst, fd, bak, 0)) // success
+        (void) unlinkat(fd, dst, 0);
 
     if (linkat(fd, src, fd, dst, 0) == -1) {
         fail_errno("unable to link '%s/%s' to '%s/%s' (%d)",

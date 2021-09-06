@@ -139,8 +139,11 @@ static void im_lab_io_tape_at(
     return;
 
   fail:
-    word_t fail = 0;
-    chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    {
+        word_t fail = 0;
+        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    }
+    return;
 }
 
 static void im_lab_io_tape_known(
@@ -157,8 +160,11 @@ static void im_lab_io_tape_known(
     return;
 
   fail:
-    word_t fail = 0;
-    chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    {
+        word_t fail = 0;
+        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    }
+    return;
 }
 
 static void im_lab_io_item_bits(
@@ -175,8 +181,11 @@ static void im_lab_io_item_bits(
     return;
 
   fail:
-    word_t fail = 0;
-    chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    {
+        word_t fail = 0;
+        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    }
+    return;
 }
 
 static void im_lab_io_item_known(
@@ -193,8 +202,11 @@ static void im_lab_io_item_known(
     return;
 
   fail:
-    word_t fail = 0;
-    chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    {
+        word_t fail = 0;
+        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+    }
+    return;
 }
 
 static void im_lab_io(

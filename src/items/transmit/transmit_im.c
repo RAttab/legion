@@ -14,15 +14,19 @@
 // transmit
 // -----------------------------------------------------------------------------
 
-static void im_transmit_init(void *state, struct chunk *, id_t id)
+static void im_transmit_init(void *state, struct chunk *chunk, id_t id)
 {
     struct im_transmit *transmit = state;
+    (void) chunk;
+
     transmit->id = id;
 }
 
 
-static void im_transmit_reset(struct im_transmit *transmit, struct chunk *)
+static void im_transmit_reset(struct im_transmit *transmit, struct chunk *chunk)
 {
+    (void) chunk;
+
     transmit->target = coord_nil();
 }
 
