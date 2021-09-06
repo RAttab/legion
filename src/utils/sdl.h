@@ -16,6 +16,6 @@ inline bool sdl_rect_contains(const SDL_Rect *rect, const SDL_Point *point)
     int x = point->x - rect->x;
     int y = point->y - rect->y;
     return
-        x >= 0 && x <= rect->w &&
-        y >= 0 && y <= rect->h;
+        x >= 0 && x < rect->w &&
+        y >= 0 && y < rect->h;
 }
