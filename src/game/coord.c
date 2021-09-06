@@ -51,7 +51,7 @@ size_t coord_str(struct coord coord, char *str, size_t len)
 
 inline scale_t scale_inc(scale_t scale, int dir)
 {
-    if (scale == 1 && dir < 0) return scale;
+    if (scale == scale_base && dir < 0) return scale;
     if (scale < (1 << 4)) return scale + dir;
 
     uint64_t delta = (1 << (u64_log2(scale) - 4));
