@@ -111,6 +111,7 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
     {
 
     case EV_MAP_GOTO: {
+        map->active = true;
         map->pos = coord_from_u64((uintptr_t) ev->user.data1);
         map->scale = map_scale_default;
         return false;

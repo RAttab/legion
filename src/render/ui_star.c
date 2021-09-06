@@ -40,7 +40,8 @@ struct ui_star
 
     struct ui_panel panel;
 
-    struct ui_button view;
+    struct ui_button goto_factory;
+    struct ui_button goto_map;
     struct ui_label coord;
     struct ui_link coord_val;
 
@@ -92,7 +93,8 @@ struct ui_star *ui_star_new(void)
     *ui = (struct ui_star) {
         .panel = ui_panel_title(pos, dim, ui_str_c("star")),
 
-        .view = ui_button_new(font, ui_str_c("<< view")),
+        .goto_map = ui_button_new(font, ui_str_c("<< map")),
+        .goto_factory = ui_button_new(font, ui_str_c("<< factory")),
 
         .coord = ui_label_new(font, ui_str_c("coord: ")),
         .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
@@ -168,13 +170,19 @@ struct ui_star *ui_star_new(void)
 
     ui->panel.state = ui_panel_hidden;
     ui->control.disabled = true;
-    ui->view.w.dim.w = ui_layout_inf;
+
+    size_t goto_width = (width - font->glyph_w) / 2;
+    ui->goto_map.w.dim.w = goto_width;
+    ui->goto_factory.w.dim.w = goto_width;
+
     return ui;
 }
 
 void ui_star_free(struct ui_star *ui) {
     ui_panel_free(&ui->panel);
-    ui_button_free(&ui->view);
+
+    ui_button_free(&ui->goto_map);
+    ui_button_free(&ui->goto_factory);
 
     ui_label_free(&ui->coord);
     ui_link_free(&ui->coord_val);
@@ -408,7 +416,12 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return ret == ui_consume;
     }
 
-    if ((ret = ui_button_event(&ui->view, ev))) {
+    if ((ret = ui_button_event(&ui->goto_map, ev))) {
+        core_push_event(EV_MAP_GOTO, coord_to_u64(ui->id), 0);
+        return ret == ui_consume;
+    }
+
+    if ((ret = ui_button_event(&ui->goto_factory, ev))) {
         core_push_event(EV_FACTORY_SELECT, coord_to_u64(ui->id), 0);
         return ret == ui_consume;
     }
@@ -473,7 +486,8 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
     struct font *font = ui_star_font();
 
-    ui_button_render(&ui->view, &layout, renderer);
+    ui_button_render(&ui->goto_map, &layout, renderer);
+    ui_button_render(&ui->goto_factory, &layout, renderer);
     ui_layout_next_row(&layout);
 
     ui_layout_sep_y(&layout, font->glyph_h);
