@@ -48,14 +48,12 @@ struct map *map_new(void)
     struct map *map = calloc(1, sizeof(*map));
     *map = (struct map) {
         .pos = core.state.home,
-        .scale = scale_init(),
+        .scale = map_scale_default,
         .tex = NULL,
         .active = true,
         .panning = false,
         .panned = false,
     };
-
-    map->scale = map_scale_default;
 
     char path[PATH_MAX];
     core_path_res("map.bmp", path, sizeof(path));
@@ -75,15 +73,20 @@ void map_free(struct map *map)
     SDL_DestroyTexture(map->tex);
 }
 
-
-// -----------------------------------------------------------------------------
-// coord
-// -----------------------------------------------------------------------------
+bool map_active(struct map *map)
+{
+    return map->active;
+}
 
 scale_t map_scale(struct map *map)
 {
     return map->scale;
 }
+
+
+// -----------------------------------------------------------------------------
+// coord
+// -----------------------------------------------------------------------------
 
 struct coord map_project_coord(struct map *map, SDL_Point sdl)
 {
@@ -98,6 +101,11 @@ struct rect map_project_coord_rect(struct map *map, const SDL_Rect *sdl)
 SDL_Point map_project_sdl(struct map *map, struct coord coord)
 {
     return project_sdl(core.rect, map->pos, map->scale, coord);
+}
+
+struct coord map_coord(struct map *map)
+{
+    return map_project_coord(map, core.cursor.point);
 }
 
 

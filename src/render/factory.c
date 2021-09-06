@@ -30,6 +30,9 @@
 // factory
 // -----------------------------------------------------------------------------
 
+struct flow_pos { int32_t x, y; };
+struct flow_rect { int32_t x, y, w, h; };
+
 struct factory
 {
     struct coord star;
@@ -39,7 +42,8 @@ struct factory
     struct htable index;
     struct workers workers;
 
-    struct pos pos;
+    scale_t scale;
+    struct flow_pos pos;
     struct dim inner, margin, pad, total, in, out;
 
     SDL_Texture *tex;
@@ -62,6 +66,9 @@ struct factory *factory_new(void)
 
     *factory = (struct factory) {
         .active = false,
+
+        .scale = scale_init(),
+        .pos = (struct flow_pos) {0},
 
         .ui_id = ui_label_new(font, ui_str_v(id_str_len)),
         .ui_target = ui_label_new(font, ui_str_v(item_str_len)),
@@ -132,6 +139,144 @@ void factory_free(struct factory *factory)
 }
 
 
+bool factory_active(struct factory *factory)
+{
+    return factory->active;
+}
+
+scale_t factory_scale(struct factory *factory)
+{
+    return factory->scale;
+}
+
+struct coord factory_coord(struct factory *factory)
+{
+    return factory->star;
+}
+
+
+// -----------------------------------------------------------------------------
+// coordinates
+// -----------------------------------------------------------------------------
+
+static struct flow_rect factory_flow_rect(
+        struct factory *factory, size_t row, size_t col)
+{
+    const size_t rows = vec64_len(factory->grid);
+    assert(row < rows);
+
+    const size_t cols = vec16_len((void *) factory->grid->vals[row]);
+    assert(col < cols);
+
+    const int64_t left = -(((int64_t) cols * factory->total.w) / 2);
+    const int64_t top = -(((int64_t) rows * factory->total.h) / 2);
+
+    return (struct flow_rect) {
+        .x = left + (col * factory->total.w),
+        .y = top + (row * factory->total.h),
+        .w = factory->total.w, .h = factory->total.h,
+    };
+}
+
+static ssize_t factory_row(struct factory *factory, struct flow_pos pos)
+{
+    const ssize_t rows = vec64_len(factory->grid);
+    const int32_t top = -((rows * factory->total.h) / 2);
+    if (pos.y < top) return -1;
+
+    ssize_t result = (pos.y - top) / factory->total.h;
+    return result < rows ? result : -1;
+}
+
+static ssize_t factory_col(struct factory *factory, struct flow_pos pos)
+{
+    const ssize_t row = factory_row(factory, pos);
+    if (row < 0 || (size_t) row >= vec64_len(factory->grid)) return -1;
+
+    const ssize_t cols = vec16_len((void *) factory->grid->vals[row]);
+    const int32_t left = -((cols * factory->total.w) / 2);
+    if (pos.x < left) return -1;
+
+    ssize_t result = (pos.x - left) / factory->total.w;
+    return result < cols ? result : -1;
+}
+
+static SDL_Point factory_project_sdl_point(
+        struct factory *factory, struct flow_pos origin)
+{
+    SDL_Rect rect = core.rect;
+    int64_t x = origin.x, y = origin.y;
+
+    int64_t rel_x = scale_div(factory->scale, x - factory->pos.x);
+    int64_t rel_y = scale_div(factory->scale, y - factory->pos.y);
+
+    return (SDL_Point) {
+        .x = i64_clamp(rel_x + rect.w / 2 + rect.x, rect.x, rect.x + rect.w),
+        .y = i64_clamp(rel_y + rect.h / 2 + rect.y, rect.y, rect.y + rect.h),
+    };
+}
+
+static SDL_Rect factory_project_sdl_rect(
+        struct factory *factory, struct flow_rect origin)
+{
+    SDL_Point top = factory_project_sdl_point(factory, (struct flow_pos) {
+                .x = origin.x,
+                .y = origin.y });
+
+    SDL_Point bot = factory_project_sdl_point(factory, (struct flow_pos) {
+                .x = origin.x + origin.w,
+                .y = origin.y + origin.h });
+
+    return (SDL_Rect) {
+        .x = top.x,
+        .y = top.y,
+        .w = bot.x - top.x,
+        .h = bot.y - top.y,
+    };
+}
+
+static struct flow_pos factory_project_flow_pos(
+        struct factory *factory, SDL_Point origin)
+{
+    SDL_Rect rect = core.rect;
+    int64_t x = origin.x, y = origin.y;
+
+    int64_t rel_x = scale_mult(factory->scale, x - rect.x - rect.w / 2);
+    int64_t rel_y = scale_mult(factory->scale, y - rect.y - rect.h / 2);
+
+    return (struct flow_pos) {
+        .x = i64_clamp(factory->pos.x + rel_x, INT32_MIN, INT32_MAX),
+        .y = i64_clamp(factory->pos.y + rel_y, INT32_MIN, INT32_MAX),
+    };
+}
+
+static struct flow_rect factory_project_flow_rect(
+        struct factory *factory, SDL_Rect origin)
+{
+    struct flow_pos top = factory_project_flow_pos(factory, (SDL_Point) {
+                .x = origin.x,
+                .y = origin.y });
+
+    struct flow_pos bot = factory_project_flow_pos(factory, (SDL_Point) {
+                .x = origin.x + origin.w,
+                .y = origin.y + origin.h });
+
+    return (struct flow_rect) {
+        .x = top.x,
+        .y = top.y,
+        .w = bot.x - top.x,
+        .h = bot.y - top.y,
+    };
+}
+
+static bool factory_flow_intersect(struct flow_rect a, struct flow_rect b)
+{
+    if (legion_max(a.x, b.x) >= legion_min(a.x + a.w, b.x + b.w)) return false;
+    if (legion_max(a.y, b.y) >= legion_min(a.y + a.h, b.y + b.h)) return false;
+    return true;
+}
+
+
 // -----------------------------------------------------------------------------
 // events
 // -----------------------------------------------------------------------------
@@ -147,7 +292,7 @@ static bool factory_make_flow(
 
     const struct im_config *config = im_config_assert(id_item(id));
     assert(config->im.flow);
-    
+
     if (!config->im.flow(state, flow)) return false;
 
     flow->row = flow->rank - 1;
@@ -211,8 +356,9 @@ static bool factory_event_user(struct factory *factory, SDL_Event *ev)
 
     case EV_FACTORY_SELECT: {
         factory->active = true;
+        factory->scale = scale_init();
         factory->star = coord_from_u64((uintptr_t) ev->user.data1);
-        factory->pos = make_pos(0, -20);
+        factory->pos = (struct flow_pos) {0};
         factory_update(factory);
         return false;
     }
@@ -226,19 +372,14 @@ static bool factory_event_user(struct factory *factory, SDL_Event *ev)
 
 static struct flow *factory_cursor_flow(struct factory *factory)
 {
-    SDL_Point point = core.cursor.point;
-    point.x += factory->pos.x;
-    point.y += factory->pos.y;
+    struct flow_pos pos = factory_project_flow_pos(factory, core.cursor.point);
 
-    ssize_t row = point.y / factory->total.h;
-    if (row < 0 || row >= (ssize_t) vec64_len(factory->grid)) return NULL;
+    ssize_t row = factory_row(factory, pos);
+    ssize_t col = factory_col(factory, pos);
+    if (row < 0 || col < 0) return NULL;
+
     struct vec16* vec = (void *) factory->grid->vals[row];
-
-    ssize_t col = point.x / factory->total.w;
-    if (col < 0 || col >= (ssize_t) vec16_len(vec)) return NULL;
-    struct flow *flow = &factory->flows->vals[vec->vals[col]];
-
-    return flow;
+    return &factory->flows->vals[vec->vals[col]];
 }
 
 static bool factory_event_click(struct factory *factory)
@@ -258,10 +399,19 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
     switch (ev->type)
     {
 
+    case SDL_MOUSEWHEEL: {
+        factory->scale = scale_inc(factory->scale, -ev->wheel.y);
+        return false;
+    }
+
     case SDL_MOUSEMOTION: {
         if (!factory->panning) return false;
-        factory->pos.x -= ev->motion.xrel;
-        factory->pos.y -= ev->motion.yrel;
+        int64_t xrel = scale_mult(factory->scale, ev->motion.xrel);
+        factory->pos.x = i64_clamp(factory->pos.x - xrel, INT32_MIN, INT32_MAX);
+
+        int64_t yrel = scale_mult(factory->scale, ev->motion.yrel);
+        factory->pos.y = i64_clamp(factory->pos.y - yrel, INT32_MIN, INT32_MAX);
+
         factory->panned = true;
         return false;
     }
@@ -363,16 +513,19 @@ static void factory_render_op(
     struct flow *dst = (struct flow *) ret.value;
     assert(ret.ok);
 
-    struct pos src_pos = make_pos(
-            src->col*factory->total.w + factory->out.w - factory->pos.x,
-            src->row*factory->total.h + factory->out.h - factory->pos.y);
+    struct flow_rect src_rect = factory_flow_rect(factory, src->row, src->col);
+    struct flow_rect dst_rect = factory_flow_rect(factory, dst->row, dst->col);
 
-    struct pos dst_pos = make_pos(
-            dst->col*factory->total.w + factory->in.w - factory->pos.x,
-            dst->row*factory->total.h + factory->in.h - factory->pos.y);
+    SDL_Point out = factory_project_sdl_point(factory, (struct flow_pos) {
+                .x = src_rect.x + factory->out.w,
+                .y = src_rect.y + factory->out.h, });
+
+    SDL_Point in = factory_project_sdl_point(factory, (struct flow_pos) {
+                .x = dst_rect.x + factory->in.w,
+                .y = dst_rect.y + factory->in.h, });
 
     rgba_render(rgba_gray(0x88), renderer);
-    sdl_err(SDL_RenderDrawLine(renderer, src_pos.x, src_pos.y, dst_pos.x, dst_pos.y));
+    sdl_err(SDL_RenderDrawLine(renderer, out.x, out.y, in.x, in.y));
 }
 
 
@@ -383,28 +536,21 @@ void factory_render(struct factory *factory, SDL_Renderer *renderer)
     rgba_render(rgba_black(), renderer);
     sdl_err(SDL_RenderFillRect(renderer, &core.rect));
 
-    size_t row = legion_max(factory->pos.y / factory->total.h, 0);
-    size_t col = legion_max(factory->pos.x / factory->total.w, 0);
-
-    size_t rows = i64_ceil_div(core.rect.h, factory->total.h);
-    size_t cols = i64_ceil_div(core.rect.w, factory->total.w);
-
     struct flow *cursor = factory_cursor_flow(factory);
+    struct flow_rect view = factory_project_flow_rect(factory, core.rect);
 
-    for (size_t i = row; i < row + rows && i < vec64_len(factory->grid); ++i) {
+    for (size_t i = 0; i < vec64_len(factory->grid); ++i) {
         struct vec16 *vec = (void *) factory->grid->vals[i];
 
-        for (size_t j = col; j < col + cols && j < vec16_len(vec); ++j) {
+        for (size_t j = 0; j < vec16_len(vec); ++j) {
             struct flow *flow = &factory->flows->vals[vec->vals[j]];
-            factory_render_flow(factory, flow, flow == cursor, renderer);
 
-            SDL_Rect rect = {
-                .x = j*factory->total.w - factory->pos.x,
-                .y = i*factory->total.h - factory->pos.y,
-                .w = factory->total.w,
-                .h = factory->total.h,
-            };
-            sdl_err(SDL_RenderCopy(renderer, factory->tex, &factory->tex_rect, &rect));
+            struct flow_rect rect = factory_flow_rect(factory, i, j);
+            if (!factory_flow_intersect(view, rect)) continue;
+
+            SDL_Rect sdl = factory_project_sdl_rect(factory, rect);
+            factory_render_flow(factory, flow, flow == cursor, renderer);
+            sdl_err(SDL_RenderCopy(renderer, factory->tex, &factory->tex_rect, &sdl));
         }
     }
 

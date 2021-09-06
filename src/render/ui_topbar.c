@@ -107,11 +107,20 @@ static void topbar_render_coord(
     it += str_utoa(world_time(core.state.world), it, topbar_ticks_len);
     *it = ' '; it++; assert(it < end);
 
-    struct coord coord = map_project_coord(core.ui.map, core.cursor.point);
+    scale_t scale = 0;
+    struct coord coord = {0};
+    if (map_active(core.ui.map)) {
+        scale = map_scale(core.ui.map);
+        coord = map_coord(core.ui.map);
+    }
+    else if (factory_active(core.ui.factory)) {
+        scale = factory_scale(core.ui.factory);
+        coord = factory_coord(core.ui.factory);
+    }
+
     it += coord_str(coord, it, end - it);
     *it = ' '; it++; assert(it < end);
 
-    scale_t scale = map_scale(core.ui.map);
     it += scale_str(scale, it, end - it);
     assert(it <= end);
 
