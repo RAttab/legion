@@ -211,8 +211,8 @@ static SDL_Point factory_project_sdl_point(
     int64_t rel_y = scale_div(factory->scale, y - factory->pos.y);
 
     return (SDL_Point) {
-        .x = i64_clamp(rel_x + rect.w / 2 + rect.x, rect.x, rect.x + rect.w),
-        .y = i64_clamp(rel_y + rect.h / 2 + rect.y, rect.y, rect.y + rect.h),
+        .x = i64_clamp(rel_x + rect.w / 2 + rect.x, INT_MIN, INT_MAX),
+        .y = i64_clamp(rel_y + rect.h / 2 + rect.y, INT_MIN, INT_MAX),
     };
 }
 
