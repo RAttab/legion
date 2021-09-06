@@ -283,9 +283,8 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     {
     case IO_SEND: {
         uint64_t val = 0;
-        if (ui_input_get_u64(&cmd->arg[0].val, &val))
-            len = legion_min(val, (size_t) im_packet_max);
-        else len = 0;
+        if (!ui_input_get_u64(&cmd->arg[0].val, &val)) return;
+        len = legion_min(val, (size_t) im_packet_max);
 
         for (size_t i = 0; i < len; ++i) {
             if (ui_input_get_u64(&cmd->arg[i+1].val, &val))
@@ -304,7 +303,6 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     }
     }
 
-    if (!len) return;
     bool ok = chunk_io(chunk, cmd->id, 0, ui->id, args, len);
     assert(ok);
 

@@ -216,9 +216,9 @@ static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)
 {
     if (!brain->debug) return;
 
-    brain->vm.specs.speed = 1;
+    uint8_t old = legion_xchg(&brain->vm.specs.speed, 1);
     im_brain_vm_step(brain, chunk);
-    brain->vm.specs.speed = im_brain_speed(brain);
+    brain->vm.specs.speed = old;
 }
 
 static void im_brain_io(
