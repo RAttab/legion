@@ -86,18 +86,15 @@ static void im_receive_io_target(
 static void im_receive_io_receive(
         struct im_receive *receive, struct chunk *chunk, id_t src)
 {
-    size_t len = 1;
-    word_t data[1 + im_packet_max] = {0};
+    size_t len = 0;
+    word_t data[im_packet_max] = {0};
 
-    if (receive->tail == receive->head)
-        data[0] = im_packet_pack(receive->channel, 0);
-    else {
+    if (receive->tail < receive->head) {
         const size_t tail = receive->tail % im_receive_cap(receive);
         const struct im_packet *packet = receive->buffer + tail;
 
-        len += packet->len;
-        data[0] = im_packet_pack(packet->chan, packet->len);
-        memcpy(data + 1, packet->data, packet->len * sizeof(packet->data[0]));
+        len = packet->len;
+        memcpy(data, packet->data, packet->len * sizeof(packet->data[0]));
 
         receive->tail++;
     }
@@ -118,7 +115,7 @@ static void im_receive_io_recv(
     }
 
     size_t head = receive->head % cap;
-    size_t tail = receive->head % cap;
+    size_t tail = receive->tail % cap;
     if (tail == head && receive->tail < receive->head) return;
 
     struct im_packet *packet = receive->buffer + head;

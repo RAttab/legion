@@ -80,7 +80,11 @@ static void ui_receive_update(void *_ui, struct chunk *chunk, id_t id)
     ui_str_set_u64(&ui->channel_val.str, receive->channel);
 
     ui->cap = im_receive_cap(receive);
+    ui_str_set_u64(&ui->buffer_cap.str, ui->cap);
+
     ui->len = receive->head - receive->tail;
+    ui_str_set_u64(&ui->buffer_len.str, ui->len);
+
     for (size_t i = 0; i < ui->len; ++i)
         ui->packets[i] = receive->buffer[(receive->tail + i) % ui->cap];
 }

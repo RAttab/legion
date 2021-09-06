@@ -35,20 +35,15 @@ void test_txrx(void)
         0x3333333333333333
     };
 
-    const word_t exp_nil = 0;
-    const word_t exp[1+im_packet_max] = {
-        im_packet_max, packet[0], packet[1], packet[2],
-    };
-
     // nil rx
     chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-    assert(im_test_check(test, IO_RECV, id_rx, &exp_nil, 1));
+    assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
 
     { // unconfigured
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
         wait(world, im_transmit_speed, src, dst);
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, &exp_nil, 1));
+        assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
     }
 
     { // configure - tx
@@ -58,7 +53,7 @@ void test_txrx(void)
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
         wait(world, im_transmit_speed, src, dst);
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, &exp_nil, 1));
+        assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
     }
 
 
@@ -74,10 +69,10 @@ void test_txrx(void)
         wait(world, im_transmit_speed, src, dst);
 
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, exp, array_len(exp)));
+        assert(im_test_check(test, IO_RECV, id_rx, packet, array_len(packet)));
 
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, &exp_nil, 1));
+        assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
     }
 
     // oversaturate the rx buffer
@@ -88,10 +83,10 @@ void test_txrx(void)
         wait(world, im_transmit_speed, src, dst);
 
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, exp, array_len(exp)));
+        assert(im_test_check(test, IO_RECV, id_rx, packet, array_len(packet)));
 
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, &exp_nil, 1));
+        assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
     }
 
     { // reset
@@ -101,7 +96,7 @@ void test_txrx(void)
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
         wait(world, im_transmit_speed, src, dst);
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
-        assert(im_test_check(test, IO_RECV, id_rx, &exp_nil, 1));
+        assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
 
     }
 
