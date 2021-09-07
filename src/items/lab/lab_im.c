@@ -42,6 +42,11 @@ static void im_lab_step(void *state, struct chunk *chunk)
     struct im_lab *lab = state;
     if (lab->item == ITEM_NIL) return;
 
+    if (world_lab_learned(chunk_world(chunk), lab->item)) {
+        im_lab_reset(lab, chunk);
+        return;
+    }
+
     switch (lab->state)
     {
 
@@ -67,10 +72,7 @@ static void im_lab_step(void *state, struct chunk *chunk)
 
         const uint8_t bits = im_config_assert(lab->item)->lab_bits;
         uint8_t bit = rng_uni(&lab->rng, 0, bits);
-
-        struct world *world = chunk_world(chunk);
-        world_lab_learn_bit(world, lab->item, bit);
-        if (world_lab_learned(world, lab->item)) lab->item = ITEM_NIL;
+        world_lab_learn_bit(chunk_world(chunk), lab->item, bit);
 
         lab->state = im_lab_idle;
         return;
