@@ -12,7 +12,7 @@
 
 void test_txrx(void)
 {
-    struct world *world = world_new();
+    struct world *world = world_new(0);
     struct sector *sector = world_sector(world, coord_center());
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;

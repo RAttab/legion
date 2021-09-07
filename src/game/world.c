@@ -6,6 +6,7 @@
 #include "game/world.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
+#include "game/gen.h"
 #include "game/tape.h"
 #include "items/config.h"
 #include "items/legion/legion.h"
@@ -18,6 +19,7 @@
 
 struct world
 {
+    seed_t seed;
     world_ts_t time;
 
     struct tape_set known;
@@ -31,10 +33,11 @@ struct world
     struct lanes lanes;
 };
 
-struct world *world_new(void)
+struct world *world_new(seed_t seed)
 {
     struct world *world = calloc(1, sizeof(*world));
 
+    world->seed = seed;
     world->atoms = atoms_new();
     world->mods = mods_new();
     lanes_init(&world->lanes, world);
@@ -63,7 +66,8 @@ struct world *world_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_world)) return NULL;
 
-    struct world *world = world_new();
+    struct world *world = world_new(0);
+    save_read_into(save, &world->seed);
     save_read_into(save, &world->time);
 
     if (!tape_set_load(&world->known, save)) goto fail;
@@ -102,6 +106,7 @@ void world_save(struct world *world, struct save *save)
 {
     save_write_magic(save, save_magic_world);
 
+    save_write_value(save, world->seed);
     save_write_value(save, world->time);
 
     tape_set_save(&world->known, save);
@@ -139,6 +144,11 @@ void world_step(struct world *world)
         sector_step((struct sector *) it->value);
 }
 
+seed_t world_seed(struct world *world)
+{
+    return world->seed;
+}
+
 world_ts_t world_time(struct world *world)
 {
     return world->time;
@@ -167,7 +177,7 @@ struct sector *world_sector(struct world *world, struct coord sector)
     struct htable_ret ret = htable_get(&world->sectors, id);
     if (ret.ok) return (struct sector *) ret.value;
 
-    struct sector *value = sector_gen(world, coord);
+    struct sector *value = gen_sector(world, coord, world->seed);
     ret = htable_put(&world->sectors, id, (uintptr_t) value);
     assert(ret.ok);
 
@@ -367,49 +377,63 @@ void world_lab_learn_bit(struct world *world, enum item item, uint8_t bit)
 // populate
 // -----------------------------------------------------------------------------
 
+static struct coord world_populate_star(struct sector *sector)
+{
+    for (size_t i = 0; i < sector->stars_len; ++i) {
+        const struct star *star = &sector->stars[i];
+
+        if (star->energy < 10000) continue;
+        if (star_elem(star, ITEM_ELEM_A) < 20000) continue;
+        if (star_elem(star, ITEM_ELEM_B) < 20000) continue;
+        if (star_elem(star, ITEM_ELEM_C) < 10000) continue;
+        if (star_elem(star, ITEM_ELEM_D) < 10000) continue;
+        if (star_elem(star, ITEM_ELEM_E) < 10000) continue;
+        if (star_elem(star, ITEM_ELEM_F) < 10000) continue;
+        if (star_elem(star, ITEM_ELEM_G) < 1000) continue;
+        if (star_elem(star, ITEM_ELEM_H) < 1000) continue;
+        return star->coord;
+    }
+    return coord_nil();
+}
+
 struct coord world_populate(struct world *world)
 {
     im_populate_atoms(world->atoms);
     mods_populate(world->mods, world->atoms);
 
-    tape_set_put(&world->known, ITEM_NIL);
-    for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
-        tape_set_put(&world->known, it);
+    { // research
+        tape_set_put(&world->known, ITEM_NIL);
+        for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
+            tape_set_put(&world->known, it);
 
-    tape_set_put(&world->known, ITEM_LEGION);
-    tape_set_union(&world->known, &tapes_info(ITEM_LEGION)->reqs);
+        tape_set_put(&world->known, ITEM_LEGION);
+        tape_set_union(&world->known, &tapes_info(ITEM_LEGION)->reqs);
 
-    tape_set_put(&world->known, ITEM_LAB);
-    tape_set_union(&world->known, &tapes_info(ITEM_LAB)->reqs);
+        tape_set_put(&world->known, ITEM_LAB);
+        tape_set_union(&world->known, &tapes_info(ITEM_LAB)->reqs);
+    }
 
+    struct sector *sector = NULL;
     struct rng rng = rng_make(0);
+
     while (true) {
-        struct coord coord = coord_from_u64(rng_step(&rng));
-        struct sector *sector = world_sector(world, coord);
+        if (sector) sector_free(sector);
+
+        sector = gen_sector(world, coord_from_u64(rng_step(&rng)), world->seed);
         if (sector->stars_len < 100) continue;
 
-        struct star *star = NULL;
-        for (size_t tries = 0; tries < 10; ++tries) {
-            size_t index = rng_uni(&rng, 0, sector->stars_len);
-            star = &sector->stars[index];
+        struct coord coord = world_populate_star(sector);
+        if (coord_is_nil(coord)) continue;
 
-            if (star->energy < 10000) continue;
-            if (star_elem(star, ITEM_ELEM_A) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_B) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_C) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_D) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_E) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_F) < 20000) continue;
-            if (star_elem(star, ITEM_ELEM_G) < 2000) continue;
-            if (star_elem(star, ITEM_ELEM_H) < 2000) continue;
+        sector_free(sector);
+        sector = world_sector(world, coord);
 
-            struct chunk *chunk = sector_chunk_alloc(sector, star->coord);
-            assert(chunk);
+        struct chunk *chunk = sector_chunk_alloc(sector, coord);
+        assert(chunk);
 
-            for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++)
-                chunk_create(chunk, *it);
+        for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++)
+            chunk_create(chunk, *it);
 
-            return star->coord;
-        }
+        return coord;
     }
 }

@@ -28,10 +28,21 @@ struct map
     bool panning, panned;
 };
 
-enum { px_star = 1 << 10 };
+enum
+{
+    // Number of pixels per star at scale_base (not
+    // map_scale_default). Basically it needs to be tweaked to a number that's
+    // big enough to see and click on but not too big that there are overlaps
+    // between stars during gen.
+    map_star_px = 650,
 
-enum {
-    map_scale_default = scale_base << 6,
+    // Tweaked in relation to map_star_px so that our default view isn't
+    // useless.
+    map_scale_default = scale_base << 5,
+
+    // As we zoom out we need to pull more nad more sector data which becomes
+    // too expansive. These determine at which zoom threshold do we stop pulling
+    // some data and displaying things like the sector or area grid.
     map_thresh_stars = scale_base << 0x8,
     map_thresh_sector_low = scale_base << 0x7,
     map_thresh_sector_high = scale_base << 0xE,
@@ -165,7 +176,7 @@ bool map_event(struct map *map, SDL_Event *event)
 
         if (map->scale < map_thresh_stars) {
             SDL_Point point = core.cursor.point;
-            size_t px = scale_div(map->scale, px_star);
+            size_t px = scale_div(map->scale, map_star_px);
             struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
                         .x = point.x - px / 2,
                         .y = point.y - px / 2,
@@ -277,7 +288,7 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
     while ((star = world_render_next(core.state.world, &it))) {
         SDL_Point pos = map_project_sdl(map, star->coord);
 
-        size_t px = scale_div(map->scale, px_star);
+        size_t px = scale_div(map->scale, map_star_px);
         SDL_Rect dst = {
             .x = pos.x - px / 2,
             .y = pos.y - px / 2,

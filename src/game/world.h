@@ -13,6 +13,7 @@
 struct mods;
 struct hset;
 
+typedef uint64_t seed_t;
 typedef uint32_t world_ts_t;
 typedef int64_t world_ts_delta_t;
 
@@ -22,7 +23,7 @@ typedef int64_t world_ts_delta_t;
 
 struct world;
 
-struct world *world_new(void);
+struct world *world_new(seed_t seed);
 void world_free(struct world *);
 
 struct world *world_load(struct save *);
@@ -31,6 +32,7 @@ void world_save(struct world *, struct save *);
 void world_step(struct world *);
 struct coord world_populate(struct world *);
 
+seed_t world_seed(struct world *);
 world_ts_t world_time(struct world *);
 struct mods *world_mods(struct world *);
 struct atoms *world_atoms(struct world *);

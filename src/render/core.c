@@ -37,7 +37,7 @@ static void state_init()
     core.state.sleep = ts_sec / state_freq;
     core.state.next = ts_now();
 
-    core.state.world = world_new();
+    core.state.world = world_new(0);
     core.state.home = world_populate(core.state.world);
 }
 

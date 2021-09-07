@@ -55,7 +55,7 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
 
 void test_basics(void)
 {
-    struct world *world = world_new();
+    struct world *world = world_new(0);
     struct sector *sector = world_sector(world, coord_center());
 
     const size_t speed = 100;
@@ -90,7 +90,7 @@ void test_basics(void)
 
 void test_speed(void)
 {
-    struct world *world = world_new();
+    struct world *world = world_new(0);
     struct sector *sector = world_sector(world, coord_center());
 
     enum { count = 10 };

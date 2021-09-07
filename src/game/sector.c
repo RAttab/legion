@@ -5,32 +5,12 @@
 
 #include "game/sector.h"
 #include "game/chunk.h"
+#include "game/gen.h"
 #include "utils/rng.h"
 
 // -----------------------------------------------------------------------------
 // star
 // -----------------------------------------------------------------------------
-
-void star_gen(struct star *star, struct coord coord)
-{
-    struct rng rng = rng_make(coord_to_u64(coord));
-
-    star->coord = coord;
-    star->state = star_untouched;
-
-    star->energy = 1U << rng_uni(&rng, 1, 16);
-    star->energy += rng_uni(&rng, 1, star->energy);
-
-    size_t planets = rng_norm(&rng, 1, 16);
-    for (size_t planet = 0; planet < planets; ++planet) {
-        size_t size = rng_norm(&rng, 1, 16);
-        for (size_t roll = 0; roll < size; ++roll) {
-            size_t elem = rng_exp(&rng, 0, ITEMS_NATURAL_LEN);
-            star->elems[elem] = u16_saturate_add(star->elems[elem], 1U << size);
-        }
-    }
-}
-
 
 bool star_load(struct star *star, struct save *save)
 {
@@ -57,7 +37,7 @@ void star_save(struct star *star, struct save *save)
 // sector
 // -----------------------------------------------------------------------------
 
-static struct sector *sector_new(struct world *world, size_t stars)
+struct sector *sector_new(struct world *world, size_t stars)
 {
     struct sector *sector =
         calloc(1, sizeof(*sector) + (stars * sizeof(sector->stars[0])));
@@ -65,41 +45,6 @@ static struct sector *sector_new(struct world *world, size_t stars)
     sector->world = world;
     sector->stars_len = stars;
     htable_reserve(&sector->index, stars);
-
-    return sector;
-}
-
-struct sector *sector_gen(struct world *world, struct coord coord)
-{
-    coord = coord_sector(coord);
-    struct rng rng = rng_make(coord_to_u64(coord));
-
-    double delta_max = ((double) coord_mid) * coord_mid;
-    double delta = coord_dist_2(coord, coord_center());
-
-    enum { stars_max = 1U << 10 };
-    size_t stars = delta > delta_max ? 4 :
-        (stars_max * (delta_max - delta)) / delta_max;
-
-    size_t fuzz = rng_uni(&rng, 0, (stars / 4) * 2);
-    stars = fuzz < stars ? stars - fuzz : stars + fuzz;
-
-    struct sector *sector = sector_new(world, stars);
-    sector->coord = coord;
-
-    for (size_t i = 0; i < stars; ++i) {
-        struct star *star = &sector->stars[i];
-
-        struct coord pos = coord_from_u64(rng_step(&rng));
-        pos.x = coord.x | (pos.x & coord_sector_mask);
-        pos.y = coord.y | (pos.y & coord_sector_mask);
-
-        struct htable_ret ret =
-            htable_put(&sector->index, coord_to_u64(pos), (uintptr_t) star);
-        if (!ret.ok) continue;
-
-        star_gen(star, pos);
-    }
 
     return sector;
 }
@@ -120,7 +65,7 @@ struct sector *sector_load(struct world *world, struct save *save)
     if (!save_read_magic(save, save_magic_sector)) return NULL;
 
     struct coord coord = save_read_type(save, typeof(coord));
-    struct sector *sector = sector_gen(world, coord);
+    struct sector *sector = gen_sector(world, coord, world_seed(world));
 
     size_t chunks = save_read_type(save, uint32_t);
     htable_reserve(&sector->chunks, chunks);

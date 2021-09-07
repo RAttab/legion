@@ -24,7 +24,7 @@ void check(const char *path)
     im_populate();
     tapes_populate();
     mod_compiler_init();
-    struct world *old = world_new();
+    struct world *old = world_new(0);
     struct coord coord = world_populate(old);
     world_step(old); // to create all the objects.
 

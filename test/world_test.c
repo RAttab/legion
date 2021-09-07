@@ -32,7 +32,6 @@ void check_learn_item(struct world *world, enum item item)
 {
     if (world_lab_known(world, item)) return;
 
-
     const struct tape_info *info = tapes_info(item);
     if (!info) return;
 
@@ -48,7 +47,7 @@ void check_learn_item(struct world *world, enum item item)
 
 void test_lab(void)
 {
-    struct world *world = world_new();
+    struct world *world = world_new(0);
     (void) world_populate(world);
 
     for (enum item it = ITEM_ACTIVE_FIRST; it < ITEM_ACTIVE_LAST; ++it)

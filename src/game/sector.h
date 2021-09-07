@@ -35,7 +35,6 @@ struct legion_packed star
 };
 static_assert(sizeof(struct star) == 4 * 8 + 2);
 
-void star_gen(struct star *, struct coord);
 bool star_load(struct star *, struct save *);
 void star_save(struct star *, struct save *);
 
@@ -63,6 +62,7 @@ struct sector
 };
 
 struct sector *sector_gen(struct world *, struct coord coord);
+struct sector *sector_new(struct world *, size_t stars);
 void sector_free(struct sector *);
 
 struct sector *sector_load(struct world *, struct save *);
