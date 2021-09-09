@@ -2,48 +2,80 @@
 ;; launches any available `&item_legion` to that star programmed with
 ;; `(mod boot 2)`.
 
-(let ((scanner-star (id &item_scanner 2))
-      (coord-star -1)
-      (legion 0)
-      (mem-index 1))
 
-  (assert (= (io &io_scan scanner-star (progn (io &io_coord (self)) (head))) &io_ok))
+(defconst scan-star-ongoing -1)
+(defconst scan-star-done -1)
 
-  (while (/= coord-star 0)
+(defconst mem-id (id &item_memory 1))
+(assert (= (io &io_ping mem-id) &io_ok))
 
-    (set legion (legion (progn (io &io_coord (self)) (head))))
-    (set coord-star (progn (assert (= (io &io_scan_val scanner-star) &io_ok))
-			   (head)))
+(defconst scanner-star (id &item_scanner 2))
+(assert (= (io &io_ping scanner-star) &io_ok))
 
-    (when (and (> legion 0) (and (/= coord-star -1) (/= coord-star 0)))
-      (when (and (= (count coord-star &item_brain) 0)
-		 (> (count coord-star &item_elem_a) 10000)
-		 (> (count coord-star &item_elem_b) 10000)
-		 (> (count coord-star &item_elem_c) 5000)
-		 (> (count coord-star &item_elem_d) 5000)
-		 (> (count coord-star &item_elem_e) 5000)
-		 (> (count coord-star &item_elem_f) 5000)
-		 (> (count coord-star &item_elem_g) 2000)
-		 (> (count coord-star &item_elem_h) 2000)
-		 (> (count coord-star &item_energy) 2000))
+(defconst scanner-count (id &item_scanner 3))
+(assert (= (io &io_ping scanner-count) &io_ok))
 
-	(assert (= (io &io_set (id &item_memory 1) mem-index coord-star) &io_ok))
-	(set mem-index (+ mem-index 1))
 
-	(assert (= (io &io_mod legion (mod boot 2)) &io_ok))
-	(assert (= (io &io_launch legion coord-star) &io_ok))
-	))))
+(let ((mem-index 0))
+  (io &io_scan scanner-star (progn (io &io_coord (self)) (head)))
+
+  (while 1
+    (case (progn (io &io_scan_val scanner-star) (head))
+      ((scan-star-ongoing 0)
+       (scan-star-done
+	(io &io_scan scanner-star
+	    (coord-inc (progn (io &io_status scanner-star) (head))))))
+      (star
+       (when (check-star star)
+	 (let ((legion-id (legion)))
+	   (assert (= (io &io_ping legion-id) &io_ok))
+
+	   (io &io_mod legion-id (mod boot 2))
+	   (io &io_launch legion-id star)
+
+	   (io &io_set mem-id mem-index star)
+	   (set mem-index (+ mem-index 1))))))))
+
+
+(defconst min-energy 2000)
+(defconst min-elem-top 10000)
+(defconst min-elem-mid 5000)
+(defconst min-elem-low 2000)
+(defun check-star (star)
+  (if (> (count star &item_brain) 0) 0
+    (if (< (count star &item_elem_a) min-elem-top) 0
+      (if (< (count star &item_elem_b) min-elem-top) 0
+	(if (< (count star &item_elem_c) min-elem-mid) 0
+	  (if (< (count star &item_elem_d) min-elem-mid) 0
+	    (if (< (count star &item_elem_e) min-elem-mid) 0
+	      (if (< (count star &item_elem_f) min-elem-mid) 0
+		(if (< (count star &item_elem_g) min-elem-low) 0
+		  (if (< (count star &item_elem_h) min-elem-low) 0
+		    (if (< (count star &item_energy) min-energy) 0
+		      1)))))))))))
+
+
+(defconst inc-y (bsl 1 (+ 16)))
+(defconst inc-x (bsl 1 (+ 32 16)))
+(defun coord-inc (coord)
+  (case (rem (tsc) 4)
+    ((0 (+ coord inc-x))
+     (1 (- coord inc-x))
+     (2 (+ coord inc-y))
+     (3 (- coord inc-y)))))
+
 
 (defun count (coord item)
-  (let ((val -1) (scanner (id &item_scanner 3)))
-    (assert (= (io &io_scan scanner coord item) &io_ok))
-    (while (= val -1)
-      (set val (progn (assert (= (io &io_scan_val scanner) &io_ok))
-			      (head))))
-    val))
+  (io &io_scan scanner-count coord item)
+  (let ((count -1))
+    (while (< count 0)
+      (set count (progn (io &io_scan_val scanner-count) (head))))
+    count))
 
-(defun legion (coord-self)
-  (when (count coord-self &item_legion)
+
+(defun legion ()
+  (let ((coord-self (progn (io &io_coord (self)) (head))))
+    (while (progn (io &io_scan coord-self &item_legion) (head)))
     (let ((id (id &item_legion 1)))
       (while (= (io &io_ping id) &io_fail) (set id (+ id 1)))
       id)))
