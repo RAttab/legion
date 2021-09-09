@@ -2,16 +2,19 @@
    Rémi Attab (remi.attab@gmail.com), 25 Feb 2016
    FreeBSD-style copyright and disclaimer apply
 
-   Xorshift random number generator
+   Extracted from PCG's PCG-RXS-M-XS (64 bit state, 64-bit output).
 
-   See George Marsaglia (2003). Xorshift RNGs.  DOI: 10.18637/jss.v008.i14
-     http://www.jstatsoft.org/article/view/v008i14
-   (section 4, function xor128)
-
-   Current implementation is the xorshift64* variant which has better
-   statistical properties.
-
-   TODO: Replace with PCG which is even better and allows for customization.
+   PCG: A Family of Simple Fast Space-Efficient Statistically Good Algorithms for Random Number Generation
+     Author: Melissa E. O'Neill
+     Institution: Harvey Mudd College
+     Address: Claremont, CA
+     Number: HMC-CS-2014-0905
+     Year: 2014
+     Month: Sep
+     Xurl: https://www.cs.hmc.edu/tr/hmc-cs-2014-0905.pdf
+     Implementation:
+       Repo: https://github.com/imneme/pcg-c
+       License: MIT-style license
 */
 
 #include "rng.h"
@@ -23,11 +26,7 @@
 
 struct rng rng_make(uint64_t seed)
 {
-    // We xor the seed with a randomly chosen number to avoid ending up with a 0
-    // state which would be bad.
-    struct rng rng = { .x = seed ^ UINT64_C(0xedef335f00e170b3) };
-    assert(rng.x);
-    return rng;
+    return (struct rng) { .x = seed };
 }
 
 
@@ -35,12 +34,21 @@ struct rng rng_make(uint64_t seed)
 // gen
 // -----------------------------------------------------------------------------
 
+// Reproduction of PCG-RXS-M-XS taken from pcg-c. All credits goes to the
+// original author (see header).
 uint64_t rng_step(struct rng *rng)
 {
-    rng->x ^= rng->x >> 12;
-    rng->x ^= rng->x << 25;
-    rng->x ^= rng->x >> 27;
-    return rng->x * UINT64_C(2685821657736338717);
+    // ref: pcg-c/include/pcg_variants.h
+    //   math: pcg_oneseq_64_step_r
+    //   const: PCG_DEFAULT_MULTIPLIER_64, PCG_DEFAULT_INCREMENT_64
+    rng->x = rng->x * 6364136223846793005ULL + 1442695040888963407ULL;
+
+    // ref: pcg-c/include/pcg_variants.h
+    //   math: pcg_output_rxs_m_xs_64_64
+    //   const: nil
+    uint64_t x = rng->x;
+    x = ((x >> ((x >> 59U) + 5U)) ^ x) * 12605985483714917081ULL;
+    return (x >> 43u) ^ x;
 }
 
 bool rng_prob(struct rng *rng, double prob)
