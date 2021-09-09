@@ -98,6 +98,7 @@ bool ui_input_get_u64(struct ui_input *input, uint64_t *ret)
 
 bool ui_input_get_symbol(struct ui_input *input, struct symbol *ret)
 {
+    if (!input->buf.len) return false;
     return symbol_parse(input->buf.c, input->buf.len, ret);
 }
 
