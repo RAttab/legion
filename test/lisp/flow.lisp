@@ -108,13 +108,13 @@
 ;; -----------------------------------------------------------------------------
 
 (flow/case-simplest
- (mod (assert (= 0 (case 5 ()))))
+ (mod (assert (= 5 (case 5 ()))))
  (check))
 
 (flow/case-true
- (mod (assert (= 2 (case 5 ((0 1) (5 2) (2 3)) 4))))
+ (mod (assert (= 2 (case 5 ((0 1) (5 2) (2 3)) (x 4)))))
  (check))
 
-(flow/case-false
- (mod (assert (= 4 (case 5 ((0 1) (1 2) (1 3)) 4))))
+(flow/case-default
+ (mod (assert (= 10 (case 5 ((0 1) (1 2) (1 3)) (x (* x 2))))))
  (check))

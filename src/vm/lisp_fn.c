@@ -513,13 +513,43 @@ static void lisp_fn_case(struct lisp *lisp)
         }
     }
 
-    // Remove the case value
-    lisp_write_op(lisp, OP_POP);
+    // Optional default clause. If the default clause is not present then our
+    // return value is the case value.
+    if (!lisp_peek_close(lisp)) {
+        if (!lisp_expect(lisp, token_open)) {
+            lisp_goto_close(lisp);
+            return;
+        }
 
-    if (!lisp_peek_close(lisp)) lisp_stmt(lisp);
-    else {
-        lisp_write_op(lisp, OP_PUSH);
-        lisp_write_value(lisp, (word_t) 0);
+        token = lisp_expect(lisp, token_symbol);
+        if (!token) {
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
+        uint64_t key = symbol_hash(&token->value.s);
+        reg_t reg = lisp_reg_alloc(lisp, key);
+        lisp_index_at(lisp, token);
+
+        // pop case value into our register
+        lisp_write_op(lisp, OP_POPR);
+        lisp_write_value(lisp, reg);
+
+        if (!lisp_stmt(lisp)) {
+            lisp_err(lisp, "missing default-clause statment");
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
+
+        lisp_reg_free(lisp, reg, key);
+
+        if (!lisp_expect(lisp, token_close)) {
+            lisp_goto_close(lisp);
+            lisp_goto_close(lisp);
+            return;
+        }
     }
 
     for (size_t i = 0; i < len; ++i)
