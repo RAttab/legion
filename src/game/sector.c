@@ -160,10 +160,7 @@ ssize_t sector_scan(struct sector *sector, struct coord coord, enum item item)
     if (!ret.ok) return -1;
 
     struct star *star = (void *) ret.value;
-    if (star->state != star_active) {
-        if (item < ITEM_NATURAL_FIRST || item >= ITEM_SYNTH_FIRST) return -1;
-        return star->elems[item - ITEM_NATURAL_FIRST];
-    }
+    if (star->state != star_active) return star_scan(star, item);
 
     ret = htable_get(&sector->chunks, id);
     assert(ret.ok);

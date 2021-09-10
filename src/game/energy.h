@@ -50,7 +50,7 @@ inline energy_t energy_prod_solar(
 inline energy_t energy_prod_kwheel(
         const struct energy *en, const struct star *star)
 {
-    const uint16_t elem_k = star_elem(star, ITEM_ELEM_K);
+    const uint16_t elem_k = star_scan(star, ITEM_ELEM_K);
     return (elem_k * en->kwheel) / energy_kwheel_div;
 }
 

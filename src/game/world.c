@@ -256,7 +256,10 @@ struct coord world_scan_next(struct world *world, struct world_scan_it *it)
 {
     struct sector *sector = world_sector(world, it->coord);
     if (it->index >= sector->stars_len) return coord_nil();
-    return sector->stars[it->index++].coord;
+
+    struct coord result = sector->stars[it->index].coord;
+    it->index++;
+    return result;
 }
 
 
@@ -382,15 +385,15 @@ static struct coord world_populate_star(struct sector *sector)
     for (size_t i = 0; i < sector->stars_len; ++i) {
         const struct star *star = &sector->stars[i];
 
-        if (star->energy < 10000) continue;
-        if (star_elem(star, ITEM_ELEM_A) < 20000) continue;
-        if (star_elem(star, ITEM_ELEM_B) < 20000) continue;
-        if (star_elem(star, ITEM_ELEM_C) < 10000) continue;
-        if (star_elem(star, ITEM_ELEM_D) < 10000) continue;
-        if (star_elem(star, ITEM_ELEM_E) < 10000) continue;
-        if (star_elem(star, ITEM_ELEM_F) < 10000) continue;
-        if (star_elem(star, ITEM_ELEM_G) < 1000) continue;
-        if (star_elem(star, ITEM_ELEM_H) < 1000) continue;
+        if (star_scan(star, ITEM_ENERGY) < 10000) continue;
+        if (star_scan(star, ITEM_ELEM_A) < 20000) continue;
+        if (star_scan(star, ITEM_ELEM_B) < 20000) continue;
+        if (star_scan(star, ITEM_ELEM_C) < 10000) continue;
+        if (star_scan(star, ITEM_ELEM_D) < 10000) continue;
+        if (star_scan(star, ITEM_ELEM_E) < 10000) continue;
+        if (star_scan(star, ITEM_ELEM_F) < 10000) continue;
+        if (star_scan(star, ITEM_ELEM_G) < 1000) continue;
+        if (star_scan(star, ITEM_ELEM_H) < 1000) continue;
         return star->coord;
     }
     return coord_nil();

@@ -38,10 +38,12 @@ static_assert(sizeof(struct star) == 4 * 8 + 2);
 bool star_load(struct star *, struct save *);
 void star_save(struct star *, struct save *);
 
-inline uint16_t star_elem(const struct star *star, enum item item)
+inline uint16_t star_scan(const struct star *star, enum item item)
 {
-    assert(item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST);
-    return star->elems[item - ITEM_NATURAL_FIRST];
+    if (item == ITEM_ENERGY) return star->energy;
+    if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
+        return star->elems[item - ITEM_NATURAL_FIRST];
+    return 0;
 }
 
 

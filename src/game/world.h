@@ -57,16 +57,15 @@ struct world_render_it world_render_it(struct world *, struct rect viewport);
 const struct star *world_render_next(struct world *, struct world_render_it *);
 
 
+// -----------------------------------------------------------------------------
+// scan
+// -----------------------------------------------------------------------------
+
 struct legion_packed world_scan_it
 {
     struct coord coord;
     uint64_t index;
 };
-
-
-// -----------------------------------------------------------------------------
-// scan
-// -----------------------------------------------------------------------------
 
 struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);
