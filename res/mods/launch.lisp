@@ -75,7 +75,7 @@
 
 (defun legion ()
   (let ((coord-self (progn (io &io_coord (self)) (head))))
-    (while (progn (io &io_scan coord-self &item_legion) (head)))
+    (while (= (count coord-self &item_legion) 0))
     (let ((id (id &item_legion 1)))
       (while (= (io &io_ping id) &io_fail) (set id (+ id 1)))
       id)))
