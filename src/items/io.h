@@ -32,13 +32,14 @@ enum legion_packed io
 
     // Brain
     IO_ID         = IO_MIN + 0x10,
-    IO_COORD      = IO_MIN + 0x11,
-    IO_SEND       = IO_MIN + 0x12,
-    IO_RECV       = IO_MIN + 0x13,
-    IO_DBG_ATTACH = IO_MIN + 0x18,
-    IO_DBG_DETACH = IO_MIN + 0x19,
-    IO_DBG_BREAK  = IO_MIN + 0x1A,
-    IO_DBG_STEP   = IO_MIN + 0x1B,
+    IO_TICK       = IO_MIN + 0x12,
+    IO_COORD      = IO_MIN + 0x13,
+    IO_SEND       = IO_MIN + 0x18,
+    IO_RECV       = IO_MIN + 0x19,
+    IO_DBG_ATTACH = IO_MIN + 0x1A,
+    IO_DBG_DETACH = IO_MIN + 0x1B,
+    IO_DBG_BREAK  = IO_MIN + 0x1C,
+    IO_DBG_STEP   = IO_MIN + 0x1D,
 
     // Lab
     IO_TAPE_AT    = IO_MIN + 0x20,

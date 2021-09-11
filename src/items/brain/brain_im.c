@@ -5,6 +5,7 @@
 
 #include "items/io.h"
 #include "game/chunk.h"
+#include "game/world.h"
 #include "vm/op.h"
 
 static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_t id);
@@ -118,6 +119,7 @@ static void im_brain_step_io(
     case IO_RECV: { ok = im_brain_step_recv(brain); break; }
 
     case IO_ID: { vm_push(&brain->vm, brain->id); break; }
+    case IO_TICK: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
     case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
 
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }

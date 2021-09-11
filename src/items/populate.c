@@ -210,6 +210,7 @@ static struct io_config io_configs[IO_LEN] =
 
     // Brain
     io_init(IO_ID),
+    io_init(IO_TICK),
     io_init(IO_COORD),
     io_init(IO_SEND),
     io_init(IO_RECV),
