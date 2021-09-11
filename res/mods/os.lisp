@@ -59,7 +59,7 @@
 	(src (progn (io &io_get mem-id mem-pck-src) (head))))
 
     (for (i 1) (<= i len) (+ i 1)
-	 (when (/= (id &item_transmit i) src)
+	 (when (/= (id &item_receive i) src)
 	   (case (progn (io &io_get mem-id mem-pck-len) (head))
 	     ((1
 	       (io &io_transmit (id &item_transmit i)

@@ -4,7 +4,7 @@
 
 
 (defconst scan-star-ongoing -1)
-(defconst scan-star-done -1)
+(defconst scan-star-done 0)
 
 (defconst mem-id (id &item_memory 1))
 (assert (= (io &io_ping mem-id) &io_ok))
@@ -16,8 +16,9 @@
 (assert (= (io &io_ping scanner-count) &io_ok))
 
 
-(let ((mem-index 0))
-  (io &io_scan scanner-star (progn (io &io_coord (self)) (head)))
+(let ((mem-index 1))
+  (io &io_scan scanner-star
+      (coord-inc (progn (io &io_coord (self)) (head))))
 
   (while 1
     (case (progn (io &io_scan_val scanner-star) (head))
@@ -58,11 +59,12 @@
 (defconst inc-y (bsl 1 (+ 16)))
 (defconst inc-x (bsl 1 (+ 32 16)))
 (defun coord-inc (coord)
-  (case (rem (tsc) 4)
+  (case (rem (progn (io &io_tick (self)) (head)) 5)
     ((0 (+ coord inc-x))
      (1 (- coord inc-x))
      (2 (+ coord inc-y))
-     (3 (- coord inc-y)))))
+     (3 (- coord inc-y))
+     (4 coord))))
 
 
 (defun count (coord item)
