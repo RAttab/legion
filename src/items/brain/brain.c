@@ -12,6 +12,9 @@
 // specs
 // -----------------------------------------------------------------------------
 
+#define im_brain_len(stack) \
+    (sizeof(struct im_brain) + sizeof(word_t) * vm_stack_len(stack))
+
 enum
 {
     im_brain_stack_base = 1,
@@ -23,9 +26,9 @@ enum
     im_brain_speed_volume = 2,
     im_brain_speed_dense = 4,
 
-    im_brain_len_base = sizeof(struct im_brain) + vm_len(im_brain_stack_base),
-    im_brain_len_volume = sizeof(struct im_brain) + vm_len(im_brain_stack_volume),
-    im_brain_len_dense = sizeof(struct im_brain) + vm_len(im_brain_stack_dense),
+    im_brain_len_base = im_brain_len(im_brain_stack_base),
+    im_brain_len_volume = im_brain_len(im_brain_stack_volume),
+    im_brain_len_dense = im_brain_len(im_brain_stack_dense),
 };
 
 

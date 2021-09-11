@@ -170,7 +170,7 @@ void active_save(struct active *active, struct save *save)
 
     save_write_value(save, active->count);
     save_write(save, active->arena, len * active->size);
-    save_write(save, active->ports, len * sizeof(struct ports));
+    save_write(save, active->ports, len * sizeof(*active->ports));
 
     if (active->cap < 64) save_write_value(save, active->free);
     else save_write_vec64(save, (const void *) active->free);
