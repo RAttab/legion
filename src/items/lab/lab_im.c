@@ -260,6 +260,7 @@ static bool im_lab_flow(const void *state, struct flow *flow)
     if (!lab->item) return false;
     *flow = (struct flow) {
         .id = lab->id,
+        .loops = loops_inf,
         .target = lab->item,
         .in = lab->state == im_lab_waiting ? lab->item : 0,
         .rank = tapes_info(lab->item)->rank + 1,
