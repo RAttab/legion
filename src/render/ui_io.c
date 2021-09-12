@@ -282,21 +282,22 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     switch (cmd->id)
     {
     case IO_SEND: {
-        uint64_t val = 0;
-        if (!ui_input_get_u64(&cmd->arg[0].val, &val)) return;
-        len = legion_min(val, (size_t) im_packet_max);
+        word_t val = 0;
+        if (!ui_input_eval(&cmd->arg[0].val, &val)) return;
+        len = legion_min(val, im_packet_max);
+        len = legion_max(val, 0);
 
         for (size_t i = 0; i < len; ++i) {
-            if (ui_input_get_u64(&cmd->arg[i+1].val, &val))
+            if (ui_input_eval(&cmd->arg[i+1].val, &val))
                 args[i] = val;
         }
         break;
     }
 
     default: {
-        uint64_t val = 0;
+        word_t val = 0;
         for (size_t i = 0; i < cmd->args; ++i) {
-            if (ui_input_get_u64(&cmd->arg[i].val, &val))
+            if (ui_input_eval(&cmd->arg[i].val, &val))
                 args[i] = val;
         }
         break;

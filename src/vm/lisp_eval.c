@@ -78,7 +78,7 @@ static word_t lisp_eval(struct lisp *lisp)
 
 static void lisp_eval_goto_close(struct lisp *lisp)
 {
-    while (!lisp_peek_close(lisp)) lisp_next(lisp);
+    while (!lisp_eof(lisp) && !lisp_peek_close(lisp)) lisp_next(lisp);
 }
 
 

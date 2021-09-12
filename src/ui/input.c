@@ -76,22 +76,6 @@ bool ui_input_get_u64(struct ui_input *input, uint64_t *ret)
     const char *end = it + input->buf.len;
     it += str_skip_spaces(it, end - it);
 
-    if (*it == '!' || *it == '&') {
-        struct atoms *atoms = world_atoms(core.state.world);
-        word_t atom = atoms_parse(atoms, it, end - it);
-        if (atom == -1) return false;
-        *ret = atom;
-        return true;
-    }
-
-    if (*it == '(') {
-        struct mods *mods = world_mods(core.state.world);
-        const struct mod *mod = mods_parse(mods, it, end - it);
-        if (!mod) return false;
-        *ret = mod->id;
-        return true;
-    }
-
     size_t read = str_atou(it, end - it, ret);
     return read > 0;
 }
@@ -100,6 +84,16 @@ bool ui_input_get_symbol(struct ui_input *input, struct symbol *ret)
 {
     if (!input->buf.len) return false;
     return symbol_parse(input->buf.c, input->buf.len, ret);
+}
+
+bool ui_input_eval(struct ui_input *input, word_t *ret)
+{
+    if (!input->buf.len) return false;
+
+    struct lisp_ret eval =
+        world_eval(core.state.world, input->buf.c, input->buf.len);
+    *ret = eval.value;
+    return eval.ok;
 }
 
 void ui_input_render(

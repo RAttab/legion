@@ -159,6 +159,11 @@ static void lisp_err_token(void *ctx, const char *fmt, ...)
 // in
 // -----------------------------------------------------------------------------
 
+static bool lisp_eof(struct lisp *lisp)
+{
+    return token_eof(&lisp->in);
+}
+
 static void lisp_goto_close(struct lisp *lisp)
 {
     token_goto_close(&lisp->in);
@@ -562,4 +567,39 @@ struct mod *mod_compile(
     htable_reset(&lisp.pub.symb);
 
     return mod;
+}
+
+
+// -----------------------------------------------------------------------------
+// eval
+// -----------------------------------------------------------------------------
+
+struct lisp *lisp_new(struct mods *mods, struct atoms *atoms)
+{
+    struct lisp *lisp = calloc(1, sizeof(*lisp));
+    lisp->mods = mods;
+    lisp->atoms = atoms;
+    return lisp;
+}
+
+void lisp_free(struct lisp *lisp)
+{
+    free(lisp);
+}
+
+struct lisp_ret lisp_eval_const(struct lisp *lisp, const char *src, size_t len)
+{
+    token_init(&lisp->in, src, len, lisp_err_token, lisp);
+    lisp->err.len = 0;
+
+    word_t result = lisp_eval(lisp);
+    for (size_t i = 0; i < lisp->err.len; ++i) {
+        struct mod_err *err = lisp->err.list + i;
+        dbg("eval:%u:%u: %s", err->row, err->col, err->str);
+    }
+
+    return (struct lisp_ret) {
+        .ok = lisp->err.len == 0,
+        .value = result,
+    };
 }

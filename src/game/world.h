@@ -9,6 +9,7 @@
 #include "game/save.h"
 #include "game/coord.h"
 #include "game/sector.h"
+#include "vm/mod.h"
 
 struct mods;
 struct hset;
@@ -40,6 +41,8 @@ struct chunk *world_chunk(struct world *, struct coord);
 struct sector *world_sector(struct world *, struct coord);
 const struct star *world_star_in(struct world *, struct rect);
 const struct star *world_star_at(struct world *, struct coord);
+
+struct lisp_ret world_eval(struct world *, const char *src, size_t len);
 
 
 // -----------------------------------------------------------------------------

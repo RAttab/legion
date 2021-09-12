@@ -156,3 +156,20 @@ struct mods_list *mods_list(struct mods *);
 
 void mods_populate(struct mods *, struct atoms *);
 
+
+// -----------------------------------------------------------------------------
+// lisp
+// -----------------------------------------------------------------------------
+
+struct lisp;
+
+struct lisp_ret
+{
+    bool ok;
+    word_t value;
+};
+
+struct lisp *lisp_new(struct mods *mods, struct atoms *atoms);
+void lisp_free(struct lisp *);
+
+struct lisp_ret lisp_eval_const(struct lisp *, const char *src, size_t len);

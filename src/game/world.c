@@ -31,6 +31,8 @@ struct world
 
     struct htable sectors;
     struct lanes lanes;
+
+    struct lisp *lisp;
 };
 
 struct world *world_new(seed_t seed)
@@ -40,6 +42,7 @@ struct world *world_new(seed_t seed)
     world->seed = seed;
     world->atoms = atoms_new();
     world->mods = mods_new();
+    world->lisp = lisp_new(world->mods, world->atoms);
     lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
     htable_reset(&world->research);
@@ -49,6 +52,7 @@ struct world *world_new(seed_t seed)
 
 void world_free(struct world *world)
 {
+    lisp_free(world->lisp);
     atoms_free(world->atoms);
     mods_free(world->mods);
     lanes_free(&world->lanes);
@@ -79,6 +83,9 @@ struct world *world_load(struct save *save)
 
     mods_free(world->mods);
     if (!(world->mods = mods_load(save))) goto fail;
+
+    if (world->lisp) lisp_free(world->lisp);
+    world->lisp = lisp_new(world->mods, world->atoms);
 
     if (!lanes_load(&world->lanes, world, save)) goto fail;
 
@@ -206,6 +213,11 @@ const struct star *world_star_in(struct world *world, struct rect rect)
 const struct star *world_star_at(struct world *world, struct coord coord)
 {
     return sector_star_at(world_sector(world, coord), coord);
+}
+
+struct lisp_ret world_eval(struct world *world, const char *src, size_t len)
+{
+    return lisp_eval_const(world->lisp, src, len);
 }
 
 

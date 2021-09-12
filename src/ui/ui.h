@@ -415,6 +415,7 @@ void ui_input_set(struct ui_input *, const char *str);
 
 bool ui_input_get_u64(struct ui_input *, uint64_t *ret);
 bool ui_input_get_symbol(struct ui_input *, struct symbol *ret);
+bool ui_input_eval(struct ui_input *, word_t *ret);
 
 enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
 void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
