@@ -421,6 +421,14 @@ void chunk_lanes_launch(
         struct coord dst,
         const word_t *data, size_t len)
 {
+    switch (type)
+    {
+    case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: { break; }
+    case ITEM_BULLET: { break; }
+    case ITEM_DATA: { break; }
+    default: { assert(false); }
+    }
+
     world_lanes_launch(chunk->world, type, speed, chunk->star.coord, dst, data, len);
 }
 
