@@ -183,6 +183,10 @@ word_t chunk_name(struct chunk *chunk)
 {
     return chunk->name;
 }
+void chunk_rename(struct chunk *chunk, word_t new)
+{
+    chunk->name = new;
+}
 
 bool chunk_harvest(struct chunk *chunk, enum item item)
 {

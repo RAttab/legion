@@ -88,6 +88,13 @@ static void im_brain_recv(
     vm_push(&brain->vm, len);
 }
 
+static void im_brain_name(
+        struct im_brain *brain, struct chunk *chunk,
+        const word_t *args, size_t len)
+{
+    if (len) chunk_rename(chunk, args[0]);
+    else vm_push(&brain->vm, chunk_name(chunk));
+}
 
 // -----------------------------------------------------------------------------
 // step
@@ -121,6 +128,7 @@ static void im_brain_step_io(
     case IO_ID: { vm_push(&brain->vm, brain->id); break; }
     case IO_TICK: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
     case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
+    case IO_NAME: { im_brain_name(brain, chunk, io + 1, len - 1); break; }
 
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }
     }
@@ -243,6 +251,8 @@ static void im_brain_io(
     case IO_RESET: { im_brain_reset(brain); return; }
     case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
 
+    case IO_NAME: { im_brain_name(brain, chunk, args, len); return; }
+
     case IO_SEND: { im_brain_io_send(brain, args, len); return; }
     case IO_RECV: { im_brain_recv(brain, args, len); return; }
 
@@ -270,6 +280,7 @@ static const word_t im_brain_io_list[] =
 
     IO_ID,
     IO_COORD,
+    IO_NAME,
 
     IO_SEND,
     IO_RECV,

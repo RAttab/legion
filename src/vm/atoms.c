@@ -261,6 +261,8 @@ word_t atoms_make(struct atoms *atoms, const struct symbol *symbol)
 
 bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)
 {
+    if (!id) return false;
+
     struct htable_ret ret = htable_get(&atoms->iword, id);
     if (!ret.ok) return false;
 

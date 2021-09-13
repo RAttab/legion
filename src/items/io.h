@@ -34,6 +34,7 @@ enum legion_packed io
     IO_ID         = IO_MIN + 0x10,
     IO_TICK       = IO_MIN + 0x12,
     IO_COORD      = IO_MIN + 0x13,
+    IO_NAME       = IO_MIN + 0x14,
     IO_SEND       = IO_MIN + 0x18,
     IO_RECV       = IO_MIN + 0x19,
     IO_DBG_ATTACH = IO_MIN + 0x1A,

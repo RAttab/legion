@@ -97,7 +97,7 @@ word_t gen_name(struct world *world, struct coord coord)
     assert(prefix->len + suffix->len + 1 < symbol_cap);
 
     struct symbol name = *prefix;
-    name.c[name.len] = ' ';
+    name.c[name.len] = '-';
     name.len++;
     memcpy(name.c + name.len, suffix->c, suffix->len);
     name.len += suffix->len;

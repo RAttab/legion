@@ -110,6 +110,7 @@ enum
     ui_io_tape,
     ui_io_mod,
 
+    ui_io_name,
     ui_io_send,
     ui_io_dbg_attach,
     ui_io_dbg_detach,
@@ -161,6 +162,7 @@ struct ui_io *ui_io_new(void)
             [ui_io_tape] = ui_io_cmd2(font, IO_TAPE,     "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
 
+            [ui_io_name] = ui_io_cmd1(font, IO_NAME,       "name:  "),
             [ui_io_send] = ui_io_cmd4(font, IO_SEND,
                     "len:   ", "[0]:   ", "[1]:   ", "[2]:   "),
             [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),

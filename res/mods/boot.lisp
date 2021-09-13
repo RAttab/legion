@@ -20,6 +20,13 @@
 (defconst energy-target 1000)
 (defconst specs-solar-div 1000)
 
+(defconst mem-id (id &item_memory 1))
+(assert (= (io &io_ping mem-id) &io_ok))
+
+;; Name
+(unless (progn (io &io_get mem-id 0) (head))
+  (io &io_name (self) !Bob-The-Homeworld))
+
 
 ;; Elem - Extract
 (progn
@@ -156,7 +163,7 @@
   ;; children stars while the parent is filled in automatically when
   ;; legion is deployed.
   (for (i 0) (< i antenna-count) (+ i 1)
-       (let ((coord (progn (io &io_get (id &item_memory 1) i) (head))))
+       (let ((coord (progn (io &io_get mem-id i) (head))))
 	 (assert (= (io &io_target (id &item_transmit (+ i 1)) coord) &io_ok))
 	 (assert (= (io &io_target (id &item_receive (+ i 1)) coord) &io_ok)))))
 
