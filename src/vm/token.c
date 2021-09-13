@@ -103,13 +103,6 @@ void token_goto_close(struct tokenizer *tok)
     }
 }
 
-#define token_err(tok, fmt, ...)                        \
-    do {                                                \
-        if (!tok->err_fn) break;                        \
-        tok->err_fn(tok->err_ctx, fmt, __VA_ARGS__);    \
-    } while (false)
-
-
 struct token *token_next(struct tokenizer *tok, struct token *token)
 {
     token_skip_spaces(tok);
@@ -268,4 +261,62 @@ struct token *token_expect(
         struct tokenizer *tok, struct token *token, enum token_type exp)
 {
     return token_assert(tok, token_next(tok, token), exp);
+}
+
+
+// -----------------------------------------------------------------------------
+// stderr
+// -----------------------------------------------------------------------------
+
+#include <unistd.h>
+#include <stdarg.h>
+
+struct token_ctx
+{
+    bool ok;
+    const char *name;
+    struct tokenizer *tok;
+};
+
+static void token_ctx_err(void *_ctx, const char *fmt, ...)
+{
+    struct token_ctx *ctx = _ctx;
+    ctx->ok = false;
+
+    char str[256] = {0};
+    char *it = str;
+    char *end = str + sizeof(str);
+
+    it += snprintf(str, end - it, "%s:%zu:%zu: ",
+            ctx->name, ctx->tok->row+1, ctx->tok->col+1);
+
+    va_list args;
+    va_start(args, fmt);
+    it += vsnprintf(it, end - it, fmt, args);
+    va_end(args);
+
+    *it = '\n'; it++;
+
+    ssize_t ret = write(2, str, it - str);
+    assert(ret == (it - str));
+}
+
+struct token_ctx *token_init_stderr(
+        struct tokenizer *tok, const char *name, const char *src, size_t len)
+{
+    struct token_ctx *ctx = calloc(1, sizeof(*ctx));
+    *ctx = (struct token_ctx) { .ok = true, .name = name, .tok = tok };
+
+    token_init(tok, src, len, token_ctx_err, ctx);
+    return ctx;
+}
+
+void token_ctx_free(struct token_ctx *ctx)
+{
+    free(ctx);
+}
+
+bool token_ctx_ok(struct token_ctx *ctx)
+{
+    return ctx->ok;
 }

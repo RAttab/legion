@@ -25,34 +25,6 @@
 // token
 // -----------------------------------------------------------------------------
 
-struct ctx
-{
-    const char *path;
-    const struct tokenizer *tok;
-};
-
-legion_printf(2, 3)
-void ctx_err(void *_ctx, const char *fmt, ...)
-{
-    struct ctx *ctx = _ctx;
-
-    char str[256] = {0};
-    char *it = str;
-    char *end = str + sizeof(str);
-
-    it += snprintf(str, end - it, "%s:%zu:%zu: ",
-            ctx->path, ctx->tok->row+1, ctx->tok->col+1);
-
-    va_list args;
-    va_start(args, fmt);
-    it += vsnprintf(it, end - it, fmt, args);
-    va_end(args);
-
-    *it = '\n'; it++;
-
-    write(2, str, it - str);
-}
-
 word_t token_word(struct tokenizer *tok, struct atoms *atoms)
 {
     struct token token = {0};
@@ -282,9 +254,8 @@ bool check_file(const char *path)
     im_populate_atoms(atoms);
 
     struct tokenizer tok = {0};
-    struct mfile mem = mfile_open(path);
-    struct ctx ctx = { .path = path, .tok = &tok };
-    token_init(&tok, mem.ptr, mem.len, ctx_err, &ctx);
+    struct mfile file = mfile_open(path);
+    struct token_ctx *ctx = token_init_stderr(&tok, path, file.ptr, file.len);
 
     bool ok = true;
     struct token token = {0};
@@ -324,7 +295,9 @@ bool check_file(const char *path)
         vm_free(vm);
     }
 
-    mfile_close(&mem);
+    assert(token_ctx_ok(ctx));
+    token_ctx_free(ctx);
+    mfile_close(&file);
     mods_free(mods);
     atoms_free(atoms);
     return ok;

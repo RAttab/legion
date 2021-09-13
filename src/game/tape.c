@@ -183,41 +183,6 @@ static const struct tape_info *tapes_info_for(enum item id)
 // populate
 // -----------------------------------------------------------------------------
 
-#include <unistd.h>
-
-
-struct tapes_ctx
-{
-    bool ok;
-    const char *path;
-    struct tokenizer *tok;
-};
-
-legion_printf(2, 3)
-static void tapes_err(void *_ctx, const char *fmt, ...)
-{
-    struct tapes_ctx *ctx = _ctx;
-    ctx->ok = false;
-
-    char str[256] = {0};
-    char *it = str;
-    char *end = str + sizeof(str);
-
-    it += snprintf(str, end - it, "%s:%zu:%zu: ",
-            ctx->path, ctx->tok->row+1, ctx->tok->col+1);
-
-    va_list args;
-    va_start(args, fmt);
-    it += vsnprintf(it, end - it, fmt, args);
-    va_end(args);
-
-    *it = '\n'; it++;
-
-    ssize_t ret = write(2, str, it - str);
-    assert(ret == (it - str));
-}
-
-
 enum tapes_type { tapes_nil = 0, tapes_in, tapes_out };
 
 struct tapes_vec
@@ -264,7 +229,7 @@ static enum item tapes_assert_item(
 
     word_t item = atoms_get(atoms, &token->value.s);
     if (item <= 0 || item >= ITEM_MAX) {
-        tapes_err(tok->err_ctx, "invalid item atom: %s", token->value.s.c);
+        token_err(tok, "invalid item atom: %s", token->value.s.c);
         assert(false);
     }
 
@@ -317,8 +282,7 @@ static void tapes_load_file(const char *path, struct atoms *atoms)
     struct mfile file = mfile_open(path);
 
     struct tokenizer tok = {0};
-    struct tapes_ctx ctx = { .ok = true, .path = path, .tok = &tok };
-    token_init(&tok, file.ptr, file.len, tapes_err, &ctx);
+    struct token_ctx *ctx = token_init_stderr(&tok, path, file.ptr, file.len);
 
     struct token token = {0};
     while (token_next(&tok, &token)->type != token_nil) {
@@ -331,16 +295,14 @@ static void tapes_load_file(const char *path, struct atoms *atoms)
         }
     }
 
+    assert(token_ctx_ok(ctx));
+    token_ctx_free(ctx);
     mfile_close(&file);
-    assert(ctx.ok);
 }
 
 
-void tapes_populate(void)
+void tapes_populate(struct atoms *atoms)
 {
-    struct atoms *atoms = atoms_new();
-    im_populate_atoms(atoms);
-
     char path[PATH_MAX] = {0};
     core_path_res("tapes", path, sizeof(path));
 
@@ -353,6 +315,4 @@ void tapes_populate(void)
 
     for (enum item item = 0; item < ITEM_MAX; ++item)
         (void) tapes_info_for(item);
-
-    atoms_free(atoms);
 }

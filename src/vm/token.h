@@ -69,3 +69,22 @@ struct token *token_next(struct tokenizer *, struct token *);
 struct token *token_peek(struct tokenizer *, struct token *);
 struct token *token_expect(struct tokenizer *, struct token *, enum token_type exp);
 struct token *token_assert(struct tokenizer *, struct token *, enum token_type exp);
+
+#define token_err(_tok_, fmt, ...)                      \
+    do {                                                \
+        struct tokenizer *_tok = (_tok_);               \
+        if (!_tok->err_fn) break;                       \
+        _tok->err_fn(_tok->err_ctx, fmt, __VA_ARGS__);  \
+    } while (false)
+
+
+// -----------------------------------------------------------------------------
+// token_ctx
+// -----------------------------------------------------------------------------
+
+struct token_ctx;
+
+struct token_ctx *token_init_stderr(
+        struct tokenizer *, const char *name, const char *src, size_t len);
+void token_ctx_free(struct token_ctx *);
+bool token_ctx_ok(struct token_ctx *);

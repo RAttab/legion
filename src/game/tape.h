@@ -10,6 +10,8 @@
 #include "items/item.h"
 #include "utils/bits.h"
 
+struct atoms;
+
 
 // -----------------------------------------------------------------------------
 // tape
@@ -110,7 +112,7 @@ bool tape_set_load(struct tape_set *, struct save *);
 // tapes
 // -----------------------------------------------------------------------------
 
-void tapes_populate(void);
+void tapes_populate(struct atoms *);
 const struct tape *tapes_get(enum item id);
 
 struct tape_info
