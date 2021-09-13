@@ -184,7 +184,7 @@ struct sector *world_sector(struct world *world, struct coord sector)
     struct htable_ret ret = htable_get(&world->sectors, id);
     if (ret.ok) return (struct sector *) ret.value;
 
-    struct sector *value = gen_sector(world, coord, world->seed);
+    struct sector *value = gen_sector(world, coord);
     ret = htable_put(&world->sectors, id, (uintptr_t) value);
     assert(ret.ok);
 
@@ -434,7 +434,7 @@ struct coord world_populate(struct world *world)
     while (true) {
         if (sector) sector_free(sector);
 
-        sector = gen_sector(world, coord_from_u64(rng_step(&rng)), world->seed);
+        sector = gen_sector(world, coord_from_u64(rng_step(&rng)));
         if (sector->stars_len < 100) continue;
 
         struct coord coord = world_populate_star(sector);

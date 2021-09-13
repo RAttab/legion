@@ -7,6 +7,7 @@
 #include "vm/mod.h"
 #include "game/tape.h"
 #include "game/world.h"
+#include "render/core.h"
 #include "items/config.h"
 
 
@@ -65,9 +66,7 @@ void test_lab(void)
 
 int main(int, char **)
 {
-    im_populate();
-    tapes_populate();
-    mod_compiler_init();
+    core_populate();
 
     test_lab();
 

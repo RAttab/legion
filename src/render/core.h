@@ -12,8 +12,9 @@
 #include "SDL.h"
 
 struct map;
-struct ui_topbar;
 struct sector;
+struct atoms;
+struct ui_topbar;
 
 
 // -----------------------------------------------------------------------------
@@ -111,3 +112,4 @@ void core_push_event(enum event, uint64_t d0, uint64_t d1);
 
 void core_save(void);
 void core_load(void);
+void core_populate(void);

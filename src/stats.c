@@ -19,8 +19,7 @@ int stats_run(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    im_populate();
-    tapes_populate();
+    core_populate();
 
     struct symbol sym = {0};
     struct atoms *atoms = atoms_new();

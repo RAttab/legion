@@ -65,7 +65,7 @@ struct sector *sector_load(struct world *world, struct save *save)
     if (!save_read_magic(save, save_magic_sector)) return NULL;
 
     struct coord coord = save_read_type(save, typeof(coord));
-    struct sector *sector = gen_sector(world, coord, world_seed(world));
+    struct sector *sector = gen_sector(world, coord);
 
     size_t chunks = save_read_type(save, uint32_t);
     htable_reserve(&sector->chunks, chunks);

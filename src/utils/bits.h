@@ -66,6 +66,9 @@ inline uint64_t hash_u64(uint64_t value)
 // math
 // -----------------------------------------------------------------------------
 
+inline uint32_t u64_top(uint64_t x) { return x >> 32; }
+inline uint32_t u64_bot(uint64_t x) { return x << 32 >> 32; }
+
 inline int64_t i64_ceil_div(int64_t x, int64_t d)
 {
 

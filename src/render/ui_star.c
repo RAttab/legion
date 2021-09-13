@@ -42,6 +42,7 @@ struct ui_star
 
     struct ui_button goto_factory;
     struct ui_button goto_map;
+    struct ui_label name, name_val;
     struct ui_label coord;
     struct ui_link coord_val;
 
@@ -85,7 +86,7 @@ enum
 struct ui_star *ui_star_new(void)
 {
     struct font *font = ui_star_font();
-    size_t width = 35 * font->glyph_w;
+    size_t width = 38 * font->glyph_w;
     struct pos pos = make_pos(core.rect.w - width, ui_topbar_height(core.ui.topbar));
     struct dim dim = make_dim(width, core.rect.h - pos.y);
 
@@ -95,6 +96,9 @@ struct ui_star *ui_star_new(void)
 
         .goto_map = ui_button_new(font, ui_str_c("<< map")),
         .goto_factory = ui_button_new(font, ui_str_c("<< factory")),
+
+        .name = ui_label_new(font, ui_str_c("name:  ")),
+        .name_val = ui_label_new(font, ui_str_v(symbol_cap)),
 
         .coord = ui_label_new(font, ui_str_c("coord: ")),
         .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
@@ -184,6 +188,8 @@ void ui_star_free(struct ui_star *ui) {
     ui_button_free(&ui->goto_map);
     ui_button_free(&ui->goto_factory);
 
+    ui_label_free(&ui->name);
+    ui_label_free(&ui->name_val);
     ui_label_free(&ui->coord);
     ui_link_free(&ui->coord_val);
     ui_label_free(&ui->energy);
@@ -281,6 +287,14 @@ static void ui_star_update(struct ui_star *ui)
         assert(star);
         ui->star = *star;
 
+        {
+            struct symbol sym = {0};
+            word_t name = gen_name(core.state.world, ui->id);
+            bool ok = atoms_str(world_atoms(core.state.world), name, &sym);
+            ui_str_set_symbol(&ui->name_val.str, &sym);
+            assert(ok);
+        }
+
         ui_toggles_resize(&ui->control_list, 0);
         ui_scroll_update(&ui->control_scroll, 0);
         ui_toggles_resize(&ui->factory_list, 0);
@@ -302,6 +316,14 @@ static void ui_star_update(struct ui_star *ui)
         ui->kwheel.show = false;
         ui->store.show = false;
         return;
+    }
+
+    {
+        struct symbol sym = {0};
+        word_t name = chunk_name(chunk);
+        if (atoms_str(world_atoms(core.state.world), name, &sym))
+            ui_str_set_symbol(&ui->name_val.str, &sym);
+        else ui_str_set_hex(&ui->name_val.str, name);
     }
 
     ui->star = *chunk_star(chunk);
@@ -492,23 +514,24 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
     ui_layout_sep_y(&layout, font->glyph_h);
 
+    ui_label_render(&ui->name, &layout, renderer);
+    ui_label_render(&ui->name_val, &layout, renderer);
+    ui_layout_next_row(&layout);
     ui_label_render(&ui->coord, &layout, renderer);
     ui_link_render(&ui->coord_val, &layout, renderer);
     ui_layout_next_row(&layout);
 
+    ui_layout_sep_y(&layout, font->glyph_h);
+
     {
+        uint32_t energy = ui->star.energy;
+        ui_str_set_scaled(&ui->energy_val.str, energy);
+        ui->energy_val.fg = rgba_gray(0x11 * u64_log2(energy));
+
         ui_label_render(&ui->energy, &layout, renderer);
-
-        uint32_t value = ui->star.energy;
-        ui_str_set_scaled(&ui->energy_val.str, value);
-        ui->energy_val.fg = rgba_gray(0x11 * u64_log2(value));
         ui_label_render(&ui->energy_val, &layout, renderer);
-
         ui_layout_next_row(&layout);
-        ui_layout_sep_y(&layout, font->glyph_h);
-    }
 
-    {
         for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {
             if (i == ITEMS_NATURAL_LEN-1)
                 ui_layout_sep_x(&layout, (ui_star_elems_col_len+1)*2 * font->glyph_w);

@@ -8,6 +8,7 @@
 #include "game/sector.h"
 #include "game/chunk.h"
 #include "game/lanes.h"
+#include "render/core.h"
 #include "items/io.h"
 #include "items/item.h"
 #include "items/types.h"
@@ -41,9 +42,7 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
 
 int main(int, char **)
 {
-    im_populate();
-    tapes_populate();
-    mod_compiler_init();
+    core_populate();
 
     test_txrx();
 

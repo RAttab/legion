@@ -54,7 +54,8 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    vm_compile_init();
+    core_populate();
+
     test_compiler();
 
     return 0;

@@ -10,6 +10,7 @@
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"
+#include "render/core.h"
 #include "items/io.h"
 #include "items/config.h"
 #include "utils/vec.h"
@@ -21,9 +22,7 @@ void check(const char *path)
 {
     enum { attempts = 5, steps = 100 };
 
-    im_populate();
-    tapes_populate();
-    mod_compiler_init();
+    core_populate();
     struct world *old = world_new(0);
     struct coord coord = world_populate(old);
     world_step(old); // to create all the objects.

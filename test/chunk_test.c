@@ -7,6 +7,7 @@
 #include "game/chunk.h"
 #include "game/sector.h"
 #include "game/active.h"
+#include "render/core.h"
 #include "items/config.h"
 
 
@@ -43,7 +44,8 @@ void test_active_list(void)
 void test_ports_1on1(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(NULL, &star);
+    struct world *world = world_new(0);
+    struct chunk *chunk = chunk_alloc(world, &star);
 
     enum item item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_EXTRACT, 1);
@@ -67,12 +69,14 @@ void test_ports_1on1(void)
     }
 
     chunk_free(chunk);
+    world_free(world);
 }
 
 void test_ports_2on1(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(NULL, &star);
+    struct world *world = world_new(0);
+    struct chunk *chunk = chunk_alloc(world, &star);
 
     enum item item = ITEM_ELEM_A;
     id_t src0 = make_id(ITEM_EXTRACT, 1);
@@ -99,12 +103,14 @@ void test_ports_2on1(void)
     }
 
     chunk_free(chunk);
+    world_free(world);
 }
 
 void test_ports_1on2(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(NULL, &star);
+    struct world *world = world_new(0);
+    struct chunk *chunk = chunk_alloc(world, &star);
 
     enum item item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_EXTRACT, 1);
@@ -134,12 +140,14 @@ void test_ports_1on2(void)
     }
 
     chunk_free(chunk);
+    world_free(world);
 }
 
 void test_ports_reset(void)
 {
     struct star star = {0};
-    struct chunk *chunk = chunk_alloc(NULL, &star);
+    struct world *world = world_new(0);
+    struct chunk *chunk = chunk_alloc(world, &star);
 
     enum item item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_EXTRACT, 1);
@@ -203,13 +211,14 @@ void test_ports_reset(void)
     }
 
     chunk_free(chunk);
+    world_free(world);
 }
 
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    im_populate();
+    core_populate();
 
     test_active_list();
     test_ports_1on1();

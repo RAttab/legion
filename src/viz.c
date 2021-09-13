@@ -186,8 +186,7 @@ int viz_run(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    im_populate();
-    tapes_populate();
+    core_populate();
 
     struct viz viz = {0};
     viz_graph(&viz);

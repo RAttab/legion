@@ -31,8 +31,10 @@ void chunk_free(struct chunk *);
 struct chunk *chunk_load(struct world *, struct save *);
 void chunk_save(struct chunk *, struct save *);
 
+word_t chunk_name(struct chunk *);
 struct world *chunk_world(struct chunk *);
-struct star *chunk_star(struct chunk *);
+const struct star *chunk_star(struct chunk *);
+
 bool chunk_harvest(struct chunk *, enum item item);
 
 struct vec64 *chunk_list(struct chunk *);

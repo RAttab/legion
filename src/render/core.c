@@ -11,8 +11,11 @@
 #include "game/tape.h"
 #include "game/coord.h"
 #include "game/world.h"
+#include "game/gen.h"
+#include "game/tape.h"
 #include "items/config.h"
 #include "vm/mod.h"
+#include "vm/atoms.h"
 #include "utils/log.h"
 #include "utils/time.h"
 
@@ -189,9 +192,7 @@ static void ui_render(SDL_Renderer *renderer)
 
 void core_init()
 {
-    im_populate();
-    tapes_populate();
-    mod_compiler_init();
+    core_populate();
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
@@ -327,4 +328,20 @@ static void core_load_apply(void)
     save_close(save);
     core.state.loading = false;
     dbg("loaded %zu bytes", bytes);
+}
+
+void core_populate(void)
+{
+    im_populate();
+    mod_compiler_init();
+
+    {
+        struct atoms *atoms = atoms_new();
+        im_populate_atoms(atoms);
+
+        gen_populate(atoms);
+        tapes_populate(atoms);
+
+        atoms_free(atoms);
+    }
 }

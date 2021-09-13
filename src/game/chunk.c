@@ -23,8 +23,9 @@ static void chunk_ports_step(struct chunk *);
 struct chunk
 {
     struct world *world;
-
     struct star star;
+    word_t name;
+
     active_list_t active;
 
     // Ports
@@ -42,9 +43,12 @@ struct chunk
 
 struct chunk *chunk_alloc(struct world *world, const struct star *star)
 {
+    assert(world);
+
     struct chunk *chunk = calloc(1, sizeof(*chunk));
     chunk->world = world;
     chunk->star = *star;
+    chunk->name = gen_name(world, star->coord);
     chunk->requested = ring32_reserve(16);
     chunk->storage = ring32_reserve(1);
     chunk->bullets = ring64_reserve(2);
@@ -86,6 +90,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     struct chunk *chunk = calloc(1, sizeof(*chunk));
     chunk->world = world;
 
+    save_read_into(save, &chunk->name);
     star_load(&chunk->star, save);
     active_list_load(&chunk->active, chunk, save);
 
@@ -135,6 +140,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
 {
     save_write_magic(save, save_magic_chunk);
 
+    save_write_value(save, chunk->name);
     star_save(&chunk->star, save);
     active_list_save(&chunk->active, save);
 
@@ -168,9 +174,14 @@ struct world *chunk_world(struct chunk *chunk)
     return chunk->world;
 }
 
-struct star *chunk_star(struct chunk *chunk)
+const struct star *chunk_star(struct chunk *chunk)
 {
     return &chunk->star;
+}
+
+word_t chunk_name(struct chunk *chunk)
+{
+    return chunk->name;
 }
 
 bool chunk_harvest(struct chunk *chunk, enum item item)

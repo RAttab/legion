@@ -7,11 +7,17 @@
 
 #include "common.h"
 #include "game/coord.h"
-#include "game/world.h"
+#include "vm/vm.h"
+
+struct world;
+struct atoms;
 
 
 // -----------------------------------------------------------------------------
 // gen
 // -----------------------------------------------------------------------------
 
-struct sector *gen_sector(struct world *world, struct coord coord, seed_t seed);
+struct sector *gen_sector(struct world *, struct coord);
+word_t gen_name(struct world *, struct coord);
+
+void gen_populate(struct atoms *);
