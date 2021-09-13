@@ -65,12 +65,13 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
 {
     struct font *font = calloc(1, sizeof(*font));
 
-    float dpi_w = 0, dpi_h = 0;
-    sdl_err(SDL_GetDisplayDPI(0, &dpi_w, &dpi_h, NULL));
+    float hdpi = 0, vdpi = 0;
+    sdl_err(SDL_GetDisplayDPI(0, NULL, &hdpi, &vdpi));
 
     FT_Face face;
     ft_err(FT_New_Face(ft_library, ttf, 0, &face));
-    ft_err(FT_Set_Char_Size(face, 0, pt << 6, dpi_w, dpi_h));
+    ft_err(FT_Set_Char_Size(face, 0, pt << 6, hdpi, vdpi));
+    assert(FT_IS_SCALABLE(face));
 
     // The face level metric information is beyond my comprehension (bbox is in
     // units per EM and I have no idea how to conver that to pixels; pretty sure
