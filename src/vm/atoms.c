@@ -195,10 +195,9 @@ static struct atom_data *atoms_insert(
     struct htable_ret ret = htable_try_put(&atoms->istr, hash, index);
     assert(!ret.value);
 
-    if (!ret.ok) {
+    while (!ret.ok) {
         atoms_grow_index(atoms);
         ret = htable_try_put(&atoms->istr, hash, index);
-        assert(ret.ok);
     }
 
     htable_put(&atoms->iword, id, index);
