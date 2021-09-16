@@ -7,6 +7,7 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
+#include "utils/hset.h"
 
 
 // -----------------------------------------------------------------------------
@@ -26,8 +27,9 @@ struct ui_tree ui_tree_new(struct dim dim, struct font *font, struct ui_str str)
         .cap = 0,
         .nodes = NULL,
 
-        .hover = ui_node_nil,
-        .selected = ui_node_nil,
+        .hover = 0,
+        .selected = 0,
+        .open = NULL,
     };
 }
 
@@ -40,6 +42,7 @@ void ui_tree_free(struct ui_tree *tree)
         ui_str_free(&tree->nodes[i].str);
 
     free(tree->nodes);
+    hset_free(tree->open);
 }
 
 
@@ -81,6 +84,7 @@ ui_node_t ui_tree_index(struct ui_tree *tree)
 struct ui_str *ui_tree_add(
         struct ui_tree *tree, ui_node_t parent, uint64_t user)
 {
+    assert(user);
     assert(parent == ui_node_nil || parent < tree->len);
 
     if (tree->len == tree->cap) {
@@ -97,7 +101,7 @@ struct ui_str *ui_tree_add(
     tree->len++;
 
     node->user = user;
-    node->open = true;
+    node->open = hset_test(tree->open, user);
     node->parent = parent;
     node->depth = parent == ui_node_nil ? 0 : tree->nodes[parent].depth + 1;
 
@@ -109,7 +113,6 @@ static ui_node_t ui_tree_next(struct ui_tree *tree, ui_node_t index)
     if (index >= tree->len) return ui_node_nil;
 
     struct ui_node *parent = tree->nodes + index;
-
     index++;
     if (parent->open) return index;
 
@@ -118,7 +121,7 @@ static ui_node_t ui_tree_next(struct ui_tree *tree, ui_node_t index)
         index++;
     }
 
-    return index;
+    return index < tree->len ? index : ui_node_nil;
 }
 
 static ui_node_t ui_tree_row(struct ui_tree *tree, size_t row)
@@ -152,11 +155,14 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
     case SDL_MOUSEMOTION: {
         SDL_Point point = core.cursor.point;
-        if (!sdl_rect_contains(&rect, &point)) tree->hover = ui_node_nil;
+        if (!sdl_rect_contains(&rect, &point)) tree->hover = 0;
         else {
             size_t row = (point.y - rect.y) / tree->font->glyph_h;
             row += ui_scroll_first(&tree->scroll);
-            tree->hover = ui_tree_row(tree, row);
+
+            ui_node_t index = ui_tree_row(tree, row);
+            if (index == ui_node_nil) tree->hover = 0;
+            else tree->hover = ui_tree_node(tree, index)->user;
         }
         return ui_nil;
     }
@@ -164,7 +170,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) {
-            tree->selected = ui_node_nil;
+            tree->selected = 0;
             return ui_nil;
         }
 
@@ -172,11 +178,17 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         row += ui_scroll_first(&tree->scroll);
 
         ui_node_t index = ui_tree_row(tree, row);
-        if (index != ui_node_nil) {
-            if (ui_tree_leaf(tree, index)) tree->selected = index;
-            else tree->nodes[index].open = !tree->nodes[index].open;
+        if (index == ui_node_nil) return ui_consume;
+
+        struct ui_node *node = tree->nodes + index;
+        if (ui_tree_leaf(tree, index)) {
+            tree->selected = node->user;
+            return ui_action;
         }
 
+        node->open = !node->open;
+        if (!node->open) hset_del(tree->open, node->user);
+        else tree->open = hset_put(tree->open, node->user);
         return ui_consume;
     }
 
@@ -219,11 +231,16 @@ void ui_tree_render(
         ui_layout_add(&inner, &widget);
 
         struct rgba bg = rgba_nil();
-        if (index == tree->selected) bg = rgba_gray(0x22);
-        else if (index == tree->hover) bg = rgba_gray(0x44);
-
+        if (node->user == tree->selected) bg = rgba_gray(0x22);
+        else if (node->user == tree->hover) bg = rgba_gray(0x44);
+        else if (!ui_tree_leaf(tree, index)) bg = rgba_gray(0x11);
         rgba_render(bg, renderer);
+
         SDL_Rect rect = ui_widget_rect(&widget);
+        if (!ui_tree_leaf(tree, index)) {
+            rect.x = inner.top.x;
+            rect.w = inner.dim.w;
+        }
         sdl_err(SDL_RenderFillRect(renderer, &rect));
 
         font_render(

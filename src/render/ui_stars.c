@@ -64,7 +64,7 @@ static void ui_stars_update(struct ui_stars *ui)
         if (!coord_eq(coord_sector(ret), sector)) {
             sector = coord_sector(ret);
             parent = ui_tree_index(&ui->tree);
-            ui_str_setf(ui_tree_add(&ui->tree, ui_node_nil, 0),
+            ui_str_setf(ui_tree_add(&ui->tree, ui_node_nil, coord_to_u64(sector)),
                     "%02x.%02x x %02x.%02x",
                     (sector.x >> coord_sector_bits) & 0xFF,
                     (sector.x >> (coord_sector_bits + coord_area_bits)),
@@ -139,14 +139,15 @@ bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
 
     if ((ret = ui_tree_event(&ui->tree, ev))) {
-        if (ui->tree.selected != ui_node_nil) {
-            uint64_t user = ui_tree_node(&ui->tree, ui->tree.selected)->user;
-            if (user) {
-                core_push_event(EV_STAR_SELECT, user, 0);
-                core_push_event(EV_MAP_GOTO, user, 0);
-            }
+        if (ret != ui_action) return true;
+
+        uint64_t user = ui->tree.selected;
+        struct coord coord = coord_from_u64(user);
+        if (user && !coord_eq(coord, coord_sector(coord))) {
+            core_push_event(EV_STAR_SELECT, user, 0);
+            core_push_event(EV_MAP_GOTO, user, 0);
         }
-        return ret == ui_consume;
+        return true;
     }
 
     return ui_panel_event_consume(&ui->panel, ev);

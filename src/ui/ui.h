@@ -14,6 +14,7 @@
 #include "SDL.h"
 
 struct font;
+struct hset;
 
 
 // -----------------------------------------------------------------------------
@@ -500,7 +501,8 @@ struct ui_tree
     ui_node_t len, cap;
     struct ui_node *nodes;
 
-    ui_node_t hover, selected;
+    uint64_t hover, selected;
+    struct hset *open;
 };
 
 
