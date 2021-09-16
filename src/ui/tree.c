@@ -233,7 +233,7 @@ void ui_tree_render(
         struct rgba bg = rgba_nil();
         if (node->user == tree->selected) bg = rgba_gray(0x22);
         else if (node->user == tree->hover) bg = rgba_gray(0x44);
-        else if (!ui_tree_leaf(tree, index)) bg = rgba_gray(0x11);
+        else if (!ui_tree_leaf(tree, index)) bg = rgba_gray_a(0x11, 0x88);
         rgba_render(bg, renderer);
 
         SDL_Rect rect = ui_widget_rect(&widget);
