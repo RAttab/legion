@@ -46,7 +46,7 @@ struct lisp_ret world_eval(struct world *, const char *src, size_t len);
 
 
 // -----------------------------------------------------------------------------
-// render
+// render-it
 // -----------------------------------------------------------------------------
 
 struct world_render_it
@@ -61,7 +61,7 @@ const struct star *world_render_next(struct world *, struct world_render_it *);
 
 
 // -----------------------------------------------------------------------------
-// scan
+// scan-it
 // -----------------------------------------------------------------------------
 
 struct legion_packed world_scan_it
@@ -74,6 +74,20 @@ struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);
 
 ssize_t world_scan(struct world *, struct coord, enum item);
+
+
+// -----------------------------------------------------------------------------
+// chunk-it
+// -----------------------------------------------------------------------------
+
+struct world_chunk_it
+{
+    struct htable_bucket *sector;
+    struct htable_bucket *chunk;
+};
+
+struct world_chunk_it world_chunk_it(struct world *);
+struct coord world_chunk_next(struct world *, struct world_chunk_it *);
 
 
 // -----------------------------------------------------------------------------

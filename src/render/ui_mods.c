@@ -96,7 +96,7 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
                 core_push_event(EV_FOCUS_PANEL, 0, 0);
             ui->panel.state = ui_panel_hidden;
         }
-        return true;
+        return false;
     }
 
     case EV_MOD_SELECT: {
@@ -113,6 +113,11 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 
     case EV_MOD_CLEAR: {
         ui_toggles_clear(&ui->toggles);
+        return false;
+    }
+
+    case EV_STARS_TOGGLE: {
+        ui->panel.state = ui_panel_hidden;
         return false;
     }
 

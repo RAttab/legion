@@ -474,6 +474,54 @@ void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// tree
+// -----------------------------------------------------------------------------
+
+typedef uint32_t ui_node_t;
+static legion_unused ui_node_t ui_node_nil = -1;
+
+struct ui_node
+{
+    bool open;
+    uint8_t depth;
+    struct ui_str str;
+    uint64_t user;
+    ui_node_t parent;
+};
+
+struct ui_tree
+{
+    struct ui_widget w;
+    struct ui_scroll scroll;
+
+    struct font *font;
+    struct ui_str str;
+
+    ui_node_t len, cap;
+    struct ui_node *nodes;
+
+    ui_node_t hover, selected;
+};
+
+
+struct ui_tree ui_tree_new(struct dim, struct font *, struct ui_str);
+void ui_tree_free(struct ui_tree *);
+
+struct ui_node *ui_tree_node(struct ui_tree *, ui_node_t);
+ui_node_t ui_tree_user(struct ui_tree *, uint64_t user);
+
+void ui_tree_clear(struct ui_tree *);
+void ui_tree_select(struct ui_tree *, uint64_t user);
+
+void ui_tree_reset(struct ui_tree *);
+ui_node_t ui_tree_index(struct ui_tree *);
+struct ui_str *ui_tree_add(struct ui_tree *, ui_node_t parent, uint64_t user);
+
+enum ui_ret ui_tree_event(struct ui_tree *, const SDL_Event *);
+void ui_tree_render(struct ui_tree *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // panel
 // -----------------------------------------------------------------------------
 

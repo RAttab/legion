@@ -282,6 +282,32 @@ ssize_t world_scan(struct world *world, struct coord coord, enum item item)
 
 
 // -----------------------------------------------------------------------------
+// chunk
+// -----------------------------------------------------------------------------
+
+struct world_chunk_it world_chunk_it(struct world *world)
+{
+    return (struct world_chunk_it) {
+        .sector = htable_next(&world->sectors, NULL),
+        .chunk = NULL,
+    };
+}
+
+struct coord world_chunk_next(struct world *world, struct world_chunk_it *it)
+{
+    while (true) {
+        if (!it->sector) return coord_nil();
+        struct sector *sector = (void *) it->sector->value;
+
+        it->chunk = htable_next(&sector->chunks, it->chunk);
+        if (it->chunk) return coord_from_u64(it->chunk->key);
+
+        it->sector = htable_next(&world->sectors, it->sector);
+    }
+}
+
+
+// -----------------------------------------------------------------------------
 // lanes
 // -----------------------------------------------------------------------------
 

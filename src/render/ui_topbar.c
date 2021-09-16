@@ -18,6 +18,7 @@ struct ui_topbar
     struct ui_panel panel;
     struct ui_button save, load;
     struct ui_button home;
+    struct ui_button stars;
     struct ui_button mods;
     struct ui_label coord;
     struct ui_button close;
@@ -39,6 +40,7 @@ struct ui_topbar *ui_topbar_new(void)
         .save = ui_button_new(font, ui_str_c("save")),
         .load = ui_button_new(font, ui_str_c("load")),
         .home = ui_button_new(font, ui_str_c("home")),
+        .stars = ui_button_new(font, ui_str_c("stars")),
         .mods = ui_button_new(font, ui_str_c("mods")),
         .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
         .close = ui_button_new(font, ui_str_c("x")),
@@ -52,6 +54,7 @@ void ui_topbar_free(struct ui_topbar *ui) {
     ui_button_free(&ui->save);
     ui_button_free(&ui->load);
     ui_button_free(&ui->home);
+    ui_button_free(&ui->stars);
     ui_button_free(&ui->mods);
     ui_label_free(&ui->coord);
     ui_button_free(&ui->close);
@@ -80,6 +83,11 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->home, ev))) {
         core_push_event(EV_MAP_GOTO, coord_to_u64(core.state.home), 0);
+        return ret == ui_consume;
+    }
+
+    if ((ret = ui_button_event(&ui->stars, ev))) {
+        core_push_event(EV_STARS_TOGGLE, 0, 0);
         return ret == ui_consume;
     }
 
@@ -138,6 +146,8 @@ void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
     ui_layout_sep_x(&layout, 10);
 
     ui_button_render(&ui->home, &layout, renderer);
+    ui_layout_sep_x(&layout, 10);
+    ui_button_render(&ui->stars, &layout, renderer);
     ui_layout_sep_x(&layout, 10);
     ui_button_render(&ui->mods, &layout, renderer);
 

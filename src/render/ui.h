@@ -55,6 +55,17 @@ void ui_topbar_render(struct ui_topbar *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// stars
+// -----------------------------------------------------------------------------
+
+struct ui_stars;
+struct ui_stars *ui_stars_new(void);
+void ui_stars_free(struct ui_stars *);
+bool ui_stars_event(struct ui_stars *, SDL_Event *);
+void ui_stars_render(struct ui_stars *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // mods
 // -----------------------------------------------------------------------------
 

@@ -42,6 +42,8 @@ enum event
     EV_MOD_SELECT,
     EV_MOD_CLEAR,
 
+    EV_STARS_TOGGLE,
+
     EV_STAR_SELECT,
     EV_STAR_CLEAR,
 
@@ -84,6 +86,7 @@ struct core
         struct ui_topbar *topbar;
         struct ui_mods *mods;
         struct ui_mod *mod;
+        struct ui_stars *stars;
         struct ui_star *star;
         struct ui_item *item;
         struct ui_io *io;

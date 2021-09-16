@@ -14,4 +14,5 @@
 #include "ui/toggle.c"
 #include "ui/input.c"
 #include "ui/code.c"
+#include "ui/tree.c"
 #include "ui/panel.c"

@@ -20,6 +20,7 @@
 // compiler
 // -----------------------------------------------------------------------------
 
+#define legion_unused       __attribute__((unused))
 #define legion_packed       __attribute__((__packed__))
 #define legion_printf(x,y)  __attribute__((format(printf, x, y)))
 
