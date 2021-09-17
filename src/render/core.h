@@ -37,13 +37,14 @@ enum event
     EV_FACTORY_SELECT,
     EV_FACTORY_CLOSE,
 
-    EV_MODS_TOGGLE,
+    EV_TAPES_TOGGLE,
+    EV_TAPE_SELECT,
 
+    EV_MODS_TOGGLE,
     EV_MOD_SELECT,
     EV_MOD_CLEAR,
 
     EV_STARS_TOGGLE,
-
     EV_STAR_SELECT,
     EV_STAR_CLEAR,
 
@@ -84,6 +85,7 @@ struct core
         struct map *map;
         struct factory *factory;
         struct ui_topbar *topbar;
+        struct ui_tapes *tapes;
         struct ui_mods *mods;
         struct ui_mod *mod;
         struct ui_stars *stars;

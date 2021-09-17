@@ -87,13 +87,13 @@ void ui_tape_render(
 
     size_t first = ui_scroll_first(&ui->scroll);
     size_t last = ui_scroll_last(&ui->scroll);
+    const struct tape *tape = tape_packed_ptr(state);
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);
         ui_label_render(&ui->index, &inner, renderer);
         ui_layout_sep_x(&inner, ui->font->glyph_w);
 
-        const struct tape *tape = tape_packed_ptr(state);
         struct tape_ret ret = tape_at(tape, i);
 
         struct ui_label *label = NULL;

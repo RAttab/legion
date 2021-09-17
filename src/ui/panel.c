@@ -28,6 +28,14 @@ static struct ui_panel ui_panel_new(struct pos pos, struct dim dim)
     };
 }
 
+void ui_panel_resize(struct ui_panel *panel, struct dim dim)
+{
+    panel->w.dim = dim;
+    panel->layout.dim = make_dim(
+            dim.w - (ui_panel_margin.w * 2),
+            dim.h - (ui_panel_margin.h * 2));
+}
+
 struct ui_panel ui_panel_menu(struct pos pos, struct dim dim)
 {
     struct ui_panel panel = ui_panel_new(pos, dim);
@@ -53,6 +61,7 @@ void ui_panel_free(struct ui_panel *panel)
         ui_button_free(&panel->close);
     }
 }
+
 
 enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 {

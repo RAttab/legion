@@ -67,8 +67,7 @@ void ui_tree_clear(struct ui_tree *tree)
 
 void ui_tree_select(struct ui_tree *tree, uint64_t user)
 {
-    ui_node_t index = ui_tree_user(tree, user);
-    if (index != ui_node_nil) tree->selected = index;
+    tree->selected = user;
 }
 
 void ui_tree_reset(struct ui_tree *tree)
@@ -169,10 +168,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point point = core.cursor.point;
-        if (!sdl_rect_contains(&rect, &point)) {
-            tree->selected = 0;
-            return ui_nil;
-        }
+        if (!sdl_rect_contains(&rect, &point)) return ui_nil;
 
         size_t row = (point.y - rect.y) / tree->font->glyph_h;
         row += ui_scroll_first(&tree->scroll);

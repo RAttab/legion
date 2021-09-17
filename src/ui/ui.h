@@ -143,6 +143,7 @@ enum { ui_layout_inf = -1 };
 
 struct ui_layout ui_layout_new(struct pos, struct dim);
 void ui_layout_add(struct ui_layout *, struct ui_widget *);
+struct ui_layout ui_layout_inner(struct ui_layout *);
 
 void ui_layout_next_row(struct ui_layout *);
 void ui_layout_sep_x(struct ui_layout *, int16_t px);
@@ -549,6 +550,9 @@ struct ui_panel
 struct ui_panel ui_panel_menu(struct pos, struct dim);
 struct ui_panel ui_panel_title(struct pos, struct dim, struct ui_str);
 void ui_panel_free(struct ui_panel *);
+
+void ui_panel_resize(struct ui_panel *, struct dim);
+
 enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
 enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);
 struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);

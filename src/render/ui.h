@@ -55,14 +55,14 @@ void ui_topbar_render(struct ui_topbar *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
-// stars
+// tapes
 // -----------------------------------------------------------------------------
 
-struct ui_stars;
-struct ui_stars *ui_stars_new(void);
-void ui_stars_free(struct ui_stars *);
-bool ui_stars_event(struct ui_stars *, SDL_Event *);
-void ui_stars_render(struct ui_stars *, SDL_Renderer *);
+struct ui_tapes;
+struct ui_tapes *ui_tapes_new(void);
+void ui_tapes_free(struct ui_tapes *);
+bool ui_tapes_event(struct ui_tapes *, SDL_Event *);
+void ui_tapes_render(struct ui_tapes *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -87,6 +87,16 @@ void ui_mod_free(struct ui_mod *);
 bool ui_mod_event(struct ui_mod *, SDL_Event *);
 void ui_mod_render(struct ui_mod *, SDL_Renderer *);
 
+
+// -----------------------------------------------------------------------------
+// stars
+// -----------------------------------------------------------------------------
+
+struct ui_stars;
+struct ui_stars *ui_stars_new(void);
+void ui_stars_free(struct ui_stars *);
+bool ui_stars_event(struct ui_stars *, SDL_Event *);
+void ui_stars_render(struct ui_stars *, SDL_Renderer *);
 
 // -----------------------------------------------------------------------------
 // star

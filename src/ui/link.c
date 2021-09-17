@@ -45,7 +45,7 @@ enum ui_ret ui_link_event(struct ui_link *link, const SDL_Event *ev)
         SDL_Point point = core.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         link->state = ui_link_pressed;
-        return ui_consume;
+        return ui_action;
     }
 
     case SDL_MOUSEBUTTONUP: {

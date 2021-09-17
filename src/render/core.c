@@ -134,6 +134,7 @@ static void ui_init(void)
     core.ui.map = map_new();
     core.ui.factory = factory_new();
     core.ui.topbar = ui_topbar_new();
+    core.ui.tapes = ui_tapes_new();
     core.ui.mods = ui_mods_new();
     core.ui.mod = ui_mod_new();
     core.ui.stars = ui_stars_new();
@@ -145,6 +146,7 @@ static void ui_init(void)
 static void ui_close()
 {
     ui_topbar_free(core.ui.topbar);
+    ui_tapes_free(core.ui.tapes);
     ui_mods_free(core.ui.mods);
     ui_mod_free(core.ui.mod);
     ui_stars_free(core.ui.stars);
@@ -166,6 +168,7 @@ static void ui_event(SDL_Event *event)
     }
 
     if (ui_topbar_event(core.ui.topbar, event)) return;
+    if (ui_tapes_event(core.ui.tapes, event)) return;
     if (ui_mods_event(core.ui.mods, event)) return;
     if (ui_mod_event(core.ui.mod, event)) return;
     if (ui_stars_event(core.ui.stars, event)) return;
@@ -181,6 +184,7 @@ static void ui_render(SDL_Renderer *renderer)
     map_render(core.ui.map, renderer);
     factory_render(core.ui.factory, renderer);
     ui_topbar_render(core.ui.topbar, renderer);
+    ui_tapes_render(core.ui.tapes, renderer);
     ui_mods_render(core.ui.mods, renderer);
     ui_mod_render(core.ui.mod, renderer);
     ui_stars_render(core.ui.stars, renderer);

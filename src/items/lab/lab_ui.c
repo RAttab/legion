@@ -12,9 +12,7 @@
 
 struct ui_lab
 {
-    uint8_t bits;
-    uint64_t known;
-    struct dim margin;
+    struct im_lab_bits bits;
 
     struct font *font;
     struct ui_label item, item_val;
@@ -23,13 +21,20 @@ struct ui_lab
     struct ui_label total;
 };
 
+struct im_lab_bits im_lab_bits_new(struct font *font)
+{
+    return (struct im_lab_bits) {
+        .margin = make_dim(5, 5),
+        .font = font
+    };
+}
 
 static void *ui_lab_alloc(struct font *font)
 {
     struct ui_lab *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_lab) {
-        .margin = make_dim(5, 5),
+        .bits = im_lab_bits_new(font),
         .font = font,
 
         .item = ui_label_new(font, ui_str_c("item:     ")),
@@ -45,7 +50,6 @@ static void *ui_lab_alloc(struct font *font)
 
         .total = ui_label_new(font, ui_str_c("total:    ")),
     };
-
     return ui;
 }
 
@@ -70,6 +74,16 @@ static void ui_lab_free(void *_ui)
     free(ui);
 }
 
+void im_lab_bits_update(
+        struct im_lab_bits *ui, struct world *world, enum item item)
+{
+    if (!item)
+        ui->bits = ui->known = 0;
+    else {
+        ui->bits = im_config_assert(item)->lab_bits;
+        ui->known = world_lab_learned_bits(world, item);
+    }
+}
 
 static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
 {
@@ -80,12 +94,7 @@ static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
     assert(state);
 
     ui_str_set_item(&ui->item_val.str, state->item);
-
-    if (state->item) {
-        ui->bits = im_config_assert(state->item)->lab_bits;
-        ui->known = world_lab_learned_bits(world, state->item);
-    }
-    else ui->bits = ui->known = 0;
+    im_lab_bits_update(&ui->bits, world, state->item);
 
     switch (state->state)
     {
@@ -114,6 +123,33 @@ static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
 }
 
 
+void im_lab_bits_render(
+        struct im_lab_bits *ui,
+        struct ui_layout *layout,
+        SDL_Renderer *renderer)
+{
+    if (!ui->bits) return;
+
+    struct ui_widget w = ui_widget_new(ui_layout_inf, ui->font->glyph_h);
+    ui_layout_add(layout, &w);
+
+    SDL_Rect rect = ui_widget_rect(&w);
+    rgba_render(rgba_white(), renderer);
+    sdl_err(SDL_RenderDrawRect(renderer, &rect));
+
+    rect = (SDL_Rect) {
+        .x = rect.x + ui->margin.w,
+        .y = rect.y + ui->margin.h,
+        .w = (rect.w - 2*ui->margin.w) / ui->bits,
+        .h = rect.h - 2*ui->margin.h,
+    };
+
+    for (size_t i = 0; i < ui->bits; ++i, rect.x += rect.w) {
+        if (!(ui->known & (1ULL << i))) continue;
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
+    }
+}
+
 static void ui_lab_render(
         void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
 {
@@ -135,24 +171,5 @@ static void ui_lab_render(
 
     ui_label_render(&ui->total, layout, renderer);
 
-    if (ui->bits) {
-        struct ui_widget w = ui_widget_new(ui_layout_inf, ui->font->glyph_h);
-        ui_layout_add(layout, &w);
-
-        SDL_Rect rect = ui_widget_rect(&w);
-        rgba_render(rgba_white(), renderer);
-        sdl_err(SDL_RenderDrawRect(renderer, &rect));
-
-        rect = (SDL_Rect) {
-            .x = rect.x + ui->margin.w,
-            .y = rect.y + ui->margin.h,
-            .w = (rect.w - 2*ui->margin.w) / ui->bits,
-            .h = rect.h - 2*ui->margin.h,
-        };
-
-        for (size_t i = 0; i < ui->bits; ++i, rect.x += rect.w) {
-            if (!(ui->known & (1ULL << i))) continue;
-            sdl_err(SDL_RenderFillRect(renderer, &rect));
-        }
-    }
+    im_lab_bits_render(&ui->bits, layout, renderer);
 }

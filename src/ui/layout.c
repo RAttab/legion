@@ -37,6 +37,13 @@ void ui_layout_add(struct ui_layout *layout, struct ui_widget *widget)
     layout->next_y = legion_max(layout->next_y, layout->pos.y + widget->dim.h);
 }
 
+struct ui_layout ui_layout_inner(struct ui_layout *layout)
+{
+    return ui_layout_new(layout->pos, make_dim(
+                    layout->dim.w - (layout->pos.x - layout->top.x),
+                    layout->next_y));
+}
+
 void ui_layout_next_row(struct ui_layout *layout)
 {
     layout->pos.x = layout->top.x;
