@@ -17,7 +17,6 @@
 // world
 // -----------------------------------------------------------------------------
 
-
 struct world
 {
     seed_t seed;
@@ -32,7 +31,7 @@ struct world
 
     struct htable sectors;
     struct lanes lanes;
-    struct log log;
+    struct log *log;
 
     struct lisp *lisp;
 };
@@ -48,6 +47,7 @@ struct world *world_new(seed_t seed)
     lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
     htable_reset(&world->research);
+    world->log = log_new(world_log_cap);
 
     return world;
 }
@@ -65,6 +65,8 @@ void world_free(struct world *world)
     htable_reset(&world->sectors);
 
     htable_reset(&world->research);
+    log_free(world->log);
+
     free(world);
 }
 
@@ -90,7 +92,7 @@ struct world *world_load(struct save *save)
     world->lisp = lisp_new(world->mods, world->atoms);
 
     if (!lanes_load(&world->lanes, world, save)) goto fail;
-    if (!log_load(&world->log, save)) goto fail;
+    if (!(world->log = log_load(save))) goto fail;
 
     uint32_t sectors = save_read_type(save, uint32_t);
     htable_reserve(&world->sectors, sectors);
@@ -126,7 +128,7 @@ void world_save(struct world *world, struct save *save)
     atoms_save(world->atoms, save);
     mods_save(world->mods, save);
     lanes_save(&world->lanes, save);
-    log_save(&world->log, save);
+    log_save(world->log, save);
 
     uint32_t sectors = 0;
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
@@ -329,12 +331,12 @@ void world_log(
         enum io io,
         enum ioe err)
 {
-    log_push(&world->log, world->time, coord, id, io, err);
+    log_push(world->log, world->time, coord, id, io, err);
 }
 
 const struct logi *world_log_next(struct world *world, const struct logi *it)
 {
-    return log_next(&world->log, it);
+    return log_next(world->log, it);
 }
 
 

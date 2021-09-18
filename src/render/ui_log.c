@@ -39,7 +39,7 @@ struct ui_log
     struct ui_panel panel;
     struct ui_label star;
     struct ui_link star_val;
-    struct ui_logi items[log_cap];
+    struct ui_logi items[world_log_cap];
 };
 
 static struct font *ui_log_font(void) { return font_mono6; }

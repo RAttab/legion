@@ -31,16 +31,13 @@ static_assert(sizeof(struct logi) == 20);
 // log
 // -----------------------------------------------------------------------------
 
-enum { log_cap = 8 };
+struct log;
 
-struct log
-{
-    uint32_t it;
-    struct logi items[log_cap];
-};
+struct log *log_new(size_t cap);
+void log_free(struct log *);
 
 void log_push(struct log *, world_ts_t, struct coord, id_t, enum io, enum ioe);
 const struct logi *log_next(struct log *, const struct logi *it);
 
 void log_save(const struct log *, struct save *);
-bool log_load(struct log *, struct save *);
+struct log *log_load(struct save *);

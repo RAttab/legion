@@ -21,6 +21,8 @@ static void chunk_ports_step(struct chunk *);
 // cargo
 // -----------------------------------------------------------------------------
 
+enum { chunk_log_cap = 8 };
+
 struct chunk
 {
     struct world *world;
@@ -28,7 +30,7 @@ struct chunk
     word_t name;
 
     active_list_t active;
-    struct log log;
+    struct log *log;
 
     // Ports
     struct htable provided;
@@ -51,6 +53,7 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->world = world;
     chunk->star = *star;
     chunk->name = gen_name(world, star->coord);
+    chunk->log = log_new(chunk_log_cap);
     chunk->requested = ring32_reserve(16);
     chunk->storage = ring32_reserve(1);
     chunk->bullets = ring64_reserve(2);
@@ -62,6 +65,8 @@ void chunk_free(struct chunk *chunk)
 {
     active_it_t it = active_next(&chunk->active, NULL);
     for (; it; it = active_next(&chunk->active, it)) active_free(*it);
+
+    log_free(chunk->log);
 
     for (struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
@@ -96,7 +101,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     star_load(&chunk->star, save);
     active_list_load(&chunk->active, chunk, save);
 
-    if (!log_load(&chunk->log, save)) goto fail;
+    if (!(chunk->log = log_load(save))) goto fail;
 
     chunk->requested = save_read_ring32(save);
     chunk->storage = save_read_ring32(save);
@@ -147,7 +152,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_value(save, chunk->name);
     star_save(&chunk->star, save);
     active_list_save(&chunk->active, save);
-    log_save(&chunk->log, save);
+    log_save(chunk->log, save);
 
     save_write_ring32(save, chunk->requested);
     save_write_ring32(save, chunk->storage);
@@ -315,13 +320,13 @@ bool chunk_io(
 void chunk_log(struct chunk *chunk, id_t id, enum io io, enum ioe err)
 {
     struct coord star = chunk->star.coord;
-    log_push(&chunk->log, world_time(chunk->world), star, id, io, err);
+    log_push(chunk->log, world_time(chunk->world), star, id, io, err);
     world_log(chunk->world, star, id, io, err);
 }
 
 const struct logi *chunk_log_next(struct chunk *chunk, const struct logi *it)
 {
-    return log_next(&chunk->log, it);
+    return log_next(chunk->log, it);
 }
 
 

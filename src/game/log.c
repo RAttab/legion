@@ -10,6 +10,27 @@
 // log
 // -----------------------------------------------------------------------------
 
+struct log
+{
+    uint32_t it, cap;
+    struct logi items[];
+};
+
+
+struct log *log_new(size_t cap)
+{
+    assert(u64_pop(cap) == 1); // power of two required for overflow
+
+    struct log *log = calloc(1, sizeof(*log) + cap * sizeof(log->items[0]));
+    log->cap = cap;
+    return log;
+}
+
+void log_free(struct log *log)
+{
+    free(log);
+}
+
 void log_push(
         struct log *log,
         world_ts_t time,
@@ -18,7 +39,7 @@ void log_push(
         enum io io,
         enum ioe err)
 {
-    log->items[log->it % log_cap] = (struct logi) {
+    log->items[log->it % log->cap] = (struct logi) {
         .time = time,
         .star = star,
         .id = id,
@@ -30,11 +51,11 @@ void log_push(
 
 const struct logi *log_next(struct log *log, const struct logi *it)
 {
-    if (it == log->items + (log->it % log_cap)) return NULL;
-    if (!it) it = log->items + (log->it % log_cap);
+    if (it == log->items + (log->it % log->cap)) return NULL;
+    if (!it) it = log->items + (log->it % log->cap);
 
     if (it > log->items) it--;
-    else it = log->items + (log_cap - 1);
+    else it = log->items + (log->cap - 1);
 
     return it->err ? it : NULL;
 }
@@ -44,18 +65,27 @@ void log_save(const struct log *log, struct save *save)
 {
     save_write_magic(save, save_magic_log);
 
+    save_write_value(save, log->cap);
     save_write_value(save, log->it);
-    save_write(save, log->items, sizeof(log->items));
+    save_write(save, log->items, log->cap * sizeof(log->items[0]));
 
     save_write_magic(save, save_magic_log);
 }
 
-bool log_load(struct log *log, struct save *save)
+struct log *log_load(struct save *save)
 {
-    if (!save_read_magic(save, save_magic_log)) return false;
+    if (!save_read_magic(save, save_magic_log)) return NULL;
+
+    uint32_t cap = save_read_type(save, typeof(cap));
+    struct log *log = log_new(cap);
 
     save_read_into(save, &log->it);
-    save_read(save, log->items, sizeof(log->items));
+    save_read(save, log->items, log->cap * sizeof(log->items[0]));
 
-    return save_read_magic(save, save_magic_log);
+    if (!save_read_magic(save, save_magic_log)) goto fail;
+    return log;
+
+  fail:
+    log_free(log);
+    return NULL;
 }

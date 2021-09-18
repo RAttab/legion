@@ -20,6 +20,7 @@ typedef uint64_t seed_t;
 typedef uint32_t world_ts_t;
 typedef int64_t world_ts_delta_t;
 
+
 // -----------------------------------------------------------------------------
 // world
 // -----------------------------------------------------------------------------
@@ -97,6 +98,7 @@ struct coord world_chunk_next(struct world *, struct world_chunk_it *);
 // log
 // -----------------------------------------------------------------------------
 
+enum { world_log_cap = 32 };
 void world_log(struct world *, struct coord, id_t, enum io, enum ioe);
 const struct logi *world_log_next(struct world *, const struct logi *it);
 
