@@ -7,6 +7,7 @@
 #include "vm/mod.h"
 #include "vm/atoms.h"
 #include "game/gen.h"
+#include "game/log.h"
 #include "game/tape.h"
 #include "items/config.h"
 #include "items/legion/legion.h"
@@ -31,6 +32,7 @@ struct world
 
     struct htable sectors;
     struct lanes lanes;
+    struct log log;
 
     struct lisp *lisp;
 };
@@ -88,6 +90,7 @@ struct world *world_load(struct save *save)
     world->lisp = lisp_new(world->mods, world->atoms);
 
     if (!lanes_load(&world->lanes, world, save)) goto fail;
+    if (!log_load(&world->log, save)) goto fail;
 
     uint32_t sectors = save_read_type(save, uint32_t);
     htable_reserve(&world->sectors, sectors);
@@ -123,6 +126,7 @@ void world_save(struct world *world, struct save *save)
     atoms_save(world->atoms, save);
     mods_save(world->mods, save);
     lanes_save(&world->lanes, save);
+    log_save(&world->log, save);
 
     uint32_t sectors = 0;
     struct htable_bucket *it = htable_next(&world->sectors, NULL);
@@ -215,6 +219,13 @@ const struct star *world_star_at(struct world *world, struct coord coord)
     return sector_star_at(world_sector(world, coord), coord);
 }
 
+word_t world_star_name(struct world *world, struct coord coord)
+{
+    struct chunk *chunk = world_chunk(world, coord);
+    return chunk ? chunk_name(chunk) : gen_name(world, coord);
+}
+
+
 struct lisp_ret world_eval(struct world *world, const char *src, size_t len)
 {
     return lisp_eval_const(world->lisp, src, len);
@@ -304,6 +315,26 @@ struct coord world_chunk_next(struct world *world, struct world_chunk_it *it)
 
         it->sector = htable_next(&world->sectors, it->sector);
     }
+}
+
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
+void world_log(
+        struct world *world,
+        struct coord coord,
+        id_t id,
+        enum io io,
+        enum ioe err)
+{
+    log_push(&world->log, world->time, coord, id, io, err);
+}
+
+const struct logi *world_log_next(struct world *world, const struct logi *it)
+{
+    return log_next(&world->log, it);
 }
 
 

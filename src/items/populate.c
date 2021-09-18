@@ -182,17 +182,23 @@ const struct im_config *im_config(enum item item)
 
 struct io_config
 {
-    enum io io;
+    word_t word;
     const char *atom;
 };
 
 #define io_init(_io)                            \
     [_io - IO_MIN] = (struct io_config) {       \
-        .io = _io,                              \
+        .word = _io,                            \
         .atom = #_io,                           \
     }
 
-static struct io_config io_configs[IO_LEN] =
+#define ioe_init(_ioe)                                  \
+    [(_ioe - IOE_MIN) + IO_LEN] = (struct io_config) {  \
+        .word = _ioe,                                   \
+        .atom = #_ioe,                                  \
+    }
+
+static struct io_config io_configs[IO_LEN + IOE_LEN] =
 {
     // Generic
     io_init(IO_NIL),
@@ -238,6 +244,14 @@ static struct io_config io_configs[IO_LEN] =
     io_init(IO_SCAN_VAL),
     io_init(IO_LAUNCH),
     io_init(IO_TARGET),
+
+    // Errors
+    ioe_init(IOE_ARGS_LEN),
+    ioe_init(IOE_INVALID_STATE),
+    ioe_init(IOE_A0_BOUNDS),
+    ioe_init(IOE_A0_UNKNOWN),
+    ioe_init(IOE_A1_BOUNDS),
+    ioe_init(IOE_A1_UNKNOWN),
 };
 
 #undef io_init
@@ -280,17 +294,17 @@ void im_populate(void)
 void im_populate_atoms(struct atoms *atoms)
 {
     // !item_nil can't be registered as it has the value 0
-    for (size_t i = 1; i < ITEM_MAX; ++i) {
+    for (size_t i = 1; i < array_len(im_configs); ++i) {
         struct im_config *config = &im_configs[i];
         if (i && !config->type) continue;
 
         populate_atom(atoms, config->atom, config->type);
     }
 
-    for (size_t i = 0; i < IO_LEN; ++i) {
+    for (size_t i = 0; i < array_len(io_configs); ++i) {
         struct io_config *config = &io_configs[i];
-        if (!config->io) continue;
+        if (!config->word) continue;
 
-        populate_atom(atoms, config->atom, config->io);
+        populate_atom(atoms, config->atom, config->word);
     }
 }

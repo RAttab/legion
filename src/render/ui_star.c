@@ -40,8 +40,7 @@ struct ui_star
 
     struct ui_panel panel;
 
-    struct ui_button goto_factory;
-    struct ui_button goto_map;
+    struct ui_button goto_factory, goto_map, goto_log;
     struct ui_label name, name_val;
     struct ui_label coord;
     struct ui_link coord_val;
@@ -96,6 +95,7 @@ struct ui_star *ui_star_new(void)
 
         .goto_map = ui_button_new(font, ui_str_c("<< map")),
         .goto_factory = ui_button_new(font, ui_str_c("<< factory")),
+        .goto_log = ui_button_new(font, ui_str_c("<< log")),
 
         .name = ui_label_new(font, ui_str_c("name:  ")),
         .name_val = ui_label_new(font, ui_str_v(symbol_cap)),
@@ -175,9 +175,10 @@ struct ui_star *ui_star_new(void)
     ui->panel.state = ui_panel_hidden;
     ui->control.disabled = true;
 
-    size_t goto_width = (width - font->glyph_w) / 2;
+    size_t goto_width = (width - font->glyph_w) / 3;
     ui->goto_map.w.dim.w = goto_width;
     ui->goto_factory.w.dim.w = goto_width;
+    ui->goto_log.w.dim.w = goto_width;
 
     return ui;
 }
@@ -187,6 +188,7 @@ void ui_star_free(struct ui_star *ui) {
 
     ui_button_free(&ui->goto_map);
     ui_button_free(&ui->goto_factory);
+    ui_button_free(&ui->goto_log);
 
     ui_label_free(&ui->name);
     ui_label_free(&ui->name_val);
@@ -448,6 +450,11 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return ret == ui_consume;
     }
 
+    if ((ret = ui_button_event(&ui->goto_log, ev))) {
+        core_push_event(EV_LOG_SELECT, coord_to_u64(ui->id), 0);
+        return ret == ui_consume;
+    }
+
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
         ui_clipboard_copy_hex(&core.ui.board, coord_to_u64(ui->star.coord));
         return ret == ui_consume;
@@ -510,6 +517,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
     ui_button_render(&ui->goto_map, &layout, renderer);
     ui_button_render(&ui->goto_factory, &layout, renderer);
+    ui_button_render(&ui->goto_log, &layout, renderer);
     ui_layout_next_row(&layout);
 
     ui_layout_sep_y(&layout, font->glyph_h);

@@ -131,3 +131,14 @@ struct ui_io *ui_io_new(void);
 void ui_io_free(struct ui_io *);
 bool ui_io_event(struct ui_io *, SDL_Event *);
 void ui_io_render(struct ui_io *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
+struct ui_log;
+struct ui_log *ui_log_new(void);
+void ui_log_free(struct ui_log *);
+bool ui_log_event(struct ui_log *, SDL_Event *);
+void ui_log_render(struct ui_log *, SDL_Renderer *);

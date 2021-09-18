@@ -66,3 +66,28 @@ enum legion_packed io
 };
 
 static_assert(sizeof(enum io) == 2);
+
+
+// -----------------------------------------------------------------------------
+// ioerr
+// -----------------------------------------------------------------------------
+
+enum legion_packed ioe
+{
+    IOE_NIL = 0,
+    IOE_MIN = 2 << 8,
+
+    IOE_ARGS_LEN = IOE_MIN + 0x00,
+    IOE_INVALID_STATE = IOE_MIN + 0x01,
+
+    IOE_A0_BOUNDS = IOE_MIN + 0x10,
+    IOE_A0_UNKNOWN = IOE_MIN + 0x11,
+
+    IOE_A1_BOUNDS = IOE_MIN + 0x20,
+    IOE_A1_UNKNOWN = IOE_MIN + 0x21,
+
+    IOE_MAX,
+    IOE_LEN = IOE_MAX - IOE_MIN,
+};
+
+static_assert(sizeof(enum ioe) == 2);

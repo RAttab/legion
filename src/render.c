@@ -15,6 +15,7 @@
 #include "render/ui_mod.c"
 #include "render/ui_stars.c"
 #include "render/ui_star.c"
+#include "render/ui_log.c"
 #include "render/ui_item.c"
 #include "render/ui_io.c"
 

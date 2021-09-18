@@ -207,6 +207,7 @@ void ui_str_set_id(struct ui_str *, id_t val);
 void ui_str_set_item(struct ui_str *, enum item val);
 void ui_str_set_coord(struct ui_str *, struct coord val);
 void ui_str_set_symbol(struct ui_str *, const struct symbol *val);
+void ui_str_set_atom(struct ui_str *, word_t word);
 
 inline size_t ui_str_len(struct ui_str *str)
 {

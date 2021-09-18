@@ -225,7 +225,9 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
 
     case EV_STARS_TOGGLE:
     case EV_MODS_TOGGLE:
-    case EV_MOD_SELECT: {
+    case EV_MOD_SELECT:
+    case EV_LOG_TOGGLE:
+    case EV_LOG_SELECT: {
         ui->panel.state = ui_panel_hidden;
         return false;
     }

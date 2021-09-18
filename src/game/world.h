@@ -9,10 +9,12 @@
 #include "game/save.h"
 #include "game/coord.h"
 #include "game/sector.h"
+#include "items/io.h"
 #include "vm/mod.h"
 
 struct mods;
 struct hset;
+struct logi;
 
 typedef uint64_t seed_t;
 typedef uint32_t world_ts_t;
@@ -41,6 +43,7 @@ struct chunk *world_chunk(struct world *, struct coord);
 struct sector *world_sector(struct world *, struct coord);
 const struct star *world_star_in(struct world *, struct rect);
 const struct star *world_star_at(struct world *, struct coord);
+word_t world_star_name(struct world *, struct coord);
 
 struct lisp_ret world_eval(struct world *, const char *src, size_t len);
 
@@ -88,6 +91,14 @@ struct world_chunk_it
 
 struct world_chunk_it world_chunk_it(struct world *);
 struct coord world_chunk_next(struct world *, struct world_chunk_it *);
+
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
+void world_log(struct world *, struct coord, id_t, enum io, enum ioe);
+const struct logi *world_log_next(struct world *, const struct logi *it);
 
 
 // -----------------------------------------------------------------------------

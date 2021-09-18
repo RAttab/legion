@@ -5,6 +5,7 @@
 
 #include "chunk.h"
 
+#include "game/log.h"
 #include "game/world.h"
 #include "game/sector.h"
 #include "game/active.h"
@@ -27,6 +28,7 @@ struct chunk
     word_t name;
 
     active_list_t active;
+    struct log log;
 
     // Ports
     struct htable provided;
@@ -94,6 +96,8 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     star_load(&chunk->star, save);
     active_list_load(&chunk->active, chunk, save);
 
+    if (!log_load(&chunk->log, save)) goto fail;
+
     chunk->requested = save_read_ring32(save);
     chunk->storage = save_read_ring32(save);
     { // provided
@@ -143,6 +147,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_value(save, chunk->name);
     star_save(&chunk->star, save);
     active_list_save(&chunk->active, save);
+    log_save(&chunk->log, save);
 
     save_write_ring32(save, chunk->requested);
     save_write_ring32(save, chunk->storage);
@@ -300,6 +305,23 @@ bool chunk_io(
     if (!item_is_active(id_item(dst))) return false;
     struct active *active = active_index(&chunk->active, id_item(dst));
     return active_io(active, chunk, io, src, dst, args, len);
+}
+
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
+void chunk_log(struct chunk *chunk, id_t id, enum io io, enum ioe err)
+{
+    struct coord star = chunk->star.coord;
+    log_push(&chunk->log, world_time(chunk->world), star, id, io, err);
+    world_log(chunk->world, star, id, io, err);
+}
+
+const struct logi *chunk_log_next(struct chunk *chunk, const struct logi *it)
+{
+    return log_next(&chunk->log, it);
 }
 
 

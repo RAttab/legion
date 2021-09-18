@@ -34,12 +34,29 @@ static void core_exec_event(enum event code, uint64_t d0, uint64_t d1);
 // state
 // -----------------------------------------------------------------------------
 
+void core_populate(void)
+{
+    im_populate();
+    mod_compiler_init();
+
+    {
+        struct atoms *atoms = atoms_new();
+        im_populate_atoms(atoms);
+
+        gen_populate(atoms);
+        tapes_populate(atoms);
+
+        atoms_free(atoms);
+    }
+}
+
 static void state_init()
 {
     enum { state_freq = 10 };
     core.state.sleep = ts_sec / state_freq;
     core.state.next = ts_now();
 
+    core_populate();
     core.state.world = world_new(0);
     core.state.home = world_populate(core.state.world);
 }
@@ -137,6 +154,7 @@ static void ui_init(void)
     core.ui.tapes = ui_tapes_new();
     core.ui.mods = ui_mods_new();
     core.ui.mod = ui_mod_new();
+    core.ui.log = ui_log_new();
     core.ui.stars = ui_stars_new();
     core.ui.star = ui_star_new();
     core.ui.item = ui_item_new();
@@ -149,6 +167,7 @@ static void ui_close()
     ui_tapes_free(core.ui.tapes);
     ui_mods_free(core.ui.mods);
     ui_mod_free(core.ui.mod);
+    ui_log_free(core.ui.log);
     ui_stars_free(core.ui.stars);
     ui_star_free(core.ui.star);
     ui_item_free(core.ui.item);
@@ -171,6 +190,7 @@ static void ui_event(SDL_Event *event)
     if (ui_tapes_event(core.ui.tapes, event)) return;
     if (ui_mods_event(core.ui.mods, event)) return;
     if (ui_mod_event(core.ui.mod, event)) return;
+    if (ui_log_event(core.ui.log, event)) return;
     if (ui_stars_event(core.ui.stars, event)) return;
     if (ui_star_event(core.ui.star, event)) return;
     if (ui_item_event(core.ui.item, event)) return;
@@ -187,6 +207,7 @@ static void ui_render(SDL_Renderer *renderer)
     ui_tapes_render(core.ui.tapes, renderer);
     ui_mods_render(core.ui.mods, renderer);
     ui_mod_render(core.ui.mod, renderer);
+    ui_log_render(core.ui.log, renderer);
     ui_stars_render(core.ui.stars, renderer);
     ui_star_render(core.ui.star, renderer);
     ui_item_render(core.ui.item, renderer);
@@ -200,8 +221,6 @@ static void ui_render(SDL_Renderer *renderer)
 
 void core_init()
 {
-    core_populate();
-
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
     SDL_DisplayMode display = {0};
@@ -336,20 +355,4 @@ static void core_load_apply(void)
     save_close(save);
     core.state.loading = false;
     dbg("loaded %zu bytes", bytes);
-}
-
-void core_populate(void)
-{
-    im_populate();
-    mod_compiler_init();
-
-    {
-        struct atoms *atoms = atoms_new();
-        im_populate_atoms(atoms);
-
-        gen_populate(atoms);
-        tapes_populate(atoms);
-
-        atoms_free(atoms);
-    }
 }

@@ -172,7 +172,9 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     case EV_TAPES_TOGGLE:
     case EV_TAPE_SELECT:
     case EV_STARS_TOGGLE:
-    case EV_MOD_CLEAR: {
+    case EV_MOD_CLEAR:
+    case EV_LOG_TOGGLE:
+    case EV_LOG_SELECT: {
         ui_code_clear(&ui->code);
         ui->mod = NULL;
         ui->id = 0;

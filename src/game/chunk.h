@@ -13,6 +13,7 @@
 #include "vm/vm.h"
 
 struct star;
+struct logi;
 struct vec64;
 struct world;
 struct coord;
@@ -52,6 +53,10 @@ bool chunk_io(
         struct chunk *,
         enum io io, id_t src, id_t dst,
         const word_t *args, size_t len);
+
+
+void chunk_log(struct chunk *, id_t, enum io, enum ioe);
+const struct logi *chunk_log_next(struct chunk *, const struct logi *it);
 
 
 struct energy *chunk_energy(struct chunk *);

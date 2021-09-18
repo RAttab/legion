@@ -48,6 +48,9 @@ enum event
     EV_STAR_SELECT,
     EV_STAR_CLEAR,
 
+    EV_LOG_TOGGLE,
+    EV_LOG_SELECT,
+
     EV_ITEM_SELECT,
     EV_ITEM_CLEAR,
 
@@ -88,6 +91,7 @@ struct core
         struct ui_tapes *tapes;
         struct ui_mods *mods;
         struct ui_mod *mod;
+        struct ui_log *log;
         struct ui_stars *stars;
         struct ui_star *star;
         struct ui_item *item;

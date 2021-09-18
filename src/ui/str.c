@@ -6,8 +6,11 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
+#include "render/core.h"
 #include "game/id.h"
+#include "game/world.h"
 #include "items/item.h"
+#include "vm/atoms.h"
 #include "utils/str.h"
 
 #include <stdarg.h>
@@ -131,4 +134,12 @@ void ui_str_set_symbol(struct ui_str *str, const struct symbol *val)
     assert(str->cap);
     str->len = val->len;
     memcpy((char *) str->str, val->c, str->len);
+}
+
+void ui_str_set_atom(struct ui_str *str, word_t word)
+{
+    struct symbol sym = {0};
+    if (atoms_str(world_atoms(core.state.world), word, &sym))
+        ui_str_set_symbol(str, &sym);
+    else ui_str_set_hex(str, word);
 }

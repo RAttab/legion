@@ -59,8 +59,6 @@ static void ui_stars_update(struct ui_stars *ui)
     for (struct coord ret = world_chunk_next(world, &it);
          !coord_is_nil(ret); ret = world_chunk_next(world, &it))
     {
-        struct chunk *chunk = world_chunk(world, ret);
-
         if (!coord_eq(coord_sector(ret), sector)) {
             sector = coord_sector(ret);
             parent = ui_tree_index(&ui->tree);
@@ -72,10 +70,9 @@ static void ui_stars_update(struct ui_stars *ui)
                     (sector.y >> (coord_sector_bits + coord_area_bits)));
         }
 
-        struct symbol name = {0};
-        bool ok = atoms_str(world_atoms(world), chunk_name(chunk), &name);
-        ui_str_set_symbol(ui_tree_add(&ui->tree, parent, coord_to_u64(ret)), &name);
-        assert(ok);
+        ui_str_set_atom(
+                ui_tree_add(&ui->tree, parent, coord_to_u64(ret)),
+                world_star_name(world, ret));
     }
 }
 
@@ -124,7 +121,9 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
     case EV_TAPES_TOGGLE:
     case EV_TAPE_SELECT:
     case EV_MODS_TOGGLE:
-    case EV_MOD_SELECT: {
+    case EV_MOD_SELECT:
+    case EV_LOG_TOGGLE:
+    case EV_LOG_SELECT: {
         ui->panel.state = ui_panel_hidden;
         return false;
     }
