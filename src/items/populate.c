@@ -250,6 +250,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     ioe_init(IOE_MISSING_ARG),
     ioe_init(IOE_INVALID_STATE),
     ioe_init(IOE_VM_FAULT),
+    ioe_init(IOE_STARVED),
     ioe_init(IOE_A0_INVALID),
     ioe_init(IOE_A0_UNKNOWN),
     ioe_init(IOE_A1_INVALID),

@@ -78,9 +78,10 @@ enum legion_packed ioe
     IOE_NIL = 0,
     IOE_MIN = 2 << 8,
 
-    IOE_MISSING_ARG = IOE_MIN + 0x00,
+    IOE_MISSING_ARG   = IOE_MIN + 0x00,
     IOE_INVALID_STATE = IOE_MIN + 0x01,
-    IOE_VM_FAULT = IOE_MIN + 0x02,
+    IOE_VM_FAULT      = IOE_MIN + 0x02,
+    IOE_STARVED       = IOE_MIN + 0x03,
 
     IOE_A0_INVALID = IOE_MIN + 0x10,
     IOE_A0_UNKNOWN = IOE_MIN + 0x11,

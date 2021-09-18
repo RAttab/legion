@@ -78,6 +78,7 @@ static void im_extract_step_output(
 {
     if (!extract->waiting) {
         if (!chunk_harvest(chunk, item)) {
+            chunk_log(chunk, extract->id, IO_STEP, IOE_STARVED);
             im_extract_reset(extract, chunk);
             return;
         }
