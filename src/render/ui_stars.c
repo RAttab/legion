@@ -104,7 +104,7 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
                 core_push_event(EV_FOCUS_PANEL, 0, 0);
             ui->panel.state = ui_panel_hidden;
         }
-        return true;
+        return false;
     }
 
     case EV_STAR_SELECT: {

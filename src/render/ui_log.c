@@ -185,7 +185,7 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
                 core_push_event(EV_FOCUS_PANEL, 0, 0);
             ui->panel.state = ui_panel_hidden;
         }
-        return true;
+        return false;
     }
 
     case EV_LOG_SELECT: {
