@@ -64,11 +64,14 @@ static void im_receive_io_channel(
         struct im_receive *receive, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    if (args[0] >= im_channel_max) return;
+    if (!im_check_args(chunk, receive->id, IO_CHANNEL, len, 1)) return;
+
+    uint8_t channel = args[0];
+    if (args[0] < 0 || args[0] >= im_channel_max)
+        return chunk_log(chunk, receive->id, IO_CHANNEL, IOE_A0_INVALID);
 
     im_receive_unlisten(receive, chunk);
-    receive->channel = args[0];
+    receive->channel = channel;
     im_receive_listen(receive, chunk);
 }
 
@@ -76,10 +79,14 @@ static void im_receive_io_target(
         struct im_receive *receive, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, receive->id, IO_TARGET, len, 1)) return;
+
+    struct coord target = coord_from_u64(args[0]);
+    if (!coord_validate(args[0]))
+        return chunk_log(chunk, receive->id, IO_TARGET, IOE_A0_INVALID);
 
     im_receive_unlisten(receive, chunk);
-    receive->target = coord_from_u64(args[0]);
+    receive->target = target;
     im_receive_listen(receive, chunk);
 }
 
@@ -103,10 +110,10 @@ static void im_receive_io_receive(
 }
 
 static void im_receive_io_recv(
-        struct im_receive *receive,
+        struct im_receive *receive, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    assert(len >= 1);
+    if (!im_check_args(chunk, receive->id, IO_RECV, len, 1)) return;
 
     const size_t cap = im_receive_cap(receive);
     if (receive->head == UINT8_MAX) {
@@ -120,9 +127,11 @@ static void im_receive_io_recv(
 
     struct im_packet *packet = receive->buffer + head;
     im_packet_unpack(args[0], &packet->chan, &packet->len);
-    assert(packet->len < len);
-    memcpy(packet->data, args + 1, packet->len * sizeof(packet->data[0]));
 
+    if (packet->len >= len || packet->chan >= im_channel_max)
+        return chunk_log(chunk, receive->id, IO_RECV, IOE_A0_INVALID);
+
+    memcpy(packet->data, args + 1, packet->len * sizeof(packet->data[0]));
     receive->head++;
 }
 
@@ -143,7 +152,7 @@ static void im_receive_io(
     case IO_TARGET: { im_receive_io_target(receive, chunk, args, len); return; }
     case IO_RECEIVE: { im_receive_io_receive(receive, chunk, src); return; }
 
-    case IO_RECV: { im_receive_io_recv(receive, args, len); return; }
+    case IO_RECV: { im_receive_io_recv(receive, chunk, args, len); return; }
 
     default: { return; }
     }

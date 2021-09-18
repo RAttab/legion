@@ -204,6 +204,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_NIL),
     io_init(IO_OK),
     io_init(IO_FAIL),
+    io_init(IO_STEP),
     io_init(IO_RETURN),
     io_init(IO_PING),
     io_init(IO_PONG),
@@ -246,11 +247,12 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_TARGET),
 
     // Errors
-    ioe_init(IOE_ARGS_LEN),
+    ioe_init(IOE_MISSING_ARG),
     ioe_init(IOE_INVALID_STATE),
-    ioe_init(IOE_A0_BOUNDS),
+    ioe_init(IOE_VM_FAULT),
+    ioe_init(IOE_A0_INVALID),
     ioe_init(IOE_A0_UNKNOWN),
-    ioe_init(IOE_A1_BOUNDS),
+    ioe_init(IOE_A1_INVALID),
     ioe_init(IOE_A1_UNKNOWN),
 };
 

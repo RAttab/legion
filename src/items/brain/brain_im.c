@@ -81,7 +81,7 @@ static void im_brain_reset(struct im_brain *brain)
 static void im_brain_recv(
         struct im_brain *brain, const word_t *args, size_t len)
 {
-    assert(len <= im_packet_max);
+    len = legion_min(len, (size_t) im_packet_max);
 
     for (size_t i = 0; i < len; ++i)
         vm_push(&brain->vm, args[len - i - 1]);
@@ -140,12 +140,14 @@ static void im_brain_step_io(
 
 static void im_brain_vm_step(struct im_brain *brain, struct chunk *chunk)
 {
-    if (!brain->mod || brain->mod_fault) return;
+    if (!brain->mod || brain->mod_fault || vm_fault(&brain->vm)) return;
 
     mod_t mod = vm_exec(&brain->vm, brain->mod);
     if (brain->vm.ip == brain->breakpoint) brain->debug = true;
 
-    if (mod == VM_FAULT) return;
+    if (mod == VM_FAULT)
+        return chunk_log(chunk, brain->id, IO_STEP, IOE_VM_FAULT);
+
     if (mod == VM_RESET) { im_brain_reset(brain); return; }
     if (mod) { im_brain_mod(brain, chunk, mod); return; }
 
@@ -187,22 +189,24 @@ static void im_brain_io_mod(
         struct im_brain *brain, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, brain->id, IO_MOD, len, 1)) return;
 
     mod_t id = args[0];
-    if (id != args[0]) return;
+    if (!mod_validate(args[0]))
+        return chunk_log(chunk, brain->id, IO_MOD, IOE_A0_INVALID);
 
     vm_reset(&brain->vm);
     im_brain_mod(brain, chunk, id);
+
+    if (id && !brain->mod)
+        return chunk_log(chunk, brain->id, IO_MOD, IOE_A0_UNKNOWN);
 }
 
 static void im_brain_io_return(
-        struct im_brain *brain, const word_t *args, size_t len)
+        struct im_brain *brain, struct chunk *chunk, const word_t *args, size_t len)
 {
-    (void) len;
-    if (len < 1) return;
-
-    vm_push(&brain->vm,  args[0]);
+    if (!im_check_args(chunk, brain->id, IO_RETURN, len, 1)) return;
+    vm_push(&brain->vm, args[0]);
 }
 
 static void im_brain_io_send(
@@ -213,18 +217,22 @@ static void im_brain_io_send(
 }
 
 static void im_brain_io_dbg_break(
-        struct im_brain *brain, const word_t *args, size_t len)
+        struct im_brain *brain, struct chunk *chunk, const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    if (args[0] > UINT32_MAX || args[0] < 0) return;
+    if (!im_check_args(chunk, brain->id, IO_DBG_BREAK, len, 1)) return;
 
-    brain->breakpoint = args[0] ? args[0] : IP_NIL;
+    ip_t ip = args[0];
+    if (!ip_validate(args[0]))
+        return chunk_log(chunk, brain->id, IO_DBG_BREAK, IOE_A0_INVALID);
+
+    brain->breakpoint = ip ? ip : IP_NIL;
     brain->vm.specs.speed = brain->breakpoint != IP_NIL ? 1 : im_brain_speed(brain);
 }
 
 static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)
 {
-    if (!brain->debug) return;
+    if (!brain->debug)
+        return chunk_log(chunk, brain->id, IO_DBG_STEP, IOE_INVALID_STATE);
 
     uint8_t old = legion_xchg(&brain->vm.specs.speed, 1);
     im_brain_vm_step(brain, chunk);
@@ -240,7 +248,7 @@ static void im_brain_io(
 
     switch(io)
     {
-    case IO_RETURN: { im_brain_io_return(brain, args, len); return; }
+    case IO_RETURN: { im_brain_io_return(brain, chunk, args, len); return; }
 
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, NULL, 0); return; }
     case IO_PONG: { return; } // the return value of chunk_io is all we really need.
@@ -258,7 +266,7 @@ static void im_brain_io(
 
     case IO_DBG_ATTACH: { brain->debug = true; return; }
     case IO_DBG_DETACH: { brain->debug = false; return; }
-    case IO_DBG_BREAK: { im_brain_io_dbg_break(brain, args, len); return; }
+    case IO_DBG_BREAK: { im_brain_io_dbg_break(brain, chunk, args, len); return; }
     case IO_DBG_STEP: { im_brain_io_dbg_step(brain, chunk); return; }
 
     default: { return; }

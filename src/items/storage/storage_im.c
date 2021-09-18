@@ -72,13 +72,16 @@ static void im_storage_io_item(
         struct im_storage *storage, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, storage->id, IO_ITEM, len, 1)) return;
 
     enum item item = args[0];
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
-    if (!world_lab_known(chunk_world(chunk), item)) return;
-    if (item == storage->item) return;
+    if (!item_validate(args[0]))
+        return chunk_log(chunk, storage->id, IO_ITEM, IOE_A0_INVALID);
 
+    if (!world_lab_known(chunk_world(chunk), item))
+        return chunk_log(chunk, storage->id, IO_ITEM, IOE_A0_UNKNOWN);
+
+    if (item == storage->item) return;
     im_storage_io_reset(storage, chunk);
     storage->item = item;
     storage->count = 0;

@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "utils/bits.h"
+#include "vm/vm.h"
 #include "SDL.h"
 
 // -----------------------------------------------------------------------------
@@ -63,6 +64,8 @@ inline bool coord_eq(struct coord rhs, struct coord lhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y;
 }
+
+inline bool coord_validate(word_t word) { return word > 0; }
 
 inline struct coord coord_area(struct coord coord)
 {

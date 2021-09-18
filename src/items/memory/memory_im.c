@@ -47,7 +47,8 @@ static void im_memory_make(
 // io
 // -----------------------------------------------------------------------------
 
-static void im_memory_io_status(struct im_memory *memory, struct chunk *chunk, id_t src)
+static void im_memory_io_status(
+        struct im_memory *memory, struct chunk *chunk, id_t src)
 {
     word_t value = memory->len;
     chunk_io(chunk, IO_STATE, memory->id, src, &value, 1);
@@ -58,20 +59,35 @@ static void im_memory_io_get(
         id_t src,
         const word_t *args, size_t len)
 {
-    word_t val = 0;
-    if (len >= 1) {
-        word_t index = args[0];
-        if (index >= 0 && index < memory->len) val = memory->data[index];
+    if (!im_check_args(chunk, memory->id, IO_GET, len, 1)) goto fail;
+
+    uint8_t index = args[0];
+    if (args[0] < 0 || args[0] >= memory->len) {
+        chunk_log(chunk, memory->id, IO_GET, IOE_A0_INVALID);
+        goto fail;
     }
-    chunk_io(chunk, IO_RETURN, memory->id, src, &val, 1);
+
+    word_t value = memory->data[index];
+    chunk_io(chunk, IO_RETURN, memory->id, src, &value, 1);
+    return;
+
+  fail:
+    {
+        word_t fail = 0;
+        chunk_io(chunk, IO_RETURN, memory->id, src, &fail, 1);
+    }
+    return;
 }
 
-static void im_memory_io_set(struct im_memory *memory, const word_t *args, size_t len)
+static void im_memory_io_set(
+        struct im_memory *memory, struct chunk *chunk,
+        const word_t *args, size_t len)
 {
-    if (len < 2) return;
+    if (!im_check_args(chunk, memory->id, IO_SET, len, 2)) return;
 
-    if (args[0] >= memory->len) return;
     uint8_t index = args[0];
+    if (args[0] < 0 || args[0] >= memory->len)
+        return chunk_log(chunk, memory->id, IO_GET, IOE_A0_INVALID);
 
     memory->data[index] = args[1];
 }
@@ -89,7 +105,7 @@ static void im_memory_io(
     case IO_STATUS: { im_memory_io_status(memory, chunk, src); return; }
 
     case IO_GET: { im_memory_io_get(memory, chunk, src, args, len); return; }
-    case IO_SET: { im_memory_io_set(memory, args, len); return; }
+    case IO_SET: { im_memory_io_set(memory, chunk, args, len); return; }
 
     default: { return; }
     }

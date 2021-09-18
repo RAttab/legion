@@ -20,6 +20,7 @@ typedef uint32_t mod_t; // see mod.h for the full definition
 
 typedef uint32_t ip_t;
 static const ip_t IP_NIL = UINT32_MAX;
+inline bool ip_validate(word_t word) { return word >= 0 && word < UINT32_MAX; }
 
 enum flags
 {

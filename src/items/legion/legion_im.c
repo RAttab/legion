@@ -85,23 +85,26 @@ static void im_legion_io_reset(struct im_legion *legion, struct chunk *chunk)
 }
 
 static void im_legion_io_mod(
-        struct im_legion *legion, const word_t *args, size_t len)
+        struct im_legion *legion, struct chunk *chunk, const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, legion->id, IO_MOD, len, 1)) return;
 
-    mod_t id = args[0];
-    if (id != args[0]) return;
-    legion->mod = id;
+    mod_t mod = args[0];
+    if (!mod_validate(args[0]))
+        return chunk_log(chunk, legion->id, IO_MOD, IOE_A0_INVALID);
+
+    legion->mod = mod;
 }
 
 static void im_legion_io_launch(
         struct im_legion *legion, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, legion->id, IO_LAUNCH, len, 1)) return;
 
     struct coord dst = coord_from_u64(args[0]);
-    if (coord_is_nil(dst)) return;
+    if (!coord_validate(args[0]))
+        return chunk_log(chunk, legion->id, IO_MOD, IOE_A0_INVALID);
 
     const word_t data[] = {
         coord_to_u64(chunk_star(chunk)->coord),
@@ -125,7 +128,7 @@ static void im_legion_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, legion->id, src, NULL, 0); return; }
     case IO_STATUS: { im_legion_io_status(legion, chunk, src); return; }
 
-    case IO_MOD: { im_legion_io_mod(legion, args, len); return; }
+    case IO_MOD: { im_legion_io_mod(legion, chunk, args, len); return; }
     case IO_RESET: { im_legion_io_reset(legion, chunk); return; }
 
     case IO_LAUNCH: { im_legion_io_launch(legion, chunk, args, len); return; }

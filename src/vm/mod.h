@@ -29,6 +29,7 @@ inline mod_t make_mod(mod_maj_t maj, mod_ver_t ver)
 
 inline mod_maj_t mod_maj(mod_t mod) { return mod >> 16; }
 inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
+inline bool mod_validate(word_t word) { return word > 0 && word <= UINT32_MAX; }
 
 
 // -----------------------------------------------------------------------------

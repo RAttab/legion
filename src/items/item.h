@@ -6,6 +6,8 @@
 #pragma once
 
 #include "common.h"
+#include "vm/vm.h"
+
 
 // -----------------------------------------------------------------------------
 // item
@@ -152,6 +154,8 @@ static_assert(ITEM_NATURAL_LAST <= ITEM_SYNTH_FIRST);
 static_assert(ITEM_SYNTH_LAST   <= ITEM_PASSIVE_FIRST);
 static_assert(ITEM_PASSIVE_LAST <= ITEM_ACTIVE_FIRST);
 static_assert(ITEM_ACTIVE_LAST  <= ITEM_LOGISTICS_FIRST);
+
+inline bool item_validate(word_t word) { return word > 0 && word < ITEM_MAX; }
 
 
 // -----------------------------------------------------------------------------

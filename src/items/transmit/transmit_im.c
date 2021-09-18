@@ -43,27 +43,39 @@ static void im_transmit_io_status(
 }
 
 static void im_transmit_io_channel(
-        struct im_transmit *transmit, const word_t *args, size_t len)
+        struct im_transmit *transmit, struct chunk *chunk,
+        const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    if (args[0] >= im_channel_max) return;
+    if (!im_check_args(chunk, transmit->id, IO_CHANNEL, len, 1)) return;
 
-    transmit->channel = args[0];
+    uint8_t channel = args[0];
+    if (args[0] < 0 || args[0] >= im_channel_max)
+        return chunk_log(chunk, transmit->id, IO_CHANNEL, IOE_A0_INVALID);
+
+    transmit->channel = channel;
 }
 
 static void im_transmit_io_target(
-        struct im_transmit *transmit, const word_t *args, size_t len)
+        struct im_transmit *transmit, struct chunk *chunk,
+        const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    transmit->target = coord_from_u64(args[0]);
+    if (!im_check_args(chunk, transmit->id, IO_TARGET, len, 1)) return;
+
+    struct coord target = coord_from_u64(args[0]);
+    if (!coord_validate(args[0]))
+        return chunk_log(chunk, transmit->id, IO_TARGET, IOE_A0_INVALID);
+
+    transmit->target = target;
 }
 
 static void im_transmit_io_transmit(
         struct im_transmit *transmit, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    if (coord_is_nil(transmit->target)) return;
+    if (!im_check_args(chunk, transmit->id, IO_TRANSMIT, len, 1)) return;
+
+    if (coord_is_nil(transmit->target))
+        return chunk_log(chunk, transmit->id, IO_TRANSMIT, IOE_INVALID_STATE);
 
     const size_t packet_len = legion_min(len, (size_t) im_packet_max);
     const size_t packet_speed = im_transmit_speed;
@@ -89,8 +101,8 @@ static void im_transmit_io(
     case IO_STATUS: { im_transmit_io_status(transmit, chunk, src); return; }
     case IO_RESET: { im_transmit_reset(transmit, chunk); return; }
 
-    case IO_CHANNEL: { im_transmit_io_channel(transmit, args, len); return; }
-    case IO_TARGET: { im_transmit_io_target(transmit, args, len); return; }
+    case IO_CHANNEL: { im_transmit_io_channel(transmit, chunk, args, len); return; }
+    case IO_TARGET: { im_transmit_io_target(transmit, chunk, args, len); return; }
     case IO_TRANSMIT: { im_transmit_io_transmit(transmit, chunk, args, len); return; }
 
     default: { return; }

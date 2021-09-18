@@ -88,12 +88,17 @@ static void im_scanner_io_scan(
         struct im_scanner *scanner, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    if (len >= 2 && !args[1]) len = 1;
+    if (!im_check_args(chunk, scanner->id, IO_SCAN, len, 1)) return;
 
     struct coord coord = coord_from_u64(args[0]);
+    if (!coord_validate(args[0]))
+        return chunk_log(chunk, scanner->id, IO_SCAN, IOE_A0_INVALID);
 
-    if (len < 2) {
+    enum item item = len >= 2 ? args[1] : ITEM_NIL;
+    if (len >= 2 && !item_validate(args[1]))
+        return chunk_log(chunk, scanner->id, IO_SCAN, IOE_A1_INVALID);
+
+    if (!item) {
         coord = coord_sector(coord);
         coord = make_coord(
                 coord.x + coord_sector_size/2,
@@ -103,9 +108,6 @@ static void im_scanner_io_scan(
         scanner->type.wide = world_scan_it(chunk_world(chunk), coord);
     }
     else {
-        enum item item = args[1];
-        if (item != args[1]) return;
-
         scanner->state = im_scanner_target;
         scanner->type.target.item = item;
         scanner->type.target.coord = coord;

@@ -136,10 +136,10 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
 
 mod_t vm_exec(struct vm *vm, const struct mod *mod)
 {
-    if (vm->flags & flag_faults) return VM_FAULT;
-    if (vm->flags & FLAG_SUSPENDED) return 0;
+    if (unlikely(vm_fault(vm))) return VM_FAULT;
+    if (unlikely(vm->flags & FLAG_SUSPENDED)) return 0;
 
-    if (vm->ip >= mod->len) {
+    if (unlikely(vm->ip >= mod->len)) {
         vm->flags |= FLAG_FAULT_CODE;
         return VM_FAULT;
     }

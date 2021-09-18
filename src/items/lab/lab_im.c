@@ -98,15 +98,20 @@ static void im_lab_io_item(
         struct im_lab *lab, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, lab->id, IO_ITEM, len, 1)) return;
 
     enum item item = args[0];
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
-    if (!world_lab_known(chunk_world(chunk), item)) return;
+    if (!item_validate(args[0]))
+        return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_INVALID);
 
-    struct world *world = chunk_world(chunk);
+    if (!world_lab_known(chunk_world(chunk), item))
+        return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_UNKNOWN);
+
     const struct im_config *config = im_config(item);
-    if (!config || world_lab_learned(world, item)) return;
+    if (!config)
+        return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_UNKNOWN);
+
+    if (world_lab_learned(chunk_world(chunk), item)) return;
 
     im_lab_reset(lab, chunk);
     lab->item = item;
@@ -118,22 +123,33 @@ static void im_lab_io_tape_at(
         id_t src,
         const word_t *args, size_t len)
 {
-    if (len < 2) goto fail;
+    if (!im_check_args(chunk, lab->id, IO_TAPE_AT, len, 2)) goto fail;
 
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) goto fail;
     enum item item = args[0];
+    if (!item_validate(args[0])) {
+        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A0_INVALID);
+        goto fail;
+    }
 
-    if (args[1] < 0 || args[1] >= UINT8_MAX) goto fail;
-    tape_it_t index = args[1];
-
-    if (!world_lab_known(chunk_world(chunk), item)) goto fail;
+    if (!world_lab_known(chunk_world(chunk), item)) {
+        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A0_UNKNOWN);
+        goto fail;
+    }
 
     const struct tape *tape = tapes_get(item);
-    if (!tape) goto fail;
+    if (!tape) {
+        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A0_UNKNOWN);
+        goto fail;
+    }
 
-    struct tape_ret ret = tape_at(tape, index);
+    tape_it_t index = args[1];
+    if (!tape_it_validate(args[1])) {
+        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A1_INVALID);
+        goto fail;
+    }
 
     word_t result = 0;
+    struct tape_ret ret = tape_at(tape, index);
     if (ret.state == tape_input || ret.state == tape_output)
         result = vm_pack(ret.item, ret.state);
 
@@ -153,9 +169,13 @@ static void im_lab_io_tape_known(
         id_t src,
         const word_t *args, size_t len)
 {
-    if (len < 1) goto fail;
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) goto fail;
+    if (!im_check_args(chunk, lab->id, IO_TAPE_KNOWN, len, 1)) goto fail;
+
     enum item item = args[0];
+    if (!item_validate(args[0])) {
+        chunk_log(chunk, lab->id, IO_TAPE_KNOWN, IOE_A0_INVALID);
+        goto fail;
+    }
 
     word_t known = world_lab_known(chunk_world(chunk), item) ? 1 : 0;
     chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
@@ -174,9 +194,13 @@ static void im_lab_io_item_bits(
         id_t src,
         const word_t *args, size_t len)
 {
-    if (len < 1) goto fail;
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) goto fail;
+    if (!im_check_args(chunk, lab->id, IO_ITEM_BITS, len, 1)) goto fail;
+
     enum item item = args[0];
+    if (!item_validate(args[0])) {
+        chunk_log(chunk, lab->id, IO_ITEM_BITS, IOE_A0_INVALID);
+        goto fail;
+    }
 
     word_t bits = world_lab_learned_bits(chunk_world(chunk), item);
     chunk_io(chunk, IO_RETURN, lab->id, src, &bits, 1);
@@ -195,9 +219,13 @@ static void im_lab_io_item_known(
         id_t src,
         const word_t *args, size_t len)
 {
-    if (len < 1) goto fail;
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) goto fail;
+    if (!im_check_args(chunk, lab->id, IO_ITEM_KNOWN, len, 1)) goto fail;
+
     enum item item = args[0];
+    if (!item_validate(args[0])) {
+        chunk_log(chunk, lab->id, IO_ITEM_KNOWN, IOE_A0_INVALID);
+        goto fail;
+    }
 
     word_t known = world_lab_learned(chunk_world(chunk), item) ? 1 : 0;
     chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);

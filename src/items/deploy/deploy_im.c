@@ -73,12 +73,18 @@ static void im_deploy_io_item(
         struct im_deploy *deploy, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, deploy->id, IO_ITEM, len, 1)) return;
 
     enum item item = args[0];
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
-    if (!item_is_active(item) && !item_is_logistics(item)) return;
-    if (!world_lab_known(chunk_world(chunk), item)) return;
+
+    if (!item_validate(args[0]))
+        return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_INVALID);
+
+    if (!item_is_active(item) && !item_is_logistics(item))
+        return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_INVALID);
+
+    if (!world_lab_known(chunk_world(chunk), item))
+        return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_UNKNOWN);
 
     im_deploy_reset(deploy, chunk);
     deploy->item = item;

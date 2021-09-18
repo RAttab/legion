@@ -120,14 +120,18 @@ static void im_printer_io_tape(
         struct im_printer *printer, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, printer->id, IO_TAPE, len, 1)) return;
 
     enum item item = args[0];
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
-    if (!world_lab_known(chunk_world(chunk), item)) return;
+    if (!item_validate(args[0]))
+        return chunk_log(chunk, printer->id, IO_TAPE, IOE_A0_INVALID);
+
+    if (!world_lab_known(chunk_world(chunk), item))
+        return chunk_log(chunk, printer->id, IO_TAPE, IOE_A0_UNKNOWN);
 
     const struct tape *tape = tapes_get(item);
-    if (!tape || tape_host(tape) != id_item(printer->id)) return;
+    if (!tape || tape_host(tape) != id_item(printer->id))
+        return chunk_log(chunk, printer->id, IO_TAPE, IOE_A0_INVALID);
 
     im_printer_reset(printer, chunk);
     printer->tape = tape_pack(item, 0, tape);

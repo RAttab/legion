@@ -95,27 +95,40 @@ static void im_port_io_item(
         struct im_port *port, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (len < 1) return;
+    if (!im_check_args(chunk, port->id, IO_ITEM, len, 1)) return;
 
     enum item item = args[0];
-    if (args[0] <= 0 || args[0] >= ITEM_MAX) return;
-    if (!world_lab_known(chunk_world(chunk), item)) return;
+    if (!item_validate(args[0]))
+        return chunk_log(chunk, port->id, IO_TAPE, IOE_A0_INVALID);
+
+    if (!world_lab_known(chunk_world(chunk), item))
+        return chunk_log(chunk, port->id, IO_TAPE, IOE_A0_UNKNOWN);
+
     if (item == port->want.item) return;
     port->want.item = item;
+    port->want.count = item ? 1 : 0;
 
-    port->want.count = 1;
-    if (!item) port->want.count = 0;
-    else if (len >= 2 && args[1] > 0)
-        port->want.count = legion_min(args[1], UINT8_MAX);
+    if (len >= 2) {
+        uint8_t count = args[1];
+        if (args[1] < 0 || args[1] > UINT8_MAX)
+            return chunk_log(chunk, port->id, IO_TAPE, IOE_A1_INVALID);
+        port->want.count = count;
+    }
 
     chunk_ports_reset(chunk, port->id);
 }
 
 static void im_port_io_target(
-        struct im_port *port, const word_t *args, size_t len)
+        struct im_port *port, struct chunk *chunk,
+        const word_t *args, size_t len)
 {
-    if (len < 1) return;
-    port->target = coord_from_u64(args[0]);
+    if (!im_check_args(chunk, port->id, IO_TARGET, len, 1)) return;
+
+    struct coord coord = coord_from_u64(args[0]);
+    if (!coord_validate(args[0]))
+        return chunk_log(chunk, port->id, IO_TARGET, IOE_A0_INVALID);
+
+    port->target = coord;
 }
 
 static void im_port_io(
@@ -133,7 +146,7 @@ static void im_port_io(
     case IO_RESET: { im_port_io_reset(port, chunk); return; }
     case IO_ITEM: { im_port_io_item(port, chunk, args, len); return; }
 
-    case IO_TARGET: {im_port_io_target(port, args, len); return; }
+    case IO_TARGET: {im_port_io_target(port, chunk, args, len); return; }
 
     default: { return; }
     }

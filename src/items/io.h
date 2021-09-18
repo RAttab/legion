@@ -20,15 +20,16 @@ enum legion_packed io
     IO_NIL    = IO_MIN,
     IO_OK     = IO_MIN + 0x01,
     IO_FAIL   = IO_MIN + 0x02,
-    IO_RETURN = IO_MIN + 0x03,
-    IO_PING   = IO_MIN + 0x04,
-    IO_PONG   = IO_MIN + 0x05,
-    IO_STATUS = IO_MIN + 0x06,
-    IO_STATE  = IO_MIN + 0x07,
-    IO_RESET  = IO_MIN + 0x08,
-    IO_ITEM   = IO_MIN + 0x09,
-    IO_TAPE   = IO_MIN + 0x0A,
-    IO_MOD    = IO_MIN + 0x0B,
+    IO_STEP   = IO_MIN + 0x03,
+    IO_RETURN = IO_MIN + 0x04,
+    IO_PING   = IO_MIN + 0x05,
+    IO_PONG   = IO_MIN + 0x06,
+    IO_STATUS = IO_MIN + 0x07,
+    IO_STATE  = IO_MIN + 0x08,
+    IO_RESET  = IO_MIN + 0x09,
+    IO_ITEM   = IO_MIN + 0x0A,
+    IO_TAPE   = IO_MIN + 0x0B,
+    IO_MOD    = IO_MIN + 0x0C,
 
     // Brain
     IO_ID         = IO_MIN + 0x10,
@@ -77,13 +78,14 @@ enum legion_packed ioe
     IOE_NIL = 0,
     IOE_MIN = 2 << 8,
 
-    IOE_ARGS_LEN = IOE_MIN + 0x00,
+    IOE_MISSING_ARG = IOE_MIN + 0x00,
     IOE_INVALID_STATE = IOE_MIN + 0x01,
+    IOE_VM_FAULT = IOE_MIN + 0x02,
 
-    IOE_A0_BOUNDS = IOE_MIN + 0x10,
+    IOE_A0_INVALID = IOE_MIN + 0x10,
     IOE_A0_UNKNOWN = IOE_MIN + 0x11,
 
-    IOE_A1_BOUNDS = IOE_MIN + 0x20,
+    IOE_A1_INVALID = IOE_MIN + 0x20,
     IOE_A1_UNKNOWN = IOE_MIN + 0x21,
 
     IOE_MAX,
