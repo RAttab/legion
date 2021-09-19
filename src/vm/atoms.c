@@ -2,8 +2,8 @@
    Rémi Attab (remi.attab@gmail.com), 28 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 
-   \todo entire implementation is a convoluted work-around for not having str
-   hash table. Need to improve
+   \todo We're kinda praying for a low collision rate on the symbol_hash
+   function.
 */
 
 #include "vm/atoms.h"
@@ -16,7 +16,6 @@
 
 struct legion_packed atom_data
 {
-    uint64_t next;
     word_t word;
     struct symbol symbol;
 };
@@ -30,13 +29,7 @@ struct atoms
     struct htable iword;
 };
 
-enum
-{
-    atoms_default_cap = 1 << 10,
-
-    atoms_cap_mul = 2,
-    atoms_cap_str_mul = 4,
-};
+enum { atoms_default_cap = 1 << 10 };
 
 struct atoms *atoms_new(void)
 {
@@ -70,11 +63,7 @@ struct atoms *atoms_load(struct save *save)
 
     size_t len = save_read_type(save, typeof(len));
     size_t cap = atoms_default_cap;
-    size_t cap_str = atoms_default_cap;
-    while (cap < len) {
-        cap *= atoms_cap_mul;
-        cap_str *= atoms_cap_str_mul;
-    }
+    while (cap < len) cap *= 2;
 
     if (atoms->base) free(atoms->base);
     atoms->base = alloc_cache(cap * sizeof(*atoms->base));
@@ -82,23 +71,17 @@ struct atoms *atoms_load(struct save *save)
     atoms->it = atoms->base + len;
     save_read(save, atoms->base, (atoms->it - atoms->base) * sizeof(*atoms->it));
 
-    htable_reserve(&atoms->iword, cap);
-    htable_reserve(&atoms->istr, cap_str);
+    htable_reserve(&atoms->iword, len);
+    htable_reserve(&atoms->istr, len);
 
     for (struct atom_data *it = atoms->base + 1; it < atoms->it; it++) {
-        it->next = 0;
+        struct htable_ret ret = {0};
         uint64_t index = it - atoms->base;
 
-        struct htable_ret ret = htable_put(&atoms->iword, it->word, index);
+        ret = htable_put(&atoms->iword, it->word, index);
         assert(ret.ok);
-
-        ret = htable_try_put(&atoms->istr, symbol_hash(&it->symbol), index);
-        assert(ret.ok || ret.value);
-
-        if (!ret.ok) {
-            struct atom_data *prev = atoms->base + index;
-            prev->next = index;
-        }
+        ret = htable_put(&atoms->istr, symbol_hash(&it->symbol), index);
+        assert(ret.ok);
     }
 
     if (!save_read_magic(save, save_magic_atoms)) goto fail;
@@ -122,140 +105,64 @@ void atoms_save(struct atoms *atoms, struct save *save)
     save_write_magic(save, save_magic_atoms);
 }
 
-
-static struct atom_data *atoms_find(
-        struct atoms *atoms, const struct symbol *symbol, struct atom_data **prev)
-{
-    *prev = NULL;
-
-    struct htable_ret ret = htable_get(&atoms->istr, symbol_hash(symbol));
-    if (!ret.ok) return NULL;
-
-    struct atom_data *data = atoms->base + ret.value;
-    while (data) {
-        if (likely(symbol_eq(symbol, &data->symbol))) return data;
-        *prev = data;
-        data = atoms->base + data->next;
-    }
-
-    assert(*prev);
-    return NULL;
-}
-
-static void atoms_expand(struct atoms *atoms)
-{
-    if (likely(atoms->it < atoms->end)) return;
-
-    size_t old = atoms->end - atoms->base;
-    size_t new = old * atoms_cap_mul;
-
-    atoms->base = realloc(atoms->base, new * sizeof(*atoms->base));
-    atoms->it = atoms->base + old;
-    atoms->end = atoms->base + new;
-}
-
-static void atoms_grow_index(struct atoms *atoms)
-{
-    size_t end = atoms->istr.len * atoms_cap_str_mul;
-    htable_reset(&atoms->istr);
-    htable_reserve(&atoms->istr, end);
-
-    size_t len = atoms->it - atoms->base;
-    for (size_t i = 0; i < len; ++i) {
-        struct atom_data *data = &atoms->base[i];
-        data->next = 0;
-
-        struct atom_data *prev = NULL;
-        struct atom_data *ret = atoms_find(atoms, &data->symbol, &prev);
-        assert(!ret);
-
-        if (prev) prev->next = i;
-        else {
-            uint64_t hash = symbol_hash(&data->symbol);
-            struct htable_ret ret = htable_put(&atoms->istr, hash, i);
-            assert(ret.ok);
-        }
-    }
-}
-
-static struct atom_data *atoms_insert(
+static uint64_t atoms_insert(
         struct atoms *atoms, const struct symbol *symbol, word_t id)
 {
-    atoms_expand(atoms);
+    if (unlikely(atoms->it == atoms->end)) {
+        size_t old = atoms->end - atoms->base;
+        size_t new = old * 2;
 
-    struct atom_data *data = atoms->it;
-    atoms->it++;
-
-    data->word = id;
-    data->symbol = *symbol;
-
-    uint64_t hash = symbol_hash(symbol);
-    uint64_t index = data - atoms->base;
-
-    struct htable_ret ret = htable_try_put(&atoms->istr, hash, index);
-    assert(!ret.value);
-
-    while (!ret.ok) {
-        atoms_grow_index(atoms);
-        ret = htable_try_put(&atoms->istr, hash, index);
+        atoms->base = realloc(atoms->base, new * sizeof(*atoms->base));
+        atoms->it = atoms->base + old;
+        atoms->end = atoms->base + new;
     }
 
-    htable_put(&atoms->iword, id, index);
-    assert(ret.ok);
-
-    return data;
-}
-
-static struct atom_data *atoms_chain(
-        struct atoms *atoms, struct atom_data *prev,
-        const struct symbol *symbol, word_t id)
-{
-    atoms_expand(atoms);
-
-    struct atom_data *data = atoms->it;
+    uint64_t index = atoms->it - atoms->base;
+    *atoms->it = (struct atom_data) {.word = id, .symbol = *symbol };
     atoms->it++;
-
-    data->word = id;
-    data->symbol = *symbol;
-
-    uint64_t index = data - atoms->base;
-    prev->next = index;
-
-    struct htable_ret ret = htable_put(&atoms->iword, id, index);
-    assert(ret.ok);
-
-    return data;
+    return index;
 }
 
 bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word_t id)
 {
+    uint64_t hash = symbol_hash(symbol);
+    if (htable_get(&atoms->iword, id).ok) return false;
+    if (htable_get(&atoms->istr, hash).ok) return false;
+
     struct htable_ret ret = {0};
-    ret = htable_get(&atoms->iword, id);
-    if (ret.ok) return false;
+    uint64_t index = atoms_insert(atoms, symbol, id);
 
-    struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(atoms, symbol, &prev);
+    ret = htable_put(&atoms->iword, id, index);
+    assert(ret.ok);
+    ret = htable_put(&atoms->istr, hash, index);
+    assert(ret.ok);
 
-    if (data) return data->word;
-    if (!prev) return atoms_insert(atoms,symbol, id)->word;
-    return atoms_chain(atoms, prev, symbol, id)->word;
+    return true;
 }
 
 word_t atoms_get(struct atoms *atoms, const struct symbol *symbol)
 {
-    struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(atoms, symbol, &prev);
-    return data ? data->word : 0;
+    uint64_t hash = symbol_hash(symbol);
+    struct htable_ret ret = htable_get(&atoms->istr, hash);
+    if (!ret.ok) return 0;
+
+    struct atom_data *data = atoms->base + ret.value;
+    return data->word;
 }
 
 word_t atoms_make(struct atoms *atoms, const struct symbol *symbol)
 {
-    struct atom_data *prev = NULL;
-    struct atom_data *data = atoms_find(atoms, symbol, &prev);
+    uint64_t hash = symbol_hash(symbol);
+    struct htable_ret ret = htable_get(&atoms->istr, hash);
 
-    if (data) return data->word;
-    if (!prev) return atoms_insert(atoms, symbol, atoms->id++)->word;
-    return atoms_chain(atoms, prev, symbol, atoms->id++)->word;
+    if (ret.ok) {
+        struct atom_data *data = atoms->base + ret.value;
+        return data->word;
+    }
+
+    word_t id = atoms->id++;
+    assert(atoms_set(atoms, symbol, id));
+    return id;
 }
 
 bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)
@@ -294,7 +201,7 @@ struct vec64 *atoms_list(struct atoms *atoms)
 {
     struct vec64 *list = vec64_reserve(atoms->iword.len);
 
-    for (struct htable_bucket *it = htable_next(&atoms->iword, NULL);
+    for (const struct htable_bucket *it = htable_next(&atoms->iword, NULL);
          it; it = htable_next(&atoms->iword, it))
     {
         list = vec64_append(list, it->key);

@@ -27,7 +27,7 @@ static_assert(sizeof(struct symbol) == 32);
 struct symbol make_symbol(const char *str);
 struct symbol make_symbol_len(const char *str, size_t len);
 
-// FNV-1a hash implementation: http://isthe.com/chongo/tech/comp/fnv/
+// FNV-1a hash: http://isthe.com/chongo/tech/comp/fnv/
 inline uint64_t symbol_hash(const struct symbol *symbol)
 {
     uint64_t hash = 0xcbf29ce484222325;
