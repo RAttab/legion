@@ -186,7 +186,7 @@ void lanes_init(struct lanes *lanes, struct world *world)
 
 void lanes_free(struct lanes *lanes)
 {
-    struct htable_bucket *it = NULL;
+    const struct htable_bucket *it = NULL;
 
     it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it))
@@ -269,7 +269,7 @@ void lanes_save(struct lanes *lanes, struct save *save)
     save_write_magic(save, save_magic_lanes);
     save_write_value(save, (uint32_t) lanes->lanes.len);
 
-    struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+    const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it))
         lane_save((void *) it->value, save);
 
@@ -329,7 +329,7 @@ void lanes_step(struct lanes *lanes)
 {
     world_ts_t now = world_time(lanes->world);
 
-    struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+    const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it)) {
         struct lane *lane = (void *) it->value;
 

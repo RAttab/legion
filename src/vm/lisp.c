@@ -470,7 +470,7 @@ static void lisp_label(struct lisp *lisp, const struct symbol *symbol)
 static void lisp_label_unknown(struct lisp *lisp)
 {
 
-    for (struct htable_bucket *it = htable_next(&lisp->symb.req, NULL);
+    for (const struct htable_bucket *it = htable_next(&lisp->symb.req, NULL);
          it; it = htable_next(&lisp->symb.req, it))
     {
         uint64_t key = it->key;
@@ -561,7 +561,7 @@ struct mod *mod_compile(
     htable_reset(&lisp.symb.req);
     htable_reset(&lisp.symb.jmp);
 
-    for (struct htable_bucket *it = htable_next(&lisp.pub.symb, NULL);
+    for (const struct htable_bucket *it = htable_next(&lisp.pub.symb, NULL);
          it; it = htable_next(&lisp.pub.symb, it))
         free((struct symbol *) it->value);
     htable_reset(&lisp.pub.symb);

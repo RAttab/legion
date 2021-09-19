@@ -260,7 +260,7 @@ void save_write_htable(struct save *save, const struct htable *ht)
     save_write_magic(save, save_magic_htable);
     save_write_value(save, (uint64_t) ht->len);
 
-    for (struct htable_bucket *it = htable_next(ht, NULL);
+    for (const struct htable_bucket *it = htable_next(ht, NULL);
          it; it = htable_next(ht, it))
     {
         save_write_value(save, it->key);

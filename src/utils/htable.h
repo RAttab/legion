@@ -39,4 +39,5 @@ struct htable_ret htable_put(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_try_put(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_xchg(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_del(struct htable *, uint64_t key);
-struct htable_bucket * htable_next(const struct htable *, struct htable_bucket *bucket);
+const struct htable_bucket *htable_next(
+        const struct htable *, const struct htable_bucket *bucket);

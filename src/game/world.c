@@ -59,7 +59,7 @@ void world_free(struct world *world)
     mods_free(world->mods);
     lanes_free(&world->lanes);
 
-    for (struct htable_bucket *it = htable_next(&world->sectors, NULL);
+    for (const struct htable_bucket *it = htable_next(&world->sectors, NULL);
          it; it = htable_next(&world->sectors, it))
         sector_free((struct sector *) it->value);
     htable_reset(&world->sectors);
@@ -131,7 +131,7 @@ void world_save(struct world *world, struct save *save)
     log_save(world->log, save);
 
     uint32_t sectors = 0;
-    struct htable_bucket *it = htable_next(&world->sectors, NULL);
+    const struct htable_bucket *it = htable_next(&world->sectors, NULL);
     for (; it; it = htable_next(&world->sectors, it)) {
         struct sector *sector = (void *) it->value;
         if (sector->chunks.len) sectors++;
@@ -152,7 +152,7 @@ void world_step(struct world *world)
     world->time++;
     lanes_step(&world->lanes);
 
-    struct htable_bucket *it = htable_next(&world->sectors, NULL);
+    const struct htable_bucket *it = htable_next(&world->sectors, NULL);
     for (; it; it = htable_next(&world->sectors, it))
         sector_step((struct sector *) it->value);
 }

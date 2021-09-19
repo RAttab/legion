@@ -158,7 +158,7 @@ void viz_dot(struct viz *viz)
         viz_writef(viz, "subgraph { \"%02x\" [label=\"%02x:%s\"] }\n", it, it, label);
     }
 
-    for (struct htable_bucket *it = htable_next(&viz->graph, NULL);
+    for (const struct htable_bucket *it = htable_next(&viz->graph, NULL);
          it; it = htable_next(&viz->graph, it))
     {
         enum item in = it->key;

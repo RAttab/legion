@@ -51,7 +51,7 @@ struct sector *sector_new(struct world *world, size_t stars)
 
 void sector_free(struct sector *sector)
 {
-    for(struct htable_bucket *it = htable_next(&sector->chunks, NULL);
+    for(const struct htable_bucket *it = htable_next(&sector->chunks, NULL);
         it; it = htable_next(&sector->chunks, it))
         chunk_free((void *) it->value);
     htable_reset(&sector->chunks);
@@ -96,7 +96,7 @@ void sector_save(struct sector *sector, struct save *save)
     save_write_magic(save, save_magic_sector);
     save_write_value(save, sector->coord);
     save_write_value(save, (uint32_t) sector->chunks.len);
-    struct htable_bucket *it = htable_next(&sector->chunks, NULL);
+    const struct htable_bucket *it = htable_next(&sector->chunks, NULL);
     for (; it; it = htable_next(&sector->chunks, it)) {
         chunk_save((struct chunk *) it->value, save);
     }
@@ -147,7 +147,7 @@ const struct star *sector_star_at(struct sector *sector, struct coord coord)
 
 void sector_step(struct sector *sector)
 {
-    struct htable_bucket *bucket = htable_next(&sector->chunks, NULL);
+    const struct htable_bucket *bucket = htable_next(&sector->chunks, NULL);
     for (; bucket; bucket = htable_next(&sector->chunks, bucket))
         chunk_step((void *) bucket->value);
 }

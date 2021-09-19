@@ -86,8 +86,8 @@ ssize_t world_scan(struct world *, struct coord, enum item);
 
 struct world_chunk_it
 {
-    struct htable_bucket *sector;
-    struct htable_bucket *chunk;
+    const struct htable_bucket *sector;
+    const struct htable_bucket *chunk;
 };
 
 struct world_chunk_it world_chunk_it(struct world *);

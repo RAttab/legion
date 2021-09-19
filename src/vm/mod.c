@@ -297,7 +297,7 @@ struct mods *mods_new(void)
 
 void mods_free(struct mods *mods)
 {
-    struct htable_bucket *it = NULL;
+    const struct htable_bucket *it = NULL;
 
     for (it = htable_next(&mods->by_maj, NULL); it; it = htable_next(&mods->by_maj, it))
         free((struct mod_entry *) it->value);
@@ -356,7 +356,7 @@ void mods_save(const struct mods *mods, struct save *save)
     save_write_magic(save, save_magic_mods);
     save_write_value(save, mods->maj);
 
-    struct htable_bucket *it = NULL;
+    const struct htable_bucket *it = NULL;
 
     save_write_value(save, mods->by_mod.len);
     for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
@@ -448,7 +448,7 @@ const struct mod *mods_get(struct mods *mods, mod_t id)
 
 mod_maj_t mods_find(struct mods *mods, const struct symbol *name)
 {
-    struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
+    const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
     for (; it; it = htable_next(&mods->by_maj, it)) {
         struct mod_entry *entry = (void *) it->value;
         if (symbol_eq(name, &entry->str)) return entry->maj;
@@ -493,7 +493,7 @@ struct mods_list *mods_list(struct mods *mods)
             sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
     ret->len = mods->by_maj.len;
 
-    struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
+    const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
     for (size_t i = 0; it; it = htable_next(&mods->by_maj, it), i++) {
         struct mod_entry *entry = (void *) it->value;
         ret->items[i].maj = entry->maj;

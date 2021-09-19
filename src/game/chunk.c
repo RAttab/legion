@@ -68,7 +68,7 @@ void chunk_free(struct chunk *chunk)
 
     log_free(chunk->log);
 
-    for (struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+    for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
     {
         ring32_free((void *) it->value);
@@ -80,7 +80,7 @@ void chunk_free(struct chunk *chunk)
     vec64_free(chunk->workers.ops);
     ring64_free(chunk->bullets);
 
-    for (struct htable_bucket *it = htable_next(&chunk->listen, NULL);
+    for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
          it; it = htable_next(&chunk->listen, it))
     {
         free((void *) it->value);
@@ -157,7 +157,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_ring32(save, chunk->requested);
     save_write_ring32(save, chunk->storage);
     save_write_value(save, chunk->provided.len);
-    for (struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+    for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
     {
         save_write_value(save, (enum item) it->key);
@@ -169,7 +169,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_ring64(save, chunk->bullets);
 
     save_write_value(save, chunk->listen.len);
-    for (struct htable_bucket *it = htable_next(&chunk->listen, NULL);
+    for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
          it; it = htable_next(&chunk->listen, it))
     {
         save_write_value(save, it->key);
