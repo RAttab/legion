@@ -98,7 +98,7 @@ struct coord world_chunk_next(struct world *, struct world_chunk_it *);
 // log
 // -----------------------------------------------------------------------------
 
-enum { world_log_cap = 32 };
+enum { world_log_cap = 64 };
 void world_log(struct world *, struct coord, id_t, enum io, enum ioe);
 const struct logi *world_log_next(struct world *, const struct logi *it);
 
