@@ -37,8 +37,6 @@ struct ui_log
     size_t len;
 
     struct ui_panel panel;
-    struct ui_label star;
-    struct ui_link star_val;
     struct ui_logi items[world_log_cap];
 };
 
@@ -73,8 +71,6 @@ struct ui_log *ui_log_new(void)
     struct ui_log *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_log) {
         .panel = ui_panel_title(pos, dim, ui_str_c("log")),
-        .star = ui_label_new(font, ui_str_c("star: ")),
-        .star_val = ui_link_new(font, ui_str_v(symbol_cap)),
     };
 
     ui->panel.state = ui_panel_hidden;
@@ -97,25 +93,19 @@ void ui_logi_free(struct ui_logi *ui)
 void ui_log_free(struct ui_log *ui)
 {
     ui_panel_free(&ui->panel);
-    ui_label_free(&ui->star);
-    ui_link_free(&ui->star_val);
     for (size_t i = 0; i < array_len(ui->items); ++i)
         ui_logi_free(ui->items + i);
     free(ui);
 }
 
 
-static void ui_logi_update(
-        struct ui_logi *ui, const struct logi *it, struct coord star)
+static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
 {
     ui_str_set_u64(&ui->time.str, it->time);
 
-    if (!coord_is_nil(star)) ui->state.star = coord_nil();
-    else {
-        ui->state.star = it->star;
-        word_t name = world_star_name(core.state.world, it->star);
-        ui_str_set_atom(&ui->star.str, name);
-    }
+    ui->state.star = it->star;
+    word_t name = world_star_name(core.state.world, it->star);
+    ui_str_set_atom(&ui->star.str, name);
 
     ui->state.id = it->id;
     ui_str_set_id(&ui->id.str, it->id);
@@ -130,15 +120,12 @@ static void ui_log_update(struct ui_log *ui)
     struct world *world = core.state.world;
 
     if (!coord_is_nil(ui->coord)) {
-        word_t name = world_star_name(world, ui->coord);
-        ui_str_set_atom(&ui->star_val.str, name);
-
         struct chunk *chunk = world_chunk(world, ui->coord);
         for (const struct logi *it = chunk_log_next(chunk, NULL);
              it; index++, it = chunk_log_next(chunk, it))
         {
             assert(index < array_len(ui->items));
-            ui_logi_update(ui->items + index, it, ui->coord);
+            ui_logi_update(ui->items + index, it);
         }
     }
 
@@ -147,7 +134,7 @@ static void ui_log_update(struct ui_log *ui)
              it; index++, it = world_log_next(world, it))
         {
             assert(index < array_len(ui->items));
-            ui_logi_update(ui->items + index, it, ui->coord);
+            ui_logi_update(ui->items + index, it);
         }
     }
 
@@ -235,11 +222,6 @@ bool ui_log_event(struct ui_log *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
 
-    if (!coord_is_nil(ui->coord) && (ret = ui_link_event(&ui->star_val, ev))) {
-        core_push_event(EV_STAR_SELECT, coord_to_u64(ui->coord), 0);
-        return true;
-    }
-
     for (size_t i = 0; i < ui->len; ++i) {
         if (ui_logi_event(ui->items + i, ui->coord, ev)) return true;
     }
@@ -268,17 +250,8 @@ void ui_logi_render(
 
 void ui_log_render(struct ui_log *ui, SDL_Renderer *renderer)
 {
-    struct font *font = ui_log_font();
-
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
-
-    if (!coord_is_nil(ui->coord)) {
-        ui_label_render(&ui->star, &layout, renderer);
-        ui_link_render(&ui->star_val, &layout, renderer);
-        ui_layout_next_row(&layout);
-        ui_layout_sep_y(&layout, font->glyph_h);
-    }
 
     for (size_t i = 0; i < ui->len; ++i) {
         ui_logi_render(ui->items + i, &layout, renderer);
