@@ -392,6 +392,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     case EV_STAR_CLEAR: {
         ui->id = coord_nil();
         ui_panel_hide(&ui->panel);
+        ui->selected = 0;
         return false;
     }
 
