@@ -17,6 +17,7 @@
 
 static const size_t ui_status_cap = ui_str_cap;
 static const ts_t ui_status_duration = 5 * ts_sec;
+static const ts_t ui_status_fade = 100 * ts_msec;
 
 struct ui_status
 {
@@ -85,8 +86,14 @@ void ui_status_render(struct ui_status *ui, SDL_Renderer *renderer)
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
 
     ts_t delta = ts_now() - ui->ts;
-    if (delta > ui_status_duration) ui->ts = 0;
+    if (delta > ui_status_duration + ui_status_fade) ui->ts = 0;
     if (!ui->ts) return;
+
+    if (delta > ui_status_duration) {
+        delta -= ui_status_duration;
+        ui->status.fg.a = 0xFF - ((0xFF * delta) / ui_status_fade);
+    }
+    else ui->status.fg.a = 0xFF;
 
     ui_label_render(&ui->status, &layout, renderer);
 }
