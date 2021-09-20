@@ -127,6 +127,8 @@ static const struct mod *ui_mod_compile(struct ui_mod *ui)
             world_mods(core.state.world),
             world_atoms(core.state.world));
 
+    if (!mod->errs_len) core_log(st_info, "Compilation finished");
+    else core_log(st_warn, "%u compilation errors", mod->errs_len);
 
     free(buffer);
     return mod;
@@ -204,10 +206,18 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
+        struct mods *mods = world_mods(core.state.world);
+
         assert(ui->mod->errs_len == 0);
-        ui->id = mods_set(world_mods(core.state.world), mod_maj(ui->id), ui->mod);
+        ui->id = mods_set(mods, mod_maj(ui->id), ui->mod);
         ui->publish.disabled = true;
         ui_mod_title(ui);
+
+        struct symbol name = {0};
+        bool ok = mods_name(mods, mod_maj(ui->id), &name);
+        core_log(st_info, "Module '%s' published: %x", name.c, ui->id);
+        assert(ok);
+
         return ret == ui_consume;
     }
 

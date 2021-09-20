@@ -93,6 +93,9 @@ bool ui_input_eval(struct ui_input *input, word_t *ret)
     struct lisp_ret eval =
         world_eval(core.state.world, input->buf.c, input->buf.len);
     *ret = eval.value;
+
+    if (!eval.ok)
+        core_log(st_error, "Invalid const LISP statement: '%s'", input->buf.c);
     return eval.ok;
 }
 
@@ -254,6 +257,8 @@ enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;
         switch (keysym) {
+
+        case SDLK_RETURN: { return ui_action; }
 
         case SDLK_LEFT: { return ui_input_event_move(input, -1); }
         case SDLK_RIGHT: { return ui_input_event_move(input, 1); }

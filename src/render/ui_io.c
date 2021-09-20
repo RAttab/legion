@@ -290,8 +290,8 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
         len = legion_max(val, 0);
 
         for (size_t i = 0; i < len; ++i) {
-            if (ui_input_eval(&cmd->arg[i+1].val, &val))
-                args[i] = val;
+            if (!ui_input_eval(&cmd->arg[i+1].val, &val)) return;
+            args[i] = val;
         }
         break;
     }
@@ -299,8 +299,8 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     default: {
         word_t val = 0;
         for (size_t i = 0; i < cmd->args; ++i) {
-            if (ui_input_eval(&cmd->arg[i].val, &val))
-                args[i] = val;
+            if (!ui_input_eval(&cmd->arg[i].val, &val)) return;
+            args[i] = val;
         }
         break;
     }
@@ -311,6 +311,17 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 
     core_push_event(EV_STATE_UPDATE, 0, 0);
     core_push_event(EV_IO_EXEC, cmd->id, 0);
+
+    {
+        struct symbol name = {0};
+        bool ok = atoms_str(world_atoms(core.state.world), cmd->id, &name);
+        assert(ok);
+
+        char id[id_str_len] = {0};
+        id_str(ui->id, id, sizeof(id));
+
+        core_log(st_info, "IO command '%s' sent to '%s'", name.c, id);
+    }
 }
 
 bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
@@ -324,13 +335,21 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
         struct ui_io_cmd *cmd = &ui->io[i];
         if (!cmd->active) continue;
 
-        for (size_t j = 0; j < cmd->args; ++j)
-            if ((ret = ui_input_event(&cmd->arg[j].val, ev)))
-                return ret == ui_consume;
+        for (size_t j = 0; j < cmd->args; ++j) {
+            if (!(ret = ui_input_event(&cmd->arg[j].val, ev))) continue;
+            if (ret != ui_action) return true;
+
+            if (j + 1 == cmd->args) ui_io_exec(ui, cmd);
+            else  {
+                struct ui_input *next = &cmd->arg[j+1].val;
+                core_push_event(EV_FOCUS_INPUT, (uintptr_t) next, 0);
+            }
+            return true;
+        }
 
         if ((ret = ui_button_event(&cmd->exec, ev))) {
             ui_io_exec(ui, cmd);
-            return ret == ui_consume;
+            return true;
         }
     }
 

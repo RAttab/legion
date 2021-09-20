@@ -129,6 +129,25 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
     }
 }
 
+static void ui_mods_event_new(struct ui_mods *ui)
+{
+    struct symbol name = {0};
+    if (!ui_input_get_symbol(&ui->new_val, &name)) {
+        core_log(st_error, "Invalid module name: '%s'", name.c);
+        return;
+    }
+
+    mod_t mod = mods_register(world_mods(core.state.world), &name);
+    if (!mod) {
+        core_log(st_error, "Module '%s' already exists", name.c);
+        return;
+    }
+
+    ui_mods_update(ui);
+    core_push_event(EV_MOD_SELECT, mod, 0);
+    core_log(st_info, "Module created: %x", mod);
+}
+
 bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 {
     if (ev->type == core.event && ui_mods_event_user(ui, ev)) return true;
@@ -136,16 +155,13 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
 
-    if ((ret = ui_input_event(&ui->new_val, ev))) return ret == ui_consume;
+    if ((ret = ui_input_event(&ui->new_val, ev))) {
+        if (ret == ui_action) ui_mods_event_new(ui);
+        return true;
+    }
+
     if ((ret = ui_button_event(&ui->new, ev))) {
-        struct symbol name = {0};
-        if (ui_input_get_symbol(&ui->new_val, &name)) {
-            mod_t mod = mods_register(world_mods(core.state.world), &name);
-            if (mod) {
-                ui_mods_update(ui);
-                core_push_event(EV_MOD_SELECT, mod, 0);
-            }
-        }
+        ui_mods_event_new(ui);
         return ret;
     }
 
