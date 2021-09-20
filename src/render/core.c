@@ -375,13 +375,13 @@ void core_logv(enum status type, const char *fmt, va_list args)
 
     const char *prefix = NULL;
     switch (type) {
-    case st_info: { prefix = "INFO"; break; }
-    case st_warn: { prefix = "WARN"; break; }
-    case st_error: { prefix = "ERROR"; break; }
+    case st_info: { prefix = "inf"; break; }
+    case st_warn: { prefix = "wrn"; break; }
+    case st_error: { prefix = "err"; break; }
     default: { assert(false); }
     }
 
-    dbg("<%s> %s", prefix, msg);
+    fprintf(stderr, "<%s> %s\n", prefix, msg);
 }
 
 void core_log(enum status type, const char *fmt, ...)
