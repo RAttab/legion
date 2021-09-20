@@ -415,6 +415,8 @@ struct ui_input
 struct ui_input ui_input_new(struct font *, size_t char_width);
 void ui_input_free(struct ui_input *);
 
+void ui_input_focus(struct ui_input *);
+
 void ui_input_clear(struct ui_input *);
 void ui_input_set(struct ui_input *, const char *str);
 
@@ -465,6 +467,8 @@ enum { ui_code_num_len = 4 };
 
 struct ui_code ui_code_new(struct dim, struct font *);
 void ui_code_free(struct ui_code *);
+
+void ui_code_focus(struct ui_code *);
 
 void ui_code_clear(struct ui_code *);
 void ui_code_set_code(struct ui_code *, const struct mod *, ip_t);
@@ -555,6 +559,9 @@ struct ui_panel ui_panel_title(struct pos, struct dim, struct ui_str);
 void ui_panel_free(struct ui_panel *);
 
 void ui_panel_resize(struct ui_panel *, struct dim);
+void ui_panel_show(struct ui_panel *);
+void ui_panel_hide(struct ui_panel *);
+bool ui_panel_is_visible(struct ui_panel *);
 
 enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
 enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);

@@ -52,7 +52,8 @@ struct ui_mod *ui_mod_new(void)
         .reset = ui_button_new(font, ui_str_c("reset")),
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
     };
-    ui->panel.state = ui_panel_hidden;
+
+    ui_panel_hide(&ui->panel);
 
     ui->disassembly = false;
     ui_str_setv(&ui->mode.str, "asm", 3);
@@ -140,7 +141,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         ui->id = 0;
         ui->mod = NULL;
         ui_code_clear(&ui->code);
@@ -164,10 +165,8 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
         ui->publish.disabled = true;
         ui_mod_title(ui);
 
-        ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
-        core_push_event(EV_FOCUS_INPUT, (uintptr_t) &ui->code, 0);
-
+        ui_panel_show(&ui->panel);
+        ui_code_focus(&ui->code);
         return false;
     }
 
@@ -177,10 +176,10 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     case EV_MOD_CLEAR:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
+        ui_panel_hide(&ui->panel);
         ui_code_clear(&ui->code);
         ui->mod = NULL;
         ui->id = 0;
-        ui->panel.state = ui_panel_hidden;
         return false;
     }
 
@@ -195,14 +194,14 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_panel_event(&ui->panel, ev))) {
-        if (ret == ui_consume && ui->panel.state == ui_panel_hidden)
+        if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
             core_push_event(EV_MOD_CLEAR, 0, 0);
-        return ret == ui_consume;
+        return ret != ui_skip;;
     }
 
     if ((ret = ui_button_event(&ui->compile, ev))) {
         ui_mod_update(ui, ui_mod_compile(ui), 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
@@ -218,25 +217,25 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         core_log(st_info, "Module '%s' published: %x", name.c, ui->id);
         assert(ok);
 
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->mode, ev))) {
         ui_mod_mode_swap(ui);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->indent, ev))) {
         ui_code_indent(&ui->code);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
         ui_mod_update(ui, mods_get(world_mods(core.state.world), ui->id), 0);
-        return ret == ui_consume;
+        return true;
     }
 
-    if ((ret = ui_code_event(&ui->code, ev))) return ret == ui_consume;
+    if ((ret = ui_code_event(&ui->code, ev))) return true;
 
     return ui_panel_event_consume(&ui->panel, ev);
 }

@@ -45,6 +45,11 @@ void ui_input_free(struct ui_input *input)
     free(input->buf.c);
 }
 
+void ui_input_focus(struct ui_input *input)
+{
+    core_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
+}
+
 static void ui_input_view_update(struct ui_input *input)
 {
     if (input->carret.col < input->view.col)

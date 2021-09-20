@@ -73,7 +73,7 @@ struct ui_log *ui_log_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_c("log")),
     };
 
-    ui->panel.state = ui_panel_hidden;
+    ui_panel_hide(&ui->panel);
     for (size_t i = 0; i < array_len(ui->items); ++i)
         ui->items[i] = ui_logi_new();
 
@@ -149,38 +149,30 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (ui->panel.state != ui_panel_hidden)
+        if (!ui_panel_is_visible(&ui->panel))
             ui_log_update(ui);
         return false;
     }
 
     case EV_LOG_TOGGLE: {
-        if (ui->panel.state == ui_panel_hidden || !coord_is_nil(ui->coord)) {
+        if (!ui_panel_is_visible(&ui->panel) || !coord_is_nil(ui->coord)) {
             ui->coord = coord_nil();
             ui_log_update(ui);
-
-            ui->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
+            ui_panel_show(&ui->panel);
         }
-        else {
-            if (ui->panel.state == ui_panel_focused)
-                core_push_event(EV_FOCUS_PANEL, 0, 0);
-            ui->panel.state = ui_panel_hidden;
-        }
+        else ui_panel_hide(&ui->panel);
         return false;
     }
 
     case EV_LOG_SELECT: {
         ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
         ui_log_update(ui);
-
-        ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
+        ui_panel_show(&ui->panel);
         return false;
     }
 
@@ -189,7 +181,7 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     case EV_MODS_TOGGLE:
     case EV_MOD_SELECT:
     case EV_STARS_TOGGLE: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -220,7 +212,7 @@ bool ui_log_event(struct ui_log *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_log_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     for (size_t i = 0; i < ui->len; ++i) {
         if (ui_logi_event(ui->items + i, ui->coord, ev)) return true;

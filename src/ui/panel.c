@@ -28,14 +28,6 @@ static struct ui_panel ui_panel_new(struct pos pos, struct dim dim)
     };
 }
 
-void ui_panel_resize(struct ui_panel *panel, struct dim dim)
-{
-    panel->w.dim = dim;
-    panel->layout.dim = make_dim(
-            dim.w - (ui_panel_margin.w * 2),
-            dim.h - (ui_panel_margin.h * 2));
-}
-
 struct ui_panel ui_panel_menu(struct pos pos, struct dim dim)
 {
     struct ui_panel panel = ui_panel_new(pos, dim);
@@ -60,6 +52,32 @@ void ui_panel_free(struct ui_panel *panel)
         ui_label_free(&panel->title);
         ui_button_free(&panel->close);
     }
+}
+
+void ui_panel_resize(struct ui_panel *panel, struct dim dim)
+{
+    panel->w.dim = dim;
+    panel->layout.dim = make_dim(
+            dim.w - (ui_panel_margin.w * 2),
+            dim.h - (ui_panel_margin.h * 2));
+}
+
+void ui_panel_show(struct ui_panel *panel)
+{
+    panel->state = ui_panel_visible;
+    core_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
+}
+
+void ui_panel_hide(struct ui_panel *panel)
+{
+    if (panel->state == ui_panel_focused)
+        core_push_event(EV_FOCUS_PANEL, 0, 0);
+    panel->state = ui_panel_hidden;
+}
+
+bool ui_panel_is_visible(struct ui_panel *panel)
+{
+    return panel->state != ui_panel_hidden;
 }
 
 

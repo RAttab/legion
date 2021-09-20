@@ -36,7 +36,7 @@ struct ui_stars *ui_stars_new(void)
                 font, ui_str_v(symbol_cap)),
     };
 
-    ui->panel.state = ui_panel_hidden;
+    ui_panel_hide(&ui->panel);
     return ui;
 }
 
@@ -83,26 +83,22 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
 
     case EV_STATE_LOAD: {
         ui_stars_update(ui);
-        ui->panel.state = ui_panel_visible;
+        ui_panel_show(&ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (ui->panel.state != ui_panel_hidden)
+        if (!ui_panel_is_visible(&ui->panel))
             ui_stars_update(ui);
         return false;
     }
 
     case EV_STARS_TOGGLE: {
-        if (ui->panel.state == ui_panel_hidden) {
-            ui_stars_update(ui);
-            ui->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
-        }
+        if (ui_panel_is_visible(&ui->panel))
+            ui_panel_hide(&ui->panel);
         else {
-            if (ui->panel.state == ui_panel_focused)
-                core_push_event(EV_FOCUS_PANEL, 0, 0);
-            ui->panel.state = ui_panel_hidden;
+            ui_stars_update(ui);
+            ui_panel_show(&ui->panel);
         }
         return false;
     }
@@ -124,7 +120,7 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
     case EV_MOD_SELECT:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -137,7 +133,7 @@ bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_stars_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_tree_event(&ui->tree, ev))) {
         if (ret != ui_action) return true;

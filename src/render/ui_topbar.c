@@ -71,46 +71,46 @@ int16_t ui_topbar_height(void)
 bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_button_event(&ui->save, ev))) {
         core_save();
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->load, ev))) {
         core_load();
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
         core_push_event(EV_MAP_GOTO, coord_to_u64(core.state.home), 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->stars, ev))) {
         core_push_event(EV_STARS_TOGGLE, 0, 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->tapes, ev))) {
         core_push_event(EV_TAPES_TOGGLE, 0, 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->mods, ev))) {
         core_push_event(EV_MODS_TOGGLE, 0, 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->log, ev))) {
         core_push_event(EV_LOG_TOGGLE, 0, 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->close, ev))) {
         sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
-        return ret == ui_consume;
+        return true;
     }
 
     return ui_panel_event_consume(&ui->panel, ev);

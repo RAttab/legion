@@ -80,7 +80,7 @@ struct ui_tapes *ui_tapes_new(void)
         .known = ui_label_new(font, ui_str_c("*")),
     };
 
-    ui->panel.state = ui_panel_hidden;
+    ui_panel_hide(&ui->panel);
     ui->index.fg = rgba_gray(0x88);
     ui->index.bg = rgba_gray_a(0x44, 0x88);
     ui->in.fg = rgba_green();
@@ -192,26 +192,22 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (ui->panel.state != ui_panel_hidden)
+        if (ui_panel_is_visible(&ui->panel))
             ui_tapes_update(ui);
         return false;
     }
 
     case EV_TAPES_TOGGLE: {
-        if (ui->panel.state == ui_panel_hidden) {
-            ui_tapes_update(ui);
-            ui->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
-        }
+        if (ui_panel_is_visible(&ui->panel))
+            ui_panel_hide(&ui->panel);
         else {
-            if (ui->panel.state == ui_panel_focused)
-                core_push_event(EV_FOCUS_PANEL, 0, 0);
-            ui->panel.state = ui_panel_hidden;
+            ui_tapes_update(ui);
+            ui_panel_show(&ui->panel);
         }
         return false;
     }
@@ -228,7 +224,7 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     case EV_MOD_SELECT:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -241,7 +237,7 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_tapes_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_tree_event(&ui->tree, ev))) {
         if (ret == ui_action) ui_tapes_update(ui);

@@ -77,7 +77,7 @@ void ui_status_set(
 bool ui_status_event(struct ui_status *ui, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
     return ui_panel_event_consume(&ui->panel, ev);
 }
 

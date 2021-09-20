@@ -172,7 +172,7 @@ struct ui_star *ui_star_new(void)
         },
     };
 
-    ui->panel.state = ui_panel_hidden;
+    ui_panel_hide(&ui->panel);
     ui->control.disabled = true;
 
     size_t goto_width = (width - font->glyph_w) / 3;
@@ -376,7 +376,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         ui->id = coord_nil();
         ui->selected = 0;
         return false;
@@ -385,15 +385,13 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     case EV_STAR_SELECT: {
         ui->id = coord_from_u64((uintptr_t) ev->user.data1);
         ui_star_update(ui);
-        ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
+        ui_panel_show(&ui->panel);
         return false;
     }
 
     case EV_STAR_CLEAR: {
         ui->id = coord_nil();
-        ui->panel.state = ui_panel_hidden;
-        core_push_event(EV_FOCUS_PANEL, 0, 0);
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -408,7 +406,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
         ui_toggles_select(&ui->control_list, ui->selected);
         ui_toggles_select(&ui->factory_list, ui->selected);
 
-        ui->panel.state = ui_panel_visible;
+        ui_panel_show(&ui->panel);
         return false;
     }
 
@@ -420,8 +418,8 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (ui->panel.state == ui_panel_hidden) return false;
-        ui_star_update(ui);
+        if (ui_panel_is_visible(&ui->panel))
+            ui_star_update(ui);
         return false;
     }
 
@@ -437,51 +435,51 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) {
         if (ret == ui_consume) core_push_event(EV_STAR_CLEAR, 0, 0);
-        return ret == ui_consume;
+        return ret != ui_skip;
     }
 
     if ((ret = ui_button_event(&ui->goto_map, ev))) {
         core_push_event(EV_MAP_GOTO, coord_to_u64(ui->id), 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->goto_factory, ev))) {
         core_push_event(EV_FACTORY_SELECT, coord_to_u64(ui->id), 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->goto_log, ev))) {
         core_push_event(EV_LOG_SELECT, coord_to_u64(ui->id), 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
         ui_clipboard_copy_hex(&core.ui.board, coord_to_u64(ui->star.coord));
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->control, ev))) {
         ui->control.disabled = true;
         ui->factory.disabled = ui->logistic.disabled = false;
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->factory, ev))) {
         ui->factory.disabled = true;
         ui->control.disabled = ui->logistic.disabled = false;
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_button_event(&ui->logistic, ev))) {
         ui->logistic.disabled = true;
         ui->control.disabled = ui->factory.disabled = false;
-        return ret == ui_consume;
+        return true;
     }
 
 
     if (ui->control.disabled) {
         if ((ret = ui_scroll_event(&ui->control_scroll, ev)))
-            return ret == ui_consume;
+            return true;
 
         struct ui_toggle *toggle = NULL;
         if ((ret = ui_toggles_event(&ui->control_list, ev, &ui->control_scroll, &toggle, NULL))) {
@@ -494,7 +492,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
 
     if (ui->factory.disabled) {
         if ((ret = ui_scroll_event(&ui->factory_scroll, ev)))
-            return ret == ui_consume;
+            return true;
 
         struct ui_toggle *toggle = NULL;
         if ((ret = ui_toggles_event(&ui->factory_list, ev, &ui->factory_scroll, &toggle, NULL))) {

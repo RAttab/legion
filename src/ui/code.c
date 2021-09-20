@@ -42,6 +42,11 @@ void ui_code_free(struct ui_code *code)
     text_clear(&code->text);
 }
 
+void ui_code_focus(struct ui_code *code)
+{
+    core_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
+}
+
 void ui_code_clear(struct ui_code *code)
 {
     code->mod = NULL;

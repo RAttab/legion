@@ -40,7 +40,7 @@ struct ui_mods *ui_mods_new(void)
         .toggles = ui_toggles_new(font, ui_str_v(symbol_cap)),
     };
 
-    ui->panel.state = ui_panel_hidden;
+    ui_panel_hide(&ui->panel);
     return ui;
 }
 
@@ -81,20 +81,16 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
     case EV_MODS_TOGGLE: {
-        if (ui->panel.state == ui_panel_hidden) {
-            ui_mods_update(ui);
-            ui->panel.state = ui_panel_visible;
-            core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
-        }
+        if (ui_panel_is_visible(&ui->panel))
+            ui_panel_hide(&ui->panel);
         else {
-            if (ui->panel.state == ui_panel_focused)
-                core_push_event(EV_FOCUS_PANEL, 0, 0);
-            ui->panel.state = ui_panel_hidden;
+            ui_mods_update(ui);
+            ui_panel_show(&ui->panel);
         }
         return false;
     }
@@ -103,8 +99,8 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
         mod_t mod = (uintptr_t) ev->user.data1;
         ui_toggles_select(&ui->toggles, mod_maj(mod));
 
-        if (ui->panel.state == ui_panel_hidden) {
-            ui->panel.state = ui_panel_visible;
+        if (!ui_panel_is_visible(&ui->panel)) {
+            ui_panel_show(&ui->panel);
             ui_mods_update(ui);
         }
 
@@ -121,7 +117,7 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
     case EV_STARS_TOGGLE:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -153,7 +149,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_mods_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_input_event(&ui->new_val, ev))) {
         if (ret == ui_action) ui_mods_event_new(ui);
@@ -165,7 +161,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
         return ret;
     }
 
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
+    if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
 
     struct ui_toggle *toggle = NULL;
     if ((ret = ui_toggles_event(&ui->toggles, ev, &ui->scroll, &toggle, NULL))) {

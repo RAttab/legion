@@ -46,8 +46,8 @@ struct ui_item *ui_item_new(void)
         .id_val = ui_link_new(font, ui_str_v(id_str_len)),
     };
 
+    ui_panel_hide(&ui->panel);
     ui->io.w.dim.w = ui_layout_inf;
-    ui->panel.state = ui_panel_hidden;
 
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
         const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
@@ -105,29 +105,29 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         ui->id = 0;
         ui->star = coord_nil();
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (ui->panel.state == ui_panel_hidden) return false;
-        ui_item_update(ui);
+        if (ui_panel_is_visible(&ui->panel))
+            ui_item_update(ui);
         return false;
     }
 
     case EV_STAR_SELECT: {
         struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new)) {
-            ui->panel.state = ui_panel_hidden;
+            ui_panel_hide(&ui->panel);
             ui->id = 0;
         }
         return false;
     }
 
     case EV_STAR_CLEAR: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         ui->id = 0;
         return false;
     }
@@ -136,15 +136,13 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui->id = (uintptr_t) ev->user.data1;
         ui->star = coord_from_u64((uintptr_t) ev->user.data2);
         ui_item_update(ui);
-        ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
+        ui_panel_show(&ui->panel);
         return false;
     }
 
     case EV_ITEM_CLEAR: {
         ui->id = 0;
-        ui->panel.state = ui_panel_hidden;
-        core_push_event(EV_FOCUS_PANEL, 0, 0);
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -158,9 +156,9 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) {
-        if (ret == ui_consume && ui->panel.state == ui_panel_hidden)
+        if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
             core_push_event(EV_ITEM_CLEAR, 0, 0);
-        return ret == ui_consume;
+        return ret != ui_skip;
     }
 
     if ((ret = ui_button_event(&ui->io, ev))) {

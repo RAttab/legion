@@ -178,7 +178,7 @@ struct ui_io *ui_io_new(void)
         },
     };
 
-    ui->panel.state = ui_panel_hidden;
+    ui_panel_hide(&ui->panel);
     return ui;
 }
 
@@ -227,7 +227,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         ui->id = 0;
         ui->star = coord_nil();
         ui->list_len = 0;
@@ -236,12 +236,9 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     }
 
     case EV_IO_TOGGLE: {
-        if (ui->panel.state != ui_panel_hidden) {
-            ui->panel.state = ui_panel_hidden;
-            return false;
-        }
-        ui->panel.state = ui_panel_visible;
-        core_push_event(EV_FOCUS_PANEL, (uintptr_t) &ui->panel, 0);
+        if (ui_panel_is_visible(&ui->panel))
+            ui_panel_hide(&ui->panel);
+        else ui_panel_show(&ui->panel);
         return false;
     }
 
@@ -255,7 +252,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     case EV_STAR_SELECT: {
         struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new)) {
-            ui->panel.state = ui_panel_hidden;
+            ui_panel_hide(&ui->panel);
             ui->id = 0;
         }
         return false;
@@ -263,7 +260,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
 
     case EV_STAR_CLEAR: // fallthrough
     case EV_ITEM_CLEAR: {
-        ui->panel.state = ui_panel_hidden;
+        ui_panel_hide(&ui->panel);
         return false;
     }
 
@@ -329,7 +326,7 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
     if (ev->type == core.event && ui_io_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret == ui_consume;
+    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     for (size_t i = 0; i < ui_io_max; ++i) {
         struct ui_io_cmd *cmd = &ui->io[i];
