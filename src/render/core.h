@@ -88,6 +88,7 @@ struct core
         struct map *map;
         struct factory *factory;
         struct ui_topbar *topbar;
+        struct ui_status *status;
         struct ui_tapes *tapes;
         struct ui_mods *mods;
         struct ui_mod *mod;
@@ -122,3 +123,13 @@ void core_push_event(enum event, uint64_t d0, uint64_t d1);
 void core_save(void);
 void core_load(void);
 void core_populate(void);
+
+enum status
+{
+    st_info = 0,
+    st_warn = 1,
+    st_error = 2,
+};
+
+void core_logv(enum status, const char *fmt, va_list);
+void core_log(enum status, const char *fmt, ...) legion_printf(2, 3);

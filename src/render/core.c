@@ -151,6 +151,7 @@ static void ui_init(void)
     core.ui.map = map_new();
     core.ui.factory = factory_new();
     core.ui.topbar = ui_topbar_new();
+    core.ui.status = ui_status_new();
     core.ui.tapes = ui_tapes_new();
     core.ui.mods = ui_mods_new();
     core.ui.mod = ui_mod_new();
@@ -164,6 +165,7 @@ static void ui_init(void)
 static void ui_close()
 {
     ui_topbar_free(core.ui.topbar);
+    ui_status_free(core.ui.status);
     ui_tapes_free(core.ui.tapes);
     ui_mods_free(core.ui.mods);
     ui_mod_free(core.ui.mod);
@@ -187,6 +189,7 @@ static void ui_event(SDL_Event *event)
     }
 
     if (ui_topbar_event(core.ui.topbar, event)) return;
+    if (ui_status_event(core.ui.status, event)) return;
     if (ui_tapes_event(core.ui.tapes, event)) return;
     if (ui_mods_event(core.ui.mods, event)) return;
     if (ui_mod_event(core.ui.mod, event)) return;
@@ -204,6 +207,7 @@ static void ui_render(SDL_Renderer *renderer)
     map_render(core.ui.map, renderer);
     factory_render(core.ui.factory, renderer);
     ui_topbar_render(core.ui.topbar, renderer);
+    ui_status_render(core.ui.status, renderer);
     ui_tapes_render(core.ui.tapes, renderer);
     ui_mods_render(core.ui.mods, renderer);
     ui_mod_render(core.ui.mod, renderer);
@@ -326,7 +330,7 @@ void core_save(void)
 
     size_t bytes = save_len(save);
     save_close(save);
-    dbg("saved %zu bytes", bytes);
+    core_log(st_info, "saved %zu bytes", bytes);
 }
 
 void core_load(void)
@@ -354,5 +358,36 @@ static void core_load_apply(void)
   done:
     save_close(save);
     core.state.loading = false;
-    dbg("loaded %zu bytes", bytes);
+    core_log(st_info, "loaded %zu bytes", bytes);
+}
+
+// -----------------------------------------------------------------------------
+// status
+// -----------------------------------------------------------------------------
+
+void core_logv(enum status type, const char *fmt, va_list args)
+{
+    static char msg[256] = {0};
+    ssize_t len = vsnprintf(msg, sizeof(msg), fmt, args);
+
+    assert(len >= 0);
+    ui_status_set(core.ui.status, type, msg, len);
+
+    const char *prefix = NULL;
+    switch (type) {
+    case st_info: { prefix = "INFO"; break; }
+    case st_warn: { prefix = "WARN"; break; }
+    case st_error: { prefix = "ERROR"; break; }
+    default: { assert(false); }
+    }
+
+    dbg("<%s> %s", prefix, msg);
+}
+
+void core_log(enum status type, const char *fmt, ...)
+{
+    va_list args = {0};
+    va_start(args, fmt);
+    core_logv(type, fmt, args);
+    va_end(args);
 }

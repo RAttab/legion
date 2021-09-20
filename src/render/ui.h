@@ -49,9 +49,23 @@ struct coord factory_coord(struct factory *);
 struct ui_topbar;
 struct ui_topbar *ui_topbar_new(void);
 void ui_topbar_free(struct ui_topbar *);
-int16_t ui_topbar_height(const struct ui_topbar *);
+int16_t ui_topbar_height(void);
 bool ui_topbar_event(struct ui_topbar *, SDL_Event *);
 void ui_topbar_render(struct ui_topbar *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// status
+// -----------------------------------------------------------------------------
+
+struct ui_status;
+struct ui_status *ui_status_new(void);
+void ui_status_free(struct ui_status *);
+int16_t ui_status_height(void);
+bool ui_status_event(struct ui_status *, SDL_Event *);
+void ui_status_render(struct ui_status *, SDL_Renderer *);
+
+void ui_status_set(struct ui_status *, enum status, const char *msg, size_t len);
 
 
 // -----------------------------------------------------------------------------

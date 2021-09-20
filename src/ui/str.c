@@ -23,6 +23,7 @@
 struct ui_str ui_str_c(const char *str)
 {
     size_t len = strnlen(str, ui_str_cap);
+    assert(len <= ui_str_cap);
     return (struct ui_str) {
         .len = len,
         .cap = 0,
@@ -32,6 +33,7 @@ struct ui_str ui_str_c(const char *str)
 
 struct ui_str ui_str_v(size_t len)
 {
+    assert(len <= ui_str_cap);
     return (struct ui_str) {
         .len = 0,
         .cap = len,
@@ -80,17 +82,20 @@ void ui_str_setv(struct ui_str *str, const char *val, size_t len)
     memcpy((char *) str->str, val, len);
 }
 
-void ui_str_setf(struct ui_str *str, const char *fmt, ...)
+void ui_str_setvf(struct ui_str *str, const char *fmt, va_list args)
 {
     assert(str->cap);
-
-    va_list args = {0};
-    va_start(args, fmt);
     ssize_t len = vsnprintf((char *)(str->str), str->cap, fmt, args);
-    va_end(args);
-
     assert(len >= 0);
     str->len = len;
+}
+
+void ui_str_setf(struct ui_str *str, const char *fmt, ...)
+{
+    va_list args = {0};
+    va_start(args, fmt);
+    ui_str_setvf(str, fmt, args);
+    va_end(args);
 }
 
 void ui_str_set_u64(struct ui_str *str, uint64_t val)

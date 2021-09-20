@@ -26,10 +26,10 @@ static struct font *ui_mods_font(void) { return font_mono6; }
 struct ui_mods *ui_mods_new(void)
 {
     struct font *font = ui_mods_font();
-    struct pos pos = make_pos(0, ui_topbar_height(core.ui.topbar));
+    struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (symbol_cap+5) * font->glyph_w,
-            core.rect.h - pos.y);
+            core.rect.h - pos.y - ui_status_height());
 
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {

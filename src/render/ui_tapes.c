@@ -43,9 +43,9 @@ static struct font *ui_tapes_font(void) { return font_mono6; }
 struct ui_tapes *ui_tapes_new(void)
 {
     struct font *font = ui_tapes_font();
-    struct pos pos = make_pos(0, ui_topbar_height(core.ui.topbar));
+    struct pos pos = make_pos(0, ui_topbar_height());
 
-    int height = core.rect.h - pos.y;
+    int height = core.rect.h - pos.y - ui_status_height();
     int tree_w = (item_str_len + 3) * font->glyph_w;
     int tape_w = (item_str_len + 8 + 1) * font->glyph_w;
     struct dim dim = make_dim(tree_w + font->glyph_w, height);

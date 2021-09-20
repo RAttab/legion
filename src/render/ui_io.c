@@ -148,8 +148,8 @@ struct ui_io *ui_io_new(void)
     size_t width = 38 * font->glyph_w;
     struct pos pos = make_pos(
             core.rect.w - width - ui_item_width(core.ui.item) - ui_star_width(core.ui.star),
-            ui_topbar_height(core.ui.topbar));
-    struct dim dim = make_dim(width, core.rect.h - pos.y);
+            ui_topbar_height());
+    struct dim dim = make_dim(width, core.rect.h - pos.y - ui_status_height());
 
     struct ui_io *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_io) {

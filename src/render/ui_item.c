@@ -35,8 +35,8 @@ struct ui_item *ui_item_new(void)
     size_t width = 38 * ui_item_font()->glyph_w;
     struct pos pos = make_pos(
             core.rect.w - width - ui_star_width(core.ui.star),
-            ui_topbar_height(core.ui.topbar));
-    struct dim dim = make_dim(width, core.rect.h - pos.y);
+            ui_topbar_height());
+    struct dim dim = make_dim(width, core.rect.h - pos.y - ui_status_height());
 
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {

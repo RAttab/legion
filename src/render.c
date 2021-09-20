@@ -10,6 +10,7 @@
 #include "render/map.c"
 #include "render/factory.c"
 #include "render/ui_topbar.c"
+#include "render/ui_status.c"
 #include "render/ui_tapes.c"
 #include "render/ui_mods.c"
 #include "render/ui_mod.c"

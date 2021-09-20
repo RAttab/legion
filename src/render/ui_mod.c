@@ -36,11 +36,11 @@ struct ui_mod *ui_mod_new(void)
 
     struct pos pos = make_pos(
             ui_mods_width(core.ui.mods),
-            ui_topbar_height(core.ui.topbar));
+            ui_topbar_height());
 
     struct dim dim = make_dim(
             (ui_code_num_len+1 + cols + 2) * font->glyph_w,
-            core.rect.h - pos.y);
+            core.rect.h - pos.y - ui_status_height());
 
     struct ui_mod *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mod) {

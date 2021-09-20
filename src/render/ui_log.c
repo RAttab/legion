@@ -63,10 +63,10 @@ struct ui_logi ui_logi_new(void)
 struct ui_log *ui_log_new(void)
 {
     struct font *font = ui_log_font();
-    struct pos pos = make_pos(0, ui_topbar_height(core.ui.topbar));
+    struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (10 + symbol_cap * 3 + id_str_len + 2) * font->glyph_w,
-            core.rect.h - pos.y);
+            core.rect.h - pos.y - ui_status_height());
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_log) {

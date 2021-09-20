@@ -63,9 +63,9 @@ void ui_topbar_free(struct ui_topbar *ui) {
     free(ui);
 }
 
-int16_t ui_topbar_height(const struct ui_topbar *ui)
+int16_t ui_topbar_height(void)
 {
-    return ui->panel.w.dim.h;
+    return core.ui.topbar->panel.w.dim.h;
 }
 
 bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)

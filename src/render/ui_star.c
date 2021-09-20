@@ -86,8 +86,8 @@ struct ui_star *ui_star_new(void)
 {
     struct font *font = ui_star_font();
     size_t width = 38 * font->glyph_w;
-    struct pos pos = make_pos(core.rect.w - width, ui_topbar_height(core.ui.topbar));
-    struct dim dim = make_dim(width, core.rect.h - pos.y);
+    struct pos pos = make_pos(core.rect.w - width, ui_topbar_height());
+    struct dim dim = make_dim(width, core.rect.h - pos.y - ui_status_height());
 
     struct ui_star *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_star) {

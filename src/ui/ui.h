@@ -91,6 +91,7 @@ inline struct rgba rgba_black(void )    { return rgba_gray(0x00); }
 inline struct rgba rgba_red(void)       { return make_rgba(0xCC, 0x00, 0x00, 0xFF); }
 inline struct rgba rgba_green(void)     { return make_rgba(0x00, 0xCC, 0x00, 0xFF); }
 inline struct rgba rgba_blue(void)      { return make_rgba(0x00, 0x00, 0xCC, 0xFF); }
+inline struct rgba rgba_yellow(void)    { return make_rgba(0xCC, 0xCC, 0x00, 0xFF); }
 
 inline void rgba_render(struct rgba c, SDL_Renderer *renderer)
 {
@@ -199,6 +200,7 @@ void ui_str_paste(struct ui_str *, struct ui_clipboard *);
 
 void ui_str_setc(struct ui_str *, const char *str);
 void ui_str_setv(struct ui_str *, const char *str, size_t len);
+void ui_str_setvf(struct ui_str *, const char *fmt, va_list);
 void ui_str_setf(struct ui_str *, const char *fmt, ...) legion_printf(2, 3);
 void ui_str_set_u64(struct ui_str *, uint64_t val);
 void ui_str_set_hex(struct ui_str *, uint64_t val);
