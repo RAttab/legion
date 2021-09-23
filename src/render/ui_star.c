@@ -382,6 +382,12 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
         return false;
     }
 
+    case EV_STATE_UPDATE: {
+        if (ui_panel_is_visible(&ui->panel))
+            ui_star_update(ui);
+        return false;
+    }
+
     case EV_STAR_SELECT: {
         ui->id = coord_from_u64((uintptr_t) ev->user.data1);
         ui_star_update(ui);
@@ -415,12 +421,6 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
         ui->selected = 0;
         ui_toggles_clear(&ui->control_list);
         ui_toggles_clear(&ui->factory_list);
-        return false;
-    }
-
-    case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_star_update(ui);
         return false;
     }
 

@@ -154,7 +154,7 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel))
+        if (ui_panel_is_visible(&ui->panel))
             ui_log_update(ui);
         return false;
     }

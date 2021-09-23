@@ -361,7 +361,7 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
       op_mul: { vm_ensure(2); vm_stack(1) *= vm_stack(0); vm_pop(); continue; }
       op_lmul: {
             vm_ensure(2);
-            __int128 ret = ((__int128)vm_stack(0)) * ((__int128)vm_stack(1));
+            int128_t ret = ((int128_t) vm_stack(0)) * ((int128_t) vm_stack(1));
             vm_stack(0) = ret >> 64;
             vm_stack(1) = ret & ((((__int128) 1) << 64) - 1);
             continue;

@@ -88,7 +88,7 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel))
+        if (ui_panel_is_visible(&ui->panel))
             ui_stars_update(ui);
         return false;
     }

@@ -43,17 +43,19 @@
             _Generic((x), typeof(y): true, default: false),     \
             "type mismatch: " #x " != " #y )
 
-#define legion_max(x, y) ({                                             \
-            typeof(x) __x = (x);                                        \
-            typeof(y) __y = (y);                                        \
-            __x >= __y ? __x : __y;                                     \
-        })
+#define legion_max(x, y)                        \
+    ({                                          \
+        typeof(x) __x = (x);                    \
+        typeof(y) __y = (y);                    \
+        __x >= __y ? __x : __y;                 \
+    })
 
-#define legion_min(x, y) ({                                             \
-            typeof(x) __x = (x);                                        \
-            typeof(y) __y = (y);                                        \
-            __x <= __y ? __x : __y;                                     \
-        })
+#define legion_min(x, y)                        \
+    ({                                          \
+        typeof(x) __x = (x);                    \
+        typeof(y) __y = (y);                    \
+        __x <= __y ? __x : __y;                 \
+    })
 
 #define legion_bound(_val, _lo, _hi)            \
     ({                                          \
@@ -63,14 +65,15 @@
         val < lo ? lo : (val > hi ? hi : val);  \
     })
 
-#define legion_xchg(_ptr, _val) ({              \
-            typeof(_val) val = (_val);          \
-            typeof(_ptr) ptr = (_ptr);          \
+#define legion_xchg(_ptr, _val)                 \
+    ({                                          \
+        typeof(_val) val = (_val);              \
+        typeof(_ptr) ptr = (_ptr);              \
                                                 \
-            typeof(val) tmp = *ptr;             \
-            *ptr = val;                         \
-            tmp;                                \
-        })
+        typeof(val) tmp = *ptr;                 \
+        *ptr = val;                             \
+        tmp;                                    \
+    })
 
 #define legion_swap(p0, _p1)                    \
     do {                                        \
