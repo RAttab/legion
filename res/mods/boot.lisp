@@ -121,9 +121,7 @@
 (progn
   (wait-tech &item_condenser)
   (deploy-tape &item_condenser &item_elem_g condenser-count)
-  (deploy-tape &item_condenser &item_elem_h condenser-count)
-  (deploy-tape &item_condenser &item_elem_i condenser-count)
-  (deploy-tape &item_condenser &item_elem_j condenser-count))
+  (deploy-tape &item_condenser &item_elem_h condenser-count))
 
 
 ;; Antenna
