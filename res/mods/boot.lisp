@@ -20,6 +20,9 @@
 (defconst energy-target 1000)
 (defconst specs-solar-div 1000)
 
+(defconst scan-id (id &item_scanner 1))
+(assert (= (io &io_ping scan-id) &io_ok))
+
 (defconst mem-id (id &item_memory 1))
 (assert (= (io &io_ping mem-id) &io_ok))
 
@@ -185,6 +188,7 @@
 ;; -----------------------------------------------------------------------------
 
 (defun set-tape (id n host tape)
+  (assert (> id 0))
   (set n (+ id n))
   (while (< id n)
     (assert (= (io &io_tape (id host id) tape) &io_ok))
@@ -198,6 +202,7 @@
 
 (defun deploy-tape (host tape n)
   (let ((id (+ (count host) 1)))
+    (assert (> id 0))
     (assert (= (io &io_tape (id &item_assembly 1) host n) &io_ok))
     (assert (= (io &io_item (id &item_deploy 1) host n) &io_ok))
     (while (progn (assert (= (io &io_status (id &item_deploy 1)) &io_ok))
@@ -205,10 +210,10 @@
     (set-tape id n host tape)))
 
 (defun count (item)
-  (let ((coord (progn (assert (= (io &io_coord (self)) &io_ok)) (head))))
-    (assert (= (io &io_scan (id &item_scanner 1) coord item) &io_ok))
-    (assert (= (io &io_scan_val (id &item_scanner 1)) &io_ok))
-    (head)))
+  (io &io_scan scan-id (progn (io &io_coord (self)) (head)) item)
+  (let ((count -1))
+    (while (< count 0) (set count (progn (io &io_scan_val scan-id) (head))))
+    count))
 
 (defun wait-tech (item)
   (while

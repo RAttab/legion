@@ -39,7 +39,7 @@
 
 
 (defconst min-energy 2000)
-(defconst min-elem-top 10000)
+(defconst min-elem-top 12000)
 (defconst min-elem-mid 5000)
 (defconst min-elem-low 2000)
 (defun check-star (star)
