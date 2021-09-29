@@ -113,10 +113,15 @@ static void im_scanner_io_scan(
         scanner->type.target.coord = coord;
     }
 
-    uint64_t delta = coord_dist(chunk_star(chunk)->coord, coord);
+    struct coord origin = chunk_star(chunk)->coord;
+    uint64_t delta = coord_dist(origin, coord);
     delta /= im_scanner_div(id_item(scanner->id));
 
-    if (delta >= UINT8_MAX) { im_scanner_reset(scanner); return; }
+    if (delta >= UINT8_MAX) {
+        im_scanner_reset(scanner);
+        return chunk_log(chunk, scanner->id, IO_SCAN, IOE_OUT_OF_RANGE);
+    }
+
     scanner->work.cap = scanner->work.left = delta;
     scanner->result = im_scanner_empty;
 }
