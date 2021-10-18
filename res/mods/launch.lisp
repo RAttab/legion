@@ -48,12 +48,10 @@
       (if (< (count star &item_elem_b) min-elem-top) 0
 	(if (< (count star &item_elem_c) min-elem-mid) 0
 	  (if (< (count star &item_elem_d) min-elem-mid) 0
-	    (if (< (count star &item_elem_e) min-elem-mid) 0
-	      (if (< (count star &item_elem_f) min-elem-mid) 0
-		(if (< (count star &item_elem_g) min-elem-low) 0
-		  (if (< (count star &item_elem_h) min-elem-low) 0
-		    (if (< (count star &item_energy) min-energy) 0
-		      1)))))))))))
+	    (if (< (count star &item_elem_g) min-elem-low) 0
+	      (if (< (count star &item_elem_h) min-elem-low) 0
+		(if (< (count star &item_energy) min-energy) 0
+		  1)))))))))
 
 
 (defconst inc-y (bsl 1 (+ 16)))

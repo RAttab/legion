@@ -35,51 +35,52 @@
 (progn
   (set-tape 1 1 &item_extract &item_elem_a)
   (set-tape 2 1 &item_extract &item_elem_b)
-  (set-tape 1 1 &item_printer &item_frame)
-  (set-tape 2 1 &item_printer &item_logic)
+  (set-tape 1 1 &item_printer &item_muscle)
+  (set-tape 2 1 &item_printer &item_nodule)
 
   (deploy-tape &item_extract &item_elem_b extract-count)
   (set-tape 1 2 &item_extract &item_elem_a)
   (deploy-tape &item_extract &item_elem_c extract-count)
-  (deploy-tape &item_extract &item_elem_d extract-count)
-  (deploy-tape &item_extract &item_elem_e extract-count)
-  (deploy-tape &item_extract &item_elem_f extract-count))
+  (deploy-tape &item_extract &item_elem_d extract-count))
 
 
 ;; Printers - T0
 (progn
-  (set-tape 1 1 &item_printer &item_logic)
-  (set-tape 2 1 &item_printer &item_gear)
+  (set-tape 1 1 &item_printer &item_nodule)
+  (set-tape 2 1 &item_printer &item_vein)
 
-  (deploy-tape &item_printer &item_frame (- printer-count 2))
-  (deploy-tape &item_printer &item_logic printer-count)
-  (deploy-tape &item_printer &item_gear printer-count)
+  (deploy-tape &item_printer &item_muscle (- printer-count 2))
+  (deploy-tape &item_printer &item_nodule printer-count)
+  (deploy-tape &item_printer &item_vein printer-count)
+  (deploy-tape &item_printer &item_bone printer-count)
+  (deploy-tape &item_printer &item_tendon printer-count)
+  (deploy-tape &item_printer &item_lens printer-count)
+  (deploy-tape &item_printer &item_nerve printer-count)
   (deploy-tape &item_printer &item_neuron printer-count)
-  (deploy-tape &item_printer &item_bond printer-count)
-  (deploy-tape &item_printer &item_magnet printer-count)
-  (deploy-tape &item_printer &item_nuclear printer-count)
+  (deploy-tape &item_printer &item_retina printer-count)
 
-  (set-tape 1 2 &item_printer &item_frame))
-
+  (set-tape 1 2 &item_printer &item_muscle))
 
 ;; Workers
 (progn
-  (set-tape 1 2 &item_assembly &item_core)
+  (set-tape 2 1 &item_assembly &item_limb)
+
+  (deploy-tape &item_assembly &item_limb assembly-count)
+  (deploy-tape &item_assembly &item_stem assembly-count)
+  (deploy-tape &item_assembly &item_lung assembly-count)
+
   (deploy-item &item_worker worker-count))
 
 
 ;; Assembly - T0 Passive
 (progn
-  (set-tape 2 1 &item_assembly &item_robotics)
+  (deploy-tape &item_assembly &item_spinal assembly-count)
+  (deploy-tape &item_assembly &item_engram assembly-count)
+  (deploy-tape &item_assembly &item_cortex assembly-count)
+  (deploy-tape &item_assembly &item_eye assembly-count)
 
-  (deploy-tape &item_assembly &item_robotics assembly-count)
-  (deploy-tape &item_assembly &item_core assembly-count)
-  (deploy-tape &item_assembly &item_capacitor assembly-count)
-  (deploy-tape &item_assembly &item_matrix assembly-count)
-  (deploy-tape &item_assembly &item_magnet_field assembly-count)
-  (deploy-tape &item_assembly &item_hull assembly-count)
+  ;; required for building brain
   (deploy-tape &item_assembly &item_memory assembly-count)
-  (deploy-tape &item_assembly &item_worker assembly-count)
 
   (assert (= (io &io_reset (id &item_assembly 2)) &io_ok)))
 
@@ -101,19 +102,23 @@
   (let ((id-brain (id &item_brain (count &item_brain))))
     (assert (= (io &io_mod id-brain (mod launch 2)) &io_ok)))
 
-  (deploy-tape &item_assembly &item_deploy active-count)
+  (deploy-tape &item_assembly &item_worker active-count)
   (deploy-tape &item_assembly &item_extract active-count)
   (deploy-tape &item_assembly &item_printer active-count)
   (deploy-tape &item_assembly &item_assembly active-count)
-  (deploy-tape &item_assembly &item_scanner active-count)
+  (deploy-tape &item_assembly &item_deploy active-count)
   (deploy-tape &item_assembly &item_brain active-count)
+  (deploy-tape &item_assembly &item_scanner active-count)
   (deploy-item &item_legion legion-count))
 
 
 ;; Energy - Solar
 (progn
-  (wait-tech &item_captor)
-  (deploy-tape &item_printer &item_captor printer-count)
+  (wait-tech &item_semiconductor)
+  (deploy-tape &item_printer &item_semiconductor printer-count)
+
+  (wait-tech &item_photovoltaic)
+  (deploy-tape &item_assembly &item_photovoltaic printer-count)
 
   (wait-tech &item_solar)
   (deploy-tape &item_assembly &item_solar assembly-count)
@@ -129,11 +134,8 @@
 
 ;; Antenna
 (progn
-  (wait-tech &item_liquid_frame)
-  (deploy-tape &item_printer &item_liquid_frame printer-count)
-
-  (wait-tech &item_radiation)
-  (deploy-tape &item_printer &item_radiation printer-count)
+  (wait-tech &item_conductor)
+  (deploy-tape &item_printer &item_conductor printer-count)
 
   (wait-tech &item_antenna)
   (deploy-tape &item_assembly &item_antenna assembly-count)
@@ -143,17 +145,6 @@
 
   (wait-tech &item_receive)
   (deploy-item &item_receive antenna-count))
-
-
-;; Finish - T1
-(progn
-  (wait-tech &item_storage)
-  (deploy-tape &item_assembly &item_storage active-count)
-
-  (wait-tech &item_accelerator)
-  (deploy-tape &item_assembly &item_accelerator assembly-count)
-
-  (deploy-tape &item_assembly &item_lab active-count))
 
 
 ;; Spanning Tree
