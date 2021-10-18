@@ -3,9 +3,8 @@
  (rolls
   (one item_energy 30000)
   (one item_elem_k 100)
-  (all_of item_elem_a item_elem_f 60000)
-  (all_of item_elem_g item_elem_h 30000)
-  (all_of item_elem_h item_elem_i 10000)))
+  (all_of item_elem_a item_elem_d 60000)
+  (all_of item_elem_g item_elem_h 30000)))
 
 (barren
  (weight 200)

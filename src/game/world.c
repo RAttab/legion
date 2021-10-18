@@ -461,8 +461,6 @@ static struct coord world_populate_star(struct sector *sector)
         if (star_scan(star, ITEM_ELEM_B) < 20000) continue;
         if (star_scan(star, ITEM_ELEM_C) < 10000) continue;
         if (star_scan(star, ITEM_ELEM_D) < 10000) continue;
-        if (star_scan(star, ITEM_ELEM_E) < 10000) continue;
-        if (star_scan(star, ITEM_ELEM_F) < 10000) continue;
         if (star_scan(star, ITEM_ELEM_G) < 1000) continue;
         if (star_scan(star, ITEM_ELEM_H) < 1000) continue;
         return star->coord;
