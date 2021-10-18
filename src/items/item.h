@@ -23,23 +23,25 @@ enum legion_packed item
     // -------------------------------------------------------------------------
 
     ITEM_NATURAL_FIRST = 0x01,
+
     // extract
     ITEM_ELEM_A = 0x01,
     ITEM_ELEM_B = 0x02,
     ITEM_ELEM_C = 0x03,
     ITEM_ELEM_D = 0x04,
-    ITEM_ELEM_E = 0x05,
-    ITEM_ELEM_F = 0x06,
+    ITEM_ELEM_E = 0x05, // nomad
+    ITEM_ELEM_F = 0x06, // nomad
     // condenser
     ITEM_ELEM_G = 0x07,
     ITEM_ELEM_H = 0x08,
-    ITEM_ELEM_I = 0x09,
-    ITEM_ELEM_J = 0x0A,
+    ITEM_ELEM_I = 0x09, // nomad
+    ITEM_ELEM_J = 0x0A, // nomad
     // siphon
     ITEM_ELEM_K = 0x0B,
-    ITEM_NATURAL_LAST,
 
+    ITEM_NATURAL_LAST,
     ITEM_SYNTH_FIRST = 0x0C,
+
     // collider
     ITEM_ELEM_L = 0x0C,
     ITEM_ELEM_M = 0x0D,
@@ -59,6 +61,7 @@ enum legion_packed item
     ITEM_ELEM_Y = 0x19,
     // blackhole
     ITEM_ELEM_Z = 0x1A,
+
     ITEM_SYNTH_LAST,
 
 
@@ -68,28 +71,36 @@ enum legion_packed item
 
     ITEM_PASSIVE_FIRST = 0x20,
 
-    // T0 - printer
-    ITEM_FRAME        = ITEM_PASSIVE_FIRST + 0x00,
-    ITEM_LOGIC        = ITEM_PASSIVE_FIRST + 0x01,
-    ITEM_GEAR         = ITEM_PASSIVE_FIRST + 0x02,
-    ITEM_NEURON       = ITEM_PASSIVE_FIRST + 0x03,
-    ITEM_BOND         = ITEM_PASSIVE_FIRST + 0x04,
-    ITEM_MAGNET       = ITEM_PASSIVE_FIRST + 0x05,
-    ITEM_NUCLEAR      = ITEM_PASSIVE_FIRST + 0x06,
-    // T0 - assembly
-    ITEM_ROBOTICS     = ITEM_PASSIVE_FIRST + 0x08,
-    ITEM_CORE         = ITEM_PASSIVE_FIRST + 0x09,
-    ITEM_CAPACITOR    = ITEM_PASSIVE_FIRST + 0x0A,
-    ITEM_MATRIX       = ITEM_PASSIVE_FIRST + 0x0B,
-    ITEM_MAGNET_FIELD = ITEM_PASSIVE_FIRST + 0x0C,
-    ITEM_HULL         = ITEM_PASSIVE_FIRST + 0x0D,
+    // T0 - boot-factory
+    ITEM_MUSCLE = ITEM_PASSIVE_FIRST + 0x00, // printer
+    ITEM_NODULE = ITEM_PASSIVE_FIRST + 0x01,
+    ITEM_VEIN   = ITEM_PASSIVE_FIRST + 0x02,
+    ITEM_BONE   = ITEM_PASSIVE_FIRST + 0x03,
+    ITEM_TENDON = ITEM_PASSIVE_FIRST + 0x04,
+    ITEM_LIMB   = ITEM_PASSIVE_FIRST + 0x05, // assembly
+    ITEM_SPINAL = ITEM_PASSIVE_FIRST + 0x06,
+    // T0 - boot-legion
+    ITEM_LENS   = ITEM_PASSIVE_FIRST + 0x07, // printer
+    ITEM_NERVE  = ITEM_PASSIVE_FIRST + 0x08,
+    ITEM_NEURON = ITEM_PASSIVE_FIRST + 0x09,
+    ITEM_RETINA = ITEM_PASSIVE_FIRST + 0x0A,
+    ITEM_STEM   = ITEM_PASSIVE_FIRST + 0x0B, // assembly
+    ITEM_LUNG   = ITEM_PASSIVE_FIRST + 0x0C,
+    ITEM_ENGRAM = ITEM_PASSIVE_FIRST + 0x0D,
+    ITEM_CORTEX = ITEM_PASSIVE_FIRST + 0x0E,
+    ITEM_EYE    = ITEM_PASSIVE_FIRST + 0x0F,
 
-    // T1
-    ITEM_CAPTOR       = ITEM_PASSIVE_FIRST + 0x10,
-    ITEM_LIQUID_FRAME = ITEM_PASSIVE_FIRST + 0x11,
-    ITEM_RADIATION    = ITEM_PASSIVE_FIRST + 0x12,
-    ITEM_ANTENNA      = ITEM_PASSIVE_FIRST + 0x13,
-    ITEM_ACCELERATOR  = ITEM_PASSIVE_FIRST + 0x14,
+    // T1 - expand-lab
+    ITEM_MAGNET        = ITEM_PASSIVE_FIRST + 0x10, // printer
+    ITEM_FERROFLUID    = ITEM_PASSIVE_FIRST + 0x11,
+    ITEM_SEMICONDUCTOR = ITEM_PASSIVE_FIRST + 0x12,
+    ITEM_PHOTOVOLTAIC  = ITEM_PASSIVE_FIRST + 0x13, // assembly
+    ITEM_FIELD         = ITEM_PASSIVE_FIRST + 0x14,
+    // T1 - expand-gas
+    ITEM_CONDUCTOR     = ITEM_PASSIVE_FIRST + 0x15, // printer
+    ITEM_GALVANIC      = ITEM_PASSIVE_FIRST + 0x16,
+    ITEM_ANTENNA       = ITEM_PASSIVE_FIRST + 0x17, // assembly
+    ITEM_ACCELERATOR   = ITEM_PASSIVE_FIRST + 0x18,
 
     ITEM_PASSIVE_LAST,
 
