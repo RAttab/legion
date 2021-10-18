@@ -6,9 +6,7 @@
  (item_elem_a (out item_elem_a))
  (item_elem_b (out item_elem_b))
  (item_elem_c (out item_elem_c))
- (item_elem_d (out item_elem_d))
- (item_elem_e (out item_elem_e))
- (item_elem_f (out item_elem_f)))
+ (item_elem_d (out item_elem_d)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -17,65 +15,68 @@
 
 (item_printer
 
- (item_frame
+ (item_muscle
   (in item_elem_a
       item_elem_a
-      item_elem_a
-      item_elem_a
       item_elem_a)
-  (out item_frame))
+  (out item_muscle))
 
- (item_logic
+ (item_nodule
   (in item_elem_a
       item_elem_b
       item_elem_b
-      item_elem_a
-      item_elem_b
-      item_elem_b
       item_elem_a)
-  (out item_logic))
+  (out item_nodule))
 
- (item_gear
+ (item_vein
   (in item_elem_a
       item_elem_c
-      item_elem_a
-      item_elem_c
       item_elem_a)
-  (out item_gear))
+  (out item_vein))
+
+ (item_bone
+  (in item_elem_b
+      item_elem_b
+      item_elem_b
+      item_elem_b
+      item_elem_b)
+  (out item_bone))
+
+ (item_tendon
+  (in item_elem_b
+      item_elem_a
+      item_elem_a
+      item_elem_a
+      item_elem_b)
+  (out item_tendon))
+
+ (item_lens
+  (in item_elem_b
+      item_elem_c
+      item_elem_c
+      item_elem_b)
+  (out item_lens))
+
+ (item_nerve
+  (in item_elem_c
+      item_elem_c
+      item_elem_c)
+  (out item_nerve))
 
  (item_neuron
-  (in item_elem_b
-      item_elem_d
-      item_elem_b
-      item_elem_d
-      item_elem_b)
+  (in item_elem_c
+      item_elem_a
+      item_elem_c
+      item_elem_a
+      item_elem_c)
   (out item_neuron))
 
- (item_bond
-  (in item_elem_d
-      item_elem_e
-      item_elem_d
-      item_elem_e
-      item_elem_d)
-  (out item_bond))
-
- (item_magnet
-  (in item_elem_e
-      item_elem_f
-      item_elem_e
-      item_elem_f
-      item_elem_e)
-  (out item_magnet))
-
- (item_nuclear
-  (in item_elem_b
-      item_elem_d
-      item_elem_f
-      item_elem_d
-      item_elem_f
-      item_elem_d
-      item_elem_b)
-  (out item_nuclear)))
+ (item_retina
+  (in item_elem_c
+      item_elem_b
+      item_elem_b
+      item_elem_c)
+  (out item_retina)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -83,67 +84,71 @@
 ;; -----------------------------------------------------------------------------
 
 (item_assembly
- (item_robotics
-  (in item_gear
-      item_logic
-      item_gear
-      item_gear
-      item_logic
-      item_gear)
-  (out item_robotics))
 
- (item_core
-  (in item_logic
-      item_neuron
-      item_neuron
-      item_logic
-      item_neuron
-      item_neuron
-      item_logic)
-  (out item_core))
+ (item_limb
+  (in item_bone
+      item_bone
+      item_tendon
+      item_tendon
+      item_muscle
+      item_muscle)
+  (out item_limb))
 
- (item_capacitor
-  (in item_gear
+ (item_spinal
+  (in item_nerve
+      item_vein
+      item_nerve
+      item_vein
+      item_nerve)
+  (out item_spinal))
+
+ (item_stem
+  (in item_neuron
+      item_neuron
+      item_vein
+      item_neuron
+      item_neuron)
+  (out item_stem))
+
+ (item_lung
+  (in item_stem
+      item_nerve
+      item_muscle
+      item_muscle
+      item_muscle
+      item_nerve)
+  (out item_lung))
+
+ (item_engram
+  (in item_nerve
+      item_neuron
+      item_neuron
+      item_nerve
+      item_neuron
+      item_neuron
+      item_nerve)
+  (out item_engram))
+
+ (item_cortex
+  (in item_stem
+      item_vein
       item_neuron
       item_neuron
       item_neuron
-      item_gear)
-  (out item_capacitor))
+      item_vein
+      item_neuron
+      item_neuron
+      item_neuron
+      item_vein)
+  (out item_cortex))
 
- (item_matrix
-  (in item_capacitor
-      item_core
-      item_bond
-      item_core
-      item_core
-      item_bond
-      item_core
-      item_capacitor)
-  (out item_matrix))
-
- (item_magnet_field
-  (in item_magnet
-      item_magnet
-      item_robotics
-      item_magnet
-      item_magnet
-      item_magnet
-      item_robotics
-      item_magnet
-      item_magnet)
-  (out item_magnet_field))
-
- (item_hull
-  (in item_magnet_field
-      item_magnet_field
-      item_bond
-      item_nuclear
-      item_nuclear
-      item_nuclear
-      item_bond
-      item_magnet_field
-      item_magnet_field)
-  (out item_hull)))
+ (item_eye
+  (in item_retina
+      item_lens
+      item_lens
+      item_lens
+      item_retina)
+  (out item_eye)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -153,92 +158,82 @@
 (item_assembly
 
  (item_deploy
-  (in item_frame
-      item_logic
-      item_logic
-      item_frame
-      item_logic
-      item_logic
-      item_frame)
+  (in item_spinal
+      item_nodule
+      item_spinal)
   (out item_deploy))
 
  (item_extract
-  (in item_frame
-      item_frame
-      item_logic
-      item_logic
-      item_logic
-      item_frame
-      item_frame)
+  (in item_muscle
+      item_muscle
+      item_nodule
+      item_muscle
+      item_muscle)
   (out item_extract))
 
  (item_printer
-  (in item_gear
-      item_logic
-      item_logic
-      item_gear
-      item_logic
-      item_logic
-      item_gear)
+  (in item_vein
+      item_vein
+      item_nodule
+      item_vein
+      item_vein)
   (out item_printer))
 
  (item_assembly
-  (in item_frame
-      item_robotics
-      item_neuron
-      item_robotics
-      item_robotics
-      item_neuron
-      item_robotics
-      item_frame)
+  (in item_limb
+      item_limb
+      item_vein
+      item_nodule
+      item_vein
+      item_limb
+      item_limb)
   (out item_assembly))
 
  (item_worker
-  (in item_magnet
-      item_frame
-      item_frame
-      item_core
-      item_frame
-      item_frame
-      item_magnet)
+  (in item_lung
+      item_lung
+      item_stem
+      item_nodule
+      item_stem
+      item_limb
+      item_limb)
   (out item_worker))
 
  (item_memory
-  (in item_capacitor
-      item_capacitor
-      item_capacitor
-      item_bond
-      item_core
-      item_bond
-      item_capacitor
-      item_capacitor
-      item_capacitor)
+  (in item_engram
+      item_engram
+      item_engram
+      item_nodule
+      item_engram
+      item_engram
+      item_engram)
   (out item_memory))
 
  (item_brain
   (in item_memory
-      item_memory
-      item_matrix
-      item_matrix
-      item_matrix
-      item_memory
+      item_cortex
+      item_cortex
+      item_nodule
+      item_cortex
+      item_cortex
       item_memory)
   (out item_brain))
 
  (item_scanner
-  (in item_magnet
-      item_magnet
-      item_magnet
-      item_capacitor
-      item_capacitor
-      item_magnet
-      item_magnet
-      item_magnet)
+  (in item_lung
+      item_nodule
+      item_eye
+      item_eye
+      item_eye
+      item_eye
+      item_eye)
   (out item_scanner))
 
  (item_legion
-  (in item_hull
-      item_hull
+  (in item_lung
+      item_lung
+      item_lung
+      item_nodule
       item_worker
       item_worker
       item_extract
@@ -252,14 +247,18 @@
       item_memory
       item_brain
       item_scanner
-      item_hull
-      item_hull)
+      item_nodule
+      item_cortex
+      item_cortex)
   (out item_legion))
 
  (item_lab
-  (in item_robotics
-      item_magnet_field
-      item_nuclear
-      item_magnet_field
-      item_robotics)
+  (in item_limb
+      item_limb
+      item_vein
+      item_nodule
+      item_nodule
+      item_vein
+      item_cortex
+      item_cortex)
   (out item_lab)))
