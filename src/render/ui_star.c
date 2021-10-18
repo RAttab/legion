@@ -362,11 +362,11 @@ static void ui_star_update(struct ui_star *ui)
         energy.kwheel = 1;
         ui_str_set_scaled(&ui->kwheel.prod_val.str, energy_prod_kwheel(&energy, &ui->star));
 
-        ui->store.show = energy.store;
-        ui_str_set_u64(&ui->store.count.str, energy.store);
-        ui_str_set_scaled(&ui->store.total_val.str, energy_store(&energy));
-        energy.store = 1;
-        ui_str_set_scaled(&ui->store.prod_val.str, energy_store(&energy));
+        ui->store.show = energy.battery;
+        ui_str_set_u64(&ui->store.count.str, energy.battery);
+        ui_str_set_scaled(&ui->store.total_val.str, energy_battery(&energy));
+        energy.battery = 1;
+        ui_str_set_scaled(&ui->store.prod_val.str, energy_battery(&energy));
     }
 }
 

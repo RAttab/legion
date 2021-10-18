@@ -15,7 +15,7 @@
 
 enum
 {
-    energy_store_mul = 1000,
+    energy_battery_mul = 1000,
     energy_solar_div = 1000,
     energy_kwheel_div = 10,
 };
@@ -29,16 +29,16 @@ typedef uint64_t energy_t;
 
 struct energy
 {
-    uint16_t solar, kwheel, store;
+    uint16_t solar, kwheel, battery;
 
     energy_t current;
     energy_t produced, consumed, need;
 };
 
 
-inline energy_t energy_store(const struct energy *en)
+inline energy_t energy_battery(const struct energy *en)
 {
-    return en->store * energy_store_mul;
+    return en->battery * energy_battery_mul;
 }
 
 inline energy_t energy_prod_solar(
@@ -90,7 +90,7 @@ inline void energy_step_begin(struct energy *en, const struct star *star)
 
 inline void energy_step_end(struct energy *en)
 {
-    en->current = legion_min(en->current, energy_store(en));
+    en->current = legion_min(en->current, energy_battery(en));
 }
 
 
@@ -99,7 +99,7 @@ inline void energy_save(const struct energy *en, struct save *save)
     save_write_magic(save, save_magic_energy);
     save_write_value(save, en->solar);
     save_write_value(save, en->kwheel);
-    save_write_value(save, en->store);
+    save_write_value(save, en->battery);
     save_write_value(save, en->current);
     save_write_magic(save, save_magic_energy);
 }
@@ -109,7 +109,7 @@ inline bool energy_load(struct energy *en, struct save *save)
     if (!save_read_magic(save, save_magic_energy)) return false;
     save_read_into(save, &en->solar);
     save_read_into(save, &en->kwheel);
-    save_read_into(save, &en->store);
+    save_read_into(save, &en->battery);
     save_read_into(save, &en->current);
     return save_read_magic(save, save_magic_energy);
 }

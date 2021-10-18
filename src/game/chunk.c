@@ -256,10 +256,10 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
     if (likely(!item_is_logistics(item))) return false;
 
     switch (item) {
-    case ITEM_WORKER:       { chunk->workers.count++; return true; }
-    case ITEM_SOLAR:        { chunk->energy.solar++; return true; }
-    case ITEM_KWHEEL:       { chunk->energy.kwheel++; return true; }
-    case ITEM_ENERGY_STORE: { chunk->energy.store++; return true; }
+    case ITEM_WORKER:  { chunk->workers.count++; return true; }
+    case ITEM_SOLAR:   { chunk->energy.solar++; return true; }
+    case ITEM_KWHEEL:  { chunk->energy.kwheel++; return true; }
+    case ITEM_BATTERY: { chunk->energy.battery++; return true; }
 
     case ITEM_PILL: {
         word_t cargo = 0;
@@ -350,7 +350,7 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     if (item == ITEM_PILL) return ring64_len(chunk->pills);
     if (item == ITEM_SOLAR) return chunk->energy.solar;
     if (item == ITEM_KWHEEL) return chunk->energy.kwheel;
-    if (item == ITEM_ENERGY_STORE) return chunk->energy.store;
+    if (item == ITEM_BATTERY) return chunk->energy.battery;
 
     if (item == ITEM_ENERGY) return chunk->star.energy;
     if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)

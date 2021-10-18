@@ -140,11 +140,13 @@ enum legion_packed item
     // -------------------------------------------------------------------------
 
     ITEM_LOGISTICS_FIRST = 0xE0,
-    ITEM_WORKER          = ITEM_LOGISTICS_FIRST + 0x00,
-    ITEM_PILL            = ITEM_LOGISTICS_FIRST + 0x01,
-    ITEM_SOLAR           = ITEM_LOGISTICS_FIRST + 0x08,
-    ITEM_KWHEEL          = ITEM_LOGISTICS_FIRST + 0x09,
-    ITEM_ENERGY_STORE    = ITEM_LOGISTICS_FIRST + 0x0F,
+
+    ITEM_WORKER  = ITEM_LOGISTICS_FIRST + 0x00,
+    ITEM_PILL    = ITEM_LOGISTICS_FIRST + 0x01,
+    ITEM_SOLAR   = ITEM_LOGISTICS_FIRST + 0x08,
+    ITEM_KWHEEL  = ITEM_LOGISTICS_FIRST + 0x09,
+    ITEM_BATTERY = ITEM_LOGISTICS_FIRST + 0x0F,
+
     ITEM_LOGISTICS_LAST,
 
     // -------------------------------------------------------------------------
@@ -152,11 +154,11 @@ enum legion_packed item
     // -------------------------------------------------------------------------
 
     ITEM_SYS_FIRST = 0xF0,
+
     ITEM_DATA   = ITEM_SYS_FIRST + 0x00,
     ITEM_ENERGY = ITEM_SYS_FIRST + 0x01,
+
     ITEM_SYS_LAST,
-
-
     ITEM_MAX = ITEM_SYS_LAST,
 };
 
