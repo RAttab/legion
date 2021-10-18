@@ -120,7 +120,7 @@ static struct im_config im_configs[ITEM_MAX] =
 
     // Logistics
     im_init(ITEM_WORKER,       "worker",       bits_s, work_s),
-    im_init(ITEM_BULLET,       "bullet",       bits_s, work_s),
+    im_init(ITEM_PILL,         "pill",         bits_s, work_s),
     im_init(ITEM_SOLAR,        "solar",        bits_s, work_s),
     im_init(ITEM_KWHEEL,       "k-wheel",      bits_s, work_s),
     im_init(ITEM_ENERGY_STORE, "energy-store", bits_s, work_s),

@@ -58,7 +58,7 @@ static void im_port_step(void *state, struct chunk *chunk)
 
     if (!coord_is_nil(port->target)) {
         const word_t data = im_port_pack(port->has.item, port->has.count);
-        chunk_lanes_launch(chunk, ITEM_BULLET, im_port_speed, port->target, &data, 1);
+        chunk_lanes_launch(chunk, ITEM_PILL, im_port_speed, port->target, &data, 1);
 
         port->has.item = 0;
         port->has.count = 0;

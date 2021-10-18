@@ -86,12 +86,12 @@
       item_magnet_field)
   (out item_port))
 
- (item_bullet
+ (item_pill
   (in item_hull
       item_magnet
       item_magnet
       item_hull)
-  (out item_bullet))
+  (out item_pill))
 
  (item_condenser
   (in item_worker

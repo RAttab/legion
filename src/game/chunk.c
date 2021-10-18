@@ -40,7 +40,7 @@ struct chunk
     // Logistics
     struct energy energy;
     struct workers workers;
-    struct ring64 *bullets;
+    struct ring64 *pills;
 
     struct htable listen;
 };
@@ -56,7 +56,7 @@ struct chunk *chunk_alloc(struct world *world, const struct star *star)
     chunk->log = log_new(chunk_log_cap);
     chunk->requested = ring32_reserve(16);
     chunk->storage = ring32_reserve(1);
-    chunk->bullets = ring64_reserve(2);
+    chunk->pills = ring64_reserve(2);
     chunk->workers.ops = vec64_reserve(1);
     return chunk;
 }
@@ -78,7 +78,7 @@ void chunk_free(struct chunk *chunk)
     ring32_free(chunk->storage);
 
     vec64_free(chunk->workers.ops);
-    ring64_free(chunk->bullets);
+    ring64_free(chunk->pills);
 
     for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
          it; it = htable_next(&chunk->listen, it))
@@ -122,7 +122,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     if (!energy_load(&chunk->energy, save)) goto fail;
     save_read_into(save, &chunk->workers.count);
     chunk->workers.ops = vec64_reserve(chunk->workers.count);
-    chunk->bullets = save_read_ring64(save);
+    chunk->pills = save_read_ring64(save);
 
     { // listen
         size_t len = save_read_type(save, typeof(chunk->listen.len));
@@ -166,7 +166,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
 
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
-    save_write_ring64(save, chunk->bullets);
+    save_write_ring64(save, chunk->pills);
 
     save_write_value(save, chunk->listen.len);
     for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
@@ -261,7 +261,7 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
     case ITEM_KWHEEL:       { chunk->energy.kwheel++; return true; }
     case ITEM_ENERGY_STORE: { chunk->energy.store++; return true; }
 
-    case ITEM_BULLET: {
+    case ITEM_PILL: {
         word_t cargo = 0;
         chunk_lanes_arrive(chunk, item, coord_nil(), &cargo, 1);
         return true;
@@ -347,7 +347,7 @@ struct energy *chunk_energy(struct chunk *chunk)
 ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
     if (item == ITEM_WORKER) return chunk->workers.count;
-    if (item == ITEM_BULLET) return ring64_len(chunk->bullets);
+    if (item == ITEM_PILL) return ring64_len(chunk->pills);
     if (item == ITEM_SOLAR) return chunk->energy.solar;
     if (item == ITEM_KWHEEL) return chunk->energy.kwheel;
     if (item == ITEM_ENERGY_STORE) return chunk->energy.store;
@@ -435,9 +435,9 @@ void chunk_lanes_arrive(
         break;
     }
 
-    case ITEM_BULLET: {
+    case ITEM_PILL: {
         word_t cargo = len == 1 ? data[0] : 0;
-        chunk->bullets = ring64_push(chunk->bullets, cargo);
+        chunk->pills = ring64_push(chunk->pills, cargo);
         break;
     }
 
@@ -452,8 +452,8 @@ void chunk_lanes_arrive(
 
 bool chunk_lanes_dock(struct chunk *chunk, word_t *data)
 {
-    if (ring64_empty(chunk->bullets)) return false;
-    *data = ring64_pop(chunk->bullets);
+    if (ring64_empty(chunk->pills)) return false;
+    *data = ring64_pop(chunk->pills);
     return true;
 }
 
@@ -466,7 +466,7 @@ void chunk_lanes_launch(
     switch (type)
     {
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: { break; }
-    case ITEM_BULLET: { break; }
+    case ITEM_PILL: { break; }
     case ITEM_DATA: { break; }
     default: { assert(false); }
     }

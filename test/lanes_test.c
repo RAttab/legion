@@ -60,7 +60,7 @@ void test_basics(void)
     struct sector *sector = world_sector(world, coord_center());
 
     const size_t speed = 100;
-    const enum item item = ITEM_BULLET;
+    const enum item item = ITEM_PILL;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
 
@@ -97,7 +97,7 @@ void test_speed(void)
     enum { count = 10 };
     const size_t speed_slow = 10;
     const size_t speed_fast = speed_slow * 100;
-    const enum item item_slow = ITEM_BULLET;
+    const enum item item_slow = ITEM_PILL;
     const enum item item_fast = ITEM_MEMORY;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
