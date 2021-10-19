@@ -149,7 +149,7 @@ void viz_dot(struct viz *viz)
 
     viz_color(viz, "blue", ITEM_NATURAL_FIRST, ITEM_SYNTH_FIRST);
     viz_color(viz, "green", ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
-    viz_color(viz, "red", ITEM_LOGISTICS_FIRST, ITEM_ACTIVE_LAST);
+    viz_color(viz, "red", ITEM_ACTIVE_FIRST, ITEM_LOGISTICS_LAST);
 
     char label[item_str_len] = {0};
     for (enum item it = 0; it < ITEM_MAX; ++it) {
