@@ -39,7 +39,8 @@ void check_learn_item(struct world *world, enum item item)
     for (enum item it = tape_set_next(&info->reqs, 0); it;
          it = tape_set_next(&info->reqs, it))
     {
-        assert(!world_lab_known(world, item));
+        if (!world_lab_known(world, it))
+            assert(!world_lab_known(world, item));
         check_learn_bits(world, it);
     }
 
