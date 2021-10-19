@@ -20,7 +20,6 @@ if [ -z "${PROFILE}" ]; then TIME=""; ECHO=":"; fi
 
 CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm"
 CFLAGS="$CFLAGS -I${PREFIX}/src"
-CFLAGS="$CFLAGS -I${PREFIX}/build/nuklear"
 CFLAGS="$CFLAGS $(sdl2-config --cflags)"
 CFLAGS="$CFLAGS $(pkg-config --cflags freetype2)"
 
