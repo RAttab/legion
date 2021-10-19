@@ -73,6 +73,7 @@ struct core
 
     uint32_t event;
     uint64_t ticks;
+    bool focus;
 
     struct
     {
@@ -110,13 +111,13 @@ struct core
 
 extern struct core core;
 
-void core_init();
-void core_close();
+void core_init(void);
+void core_close(void);
 
 void core_path_res(const char *name, char *dst, size_t len);
 
-void core_run();
-void core_quit();
+void core_run(void);
+void core_quit(void);
 
 void core_push_event(enum event, uint64_t d0, uint64_t d1);
 

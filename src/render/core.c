@@ -50,7 +50,7 @@ void core_populate(void)
     }
 }
 
-static void state_init()
+static void state_init(void)
 {
     enum { state_freq = 10 };
     core.state.sleep = ts_sec / state_freq;
@@ -61,7 +61,7 @@ static void state_init()
     core.state.home = world_populate(core.state.world);
 }
 
-static void state_close()
+static void state_close(void)
 {
     world_free(core.state.world);
 }
@@ -88,7 +88,13 @@ static void state_step(ts_t now)
 // cursor
 // -----------------------------------------------------------------------------
 
-static void cursor_init()
+static bool cursor_focus(void)
+{
+    uint32_t flags = SDL_GetWindowFlags(core.window);
+    return flags & SDL_WINDOW_INPUT_FOCUS;
+}
+
+static void cursor_init(void)
 {
     core.cursor.size = 20;
     core.cursor.point = (SDL_Point){
@@ -103,12 +109,14 @@ static void cursor_init()
     core.cursor.tex = sdl_ptr(SDL_CreateTextureFromSurface(core.renderer, surface));
     SDL_FreeSurface(surface);
 
-    sdl_err(SDL_SetRelativeMouseMode(true));
     sdl_err(SDL_SetTextureBlendMode(core.cursor.tex, SDL_BLENDMODE_ADD));
     sdl_err(SDL_SetTextureColorMod(core.cursor.tex, 0xFF, 0xFF, 0xFF));
+
+    core.focus = cursor_focus();
+    sdl_err(SDL_SetRelativeMouseMode(core.focus));
 }
 
-static void cursor_close()
+static void cursor_close(void)
 {
     SDL_DestroyTexture(core.cursor.tex);
 }
@@ -130,6 +138,7 @@ static void cursor_event(SDL_Event *event)
 
 static void cursor_render(SDL_Renderer *renderer)
 {
+    if (!core.focus) return;
     sdl_err(SDL_RenderCopy(renderer, core.cursor.tex,
                     &(SDL_Rect){ .x = 0, .y = 0, .w = 50, .h = 50 },
                     &(SDL_Rect){
@@ -137,6 +146,15 @@ static void cursor_render(SDL_Renderer *renderer)
                         .y = core.cursor.point.y,
                         .w = core.cursor.size,
                         .h = core.cursor.size }));
+}
+
+static void cursor_update(void)
+{
+    bool focus = cursor_focus();
+    if (focus == core.focus) return;
+
+    sdl_err(SDL_SetRelativeMouseMode(focus));
+    core.focus = focus;
 }
 
 
@@ -162,7 +180,7 @@ static void ui_init(void)
     core.ui.io = ui_io_new();
 }
 
-static void ui_close()
+static void ui_close(void)
 {
     ui_topbar_free(core.ui.topbar);
     ui_status_free(core.ui.status);
@@ -223,7 +241,7 @@ static void ui_render(SDL_Renderer *renderer)
 // core
 // -----------------------------------------------------------------------------
 
-void core_init()
+void core_init(void)
 {
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
@@ -239,13 +257,15 @@ void core_init()
     core.event = SDL_RegisterEvents(1);
     if (core.event == (uint32_t) -1) sdl_fail();
 
+    core.focus = true;
+
     fonts_init(core.renderer);
     state_init();
     cursor_init();
     ui_init();
 }
 
-void core_close()
+void core_close(void)
 {
     ui_close();
     cursor_close();
@@ -262,13 +282,15 @@ void core_path_res(const char *name, char *dst, size_t len)
     snprintf(dst, len, "./res/%s", name);
 }
 
-void core_run()
+void core_run(void)
 {
     enum { fps_cap = 60 };
     ts_t sleep = ts_sec / fps_cap;
 
     ts_t ts = ts_now();
     while (true) {
+        cursor_update();
+
         SDL_Event event = {0};
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) return;
@@ -289,7 +311,7 @@ void core_run()
     }
 }
 
-void core_quit()
+void core_quit(void)
 {
     sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
 }
