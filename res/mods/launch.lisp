@@ -39,17 +39,16 @@
 
 
 (defconst min-energy 2000)
-(defconst min-elem-top 12000)
-(defconst min-elem-mid 5000)
-(defconst min-elem-low 2000)
+(defconst min-solid 10000)
+(defconst min-gas 2000)
 (defun check-star (star)
   (if (> (count star &item_brain) 0) 0
-    (if (< (count star &item_elem_a) min-elem-top) 0
-      (if (< (count star &item_elem_b) min-elem-top) 0
-	(if (< (count star &item_elem_c) min-elem-mid) 0
-	  (if (< (count star &item_elem_d) min-elem-mid) 0
-	    (if (< (count star &item_elem_g) min-elem-low) 0
-	      (if (< (count star &item_elem_h) min-elem-low) 0
+    (if (< (count star &item_elem_a) min-solid) 0
+      (if (< (count star &item_elem_b) min-solid) 0
+	(if (< (count star &item_elem_c) min-solid) 0
+	  (if (< (count star &item_elem_d) min-solid) 0
+	    (if (< (count star &item_elem_g) min-gas) 0
+	      (if (< (count star &item_elem_h) min-gas) 0
 		(if (< (count star &item_energy) min-energy) 0
 		  1)))))))))
 
