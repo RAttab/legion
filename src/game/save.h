@@ -26,9 +26,10 @@ enum legion_packed save_magic
     save_magic_symbol = 0x05,
     save_magic_heap = 0x06,
 
-    save_magic_world = 0x10,
-    save_magic_sector = 0x11,
-    save_magic_star = 0x12,
+    save_magic_core = 0x10,
+    save_magic_world = 0x11,
+    save_magic_sector = 0x12,
+    save_magic_star = 0x13,
 
     save_magic_chunk = 0x20,
     save_magic_active = 0x21,

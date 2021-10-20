@@ -17,6 +17,7 @@ struct ui_topbar
 {
     struct ui_panel panel;
     struct ui_button save, load;
+    struct ui_button stop, fast;
     struct ui_button home, stars, tapes, mods, log;
     struct ui_label coord;
     struct ui_button close;
@@ -35,13 +36,19 @@ struct ui_topbar *ui_topbar_new(void)
     struct ui_topbar *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_topbar) {
         .panel = ui_panel_menu(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
+
         .save = ui_button_new(font, ui_str_c("save")),
         .load = ui_button_new(font, ui_str_c("load")),
+
+        .stop = ui_button_new(font, ui_str_c("stop")),
+        .fast = ui_button_new(font, ui_str_c("fast")),
+
         .home = ui_button_new(font, ui_str_c("home")),
         .stars = ui_button_new(font, ui_str_c("stars")),
         .tapes = ui_button_new(font, ui_str_c("tapes")),
         .mods = ui_button_new(font, ui_str_c("mods")),
         .log = ui_button_new(font, ui_str_c("log")),
+
         .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
         .close = ui_button_new(font, ui_str_c("x")),
     };
@@ -51,13 +58,19 @@ struct ui_topbar *ui_topbar_new(void)
 
 void ui_topbar_free(struct ui_topbar *ui) {
     ui_panel_free(&ui->panel);
+
     ui_button_free(&ui->save);
     ui_button_free(&ui->load);
+
+    ui_button_free(&ui->stop);
+    ui_button_free(&ui->fast);
+
     ui_button_free(&ui->home);
     ui_button_free(&ui->stars);
     ui_button_free(&ui->tapes);
     ui_button_free(&ui->mods);
     ui_button_free(&ui->log);
+
     ui_label_free(&ui->coord);
     ui_button_free(&ui->close);
     free(ui);
@@ -68,8 +81,41 @@ int16_t ui_topbar_height(void)
     return core.ui.topbar->panel.w.dim.h;
 }
 
+static void ui_topbar_update_speed(struct ui_topbar *ui)
+{
+    switch (core.state.speed)
+    {
+
+    case speed_pause: {
+        ui_str_setc(&ui->stop.str, "run");
+        ui_str_setc(&ui->fast.str, "fast");
+        break;
+    }
+
+    case speed_normal: {
+        ui_str_setc(&ui->stop.str, "stop");
+        ui_str_setc(&ui->fast.str, "fast");
+        break;
+    }
+
+    case speed_fast: {
+        ui_str_setc(&ui->stop.str, "stop");
+        ui_str_setc(&ui->fast.str, "slow");
+        break;
+    }
+
+    default: { assert(false); }
+    }
+}
+    
 bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 {
+    if (ev->type == core.event) {
+        if (ev->user.code == EV_STATE_LOAD)
+            ui_topbar_update_speed(ui);
+        return false;
+    }
+    
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
@@ -80,6 +126,20 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->load, ev))) {
         core_load();
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->stop, ev))) {
+        if (core.state.speed != speed_pause) core_speed(speed_pause);
+        else core_speed(speed_normal);
+        ui_topbar_update_speed(ui);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->fast, ev))) {
+        if (core.state.speed != speed_fast) core_speed(speed_fast);
+        else core_speed(speed_normal);
+        ui_topbar_update_speed(ui);
         return true;
     }
 
@@ -155,6 +215,10 @@ void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
     ui_button_render(&ui->save, &layout, renderer);
     ui->load.disabled = core.state.loading;
     ui_button_render(&ui->load, &layout, renderer);
+    ui_layout_sep_x(&layout, 10);
+
+    ui_button_render(&ui->stop, &layout, renderer);
+    ui_button_render(&ui->fast, &layout, renderer);
     ui_layout_sep_x(&layout, 10);
 
     ui_button_render(&ui->home, &layout, renderer);

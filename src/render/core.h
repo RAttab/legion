@@ -62,6 +62,18 @@ enum event
 
 
 // -----------------------------------------------------------------------------
+// speed
+// -----------------------------------------------------------------------------
+
+enum speed
+{
+    speed_pause = 0,
+    speed_normal,
+    speed_fast,
+};
+
+
+// -----------------------------------------------------------------------------
 // core
 // -----------------------------------------------------------------------------
 
@@ -103,7 +115,10 @@ struct core
     struct
     {
         bool loading;
+
         ts_t next, sleep;
+        enum speed speed;
+
         struct world *world;
         struct coord home;
     } state;
@@ -134,3 +149,5 @@ enum status
 
 void core_logv(enum status, const char *fmt, va_list);
 void core_log(enum status, const char *fmt, ...) legion_printf(2, 3);
+
+void core_speed(enum speed);

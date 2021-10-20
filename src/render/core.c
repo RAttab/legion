@@ -50,11 +50,22 @@ void core_populate(void)
     }
 }
 
+void core_speed(enum speed speed)
+{
+    if (core.state.speed == speed) return;
+
+    if (speed == speed_normal)
+        core.state.next = ts_now();
+
+    core.state.speed = speed;
+}
+
 static void state_init(void)
 {
     enum { state_freq = 10 };
     core.state.sleep = ts_sec / state_freq;
     core.state.next = ts_now();
+    core.state.speed = speed_normal;
 
     core_populate();
     core.state.world = world_new(0);
@@ -69,7 +80,13 @@ static void state_close(void)
 static void state_step(ts_t now)
 {
     if (core.state.loading) { core_load_apply(); return; }
-    if (now < core.state.next) return;
+
+    switch (core.state.speed) {
+    case speed_fast: { break; }
+    case speed_pause: { return; }
+    case speed_normal: { if (now < core.state.next) return; break; }
+    default: { assert(false); }
+    }
 
     world_step(core.state.world);
     core_push_event(EV_STATE_UPDATE, 0, 0);
@@ -339,6 +356,7 @@ static void core_exec_event(enum event code, uint64_t d0, uint64_t d1)
     ui_event(&ev);
 }
 
+
 // -----------------------------------------------------------------------------
 // save
 // -----------------------------------------------------------------------------
@@ -348,6 +366,11 @@ enum { core_save_version = 1 };
 void core_save(void)
 {
     struct save *save = save_new("./legion.save", core_save_version);
+
+    save_write_magic(save, save_magic_core);
+    save_write_value(save, core.state.speed);
+    save_write_magic(save, save_magic_core);
+
     world_save(core.state.world, save);
 
     size_t bytes = save_len(save);
@@ -365,22 +388,31 @@ static void core_load_apply(void)
 {
     assert(core.state.loading);
 
+    bool fail = false;
     struct save *save = save_load("./legion.save");
     assert(save_version(save) == core_save_version);
 
+    if (!save_read_magic(save, save_magic_core)) { fail = true; goto fail; }
+    save_read_into(save, &core.state.speed);
+    if (!save_read_magic(save, save_magic_core)) { fail = true; goto fail; }
+
     struct world *world = world_load(save);
     size_t bytes = save_len(save);
-    if (!world) goto done;
+    if (!world) { fail = true; goto fail; }
 
     struct world *old = core.state.world;
     core.state.world = world;
     core_exec_event(EV_STATE_LOAD, 0, 0);
     world_free(old);
 
-  done:
+  fail:
+    if (fail)
+        core_log(st_info, "save file is corrupted");
+    else core_log(st_info, "loaded %zu bytes", bytes);
+
     save_close(save);
     core.state.loading = false;
-    core_log(st_info, "loaded %zu bytes", bytes);
+    return;
 }
 
 // -----------------------------------------------------------------------------
