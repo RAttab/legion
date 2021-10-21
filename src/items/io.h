@@ -57,8 +57,9 @@ enum legion_packed io
     // Misc
     IO_GET      = IO_MIN + 0x80,
     IO_SET      = IO_MIN + 0x81,
-    IO_SCAN     = IO_MIN + 0x82,
-    IO_SCAN_VAL = IO_MIN + 0x83,
+    IO_CAS      = IO_MIN + 0x82,
+    IO_SCAN     = IO_MIN + 0x83,
+    IO_SCAN_VAL = IO_MIN + 0x84,
     IO_LAUNCH   = IO_MIN + 0x85,
     IO_TARGET   = IO_MIN + 0x86,
 

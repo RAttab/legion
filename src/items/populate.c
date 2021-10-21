@@ -248,6 +248,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     // Misc
     io_init(IO_GET),
     io_init(IO_SET),
+    io_init(IO_CAS),
     io_init(IO_SCAN),
     io_init(IO_SCAN_VAL),
     io_init(IO_LAUNCH),

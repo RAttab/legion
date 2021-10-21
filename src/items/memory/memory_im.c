@@ -92,6 +92,35 @@ static void im_memory_io_set(
     memory->data[index] = args[1];
 }
 
+static void im_memory_io_cas(
+        struct im_memory *memory, struct chunk *chunk,
+        id_t src,
+        const word_t *args, size_t len)
+{
+    if (!im_check_args(chunk, memory->id, IO_CAS, len, 3)) goto fail;
+
+    uint8_t index = args[0];
+    if (args[0] < 0 || args[0] >= memory->len) {
+        chunk_log(chunk, memory->id, IO_CAS, IOE_A0_INVALID);
+        goto fail;
+    }
+
+    word_t exp = args[1];
+    word_t val = args[2];
+    word_t old = memory->data[index];
+    if (old == exp) memory->data[index] = val;
+
+    chunk_io(chunk, IO_RETURN, memory->id, src, &old, 1);
+    return;
+
+  fail:
+    {
+        word_t fail = 0;
+        chunk_io(chunk, IO_RETURN, memory->id, src, &fail, 1);
+    }
+    return;
+}
+
 static void im_memory_io(
         void *state, struct chunk *chunk,
         enum io io, id_t src,
@@ -106,6 +135,7 @@ static void im_memory_io(
 
     case IO_GET: { im_memory_io_get(memory, chunk, src, args, len); return; }
     case IO_SET: { im_memory_io_set(memory, chunk, args, len); return; }
+    case IO_CAS: { im_memory_io_cas(memory, chunk, src, args, len); return; }
 
     default: { return; }
     }
@@ -118,4 +148,5 @@ static const word_t im_memory_io_list[] =
 
     IO_GET,
     IO_SET,
+    IO_CAS,
 };

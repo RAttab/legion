@@ -84,6 +84,17 @@ static struct ui_io_cmd ui_io_cmd2(
     return cmd;
 }
 
+static struct ui_io_cmd ui_io_cmd3(
+        struct font *font, enum io id,
+        const char *arg0, const char *arg1, const char *arg2)
+{
+    struct ui_io_cmd cmd = ui_io_cmd(font, id, 3);
+    cmd.arg[0] = ui_io_arg(font, arg0);
+    cmd.arg[1] = ui_io_arg(font, arg1);
+    cmd.arg[2] = ui_io_arg(font, arg2);
+    return cmd;
+}
+
 static struct ui_io_cmd ui_io_cmd4(
         struct font *font, enum io id,
         const char *arg0, const char *arg1, const char *arg2, const char *arg3)
@@ -118,6 +129,7 @@ enum
     ui_io_dbg_step,
 
     ui_io_set,
+    ui_io_cas,
     ui_io_scan,
     ui_io_scan_val,
     ui_io_launch,
@@ -158,11 +170,11 @@ struct ui_io *ui_io_new(void)
         .target_val = ui_label_new(font, ui_str_v(id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
-            [ui_io_item] = ui_io_cmd2(font, IO_ITEM,     "item:  ", "loops: "),
-            [ui_io_tape] = ui_io_cmd2(font, IO_TAPE,     "id:    ", "loops: "),
-            [ui_io_mod] = ui_io_cmd1(font, IO_MOD,       "id:    "),
+            [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:  ", "loops: "),
+            [ui_io_tape] = ui_io_cmd2(font, IO_TAPE, "id:    ", "loops: "),
+            [ui_io_mod] = ui_io_cmd1(font, IO_MOD,   "id:    "),
 
-            [ui_io_name] = ui_io_cmd1(font, IO_NAME,       "name:  "),
+            [ui_io_name] = ui_io_cmd1(font, IO_NAME, "name:  "),
             [ui_io_send] = ui_io_cmd4(font, IO_SEND,
                     "len:   ", "[0]:   ", "[1]:   ", "[2]:   "),
             [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),
@@ -170,8 +182,9 @@ struct ui_io *ui_io_new(void)
             [ui_io_dbg_break] = ui_io_cmd1(font, IO_DBG_BREAK, "ip:    "),
             [ui_io_dbg_step] = ui_io_cmd0(font, IO_DBG_STEP),
 
-            [ui_io_set] = ui_io_cmd2(font, IO_SET,       "index: ", "value: "),
-            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN,     "coord: ", "item:  "),
+            [ui_io_set] = ui_io_cmd2(font, IO_SET,   "index: ", "value: "),
+            [ui_io_cas] = ui_io_cmd3(font, IO_CAS,   "index: ", "test:  ", "value: "),
+            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN, "coord: ", "item:  "),
             [ui_io_scan_val] = ui_io_cmd0(font, IO_SCAN_VAL),
             [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
             [ui_io_target] = ui_io_cmd1(font, IO_TARGET, "dest:  "),
