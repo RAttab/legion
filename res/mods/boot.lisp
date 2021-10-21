@@ -17,7 +17,7 @@
 (defconst legion-count 3)
 (defconst antenna-count (+ legion-count 1))
 
-(defconst energy-target 1000)
+(defconst energy-target 100)
 (defconst specs-solar-div 1000)
 
 (defconst scan-id (id &item_scanner 1))
@@ -25,6 +25,10 @@
 
 (defconst mem-id (id &item_memory 1))
 (assert (= (io &io_ping mem-id) &io_ok))
+
+;; If there's already an active legion in the star, bail.
+(when (progn (io &io_cas mem-id 6 0 1) (head))
+  (reset))
 
 ;; Name
 (unless (progn (io &io_get mem-id 0) (head))

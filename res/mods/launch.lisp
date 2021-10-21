@@ -39,7 +39,7 @@
 
 
 (defconst min-energy 2000)
-(defconst min-solid 10000)
+(defconst min-solid 15000)
 (defconst min-gas 2000)
 (defun check-star (star)
   (if (> (count star &item_brain) 0) 0
