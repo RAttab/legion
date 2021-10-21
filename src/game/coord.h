@@ -212,17 +212,3 @@ inline int64_t scale_div(scale_t scale, int64_t value)
 
 enum { scale_str_len = 1+2+1+2 };
 size_t scale_str(scale_t, char *str, size_t len);
-
-
-// -----------------------------------------------------------------------------
-// project
-// -----------------------------------------------------------------------------
-
-struct coord project_coord(
-        SDL_Rect rect, struct coord center, scale_t scale, SDL_Point origin);
-
-struct rect project_coord_rect(
-        SDL_Rect rect, struct coord center, scale_t scale, const SDL_Rect *origin);
-
-SDL_Point project_sdl(
-        SDL_Rect rect, struct coord center, scale_t scale, struct coord origin);

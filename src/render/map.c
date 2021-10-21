@@ -99,19 +99,47 @@ scale_t map_scale(struct map *map)
 // coord
 // -----------------------------------------------------------------------------
 
-struct coord map_project_coord(struct map *map, SDL_Point sdl)
+static struct coord map_project_coord(struct map *map, SDL_Point sdl)
 {
-    return project_coord(core.rect, map->pos, map->scale, sdl);
+    SDL_Rect rect = core.rect;
+    int64_t x = sdl.x, y = sdl.y; // needed as a signed int
+
+    int64_t rel_x = scale_mult(map->scale, x - rect.x - rect.w / 2);
+    int64_t rel_y = scale_mult(map->scale, y - rect.y - rect.h / 2);
+
+    return (struct coord) {
+        .x = i64_clamp(map->pos.x + rel_x, 0, UINT32_MAX),
+        .y = i64_clamp(map->pos.y + rel_y, 0, UINT32_MAX),
+    };
+
 }
 
-struct rect map_project_coord_rect(struct map *map, const SDL_Rect *sdl)
+static struct rect map_project_coord_rect(struct map *map, const SDL_Rect *sdl)
 {
-    return project_coord_rect(core.rect, map->pos, map->scale, sdl);
+    return (struct rect) {
+        .top = map_project_coord(map, (SDL_Point) {
+                    .x = sdl->x,
+                    .y = sdl->y
+                }),
+        .bot = map_project_coord(map, (SDL_Point) {
+                    .x = sdl->x + sdl->w,
+                    .y = sdl->y + sdl->h
+                }),
+    };
 }
 
-SDL_Point map_project_sdl(struct map *map, struct coord coord)
+static SDL_Point map_project_sdl(struct map *map, struct coord coord)
 {
-    return project_sdl(core.rect, map->pos, map->scale, coord);
+    SDL_Rect rect = core.rect;
+    int64_t x = coord.x, y = coord.y; // needed as a signed int
+
+    int64_t rel_x = scale_div(map->scale, x - map->pos.x);
+    int64_t rel_y = scale_div(map->scale, y - map->pos.y);
+
+    return (SDL_Point) {
+        .x = i64_clamp(rel_x + rect.w / 2 + rect.x, rect.x, rect.x + rect.w),
+        .y = i64_clamp(rel_y + rect.h / 2 + rect.y, rect.y, rect.y + rect.h),
+    };
 }
 
 struct coord map_coord(struct map *map)
