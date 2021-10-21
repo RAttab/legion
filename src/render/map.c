@@ -108,8 +108,8 @@ static struct coord map_project_coord(struct map *map, SDL_Point sdl)
     int64_t rel_y = scale_mult(map->scale, y - rect.y - rect.h / 2);
 
     return (struct coord) {
-        .x = i64_clamp(map->pos.x + rel_x, 0, UINT32_MAX),
-        .y = i64_clamp(map->pos.y + rel_y, 0, UINT32_MAX),
+        .x = map->pos.x + rel_x,
+        .y = map->pos.y + rel_y,
     };
 
 }
@@ -137,8 +137,8 @@ static SDL_Point map_project_sdl(struct map *map, struct coord coord)
     int64_t rel_y = scale_div(map->scale, y - map->pos.y);
 
     return (SDL_Point) {
-        .x = i64_clamp(rel_x + rect.w / 2 + rect.x, rect.x, rect.x + rect.w),
-        .y = i64_clamp(rel_y + rect.h / 2 + rect.y, rect.y, rect.y + rect.h),
+        .x = rel_x + rect.w / 2 + rect.x,
+        .y = rel_y + rect.h / 2 + rect.y,
     };
 }
 
