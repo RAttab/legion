@@ -57,9 +57,9 @@ struct gen
 {
     struct symbol name;
     uint64_t weight;
+    uint16_t hue;
     struct roll rolls[8];
 };
-
 
 static struct
 {
@@ -175,6 +175,9 @@ void gen_star(struct star *star, struct coord coord, seed_t seed)
 
     const struct roll *roll = it->rolls;
     while (gen_roll(roll, star, &rng)) roll++;
+
+    int16_t hue = it->hue + (15 - rng_uni(&rng, 0, 30));
+    star->hue = hue < 0 ? 360 + hue : hue;
 }
 
 
@@ -360,6 +363,13 @@ static void gen_populate_stars(struct atoms *atoms)
 
             if (hash == symbol_hash_c("rolls"))
                 gen_populate_rolls(&tok, it, atoms);
+
+            else if (hash == symbol_hash_c("hue")) {
+                assert(token_expect(&tok, &token, token_number));
+                assert(token.value.w >= 0 && token.value.w < 360);
+                it->hue = token.value.w;
+                assert(token_expect(&tok, &token, token_close));
+            }
 
             else if (hash == symbol_hash_c("weight")) {
                 assert(token_expect(&tok, &token, token_number));

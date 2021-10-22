@@ -24,16 +24,20 @@ enum legion_packed star_state
     star_active,
     star_barren,
 };
+static_assert(sizeof(enum star_state) == 1);
 
 struct legion_packed star
 {
     struct coord coord;
-    uint16_t energy;
+
+    uint16_t hue;
     enum star_state state;
-    legion_pad(1);
+    legion_pad(5);
+
+    uint16_t energy;
     uint16_t elems[ITEMS_NATURAL_LEN];
 };
-static_assert(sizeof(struct star) == 4 * 8 + 2);
+static_assert(sizeof(struct star) == 5 * 8);
 
 bool star_load(struct star *, struct save *);
 void star_save(struct star *, struct save *);

@@ -1,4 +1,5 @@
 (starter
+ (hue 0)
  (weight 50)
  (rolls
   (one item_energy 30000)
@@ -7,6 +8,7 @@
   (all_of item_elem_g item_elem_h 30000)))
 
 (barren
+ (hue 270)
  (weight 200)
  (rolls
   (one item_energy 100)
@@ -14,7 +16,8 @@
   (rng item_elem_a item_elem_j 100)))
 
 (extract
- (weight 450)
+ (hue 180)
+ (weight 350)
  (rolls
   (one item_energy 10000)
   (one item_elem_k 100)
@@ -22,6 +25,7 @@
   (one_of item_elem_a item_elem_f 65000)))
 
 (condenser
+ (hue 120)
  (weight 250)
  (rolls
   (one item_energy 10000)
@@ -30,7 +34,8 @@
   (one_of item_elem_g item_elem_j 65000)))
 
 (power
- (weight 50)
+ (hue 60)
+ (weight 150)
  (rolls
   (one item_elem_k 65000)
   (one item_energy 65000)))

@@ -4,9 +4,9 @@
 */
 
 #include "render/ui.h"
-#include "render/color.h"
 #include "render/core.h"
 #include "game/world.h"
+#include "utils/color.h"
 #include "utils/hset.h"
 #include "utils/log.h"
 
@@ -323,10 +323,12 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
             .h = px, .w = px
         };
 
-        struct rgb rgb = spectrum_rgb(16 - u64_log2(star->energy), 16);
-        if (!SDL_PointInRect(&core.cursor.point, &dst)) {
-            rgb = desaturate(rgb, .8);
-        }
+        struct hsv hsv = {
+            .h = ((double) star->hue) / 360,
+            .s = 1.0 - (((double) star->energy) / UINT16_MAX),
+            .v = SDL_PointInRect(&core.cursor.point, &dst) ? 0.8 : 0.5,
+        };
+        struct rgba rgb = hsv_to_rgb(hsv);
 
         sdl_err(SDL_SetTextureAlphaMod(map->tex, 0xFF));
         sdl_err(SDL_SetTextureBlendMode(map->tex, SDL_BLENDMODE_ADD));
