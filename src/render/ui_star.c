@@ -514,9 +514,9 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
     struct font *font = ui_star_font();
 
+    ui_button_render(&ui->goto_log, &layout, renderer);
     ui_button_render(&ui->goto_map, &layout, renderer);
     ui_button_render(&ui->goto_factory, &layout, renderer);
-    ui_button_render(&ui->goto_log, &layout, renderer);
     ui_layout_next_row(&layout);
 
     ui_layout_sep_y(&layout, font->glyph_h);

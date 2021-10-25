@@ -99,20 +99,19 @@ static void im_port_io_item(
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, port->id, IO_TAPE, IOE_A0_INVALID);
+        return chunk_log(chunk, port->id, IO_ITEM, IOE_A0_INVALID);
 
     if (!world_lab_known(chunk_world(chunk), item))
-        return chunk_log(chunk, port->id, IO_TAPE, IOE_A0_UNKNOWN);
+        return chunk_log(chunk, port->id, IO_ITEM, IOE_A0_UNKNOWN);
 
     if (item == port->want.item) return;
     port->want.item = item;
     port->want.count = item ? 1 : 0;
 
     if (len >= 2) {
-        uint8_t count = args[1];
         if (args[1] < 0 || args[1] > UINT8_MAX)
-            return chunk_log(chunk, port->id, IO_TAPE, IOE_A1_INVALID);
-        port->want.count = count;
+            return chunk_log(chunk, port->id, IO_ITEM, IOE_A1_INVALID);
+        port->want.count = args[1];
     }
 
     chunk_ports_reset(chunk, port->id);
@@ -172,6 +171,7 @@ static bool im_port_flow(const void *state, struct flow *flow)
 {
     const struct im_port *port = state;
     if (coord_is_nil(port->target)) return false;
+    if (!port->want.item && !port->has.item) return false;
 
     const struct tape_info *info = tapes_info(port->has.item);
 
@@ -182,9 +182,15 @@ static bool im_port_flow(const void *state, struct flow *flow)
         .rank = info ? info->rank : 1,
     };
 
-    if (port->want.item == port->has.item)
+    if (port->want.item == port->has.item) {
         flow->in = port->has.item;
-    else flow->out = port->has.item;
+        flow->tape_it = port->has.count;
+        flow->tape_len = port->want.count;
+    }
+    else {
+        flow->out = port->has.item;
+        flow->tape_len = port->has.count;
+    }
 
     return true;
 }

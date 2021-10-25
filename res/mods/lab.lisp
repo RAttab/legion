@@ -34,7 +34,11 @@
   (lab n &item_photovoltaic)
   (lab n &item_elem_g)
   (lab n &item_conductor)
-  (lab n &item_antenna))
+  (lab n &item_antenna)
+  (lab n &item_magnet)
+  (lab n &item_field)
+  (lab n &item_storage)
+  (lab n &item_ferrofluid))
 
 
 (defun lab (n item)

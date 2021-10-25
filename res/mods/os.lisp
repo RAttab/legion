@@ -9,8 +9,30 @@
 (defconst mem-pck-src 2)
 (defconst mem-pck-len 3)
 (defconst mem-pck-msg 4)
-
 (assert (= (io &io_ping mem-id) &io_ok))
+
+(defconst mem-tree-id (id &item_memory 1))
+(defconst mem-tree-home 6)
+(assert (= (io &io_ping mem-tree-id) &io_ok))
+
+
+;; -----------------------------------------------------------------------------
+;; api
+;; -----------------------------------------------------------------------------
+
+(defun os-home ()
+  (io &io_transmit (id &item_transmit 1) !os_home)
+
+  (let ((home (progn (io &io_get mem-tree-id mem-tree-home) (head))))
+    (when (= home 1) (set home 0))
+
+    (while (not home)
+      (when (progn (io &io_receive (id &item_receive 1)) (head))
+	(assert (= (head) !os_home))
+	(set home (head))))
+
+    (io &io_set mem-tree-id mem-tree-home home)
+    home))
 
 
 ;; -----------------------------------------------------------------------------
@@ -22,6 +44,7 @@
     (propagate)
     (case (msg 0)
       ((!os_run (run (msg 1)))
+       (!os_home (home))
        (!os_update (load (msg 1)))
        (!os_quit (reset))))))
 
@@ -42,7 +65,7 @@
     (let ((to-poll (count &item_receive)))
       (for (i 1) (and (<= i to-poll) (not msg-len)) (+ i 1)
 	   (when (= (io &io_receive (id &item_receive i)) &io_ok) (set msg-len (head)))
-	   (when msg-len (io &io_set mem-id mem-pck-src (id &item_receive i)))))
+	   (when msg-len (io &io_set mem-id mem-pck-src i))))
 
     ;; Save the rest of the message to mem
     (io &io_set mem-id mem-pck-len msg-len)
@@ -59,7 +82,7 @@
 	(src (progn (io &io_get mem-id mem-pck-src) (head))))
 
     (for (i 1) (<= i len) (+ i 1)
-	 (when (/= (id &item_receive i) src)
+	 (when (/= (id &item_receive i) (id &item_receive src))
 	   (case (progn (io &io_get mem-id mem-pck-len) (head))
 	     ((1
 	       (io &io_transmit (id &item_transmit i)
@@ -88,6 +111,10 @@
   (let ((brain-id (progn (io &io_get mem-id mem-brain) (head))))
     (assert (= (io &io_mod brain-id mod) &io_ok))))
 
+(defun home ()
+  (let ((home (progn (io &io_get mem-tree-id mem-tree-home) (head)))
+	(src (progn (io &io_get mem-id mem-pck-src) (head))))
+    (assert (= (io &io_transmit (id &item_transmit src) !os_home home) &io_ok))))
 
 ;; -----------------------------------------------------------------------------
 ;; misc

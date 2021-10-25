@@ -484,7 +484,11 @@ static void factory_render_flow(
         ui_label_render(&factory->ui_tape_out, &layout, renderer);
     }
 
-    if ((flow->in || flow->out) && flow->tape_len) {
+    if (id_item(flow->id) == ITEM_PORT && flow->out && flow->tape_len) {
+        ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_len);
+        ui_label_render(&factory->ui_tape_num, &layout, renderer);
+    }
+    else if ((flow->in || flow->out) && flow->tape_len) {
         ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_it+1);
         ui_label_render(&factory->ui_tape_num, &layout, renderer);
 

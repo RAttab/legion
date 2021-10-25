@@ -8,7 +8,7 @@
 ;; the (mod lab 2) module.
 
 (defconst extract-count 2)
-(defconst condenser-count 4)
+(defconst condenser-count 2)
 (defconst printer-count 4)
 (defconst assembly-count 2)
 (defconst worker-count 20)
@@ -16,6 +16,7 @@
 (defconst active-count 1)
 (defconst legion-count 3)
 (defconst antenna-count (+ legion-count 1))
+(defconst mem-home 6)
 
 (defconst energy-target 100)
 (defconst specs-solar-div 1000)
@@ -27,12 +28,13 @@
 (assert (= (io &io_ping mem-id) &io_ok))
 
 ;; If there's already an active legion in the star, bail.
-(when (progn (io &io_cas mem-id 6 0 1) (head))
+(when (progn (io &io_cas mem-id mem-home 0 1) (head))
   (reset))
 
 ;; Name
-(unless (progn (io &io_get mem-id 0) (head))
-  (io &io_name (self) !Bob-The-Homeworld))
+(when (is-home)
+  (io &io_name (self) !Bob-The-Homeworld)
+  (io &io_set mem-id mem-home (progn (io &io_coord (self)) (head))))
 
 
 ;; Elem - Extract
@@ -148,11 +150,8 @@
   (deploy-item &item_transmit antenna-count)
 
   (wait-tech &item_receive)
-  (deploy-item &item_receive antenna-count))
+  (deploy-item &item_receive antenna-count)
 
-
-;; Spanning Tree
-(progn
   (while (count &item_legion))
 
   ;; Launch is responsible for filling (id &item_memory 1) with our
@@ -162,6 +161,38 @@
        (let ((coord (progn (io &io_get mem-id i) (head))))
 	 (assert (= (io &io_target (id &item_transmit (+ i 1)) coord) &io_ok))
 	 (assert (= (io &io_target (id &item_receive (+ i 1)) coord) &io_ok)))))
+
+
+;; Pill logistics
+;; Requires the spanning tree to figure out where home is.
+(progn
+  (deploy-tape &item_printer &item_magnet printer-count)
+  (deploy-tape &item_printer &item_ferrofluid printer-count)
+
+  (wait-tech &item_storage)
+  (deploy-tape &item_assembly &item_storage active-count)
+
+  (wait-tech &item_field)
+  (deploy-tape &item_assembly &item_field assembly-count)
+
+  (wait-tech &item_port)
+  (deploy-item &item_port (+ legion-count 6))
+
+  (wait-tech &item_pill)
+  (deploy-item &item_pill 12)
+
+  ;; Feed elements back to homeworld
+  (unless (is-home)
+    (let ((home (call (os os-home))))
+      (for (i 1) (<= i 6) (+ i 1)
+	   (assert (= (io &io_ping (id &item_port (+ i 1))) &io_ok))
+	   (io &io_item (id &item_port (+ i 1)) (+ &item_elem_a 1) 64)
+	   (io &io_target (id &item_port (+ i 1)) home))))
+
+  ;; Forward any empty pills down the tree
+  (for (i 1) (<= i legion-count) (+ i 1)
+       (let ((coord (progn (io &io_get mem-id i) (head))))
+	 (assert (= (io &io_target (id &item_port (+ i 6)) coord) &io_ok)))))
 
 
 ;; OS
@@ -181,6 +212,9 @@
 ;; -----------------------------------------------------------------------------
 ;; utils
 ;; -----------------------------------------------------------------------------
+
+(defun is-home ()
+  (if (progn (io &io_get mem-id 0) (head)) 0 1))
 
 (defun set-tape (id n host tape)
   (assert (> id 0))
