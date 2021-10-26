@@ -176,23 +176,17 @@
   (deploy-tape &item_assembly &item_field assembly-count)
 
   (wait-tech &item_port)
-  (deploy-item &item_port (+ legion-count 6))
+  (deploy-item &item_port 2)
 
+  (deploy-item &item_brain 1)
+  (let ((id-brain (id &item_brain (count &item_brain))))
+    (assert (= (io &io_mod id-brain (mod port 2)) &io_ok))
+    (assert (= (io &io_send id-brain !child_count legion-count) &io_ok)))
+
+  ;; We build it after to give (mod port) a chance to boot up and set
+  ;; up the ports.
   (wait-tech &item_pill)
-  (deploy-item &item_pill 12)
-
-  ;; Feed elements back to homeworld
-  (unless (is-home)
-    (let ((home (call (os os-home))))
-      (for (i 1) (<= i 6) (+ i 1)
-	   (assert (= (io &io_ping (id &item_port (+ i 1))) &io_ok))
-	   (io &io_item (id &item_port (+ i 1)) (+ &item_elem_a 1) 64)
-	   (io &io_target (id &item_port (+ i 1)) home))))
-
-  ;; Forward any empty pills down the tree
-  (for (i 1) (<= i legion-count) (+ i 1)
-       (let ((coord (progn (io &io_get mem-id i) (head))))
-	 (assert (= (io &io_target (id &item_port (+ i 6)) coord) &io_ok)))))
+  (deploy-item &item_pill 10))
 
 
 ;; OS
