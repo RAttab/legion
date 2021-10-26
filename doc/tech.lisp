@@ -119,6 +119,31 @@
 ;; Goal is to start increasing factory depth and cost to break-out of
 ;; single star phase. Main new mechanic is nomad which allows for the
 ;; exploitation of stars not viable for a legion boot.
+;;
+;; Burner: probably the first thing to unlock as collider outputs
+;; should tend to all output garbage elements.
+;;
+;; Teleio: always active on channel 0 and omni directional since it's
+;; unlikely to share a world with an RX antenna.
+;;
+;; Nomad: Loads item through IO_ITEM. Can be programmed with one IO
+;; command on deploy which allows for either teleio or brain with a
+;; mod.
+;;
+;; Charge: Will take in battery as input and output charged
+;; battery. Discharge will invert. charged batteries can't be deployed
+;; but plain batteries can.
+;;
+;; Siphon: I'm not entirely sure it has a purpose in T2
+;;
+;; Energy: Power is the limiting factor for how much you can do in a
+;; single star. Otherwise, you can single star + nomad the entire game
+;; which removes a lot of the fun of infinit expansion. As such once
+;; T2 is done, need to spend time devising a diminishing return energy
+;; scheme.
+;;
+;; T3 will probably ramp up the costs of tapes quite a bit given that
+;; inifinit access to resources.
 
 (composite
  (collider)
