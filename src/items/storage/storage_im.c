@@ -126,11 +126,14 @@ static bool im_storage_flow(const void *state, struct flow *flow)
     const struct im_storage *storage = state;
     if (!storage->item) return false;
 
+    const struct tape_info *info = tapes_info(storage->item);
+    if (!info) return false;
+
     *flow = (struct flow) {
         .id = storage->id,
         .loops = storage->count,
         .target = storage->item,
-        .rank = tapes_info(storage->item)->rank,
+        .rank = info->rank,
     };
 
     if (!storage->count)

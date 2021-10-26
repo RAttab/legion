@@ -16,6 +16,8 @@
 (defconst active-count 1)
 (defconst legion-count 3)
 (defconst antenna-count (+ legion-count 1))
+(defconst storage-count 4)
+
 (defconst mem-home 6)
 
 (defconst energy-target 100)
@@ -178,6 +180,14 @@
   (wait-tech &item_port)
   (deploy-item &item_port 2)
 
+  (when (is-home)
+    (deploy-item &item_storage (* 11 storage-count))
+    (for (i 0) (< i 11) (+ i 1)
+	 (set-item (+ (* i storage-count) 1)
+		   storage-count
+		   &item_storage
+		   (+ &item_elem_a i))))
+
   (deploy-item &item_brain 1)
   (let ((id-brain (id &item_brain (count &item_brain))))
     (assert (= (io &io_mod id-brain (mod port 2)) &io_ok))
@@ -215,6 +225,13 @@
   (set n (+ id n))
   (while (< id n)
     (assert (= (io &io_tape (id host id) tape) &io_ok))
+    (set id (+ id 1))))
+
+(defun set-item (id n host item)
+  (assert (> id 0))
+  (set n (+ id n))
+  (while (< id n)
+    (assert (= (io &io_item (id host id) item) &io_ok))
     (set id (+ id 1))))
 
 (defun deploy-item (item n)
