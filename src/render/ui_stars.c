@@ -64,10 +64,10 @@ static void ui_stars_update(struct ui_stars *ui)
             parent = ui_tree_index(&ui->tree);
             ui_str_setf(ui_tree_add(&ui->tree, ui_node_nil, coord_to_u64(sector)),
                     "%02x.%02x x %02x.%02x",
-                    (sector.x >> coord_sector_bits) & 0xFF,
                     (sector.x >> (coord_sector_bits + coord_area_bits)),
-                    (sector.y >> coord_sector_bits) & 0xFF,
-                    (sector.y >> (coord_sector_bits + coord_area_bits)));
+                    (sector.x >> coord_sector_bits) & 0xFF,
+                    (sector.y >> (coord_sector_bits + coord_area_bits)),
+                    (sector.y >> coord_sector_bits) & 0xFF);
         }
 
         ui_str_set_atom(
