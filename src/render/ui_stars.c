@@ -142,7 +142,10 @@ bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
         struct coord coord = coord_from_u64(user);
         if (user && !coord_eq(coord, coord_sector(coord))) {
             core_push_event(EV_STAR_SELECT, user, 0);
-            core_push_event(EV_MAP_GOTO, user, 0);
+            if (map_active(core.ui.map))
+                core_push_event(EV_MAP_GOTO, user, 0);
+            if (factory_active(core.ui.factory))
+                core_push_event(EV_FACTORY_SELECT, user, 0);
         }
         return true;
     }
