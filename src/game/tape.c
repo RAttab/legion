@@ -99,6 +99,13 @@ enum item tape_set_next(const struct tape_set *set, enum item first)
     return ITEM_NIL;
 }
 
+bool tape_set_eq(const struct tape_set *lhs, const struct tape_set *rhs)
+{
+    for (size_t i = 0; i < array_len(lhs->s); ++i)
+        if (lhs->s[i] != rhs->s[i]) return false;
+    return true;
+}
+
 void tape_set_union(struct tape_set *set, const struct tape_set *other)
 {
     for (size_t i = 0; i < array_len(set->s); ++i)

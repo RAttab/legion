@@ -203,7 +203,7 @@ void lanes_free(struct lanes *lanes)
 
 static uint64_t lanes_key(struct coord src, struct coord dst)
 {
-    return coord_to_u64(src) ^ coord_to_u64(dst);
+    return hash_u64(coord_to_u64(src)) ^ hash_u64(coord_to_u64(dst));
 }
 
 static void lanes_index_put(struct lanes *lanes, struct coord key, struct coord val)
@@ -237,6 +237,21 @@ static void lanes_index_del(struct lanes *lanes, struct coord key, struct coord 
     }
 }
 
+void lanes_save(struct lanes *lanes, struct save *save)
+{
+    save_write_magic(save, save_magic_lanes);
+    save_write_value(save, (uint32_t) lanes->lanes.len);
+
+    for (const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+         it; it = htable_next(&lanes->lanes, it))
+    {
+        lane_save((void *) it->value, save);
+    }
+
+    heap_save(&lanes->data, save);
+    save_write_magic(save, save_magic_lanes);
+}
+
 bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
 {
     if (!save_read_magic(save, save_magic_lanes)) return false;
@@ -264,19 +279,6 @@ bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
     return false;
 }
 
-void lanes_save(struct lanes *lanes, struct save *save)
-{
-    save_write_magic(save, save_magic_lanes);
-    save_write_value(save, (uint32_t) lanes->lanes.len);
-
-    const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
-    for (; it; it = htable_next(&lanes->lanes, it))
-        lane_save((void *) it->value, save);
-
-    heap_save(&lanes->data, save);
-    save_write_magic(save, save_magic_lanes);
-}
-
 world_ts_delta_t lanes_travel(size_t speed, struct coord src, struct coord dst)
 {
     return coord_dist(src, dst) / speed;
@@ -286,6 +288,60 @@ const struct hset *lanes_list(struct lanes *lanes, struct coord key)
 {
     struct htable_ret ret = htable_get(&lanes->index, coord_to_u64(key));
     return (void *) ret.value;
+}
+
+void lanes_list_save(struct lanes *lanes, struct save *save)
+{
+    save_write_magic(save, save_magic_lanes);
+    save_write_value(save, (uint32_t) lanes->lanes.len);
+
+    for (const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+         it; it = htable_next(&lanes->lanes, it))
+    {
+        const struct lane *lane = (void *) it->value;
+        save_write_value(save, coord_to_u64(lane->src));
+        save_write_value(save, coord_to_u64(lane->dst));
+    }
+
+    save_write_magic(save, save_magic_lanes);
+}
+
+bool lanes_list_load_into(struct htable *lanes, struct save *save)
+{
+    // Clear the htable and the hset while avoiding unnecessary allocations.
+    for (const struct htable_bucket *it = htable_next(lanes, NULL);
+         it; it = htable_next(lanes, it))
+    {
+        struct hset *set = (void *) it->value;
+
+        if (set->len) hset_clear(set);
+        else {
+            struct htable_ret ret = htable_del(lanes, it->key);
+            assert(ret.ok);
+            hset_free(set);
+        }
+    }
+
+    if (!save_read_magic(save, save_magic_lanes)) return false;
+    uint32_t len = save_read_type(save, typeof(len));
+
+    for (size_t i = 0; i < len; ++i) {
+        uint64_t key = save_read_type(save, typeof(key));
+        uint64_t val = save_read_type(save, typeof(val));
+
+        struct htable_ret ret = htable_get(lanes, key);
+
+        struct hset *set = NULL;
+        if (ret.ok) set = (void *) ret.value;
+        set = hset_put(set, val);
+
+        if (ret.ok) ret = htable_xchg(lanes, key, (uintptr_t) set);
+        else ret = htable_put(lanes, key, (uintptr_t) set);
+        assert(ret.ok);
+    }
+
+    if (!save_read_magic(save, save_magic_lanes)) assert(false);
+    return true;
 }
 
 void lanes_launch(

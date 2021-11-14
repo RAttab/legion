@@ -11,10 +11,18 @@
 // active_list
 // -----------------------------------------------------------------------------
 
-void active_list_load(active_list_t *list, struct chunk *chunk, struct save *save)
+static struct active *const ACTIVE_FAIL = (void *) -1;
+
+bool active_list_load(
+        active_list_t *list, struct chunk *chunk, struct save *save, bool read)
 {
-    for (size_t i = 0; i < array_len(*list); ++i)
-        (*list)[i] = active_load(i + ITEM_ACTIVE_FIRST, chunk, save);
+    for (size_t i = 0; i < array_len(*list); ++i) {
+        struct active *ptr = active_load(i + ITEM_ACTIVE_FIRST, chunk, save, read);
+        if (ptr == ACTIVE_FAIL) return false;
+
+        (*list)[i] = ptr;
+    }
+    return true;
 }
 
 void active_list_save(active_list_t *list, struct save *save)
@@ -123,15 +131,18 @@ static bool active_recycle(struct active *active, size_t *index)
 }
 
 
-struct active *active_load(enum item type, struct chunk *chunk, struct save *save)
+struct active *active_load(
+        enum item type, struct chunk *chunk, struct save *save, bool read)
 {
-    if (!save_read_magic(save, save_magic_active)) return NULL;
+    if (!save_read_magic(save, save_magic_active)) return ACTIVE_FAIL;
 
     uint16_t len = save_read_type(save, typeof(len));
-    if (!len) return NULL;
+    uint16_t create = save_read_type(save, typeof(create));
+    if (!len && !create) return NULL;
 
     struct active *active = active_alloc(type);
     active->len = len;
+    active->create = create;
     save_read_into(save, &active->count);
 
     active->cap = 1;
@@ -144,13 +155,16 @@ struct active *active_load(enum item type, struct chunk *chunk, struct save *sav
     save_read(save, active->ports, active->len * sizeof(*active->ports));
 
     if (active->cap < 64) save_read_into(save, &active->free);
-    else active->free = (uintptr_t) save_read_vec64(save);
+    else {
+        bool ok = save_read_vec64(save, (struct vec64 **) &active->free);
+        assert(ok); // \todo this can't fail aparently which is bwad.
+    }
 
     const struct im_config *config = im_config_assert(active->type);
     if (config->im.load) {
         for (size_t i = 0; i < len; ++i) {
             if (active_deleted(active, i)) continue;
-            config->im.load(active->arena + (i * active->size), chunk);
+            if (!read) config->im.load(active->arena + (i * active->size), chunk);
         }
     }
 
@@ -160,17 +174,17 @@ struct active *active_load(enum item type, struct chunk *chunk, struct save *sav
 void active_save(struct active *active, struct save *save)
 {
     save_write_magic(save, save_magic_active);
+    if (!active) {
+        save_write_value(save, (uint16_t) 0);
+        save_write_value(save, (uint16_t) 0);
+        return;
+    }
 
-    uint16_t len = active ? active->len : 0;
-    save_write_value(save, len);
-    if (!active) return;
-
-    // would mean that we're saving mid step and that's a bad idea.
-    assert(!active->create);
-
+    save_write_value(save, active->len);
+    save_write_value(save, active->create);
     save_write_value(save, active->count);
-    save_write(save, active->arena, len * active->size);
-    save_write(save, active->ports, len * sizeof(*active->ports));
+    save_write(save, active->arena, active->len * active->size);
+    save_write(save, active->ports, active->len * sizeof(*active->ports));
 
     if (active->cap < 64) save_write_value(save, active->free);
     else save_write_vec64(save, (const void *) active->free);

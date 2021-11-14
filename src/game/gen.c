@@ -88,9 +88,9 @@ static struct rng gen_rng(struct coord coord, seed_t seed)
 // name
 // -----------------------------------------------------------------------------
 
-word_t gen_name(struct world *world, struct coord coord)
+word_t gen_name(struct coord coord, seed_t seed, struct atoms *atoms)
 {
-    uint64_t bits = hash_u64(gen_mix(coord, world_seed(world)));
+    uint64_t bits = hash_u64(gen_mix(coord, seed));
 
     const struct symbol *prefix = &gen.prefix[u64_top(bits) % gen.prefix_len];
     const struct symbol *suffix = &gen.suffix[u64_bot(bits) % gen.suffix_len];
@@ -102,7 +102,7 @@ word_t gen_name(struct world *world, struct coord coord)
     memcpy(name.c + name.len, suffix->c, suffix->len);
     name.len += suffix->len;
 
-    return atoms_make(world_atoms(world), &name);
+    return atoms_make(atoms, &name);
 }
 
 
@@ -212,10 +212,8 @@ struct vec64 *gen_sector_stars(struct rng *rng, struct coord base, size_t stars)
     return list;
 }
 
-struct sector *gen_sector(struct world *world, struct coord coord)
+struct sector *gen_sector(struct coord coord, seed_t seed)
 {
-    seed_t seed = world_seed(world);
-
     coord = coord_sector(coord);
     struct rng rng = gen_rng(coord, seed);
 
@@ -228,7 +226,7 @@ struct sector *gen_sector(struct world *world, struct coord coord)
         stars = (gen_stars_max * (delta_max - delta)) / delta_max;
 
     struct vec64 *list = gen_sector_stars(&rng, coord, stars);
-    struct sector *sector = sector_new(world, vec64_len(list));
+    struct sector *sector = sector_new(vec64_len(list));
     sector->coord = coord;
 
     for (size_t i = 0; i < sector->stars_len; ++i) {

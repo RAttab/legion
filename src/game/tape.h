@@ -102,6 +102,7 @@ void tape_set_put(struct tape_set *, enum item);
 struct tape_set tape_set_invert(struct tape_set *);
 enum item tape_set_next(const struct tape_set *, enum item);
 
+bool tape_set_eq(const struct tape_set *, const struct tape_set *);
 void tape_set_union(struct tape_set *, const struct tape_set *);
 size_t tape_set_intersect(const struct tape_set *, const struct tape_set *);
 

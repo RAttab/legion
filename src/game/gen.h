@@ -17,7 +17,7 @@ struct atoms;
 // gen
 // -----------------------------------------------------------------------------
 
-struct sector *gen_sector(struct world *, struct coord);
-word_t gen_name(struct world *, struct coord);
+struct sector *gen_sector(struct coord, seed_t);
+word_t gen_name(struct coord, seed_t, struct atoms *);
 
 void gen_populate(struct atoms *);

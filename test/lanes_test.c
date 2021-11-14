@@ -57,7 +57,7 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
 void test_basics(void)
 {
     struct world *world = world_new(0);
-    struct sector *sector = world_sector(world, coord_center());
+    const struct sector *sector = world_sector(world, coord_center());
 
     const size_t speed = 100;
     const enum item item = ITEM_PILL;
@@ -78,8 +78,8 @@ void test_basics(void)
         check_hset_nil(world_lanes_list(world, src));
         check_hset_nil(world_lanes_list(world, dst));
 
-        struct chunk *chunk_src = sector_chunk(sector, src);
-        struct chunk *chunk_dst = sector_chunk(sector, dst);
+        struct chunk *chunk_src = world_chunk(world, src);
+        struct chunk *chunk_dst = world_chunk(world, dst);
         assert(chunk_src && chunk_dst);
 
         assert(chunk_scan(chunk_src, item) > (ssize_t) iteration);
@@ -92,7 +92,7 @@ void test_basics(void)
 void test_speed(void)
 {
     struct world *world = world_new(0);
-    struct sector *sector = world_sector(world, coord_center());
+    const struct sector *sector = world_sector(world, coord_center());
 
     enum { count = 10 };
     const size_t speed_slow = 10;
@@ -101,7 +101,7 @@ void test_speed(void)
     const enum item item_fast = ITEM_MEMORY;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
-    struct chunk *chunk_dst = sector_chunk_alloc(sector, dst);
+    struct chunk *chunk_dst = world_chunk_alloc(world, dst);
 
     for (size_t i = 0; i < count; ++i) {
         world_lanes_launch(world, item_slow, speed_slow, src, dst, NULL, 0);

@@ -9,6 +9,7 @@
 #include "game/save.h"
 #include "items/item.h"
 #include "game/coord.h"
+#include "game/world.h"
 #include "vm/vm.h"
 #include "utils/htable.h"
 
@@ -18,21 +19,12 @@ struct chunk;
 // star
 // -----------------------------------------------------------------------------
 
-enum legion_packed star_state
-{
-    star_untouched,
-    star_active,
-    star_barren,
-};
-static_assert(sizeof(enum star_state) == 1);
-
 struct legion_packed star
 {
     struct coord coord;
 
     uint16_t hue;
-    enum star_state state;
-    legion_pad(5);
+    legion_pad(6);
 
     uint16_t energy;
     uint16_t elems[ITEMS_NATURAL_LEN];
@@ -40,7 +32,7 @@ struct legion_packed star
 static_assert(sizeof(struct star) == 5 * 8);
 
 bool star_load(struct star *, struct save *);
-void star_save(struct star *, struct save *);
+void star_save(const struct star *, struct save *);
 
 inline uint16_t star_scan(const struct star *star, enum item item)
 {
@@ -57,34 +49,21 @@ inline uint16_t star_scan(const struct star *star, enum item item)
 
 struct sector
 {
-    struct world *world;
-
     struct coord coord;
-    struct htable chunks;
     struct htable index;
 
     size_t stars_len;
     struct star stars[];
 };
 
-struct sector *sector_gen(struct world *, struct coord coord);
-struct sector *sector_new(struct world *, size_t stars);
+struct sector *sector_gen(struct coord, seed_t);
+struct sector *sector_new(size_t stars);
 void sector_free(struct sector *);
 
 struct sector *sector_load(struct world *, struct save *);
-void sector_save(struct sector *, struct save *);
+void sector_save(const struct sector *, struct save *);
 
-struct chunk *sector_chunk(struct sector *, struct coord coord);
-struct chunk *sector_chunk_alloc(struct sector *, struct coord coord);
+const struct star *sector_star_in(const struct sector *, struct rect);
+const struct star *sector_star_at(const struct sector *, struct coord coord);
 
-const struct star *sector_star_in(struct sector *, struct rect);
-const struct star *sector_star_at(struct sector *, struct coord coord);
-
-void sector_step(struct sector *);
-ssize_t sector_scan(struct sector *, struct coord, enum item);
-
-void sector_lanes_arrive(
-        struct sector *,
-        enum item type,
-        struct coord src, struct coord dst,
-        const word_t *data, size_t len);
+ssize_t sector_scan(const struct sector *, struct coord, enum item);

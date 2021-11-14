@@ -26,14 +26,14 @@ struct energy;
 
 struct chunk;
 
-struct chunk *chunk_alloc(struct world *, const struct star *);
+struct chunk *chunk_alloc(struct world *, const struct star *, word_t name);
 void chunk_free(struct chunk *);
 
 struct chunk *chunk_load(struct world *, struct save *);
 void chunk_save(struct chunk *, struct save *);
 
 struct world *chunk_world(struct chunk *);
-const struct star *chunk_star(struct chunk *);
+const struct star *chunk_star(const struct chunk *);
 
 word_t chunk_name(struct chunk *);
 void chunk_rename(struct chunk *, word_t);
@@ -56,7 +56,7 @@ bool chunk_io(
 
 
 void chunk_log(struct chunk *, id_t, enum io, enum ioe);
-const struct logi *chunk_log_next(struct chunk *, const struct logi *it);
+const struct log *chunk_logs(struct chunk *);
 
 
 struct energy *chunk_energy(struct chunk *);

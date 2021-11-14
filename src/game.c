@@ -14,3 +14,7 @@
 #include "game/chunk.c"
 #include "game/active.c"
 #include "game/save.c"
+#include "game/sim.c"
+#include "game/state.c"
+#include "game/proxy.c"
+#include "game/tech.c"

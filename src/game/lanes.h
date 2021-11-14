@@ -33,7 +33,10 @@ bool lanes_load(struct lanes *, struct world *, struct save *);
 void lanes_save(struct lanes *, struct save *);
 
 world_ts_delta_t lanes_travel(size_t speed, struct coord src, struct coord dst);
+
 const struct hset *lanes_list(struct lanes *, struct coord key);
+void lanes_list_save(struct lanes *, struct save *);
+bool lanes_list_load_into(struct htable *, struct save *);
 
 void lanes_launch(
         struct lanes *,

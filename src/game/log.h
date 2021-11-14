@@ -37,7 +37,8 @@ struct log *log_new(size_t cap);
 void log_free(struct log *);
 
 void log_push(struct log *, world_ts_t, struct coord, id_t, enum io, enum ioe);
-const struct logi *log_next(struct log *, const struct logi *it);
+const struct logi *log_next(const struct log *, const struct logi *it);
 
 void log_save(const struct log *, struct save *);
+bool log_load_into(struct log *, struct save *);
 struct log *log_load(struct save *);

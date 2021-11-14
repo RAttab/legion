@@ -45,14 +45,15 @@ struct chunk
     struct htable listen;
 };
 
-struct chunk *chunk_alloc(struct world *world, const struct star *star)
+struct chunk *chunk_alloc(
+        struct world *world, const struct star *star, word_t name)
 {
     assert(world);
 
     struct chunk *chunk = calloc(1, sizeof(*chunk));
     chunk->world = world;
     chunk->star = *star;
-    chunk->name = gen_name(world, star->coord);
+    chunk->name = name;
     chunk->log = log_new(chunk_log_cap);
     chunk->requested = ring32_reserve(16);
     chunk->storage = ring32_reserve(1);
@@ -99,7 +100,8 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     save_read_into(save, &chunk->name);
     star_load(&chunk->star, save);
-    active_list_load(&chunk->active, chunk, save);
+
+    if (!active_list_load(&chunk->active, chunk, save, world == NULL)) goto fail;
 
     if (!(chunk->log = log_load(save))) goto fail;
 
@@ -121,7 +123,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     if (!energy_load(&chunk->energy, save)) goto fail;
     save_read_into(save, &chunk->workers.count);
-    chunk->workers.ops = vec64_reserve(chunk->workers.count);
+    if (!save_read_vec64(save, &chunk->workers.ops)) goto fail;
     chunk->pills = save_read_ring64(save);
 
     { // listen
@@ -166,6 +168,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
 
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
+    save_write_vec64(save, chunk->workers.ops);
     save_write_ring64(save, chunk->pills);
 
     save_write_value(save, chunk->listen.len);
@@ -181,10 +184,11 @@ void chunk_save(struct chunk *chunk, struct save *save)
 
 struct world *chunk_world(struct chunk *chunk)
 {
+    assert(chunk->world);
     return chunk->world;
 }
 
-const struct star *chunk_star(struct chunk *chunk)
+const struct star *chunk_star(const struct chunk *chunk)
 {
     return &chunk->star;
 }
@@ -319,14 +323,16 @@ bool chunk_io(
 
 void chunk_log(struct chunk *chunk, id_t id, enum io io, enum ioe err)
 {
+    assert(chunk->world);
+
     struct coord star = chunk->star.coord;
     log_push(chunk->log, world_time(chunk->world), star, id, io, err);
     world_log(chunk->world, star, id, io, err);
 }
 
-const struct logi *chunk_log_next(struct chunk *chunk, const struct logi *it)
+const struct log *chunk_logs(struct chunk *chunk)
 {
-    return log_next(chunk->log, it);
+    return chunk->log;
 }
 
 
@@ -463,6 +469,8 @@ void chunk_lanes_launch(
         struct coord dst,
         const word_t *data, size_t len)
 {
+    assert(chunk->world);
+
     switch (type)
     {
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: { break; }

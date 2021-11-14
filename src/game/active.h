@@ -44,8 +44,9 @@ struct active;
 struct active *active_alloc(enum item type);
 void active_free(struct active *);
 
-struct active *active_load(enum item type, struct chunk *chunk, struct save *save);
 void active_save(struct active *, struct save *save);
+struct active *active_load(
+        enum item type, struct chunk *chunk, struct save *save, bool read);
 
 size_t active_count(struct active *);
 
@@ -97,5 +98,5 @@ inline active_it_t active_next(active_list_t *list, active_it_t it)
     return likely(it < end) ? it : NULL;
 }
 
-void active_list_load(active_list_t *, struct chunk *, struct save *);
+bool active_list_load(active_list_t *, struct chunk *, struct save *, bool read);
 void active_list_save(active_list_t *, struct save *);

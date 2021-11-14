@@ -3,7 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "common.h"
 #include "game/log.h"
+#include "game/save.h"
 
 
 // -----------------------------------------------------------------------------
@@ -49,7 +51,7 @@ void log_push(
     log->it++;
 };
 
-const struct logi *log_next(struct log *log, const struct logi *it)
+const struct logi *log_next(const struct log *log, const struct logi *it)
 {
     if (it == log->items + (log->it % log->cap)) return NULL;
     if (!it) it = log->items + (log->it % log->cap);
@@ -72,6 +74,24 @@ void log_save(const struct log *log, struct save *save)
     save_write_magic(save, save_magic_log);
 }
 
+static void log_load_data(struct log *log, struct save *save)
+{
+    save_read_into(save, &log->it);
+    save_read(save, log->items, log->cap * sizeof(log->items[0]));
+}
+
+bool log_load_into(struct log *log, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_log)) return false;
+
+    uint32_t cap = save_read_type(save, typeof(cap));
+    if (cap != log->cap) return false;
+
+    log_load_data(log, save);
+
+    return save_read_magic(save, save_magic_log);
+}
+
 struct log *log_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_log)) return NULL;
@@ -79,8 +99,7 @@ struct log *log_load(struct save *save)
     uint32_t cap = save_read_type(save, typeof(cap));
     struct log *log = log_new(cap);
 
-    save_read_into(save, &log->it);
-    save_read(save, log->items, log->cap * sizeof(log->items[0]));
+    log_load_data(log, save);
 
     if (!save_read_magic(save, save_magic_log)) goto fail;
     return log;

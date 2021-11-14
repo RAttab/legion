@@ -60,9 +60,19 @@ inline bool coord_is_nil(struct coord coord)
     return coord.x == 0 && coord.y == 0;
 }
 
-inline bool coord_eq(struct coord rhs, struct coord lhs)
+inline bool coord_eq(struct coord lhs, struct coord rhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+inline int coord_cmp(struct coord lhs, struct coord rhs)
+{
+    if (coord_eq(lhs, rhs)) return 0;
+    if (lhs.x < rhs.x) return -1;
+    if (lhs.x > rhs.x) return 1;
+    if (lhs.y < rhs.y) return -1;
+    if (lhs.y > rhs.y) return 1;
+    assert(false);
 }
 
 inline bool coord_validate(word_t word) { return word > 0; }
