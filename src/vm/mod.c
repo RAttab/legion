@@ -78,10 +78,18 @@ struct mod *mod_load(struct save *save)
     uint32_t pub_len = save_read_type(save, typeof(pub_len));
     size_t pub_bytes = pub_len * sizeof(*mod->pub);
 
+    uint32_t errs_len = save_read_type(save, typeof(errs_len));
+    size_t errs_bytes = errs_len * sizeof(*mod->errs);
+
     uint32_t index_len = save_read_type(save, typeof(index_len));
     size_t index_bytes = index_len * sizeof(*mod->index);
 
-    size_t total_bytes = sizeof(*mod) + code_bytes + src_bytes + pub_bytes + index_bytes;
+    size_t total_bytes = sizeof(*mod)
+        + code_bytes
+        + src_bytes
+        + pub_bytes
+        + errs_bytes
+        + index_bytes;
     mod = alloc_cache(align_cache(total_bytes));
     mod->id = id;
 
@@ -101,8 +109,10 @@ struct mod *mod_load(struct save *save)
     save_read(save, it, pub_bytes);
     it += pub_bytes;
 
-    mod->errs_len = 0;
+    mod->errs_len = errs_len;
     mod->errs = it;
+    save_read(save, it, errs_bytes);
+    it += errs_bytes;
 
     mod->index_len = index_len;
     mod->index = it;
@@ -117,17 +127,17 @@ struct mod *mod_load(struct save *save)
 
 void mod_save(const struct mod *mod, struct save *save)
 {
-    assert(!mod->errs_len);
-
     save_write_magic(save, save_magic_mod);
     save_write_value(save, mod->id);
     save_write_value(save, mod->len);
     save_write_value(save, mod->src_len);
     save_write_value(save, mod->pub_len);
+    save_write_value(save, mod->errs_len);
     save_write_value(save, mod->index_len);
     save_write(save, mod->code, mod->len * sizeof(*mod->code));
     save_write(save, mod->src, mod->src_len * sizeof(*mod->src));
     save_write(save, mod->pub, mod->pub_len * sizeof(*mod->pub));
+    save_write(save, mod->errs, mod->errs_len * sizeof(*mod->errs));
     save_write(save, mod->index, mod->index_len * sizeof(*mod->index));
     save_write_magic(save, save_magic_mod);
 }
@@ -492,11 +502,13 @@ struct mods_list *mods_list(struct mods *mods)
     struct mods_list *ret = calloc(1,
             sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
     ret->len = mods->by_maj.len;
+    ret->cap = ret->len;
 
     const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
     for (size_t i = 0; it; it = htable_next(&mods->by_maj, it), i++) {
         struct mod_entry *entry = (void *) it->value;
         ret->items[i].maj = entry->maj;
+        ret->items[i].ver = entry->ver;
         memcpy(&ret->items[i].str, &entry->str, sizeof(entry->str));
     }
 
@@ -509,6 +521,54 @@ struct mods_list *mods_list(struct mods *mods)
 
     qsort(ret->items, ret->len, sizeof(ret->items[0]), mods_item_cmp);
     return ret;
+}
+
+struct mods_list *mods_list_reserve(size_t len)
+{
+    struct mods_list *list =
+        calloc(1, sizeof(*list) + len * sizeof(list->items[0]));
+    list->cap = len;
+    return list;
+}
+
+void mods_list_save(struct mods *mods, struct save *save)
+{
+    struct mods_list *list = mods_list(mods);
+    save_write_magic(save, save_magic_mods);
+
+    save_write_value(save, list->len);
+    for (size_t i = 0; i < list->len; ++i) {
+        const struct mods_item *it = list->items + i;
+        save_write_value(save, it->maj);
+        save_write_value(save, it->ver);
+        save_write_symbol(save, &it->str);
+    }
+
+    save_write_magic(save, save_magic_mods);
+    free(list);
+}
+
+bool mods_list_load_into(struct mods_list **ret, struct save *save)
+{
+    struct mods_list *list = *ret;
+    if (!save_read_magic(save, save_magic_mods)) return false;
+
+    size_t len = save_read_type(save, typeof(list->len));
+    if (!list || len > list->cap) {
+        list = realloc(list, list->cap * sizeof(list->items[0]));
+        list->cap = len;
+        *ret = list;
+    }
+    list->len = len;
+
+    for (size_t i = 0; i < list->len; ++i) {
+        struct mods_item *it = list->items + i;
+        save_read_into(save, &it->maj);
+        save_read_into(save, &it->ver);
+        if (!save_read_symbol(save, &it->str)) return false;
+    }
+
+    return save_read_magic(save, save_magic_mods);
 }
 
 

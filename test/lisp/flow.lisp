@@ -118,3 +118,7 @@
 (flow/case-default
  (mod (assert (= 10 (case 5 ((0 1) (1 2) (1 3)) (x (* x 2))))))
  (check))
+
+(flow/case-stmts
+ (mod (assert (= 1 (case 0 ((0 1 1)) (x 2 2)))))
+ (check))

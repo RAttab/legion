@@ -31,6 +31,7 @@ struct lisp
 {
     mod_maj_t mod_maj;
     struct mods *mods;
+    struct mods_list *mods_list;
     struct atoms *atoms;
 
     size_t depth;
@@ -574,10 +575,10 @@ struct mod *mod_compile(
 // eval
 // -----------------------------------------------------------------------------
 
-struct lisp *lisp_new(struct mods *mods, struct atoms *atoms)
+struct lisp *lisp_new(struct mods_list *mods, struct atoms *atoms)
 {
     struct lisp *lisp = calloc(1, sizeof(*lisp));
-    lisp->mods = mods;
+    lisp->mods_list = mods;
     lisp->atoms = atoms;
     return lisp;
 }
@@ -585,6 +586,12 @@ struct lisp *lisp_new(struct mods *mods, struct atoms *atoms)
 void lisp_free(struct lisp *lisp)
 {
     free(lisp);
+}
+
+void lisp_context(struct lisp *lisp, struct mods_list *mods, struct atoms *atoms)
+{
+    lisp->mods_list = mods;
+    lisp->atoms = atoms;
 }
 
 struct lisp_ret lisp_eval_const(struct lisp *lisp, const char *src, size_t len)

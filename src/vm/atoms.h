@@ -21,6 +21,7 @@ struct atoms *atoms_new(void);
 void atoms_free(struct atoms *);
 
 struct atoms *atoms_load(struct save *);
+bool atoms_load_into(struct atoms *, struct save *);
 void atoms_save(struct atoms *, struct save *);
 
 bool atoms_set(struct atoms *, const struct symbol *, word_t id);

@@ -476,6 +476,7 @@ static void lisp_fn_case(struct lisp *lisp)
             lisp_goto_close(lisp);
             return;
         }
+        lisp->depth++;
 
         lisp_write_op(lisp, OP_DUPE);
 
@@ -493,24 +494,13 @@ static void lisp_fn_case(struct lisp *lisp)
         // Remove the case value
         lisp_write_op(lisp, OP_POP);
 
-        if (!lisp_stmt(lisp)) {
-            lisp_err(lisp, "missing statement for case-clause");
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
-            return;
-        }
+        lisp_stmts(lisp);
 
         lisp_write_op(lisp, OP_JMP);
         jmp[len] = lisp_skip(lisp, sizeof(ip_t));
         len++;
 
         lisp_write_value_at(lisp, next, lisp_ip(lisp));
-
-        if (!lisp_expect(lisp, token_close)) {
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
-            return;
-        }
     }
 
     // Optional default clause. If the default clause is not present then our
@@ -520,6 +510,7 @@ static void lisp_fn_case(struct lisp *lisp)
             lisp_goto_close(lisp);
             return;
         }
+        lisp->depth++;
 
         token = lisp_expect(lisp, token_symbol);
         if (!token) {
@@ -536,20 +527,9 @@ static void lisp_fn_case(struct lisp *lisp)
         lisp_write_op(lisp, OP_POPR);
         lisp_write_value(lisp, reg);
 
-        if (!lisp_stmt(lisp)) {
-            lisp_err(lisp, "missing default-clause statment");
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
-            return;
-        }
+        lisp_stmts(lisp);
 
         lisp_reg_free(lisp, reg, key);
-
-        if (!lisp_expect(lisp, token_close)) {
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
-            return;
-        }
     }
 
     for (size_t i = 0; i < len; ++i)

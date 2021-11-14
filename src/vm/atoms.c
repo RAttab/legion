@@ -54,27 +54,9 @@ void atoms_free(struct atoms *atoms)
     free(atoms);
 }
 
-struct atoms *atoms_load(struct save *save)
+static void atoms_load_data(struct atoms *atoms, size_t len)
 {
-    if (!save_read_magic(save, save_magic_atoms)) return NULL;
-
-    struct atoms *atoms = atoms_new();
-    save_read_into(save, &atoms->id);
-
-    size_t len = save_read_type(save, typeof(len));
-    size_t cap = atoms_default_cap;
-    while (cap < len) cap *= 2;
-
-    if (atoms->base) free(atoms->base);
-    atoms->base = alloc_cache(cap * sizeof(*atoms->base));
-    atoms->end = atoms->base + cap;
-    atoms->it = atoms->base + len;
-    save_read(save, atoms->base, (atoms->it - atoms->base) * sizeof(*atoms->it));
-
-    htable_reserve(&atoms->iword, len);
-    htable_reserve(&atoms->istr, len);
-
-    for (struct atom_data *it = atoms->base + 1; it < atoms->it; it++) {
+    for (struct atom_data *it = atoms->base + 1; it < atoms->base + len; it++) {
         struct htable_ret ret = {0};
         uint64_t index = it - atoms->base;
 
@@ -83,6 +65,60 @@ struct atoms *atoms_load(struct save *save)
         ret = htable_put(&atoms->istr, symbol_hash(&it->symbol), index);
         assert(ret.ok);
     }
+}
+
+bool atoms_load_into(struct atoms *atoms, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_atoms)) return false;
+
+    save_read_into(save, &atoms->id);
+
+    size_t len = save_read_type(save, typeof(len));
+    size_t cap = atoms->end - atoms->base;
+
+    if (len > cap) {
+        while (cap < len) cap *= 2;
+        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
+        atoms->end = atoms->base + cap;
+    }
+
+    atoms->it = atoms->base;
+    save_read(save, atoms->base, len * sizeof(*atoms->it));
+
+    htable_clear(&atoms->iword);
+    htable_reserve(&atoms->iword, len);
+
+    htable_clear(&atoms->istr);
+    htable_reserve(&atoms->istr, len);
+
+    atoms_load_data(atoms, len);
+
+    return save_read_magic(save, save_magic_atoms);
+}
+
+struct atoms *atoms_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_atoms)) return NULL;
+
+    struct atoms *atoms = atoms_new();
+    save_read_into(save, &atoms->id);
+
+    size_t len = save_read_type(save, typeof(len));
+    size_t cap = atoms->end - atoms->base;
+
+    if (len > cap) {
+        while (cap < len) cap *= 2;
+        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
+        atoms->end = atoms->base + cap;
+    }
+
+    atoms->it = atoms->base + len;
+    save_read(save, atoms->base, len * sizeof(*atoms->it));
+
+    htable_reserve(&atoms->iword, len);
+    htable_reserve(&atoms->istr, len);
+
+    atoms_load_data(atoms, len);
 
     if (!save_read_magic(save, save_magic_atoms)) goto fail;
     return atoms;
@@ -90,7 +126,6 @@ struct atoms *atoms_load(struct save *save)
   fail:
     atoms_free(atoms);
     return NULL;
-
 }
 
 void atoms_save(struct atoms *atoms, struct save *save)
@@ -100,7 +135,7 @@ void atoms_save(struct atoms *atoms, struct save *save)
 
     save_write_value(save, atoms->id);
     save_write_value(save, len);
-    save_write(save, atoms->base, (atoms->it - atoms->base) * sizeof(*atoms->it));
+    save_write(save, atoms->base, len * sizeof(*atoms->it));
 
     save_write_magic(save, save_magic_atoms);
 }

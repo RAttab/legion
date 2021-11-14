@@ -147,13 +147,24 @@ mod_maj_t mods_find(struct mods *, const struct symbol *name);
 
 const struct mod *mods_parse(struct mods *, const char *it, size_t len);
 
-struct mods_item { mod_maj_t maj; struct symbol str; };
+struct mods_item
+{
+    mod_maj_t maj;
+    mod_ver_t ver;
+    struct symbol str;
+};
+
 struct mods_list
 {
-    size_t len;
+    uint32_t len, cap;
     struct mods_item items[];
 };
+
 struct mods_list *mods_list(struct mods *);
+struct mods_list *mods_list_reserve(size_t len);
+
+void mods_list_save(struct mods *, struct save *);
+bool mods_list_load_into(struct mods_list **, struct save *);
 
 void mods_populate(struct mods *, struct atoms *);
 
@@ -170,7 +181,8 @@ struct lisp_ret
     word_t value;
 };
 
-struct lisp *lisp_new(struct mods *mods, struct atoms *atoms);
+struct lisp *lisp_new(struct mods_list *, struct atoms *);
 void lisp_free(struct lisp *);
 
+void lisp_context(struct lisp *, struct mods_list *, struct atoms *);
 struct lisp_ret lisp_eval_const(struct lisp *, const char *src, size_t len);
