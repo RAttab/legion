@@ -69,6 +69,14 @@ struct hset *hset_reserve(size_t len)
     return hset_resize(NULL, len * 2);
 }
 
+void hset_clear(struct hset *set)
+{
+    if (!set) return;
+
+    memset(set->set, 0, set->cap * sizeof(set->set[0]));
+    set->len = 0;
+}
+
 struct hset *hset_clone(const struct hset *src)
 {
     if (!src) return NULL;

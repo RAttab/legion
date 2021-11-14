@@ -18,6 +18,7 @@ struct hset
 };
 
 struct hset *hset_reserve(size_t len);
+void hset_clear(struct hset *);
 void hset_free(struct hset *);
 struct hset *hset_clone(const struct hset *);
 
