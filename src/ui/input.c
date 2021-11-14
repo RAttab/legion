@@ -96,7 +96,7 @@ bool ui_input_eval(struct ui_input *input, word_t *ret)
     if (!input->buf.len) return false;
 
     struct lisp_ret eval =
-        world_eval(core.state.world, input->buf.c, input->buf.len);
+        proxy_eval(core.proxy, input->buf.c, input->buf.len);
     *ret = eval.value;
 
     if (!eval.ok)

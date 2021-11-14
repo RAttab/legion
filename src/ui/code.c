@@ -300,6 +300,8 @@ static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
 void ui_code_render(
         struct ui_code *code, struct ui_layout *layout, SDL_Renderer *renderer)
 {
+    if (!code->mod) return;
+
     struct ui_layout inner = ui_scroll_render(&code->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
@@ -615,6 +617,8 @@ enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
     }
 
     if ((ret = ui_tooltip_event(&code->tooltip, ev))) return ret;
+
+    if (!code->mod) return ui_nil;
 
     switch (ev->type) {
 
