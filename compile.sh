@@ -11,14 +11,14 @@ declare -a SRC
 SRC=(items ui render game vm utils)
 
 declare -a TEST
-: ${TEST:="ring text lisp chunk lanes save world items"}
+: ${TEST:="ring text lisp chunk lanes tech save state items proxy"}
 
 TIMEFORMAT="%3R"
 TIME="eval time"
 ECHO="eval echo -n"
 if [ -z "${PROFILE}" ]; then TIME=""; ECHO=":"; fi
 
-CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm"
+CFLAGS="-ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm -pthread"
 CFLAGS="$CFLAGS -I${PREFIX}/src"
 CFLAGS="$CFLAGS $(sdl2-config --cflags)"
 CFLAGS="$CFLAGS $(pkg-config --cflags freetype2)"
