@@ -20,8 +20,9 @@
 // compiler
 // -----------------------------------------------------------------------------
 
-#define legion_unused       __attribute__((unused))
+#define legion_unused       __attribute__((__unused__))
 #define legion_packed       __attribute__((__packed__))
+#define legion_aligned(x)   __attribute__((__aligned__ (x)))
 #define legion_printf(x,y)  __attribute__((format(printf, x, y)))
 
 #define likely(x)    __builtin_expect(x, 1)
