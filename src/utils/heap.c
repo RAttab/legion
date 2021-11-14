@@ -85,7 +85,8 @@ static void heap_grow(struct heap *heap, size_t class)
     heap->free[class] = heap_index(heap, it);
     while (it < end) {
         void *next = it + size;
-        *((heap_index_t *)it) = next < end ? heap_index(heap, next) : heap_nil;
+        *((heap_index_t *) it) = (next + size) <= end ?
+            heap_index(heap, next) : heap_nil;
         it = next;
     }
 }
