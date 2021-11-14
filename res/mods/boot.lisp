@@ -159,7 +159,7 @@
   ;; Launch is responsible for filling (id &item_memory 1) with our
   ;; children stars while the parent is filled in automatically when
   ;; legion is deployed.
-  (for (i 0) (< i antenna-count) (+ i 1)
+  (for (i (if (is-home) 1 0)) (< i antenna-count) (+ i 1)
        (let ((coord (progn (io &io_get mem-id i) (head))))
 	 (assert (= (io &io_target (id &item_transmit (+ i 1)) coord) &io_ok))
 	 (assert (= (io &io_target (id &item_receive (+ i 1)) coord) &io_ok)))))

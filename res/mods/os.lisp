@@ -21,10 +21,11 @@
 ;; -----------------------------------------------------------------------------
 
 (defun os-home ()
-  (io &io_transmit (id &item_transmit 1) !os_home)
-
   (let ((home (progn (io &io_get mem-tree-id mem-tree-home) (head))))
     (when (= home 1) (set home 0))
+
+    (when (not home)
+      (io &io_transmit (id &item_transmit 1) !os_home))
 
     (while (not home)
       (when (progn (io &io_receive (id &item_receive 1)) (head))
@@ -41,12 +42,12 @@
 
 (while 1
   (when (poll)
-    (propagate)
     (case (msg 0)
-      ((!os_run (run (msg 1)))
-       (!os_home (home))
-       (!os_update (load (msg 1)))
-       (!os_quit (reset))))))
+      ((!os_run (propagate) (run (msg 1)))
+       (!os_update (propagate) (load (msg 1)))
+       (!os_quit (propagate) (reset))
+       (!os_home (home)))
+      (msg (propagate)))))
 
 
 ;; Look through all our reception points (the brain's msg buffer and
@@ -114,7 +115,19 @@
 (defun home ()
   (let ((home (progn (io &io_get mem-tree-id mem-tree-home) (head)))
 	(src (progn (io &io_get mem-id mem-pck-src) (head))))
+
+    (when (= home 1) (set home 0))
+    (when (not home)
+      (io &io_transmit (id &item_transmit 1) !os_home))
+
+    (while (not home)
+      (when (progn (io &io_receive (id &item_receive 1)) (head))
+	(assert (= (head) !os_home))
+	(set home (head))))
+
+    (io &io_set mem-tree-id mem-tree-home home)
     (assert (= (io &io_transmit (id &item_transmit src) !os_home home) &io_ok))))
+
 
 ;; -----------------------------------------------------------------------------
 ;; misc
