@@ -24,17 +24,51 @@ static const size_t save_chunks = 10 * page_len;
 
 struct save
 {
-    bool load;
-    uint8_t version;
-
     size_t cap;
     void *base, *it;
 
     int fd;
+    bool load;
+    uint8_t version;
     char dst[PATH_MAX];
 };
 
-struct save *save_new(const char *path, uint8_t version)
+struct save *save_mem_new(void)
+{
+    struct save *save = calloc(1, sizeof(*save));
+    save->cap = save_chunks;
+
+    const int prot = PROT_READ | PROT_WRITE;
+    const int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+    save->base = mmap(0, save->cap, prot, flags, 0, 0);
+    if (save->base == MAP_FAILED) {
+        err_errno("unable to mmap '%s'", "mem");
+        goto fail_mmap;
+    }
+
+    save->it = save->base;
+    return save;
+
+  fail_mmap:
+    free(save);
+    return NULL;
+}
+
+void save_mem_reset(struct save *save)
+{
+    assert(!save->fd);
+    save->it = save->base;
+}
+
+void save_mem_free(struct save *save)
+{
+    if (!save) return;
+    assert(!save->fd);
+    munmap(save->base, save->cap);
+    free(save);
+}
+
+struct save *save_file_new(const char *path, uint8_t version)
 {
     struct save *save = calloc(1, sizeof(*save));
     save->load = false;
@@ -80,7 +114,7 @@ struct save *save_new(const char *path, uint8_t version)
     return NULL;
 }
 
-struct save *save_load(const char *path)
+struct save *save_file_load(const char *path)
 {
     struct save *save = calloc(1, sizeof(*save));
     save->load = true;
@@ -175,8 +209,9 @@ static void save_seal(struct save *save)
     close(fd);
 }
 
-void save_close(struct save *save)
+void save_file_close(struct save *save)
 {
+    assert(save->fd);
     if (!save->load) save_seal(save);
 
     munmap(save->base, save->cap);
@@ -199,6 +234,11 @@ size_t save_len(struct save *save)
     return save->it - save->base;
 }
 
+uint8_t *save_bytes(struct save *save)
+{
+    return save->base;
+}
+
 static void save_grow(struct save *save, size_t len)
 {
     size_t need = save_len(save) + len;
@@ -208,7 +248,7 @@ static void save_grow(struct save *save, size_t len)
     size_t cap = save->cap;
     while (need >= cap) cap += save_chunks;
 
-    if (ftruncate(save->fd, cap) == -1)
+    if (save->fd && ftruncate(save->fd, cap) == -1)
         fail_errno("unable to grow file '%lx'", cap);
 
     save->base = mremap(save->base, save->cap, cap, MREMAP_MAYMOVE);
@@ -222,7 +262,7 @@ static void save_grow(struct save *save, size_t len)
 
 void save_write(struct save *save, const void *src, size_t len)
 {
-    assert(!save->load);
+    assert(!save->fd || !save->load);
     save_grow(save, len);
 
     memcpy(save->it, src, len);
@@ -231,7 +271,7 @@ void save_write(struct save *save, const void *src, size_t len)
 
 void save_read(struct save *save, void *dst, size_t len)
 {
-    assert(save->load);
+    assert(!save->fd || save->load);
     assert(save_len(save) + len <= save->cap);
 
     memcpy(dst, save->it, len);
@@ -295,28 +335,37 @@ void save_write_vec64(struct save *save, const struct vec64 *vec)
 {
     save_write_magic(save, save_magic_vec64);
 
-    if (!vec) save_write_value(save, (typeof(vec->len)) 0);
+    if (!vec) {
+        save_write_value(save, (typeof(vec->len)) 0);
+        save_write_value(save, (typeof(vec->cap)) 0);
+    }
     else {
         save_write_value(save, vec->len);
+        save_write_value(save, vec->cap);
         save_write(save, vec->vals, vec->len * sizeof(vec->vals[0]));
     }
 
     save_write_magic(save, save_magic_vec64);
 }
 
-struct vec64 *save_read_vec64(struct save *save)
+bool save_read_vec64(struct save *save, struct vec64 **ret)
 {
-    if (!save_read_magic(save, save_magic_vec64)) return NULL;
+    if (!save_read_magic(save, save_magic_vec64)) return false;
 
-    struct vec64 *vec = NULL;
+    struct vec64 *vec = *ret;
     typeof(vec->len) len = save_read_type(save, typeof(len));
-    if (len) {
-        vec = vec64_reserve(len);
-        save_read(save, vec->vals, vec->len * sizeof(vec->vals[0]));
+    typeof(vec->cap) cap = save_read_type(save, typeof(cap));
+
+    if (cap) vec = vec64_grow(vec, cap);
+    else if (vec && !cap) { vec64_free(vec); vec = NULL; }
+
+    if (vec) {
+        vec->len = len;
+        save_read(save, vec->vals, len * sizeof(vec->vals[0]));
     }
 
-    if (!save_read_magic(save, save_magic_vec64)) { free(vec); return NULL; }
-    return vec;
+    *ret = vec;
+    return save_read_magic(save, save_magic_vec64);
 }
 
 

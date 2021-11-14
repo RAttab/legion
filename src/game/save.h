@@ -26,19 +26,22 @@ enum legion_packed save_magic
     save_magic_symbol = 0x05,
     save_magic_heap = 0x06,
 
-    save_magic_core = 0x10,
+    save_magic_sim = 0x10,
     save_magic_world = 0x11,
-    save_magic_sector = 0x12,
-    save_magic_star = 0x13,
+    save_magic_star = 0x12,
+    save_magic_lab = 0x13,
 
-    save_magic_chunk = 0x20,
-    save_magic_active = 0x21,
-    save_magic_energy = 0x22,
-    save_magic_log = 0x23,
+    save_magic_chunks = 0x20,
+    save_magic_chunk = 0x21,
+    save_magic_active = 0x22,
+    save_magic_energy = 0x23,
+    save_magic_log = 0x24,
+    save_magic_tech = 0x25,
 
     save_magic_mods = 0x30,
     save_magic_mod = 0x31,
-    save_magic_atoms = 0x32,
+    save_magic_compile = 0x32,
+    save_magic_atoms = 0x33,
 
     save_magic_lanes = 0x40,
     save_magic_lane = 0x41,
@@ -55,13 +58,18 @@ static_assert(sizeof(enum save_magic) == 1);
 
 struct save;
 
-struct save *save_new(const char *path, uint8_t version);
-struct save *save_load(const char *path);
-void save_close(struct save *);
+struct save *save_mem_new(void);
+void save_mem_reset(struct save *);
+void save_mem_free(struct save *);
+
+struct save *save_file_new(const char *path, uint8_t version);
+struct save *save_file_load(const char *path);
+void save_file_close(struct save *);
 
 bool save_eof(struct save *);
 uint8_t save_version(struct save *);
 size_t save_len(struct save *);
+uint8_t *save_bytes(struct save *);
 
 void save_write(struct save *, const void *src, size_t len);
 
@@ -99,7 +107,7 @@ void save_write_htable(struct save *, const struct htable *);
 bool save_read_htable(struct save *, struct htable *);
 
 void save_write_vec64(struct save *, const struct vec64 *);
-struct vec64 *save_read_vec64(struct save *);
+bool save_read_vec64(struct save *, struct vec64 **);
 
 void save_write_ring32(struct save *, const struct ring32 *);
 struct ring32 *save_read_ring32(struct save *);

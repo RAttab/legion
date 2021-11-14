@@ -41,18 +41,18 @@ void check(const char *path)
 
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
         {
-            struct save *save = save_new(path, 1);
+            struct save *save = save_file_new(path, 1);
             assert(save);
             world_save(old, save);
-            save_close(save);
+            save_file_close(save);
         }
 
         struct world *new = NULL;
         {
-            struct save *save = save_load(path);
+            struct save *save = save_file_load(path);
             assert(save);
             new = world_load(save);
-            save_close(save);
+            save_file_close(save);
         }
 
         assert(new);
@@ -76,9 +76,9 @@ void check(const char *path)
         free(old_mods);
         free(new_mods);
 
-        for (size_t step = 0; step < steps; ++step) world_step(new);
         world_free(old);
         old = new;
+        for (size_t step = 0; step < steps; ++step) world_step(old);
     }
 
     world_free(old);
