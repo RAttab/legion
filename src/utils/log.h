@@ -16,16 +16,34 @@
 // err
 // -----------------------------------------------------------------------------
 
-#define err(fmt, ...) \
-    do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt "\n",                        \
-                __FILE__, __LINE__, __VA_ARGS__);                       \
+#define err0(msg)                                       \
+    do {                                                \
+        fprintf(stderr, "fail<%s:%u> " msg "\n",        \
+                __FILE__, __LINE__);                    \
+    } while(false)
+
+#define err(fmt, ...)                                   \
+    do {                                                \
+        fprintf(stderr, "fail<%s:%u> " fmt "\n",        \
+                __FILE__, __LINE__, __VA_ARGS__);       \
     } while(false)
 
 #define err_errno(fmt, ...)                                             \
     do {                                                                \
         fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
                 __FILE__, __LINE__, __VA_ARGS__, strerror(errno), errno); \
+    } while(false)
+
+#define err_posix(errnum, fmt, ...)                                     \
+    do {                                                                \
+        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
+                __FILE__, __LINE__, __VA_ARGS__, strerror(errnum), errno); \
+    } while(false)
+
+#define err_posix0(errnum, msg)                                 \
+    do {                                                        \
+        fprintf(stderr, "fail<%s:%u> " msg ": %s (%d)\n",       \
+                __FILE__, __LINE__, strerror(errnum), errno);   \
     } while(false)
 
 
