@@ -31,13 +31,18 @@ struct htable_ret
 };
 
 
+void htable_clear(struct htable *);
 void htable_reset(struct htable *);
 void htable_reserve(struct htable *, size_t items);
 struct htable htable_clone(const struct htable *);
-struct htable_ret htable_get(struct htable *, uint64_t key);
+
+struct htable_ret htable_get(const struct htable *, uint64_t key);
 struct htable_ret htable_put(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_try_put(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_xchg(struct htable *, uint64_t key, uint64_t value);
 struct htable_ret htable_del(struct htable *, uint64_t key);
+
+bool htable_eq(const struct htable *lhs, const struct htable *rhs);
+
 const struct htable_bucket *htable_next(
         const struct htable *, const struct htable_bucket *bucket);

@@ -18,6 +18,14 @@ enum { htable_window = 8 };
 // htable
 // -----------------------------------------------------------------------------
 
+void htable_clear(struct htable *ht)
+{
+    if (!ht->cap) return;
+
+    memset(ht->table, 0, ht->cap * sizeof(*ht->table));
+    ht->len = 0;
+}
+
 void htable_reset(struct htable *ht)
 {
     free(ht->table);
@@ -69,7 +77,7 @@ static void htable_resize(struct htable *ht, size_t cap)
 
 void htable_reserve(struct htable *ht, size_t items)
 {
-    htable_resize(ht, items * 4);
+    htable_resize(ht, items * 2);
 }
 
 struct htable htable_clone(const struct htable *src)
@@ -85,13 +93,14 @@ struct htable htable_clone(const struct htable *src)
 // ops
 // -----------------------------------------------------------------------------
 
-struct htable_ret htable_get(struct htable *ht, uint64_t key)
+struct htable_ret htable_get(const struct htable *ht, uint64_t key)
 {
     assert(key);
 
-    uint64_t hash = hash_u64(key);
-    htable_resize(ht, htable_window);
+    if (!ht->cap) return (struct htable_ret) { .ok = false };
+    assert(ht->cap >= htable_window);
 
+    uint64_t hash = hash_u64(key);
     for (size_t i = 0; i < htable_window; ++i) {
         struct htable_bucket *bucket = &ht->table[(hash + i) % ht->cap];
 
@@ -175,6 +184,20 @@ struct htable_ret htable_del(struct htable *ht, uint64_t key)
     }
 
     return (struct htable_ret) { .ok = false };
+}
+
+bool htable_eq(const struct htable *lhs, const struct htable *rhs)
+{
+    if (lhs->len != rhs->len) return false;
+
+    for (const struct htable_bucket *it = htable_next(lhs, NULL);
+         it; it = htable_next(lhs, it))
+    {
+        struct htable_ret ret = htable_get(rhs, it->key);
+        if (!ret.ok || ret.value != it->value) return false;
+    }
+
+    return true;
 }
 
 
