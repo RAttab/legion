@@ -77,6 +77,13 @@ inline void vecx_fn(sort) (struct vecx_name *vec)
     }
     qsort(vec->vals, vec->len, sizeof(vec->vals[0]), cmp);
 }
+
+inline void vecx_fn(sort_fn) (
+        struct vecx_name *vec,
+        int (*fn) (const void *, const void *))
+{
+    qsort(vec->vals, vec->len, sizeof(vec->vals[0]), fn);
+}
 #endif
 
 #undef vecx_fn_concat
