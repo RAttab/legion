@@ -61,7 +61,7 @@ int16_t ui_mods_width(const struct ui_mods *ui)
 
 static void ui_mods_update(struct ui_mods *ui)
 {
-    struct mods_list *list = mods_list(world_mods(core.state.world));
+    const struct mods_list *list = proxy_mods(core.proxy);
     ui_toggles_resize(&ui->toggles, list->len);
     ui_scroll_update(&ui->scroll, list->len);
 
@@ -71,8 +71,7 @@ static void ui_mods_update(struct ui_mods *ui)
         toggle->user = list->items[i].maj;
     }
 
-    ui_str_setf(&ui->panel.title.str, "mods(%zu)", list->len);
-    free(list);
+    ui_str_setf(&ui->panel.title.str, "mods(%u)", list->len);
 }
 
 static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
@@ -82,6 +81,12 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 
     case EV_STATE_LOAD: {
         ui_panel_hide(&ui->panel);
+        return false;
+    }
+
+    case EV_STATE_UPDATE: {
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        ui_mods_update(ui);
         return false;
     }
 
@@ -133,15 +138,10 @@ static void ui_mods_event_new(struct ui_mods *ui)
         return;
     }
 
-    mod_t mod = mods_register(world_mods(core.state.world), &name);
-    if (!mod) {
-        core_log(st_error, "Module '%s' already exists", name.c);
-        return;
-    }
+    proxy_mod_register(core.proxy, name);
 
-    ui_mods_update(ui);
-    core_push_event(EV_MOD_SELECT, mod, 0);
-    core_log(st_info, "Module created: %x", mod);
+    // \todo due to async nature, opening the mod right away is tricky. Defered
+    // to later.
 }
 
 bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)

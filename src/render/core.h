@@ -6,15 +6,23 @@
 #pragma once
 
 #include "common.h"
-#include "game/coord.h"
-#include "utils/time.h"
 #include "ui/ui.h"
+#include "game/sim.h"
 #include "SDL.h"
 
+struct proxy;
 struct map;
-struct sector;
-struct atoms;
+struct factory;
 struct ui_topbar;
+struct ui_status;
+struct ui_tapes;
+struct ui_mods;
+struct ui_mod;
+struct ui_log;
+struct ui_stars;
+struct ui_star;
+struct ui_item;
+struct ui_io;
 
 
 // -----------------------------------------------------------------------------
@@ -55,21 +63,8 @@ enum event
     EV_ITEM_CLEAR,
 
     EV_IO_TOGGLE,
-    EV_IO_EXEC,
 
     EV_MAX,
-};
-
-
-// -----------------------------------------------------------------------------
-// speed
-// -----------------------------------------------------------------------------
-
-enum speed
-{
-    speed_pause = 0,
-    speed_normal,
-    speed_fast,
 };
 
 
@@ -79,6 +74,8 @@ enum speed
 
 struct core
 {
+    bool init;
+
     SDL_Rect rect;
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -86,6 +83,9 @@ struct core
     uint32_t event;
     uint64_t ticks;
     bool focus;
+
+    struct sim *sim;
+    struct proxy *proxy;
 
     struct
     {
@@ -111,23 +111,13 @@ struct core
         struct ui_item *item;
         struct ui_io *io;
     } ui;
-
-    struct
-    {
-        bool loading;
-
-        ts_t next, sleep;
-        enum speed speed;
-
-        struct world *world;
-        struct coord home;
-    } state;
 };
 
 extern struct core core;
 
 void core_init(void);
 void core_close(void);
+void core_populate(void);
 
 void core_path_res(const char *name, char *dst, size_t len);
 
@@ -136,18 +126,11 @@ void core_quit(void);
 
 void core_push_event(enum event, uint64_t d0, uint64_t d1);
 
-void core_save(void);
-void core_load(void);
-void core_populate(void);
 
-enum status
-{
-    st_info = 0,
-    st_warn = 1,
-    st_error = 2,
-};
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
 
+void core_log_msg(enum status, const char *msg, size_t len);
 void core_logv(enum status, const char *fmt, va_list);
 void core_log(enum status, const char *fmt, ...) legion_printf(2, 3);
-
-void core_speed(enum speed);

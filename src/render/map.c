@@ -58,7 +58,7 @@ struct map *map_new(void)
 {
     struct map *map = calloc(1, sizeof(*map));
     *map = (struct map) {
-        .pos = core.state.home,
+        .pos = proxy_home(core.proxy),
         .scale = map_scale_default,
         .tex = NULL,
         .active = true,
@@ -164,7 +164,12 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
         return false;
     }
 
-    case EV_STATE_LOAD:
+    case EV_STATE_LOAD: {
+        if (coord_is_nil(map->pos))
+            map->pos = proxy_home(core.proxy);
+        return false;
+    }
+
     case EV_FACTORY_CLOSE: { map->active = true; return false; }
     case EV_FACTORY_SELECT: { map->active = false; return false; }
 
@@ -211,7 +216,7 @@ bool map_event(struct map *map, SDL_Event *event)
                         .h = px, .w = px,
                     });
 
-            const struct star *star = world_star_in(core.state.world, rect);
+            const struct star *star = proxy_star_in(core.proxy, rect);
             if (star) core_push_event(EV_STAR_SELECT, coord_to_u64(star->coord), 0);
         }
 
@@ -275,15 +280,14 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
             .h = bot.y - top.y,
         };
 
-        if (map->scale < map_thresh_sector_active) {
-            struct sector *sector = world_sector(core.state.world, it);
-            if (sector->chunks.len) {
-                uint8_t alpha = 0xFF;
-                if (map->scale < map_thresh_stars)
-                    alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_sector_low);
-                rgba_render(make_rgba(0x00, 0x33, 0x00, alpha), renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &sdl_rect));
-            }
+        if (map->scale < map_thresh_sector_active
+                && proxy_active_sector(core.proxy, it))
+        {
+            uint8_t alpha = 0xFF;
+            if (map->scale < map_thresh_stars)
+                alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_sector_low);
+            rgba_render(make_rgba(0x00, 0x33, 0x00, alpha), renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &sdl_rect));
         }
 
         rgba_render(make_rgba(0x00, 0x33, 0x00, 0x88), renderer);
@@ -294,7 +298,7 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
 static void map_render_lanes(
         struct map *map, SDL_Renderer *renderer, struct coord star)
 {
-    const struct hset *lanes = world_lanes_list(core.state.world, star);
+    const struct hset *lanes = proxy_lanes_for(core.proxy, star);
     if (!lanes || !lanes->len) return;
 
     SDL_Point src = map_project_sdl(map, star);
@@ -309,11 +313,10 @@ static void map_render_lanes(
 static void map_render_stars(struct map *map, SDL_Renderer *renderer)
 {
     struct rect rect = map_project_coord_rect(map, &core.rect);
-
-    struct world_render_it it = world_render_it(core.state.world, rect);
+    struct proxy_render_it it = proxy_render_it(core.proxy, rect);
 
     const struct star *star = NULL;
-    while ((star = world_render_next(core.state.world, &it))) {
+    while ((star = proxy_render_next(core.proxy, &it))) {
         SDL_Point pos = map_project_sdl(map, star->coord);
 
         size_t px = scale_div(map->scale, map_star_px);
@@ -335,7 +338,7 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
         sdl_err(SDL_SetTextureColorMod(map->tex, rgb.r, rgb.g, rgb.b));
         sdl_err(SDL_RenderCopy(renderer, map->tex, &map->tex_star, &dst));
 
-        if (star->state == star_active) {
+        if (proxy_active_star(core.proxy, star->coord)) {
             map_render_lanes(map, renderer, star->coord);
 
             dst = (SDL_Rect) {

@@ -283,16 +283,19 @@ static void ui_star_update(struct ui_star *ui)
 {
     ui_str_set_coord(&ui->coord_val.str, ui->id);
 
-    struct chunk *chunk = world_chunk(core.state.world, ui->id);
+    struct chunk *chunk = proxy_chunk(core.proxy, ui->id);
     if (!chunk) {
-        const struct star *star = world_star_at(core.state.world, ui->id);
+        const struct star *star = proxy_star_at(core.proxy, ui->id);
         assert(star);
         ui->star = *star;
 
         {
+            seed_t seed = proxy_seed(core.proxy);
+            struct atoms *atoms = proxy_atoms(core.proxy);
+
             struct symbol sym = {0};
-            word_t name = gen_name(core.state.world, ui->id);
-            bool ok = atoms_str(world_atoms(core.state.world), name, &sym);
+            word_t name = gen_name(ui->id, seed, atoms);
+            bool ok = atoms_str(atoms, name, &sym);
             ui_str_set_symbol(&ui->name_val.str, &sym);
             assert(ok);
         }
@@ -323,7 +326,7 @@ static void ui_star_update(struct ui_star *ui)
     {
         struct symbol sym = {0};
         word_t name = chunk_name(chunk);
-        if (atoms_str(world_atoms(core.state.world), name, &sym))
+        if (atoms_str(proxy_atoms(core.proxy), name, &sym))
             ui_str_set_symbol(&ui->name_val.str, &sym);
         else ui_str_set_hex(&ui->name_val.str, name);
     }
@@ -383,8 +386,8 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_star_update(ui);
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        ui_star_update(ui);
         return false;
     }
 

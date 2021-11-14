@@ -19,6 +19,7 @@ struct ui_item
 {
     id_t id;
     struct coord star;
+    bool loading;
 
     struct ui_panel panel;
     struct ui_button io;
@@ -90,8 +91,8 @@ static void ui_item_update(struct ui_item *ui)
 
     ui_str_set_id(&ui->id_val.str, ui->id);
 
-    struct chunk *chunk = world_chunk(core.state.world, ui->star);
-    assert(chunk);
+    struct chunk *chunk = proxy_chunk(core.proxy, ui->star);
+    if ((ui->loading = !chunk)) return;
 
     void *state = ui_item_state(ui, ui->id);
     const struct im_config *config = im_config_assert(id_item(ui->id));
@@ -112,8 +113,8 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_item_update(ui);
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        ui_item_update(ui);
         return false;
     }
 
@@ -161,6 +162,8 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
         return ret != ui_skip;
     }
 
+    if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
+
     if ((ret = ui_button_event(&ui->io, ev))) {
         core_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
         return true;
@@ -182,6 +185,7 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 {
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
+    if (ui->loading) return;
 
     struct font *font = ui_item_font();
 

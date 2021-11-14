@@ -4,15 +4,13 @@
 */
 
 #include "core.h"
-
 #include "render/font.h"
-#include "render/sprites.h"
 #include "render/ui.h"
 #include "game/tape.h"
 #include "game/coord.h"
-#include "game/world.h"
 #include "game/gen.h"
 #include "game/tape.h"
+#include "game/proxy.h"
 #include "items/config.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
@@ -25,80 +23,6 @@
 // -----------------------------------------------------------------------------
 
 struct core core = {0};
-
-static void core_load_apply(void);
-static void core_exec_event(enum event code, uint64_t d0, uint64_t d1);
-
-
-// -----------------------------------------------------------------------------
-// state
-// -----------------------------------------------------------------------------
-
-void core_populate(void)
-{
-    im_populate();
-    mod_compiler_init();
-
-    {
-        struct atoms *atoms = atoms_new();
-        im_populate_atoms(atoms);
-
-        gen_populate(atoms);
-        tapes_populate(atoms);
-
-        atoms_free(atoms);
-    }
-}
-
-void core_speed(enum speed speed)
-{
-    if (core.state.speed == speed) return;
-
-    if (speed == speed_normal)
-        core.state.next = ts_now();
-
-    core.state.speed = speed;
-}
-
-static void state_init(void)
-{
-    enum { state_freq = 10 };
-    core.state.sleep = ts_sec / state_freq;
-    core.state.next = ts_now();
-    core.state.speed = speed_normal;
-
-    core_populate();
-    core.state.world = world_new(0);
-    core.state.home = world_populate(core.state.world);
-}
-
-static void state_close(void)
-{
-    world_free(core.state.world);
-}
-
-static void state_step(ts_t now)
-{
-    if (core.state.loading) { core_load_apply(); return; }
-
-    switch (core.state.speed) {
-    case speed_fast: { break; }
-    case speed_pause: { return; }
-    case speed_normal: { if (now < core.state.next) return; break; }
-    default: { assert(false); }
-    }
-
-    world_step(core.state.world);
-    core_push_event(EV_STATE_UPDATE, 0, 0);
-
-    core.state.next += core.state.sleep;
-
-    if (core.state.next <= now) {
-        core.state.next = now + core.state.sleep;
-        dbg("sim.late> now:%lu, next:%lu, sleep:%lu, ticks:%lu",
-                now, core.state.next, core.state.sleep, core.ticks);
-    }
-}
 
 
 // -----------------------------------------------------------------------------
@@ -258,8 +182,26 @@ static void ui_render(SDL_Renderer *renderer)
 // core
 // -----------------------------------------------------------------------------
 
+void core_populate(void)
+{
+    im_populate();
+    mod_compiler_init();
+
+    {
+        struct atoms *atoms = atoms_new();
+        im_populate_atoms(atoms);
+
+        gen_populate(atoms);
+        tapes_populate(atoms);
+
+        atoms_free(atoms);
+    }
+}
+
 void core_init(void)
 {
+    core.init = true;
+
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
     SDL_DisplayMode display = {0};
@@ -275,18 +217,23 @@ void core_init(void)
     if (core.event == (uint32_t) -1) sdl_fail();
 
     core.focus = true;
-
     fonts_init(core.renderer);
-    state_init();
+
+    core_populate();
+    core.sim = sim_new(0);
+    core.proxy = proxy_new(core.sim);
+
     cursor_init();
     ui_init();
 }
 
 void core_close(void)
 {
+    proxy_free(core.proxy);
+    sim_close(core.sim);
+
     ui_close();
     cursor_close();
-    state_close();
     fonts_close();
 
     SDL_DestroyRenderer(core.renderer);
@@ -315,14 +262,15 @@ void core_run(void)
             ui_event(&event);
         }
 
+        if (proxy_update(core.proxy))
+            core_push_event(EV_STATE_UPDATE, 0, 0);
+
         sdl_err(SDL_RenderClear(core.renderer));
         ui_render(core.renderer);
         cursor_render(core.renderer);
         SDL_RenderPresent(core.renderer);
 
-        state_step(ts);
         ts = ts_sleep_until(ts + sleep);
-
         core.ticks++;
         core_push_event(EV_TICK, core.ticks, 0);
     }
@@ -345,88 +293,13 @@ void core_push_event(enum event code, uint64_t d0, uint64_t d1)
     assert(ret > 0);
 }
 
-static void core_exec_event(enum event code, uint64_t d0, uint64_t d1)
-{
-    SDL_Event ev = {0};
-    ev.type = core.event;
-    ev.user.code = code;
-    ev.user.data1 = (void *) d0;
-    ev.user.data2 = (void *) d1;
-
-    ui_event(&ev);
-}
-
-
-// -----------------------------------------------------------------------------
-// save
-// -----------------------------------------------------------------------------
-
-enum { core_save_version = 1 };
-
-void core_save(void)
-{
-    struct save *save = save_new("./legion.save", core_save_version);
-
-    save_write_magic(save, save_magic_core);
-    save_write_value(save, core.state.speed);
-    save_write_magic(save, save_magic_core);
-
-    world_save(core.state.world, save);
-
-    size_t bytes = save_len(save);
-    save_close(save);
-    core_log(st_info, "saved %zu bytes", bytes);
-}
-
-void core_load(void)
-{
-    if (core.state.loading) return;
-    core.state.loading = true;
-}
-
-static void core_load_apply(void)
-{
-    assert(core.state.loading);
-
-    bool fail = false;
-    struct save *save = save_load("./legion.save");
-    assert(save_version(save) == core_save_version);
-
-    if (!save_read_magic(save, save_magic_core)) { fail = true; goto fail; }
-    save_read_into(save, &core.state.speed);
-    if (!save_read_magic(save, save_magic_core)) { fail = true; goto fail; }
-
-    struct world *world = world_load(save);
-    size_t bytes = save_len(save);
-    if (!world) { fail = true; goto fail; }
-
-    struct world *old = core.state.world;
-    core.state.world = world;
-    core_exec_event(EV_STATE_LOAD, 0, 0);
-    world_free(old);
-
-  fail:
-    if (fail)
-        core_log(st_info, "save file is corrupted");
-    else core_log(st_info, "loaded %zu bytes", bytes);
-
-    save_close(save);
-    core.state.loading = false;
-    return;
-}
 
 // -----------------------------------------------------------------------------
 // status
 // -----------------------------------------------------------------------------
 
-void core_logv(enum status type, const char *fmt, va_list args)
+void core_log_msg(enum status type, const char *msg, size_t len)
 {
-    static char msg[256] = {0};
-    ssize_t len = vsnprintf(msg, sizeof(msg), fmt, args);
-
-    assert(len >= 0);
-    ui_status_set(core.ui.status, type, msg, len);
-
     const char *prefix = NULL;
     switch (type) {
     case st_info: { prefix = "inf"; break; }
@@ -435,7 +308,18 @@ void core_logv(enum status type, const char *fmt, va_list args)
     default: { assert(false); }
     }
 
-    fprintf(stderr, "<%s> %s\n", prefix, msg);
+    if (core.init) {
+        ui_status_set(core.ui.status, type, msg, len);
+        fprintf(stderr, "<%s> %s\n", prefix, msg);
+    }
+}
+
+void core_logv(enum status type, const char *fmt, va_list args)
+{
+    static char msg[256] = {0};
+    ssize_t len = vsnprintf(msg, sizeof(msg), fmt, args);
+    assert(len >= 0);
+    core_log_msg(type, msg, len);
 }
 
 void core_log(enum status type, const char *fmt, ...)

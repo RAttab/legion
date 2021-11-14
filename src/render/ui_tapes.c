@@ -6,6 +6,7 @@
 #include "common.h"
 #include "render/ui.h"
 #include "ui/ui.h"
+#include "game/tech.h"
 #include "items/lab/lab.h"
 
 
@@ -121,7 +122,7 @@ static bool ui_tapes_selected(struct ui_tapes *ui)
 static void ui_tapes_update_cat(
         struct ui_tapes *ui, const char *name, enum item first, enum item last)
 {
-    struct world *world = core.state.world;
+    const struct tech *tech = proxy_tech(core.proxy);
 
     ui_node_t parent = ui_tree_index(&ui->tree);
     ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + ITEM_MAX), name);
@@ -136,11 +137,11 @@ static void ui_tapes_update_cat(
         const struct tape *tape = tapes_get(it);
         if (!tape) continue;
 
-        if (!world_lab_known(world, tape_host(tape))) continue;
+        if (!tech_known(tech, tape_host(tape))) continue;
 
-        if (!world_lab_known(world, it)) {
+        if (!tech_known(tech, it)) {
             struct tape_set reqs = info->reqs;
-            struct tape_set known = world_lab_known_list(world);
+            struct tape_set known = tech_known_list(tech);
             if (tape_set_intersect(&known, &reqs) != tape_set_len(&reqs))
                 continue;
         }
@@ -172,13 +173,13 @@ static void ui_tapes_update(struct ui_tapes *ui)
                     ui->height));
 
     enum item item = ui->tree.selected;
-    struct world *world = core.state.world;
+    const struct tech *tech = proxy_tech(core.proxy);
     const struct tape *tape = tapes_get(item);
     assert(tape);
 
     ui_str_set_item(&ui->name.str, item);
 
-    im_lab_bits_update(&ui->lab_val, world, item);
+    im_lab_bits_update(&ui->lab_val, tech, item);
     ui_str_set_scaled(&ui->energy_val.str, tape_energy(tape));
 
     ui_str_set_item(&ui->host_val.str, tape_host(tape));
@@ -197,8 +198,8 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_tapes_update(ui);
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        ui_tapes_update(ui);
         return false;
     }
 
@@ -266,7 +267,7 @@ void ui_tapes_render_tape(
     if (ui_layout_is_nil(&inner)) return;
 
     struct font *font = ui_tapes_font();
-    struct world *world = core.state.world;
+    const struct tech *tech = proxy_tech(core.proxy);
     const struct tape *tape = tapes_get(ui->tree.selected);
 
     size_t first = ui_scroll_first(&ui->scroll);
@@ -279,7 +280,7 @@ void ui_tapes_render_tape(
 
         struct tape_ret ret = tape_at(tape, i);
 
-        if (!world_lab_learned(world, ret.item))
+        if (!tech_learned(tech, ret.item))
             ui_label_render(&ui->known, &inner, renderer);
         else ui_layout_sep_x(&inner, font->glyph_w);
 

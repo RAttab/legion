@@ -83,22 +83,22 @@ int16_t ui_topbar_height(void)
 
 static void ui_topbar_update_speed(struct ui_topbar *ui)
 {
-    switch (core.state.speed)
+    switch (proxy_speed(core.proxy))
     {
 
-    case speed_pause: {
+    case sim_pause: {
         ui_str_setc(&ui->stop.str, "run");
         ui_str_setc(&ui->fast.str, "fast");
         break;
     }
 
-    case speed_normal: {
+    case sim_normal: {
         ui_str_setc(&ui->stop.str, "stop");
         ui_str_setc(&ui->fast.str, "fast");
         break;
     }
 
-    case speed_fast: {
+    case sim_fast: {
         ui_str_setc(&ui->stop.str, "stop");
         ui_str_setc(&ui->fast.str, "slow");
         break;
@@ -107,44 +107,55 @@ static void ui_topbar_update_speed(struct ui_topbar *ui)
     default: { assert(false); }
     }
 }
-    
-bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
+
+bool ui_topbar_event_user(struct ui_topbar *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event) {
-        if (ev->user.code == EV_STATE_LOAD)
-            ui_topbar_update_speed(ui);
+    switch (ev->user.code)
+    {
+
+    case EV_STATE_LOAD:
+    case EV_STATE_UPDATE: {
+        ui_topbar_update_speed(ui);
         return false;
     }
-    
+
+    default: { return false; }
+    }
+}
+
+bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
+{
+    if (ev->type == core.event) return ui_topbar_event_user(ui, ev);
+
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_button_event(&ui->save, ev))) {
-        core_save();
+        proxy_save(core.proxy);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->load, ev))) {
-        core_load();
+        proxy_load(core.proxy);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->stop, ev))) {
-        if (core.state.speed != speed_pause) core_speed(speed_pause);
-        else core_speed(speed_normal);
-        ui_topbar_update_speed(ui);
+        if (proxy_speed(core.proxy) != sim_pause)
+            proxy_set_speed(core.proxy, sim_pause);
+        else proxy_set_speed(core.proxy, sim_normal);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fast, ev))) {
-        if (core.state.speed != speed_fast) core_speed(speed_fast);
-        else core_speed(speed_normal);
-        ui_topbar_update_speed(ui);
+        if (proxy_speed(core.proxy) != sim_fast)
+            proxy_set_speed(core.proxy, sim_fast);
+        else proxy_set_speed(core.proxy, sim_normal);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
-        core_push_event(EV_MAP_GOTO, coord_to_u64(core.state.home), 0);
+        core_push_event(EV_MAP_GOTO, coord_to_u64(proxy_home(core.proxy)), 0);
         return true;
     }
 
@@ -184,7 +195,7 @@ static void topbar_render_coord(
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
-    it += str_utoa(world_time(core.state.world), it, topbar_ticks_len);
+    it += str_utoa(proxy_time(core.proxy), it, topbar_ticks_len);
     *it = ' '; it++; assert(it < end);
 
     scale_t scale = 0;
@@ -213,7 +224,6 @@ void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
 
     ui_button_render(&ui->save, &layout, renderer);
-    ui->load.disabled = core.state.loading;
     ui_button_render(&ui->load, &layout, renderer);
     ui_layout_sep_x(&layout, 10);
 

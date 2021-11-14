@@ -52,7 +52,7 @@ static struct ui_io_cmd ui_io_cmd(
     };
 
     struct symbol str = {0};
-    bool ok = atoms_str(world_atoms(core.state.world), id, &str);
+    bool ok = atoms_str(proxy_atoms(core.proxy), id, &str);
     assert(ok);
 
     ui_str_set_symbol(&cmd.name.str, &str);
@@ -145,6 +145,8 @@ struct ui_io
 
     size_t list_len;
     const word_t *list;
+
+    bool loading;
 
     struct ui_panel panel;
     struct ui_label target, target_val;
@@ -248,6 +250,13 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
         return false;
     }
 
+    case EV_STATE_UPDATE: {
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (coord_is_nil(ui->star)) return false;
+        ui->loading = !proxy_chunk(core.proxy, ui->star);
+        return false;
+    }
+
     case EV_IO_TOGGLE: {
         if (ui_panel_is_visible(&ui->panel))
             ui_panel_hide(&ui->panel);
@@ -281,10 +290,9 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     }
 }
 
-// \todo bad inputs just get ignored... need an error reporting mechanism :(
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
-    struct chunk *chunk = world_chunk(core.state.world, ui->star);
+    struct chunk *chunk = proxy_chunk(core.proxy, ui->star);
     assert(chunk);
 
     size_t len = cmd->args;
@@ -316,22 +324,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     }
     }
 
-    bool ok = chunk_io(chunk, cmd->id, 0, ui->id, args, len);
-    assert(ok);
-
-    core_push_event(EV_STATE_UPDATE, 0, 0);
-    core_push_event(EV_IO_EXEC, cmd->id, 0);
-
-    {
-        struct symbol name = {0};
-        bool ok = atoms_str(world_atoms(core.state.world), cmd->id, &name);
-        assert(ok);
-
-        char id[id_str_len] = {0};
-        id_str(ui->id, id, sizeof(id));
-
-        core_log(st_info, "IO command '%s' sent to '%s'", name.c, id);
-    }
+    proxy_io(core.proxy, cmd->id, ui->id, args, len);
 }
 
 bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
@@ -340,6 +333,8 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+
+    if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
 
     for (size_t i = 0; i < ui_io_max; ++i) {
         struct ui_io_cmd *cmd = &ui->io[i];
@@ -372,6 +367,7 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
 
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
+    if (ui->loading) return;
 
     ui_label_render(&ui->target, &layout, renderer);
     ui_label_render(&ui->target_val, &layout, renderer);

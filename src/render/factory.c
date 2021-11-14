@@ -320,7 +320,7 @@ static void factory_update(struct factory *factory)
         if (row) row->len = 0;
     }
 
-    struct chunk *chunk = world_chunk(core.state.world, factory->star);
+    struct chunk *chunk = proxy_chunk(core.proxy, factory->star);
     if (!chunk) {
         if (factory->flows) factory->flows->len = 0;
         if (factory->workers.ops) factory->workers.ops->len = 0;
@@ -346,25 +346,50 @@ static void factory_update(struct factory *factory)
     free(ids);
 }
 
+static void factory_event_star(struct factory *factory, struct coord star)
+{
+    factory->scale = scale_init();
+    factory->star = star;
+    factory->pos = (struct flow_pos) {0};
+    factory_update(factory);
+}
+
 static bool factory_event_user(struct factory *factory, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
+
+    case EV_STATE_LOAD: {
+        factory->active = false;
+        return false;
+    }
+
+    case EV_STATE_UPDATE: {
+        if (!factory->active) return false;
+        factory_update(factory);
+        return false;
+    }
 
     case EV_MAP_GOTO:
     case EV_FACTORY_CLOSE: { factory->active = false; return false; }
 
     case EV_FACTORY_SELECT: {
         factory->active = true;
-        factory->scale = scale_init();
-        factory->star = coord_from_u64((uintptr_t) ev->user.data1);
-        factory->pos = (struct flow_pos) {0};
-        factory_update(factory);
+        factory_event_star(factory, coord_from_u64((uintptr_t) ev->user.data1));
         return false;
     }
 
-    case EV_STATE_LOAD: { factory->active = false; return false; }
-    case EV_STATE_UPDATE: { factory_update(factory); return false; }
+    case EV_STAR_SELECT: {
+        if (!factory->active) return false;
+        factory_event_star(factory, coord_from_u64((uintptr_t) ev->user.data1));
+        return false;
+    }
+
+    case EV_ITEM_SELECT: {
+        if (!factory->active) return false;
+        factory_event_star(factory, coord_from_u64((uintptr_t) ev->user.data2));
+        return false;
+    }
 
     default: { return false; }
     }

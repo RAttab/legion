@@ -49,18 +49,16 @@ void ui_stars_free(struct ui_stars *ui) {
 
 static void ui_stars_update(struct ui_stars *ui)
 {
-    struct world *world = core.state.world;
     ui_tree_reset(&ui->tree);
 
     ui_node_t parent = ui_node_nil;
     struct coord sector = coord_nil();
-    struct world_chunk_it it = world_chunk_it(world);
+    const struct vec64 *list = proxy_chunks(core.proxy);
 
-    for (struct coord ret = world_chunk_next(world, &it);
-         !coord_is_nil(ret); ret = world_chunk_next(world, &it))
-    {
-        if (!coord_eq(coord_sector(ret), sector)) {
-            sector = coord_sector(ret);
+    for (size_t i = 0; i < list->len; ++i) {
+        struct coord star = coord_from_u64(list->vals[i]);
+        if (!coord_eq(coord_sector(star), sector)) {
+            sector = coord_sector(star);
             parent = ui_tree_index(&ui->tree);
             ui_str_setf(ui_tree_add(&ui->tree, ui_node_nil, coord_to_u64(sector)),
                     "%02x.%02x x %02x.%02x",
@@ -71,8 +69,8 @@ static void ui_stars_update(struct ui_stars *ui)
         }
 
         ui_str_set_atom(
-                ui_tree_add(&ui->tree, parent, coord_to_u64(ret)),
-                world_star_name(world, ret));
+                ui_tree_add(&ui->tree, parent, coord_to_u64(star)),
+                proxy_star_name(core.proxy, star));
     }
 }
 
@@ -88,8 +86,8 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_stars_update(ui);
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        ui_stars_update(ui);
         return false;
     }
 

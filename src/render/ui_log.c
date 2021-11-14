@@ -104,7 +104,7 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
     ui_str_set_u64(&ui->time.str, it->time);
 
     ui->state.star = it->star;
-    word_t name = world_star_name(core.state.world, it->star);
+    word_t name = proxy_star_name(core.proxy, it->star);
     ui_str_set_atom(&ui->star.str, name);
 
     ui->state.id = it->id;
@@ -116,26 +116,20 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
 
 static void ui_log_update(struct ui_log *ui)
 {
-    size_t index = 0;
-    struct world *world = core.state.world;
+    const struct log *logs = proxy_logs(core.proxy);
 
     if (!coord_is_nil(ui->coord)) {
-        struct chunk *chunk = world_chunk(world, ui->coord);
-        for (const struct logi *it = chunk_log_next(chunk, NULL);
-             it; index++, it = chunk_log_next(chunk, it))
-        {
-            assert(index < array_len(ui->items));
-            ui_logi_update(ui->items + index, it);
-        }
+        struct chunk *chunk = proxy_chunk(core.proxy, ui->coord);
+        if (!chunk) { ui->len = 0; return; }
+        logs = chunk_logs(chunk);
     }
 
-    else {
-        for (const struct logi *it = world_log_next(world, NULL);
-             it; index++, it = world_log_next(world, it))
-        {
-            assert(index < array_len(ui->items));
-            ui_logi_update(ui->items + index, it);
-        }
+    size_t index = 0;
+    for (const struct logi *it = log_next(logs, NULL);
+         it; index++, it = log_next(logs, it))
+    {
+        assert(index < array_len(ui->items));
+        ui_logi_update(ui->items + index, it);
     }
 
     assert(index <= array_len(ui->items));
@@ -154,8 +148,8 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_log_update(ui);
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        ui_log_update(ui);
         return false;
     }
 
@@ -173,6 +167,22 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
         ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
         ui_log_update(ui);
         ui_panel_show(&ui->panel);
+        return false;
+    }
+
+    case EV_STAR_SELECT: {
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (coord_is_nil(ui->coord)) return false;
+        ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
+        ui_log_update(ui);
+        return false;
+    }
+
+    case EV_ITEM_SELECT: {
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (coord_is_nil(ui->coord)) return false;
+        ui->coord = coord_from_u64((uintptr_t) ev->user.data2);
+        ui_log_update(ui);
         return false;
     }
 

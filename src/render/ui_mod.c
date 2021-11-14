@@ -14,11 +14,22 @@
 // mod
 // -----------------------------------------------------------------------------
 
+enum ui_mod_action
+{
+    ui_mod_nil = 0,
+    ui_mod_select,
+    ui_mod_compile,
+    ui_mod_publish,
+};
+
 struct ui_mod
 {
     mod_t id;
     const struct mod *mod;
     bool disassembly;
+
+    enum ui_mod_action action;
+    ip_t select_ip;
 
     struct ui_panel panel;
     struct ui_button compile, publish;
@@ -110,29 +121,67 @@ static void ui_mod_update(struct ui_mod *ui, const struct mod *mod, ip_t ip)
     else ui_code_set_disassembly(&ui->code, mod, ip);
 }
 
-static void ui_mod_title(struct ui_mod *ui)
+static void ui_mod_action(struct ui_mod *ui, enum ui_mod_action action)
 {
-    struct symbol name = {0};
-    mods_name(world_mods(core.state.world), mod_maj(ui->id), &name);
-    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_ver(ui->id));
+    assert(action);
+    // select is the one action that can preempt other actions.
+    assert(!ui->action || action == ui->action || action == ui_mod_select);
+
+    ui->action = action;
+    ui->compile.disabled = true;
+    ui->publish.disabled = true;
 }
 
-static const struct mod *ui_mod_compile(struct ui_mod *ui)
+static void ui_mod_action_clear(struct ui_mod *ui)
 {
-    size_t len = ui->code.text.bytes;
-    char *buffer = calloc(len, sizeof(*buffer));
-    text_to_str(&ui->code.text, buffer, len);
+    assert(ui->mod);
+    assert(ui->action);
+    ui->action = ui_mod_nil;
+    ui->select_ip = 0;
 
-    const struct mod *mod = mod_compile(
-            mod_maj(ui->id), buffer, len,
-            world_mods(core.state.world),
-            world_atoms(core.state.world));
+    ui->compile.disabled = false;
+    ui->publish.disabled =
+        ui->mod->errs_len ||
+        ui->mod->id == ui->id ||
+        mod_ver(ui->mod->id);
 
-    if (!mod->errs_len) core_log(st_info, "Compilation finished");
-    else core_log(st_warn, "%u compilation errors", mod->errs_len);
+    struct symbol name = {0};
+    bool ok = proxy_mod_name(core.proxy, mod_maj(ui->id), &name);
+    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_ver(ui->id));
+    assert(ok);
+}
 
-    free(buffer);
-    return mod;
+static void ui_mod_action_select(struct ui_mod *ui)
+{
+    const struct mod *mod = proxy_mod(core.proxy, ui->id);
+    if (!mod) { ui_mod_action(ui, ui_mod_select); return; }
+
+    ui_mod_update(ui, mod, ui->select_ip);
+    ui_mod_action_clear(ui);
+}
+
+static void ui_mod_action_compile(struct ui_mod *ui)
+{
+    const struct mod *mod = proxy_mod_compile_result(core.proxy);
+    if (!mod) return;
+    assert(mod_maj(mod->id) == mod_maj(ui->id));
+
+    ui_mod_update(ui, mod, 0);
+    ui_mod_action_clear(ui);
+}
+
+static void ui_mod_action_publish(struct ui_mod *ui)
+{
+    mod_t id = proxy_mod_id(core.proxy);
+    if (!id) return;
+
+    const struct mod *mod = proxy_mod(core.proxy, id);
+    assert(mod_maj(id) == mod_maj(ui->id));
+    assert(mod_ver(id) > mod_ver(ui->id));
+    assert(mod);
+
+    ui->id = mod->id;
+    ui_mod_action_clear(ui);
 }
 
 static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
@@ -141,10 +190,26 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
         ui->id = 0;
         ui->mod = NULL;
+        ui->action = ui_mod_nil;
+        ui->select_ip = 0;
+
         ui_code_clear(&ui->code);
+        ui_panel_hide(&ui->panel);
+        return false;
+    }
+
+    case EV_STATE_UPDATE: {
+        if (!ui_panel_is_visible(&ui->panel)) return false;
+
+        switch (ui->action) {
+        case ui_mod_nil: { break; }
+        case ui_mod_select: { ui_mod_action_select(ui); break; }
+        case ui_mod_compile: { ui_mod_action_compile(ui); break; }
+        case ui_mod_publish: { ui_mod_action_publish(ui); break; }
+        default: { assert(false); }
+        }
         return false;
     }
 
@@ -157,13 +222,11 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
             return false;
         }
 
-        const struct mod *mod = mods_get(world_mods(core.state.world), id);
-        assert(mod);
+        ui_code_clear(&ui->code);
 
-        ui->id = mod->id;
-        ui_mod_update(ui, mod, ip);
-        ui->publish.disabled = true;
-        ui_mod_title(ui);
+        ui->id = mod_ver(id) ? id : proxy_mod_latest(core.proxy, mod_maj(id));
+        ui->select_ip = ip;
+        ui_mod_action_select(ui);
 
         ui_panel_show(&ui->panel);
         ui_code_focus(&ui->code);
@@ -176,6 +239,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     case EV_MOD_CLEAR:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
+        if (ui->action) ui_mod_action_clear(ui);
         ui_panel_hide(&ui->panel);
         ui_code_clear(&ui->code);
         ui->mod = NULL;
@@ -196,27 +260,23 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     if ((ret = ui_panel_event(&ui->panel, ev))) {
         if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
             core_push_event(EV_MOD_CLEAR, 0, 0);
-        return ret != ui_skip;;
+        return ret != ui_skip;
     }
 
     if ((ret = ui_button_event(&ui->compile, ev))) {
-        ui_mod_update(ui, ui_mod_compile(ui), 0);
+        size_t len = ui->code.text.bytes;
+        char *buffer = calloc(len, sizeof(*buffer));
+        text_to_str(&ui->code.text, buffer, len);
+
+        proxy_mod_compile(core.proxy, mod_maj(ui->id), buffer, len);
+        ui_mod_action(ui, ui_mod_compile);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
-        struct mods *mods = world_mods(core.state.world);
-
         assert(ui->mod->errs_len == 0);
-        ui->id = mods_set(mods, mod_maj(ui->id), ui->mod);
-        ui->publish.disabled = true;
-        ui_mod_title(ui);
-
-        struct symbol name = {0};
-        bool ok = mods_name(mods, mod_maj(ui->id), &name);
-        core_log(st_info, "Module '%s' published: %x", name.c, ui->id);
-        assert(ok);
-
+        proxy_mod_publish(core.proxy, mod_maj(ui->id));
+        ui_mod_action(ui, ui_mod_publish);
         return true;
     }
 
@@ -231,7 +291,8 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
-        ui_mod_update(ui, mods_get(world_mods(core.state.world), ui->id), 0);
+        assert(ui->id == proxy_mod_id(core.proxy));
+        ui_mod_update(ui, proxy_mod(core.proxy, ui->id), 0);
         return true;
     }
 
