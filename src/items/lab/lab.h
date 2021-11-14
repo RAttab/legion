@@ -53,5 +53,5 @@ struct im_lab_bits
 };
 
 struct im_lab_bits im_lab_bits_new(struct font *);
-void im_lab_bits_update(struct im_lab_bits *, struct world *, enum item);
+void im_lab_bits_update(struct im_lab_bits *, const struct tech *, enum item);
 void im_lab_bits_render(struct im_lab_bits *, struct ui_layout *, SDL_Renderer *);

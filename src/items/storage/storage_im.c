@@ -78,8 +78,7 @@ static void im_storage_io_item(
     if (!item_validate(args[0]))
         return chunk_log(chunk, storage->id, IO_ITEM, IOE_A0_INVALID);
 
-    if (!world_lab_known(chunk_world(chunk), item))
-        return chunk_log(chunk, storage->id, IO_ITEM, IOE_A0_UNKNOWN);
+    if (!im_check_known(chunk, storage->id, IO_ITEM, item)) return;
 
     if (item == storage->item) return;
     im_storage_io_reset(storage, chunk);

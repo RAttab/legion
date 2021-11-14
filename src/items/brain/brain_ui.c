@@ -4,6 +4,7 @@
 */
 
 #include "ui/ui.h"
+#include "game/proxy.h"
 #include "render/core.h"
 
 
@@ -163,6 +164,9 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     struct ui_brain *ui = _ui;
     const struct im_brain *state = &ui->state;
 
+    bool old_debug = state ? state->debug : false;
+    ip_t old_ip = state ? state->vm.ip : 0;
+
     bool ok = chunk_copy(chunk, id, &ui->state, ui->state_len);
     assert(ok);
 
@@ -175,7 +179,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     }
     else {
         struct symbol mod = {0};
-        mods_name(world_mods(core.state.world), mod_maj(state->mod->id), &mod);
+        proxy_mod_name(core.proxy, mod_maj(state->mod->id), &mod);
 
         ui->mod_val.fg = rgba_white();
         ui_str_set_symbol(&ui->mod_val.str, &mod);
@@ -196,6 +200,9 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     if (state->debug) {
         ui_str_setc(&ui->debug_val.str, "attached");
         ui->debug_val.fg = rgba_green();
+
+        if (!old_debug || old_ip != state->vm.ip)
+            core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
     }
     else {
         ui_str_setc(&ui->debug_val.str, "detached");
@@ -217,26 +224,12 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     ui_scroll_update(&ui->scroll, state->vm.sp);
 }
 
-static bool ui_brain_event_io(struct ui_brain *ui, enum io io)
-{
-    const struct im_brain *state = &ui->state;
-
-    if (!state->mod) return false;
-    if (io != IO_DBG_ATTACH && io != IO_DBG_STEP) return false;
-
-    core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
-    return true;
-}
-
 static bool ui_brain_event(void *_ui, const SDL_Event *ev)
 {
     struct ui_brain *ui = _ui;
     const struct im_brain *state = &ui->state;
 
     enum ui_ret ret = ui_nil;
-
-    if (ev->type == core.event && ev->user.code == EV_IO_EXEC)
-        return ui_brain_event_io(ui, (uintptr_t) ev->user.data1);
 
     if ((ret = ui_link_event(&ui->breakpoint_val, ev))) {
         if (state->mod && state->breakpoint != IP_NIL)

@@ -101,8 +101,7 @@ static void im_port_io_item(
     if (!item_validate(args[0]))
         return chunk_log(chunk, port->id, IO_ITEM, IOE_A0_INVALID);
 
-    if (!world_lab_known(chunk_world(chunk), item))
-        return chunk_log(chunk, port->id, IO_ITEM, IOE_A0_UNKNOWN);
+    if (!im_check_known(chunk, port->id, IO_ITEM, item)) return;
 
     if (item == port->want.item) return;
     port->want.item = item;

@@ -126,8 +126,7 @@ static void im_printer_io_tape(
     if (!item_validate(args[0]))
         return chunk_log(chunk, printer->id, IO_TAPE, IOE_A0_INVALID);
 
-    if (!world_lab_known(chunk_world(chunk), item))
-        return chunk_log(chunk, printer->id, IO_TAPE, IOE_A0_UNKNOWN);
+    if (!im_check_known(chunk, printer->id, IO_TAPE, item)) return;
 
     const struct tape *tape = tapes_get(item);
     if (!tape || tape_host(tape) != id_item(printer->id))

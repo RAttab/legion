@@ -75,26 +75,25 @@ static void ui_lab_free(void *_ui)
 }
 
 void im_lab_bits_update(
-        struct im_lab_bits *ui, struct world *world, enum item item)
+        struct im_lab_bits *ui, const struct tech *tech, enum item item)
 {
     if (!item)
         ui->bits = ui->known = 0;
     else {
         ui->bits = im_config_assert(item)->lab_bits;
-        ui->known = world_lab_learned_bits(world, item);
+        ui->known = tech_learned_bits(tech, item);
     }
 }
 
 static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
 {
     struct ui_lab *ui = _ui;
-    struct world *world = chunk_world(chunk);
 
     const struct im_lab *state = chunk_get(chunk, id);
     assert(state);
 
     ui_str_set_item(&ui->item_val.str, state->item);
-    im_lab_bits_update(&ui->bits, world, state->item);
+    im_lab_bits_update(&ui->bits, proxy_tech(core.proxy), state->item);
 
     switch (state->state)
     {

@@ -42,7 +42,9 @@ static void im_lab_step(void *state, struct chunk *chunk)
     struct im_lab *lab = state;
     if (lab->item == ITEM_NIL) return;
 
-    if (world_lab_learned(chunk_world(chunk), lab->item)) {
+    struct tech *tech = world_tech(chunk_world(chunk));
+
+    if (tech_learned(tech, lab->item)) {
         im_lab_reset(lab, chunk);
         return;
     }
@@ -72,7 +74,7 @@ static void im_lab_step(void *state, struct chunk *chunk)
 
         const uint8_t bits = im_config_assert(lab->item)->lab_bits;
         uint8_t bit = rng_uni(&lab->rng, 0, bits);
-        world_lab_learn_bit(chunk_world(chunk), lab->item, bit);
+        tech_learn_bit(tech, lab->item, bit);
 
         lab->state = im_lab_idle;
         return;
@@ -104,14 +106,13 @@ static void im_lab_io_item(
     if (!item_validate(args[0]))
         return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_INVALID);
 
-    if (!world_lab_known(chunk_world(chunk), item))
-        return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_UNKNOWN);
+    if (!im_check_known(chunk, lab->id, IO_ITEM, item)) return;
 
     const struct im_config *config = im_config(item);
     if (!config)
         return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_UNKNOWN);
 
-    if (world_lab_learned(chunk_world(chunk), item)) return;
+    if (tech_learned(world_tech(chunk_world(chunk)), item)) return;
 
     im_lab_reset(lab, chunk);
     lab->item = item;
@@ -131,10 +132,7 @@ static void im_lab_io_tape_at(
         goto fail;
     }
 
-    if (!world_lab_known(chunk_world(chunk), item)) {
-        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A0_UNKNOWN);
-        goto fail;
-    }
+    if (!im_check_known(chunk, lab->id, IO_TAPE_AT, item)) goto fail;
 
     const struct tape *tape = tapes_get(item);
     if (!tape) {
@@ -177,7 +175,8 @@ static void im_lab_io_tape_known(
         goto fail;
     }
 
-    word_t known = world_lab_known(chunk_world(chunk), item) ? 1 : 0;
+    struct tech *tech = world_tech(chunk_world(chunk));
+    word_t known = tech_known(tech, item) ? 1 : 0;
     chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
     return;
 
@@ -202,7 +201,8 @@ static void im_lab_io_item_bits(
         goto fail;
     }
 
-    word_t bits = world_lab_learned_bits(chunk_world(chunk), item);
+    struct tech *tech = world_tech(chunk_world(chunk));
+    word_t bits = tech_learned_bits(tech, item);
     chunk_io(chunk, IO_RETURN, lab->id, src, &bits, 1);
     return;
 
@@ -227,7 +227,8 @@ static void im_lab_io_item_known(
         goto fail;
     }
 
-    word_t known = world_lab_learned(chunk_world(chunk), item) ? 1 : 0;
+    struct tech *tech = world_tech(chunk_world(chunk));
+    word_t known = tech_learned(tech, item) ? 1 : 0;
     chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
     return;
 

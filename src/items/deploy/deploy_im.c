@@ -83,8 +83,7 @@ static void im_deploy_io_item(
     if (!item_is_active(item) && !item_is_logistics(item))
         return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_INVALID);
 
-    if (!world_lab_known(chunk_world(chunk), item))
-        return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_UNKNOWN);
+    if (!im_check_known(chunk, deploy->id, IO_ITEM, item)) return;
 
     im_deploy_reset(deploy, chunk);
     deploy->item = item;
