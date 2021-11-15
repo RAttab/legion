@@ -138,7 +138,9 @@ struct active *active_load(
 
     uint16_t len = save_read_type(save, typeof(len));
     uint16_t create = save_read_type(save, typeof(create));
-    if (!len && !create) return NULL;
+    if (!len && !create) {
+        return save_read_magic(save, save_magic_active) ? NULL : ACTIVE_FAIL;
+    }
 
     struct active *active = active_alloc(type);
     active->len = len;
@@ -168,7 +170,7 @@ struct active *active_load(
         }
     }
 
-    return active;
+    return save_read_magic(save, save_magic_active) ? active : ACTIVE_FAIL;
 }
 
 void active_save(struct active *active, struct save *save)
@@ -177,6 +179,7 @@ void active_save(struct active *active, struct save *save)
     if (!active) {
         save_write_value(save, (uint16_t) 0);
         save_write_value(save, (uint16_t) 0);
+        save_write_magic(save, save_magic_active);
         return;
     }
 
@@ -188,6 +191,8 @@ void active_save(struct active *active, struct save *save)
 
     if (active->cap < 64) save_write_value(save, active->free);
     else save_write_vec64(save, (const void *) active->free);
+
+    save_write_magic(save, save_magic_active);
 }
 
 
