@@ -329,15 +329,20 @@ bool lanes_list_load_into(struct htable *lanes, struct save *save)
         uint64_t key = save_read_type(save, typeof(key));
         uint64_t val = save_read_type(save, typeof(val));
 
-        struct htable_ret ret = htable_get(lanes, key);
+        void index(struct htable *lanes, uint64_t key, uint64_t val)
+        {
+            struct htable_ret ret = htable_get(lanes, key);
 
-        struct hset *set = NULL;
-        if (ret.ok) set = (void *) ret.value;
-        set = hset_put(set, val);
+            struct hset *set = NULL;
+            if (ret.ok) set = (void *) ret.value;
+            set = hset_put(set, val);
 
-        if (ret.ok) ret = htable_xchg(lanes, key, (uintptr_t) set);
-        else ret = htable_put(lanes, key, (uintptr_t) set);
-        assert(ret.ok);
+            if (ret.ok) ret = htable_xchg(lanes, key, (uintptr_t) set);
+            else ret = htable_put(lanes, key, (uintptr_t) set);
+            assert(ret.ok);
+        }
+        index(lanes, key, val);
+        index(lanes, val, key);
     }
 
     if (!save_read_magic(save, save_magic_lanes)) assert(false);
