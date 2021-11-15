@@ -25,6 +25,9 @@ enum
     sim_cmd_len = 8,
     sim_log_len = 16,
     sim_save_version = 1,
+
+    sim_prof_enabled = 0,
+    sim_prof_freq = 100,
 };
 
 struct sim
@@ -485,6 +488,11 @@ static void sim_publish(struct sim *sim)
     struct save *save = sim_state_write(sim);
     if (!save) return;
 
+    if (unlikely(sim_prof_enabled && core.init)) {
+        if (!(world_time(sim->world) % sim_prof_freq))
+            save_prof(save);
+    }
+
     state_save(save, &(struct state_ctx) {
                 .world = sim->world,
                 .speed = sim->speed,
@@ -493,6 +501,8 @@ static void sim_publish(struct sim *sim)
                 .mod = sim->mod.ts >= sim->ack ? sim->mod.id : 0,
                 .compile = sim->compile.ts >= sim->ack ? sim->compile.mod : NULL,
             });
+
+    save_prof_dump(save);
     sim_state_publish(sim, save);
 }
 

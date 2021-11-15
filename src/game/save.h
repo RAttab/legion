@@ -120,3 +120,6 @@ struct ring64 *save_read_ring64(struct save *);
 
 void save_write_symbol(struct save *, const struct symbol *);
 bool save_read_symbol(struct save *, struct symbol *);
+
+void save_prof(struct save *);
+void save_prof_dump(struct save *);

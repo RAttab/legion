@@ -22,6 +22,14 @@ static const uint64_t save_magic_top = 0xFF4E4F4947454CFF;
 static const uint64_t save_magic_seal = 0xFF4C4547494F4EFF;
 static const size_t save_chunks = 10 * page_len;
 
+
+struct save_prof
+{
+    size_t depth;
+    struct { enum save_magic magic; size_t it; } stack[16];
+    size_t bytes[save_magic_len];
+};
+
 struct save
 {
     size_t cap;
@@ -31,6 +39,8 @@ struct save
     bool load;
     uint8_t version;
     char dst[PATH_MAX];
+
+    struct save_prof *prof;
 };
 
 struct save *save_mem_new(void)
@@ -65,6 +75,7 @@ void save_mem_free(struct save *save)
     if (!save) return;
     assert(!save->fd);
     munmap(save->base, save->cap);
+    free(save->prof);
     free(save);
 }
 
@@ -216,6 +227,7 @@ void save_file_close(struct save *save)
 
     munmap(save->base, save->cap);
     close(save->fd);
+    free(save->prof);
     free(save);
 }
 
@@ -282,6 +294,23 @@ void save_read(struct save *save, void *dst, size_t len)
 void save_write_magic(struct save *save, enum save_magic value)
 {
     save_write(save, &value, sizeof(value));
+
+    if (unlikely(save->prof != NULL)) {
+        struct save_prof *prof = save->prof;
+        const size_t prev = prof->depth - 1;
+        const size_t it = save_len(save);
+
+        if (prof->depth && prof->stack[prev].magic == value) {
+            prof->bytes[value] += it - prof->stack[prev].it;
+            prof->depth--;
+        }
+        else {
+            assert(prof->depth < array_len(prof->stack));
+            prof->stack[prof->depth].magic = value;
+            prof->stack[prof->depth].it = it - 1;
+            prof->depth++;
+        }
+    }
 }
 
 bool save_read_magic(struct save *save, enum save_magic exp)
@@ -429,4 +458,75 @@ bool save_read_symbol(struct save *save, struct symbol *dst)
     save_read_into(save, &dst->len);
     save_read(save, dst->c, dst->len);
     return save_read_magic(save, save_magic_symbol);
+}
+
+
+void save_prof(struct save *save)
+{
+    if (!save->prof) save->prof = calloc(1, sizeof(*save->prof));
+    else {
+        memset(save->prof->bytes, 0, sizeof(save->prof->bytes));
+        save->prof->depth = 0;
+    }
+}
+
+void save_prof_dump(struct save *save)
+{
+    if (!save->prof) return;
+    struct save_prof *prof = save->prof;
+
+    char buffer[4096] = {0};
+    char *it = buffer;
+    const char *end = it + sizeof(buffer);
+
+    it += snprintf(it, end - it, "save: {%c:", save->fd ? 'f' : 'm');
+    it += str_scaled(save_len(save), it, end - it);
+
+    for (enum save_magic magic = 0; magic < save_magic_len; ++magic) {
+        if (!prof->bytes[magic]) continue;
+
+        const char *str = "";
+        switch(magic) {
+        case save_magic_vec64:  { str = "vec"; break; }
+        case save_magic_ring32: { str = "rg3"; break; }
+        case save_magic_ring64: { str = "rg6"; break; }
+        case save_magic_htable: { str = " ht"; break; }
+        case save_magic_symbol: { str = "sym"; break; }
+        case save_magic_heap:   { str = " hp"; break; }
+
+        case save_magic_sim:      { str = "sim"; break; }
+        case save_magic_world:    { str = "wrd"; break; }
+        case save_magic_star:     { str = "str"; break; }
+        case save_magic_lab:      { str = "lab"; break; }
+        case save_magic_tech:     { str = "tch"; break; }
+        case save_magic_log:      { str = "log"; break; }
+        case save_magic_lanes:    { str = "lns"; break; }
+        case save_magic_lane:     { str = " ln"; break; }
+        case save_magic_tape_set: { str = "tps"; break; }
+
+        case save_magic_atoms:  { str = "atm"; break; }
+        case save_magic_mods:   { str = "mds"; break; }
+        case save_magic_mod:    { str = "mod"; break; }
+        case save_magic_chunks: { str = "cks"; break; }
+        case save_magic_chunk:  { str = " ck"; break; }
+        case save_magic_active: { str = "act"; break; }
+        case save_magic_energy: { str = "nrg"; break; }
+
+        case save_magic_state_world:   { str = "swd"; break; }
+        case save_magic_state_compile: { str = "scp"; break; }
+        case save_magic_state_mod:     { str = "smd"; break; }
+        case save_magic_state_chunk:   { str = "sck"; break; }
+
+        default: { assert(false); }
+        }
+
+        it += snprintf(it, end - it, "} {%s:", str);
+        it += str_scaled(prof->bytes[magic], it, end - it);
+    }
+
+    it += snprintf(it, end - it, "}\n");
+    fprintf(stderr, "%s", buffer);
+
+    free(save->prof);
+    save->prof = NULL;
 }
