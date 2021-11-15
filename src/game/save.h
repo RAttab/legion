@@ -19,34 +19,37 @@ struct symbol;
 
 enum legion_packed save_magic
 {
-    save_magic_vec64 = 0x01,
+    save_magic_vec64  = 0x01,
     save_magic_ring32 = 0x02,
     save_magic_ring64 = 0x03,
     save_magic_htable = 0x04,
     save_magic_symbol = 0x05,
-    save_magic_heap = 0x06,
+    save_magic_heap   = 0x06,
 
-    save_magic_sim = 0x10,
-    save_magic_world = 0x11,
-    save_magic_star = 0x12,
-    save_magic_lab = 0x13,
+    save_magic_sim      = 0x10,
+    save_magic_world    = 0x11,
+    save_magic_star     = 0x12,
+    save_magic_lab      = 0x13,
+    save_magic_tech     = 0x14,
+    save_magic_log      = 0x15,
+    save_magic_lanes    = 0x16,
+    save_magic_lane     = 0x17,
+    save_magic_tape_set = 0x18,
 
-    save_magic_chunks = 0x20,
-    save_magic_chunk = 0x21,
-    save_magic_active = 0x22,
-    save_magic_energy = 0x23,
-    save_magic_log = 0x24,
-    save_magic_tech = 0x25,
+    save_magic_atoms   = 0x20,
+    save_magic_mods    = 0x21,
+    save_magic_mod     = 0x22,
+    save_magic_chunks  = 0x28,
+    save_magic_chunk   = 0x29,
+    save_magic_active  = 0x2A,
+    save_magic_energy  = 0x2B,
 
-    save_magic_mods = 0x30,
-    save_magic_mod = 0x31,
-    save_magic_compile = 0x32,
-    save_magic_atoms = 0x33,
+    save_magic_state_world   = 0x30,
+    save_magic_state_compile = 0x31,
+    save_magic_state_mod     = 0x32,
+    save_magic_state_chunk   = 0x33,
 
-    save_magic_lanes = 0x40,
-    save_magic_lane = 0x41,
-
-    save_magic_tape_set = 0x50,
+    save_magic_len,
 };
 
 static_assert(sizeof(enum save_magic) == 1);

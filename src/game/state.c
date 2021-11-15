@@ -110,12 +110,12 @@ static bool state_load_chunks(struct state *state, struct save *save)
 
 void state_save(struct save *save, const struct state_ctx *ctx)
 {
-    save_write_magic(save, save_magic_world);
+    save_write_magic(save, save_magic_state_world);
     save_write_value(save, world_seed(ctx->world));
     save_write_value(save, world_time(ctx->world));
     save_write_value(save, ctx->speed);
     save_write_value(save, coord_to_u64(ctx->home));
-    save_write_magic(save, save_magic_world);
+    save_write_magic(save, save_magic_state_world);
 
     atoms_save(world_atoms(ctx->world), save);
     mods_list_save(world_mods(ctx->world), save);
@@ -125,43 +125,43 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     world_log_save(ctx->world, save);
 
     {
-        save_write_magic(save, save_magic_compile);
+        save_write_magic(save, save_magic_state_compile);
         if (!ctx->compile) save_write_value(save, (mod_t) 0);
         else {
             save_write_value(save, ctx->compile->id);
             mod_save(ctx->compile, save);
         }
-        save_write_magic(save, save_magic_compile);
+        save_write_magic(save, save_magic_state_compile);
     }
 
     {
-        save_write_magic(save, save_magic_mod);
+        save_write_magic(save, save_magic_state_mod);
         save_write_value(save, ctx->mod);
         const struct mod *mod = mods_get(world_mods(ctx->world), ctx->mod);
         if (mod) mod_save(mod, save);
-        save_write_magic(save, save_magic_mod);
+        save_write_magic(save, save_magic_state_mod);
     }
 
     {
-        save_write_magic(save, save_magic_chunk);
+        save_write_magic(save, save_magic_state_chunk);
         struct chunk *chunk = world_chunk(ctx->world, ctx->chunk);
         if (!chunk) save_write_value(save, (uint64_t) 0);
         else {
             save_write_value(save, coord_to_u64(ctx->chunk));
             chunk_save(chunk, save);
         }
-        save_write_magic(save, save_magic_chunk);
+        save_write_magic(save, save_magic_state_chunk);
     }
 }
 
 bool state_load(struct state *state, struct save *save)
 {
-    if (!save_read_magic(save, save_magic_world)) return false;
+    if (!save_read_magic(save, save_magic_state_world)) return false;
     save_read_into(save, &state->seed);
     save_read_into(save, &state->time);
     save_read_into(save, &state->speed);
     state->home = coord_from_u64(save_read_type(save, uint64_t));
-    if (!save_read_magic(save, save_magic_world)) return false;
+    if (!save_read_magic(save, save_magic_state_world)) return false;
 
     if (!atoms_load_into(state->atoms, save)) return false;
     if (!mods_list_load_into(&state->mods, save)) return false;
@@ -171,25 +171,25 @@ bool state_load(struct state *state, struct save *save)
     if (!log_load_into(state->log, save)) return false;
 
     {
-        if (!save_read_magic(save, save_magic_compile)) return false;
+        if (!save_read_magic(save, save_magic_state_compile)) return false;
         if (state->compile) mod_free(state->compile);
         state->compile = NULL;
         mod_t id = save_read_type(save, typeof(id));
         if (id) state->compile = mod_load(save);
-        if (!save_read_magic(save, save_magic_compile)) return false;
+        if (!save_read_magic(save, save_magic_state_compile)) return false;
     }
 
     {
-        if (!save_read_magic(save, save_magic_mod)) return false;
+        if (!save_read_magic(save, save_magic_state_mod)) return false;
         if (state->mod.mod) mod_free(state->mod.mod);
         state->mod.mod = NULL;
         save_read_into(save, &state->mod.id);
         if (state->mod.id) state->mod.mod = mod_load(save);
-        if (!save_read_magic(save, save_magic_mod)) return false;
+        if (!save_read_magic(save, save_magic_state_mod)) return false;
     }
 
     {// \todo Need a chunk_load_into; it's not trivial.
-        if (!save_read_magic(save, save_magic_chunk)) return false;
+        if (!save_read_magic(save, save_magic_state_chunk)) return false;
         if (state->chunk.chunk) chunk_free(state->chunk.chunk);
         state->chunk.chunk = NULL;
         state->chunk.coord = coord_from_u64(save_read_type(save, uint64_t));
@@ -198,7 +198,7 @@ bool state_load(struct state *state, struct save *save)
             if (!chunk) return false;
             state->chunk.chunk = chunk;
         }
-        if (!save_read_magic(save, save_magic_chunk)) return false;
+        if (!save_read_magic(save, save_magic_state_chunk)) return false;
     }
 
     return true;
