@@ -173,6 +173,7 @@ bool state_load(struct state *state, struct save *save)
     {
         if (!save_read_magic(save, save_magic_compile)) return false;
         if (state->compile) mod_free(state->compile);
+        state->compile = NULL;
         mod_t id = save_read_type(save, typeof(id));
         if (id) state->compile = mod_load(save);
         if (!save_read_magic(save, save_magic_compile)) return false;
