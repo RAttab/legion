@@ -42,7 +42,7 @@ struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);
 
 seed_t proxy_seed(struct proxy *);
 world_ts_t proxy_time(struct proxy *);
-enum sim_speed proxy_speed(struct proxy *);
+enum speed proxy_speed(struct proxy *);
 struct coord proxy_home(struct proxy *);
 
 const struct tech *proxy_tech(struct proxy *);
@@ -61,7 +61,7 @@ const struct log *proxy_logs(struct proxy *);
 void proxy_quit(struct proxy *);
 void proxy_save(struct proxy *);
 void proxy_load(struct proxy *);
-void proxy_set_speed(struct proxy *, enum sim_speed);
+void proxy_set_speed(struct proxy *, enum speed);
 struct chunk *proxy_chunk(struct proxy *, struct coord);
 void proxy_io(struct proxy *, enum io, id_t dst, const word_t *args, uint8_t len);
 

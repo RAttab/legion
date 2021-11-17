@@ -86,19 +86,19 @@ static void ui_topbar_update_speed(struct ui_topbar *ui)
     switch (proxy_speed(core.proxy))
     {
 
-    case sim_pause: {
+    case speed_pause: {
         ui_str_setc(&ui->stop.str, "run");
         ui_str_setc(&ui->fast.str, "fast");
         break;
     }
 
-    case sim_normal: {
+    case speed_normal: {
         ui_str_setc(&ui->stop.str, "stop");
         ui_str_setc(&ui->fast.str, "fast");
         break;
     }
 
-    case sim_fast: {
+    case speed_fast: {
         ui_str_setc(&ui->stop.str, "stop");
         ui_str_setc(&ui->fast.str, "slow");
         break;
@@ -141,16 +141,16 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->stop, ev))) {
-        if (proxy_speed(core.proxy) != sim_pause)
-            proxy_set_speed(core.proxy, sim_pause);
-        else proxy_set_speed(core.proxy, sim_normal);
+        if (proxy_speed(core.proxy) != speed_pause)
+            proxy_set_speed(core.proxy, speed_pause);
+        else proxy_set_speed(core.proxy, speed_normal);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fast, ev))) {
-        if (proxy_speed(core.proxy) != sim_fast)
-            proxy_set_speed(core.proxy, sim_fast);
-        else proxy_set_speed(core.proxy, sim_normal);
+        if (proxy_speed(core.proxy) != speed_fast)
+            proxy_set_speed(core.proxy, speed_fast);
+        else proxy_set_speed(core.proxy, speed_normal);
         return true;
     }
 

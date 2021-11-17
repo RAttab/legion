@@ -34,7 +34,7 @@ void check_basics(void)
         proxy_io(proxy, IO_MOD, make_id(ITEM_BRAIN, 1), &ret.value, 1);
     }
 
-    proxy_set_speed(proxy, sim_fast);
+    proxy_set_speed(proxy, speed_fast);
 
     struct coord home = proxy_home(proxy);
     assert(!coord_is_nil(home));

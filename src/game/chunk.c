@@ -327,7 +327,7 @@ void chunk_log(struct chunk *chunk, id_t id, enum io io, enum ioe err)
 
     struct coord star = chunk->star.coord;
     log_push(chunk->log, world_time(chunk->world), star, id, io, err);
-    world_log(chunk->world, star, id, io, err);
+    world_log_push(chunk->world, star, id, io, err);
 }
 
 const struct log *chunk_logs(struct chunk *chunk)

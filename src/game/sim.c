@@ -26,7 +26,7 @@ enum
     sim_log_len = 16,
     sim_save_version = 1,
 
-    sim_prof_enabled = 0,
+    sim_prof_enabled = 1,
     sim_prof_freq = 100,
 };
 
@@ -35,11 +35,11 @@ struct sim
     pthread_t thread;
     ts_t next;
 
-    world_ts_t ack;
+    struct ack ack;
 
     struct world *world;
     struct coord home;
-    enum sim_speed speed;
+    enum speed speed;
 
     struct coord chunk;
 
@@ -74,7 +74,7 @@ struct sim *sim_new(seed_t seed)
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
     sim->chunk = sim->home;
-    sim->speed = sim_normal;
+    sim->speed = speed_normal;
 
     atomic_init(&sim->quit, false);
 
@@ -498,8 +498,9 @@ static void sim_publish(struct sim *sim)
                 .speed = sim->speed,
                 .home = sim->home,
                 .chunk = sim->chunk,
-                .mod = sim->mod.ts >= sim->ack ? sim->mod.id : 0,
-                .compile = sim->compile.ts >= sim->ack ? sim->compile.mod : NULL,
+                .mod = sim->mod.ts >= sim->ack.time ? sim->mod.id : 0,
+                .compile = sim->compile.ts >= sim->ack.time ? sim->compile.mod : NULL,
+                .ack = &sim->ack,
             });
 
     save_prof_dump(save);
@@ -521,7 +522,7 @@ static bool sim_cmd(struct sim *sim)
 
         case CMD_SPEED: {
             sim->speed = cmd->data.speed;
-            if (sim->speed == sim_normal) sim->next = ts_now();
+            if (sim->speed == speed_normal) sim->next = ts_now();
             break;
         }
 
@@ -555,9 +556,9 @@ static void *sim_run(void *ctx)
         if (atomic_load_explicit(&sim->quit, memory_order_relaxed)) break;
 
         switch (sim->speed) {
-        case sim_fast: { break; }
-        case sim_pause: { if (!sim_cmd(sim)) break; continue; }
-        case sim_normal: {
+        case speed_fast: { break; }
+        case speed_pause: { if (!sim_cmd(sim)) break; continue; }
+        case speed_normal: {
             if (now < sim->next)
                 now = ts_sleep_until(sim->next);
             break;

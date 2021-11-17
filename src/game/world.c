@@ -157,6 +157,7 @@ world_ts_t world_time(struct world *world)
     return world->time;
 }
 
+
 struct tech *world_tech(struct world *world)
 {
     return &world->tech;
@@ -229,6 +230,18 @@ word_t world_star_name(struct world *world, struct coord coord)
 }
 
 
+struct log *world_log(struct world *world)
+{
+    return world->log;
+}
+
+void world_log_push(
+        struct world *world, struct coord star, id_t id, enum io io, enum ioe ioe)
+{
+    log_push(world->log, world->time, star, id, io, ioe);
+}
+
+
 // -----------------------------------------------------------------------------
 // scan
 // -----------------------------------------------------------------------------
@@ -294,31 +307,6 @@ struct chunk *world_chunk_next(struct world *world, struct world_chunk_it *it)
     struct chunk *chunk = (void *) it->it->value;
     it->it = htable_next(&world->chunks, it->it);
     return chunk;
-}
-
-
-// -----------------------------------------------------------------------------
-// log
-// -----------------------------------------------------------------------------
-
-void world_log(
-        struct world *world,
-        struct coord coord,
-        id_t id,
-        enum io io,
-        enum ioe err)
-{
-    log_push(world->log, world->time, coord, id, io, err);
-}
-
-const struct logi *world_log_next(struct world *world, const struct logi *it)
-{
-    return log_next(world->log, it);
-}
-
-void world_log_save(struct world *world, struct save *save)
-{
-    log_save(world->log, save);
 }
 
 

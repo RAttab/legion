@@ -57,6 +57,10 @@ struct chunk *world_chunk_alloc(struct world *, struct coord);
 const struct sector *world_sector(struct world *, struct coord);
 word_t world_star_name(struct world *, struct coord);
 
+enum { world_log_cap = 64 };
+struct log *world_log(struct world *);
+void world_log_push(struct world *, struct coord, id_t, enum io, enum ioe);
+
 
 // -----------------------------------------------------------------------------
 // scan-it
@@ -86,17 +90,6 @@ struct world_chunk_it
 struct vec64 *world_chunk_list(struct world *);
 struct world_chunk_it world_chunk_it(struct world *);
 struct chunk *world_chunk_next(struct world *, struct world_chunk_it *);
-
-
-// -----------------------------------------------------------------------------
-// log
-// -----------------------------------------------------------------------------
-
-enum { world_log_cap = 64 };
-void world_log(struct world *, struct coord, id_t, enum io, enum ioe);
-const struct logi *world_log_next(struct world *, const struct logi *it);
-
-void world_log_save(struct world *, struct save *);
 
 
 // -----------------------------------------------------------------------------

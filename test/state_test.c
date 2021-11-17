@@ -67,19 +67,23 @@ void check(void)
         assert(ok);
     }
 
+    struct ack ack = {0};
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
+        world_log_push(world, make_coord(1, 1), make_id(1, 1), IO_PING, IOE_INVALID_STATE);
+
         save_mem_reset(save);
         state_save(save, &(struct state_ctx) {
                     .world = world,
-                    .speed = sim_fast,
+                    .speed = speed_fast,
                     .home = home,
                     .mod = mod_id,
                     .chunk = home,
                     .compile = NULL,
+                    .ack = &ack,
                 });
 
         save_mem_reset(save);
-        assert(state_load(state, save));
+        assert(state_load(state, save, &ack));
 
         assert(state->seed == world_seed(world));
         assert(state->time == world_time(world));
@@ -131,7 +135,7 @@ void check(void)
             assert(htable_eq(&tech->research, &state->tech.research));
         }
 
-        const struct logi *wd_log = world_log_next(world, NULL);
+        const struct logi *wd_log = log_next(world_log(world), NULL);
         const struct logi *st_log = log_next(state->log, NULL);
         while (wd_log) {
             assert(coord_eq(wd_log->star, st_log->star));
@@ -139,6 +143,9 @@ void check(void)
             assert(wd_log->id == st_log->id);
             assert(wd_log->io == st_log->io);
             assert(wd_log->err == st_log->err);
+
+            wd_log = log_next(world_log(world), wd_log);
+            st_log = log_next(state->log, st_log);
         }
         assert(wd_log == st_log);
 

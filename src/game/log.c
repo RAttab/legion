@@ -6,6 +6,7 @@
 #include "common.h"
 #include "game/log.h"
 #include "game/save.h"
+#include "game/state.h"
 
 
 // -----------------------------------------------------------------------------
@@ -74,24 +75,6 @@ void log_save(const struct log *log, struct save *save)
     save_write_magic(save, save_magic_log);
 }
 
-static void log_load_data(struct log *log, struct save *save)
-{
-    save_read_into(save, &log->it);
-    save_read(save, log->items, log->cap * sizeof(log->items[0]));
-}
-
-bool log_load_into(struct log *log, struct save *save)
-{
-    if (!save_read_magic(save, save_magic_log)) return false;
-
-    uint32_t cap = save_read_type(save, typeof(cap));
-    if (cap != log->cap) return false;
-
-    log_load_data(log, save);
-
-    return save_read_magic(save, save_magic_log);
-}
-
 struct log *log_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_log)) return NULL;
@@ -99,7 +82,8 @@ struct log *log_load(struct save *save)
     uint32_t cap = save_read_type(save, typeof(cap));
     struct log *log = log_new(cap);
 
-    log_load_data(log, save);
+    save_read_into(save, &log->it);
+    save_read(save, log->items, log->cap * sizeof(log->items[0]));
 
     if (!save_read_magic(save, save_magic_log)) goto fail;
     return log;
@@ -107,4 +91,43 @@ struct log *log_load(struct save *save)
   fail:
     log_free(log);
     return NULL;
+}
+
+void log_save_delta(const struct log *log, struct save *save, const struct ack *ack)
+{
+    save_write_magic(save, save_magic_log);
+
+    for (const struct logi *it = log_next(log, NULL);
+         it; it = log_next(log, it))
+    {
+        if (it->time <= ack->time) continue;
+        save_write_value(save, it->time);
+        save_write_value(save, coord_to_u64(it->star));
+        save_write_value(save, it->id);
+        save_write_value(save, it->io);
+        save_write_value(save, it->err);
+    }
+    save_write_value(save, (world_ts_t) 0);
+
+    save_write_magic(save, save_magic_log);
+}
+
+bool log_load_delta(struct log *log, struct save *save, const struct ack *ack)
+{
+    if (!save_read_magic(save, save_magic_log)) return false;
+
+    while (true) {
+        world_ts_t time = save_read_type(save, typeof(time));
+        if (!time) break;
+
+        struct coord star = coord_from_u64(save_read_type(save, uint64_t));
+        id_t id = save_read_type(save, typeof(id));
+        enum io io = save_read_type(save, typeof(io));
+        enum ioe ioe = save_read_type(save, typeof(ioe));
+
+        if (time <= ack->time) continue;
+        log_push(log, time, star, id, io, ioe);
+    }
+
+    return save_read_magic(save, save_magic_log);
 }

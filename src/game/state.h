@@ -8,7 +8,6 @@
 #include "common.h"
 #include "game/coord.h"
 #include "game/world.h"
-#include "game/sim.h"
 #include "game/tech.h"
 #include "utils/htable.h"
 
@@ -22,6 +21,26 @@ struct save;
 
 
 // -----------------------------------------------------------------------------
+// types
+// -----------------------------------------------------------------------------
+
+enum legion_packed speed
+{
+    speed_pause = 0,
+    speed_normal,
+    speed_fast,
+};
+
+static_assert(sizeof(enum speed) == 1);
+
+
+struct ack
+{
+    world_ts_t time;
+};
+
+
+// -----------------------------------------------------------------------------
 // state
 // -----------------------------------------------------------------------------
 
@@ -29,7 +48,7 @@ struct state
 {
     seed_t seed;
     world_ts_t time;
-    enum sim_speed speed;
+    enum speed speed;
     struct coord home;
 
     struct atoms *atoms;
@@ -58,16 +77,19 @@ struct state
 struct state *state_alloc(void);
 void state_free(struct state *);
 
+
 struct state_ctx
 {
     struct world *world;
-    enum sim_speed speed;
+    enum speed speed;
     struct coord home;
 
     mod_t mod;
     struct coord chunk;
     const struct mod *compile;
+
+    const struct ack *ack;
 };
 
 void state_save(struct save *, const struct state_ctx *);
-bool state_load(struct state *, struct save *);
+bool state_load(struct state *, struct save *, struct ack *);

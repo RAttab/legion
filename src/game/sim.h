@@ -8,6 +8,7 @@
 #include "common.h"
 #include "game/id.h"
 #include "game/coord.h"
+#include "game/state.h"
 #include "game/world.h"
 #include "vm/symbol.h"
 #include "vm/mod.h"
@@ -20,14 +21,6 @@ struct save;
 // -----------------------------------------------------------------------------
 // types
 // -----------------------------------------------------------------------------
-
-enum legion_packed sim_speed
-{
-    sim_pause = 0,
-    sim_normal,
-    sim_fast,
-};
-static_assert(sizeof(enum sim_speed) == 1);
 
 enum status
 {
@@ -74,8 +67,8 @@ struct sim_cmd
 
     union
     {
-        world_ts_t ack;
-        enum sim_speed speed;
+        struct ack ack;
+        enum speed speed;
         struct coord chunk;
         mod_t mod;
         struct symbol mod_register;

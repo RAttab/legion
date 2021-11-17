@@ -23,7 +23,7 @@ struct state *state_alloc(void)
     struct state *state = calloc(1, sizeof(*state));
 
     *state = (struct state) {
-        .speed = sim_normal,
+        .speed = speed_normal,
         .atoms = atoms_new(),
         .mods = mods_list_reserve(16),
         .chunks = vec64_reserve(16),
@@ -122,7 +122,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     state_save_chunks(ctx->world, save);
     world_lanes_list_save(ctx->world, save);
     tech_save(world_tech(ctx->world), save);
-    world_log_save(ctx->world, save);
+    log_save_delta(world_log(ctx->world), save, ctx->ack);
 
     {
         save_write_magic(save, save_magic_state_compile);
@@ -154,7 +154,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     }
 }
 
-bool state_load(struct state *state, struct save *save)
+bool state_load(struct state *state, struct save *save, struct ack *ack)
 {
     if (!save_read_magic(save, save_magic_state_world)) return false;
     save_read_into(save, &state->seed);
@@ -168,7 +168,7 @@ bool state_load(struct state *state, struct save *save)
     if (!state_load_chunks(state, save)) return false;
     if (!lanes_list_load_into(&state->lanes, save)) return false;
     if (!tech_load(&state->tech, save)) return false;
-    if (!log_load_into(state->log, save)) return false;
+    if (!log_load_delta(state->log, save, ack)) return false;
 
     {
         if (!save_read_magic(save, save_magic_state_compile)) return false;
@@ -201,5 +201,6 @@ bool state_load(struct state *state, struct save *save)
         if (!save_read_magic(save, save_magic_state_chunk)) return false;
     }
 
+    ack->time = state->time;
     return true;
 }

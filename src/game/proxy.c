@@ -31,6 +31,8 @@ struct proxy
 
     mod_t mod;
     struct coord chunk;
+
+    struct ack ack;
 };
 
 struct proxy *proxy_new(struct sim *sim)
@@ -76,7 +78,7 @@ bool proxy_update(struct proxy *proxy)
         if ((ok = state_load(proxy->state, save, &proxy->ack))) {
             proxy_cmd(proxy, &(struct sim_cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = proxy->state->time },
+                .data = { .ack = proxy->ack },
             });
         }
         else err0("unable to load state in proxy");
@@ -128,7 +130,7 @@ world_ts_t proxy_time(struct proxy *proxy)
     return proxy->state->time;
 }
 
-enum sim_speed proxy_speed(struct proxy *proxy)
+enum speed proxy_speed(struct proxy *proxy)
 {
     return proxy->state->speed;
 }
@@ -204,7 +206,7 @@ void proxy_load(struct proxy *proxy)
     proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_LOAD });
 }
 
-void proxy_set_speed(struct proxy *proxy, enum sim_speed speed)
+void proxy_set_speed(struct proxy *proxy, enum speed speed)
 {
     proxy_cmd(proxy, &(struct sim_cmd) {
                 .type = CMD_SPEED,
