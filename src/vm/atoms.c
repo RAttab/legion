@@ -7,6 +7,7 @@
 */
 
 #include "vm/atoms.h"
+#include "game/state.h"
 #include "utils/htable.h"
 
 
@@ -19,6 +20,8 @@ struct legion_packed atom_data
     word_t word;
     struct symbol symbol;
 };
+
+static_assert(sizeof(struct atom_data) == 40);
 
 struct atoms
 {
@@ -54,9 +57,18 @@ void atoms_free(struct atoms *atoms)
     free(atoms);
 }
 
-static void atoms_load_data(struct atoms *atoms, size_t len)
+
+// -----------------------------------------------------------------------------
+// save/load
+// -----------------------------------------------------------------------------
+
+static void atoms_load_data(
+        struct atoms *atoms, const struct atom_data *it, size_t len)
 {
-    for (struct atom_data *it = atoms->base + 1; it < atoms->base + len; it++) {
+    // first entry is always empty.
+    if (it == atoms->base) { it++; len--; }
+
+    for (const struct atom_data *end = it + len; it < end; it++) {
         struct htable_ret ret = {0};
         uint64_t index = it - atoms->base;
 
@@ -67,33 +79,16 @@ static void atoms_load_data(struct atoms *atoms, size_t len)
     }
 }
 
-bool atoms_load_into(struct atoms *atoms, struct save *save)
+void atoms_save(struct atoms *atoms, struct save *save)
 {
-    if (!save_read_magic(save, save_magic_atoms)) return false;
+    save_write_magic(save, save_magic_atoms);
+    size_t len = atoms->it - atoms->base;
 
-    save_read_into(save, &atoms->id);
+    save_write_value(save, atoms->id);
+    save_write_value(save, len);
+    save_write(save, atoms->base, len * sizeof(*atoms->it));
 
-    size_t len = save_read_type(save, typeof(len));
-    size_t cap = atoms->end - atoms->base;
-
-    if (len > cap) {
-        while (cap < len) cap *= 2;
-        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
-        atoms->end = atoms->base + cap;
-    }
-
-    atoms->it = atoms->base;
-    save_read(save, atoms->base, len * sizeof(*atoms->it));
-
-    htable_clear(&atoms->iword);
-    htable_reserve(&atoms->iword, len);
-
-    htable_clear(&atoms->istr);
-    htable_reserve(&atoms->istr, len);
-
-    atoms_load_data(atoms, len);
-
-    return save_read_magic(save, save_magic_atoms);
+    save_write_magic(save, save_magic_atoms);
 }
 
 struct atoms *atoms_load(struct save *save)
@@ -112,13 +107,12 @@ struct atoms *atoms_load(struct save *save)
         atoms->end = atoms->base + cap;
     }
 
-    atoms->it = atoms->base + len;
-    save_read(save, atoms->base, len * sizeof(*atoms->it));
-
     htable_reserve(&atoms->iword, len);
     htable_reserve(&atoms->istr, len);
 
-    atoms_load_data(atoms, len);
+    save_read(save, atoms->base, len * sizeof(*atoms->it));
+    atoms_load_data(atoms, atoms->base, len);
+    atoms->it = atoms->base + len;
 
     if (!save_read_magic(save, save_magic_atoms)) goto fail;
     return atoms;
@@ -128,17 +122,69 @@ struct atoms *atoms_load(struct save *save)
     return NULL;
 }
 
-void atoms_save(struct atoms *atoms, struct save *save)
+void atoms_save_delta(
+        struct atoms *atoms, struct save *save, const struct ack *ack)
 {
     save_write_magic(save, save_magic_atoms);
-    size_t len = atoms->it - atoms->base;
+
+    size_t total = atoms->it - atoms->base;
+    uint32_t start = ack->atoms;
+    uint32_t delta = total - start;
 
     save_write_value(save, atoms->id);
-    save_write_value(save, len);
-    save_write(save, atoms->base, len * sizeof(*atoms->it));
+    save_write_value(save, start);
+    save_write_value(save, delta);
+    save_write(save, atoms->base + ack->atoms, delta * sizeof(*atoms->it));
 
     save_write_magic(save, save_magic_atoms);
 }
+
+bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
+{
+    if (!save_read_magic(save, save_magic_atoms)) return false;
+
+    save_read_into(save, &atoms->id);
+    uint32_t start = save_read_type(save, typeof(start));
+    uint32_t delta = save_read_type(save, typeof(delta));
+
+    size_t cap = atoms->end - atoms->base;
+    size_t total = start + delta;
+    if (total > cap) {
+        while (cap < total) cap *= 2;
+        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
+        atoms->end = atoms->base + cap;
+    }
+
+    htable_reserve(&atoms->iword, total);
+    htable_reserve(&atoms->istr, total);
+
+    // It's possible for the client to add temporary entries in it's local atoms
+    // instance. It's not great but the alternative is to force a round-trip to
+    // server in the middle of lisp_eval.
+    for (struct atom_data *it = atoms->base + start; it < atoms->it; ++it) {
+        if (it == atoms->base) continue;
+
+        struct htable_ret ret = {0};
+        ret = htable_del(&atoms->iword, it->word);
+        assert(ret.ok);
+        ret = htable_del(&atoms->istr, symbol_hash(&it->symbol));
+        assert(ret.ok);
+        memset(it, 0, sizeof(*it));
+    }
+
+    atoms->it = atoms->base + start;
+    save_read(save, atoms->it, delta * sizeof(*atoms->base));
+    atoms_load_data(atoms, atoms->it, delta);
+    atoms->it += delta;
+
+    ack->atoms = atoms->it - atoms->base;
+    return save_read_magic(save, save_magic_atoms);
+}
+
+
+// -----------------------------------------------------------------------------
+// ops
+// -----------------------------------------------------------------------------
 
 static uint64_t atoms_insert(
         struct atoms *atoms, const struct symbol *symbol, word_t id)

@@ -10,6 +10,7 @@
 
 struct symbol;
 struct save;
+struct ack;
 
 // -----------------------------------------------------------------------------
 // atoms
@@ -20,9 +21,11 @@ struct atoms;
 struct atoms *atoms_new(void);
 void atoms_free(struct atoms *);
 
-struct atoms *atoms_load(struct save *);
-bool atoms_load_into(struct atoms *, struct save *);
 void atoms_save(struct atoms *, struct save *);
+struct atoms *atoms_load(struct save *);
+
+void atoms_save_delta(struct atoms *, struct save *, const struct ack *);
+bool atoms_load_delta(struct atoms *, struct save *, struct ack *);
 
 bool atoms_set(struct atoms *, const struct symbol *, word_t id);
 word_t atoms_get(struct atoms *, const struct symbol *);

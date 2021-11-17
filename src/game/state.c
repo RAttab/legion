@@ -117,7 +117,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     save_write_value(save, coord_to_u64(ctx->home));
     save_write_magic(save, save_magic_state_world);
 
-    atoms_save(world_atoms(ctx->world), save);
+    atoms_save_delta(world_atoms(ctx->world), save, ctx->ack);
     mods_list_save(world_mods(ctx->world), save);
     state_save_chunks(ctx->world, save);
     world_lanes_list_save(ctx->world, save);
@@ -163,7 +163,7 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
     state->home = coord_from_u64(save_read_type(save, uint64_t));
     if (!save_read_magic(save, save_magic_state_world)) return false;
 
-    if (!atoms_load_into(state->atoms, save)) return false;
+    if (!atoms_load_delta(state->atoms, save, ack)) return false;
     if (!mods_list_load_into(&state->mods, save)) return false;
     if (!state_load_chunks(state, save)) return false;
     if (!lanes_list_load_into(&state->lanes, save)) return false;

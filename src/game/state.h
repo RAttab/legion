@@ -37,6 +37,7 @@ static_assert(sizeof(enum speed) == 1);
 struct ack
 {
     world_ts_t time;
+    uint32_t atoms;
 };
 
 
