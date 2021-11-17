@@ -22,7 +22,7 @@ static void proxy_cmd(struct proxy *, const struct sim_cmd *);
 struct proxy
 {
     struct sim *sim;
-    struct state *state, *load;
+    struct state *state;
 
     struct htable sectors;
     struct hset *active_stars;
@@ -39,7 +39,6 @@ struct proxy *proxy_new(struct sim *sim)
     *proxy = (struct proxy) {
         .sim = sim,
         .state = state_alloc(),
-        .load = state_alloc(),
     };
 
     proxy->lisp = lisp_new(proxy->state->mods, proxy->state->atoms);
@@ -56,8 +55,6 @@ struct proxy *proxy_new(struct sim *sim)
 void proxy_free(struct proxy *proxy)
 {
     state_free(proxy->state);
-    state_free(proxy->load);
-
     hset_free(proxy->active_sectors);
     hset_free(proxy->active_stars);
     lisp_free(proxy->lisp);
@@ -76,8 +73,7 @@ bool proxy_update(struct proxy *proxy)
 
     struct save *save = sim_state_read(proxy->sim);
     if (save) {
-        if ((ok = state_load(proxy->load, save))) {
-            legion_swap(&proxy->load, &proxy->state);
+        if ((ok = state_load(proxy->state, save, &proxy->ack))) {
             proxy_cmd(proxy, &(struct sim_cmd) {
                 .type = CMD_ACK,
                 .data = { .ack = proxy->state->time },
