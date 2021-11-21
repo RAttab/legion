@@ -1,11 +1,14 @@
 #! /usr/bin/env bash
 
-set -o errexit -o nounset -o pipefail # -o xtrace
+set -o errexit -o nounset -o pipefail
 
 CC=${CC:-gcc}
 : ${PREFIX:="."}
 : ${VALGRIND:=""}
 : ${PROFILE:=""}
+: ${VERBOSE:=""}
+
+if [ ! -z "${VERBOSE}" ]; then set -o xtrace; fi
 
 declare -a SRC
 SRC=(items ui render game vm utils)
