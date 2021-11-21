@@ -167,7 +167,7 @@ const enum item im_list_factory_arr[] =
     ITEM_STORAGE,
     ITEM_PORT,
     ITEM_CONDENSER,
-    ITEM_AUTO_DEPLOY,
+    /* ITEM_AUTO_DEPLOY, */
     ITEM_COLLIDER,
 
     0,

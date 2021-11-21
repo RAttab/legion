@@ -29,8 +29,8 @@ struct chunk;
 struct chunk *chunk_alloc(struct world *, const struct star *, word_t name);
 void chunk_free(struct chunk *);
 
-struct chunk *chunk_load(struct world *, struct save *);
 void chunk_save(struct chunk *, struct save *);
+struct chunk *chunk_load(struct world *, struct save *);
 
 struct world *chunk_world(struct chunk *);
 const struct star *chunk_star(const struct chunk *);

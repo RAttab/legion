@@ -8,83 +8,32 @@
 
 
 // -----------------------------------------------------------------------------
-// active_list
-// -----------------------------------------------------------------------------
-
-static struct active *const ACTIVE_FAIL = (void *) -1;
-
-bool active_list_load(
-        active_list_t *list, struct chunk *chunk, struct save *save, bool read)
-{
-    for (size_t i = 0; i < array_len(*list); ++i) {
-        struct active *ptr = active_load(i + ITEM_ACTIVE_FIRST, chunk, save, read);
-        if (ptr == ACTIVE_FAIL) return false;
-
-        (*list)[i] = ptr;
-    }
-    return true;
-}
-
-void active_list_save(active_list_t *list, struct save *save)
-{
-    for (size_t i = 0; i < array_len(*list); ++i)
-        active_save((*list)[i], save);
-}
-
-
-// -----------------------------------------------------------------------------
 // active
 // -----------------------------------------------------------------------------
 
-legion_packed struct active
+
+void active_init(struct active *active, enum item type)
 {
-    enum item type;
-    uint8_t size;
-    uint16_t create;
-    legion_pad(4);
+    const struct im_config *config = im_config(type);
+    if (!config) { active->skip = true; return; }
 
-    uint16_t count, len, cap;
-    legion_pad(2);
-
-    void *arena;
-    struct ports *ports;
-    uint64_t free;
-
-    im_step_t step;
-    im_io_t io;
-    legion_pad(8);
-};
-
-static_assert(sizeof(struct active) == s_cache_line);
-
-
-struct active *active_alloc(enum item type)
-{
-    const struct im_config *config = im_config_assert(type);
-
-    struct active *active = calloc(1, sizeof(*active));
     *active = (struct active) {
+        .skip = false,
         .type = type,
         .size = config->size,
         .step = config->im.step,
         .io = config->im.io,
     };
-
-    return active;
 }
 
 void active_free(struct active *active)
 {
-    if (!active) return;
     free(active->arena);
     free(active->ports);
-    free(active);
 }
 
 void active_delete(struct active *active, id_t id)
 {
-    if (!active) return;
-
     size_t index = id_bot(id)-1;
     if (index >= active->len) return;
 
@@ -131,61 +80,16 @@ static bool active_recycle(struct active *active, size_t *index)
 }
 
 
-struct active *active_load(
-        enum item type, struct chunk *chunk, struct save *save, bool read)
-{
-    if (!save_read_magic(save, save_magic_active)) return ACTIVE_FAIL;
-
-    uint16_t len = save_read_type(save, typeof(len));
-    uint16_t create = save_read_type(save, typeof(create));
-    if (!len && !create) {
-        return save_read_magic(save, save_magic_active) ? NULL : ACTIVE_FAIL;
-    }
-
-    struct active *active = active_alloc(type);
-    active->len = len;
-    active->create = create;
-    save_read_into(save, &active->count);
-
-    active->cap = 1;
-    while (active->cap < len) active->cap *= 2;
-
-    active->arena = calloc(active->cap, active->size);
-    save_read(save, active->arena, active->len * active->size);
-
-    active->ports = calloc(active->cap, sizeof(*active->ports));
-    save_read(save, active->ports, active->len * sizeof(*active->ports));
-
-    if (active->cap < 64) save_read_into(save, &active->free);
-    else {
-        bool ok = save_read_vec64(save, (struct vec64 **) &active->free);
-        assert(ok); // \todo this can't fail aparently which is bwad.
-    }
-
-    const struct im_config *config = im_config_assert(active->type);
-    if (config->im.load) {
-        for (size_t i = 0; i < len; ++i) {
-            if (active_deleted(active, i)) continue;
-            if (!read) config->im.load(active->arena + (i * active->size), chunk);
-        }
-    }
-
-    return save_read_magic(save, save_magic_active) ? active : ACTIVE_FAIL;
-}
-
-void active_save(struct active *active, struct save *save)
+void active_save(const struct active *active, struct save *save)
 {
     save_write_magic(save, save_magic_active);
-    if (!active) {
-        save_write_value(save, (uint16_t) 0);
-        save_write_value(save, (uint16_t) 0);
-        save_write_magic(save, save_magic_active);
-        return;
-    }
 
     save_write_value(save, active->len);
     save_write_value(save, active->create);
+    if (!active->len && !active->create)
+        return save_write_magic(save, save_magic_active);
     save_write_value(save, active->count);
+
     save_write(save, active->arena, active->len * active->size);
     save_write(save, active->ports, active->len * sizeof(*active->ports));
 
@@ -195,16 +99,52 @@ void active_save(struct active *active, struct save *save)
     save_write_magic(save, save_magic_active);
 }
 
+bool active_load(struct active *active, struct save *save, struct chunk *chunk)
+{
+    if (!save_read_magic(save, save_magic_active)) return false;
+
+    save_read_into(save, &active->len);
+    save_read_into(save, &active->create);
+    if (!active->len && !active->create)
+        return save_read_magic(save, save_magic_active);
+    save_read_into(save, &active->count);
+
+    if (!active->cap) active->cap = 1;
+    while (active->cap < active->len) active->cap *= 2;
+
+    active->arena = realloc(active->arena, active->cap * active->size);
+    save_read(save, active->arena, active->len * active->size);
+    memset(active->arena + (active->len * active->size), 0,
+            (active->cap - active->len) * active->size);
+
+    active->ports = realloc(active->ports, active->cap * sizeof(*active->ports));
+    save_read(save, active->ports, active->len * sizeof(*active->ports));
+    memset(active->ports + active->len, 0,
+            (active->cap - active->len) * sizeof(*active->ports));
+
+    if (active->cap < 64) save_read_into(save, &active->free);
+    else if (!save_read_vec64(save, (struct vec64 **) &active->free))
+        return false;
+
+    const struct im_config *config = im_config_assert(active->type);
+    if (config->im.load) {
+        for (size_t i = 0; i < active->len; ++i) {
+            if (active_deleted(active, i)) continue;
+            if (chunk) config->im.load(active->arena + (i * active->size), chunk);
+        }
+    }
+
+    return save_read_magic(save, save_magic_active);
+}
 
 size_t active_count(struct active *active)
 {
-    return active ? active->count : 0;
+    return active->count;
 }
+
 
 void active_list(struct active *active, struct vec64 *ids)
 {
-    if (!active) return;
-
     for (size_t i = 0; i < active->len; ++i) {
         if (active_deleted(active, i)) continue;
         vec64_append(ids, make_id(active->type, i+1));
@@ -213,8 +153,6 @@ void active_list(struct active *active, struct vec64 *ids)
 
 void *active_get(struct active *active, id_t id)
 {
-    if (!active) return NULL;
-
     size_t index = id_bot(id)-1;
     if (index >= active->len || active_deleted(active, index)) return NULL;
 
@@ -223,8 +161,6 @@ void *active_get(struct active *active, id_t id)
 
 struct ports *active_ports(struct active *active, id_t id)
 {
-    if (!active) return NULL;
-
     size_t index = id_bot(id)-1;
     if (index >= active->len || active_deleted(active, index)) return NULL;
 
@@ -307,8 +243,6 @@ void active_create_from(
 void active_step(
         struct active *active, struct chunk *chunk)
 {
-    if (!active) return;
-
     if (active->step) {
         for (size_t i = 0; i < active->len; ++i) {
             if (active_deleted(active, i)) continue;

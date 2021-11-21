@@ -11,36 +11,6 @@
 #include "items/config.h"
 
 
-void test_active_list(void)
-{
-    active_it_t it = 0;
-    active_list_t list = {0};
-    enum item i0 = ITEM_EXTRACT;
-    enum item i1 = ITEM_PRINTER;
-
-    assert(!active_index(&list, i0));
-    assert(!active_index(&list, i1));
-
-    struct active *p0 = active_index_create(&list, i0);
-    assert(active_index(&list, i0) == p0);
-    assert(p0);
-
-    assert(*(it = active_next(&list, NULL)) == p0);
-    assert(!active_next(&list, it));
-
-    struct active *p1 = active_index_create(&list, i1);
-    assert(active_index(&list, i1) == p1);
-    assert(p1);
-
-    assert(*(it = active_next(&list, NULL)) == p0);
-    assert(*(it = active_next(&list, it)) == p1);
-    assert(!active_next(&list, it));
-
-    active_free(p0);
-    active_free(p1);
-}
-
-
 void test_ports_1on1(void)
 {
     struct star star = {0};
@@ -220,7 +190,6 @@ int main(int argc, char **argv)
 
     core_populate();
 
-    test_active_list();
     test_ports_1on1();
     test_ports_2on1();
     test_ports_1on2();

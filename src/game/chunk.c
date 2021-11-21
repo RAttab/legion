@@ -29,7 +29,6 @@ struct chunk
     struct star star;
     word_t name;
 
-    active_list_t active;
     struct log *log;
 
     // Ports
@@ -43,7 +42,37 @@ struct chunk
     struct ring64 *pills;
 
     struct htable listen;
+
+    struct active active[ITEMS_ACTIVE_LEN];
 };
+
+static struct active *active_index(struct chunk *chunk, enum item item)
+{
+    size_t index = item - ITEM_ACTIVE_FIRST;
+
+    if (!item_is_active(item)) return NULL;
+    if (index >= array_len(chunk->active)) return NULL;
+    if (chunk->active[index].skip) return NULL;
+
+    return chunk->active + index;
+}
+
+static struct active *active_index_assert(struct chunk *chunk, enum item item)
+{
+    struct active *it = active_index(chunk, item);
+    assert(it);
+    return it;
+}
+
+static struct active *active_next(struct chunk *chunk, struct active *it)
+{
+    it = it ? it + 1 : chunk->active;
+    for (; it < chunk->active + array_len(chunk->active); it++) {
+        if (it->skip) continue;
+        return it;
+    }
+    return NULL;
+}
 
 struct chunk *chunk_alloc(
         struct world *world, const struct star *star, word_t name)
@@ -51,23 +80,29 @@ struct chunk *chunk_alloc(
     assert(world);
 
     struct chunk *chunk = calloc(1, sizeof(*chunk));
-    chunk->world = world;
-    chunk->star = *star;
-    chunk->name = name;
-    chunk->log = log_new(chunk_log_cap);
-    chunk->requested = ring32_reserve(16);
-    chunk->storage = ring32_reserve(1);
-    chunk->pills = ring64_reserve(2);
-    chunk->workers.ops = vec64_reserve(1);
+    *chunk = (struct chunk) {
+        .world = world,
+        .star = *star,
+        .name = name,
+        .log = log_new(chunk_log_cap),
+        .requested = ring32_reserve(16),
+        .storage = ring32_reserve(1),
+        .pills = ring64_reserve(2),
+        .workers.ops = vec64_reserve(1),
+    };
+
+    for (size_t i = 0; i < array_len(chunk->active); ++i)
+        active_init(chunk->active + i, ITEM_ACTIVE_FIRST + i);
+
     return chunk;
 }
 
 void chunk_free(struct chunk *chunk)
 {
-    active_it_t it = active_next(&chunk->active, NULL);
-    for (; it; it = active_next(&chunk->active, it)) active_free(*it);
-
     log_free(chunk->log);
+
+    ring32_free(chunk->requested);
+    ring32_free(chunk->storage);
 
     for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
@@ -75,11 +110,9 @@ void chunk_free(struct chunk *chunk)
         ring32_free((void *) it->value);
     }
     htable_reset(&chunk->provided);
-    ring32_free(chunk->requested);
-    ring32_free(chunk->storage);
 
-    vec64_free(chunk->workers.ops);
     ring64_free(chunk->pills);
+    vec64_free(chunk->workers.ops);
 
     for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
          it; it = htable_next(&chunk->listen, it))
@@ -88,7 +121,47 @@ void chunk_free(struct chunk *chunk)
     }
     htable_reset(&chunk->listen);
 
+    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
+        active_free(it);
+
     free(chunk);
+}
+
+void chunk_save(struct chunk *chunk, struct save *save)
+{
+    save_write_magic(save, save_magic_chunk);
+
+    save_write_value(save, chunk->name);
+    star_save(&chunk->star, save);
+    log_save(chunk->log, save);
+
+    save_write_ring32(save, chunk->requested);
+    save_write_ring32(save, chunk->storage);
+    save_write_value(save, chunk->provided.len);
+    for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+         it; it = htable_next(&chunk->provided, it))
+    {
+        save_write_value(save, (enum item) it->key);
+        save_write_ring32(save, (struct ring32 *) it->value);
+    }
+
+    energy_save(&chunk->energy, save);
+    save_write_value(save, chunk->workers.count);
+    save_write_vec64(save, chunk->workers.ops);
+    save_write_ring64(save, chunk->pills);
+
+    save_write_value(save, chunk->listen.len);
+    for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
+         it; it = htable_next(&chunk->listen, it))
+    {
+        save_write_value(save, it->key);
+        save_write(save, (id_t *) it->value, im_channel_max * sizeof(id_t));
+    }
+
+    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
+        active_save(it, save);
+
+    save_write_magic(save, save_magic_chunk);
 }
 
 struct chunk *chunk_load(struct world *world, struct save *save)
@@ -100,8 +173,6 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     save_read_into(save, &chunk->name);
     star_load(&chunk->star, save);
-
-    if (!active_list_load(&chunk->active, chunk, save, world == NULL)) goto fail;
 
     if (!(chunk->log = log_load(save))) goto fail;
 
@@ -139,47 +210,21 @@ struct chunk *chunk_load(struct world *world, struct save *save)
         }
     }
 
+    for (size_t i = 0; i < array_len(chunk->active); ++i) {
+        struct active *it = chunk->active + i;
+
+        active_init(it, ITEM_ACTIVE_FIRST + i);
+        if (it->skip) continue;
+
+        if (!active_load(it, save, chunk->world ? chunk : NULL)) goto fail;
+    }
+
     if (!save_read_magic(save, save_magic_chunk)) goto fail;
     return chunk;
 
   fail:
     chunk_free(chunk);
     return NULL;
-}
-
-void chunk_save(struct chunk *chunk, struct save *save)
-{
-    save_write_magic(save, save_magic_chunk);
-
-    save_write_value(save, chunk->name);
-    star_save(&chunk->star, save);
-    active_list_save(&chunk->active, save);
-    log_save(chunk->log, save);
-
-    save_write_ring32(save, chunk->requested);
-    save_write_ring32(save, chunk->storage);
-    save_write_value(save, chunk->provided.len);
-    for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
-         it; it = htable_next(&chunk->provided, it))
-    {
-        save_write_value(save, (enum item) it->key);
-        save_write_ring32(save, (struct ring32 *) it->value);
-    }
-
-    energy_save(&chunk->energy, save);
-    save_write_value(save, chunk->workers.count);
-    save_write_vec64(save, chunk->workers.ops);
-    save_write_ring64(save, chunk->pills);
-
-    save_write_value(save, chunk->listen.len);
-    for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
-         it; it = htable_next(&chunk->listen, it))
-    {
-        save_write_value(save, it->key);
-        save_write(save, (id_t *) it->value, im_channel_max * sizeof(id_t));
-    }
-
-    save_write_magic(save, save_magic_chunk);
 }
 
 struct world *chunk_world(struct chunk *chunk)
@@ -220,14 +265,12 @@ struct workers chunk_workers(struct chunk *chunk)
 struct vec64* chunk_list(struct chunk *chunk)
 {
     size_t sum = 0;
-    active_it_t it = active_next(&chunk->active, NULL);
-    for (; it; it = active_next(&chunk->active, it))
-        sum += active_count(*it);
+    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
+        sum += active_count(it);
 
     struct vec64 *ids = vec64_reserve(sum);
-    it = active_next(&chunk->active, NULL);
-    for (; it; it = active_next(&chunk->active, it))
-        active_list(*it, ids);
+    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
+        active_list(it, ids);
 
     return ids;
 }
@@ -236,23 +279,23 @@ struct vec64* chunk_list_filter(struct chunk *chunk, im_list_t filter)
 {
     size_t sum = 0;
     for (im_list_t it = filter; *it; it++)
-        sum += active_count(active_index(&chunk->active, *it));
+        sum += active_count(active_index_assert(chunk, *it));
 
     struct vec64 *ids = vec64_reserve(sum);
     for (im_list_t it = filter; *it; it++)
-        active_list(active_index(&chunk->active, *it), ids);
+        active_list(active_index_assert(chunk, *it), ids);
 
     return ids;
 }
 
 const void *chunk_get(struct chunk *chunk, id_t id)
 {
-    return active_get(active_index(&chunk->active, id_item(id)), id);
+    return active_get(active_index_assert(chunk, id_item(id)), id);
 }
 
 bool chunk_copy(struct chunk *chunk, id_t id, void *dst, size_t len)
 {
-    return active_copy(active_index(&chunk->active, id_item(id)), id, dst, len);
+    return active_copy(active_index_assert(chunk, id_item(id)), id, dst, len);
 }
 
 static bool chunk_create_logistics(struct chunk *chunk, enum item item)
@@ -278,7 +321,7 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
 void chunk_create(struct chunk *chunk, enum item item)
 {
     if (chunk_create_logistics(chunk, item)) return;
-    active_create(active_index_create(&chunk->active, item));
+    active_create(active_index_assert(chunk, item));
 }
 
 void chunk_create_from(
@@ -286,22 +329,20 @@ void chunk_create_from(
 {
 
     if (chunk_create_logistics(chunk, item)) { assert(!len); return; }
-    active_create_from(active_index_create(&chunk->active, item), chunk, data, len);
+    active_create_from(active_index_assert(chunk, item), chunk, data, len);
 }
 
 void chunk_delete(struct chunk *chunk, id_t id)
 {
-    active_delete(active_index(&chunk->active, id_item(id)), id);
+    active_delete(active_index_assert(chunk, id_item(id)), id);
 }
 
 void chunk_step(struct chunk *chunk)
 {
     energy_step_begin(&chunk->energy, &chunk->star);
 
-    active_it_t it = active_next(&chunk->active, NULL);
-    for (; it; it = active_next(&chunk->active, it))
-        active_step(*it, chunk);
-
+    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
+        active_step(it, chunk);
     chunk_ports_step(chunk);
 
     energy_step_end(&chunk->energy);
@@ -311,8 +352,9 @@ bool chunk_io(
         struct chunk *chunk,
         enum io io, id_t src, id_t dst, const word_t *args, size_t len)
 {
-    if (!item_is_active(id_item(dst))) return false;
-    struct active *active = active_index(&chunk->active, id_item(dst));
+    struct active *active = active_index(chunk, id_item(dst));
+    if (!active) return false;
+
     return active_io(active, chunk, io, src, dst, args, len);
 }
 
@@ -352,20 +394,28 @@ struct energy *chunk_energy(struct chunk *chunk)
 
 ssize_t chunk_scan(struct chunk *chunk, enum item item)
 {
-    if (item == ITEM_WORKER) return chunk->workers.count;
-    if (item == ITEM_PILL) return ring64_len(chunk->pills);
-    if (item == ITEM_SOLAR) return chunk->energy.solar;
-    if (item == ITEM_KWHEEL) return chunk->energy.kwheel;
-    if (item == ITEM_BATTERY) return chunk->energy.battery;
+    switch (item)
+    {
 
-    if (item == ITEM_ENERGY) return chunk->star.energy;
-    if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
+    case ITEM_WORKER:  { return chunk->workers.count; }
+    case ITEM_PILL:    { return ring64_len(chunk->pills); }
+    case ITEM_SOLAR:   { return chunk->energy.solar; }
+    case ITEM_KWHEEL:  { return chunk->energy.kwheel; }
+    case ITEM_BATTERY: { return chunk->energy.battery; }
+    case ITEM_ENERGY:  { return chunk->star.energy; }
+
+    case ITEM_NATURAL_FIRST ... ITEM_NATURAL_LAST: {
+        if (item == ITEM_NATURAL_LAST) return -1;
         return chunk->star.elems[item - ITEM_NATURAL_FIRST];
+    }
+    case ITEM_ACTIVE_FIRST ... ITEM_ACTIVE_LAST: {
+        struct active *active = active_index(chunk, item);
+        return active ? (ssize_t) active_count(active) : (ssize_t) -1;
+    }
 
-    if (item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST)
-        return active_count(active_index(&chunk->active, item));
+    default: { return -1; }
 
-    return -1;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -489,7 +539,8 @@ void chunk_lanes_launch(
 
 void chunk_ports_reset(struct chunk *chunk, id_t id)
 {
-    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    struct active *active = active_index_assert(chunk, id_item(id));
+    struct ports *ports = active_ports(active, id);
     if (!ports) return;
 
     if (ports->in_state == ports_requested)
@@ -507,7 +558,8 @@ void chunk_ports_reset(struct chunk *chunk, id_t id)
 
 bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
 {
-    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    struct active *active = active_index_assert(chunk, id_item(id));
+    struct ports *ports = active_ports(active, id);
     if (!ports) return false;
 
     if (ports->out != ITEM_NIL) return false;
@@ -535,14 +587,17 @@ bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
 
 bool chunk_ports_consumed(struct chunk *chunk, id_t id)
 {
-    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    struct active *active = active_index_assert(chunk, id_item(id));
+    struct ports *ports = active_ports(active, id);
     return ports && ports->out == ITEM_NIL;
 }
 
 void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 {
-    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    struct active *active = active_index_assert(chunk, id_item(id));
+    struct ports *ports = active_ports(active, id);
     if (!ports) return;
+
     if (ports->in_state == ports_requested && ports->in == item) return;
 
     assert(ports->in_state == ports_nil);
@@ -556,7 +611,8 @@ void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
 
 enum item chunk_ports_consume(struct chunk *chunk, id_t id)
 {
-    struct ports *ports = active_ports(active_index(&chunk->active, id_item(id)), id);
+    struct active *active = active_index_assert(chunk, id_item(id));
+    struct ports *ports = active_ports(active, id);
     if (!ports) return ITEM_NIL;
 
     if (ports->in_state != ports_received) return ITEM_NIL;
@@ -575,7 +631,7 @@ static bool chunk_ports_step_queue(
     id_t dst = ring32_pop(requested);
     if (!dst)  { chunk->workers.clean++; return true; }
 
-    struct ports *in = active_ports(active_index(&chunk->active, id_item(dst)), dst);
+    struct ports *in = active_ports(active_index_assert(chunk, id_item(dst)), dst);
     assert(in && in->in_state == ports_requested);
 
     struct htable_ret hret = htable_get(&chunk->provided, in->in);
@@ -589,7 +645,7 @@ static bool chunk_ports_step_queue(
     if (!src) { chunk->workers.clean++; goto nomatch; }
     if (src == dst) goto nomatch; // storage can assign to self
 
-    struct ports *out = active_ports(active_index(&chunk->active, id_item(src)), src);
+    struct ports *out = active_ports(active_index_assert(chunk, id_item(src)), src);
     assert(out && out->out == in->in);
 
     out->out = ITEM_NIL;

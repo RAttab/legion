@@ -8,6 +8,7 @@
 #include "common.h"
 #include "items/io.h"
 #include "items/item.h"
+#include "items/config.h"
 #include "game/world.h"
 
 struct chunk;
@@ -39,14 +40,33 @@ static_assert(sizeof(struct ports) == 4);
 // active
 // -----------------------------------------------------------------------------
 
-struct active;
 
-struct active *active_alloc(enum item type);
+legion_packed struct active
+{
+    bool skip;
+    enum item type;
+    uint8_t size;
+    legion_pad(5);
+
+    uint16_t count, len, cap;
+    uint16_t create;
+
+    void *arena;
+    struct ports *ports;
+    uint64_t free;
+
+    im_step_t step;
+    im_io_t io;
+    legion_pad(8);
+};
+
+static_assert(sizeof(struct active) == s_cache_line);
+
+void active_init(struct active *, enum item type);
 void active_free(struct active *);
 
-void active_save(struct active *, struct save *save);
-struct active *active_load(
-        enum item type, struct chunk *chunk, struct save *save, bool read);
+bool active_load(struct active *, struct save *, struct chunk *);
+void active_save(const struct active *, struct save *save);
 
 size_t active_count(struct active *);
 
@@ -62,41 +82,3 @@ void active_delete(struct active *, id_t id);
 void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
         enum io io, id_t src, id_t dst, const word_t *args, size_t len);
-
-
-// -----------------------------------------------------------------------------
-// active_list
-// -----------------------------------------------------------------------------
-
-typedef struct active *active_list_t[ITEMS_ACTIVE_LEN];
-
-inline struct active *active_index(active_list_t *list, enum item item)
-{
-    assert(item_is_active(item));
-    size_t index =  item - ITEM_ACTIVE_FIRST;
-
-    return (*list)[index];
-}
-
-inline struct active *active_index_create(active_list_t *list, enum item item)
-{
-    assert(item_is_active(item));
-    size_t index =  item - ITEM_ACTIVE_FIRST;
-
-    if (unlikely(!(*list)[index])) (*list)[index] = active_alloc(item);
-    return (*list)[index];
-}
-
-typedef struct active **active_it_t;
-inline active_it_t active_next(active_list_t *list, active_it_t it)
-{
-    const active_it_t end = (*list) + ITEMS_ACTIVE_LEN;
-    assert(it < end);
-
-    it = it ? it+1 : *list;
-    while (!*it && it < end) it++;
-    return likely(it < end) ? it : NULL;
-}
-
-bool active_list_load(active_list_t *, struct chunk *, struct save *, bool read);
-void active_list_save(active_list_t *, struct save *);
