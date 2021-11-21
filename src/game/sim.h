@@ -45,11 +45,11 @@ enum sim_cmd_type
 {
     CMD_NIL = 0,
     CMD_QUIT,
-    CMD_ACK,
 
     CMD_SAVE,
     CMD_LOAD,
 
+    CMD_ACK,
     CMD_SPEED,
     CMD_CHUNK,
 
@@ -67,7 +67,7 @@ struct sim_cmd
 
     union
     {
-        struct ack ack;
+        const struct ack *ack;
         enum speed speed;
         struct coord chunk;
         mod_t mod;

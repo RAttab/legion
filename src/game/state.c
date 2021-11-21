@@ -13,6 +13,22 @@
 #include "utils/vec.h"
 #include "utils/hset.h"
 
+// -----------------------------------------------------------------------------
+// ack
+// -----------------------------------------------------------------------------
+
+const struct ack *ack_copy(const struct ack *src)
+{
+    struct ack *dst = calloc(1, sizeof(*dst));
+    memcpy(dst, src, sizeof(*src));
+    return dst;
+}
+
+void ack_free(const struct ack *ack)
+{
+    free((struct ack *) ack);
+}
+
 
 // -----------------------------------------------------------------------------
 // state

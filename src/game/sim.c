@@ -493,13 +493,16 @@ static void sim_publish(struct sim *sim)
             save_prof(save);
     }
 
+    bool ack_mod = sim->ack.time > sim->mod.ts;
+    bool ack_compile = sim->ack.time > sim->compile.ts;
+
     state_save(save, &(struct state_ctx) {
                 .world = sim->world,
                 .speed = sim->speed,
                 .home = sim->home,
                 .chunk = sim->chunk,
-                .mod = sim->mod.ts >= sim->ack.time ? sim->mod.id : 0,
-                .compile = sim->compile.ts >= sim->ack.time ? sim->compile.mod : NULL,
+                .mod = !ack_mod ? sim->mod.id : 0,
+                .compile = !ack_compile ? sim->compile.mod : NULL,
                 .ack = &sim->ack,
             });
 
@@ -515,10 +518,15 @@ static bool sim_cmd(struct sim *sim)
         switch (cmd->type)
         {
         case CMD_QUIT: { return false; }
-        case CMD_ACK: { sim->ack = cmd->data.ack; break; }
 
         case CMD_SAVE: { sim_cmd_save(sim, cmd); break; }
         case CMD_LOAD: { sim_cmd_load(sim, cmd); break; }
+
+        case CMD_ACK: {
+            memcpy(&sim->ack, cmd->data.ack, sizeof(sim->ack));
+            ack_free(cmd->data.ack);
+            break;
+        }
 
         case CMD_SPEED: {
             sim->speed = cmd->data.speed;

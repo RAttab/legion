@@ -78,7 +78,7 @@ bool proxy_update(struct proxy *proxy)
         if ((ok = state_load(proxy->state, save, &proxy->ack))) {
             proxy_cmd(proxy, &(struct sim_cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = proxy->ack },
+                .data = { .ack = ack_copy(&proxy->ack) },
             });
         }
         else err0("unable to load state in proxy");

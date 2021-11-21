@@ -40,6 +40,9 @@ struct ack
     uint32_t atoms;
 };
 
+const struct ack *ack_copy(const struct ack *);
+void ack_free(const struct ack *);
+
 
 // -----------------------------------------------------------------------------
 // state
