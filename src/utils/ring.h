@@ -7,6 +7,17 @@
 
 #pragma once
 
+// -----------------------------------------------------------------------------
+// misc
+// -----------------------------------------------------------------------------
+
+inline size_t ring_len(uint16_t head, uint16_t tail)
+{
+    if (head == tail) return 0;
+    if (tail < head) return head - tail;
+    return (head + 1) + (UINT16_MAX - tail);
+}
+
 
 // -----------------------------------------------------------------------------
 // ring32
@@ -14,6 +25,7 @@
 
 #define ringx_type uint32_t
 #define ringx_name ring32
+#define ringx_save
 #include "utils/ringx.h"
 
 
@@ -23,4 +35,5 @@
 
 #define ringx_type uint64_t
 #define ringx_name ring64
+#define ringx_save
 #include "utils/ringx.h"

@@ -8,8 +8,6 @@
 #include "common.h"
 
 struct htable;
-struct ring32;
-struct ring64;
 struct vec64;
 struct symbol;
 
@@ -111,12 +109,6 @@ bool save_read_htable(struct save *, struct htable *);
 
 void save_write_vec64(struct save *, const struct vec64 *);
 bool save_read_vec64(struct save *, struct vec64 **);
-
-void save_write_ring32(struct save *, const struct ring32 *);
-struct ring32 *save_read_ring32(struct save *);
-
-void save_write_ring64(struct save *, const struct ring64 *);
-struct ring64 *save_read_ring64(struct save *);
 
 void save_write_symbol(struct save *, const struct symbol *);
 bool save_read_symbol(struct save *, struct symbol *);

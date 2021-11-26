@@ -135,20 +135,20 @@ void chunk_save(struct chunk *chunk, struct save *save)
     star_save(&chunk->star, save);
     log_save(chunk->log, save);
 
-    save_write_ring32(save, chunk->requested);
-    save_write_ring32(save, chunk->storage);
+    ring32_save(chunk->requested, save);
+    ring32_save(chunk->storage, save);
     save_write_value(save, chunk->provided.len);
     for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
     {
         save_write_value(save, (enum item) it->key);
-        save_write_ring32(save, (struct ring32 *) it->value);
+        ring32_save((struct ring32 *) it->value, save);
     }
 
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
     save_write_vec64(save, chunk->workers.ops);
-    save_write_ring64(save, chunk->pills);
+    ring64_save(chunk->pills, save);
 
     save_write_value(save, chunk->listen.len);
     for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
@@ -176,15 +176,15 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     if (!(chunk->log = log_load(save))) goto fail;
 
-    chunk->requested = save_read_ring32(save);
-    chunk->storage = save_read_ring32(save);
+    chunk->requested = ring32_load(save);
+    chunk->storage = ring32_load(save);
     { // provided
         size_t len = save_read_type(save, typeof(chunk->provided.len));
         htable_reserve(&chunk->provided, len);
         for (size_t i = 0; i < len; ++i) {
             enum item item = save_read_type(save, typeof(item));
 
-            struct ring32 *ring = save_read_ring32(save);
+            struct ring32 *ring = ring32_load(save);
             if (!ring) goto fail;
 
             struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
@@ -195,7 +195,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     if (!energy_load(&chunk->energy, save)) goto fail;
     save_read_into(save, &chunk->workers.count);
     if (!save_read_vec64(save, &chunk->workers.ops)) goto fail;
-    chunk->pills = save_read_ring64(save);
+    chunk->pills = ring64_load(save);
 
     { // listen
         size_t len = save_read_type(save, typeof(chunk->listen.len));
