@@ -537,6 +537,13 @@ void chunk_lanes_launch(
 // ports
 // -----------------------------------------------------------------------------
 
+static void ring32_replace(struct ring32 *ring, uint32_t old, uint32_t new)
+{
+    for (size_t i = 0; i < ring->cap; ++i) {
+        if (ring->vals[i] == old) ring->vals[i] = new;
+    }
+}
+
 void chunk_ports_reset(struct chunk *chunk, id_t id)
 {
     struct active *active = active_index_assert(chunk, id_item(id));

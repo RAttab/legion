@@ -6,7 +6,6 @@
 #include "utils/fs.c"
 #include "utils/rng.c"
 #include "utils/str.c"
-#include "utils/ring.c"
 #include "utils/text.c"
 #include "utils/hset.c"
 #include "utils/color.c"
