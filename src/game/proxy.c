@@ -78,7 +78,7 @@ bool proxy_update(struct proxy *proxy)
         if ((ok = state_load(proxy->state, save, &proxy->ack))) {
             proxy_cmd(proxy, &(struct sim_cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = ack_copy(&proxy->ack) },
+                .data = { .ack = ack_clone(&proxy->ack) },
             });
         }
         else err0("unable to load state in proxy");
@@ -92,22 +92,23 @@ bool proxy_update(struct proxy *proxy)
         sim_log_pop(proxy->sim);
     }
 
-    if (ok) {
-        hset_clear(proxy->active_stars);
-        hset_clear(proxy->active_sectors);
-        struct vec64 *chunks = proxy->state->chunks;
-        for (size_t i = 0; i < chunks->len; ++i) {
-            struct coord star = coord_from_u64(chunks->vals[i]);
-            proxy->active_stars = hset_put(proxy->active_stars, coord_to_u64(star));
+    if (!ok) return false;
 
-            struct coord sector = coord_sector(star);
-            proxy->active_sectors = hset_put(proxy->active_sectors, coord_to_u64(sector));
-        }
+    hset_clear(proxy->active_stars);
+    hset_clear(proxy->active_sectors);
 
-        lisp_context(proxy->lisp, proxy->state->mods, proxy->state->atoms);
+    struct vec64 *chunks = proxy->state->chunks;
+    for (size_t i = 0; i < chunks->len; ++i) {
+        struct coord star = coord_from_u64(chunks->vals[i]);
+        proxy->active_stars = hset_put(proxy->active_stars, coord_to_u64(star));
+
+        struct coord sector = coord_sector(star);
+        proxy->active_sectors = hset_put(proxy->active_sectors, coord_to_u64(sector));
     }
 
-    return ok;
+    lisp_context(proxy->lisp, proxy->state->mods, proxy->state->atoms);
+
+    return true;
 }
 
 struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)

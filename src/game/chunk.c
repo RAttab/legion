@@ -74,16 +74,10 @@ static struct active *active_next(struct chunk *chunk, struct active *it)
     return NULL;
 }
 
-struct chunk *chunk_alloc(
-        struct world *world, const struct star *star, word_t name)
+struct chunk *chunk_alloc_empty(void)
 {
-    assert(world);
-
     struct chunk *chunk = calloc(1, sizeof(*chunk));
     *chunk = (struct chunk) {
-        .world = world,
-        .star = *star,
-        .name = name,
         .log = log_new(chunk_log_cap),
         .requested = ring32_reserve(16),
         .storage = ring32_reserve(1),
@@ -94,6 +88,18 @@ struct chunk *chunk_alloc(
     for (size_t i = 0; i < array_len(chunk->active); ++i)
         active_init(chunk->active + i, ITEM_ACTIVE_FIRST + i);
 
+    return chunk;
+}
+
+struct chunk *chunk_alloc(
+        struct world *world, const struct star *star, word_t name)
+{
+    assert(world);
+
+    struct chunk *chunk = chunk_alloc_empty();
+    chunk->world = world;
+    chunk->star = *star;
+    chunk->name = name;
     return chunk;
 }
 
@@ -127,16 +133,13 @@ void chunk_free(struct chunk *chunk)
     free(chunk);
 }
 
-void chunk_save(struct chunk *chunk, struct save *save)
+
+// -----------------------------------------------------------------------------
+// save/load
+// -----------------------------------------------------------------------------
+
+static void chunk_save_provided(struct chunk *chunk, struct save *save)
 {
-    save_write_magic(save, save_magic_chunk);
-
-    save_write_value(save, chunk->name);
-    star_save(&chunk->star, save);
-    log_save(chunk->log, save);
-
-    ring32_save(chunk->requested, save);
-    ring32_save(chunk->storage, save);
     save_write_value(save, chunk->provided.len);
     for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
@@ -144,12 +147,28 @@ void chunk_save(struct chunk *chunk, struct save *save)
         save_write_value(save, (enum item) it->key);
         ring32_save((struct ring32 *) it->value, save);
     }
+}
 
-    energy_save(&chunk->energy, save);
-    save_write_value(save, chunk->workers.count);
-    save_write_vec64(save, chunk->workers.ops);
-    ring64_save(chunk->pills, save);
+static bool chunk_load_provided(struct chunk *chunk, struct save *save)
+{
+    size_t len = save_read_type(save, typeof(chunk->provided.len));
+    htable_reserve(&chunk->provided, len);
 
+    for (size_t i = 0; i < len; ++i) {
+        enum item item = save_read_type(save, typeof(item));
+
+        struct ring32 *ring = ring32_load(save);
+        if (!ring) return false;
+
+        struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
+        assert(ret.ok);
+    }
+
+    return true;
+}
+
+static void chunk_save_listen(struct chunk *chunk, struct save *save)
+{
     save_write_value(save, chunk->listen.len);
     for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
          it; it = htable_next(&chunk->listen, it))
@@ -157,9 +176,67 @@ void chunk_save(struct chunk *chunk, struct save *save)
         save_write_value(save, it->key);
         save_write(save, (id_t *) it->value, im_channel_max * sizeof(id_t));
     }
+}
 
+static bool chunk_load_listen(struct chunk *chunk, struct save *save)
+{
+    size_t len = save_read_type(save, typeof(chunk->listen.len));
+    htable_reserve(&chunk->listen, len);
+    for (size_t i = 0; i < len; ++i) {
+        uint64_t src = save_read_type(save, typeof(src));
+        struct htable_ret ret = htable_get(&chunk->listen, src);
+
+        id_t *channels = (void *) ret.value;
+        if (!ret.ok) channels = calloc(im_channel_max, sizeof(*channels));
+        save_read(save, channels, im_channel_max * sizeof(*channels));
+
+        if (ret.ok)
+            ret = htable_xchg(&chunk->listen, src, (uintptr_t) channels);
+        else ret = htable_put(&chunk->listen, src, (uintptr_t) channels);
+        assert(ret.ok);
+    }
+
+    return true;
+}
+
+static void chunk_save_active(struct chunk *chunk, struct save *save)
+{
     for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
         active_save(it, save);
+}
+
+static bool chunk_load_active(struct chunk *chunk, struct save *save)
+{
+    for (size_t i = 0; i < array_len(chunk->active); ++i) {
+        struct active *it = chunk->active + i;
+
+        active_init(it, ITEM_ACTIVE_FIRST + i);
+        if (it->skip) continue;
+
+        if (!active_load(it, save, chunk)) return false;
+    }
+    return true;
+}
+
+void chunk_save(struct chunk *chunk, struct save *save)
+{
+    save_write_magic(save, save_magic_chunk);
+
+    save_write_value(save, chunk->name);
+    star_save(&chunk->star, save);
+
+    chunk_save_provided(chunk, save);
+    ring32_save(chunk->requested, save);
+    ring32_save(chunk->storage, save);
+
+    ring64_save(chunk->pills, save);
+    energy_save(&chunk->energy, save);
+    save_write_value(save, chunk->workers.count);
+    save_write_vec64(save, chunk->workers.ops);
+
+    log_save(chunk->log, save);
+    chunk_save_listen(chunk, save);
+    chunk_save_active(chunk, save);
 
     save_write_magic(save, save_magic_chunk);
 }
@@ -174,50 +251,18 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     save_read_into(save, &chunk->name);
     star_load(&chunk->star, save);
 
-    if (!(chunk->log = log_load(save))) goto fail;
+    if (!chunk_load_provided(chunk, save)) goto fail;
+    if (!(chunk->requested = ring32_load(save))) goto fail;
+    if (!(chunk->storage = ring32_load(save))) goto fail;
 
-    chunk->requested = ring32_load(save);
-    chunk->storage = ring32_load(save);
-    { // provided
-        size_t len = save_read_type(save, typeof(chunk->provided.len));
-        htable_reserve(&chunk->provided, len);
-        for (size_t i = 0; i < len; ++i) {
-            enum item item = save_read_type(save, typeof(item));
-
-            struct ring32 *ring = ring32_load(save);
-            if (!ring) goto fail;
-
-            struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
-            assert(ret.ok);
-        }
-    }
-
+    if (!(chunk->pills = ring64_load(save))) goto fail;
     if (!energy_load(&chunk->energy, save)) goto fail;
     save_read_into(save, &chunk->workers.count);
     if (!save_read_vec64(save, &chunk->workers.ops)) goto fail;
-    chunk->pills = ring64_load(save);
 
-    { // listen
-        size_t len = save_read_type(save, typeof(chunk->listen.len));
-        htable_reserve(&chunk->listen, len);
-        for (size_t i = 0; i < len; ++i) {
-            uint64_t src = save_read_type(save, typeof(src));
-
-            id_t *channels = calloc(im_channel_max, sizeof(*channels));
-            save_read(save, channels, im_channel_max * sizeof(*channels));
-            struct htable_ret ret = htable_put(&chunk->listen, src, (uintptr_t) channels);
-            assert(ret.ok);
-        }
-    }
-
-    for (size_t i = 0; i < array_len(chunk->active); ++i) {
-        struct active *it = chunk->active + i;
-
-        active_init(it, ITEM_ACTIVE_FIRST + i);
-        if (it->skip) continue;
-
-        if (!active_load(it, save, chunk->world ? chunk : NULL)) goto fail;
-    }
+    if (!(chunk->log = log_load(save))) goto fail;
+    if (!chunk_load_listen(chunk, save)) goto fail;
+    if (!chunk_load_active(chunk, save)) goto fail;
 
     if (!save_read_magic(save, save_magic_chunk)) goto fail;
     return chunk;
@@ -226,6 +271,152 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     chunk_free(chunk);
     return NULL;
 }
+
+
+static void chunk_save_delta_provided(
+        struct chunk *chunk, struct save *save, const struct chunk_ack *ack)
+{
+    assert(chunk->provided.len < ITEM_MAX);
+    for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
+         it; it = htable_next(&chunk->provided, it))
+    {
+        struct htable_ret ret = htable_get(&ack->provided, it->key);
+        struct ring_ack rack = ring_ack_from_u64(ret.value);
+
+        // Optimization to avoid sending full deltas for acknowledged empty rings.
+        struct ring32 *ring = (void *) it->value;
+        if (rack.head == rack.tail && ring->head == ring->tail) continue;
+
+        save_write_value(save, (enum item) it->key);
+        ring32_save_delta(ring, save, &rack);
+    }
+
+    save_write_value(save, (enum item) 0);
+}
+
+static bool chunk_load_delta_provided(
+        struct chunk *chunk, struct save *save, struct chunk_ack *ack)
+{
+    enum item item = 0;
+    while ((item = save_read_type(save, typeof(item)))) {
+
+        struct htable_ret ret_ack = htable_get(&ack->provided, item);
+        struct ring_ack rack = ring_ack_from_u64(ret_ack.value);
+
+        struct htable_ret ret = htable_get(&chunk->provided, item);
+        struct ring32 *ring = (void *) ret.value;
+
+        if (!ring32_load_delta(&ring, save, &rack)) {
+            if (!ret.ok) ring32_free(ring);
+            return false;
+        }
+
+        if (ret.ok)
+            ret = htable_xchg(&chunk->provided, item, (uintptr_t) ring);
+        else ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
+        assert(ret.ok);
+
+        if (ret_ack.ok)
+            ret_ack = htable_xchg(&ack->provided, item, ring_ack_to_u64(rack));
+        else ret_ack = htable_put(&ack->provided, item, ring_ack_to_u64(rack));
+        assert(ret_ack.ok);
+    }
+
+    return true;
+}
+
+static void chunk_save_delta_active(
+        struct chunk *chunk, struct save *save, const struct chunk_ack *ack)
+{
+    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it)) {
+        hash_t hash = active_hash(it, hash_init());
+        if (ack->active[it->type - ITEM_ACTIVE_FIRST] == hash) continue;
+
+        save_write_value(save, it->type);
+        save_write_value(save, hash);
+        active_save(it, save);
+    }
+    save_write_value(save, (enum item) 0);
+}
+
+static bool chunk_load_delta_active(
+        struct chunk *chunk, struct save *save, struct chunk_ack *ack)
+{
+    enum item type = 0;
+    while ((type = save_read_type(save, typeof(type)))) {
+        hash_t hash = save_read_type(save, typeof(hash));
+
+        struct active *active = active_index(chunk, type);
+        assert(active && !active->skip);
+
+        if (!active_load(active, save, NULL)) return false;
+        ack->active[type - ITEM_ACTIVE_FIRST] = hash;
+    }
+
+    return true;
+}
+
+
+void chunk_save_delta(
+        struct chunk *chunk, struct save *save, const struct ack *ack)
+{
+    save_write_magic(save, save_magic_chunk);
+
+    save_write_value(save, chunk->name);
+    star_save(&chunk->star, save);
+
+    const struct chunk_ack *cack = &ack->chunk;
+    static const struct chunk_ack cack_nil = {0};
+    if (!coord_eq(ack->chunk.coord, chunk->star.coord)) cack = &cack_nil;
+
+    chunk_save_delta_provided(chunk, save, cack);
+    ring32_save_delta(chunk->requested, save, &cack->requested);
+    ring32_save_delta(chunk->storage, save, &cack->storage);
+
+    ring64_save_delta(chunk->pills, save, &cack->pills);
+    energy_save(&chunk->energy, save);
+    save_write_value(save, chunk->workers.count);
+    save_write_vec64(save, chunk->workers.ops);
+
+    log_save_delta(chunk->log, save, cack->time);
+    chunk_save_listen(chunk, save);
+    chunk_save_delta_active(chunk, save, cack);
+
+    save_write_magic(save, save_magic_chunk);
+}
+
+bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
+{
+    if (!save_read_magic(save, save_magic_chunk)) return false;
+
+    save_read_into(save, &chunk->name);
+    if (!star_load(&chunk->star, save)) return false;
+
+    if (!coord_eq(ack->chunk.coord, chunk->star.coord)) ack_reset_chunk(ack);
+
+    if (!chunk_load_delta_provided(chunk, save, &ack->chunk)) return false;
+    if (!ring32_load_delta(&chunk->requested, save, &ack->chunk.requested)) return false;
+    if (!ring32_load_delta(&chunk->storage, save, &ack->chunk.storage)) return false;
+
+    if (!ring64_load_delta(&chunk->pills, save, &ack->chunk.pills)) return false;
+    if (!energy_load(&chunk->energy, save)) return false;
+    save_read_into(save, &chunk->workers.count);
+    if (!save_read_vec64(save, &chunk->workers.ops)) return false;
+
+    if (!log_load_delta(chunk->log, save, ack->chunk.time)) return false;
+    if (!chunk_load_listen(chunk, save)) return false;
+    if (!chunk_load_delta_active(chunk, save, &ack->chunk)) return false;
+
+    if (!save_read_magic(save, save_magic_chunk)) return false;
+
+    ack->chunk.coord = chunk->star.coord;
+    return true;
+}
+
+
+// -----------------------------------------------------------------------------
+// ops
+// -----------------------------------------------------------------------------
 
 struct world *chunk_world(struct chunk *chunk)
 {

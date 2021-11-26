@@ -36,6 +36,7 @@ struct sim
     ts_t next;
 
     struct ack ack;
+    uint64_t stream;
 
     struct world *world;
     struct coord home;
@@ -70,6 +71,7 @@ struct sim
 struct sim *sim_new(seed_t seed)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
+    sim->stream = 1;
 
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
@@ -362,6 +364,8 @@ static void sim_cmd_load(struct sim *sim, const struct sim_cmd *cmd)
     world = legion_xchg(&sim->world, world);
     world_free(world);
 
+    sim->stream++;
+
   fail:
     if (fail)
         sim_log(sim, st_error, "save file is corrupted");
@@ -495,8 +499,10 @@ static void sim_publish(struct sim *sim)
 
     bool ack_mod = sim->ack.time > sim->mod.ts;
     bool ack_compile = sim->ack.time > sim->compile.ts;
+    if (sim->stream != sim->ack.stream) ack_reset(&sim->ack);
 
     state_save(save, &(struct state_ctx) {
+                .stream = sim->stream,
                 .world = sim->world,
                 .speed = sim->speed,
                 .home = sim->home,

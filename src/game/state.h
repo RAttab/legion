@@ -8,12 +8,12 @@
 #include "common.h"
 #include "game/coord.h"
 #include "game/world.h"
+#include "game/chunk.h"
 #include "game/tech.h"
 #include "utils/htable.h"
 
 struct vec64;
 struct log;
-struct chunk;
 struct atoms;
 struct mods_list;
 struct mod;
@@ -21,7 +21,7 @@ struct save;
 
 
 // -----------------------------------------------------------------------------
-// types
+// speed
 // -----------------------------------------------------------------------------
 
 enum legion_packed speed
@@ -34,14 +34,36 @@ enum legion_packed speed
 static_assert(sizeof(enum speed) == 1);
 
 
-struct ack
+// -----------------------------------------------------------------------------
+// ack
+// -----------------------------------------------------------------------------
+
+struct chunk_ack
 {
+    struct coord coord;
     world_ts_t time;
-    uint32_t atoms;
+
+    struct htable provided;
+    struct ring_ack requested;
+    struct ring_ack storage;
+
+    struct ring_ack pills;
+    hash_t active[ITEMS_ACTIVE_LEN];
 };
 
-const struct ack *ack_copy(const struct ack *);
+struct ack
+{
+    uint64_t stream;
+    world_ts_t time;
+    uint32_t atoms;
+    struct chunk_ack chunk;
+};
+
+const struct ack *ack_clone(const struct ack *);
 void ack_free(const struct ack *);
+
+void ack_reset(struct ack *);
+void ack_reset_chunk(struct ack *);
 
 
 // -----------------------------------------------------------------------------
@@ -50,6 +72,8 @@ void ack_free(const struct ack *);
 
 struct state
 {
+    uint64_t stream;
+
     seed_t seed;
     world_ts_t time;
     enum speed speed;
@@ -84,6 +108,8 @@ void state_free(struct state *);
 
 struct state_ctx
 {
+    uint64_t stream;
+
     struct world *world;
     enum speed speed;
     struct coord home;

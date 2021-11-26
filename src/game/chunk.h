@@ -11,7 +11,10 @@
 #include "items/io.h"
 #include "items/item.h"
 #include "vm/vm.h"
+#include "utils/ring.h"
+#include "utils/hash.h"
 
+struct ack;
 struct star;
 struct logi;
 struct vec64;
@@ -26,11 +29,15 @@ struct energy;
 
 struct chunk;
 
+struct chunk *chunk_alloc_empty(void);
 struct chunk *chunk_alloc(struct world *, const struct star *, word_t name);
 void chunk_free(struct chunk *);
 
 void chunk_save(struct chunk *, struct save *);
 struct chunk *chunk_load(struct world *, struct save *);
+
+void chunk_save_delta(struct chunk *, struct save *, const struct ack *);
+bool chunk_load_delta(struct chunk *, struct save *, struct ack *);
 
 struct world *chunk_world(struct chunk *);
 const struct star *chunk_star(const struct chunk *);

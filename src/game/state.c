@@ -17,16 +17,31 @@
 // ack
 // -----------------------------------------------------------------------------
 
-const struct ack *ack_copy(const struct ack *src)
+const struct ack *ack_clone(const struct ack *src)
 {
     struct ack *dst = calloc(1, sizeof(*dst));
+
     memcpy(dst, src, sizeof(*src));
+    dst->chunk.provided = htable_clone(&src->chunk.provided);
+
     return dst;
 }
 
 void ack_free(const struct ack *ack)
 {
     free((struct ack *) ack);
+}
+
+void ack_reset(struct ack *ack)
+{
+    htable_reset(&ack->chunk.provided);
+    memset(ack, 0, sizeof(*ack));
+}
+
+void ack_reset_chunk(struct ack *ack)
+{
+    htable_reset(&ack->chunk.provided);
+    memset(&ack->chunk, 0, sizeof(ack->chunk));
 }
 
 
@@ -45,6 +60,8 @@ struct state *state_alloc(void)
         .chunks = vec64_reserve(16),
         .log = log_new(world_log_cap),
     };
+
+    state->chunk.chunk = chunk_alloc_empty();
     tech_init(&state->tech);
 
     return state;
@@ -61,7 +78,7 @@ void state_free(struct state *state)
 
     if (state->compile) mod_free(state->compile);
     if (state->mod.mod) mod_free(state->mod.mod);
-    if (state->chunk.chunk) chunk_free(state->chunk.chunk);
+    chunk_free(state->chunk.chunk);
 
     for (const struct htable_bucket *it = htable_next(&state->lanes, NULL);
          it; it = htable_next(&state->lanes, it))
@@ -127,6 +144,7 @@ static bool state_load_chunks(struct state *state, struct save *save)
 void state_save(struct save *save, const struct state_ctx *ctx)
 {
     save_write_magic(save, save_magic_state_world);
+    save_write_value(save, ctx->stream);
     save_write_value(save, world_seed(ctx->world));
     save_write_value(save, world_time(ctx->world));
     save_write_value(save, ctx->speed);
@@ -138,7 +156,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     state_save_chunks(ctx->world, save);
     world_lanes_list_save(ctx->world, save);
     tech_save(world_tech(ctx->world), save);
-    log_save_delta(world_log(ctx->world), save, ctx->ack);
+    log_save_delta(world_log(ctx->world), save, ctx->ack->time);
 
     {
         save_write_magic(save, save_magic_state_compile);
@@ -164,7 +182,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
         if (!chunk) save_write_value(save, (uint64_t) 0);
         else {
             save_write_value(save, coord_to_u64(ctx->chunk));
-            chunk_save(chunk, save);
+            chunk_save_delta(chunk, save, ctx->ack);
         }
         save_write_magic(save, save_magic_state_chunk);
     }
@@ -173,18 +191,21 @@ void state_save(struct save *save, const struct state_ctx *ctx)
 bool state_load(struct state *state, struct save *save, struct ack *ack)
 {
     if (!save_read_magic(save, save_magic_state_world)) return false;
+    save_read_into(save, &state->stream);
     save_read_into(save, &state->seed);
     save_read_into(save, &state->time);
     save_read_into(save, &state->speed);
     state->home = coord_from_u64(save_read_type(save, uint64_t));
     if (!save_read_magic(save, save_magic_state_world)) return false;
 
+    if (state->stream != ack->stream) ack_reset(ack);
+
     if (!atoms_load_delta(state->atoms, save, ack)) return false;
     if (!mods_list_load_into(&state->mods, save)) return false;
     if (!state_load_chunks(state, save)) return false;
     if (!lanes_list_load_into(&state->lanes, save)) return false;
     if (!tech_load(&state->tech, save)) return false;
-    if (!log_load_delta(state->log, save, ack)) return false;
+    if (!log_load_delta(state->log, save, ack->time)) return false;
 
     {
         if (!save_read_magic(save, save_magic_state_compile)) return false;
@@ -204,19 +225,16 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
         if (!save_read_magic(save, save_magic_state_mod)) return false;
     }
 
-    {// \todo Need a chunk_load_into; it's not trivial.
+    {
         if (!save_read_magic(save, save_magic_state_chunk)) return false;
-        if (state->chunk.chunk) chunk_free(state->chunk.chunk);
-        state->chunk.chunk = NULL;
         state->chunk.coord = coord_from_u64(save_read_type(save, uint64_t));
         if (!coord_is_nil(state->chunk.coord)) {
-            struct chunk *chunk = chunk_load(NULL, save);
-            if (!chunk) return false;
-            state->chunk.chunk = chunk;
+            if (!chunk_load_delta(state->chunk.chunk, save, ack)) return false;
         }
         if (!save_read_magic(save, save_magic_state_chunk)) return false;
     }
 
-    ack->time = state->time;
+    ack->stream = state->stream;
+    ack->time = ack->chunk.time = state->time;
     return true;
 }

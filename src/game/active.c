@@ -79,12 +79,32 @@ static bool active_recycle(struct active *active, size_t *index)
     return false;
 }
 
+hash_t active_hash(const struct active *active, hash_t hash)
+{
+    if (active->skip) return hash;
+
+    hash = hash_value(hash, active->type);
+    hash = hash_value(hash, active->size);
+    hash = hash_value(hash, active->count);
+    hash = hash_value(hash, active->create);
+    hash = hash_bytes(hash, active->arena, active->len * active->size);
+    hash = hash_bytes(hash, active->ports, active->len * sizeof(*active->ports));
+
+    if (likely(active->cap <= 64)) hash = hash_value(hash, active->free);
+    else {
+        struct vec64 *vec = (void *) active->free;
+        hash = hash_bytes(hash, vec->vals, vec->len * sizeof(vec->vals[0]));
+    }
+
+    return hash;
+}
 
 void active_save(const struct active *active, struct save *save)
 {
     save_write_magic(save, save_magic_active);
 
     save_write_value(save, active->len);
+    save_write_value(save, active->cap);
     save_write_value(save, active->create);
     if (!active->len && !active->create)
         return save_write_magic(save, save_magic_active);
@@ -104,13 +124,11 @@ bool active_load(struct active *active, struct save *save, struct chunk *chunk)
     if (!save_read_magic(save, save_magic_active)) return false;
 
     save_read_into(save, &active->len);
+    save_read_into(save, &active->cap);
     save_read_into(save, &active->create);
     if (!active->len && !active->create)
         return save_read_magic(save, save_magic_active);
     save_read_into(save, &active->count);
-
-    if (!active->cap) active->cap = 1;
-    while (active->cap < active->len) active->cap *= 2;
 
     active->arena = realloc(active->arena, active->cap * active->size);
     save_read(save, active->arena, active->len * active->size);

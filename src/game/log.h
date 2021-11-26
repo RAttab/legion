@@ -44,5 +44,5 @@ const struct logi *log_next(const struct log *, const struct logi *it);
 void log_save(const struct log *, struct save *);
 struct log *log_load(struct save *);
 
-void log_save_delta(const struct log *, struct save *, const struct ack *);
-bool log_load_delta(struct log *, struct save *, const struct ack *);
+void log_save_delta(const struct log *, struct save *, world_ts_t);
+bool log_load_delta(struct log *, struct save *, world_ts_t);

@@ -93,14 +93,14 @@ struct log *log_load(struct save *save)
     return NULL;
 }
 
-void log_save_delta(const struct log *log, struct save *save, const struct ack *ack)
+void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
 {
     save_write_magic(save, save_magic_log);
 
     for (const struct logi *it = log_next(log, NULL);
          it; it = log_next(log, it))
     {
-        if (it->time <= ack->time) continue;
+        if (it->time <= ack) continue;
         save_write_value(save, it->time);
         save_write_value(save, coord_to_u64(it->star));
         save_write_value(save, it->id);
@@ -112,7 +112,7 @@ void log_save_delta(const struct log *log, struct save *save, const struct ack *
     save_write_magic(save, save_magic_log);
 }
 
-bool log_load_delta(struct log *log, struct save *save, const struct ack *ack)
+bool log_load_delta(struct log *log, struct save *save, world_ts_t ack)
 {
     if (!save_read_magic(save, save_magic_log)) return false;
 
@@ -125,7 +125,7 @@ bool log_load_delta(struct log *log, struct save *save, const struct ack *ack)
         enum io io = save_read_type(save, typeof(io));
         enum ioe ioe = save_read_type(save, typeof(ioe));
 
-        if (time <= ack->time) continue;
+        if (time <= ack) continue;
         log_push(log, time, star, id, io, ioe);
     }
 
