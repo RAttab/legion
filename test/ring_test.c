@@ -110,6 +110,80 @@ void check_limits(void)
     ring32_free(ring);
 }
 
+struct ring32 *ring32_clone(const struct ring32 *old)
+{
+    struct ring32 *new = ring32_reserve(old->cap);
+    memcpy(new, old, sizeof(*old) + old->cap * sizeof(old->vals[0]));
+    return new;
+}
+
+#define assert_ring_eq(lhs, rhs)                                \
+    do {                                                        \
+        assert(lhs->head == rhs->head);                         \
+        assert(lhs->tail == rhs->tail);                         \
+                                                                \
+        for (size_t i = 0; i < ring32_len(lhs); ++i) {          \
+            assert(lhs->vals[(lhs->tail + i) % lhs->cap] ==     \
+                    rhs->vals[(rhs->tail + i) % rhs->cap]);     \
+        }                                                       \
+    } while (false)
+
+void check_save(size_t init, size_t churn)
+{
+    struct save *save = save_mem_new();
+
+    ring_it_t val = 1;
+    struct ring32 *base = ring32_reserve(init);
+    while (val < init) base = ring32_push(base, val++);
+
+    struct ring32 *ring = NULL;
+
+    for (size_t it = 0; it < (ring_cap * 2) / churn; ++it) {
+        save_mem_reset(save);
+        ring32_save(base, save);
+        save_mem_reset(save);
+
+        ring32_free(ring);
+        assert((ring = ring32_load(save)));
+        assert_ring_eq(base, ring);
+
+        for (size_t i = 0; i < churn; ++i) base = ring32_push(base, val++);
+        for (size_t i = 0; i < churn; ++i) ring32_pop(base);
+    }
+
+    save_mem_free(save);
+    ring32_free(base);
+    ring32_free(ring);
+}
+
+void check_save_delta(size_t init, size_t churn)
+{
+    struct save *save = save_mem_new();
+
+    ring_it_t val = 1;
+    struct ring32 *base = ring32_reserve(init);
+    while (val < init) base = ring32_push(base, val++);
+
+    struct ring_ack ack = {0};
+    struct ring32 *ring = NULL;
+
+    for (size_t it = 0; it < (ring_cap * 2) / churn; ++it) {
+        save_mem_reset(save);
+        ring32_save_delta(base, save, &ack);
+        save_mem_reset(save);
+
+        assert(ring32_load_delta(&ring, save, &ack));
+        assert_ring_eq(base, ring);
+
+        for (size_t i = 0; i < churn; ++i) base = ring32_push(base, val++);
+        for (size_t i = 0; i < churn; ++i) ring32_pop(base);
+    }
+
+    save_mem_free(save);
+    ring32_free(base);
+    ring32_free(ring);
+}
+
 int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
@@ -118,6 +192,10 @@ int main(int argc, char **argv)
     check_cap();
     check_growth();
     check_limits();
+    check_save(100, 50);
+    check_save(100, 150);
+    check_save_delta(100, 50);
+    check_save_delta(100, 150);
 
     return 0;
 };
