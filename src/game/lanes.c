@@ -7,6 +7,7 @@
 #include "items/item.h"
 #include "items/config.h"
 #include "utils/hset.h"
+#include "utils/hash.h"
 
 // -----------------------------------------------------------------------------
 // data

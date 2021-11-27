@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "utils/hash.h"
 
 #include <ctype.h>
 
@@ -27,13 +28,9 @@ static_assert(sizeof(struct symbol) == 32);
 struct symbol make_symbol(const char *str);
 struct symbol make_symbol_len(const char *str, size_t len);
 
-// FNV-1a hash: http://isthe.com/chongo/tech/comp/fnv/
 inline uint64_t symbol_hash(const struct symbol *symbol)
 {
-    uint64_t hash = 0xcbf29ce484222325;
-    for (size_t i = 0; i < symbol->len; ++i)
-        hash = (hash ^ symbol->c[i]) * 0x100000001b3;
-    return hash;
+    return hash_bytes(hash_init(), symbol->c, symbol->len);
 }
 
 #define symbol_hash_c(str)                                              \

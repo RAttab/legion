@@ -4,7 +4,7 @@
 */
 
 #include "utils/hset.h"
-#include "utils/bits.h"
+#include "utils/hash.h"
 
 
 // -----------------------------------------------------------------------------

@@ -13,6 +13,8 @@
 #include "utils/fs.h"
 #include "utils/rng.h"
 #include "utils/vec.h"
+#include "utils/hash.h"
+
 
 // -----------------------------------------------------------------------------
 // gen

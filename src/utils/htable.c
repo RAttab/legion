@@ -4,7 +4,7 @@
 */
 
 #include "utils/htable.h"
-#include "utils/bits.h"
+#include "utils/hash.h"
 
 
 // -----------------------------------------------------------------------------
