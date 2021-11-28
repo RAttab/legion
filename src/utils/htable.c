@@ -55,7 +55,7 @@ static void htable_resize(struct htable *ht, size_t cap)
 {
     if (cap <= ht->cap) return;
 
-    size_t new_cap = ht->cap ? ht->cap : 1;
+    size_t new_cap = ht->cap ? ht->cap : htable_window;
     while (new_cap < cap) new_cap *= 2;
 
     struct htable_bucket *new_table = calloc(new_cap, sizeof(*new_table));
