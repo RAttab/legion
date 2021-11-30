@@ -8,6 +8,7 @@
 #include "common.h"
 #include "game/id.h"
 #include "game/save.h"
+#include "game/world.h"
 #include "items/io.h"
 #include "items/item.h"
 #include "vm/vm.h"
@@ -18,7 +19,6 @@ struct ack;
 struct star;
 struct logi;
 struct vec64;
-struct world;
 struct coord;
 struct energy;
 
@@ -41,6 +41,7 @@ bool chunk_load_delta(struct chunk *, struct save *, struct ack *);
 
 struct world *chunk_world(struct chunk *);
 const struct star *chunk_star(const struct chunk *);
+world_ts_t chunk_updated(const struct chunk *);
 
 word_t chunk_name(struct chunk *);
 void chunk_rename(struct chunk *, word_t);

@@ -29,6 +29,8 @@ struct chunk
     struct star star;
     word_t name;
 
+    world_ts_t updated;
+
     struct log *log;
 
     // Ports
@@ -100,6 +102,7 @@ struct chunk *chunk_alloc(
     chunk->world = world;
     chunk->star = *star;
     chunk->name = name;
+    chunk->updated = world_time(world);
     return chunk;
 }
 
@@ -429,6 +432,11 @@ const struct star *chunk_star(const struct chunk *chunk)
     return &chunk->star;
 }
 
+world_ts_t chunk_updated(const struct chunk *chunk)
+{
+    return chunk->updated;
+}
+
 word_t chunk_name(struct chunk *chunk)
 {
     return chunk->name;
@@ -436,6 +444,7 @@ word_t chunk_name(struct chunk *chunk)
 void chunk_rename(struct chunk *chunk, word_t new)
 {
     chunk->name = new;
+    chunk->updated = world_time(chunk->world);
 }
 
 bool chunk_harvest(struct chunk *chunk, enum item item)

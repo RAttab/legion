@@ -94,7 +94,8 @@ void state_free(struct state *state)
 // save
 // -----------------------------------------------------------------------------
 
-static void state_save_chunks(struct world *world, struct save *save)
+static void state_save_chunks(
+        struct world *world, struct save *save, const struct ack *ack)
 {
     save_write_magic(save, save_magic_chunks);
 
@@ -102,6 +103,7 @@ static void state_save_chunks(struct world *world, struct save *save)
     struct world_chunk_it it = world_chunk_it(world);
 
     while ((chunk = world_chunk_next(world, &it))) {
+        if (chunk_updated(chunk) < ack->time) continue;
         save_write_value(save, coord_to_u64(chunk_star(chunk)->coord));
         save_write_value(save, chunk_name(chunk));
     }
@@ -114,16 +116,17 @@ static bool state_load_chunks(struct state *state, struct save *save)
 {
     if (!save_read_magic(save, save_magic_chunks)) return false;
 
-    state->chunks->len = 0;
-    htable_clear(&state->names);
-
     while (true) {
         uint64_t coord = save_read_type(save, typeof(coord));
         if (!coord) break;
         word_t name = save_read_type(save, typeof(name));
 
-        state->chunks = vec64_append(state->chunks, coord);
-        (void) htable_put(&state->names, coord, name);
+        struct htable_ret ret = htable_put(&state->names, coord, name);
+        if (ret.ok) state->chunks = vec64_append(state->chunks, coord);
+        else {
+            ret = htable_xchg(&state->names, coord, name);
+            assert(ret.ok);
+        }
     }
 
     int cmp(const void *lhs_, const void *rhs_) {
@@ -153,7 +156,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
 
     atoms_save_delta(world_atoms(ctx->world), save, ctx->ack);
     mods_list_save(world_mods(ctx->world), save);
-    state_save_chunks(ctx->world, save);
+    state_save_chunks(ctx->world, save, ctx->ack);
     world_lanes_list_save(ctx->world, save);
     tech_save(world_tech(ctx->world), save);
     log_save_delta(world_log(ctx->world), save, ctx->ack->time);
