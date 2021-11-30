@@ -134,13 +134,12 @@ static void ui_mod_action(struct ui_mod *ui, enum ui_mod_action action)
 
 static void ui_mod_action_clear(struct ui_mod *ui)
 {
-    assert(ui->mod);
-    assert(ui->action);
     ui->action = ui_mod_nil;
     ui->select_ip = 0;
 
     ui->compile.disabled = false;
     ui->publish.disabled =
+        !ui->mod ||
         ui->mod->errs_len ||
         ui->mod->id == ui->id ||
         mod_ver(ui->mod->id);

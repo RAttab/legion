@@ -257,6 +257,7 @@ const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
     if (proxy->state->mod.id == id) {
         const struct mod *mod = proxy->state->mod.mod;
         proxy->state->mod.mod = NULL;
+        proxy->mod = 0;
         return mod;
     }
 
