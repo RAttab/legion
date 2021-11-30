@@ -46,7 +46,6 @@ enum
     map_thresh_stars = scale_base << 0x8,
     map_thresh_sector_low = scale_base << 0x7,
     map_thresh_sector_high = scale_base << 0xE,
-    map_thresh_sector_active = scale_base << 0xA,
 };
 
 
@@ -280,9 +279,7 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
             .h = bot.y - top.y,
         };
 
-        if (map->scale < map_thresh_sector_active
-                && proxy_active_sector(core.proxy, it))
-        {
+        if (proxy_active_sector(core.proxy, it)) {
             uint8_t alpha = 0xFF;
             if (map->scale < map_thresh_stars)
                 alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_sector_low);
