@@ -26,7 +26,7 @@ enum
     sim_log_len = 16,
     sim_save_version = 1,
 
-    sim_prof_enabled = 1,
+    sim_prof_enabled = 0,
     sim_prof_freq = 100,
 };
 
