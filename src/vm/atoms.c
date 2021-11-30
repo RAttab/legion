@@ -147,17 +147,6 @@ bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
     uint32_t start = save_read_type(save, typeof(start));
     uint32_t delta = save_read_type(save, typeof(delta));
 
-    size_t cap = atoms->end - atoms->base;
-    size_t total = start + delta;
-    if (total > cap) {
-        while (cap < total) cap *= 2;
-        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
-        atoms->end = atoms->base + cap;
-    }
-
-    htable_reserve(&atoms->iword, total);
-    htable_reserve(&atoms->istr, total);
-
     // It's possible for the client to add temporary entries in it's local atoms
     // instance. It's not great but the alternative is to force a round-trip to
     // server in the middle of lisp_eval.
@@ -171,6 +160,17 @@ bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
         assert(ret.ok);
         memset(it, 0, sizeof(*it));
     }
+
+    size_t cap = atoms->end - atoms->base;
+    size_t total = start + delta;
+    if (total > cap) {
+        while (cap < total) cap *= 2;
+        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
+        atoms->end = atoms->base + cap;
+    }
+
+    htable_reserve(&atoms->iword, total);
+    htable_reserve(&atoms->istr, total);
 
     atoms->it = atoms->base + start;
     save_read(save, atoms->it, delta * sizeof(*atoms->base));
