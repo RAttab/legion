@@ -8,6 +8,7 @@
 #include "items/item.h"
 #include "items/config.h"
 #include "utils/htable.h"
+#include "render/core.h"
 
 #include <stdarg.h>
 #include <unistd.h>

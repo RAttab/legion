@@ -50,7 +50,7 @@ for obj in "${SRC[@]}"; do OBJ="$OBJ obj/${obj}.o"; done
 ar rcs liblegion.a $OBJ
 
 $ECHO "exec compilation..."
-$TIME $CC -o "legion" "${PREFIX}/src/main.c" $LIBS $CFLAGS
+$TIME $CC -o "legion" "${PREFIX}/src/exec.c" $LIBS $CFLAGS
 cp -r "${PREFIX}/res" .
 
 ./legion --viz | dot -Tsvg > tapes.svg

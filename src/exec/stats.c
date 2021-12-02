@@ -5,11 +5,11 @@
 
 #include "common.h"
 #include "vm/atoms.h"
-#include "items/item.h"
-
-#include "items/config.h"
-
 #include "game/tape.h"
+#include "items/item.h"
+#include "items/config.h"
+#include "render/core.h"
+
 
 // -----------------------------------------------------------------------------
 // stats
