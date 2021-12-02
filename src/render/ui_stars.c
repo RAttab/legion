@@ -30,7 +30,7 @@ struct ui_stars *ui_stars_new(void)
 
     struct ui_stars *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_stars) {
-        .panel = ui_panel_title(pos, dim, ui_str_c("stars")),
+        .panel = ui_panel_title(pos, dim, ui_str_v(16)),
         .tree = ui_tree_new(
                 make_dim(ui_layout_inf, ui_layout_inf),
                 font, ui_str_v(symbol_cap)),
@@ -55,6 +55,7 @@ static void ui_stars_update(struct ui_stars *ui)
     struct coord sector = coord_nil();
     const struct vec64 *list = proxy_chunks(core.proxy);
 
+    size_t count = 0;
     for (size_t i = 0; i < list->len; ++i) {
         struct coord star = coord_from_u64(list->vals[i]);
         if (!coord_eq(coord_sector(star), sector)) {
@@ -71,7 +72,10 @@ static void ui_stars_update(struct ui_stars *ui)
         ui_str_set_atom(
                 ui_tree_add(&ui->tree, parent, coord_to_u64(star)),
                 proxy_star_name(core.proxy, star));
+        count++;
     }
+
+    ui_str_setf(&ui->panel.title.str, "stars (%zu)", count);
 }
 
 static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
