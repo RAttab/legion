@@ -219,7 +219,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     default: { break; }
     }
 
-    /* dbg("tok: type=%u:%s, pos=%u:%u, len=%u, val={w:%lx, s:%s}", */
+    /* dbgf("tok: type=%u:%s, pos=%u:%u, len=%u, val={w:%lx, s:%s}", */
     /*         token->type, token_type_str(token->type), */
     /*         token->row, token->col, token->len, */
     /*         token->value.w, token->value.s.c); */

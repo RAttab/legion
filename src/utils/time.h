@@ -6,7 +6,6 @@
 #pragma once
 
 #include "common.h"
-#include "utils/log.h"
 
 #include <time.h>
 
@@ -27,7 +26,7 @@ static const ts_t  ts_sec = 1000 * ts_msec;
 
 inline ts_t ts_now(void)
 {
-    struct timespec ts;
+    struct timespec ts = {0};
     (void) clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * ts_sec_s + ts.tv_nsec;
 }

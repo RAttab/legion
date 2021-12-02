@@ -4,7 +4,7 @@
 */
 
 #include "utils/fs.h"
-#include "utils/log.h"
+#include "utils/err.h"
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -31,7 +31,7 @@ struct dir_it *dir_it(const char *path)
     struct dir_it *it = calloc(1, sizeof(*it));
 
     it->dir = opendir(path);
-    if (!it->dir) fail_errno("can't open dir: %s", path);
+    if (!it->dir) failf_errno("can't open dir: %s", path);
 
     size_t len = strnlen(path, PATH_MAX);
     memcpy(it->file, path, len);
@@ -57,7 +57,7 @@ bool dir_it_next(struct dir_it *it)
 
     size_t len = strlen(entry->d_name); // the dirent struct enforces a 256 limit
     if (it->it + len >= it->end) {
-        fail_errno("overly long path: %zu + %zu > %d",
+        failf_errno("overly long path: %zu + %zu > %d",
                 it->it - it->file, len, PATH_MAX);
     }
 
@@ -80,7 +80,7 @@ const char *dir_it_path(struct dir_it *it)
 size_t file_len(int fd)
 {
     struct stat stat = {0};
-    if (fstat(fd, &stat) < 0) fail_errno("failed to stat: %d", fd);
+    if (fstat(fd, &stat) < 0) failf_errno("failed to stat: %d", fd);
     return stat.st_size;
 }
 
@@ -92,15 +92,15 @@ size_t file_len(int fd)
 struct mfile mfile_open(const char *path)
 {
     int fd = open(path, O_RDONLY);
-    if (fd < 0) fail_errno("file not found: %s", path);
+    if (fd < 0) failf_errno("file not found: %s", path);
 
     struct mfile file = {0};
 
     file.len = file_len(fd);
-    if (!file.len) fail("unable to mmap empty file: %s", path);
+    if (!file.len) failf("unable to mmap empty file: %s", path);
 
     file.ptr = mmap(0, file.len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-    if (file.ptr == MAP_FAILED) fail_errno("failed to mmap: %s", path);
+    if (file.ptr == MAP_FAILED) failf_errno("failed to mmap: %s", path);
 
     close(fd);
     return file;

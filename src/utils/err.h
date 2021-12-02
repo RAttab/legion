@@ -8,61 +8,76 @@
 #include "common.h"
 
 #include "SDL.h"
-
 #include <errno.h>
 #include <stdio.h>
+
 
 // -----------------------------------------------------------------------------
 // err
 // -----------------------------------------------------------------------------
 
-#define err0(msg)                                       \
+#define err(msg)                                        \
     do {                                                \
         fprintf(stderr, "fail<%s:%u> " msg "\n",        \
                 __FILE__, __LINE__);                    \
     } while(false)
 
-#define err(fmt, ...)                                   \
+#define errf(fmt, ...)                                  \
     do {                                                \
         fprintf(stderr, "fail<%s:%u> " fmt "\n",        \
                 __FILE__, __LINE__, __VA_ARGS__);       \
     } while(false)
 
-#define err_errno(fmt, ...)                                             \
-    do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
-                __FILE__, __LINE__, __VA_ARGS__, strerror(errno), errno); \
-    } while(false)
-
-#define err_posix(errnum, fmt, ...)                                     \
-    do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
-                __FILE__, __LINE__, __VA_ARGS__, strerror(errnum), errno); \
-    } while(false)
-
-#define err_posix0(errnum, msg)                                 \
+#define err_num(errnum, errstr, msg)                            \
     do {                                                        \
         fprintf(stderr, "fail<%s:%u> " msg ": %s (%d)\n",       \
-                __FILE__, __LINE__, strerror(errnum), errno);   \
+                __FILE__, __LINE__, errstr, errnum);            \
     } while(false)
 
+#define errf_num(errnum, errstr, fmt, ...)                              \
+    do {                                                                \
+        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
+                __FILE__, __LINE__, __VA_ARGS__, errstr, errnum);       \
+    } while(false)
+
+
+#define err_errno(msg) err_num(errno, strerror(errno), msg)
+#define errf_errno(fmt, ...) \
+    errf_num(errno, strerror(errno), fmt, __VA_ARGS__)
+
+#define err_posix(errnum, msg) err_num(errnum, strerror(errnum), msg)
+#define errf_posix(errnum, fmt, ...) \
+    errf_num(errnum, strerror(errnum), fmt, __VA_ARGS__)
 
 
 // -----------------------------------------------------------------------------
 // fail
 // -----------------------------------------------------------------------------
 
-#define fail(fmt, ...)                          \
+#define fail(msg)                               \
     do {                                        \
-        err(fmt, __VA_ARGS__);                  \
+        err(msg);                               \
         abort();                                \
     } while(false)
 
-#define fail_errno(fmt, ...)                    \
+#define failf(fmt, ...)                         \
     do {                                        \
-        err(fmt, __VA_ARGS__);                  \
+        errf(fmt, __VA_ARGS__);                 \
         abort();                                \
     } while(false)
+
+#define fail_errno(msg)                         \
+    do {                                        \
+        err(msg);                               \
+        abort();                                \
+    } while(false)
+
+#define failf_errno(fmt, ...)                   \
+    do {                                        \
+        errf(fmt, __VA_ARGS__);                 \
+        abort();                                \
+    } while(false)
+
 
 // -----------------------------------------------------------------------------
 // sdl
@@ -89,4 +104,3 @@
         if (unlikely(!ret)) sdl_fail(p);                                \
         ret;                                                            \
     })
-

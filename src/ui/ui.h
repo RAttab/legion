@@ -8,7 +8,6 @@
 #include "common.h"
 #include "items/item.h"
 #include "game/coord.h"
-#include "utils/log.h"
 #include "utils/text.h"
 #include "utils/color.h"
 #include "vm/mod.h"

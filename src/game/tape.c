@@ -8,7 +8,6 @@
 #include "render/core.h"
 #include "utils/fs.h"
 #include "utils/str.h"
-#include "utils/log.h"
 #include "utils/htable.h"
 
 

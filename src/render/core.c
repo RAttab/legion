@@ -14,7 +14,7 @@
 #include "items/config.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
-#include "utils/log.h"
+#include "utils/err.h"
 #include "utils/time.h"
 
 

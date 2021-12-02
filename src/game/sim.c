@@ -88,7 +88,7 @@ struct sim *sim_new(seed_t seed)
 
     int err = pthread_create(&sim->thread, NULL, sim_run, sim);
     if (err) {
-        err_posix(err, "unable to create sim thread: fn=%p ctx=%p", sim_run, sim);
+        errf_posix(err, "unable to create sim thread: fn=%p ctx=%p", sim_run, sim);
         goto fail_pthread;
     }
 
@@ -104,7 +104,7 @@ void sim_close(struct sim *sim)
     atomic_store_explicit(&sim->quit, true, memory_order_relaxed);
 
     int err = pthread_join(sim->thread, NULL);
-    if (err) err_posix0(err, "unable to join sim thread");
+    if (err) err_posix(err, "unable to join sim thread");
 
     world_free(sim->world);
     save_mem_free((struct save *) atomic_load(&sim->state.read));
@@ -172,7 +172,7 @@ static void sim_logv_overflow(enum status type, const char *fmt, va_list args)
     default: { assert(false); }
     }
 
-    fprintf(stderr, "OVERFLOW: <%s> %s\n", prefix, msg);
+    errf("log overflow: <%s> %s\n", prefix, msg);
 }
 
 void sim_logv(struct sim *sim, enum status type, const char *fmt, va_list args)
@@ -587,7 +587,7 @@ static void *sim_run(void *ctx)
 
         sim->next += sleep;
         if (sim->next <= now) {
-            dbg("sim.late> now:%lu, next:%lu, sleep:%lu, ticks:%u",
+            dbgf("sim.late> now:%lu, next:%lu, sleep:%lu, ticks:%u",
                     now, sim->next, sleep, world_time(sim->world));
             while (sim->next <= now) sim->next += sleep;
         }

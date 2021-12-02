@@ -13,7 +13,7 @@
 #include "items/config.h"
 #include "utils/fs.h"
 #include "utils/str.h"
-#include "utils/log.h"
+#include "utils/err.h"
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -123,7 +123,7 @@ struct field token_field(struct tokenizer *tok, struct atoms *atoms)
         uint64_t _val_ = (_tval_);                                      \
         uint64_t _exp_ = (_texp_);                                      \
         bool ok = _val_ == _exp_;                                       \
-        if (!ok) dbg("<%s> val:%lx != exp:%lx", field, _val_, _exp_);   \
+        if (!ok) dbgf("<%s> val:%lx != exp:%lx", field, _val_, _exp_);  \
         ok;                                                             \
     })
 
@@ -133,7 +133,7 @@ struct field token_field(struct tokenizer *tok, struct atoms *atoms)
         uint8_t _val_ = (_tval_) & (flag);                              \
         uint8_t _exp_ = (_texp_) & (flag);                              \
         bool ok = _val_ == _exp_;                                       \
-        if (!ok) dbg("<%s> val:%x != exp:%x", #flag, _val_, _exp_);     \
+        if (!ok) dbgf("<%s> val:%x != exp:%x", #flag, _val_, _exp_);    \
         ok;                                                             \
     })
 
@@ -176,7 +176,7 @@ const struct mod *read_mod(
 
     for (size_t i = 0; i < mod->errs_len; ++i) {
         const struct mod_err *err = mod->errs + i;
-        dbg("%s:%u:%u:%u: %s", name->c, err->row, err->col, err->len, err->str);
+        dbgf("%s:%u:%u:%u: %s", name->c, err->row, err->col, err->len, err->str);
     }
 
     return NULL;
@@ -233,16 +233,16 @@ bool check_mod(
         char title[80] = {0};
         ssize_t len = snprintf(title, sizeof(title), "[ %s ]", name->c);
         memset(title + len, '=', sizeof(title) - len - 1);
-        dbg("%s", title);
+        dbgf("%s", title);
 
         char buffer[s_page_len] = {0};
-        dbg("\n<src>\n%s\n", mod->src);
+        dbgf("\n<src>\n%s\n", mod->src);
 
         mod_dump(mod, buffer, sizeof(buffer));
-        dbg("<bytecode:%x:%u>\n%s\n", (unsigned) mod->id, mod->len, buffer);
+        dbgf("<bytecode:%x:%u>\n%s\n", (unsigned) mod->id, mod->len, buffer);
 
         vm_dbg(vm, buffer, sizeof(buffer));
-        dbg("<ret>\n%sret:   %x\n", buffer, ret);
+        dbgf("<ret>\n%sret:   %x\n", buffer, ret);
     }
 
     return ok;

@@ -3,6 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "utils/err.h"
 #include "utils/heap.h"
 #include "utils/bits.h"
 #include "game/save.h"
@@ -71,7 +72,7 @@ static void heap_grow(struct heap *heap, size_t class)
         }
 
         if (heap->data == MAP_FAILED) {
-            fail_errno("unable to grow the heap '%p' to '%u'",
+            failf_errno("unable to grow the heap '%p' to '%u'",
                     heap->data, heap->cap);
         }
     }
@@ -140,7 +141,7 @@ bool heap_load(struct heap *heap, struct save *save)
         int flags = MAP_PRIVATE | MAP_ANONYMOUS;
         heap->data = mmap(0, heap->cap, prot, flags, -1, 0);
         if (heap->data == MAP_FAILED)
-            fail_errno("unable to mmap heap '%u'", heap->cap);
+            failf_errno("unable to mmap heap '%u'", heap->cap);
     }
 
     save_read(save, heap->data, heap->cap);

@@ -24,23 +24,23 @@ bool im_test_check(
     bool ok = true;
 
     if (test->io != io) {
-        dbg("im.test.io: %x != %x", test->io, io);
+        dbgf("im.test.io: %x != %x", test->io, io);
         ok = false;
     }
 
     if (test->src != src) {
-        dbg("im.test.src: %x != %x", test->src, src);
+        dbgf("im.test.src: %x != %x", test->src, src);
         ok = false;
     }
 
     if (test->len != len) {
-        dbg("im.test.len: %x != %zu", test->len, len);
+        dbgf("im.test.len: %x != %zu", test->len, len);
         ok = false;
     }
 
     for (size_t i = 0; i < len; ++i) {
         if (test->args[i] != args[i]) {
-            dbg("im.test.args[%zu]: %lx != %lx", i, test->args[i], args[i]);
+            dbgf("im.test.args[%zu]: %lx != %lx", i, test->args[i], args[i]);
             ok = false;
         }
     }

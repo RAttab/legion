@@ -8,7 +8,6 @@
 #include "game/world.h"
 #include "utils/color.h"
 #include "utils/hset.h"
-#include "utils/log.h"
 
 
 // -----------------------------------------------------------------------------

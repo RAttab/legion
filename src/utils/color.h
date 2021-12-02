@@ -6,8 +6,10 @@
 #pragma once
 
 #include "common.h"
-#include "utils/log.h"
+#include "utils/err.h"
+
 #include "SDL.h"
+
 
 // -----------------------------------------------------------------------------
 // rgba

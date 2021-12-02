@@ -12,6 +12,8 @@
 #include "utils/vec.h"
 #include "utils/htable.h"
 
+#include <stdarg.h>
+
 
 // -----------------------------------------------------------------------------
 // lisp
@@ -83,7 +85,7 @@ struct lisp
 
 static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
 {
-    /* dbg("err: %u:%u:%u %s", err->row, err->col, err->len, err->str); */
+    /* dbgf("err: %u:%u:%u %s", err->row, err->col, err->len, err->str); */
 
     if (unlikely(lisp->err.len == lisp->err.cap)) {
         lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
@@ -602,7 +604,7 @@ struct lisp_ret lisp_eval_const(struct lisp *lisp, const char *src, size_t len)
     word_t result = lisp_eval(lisp);
     for (size_t i = 0; i < lisp->err.len; ++i) {
         struct mod_err *err = lisp->err.list + i;
-        dbg("eval:%u:%u: %s", err->row, err->col, err->str);
+        dbgf("eval:%u:%u: %s", err->row, err->col, err->str);
     }
 
     return (struct lisp_ret) {

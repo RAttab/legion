@@ -27,7 +27,7 @@
         char exp_str[256];                              \
         hset_str(exp, exp_str, sizeof(exp_str));        \
                                                         \
-        dbg("%s != %s", val_str, exp_str);              \
+        dbgf("%s != %s", val_str, exp_str);             \
         abort();                                        \
     } while (false)
 
@@ -38,7 +38,7 @@
         char val_str[256];                              \
         hset_str(val, val_str, sizeof(val_str));        \
                                                         \
-        dbg("%s != { }", val_str);                      \
+        dbgf("%s != { }", val_str);                     \
         abort();                                        \
     } while (false)
 

@@ -5,6 +5,7 @@
 
 #include "game/save.h"
 #include "utils/vec.h"
+#include "utils/err.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -51,7 +52,7 @@ struct save *save_mem_new(void)
     const int flags = MAP_PRIVATE | MAP_ANONYMOUS;
     save->base = mmap(0, save->cap, prot, flags, 0, 0);
     if (save->base == MAP_FAILED) {
-        err_errno("unable to mmap '%s'", "mem");
+        errf_errno("unable to mmap '%s'", "mem");
         goto fail_mmap;
     }
 
@@ -91,19 +92,19 @@ struct save *save_file_new(const char *path, uint8_t version)
     // need O_RD to mmap the fd because... reasons...
     save->fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
     if (save->fd == -1) {
-        err_errno("unable to open tmp file for '%s'", path);
+        errf_errno("unable to open tmp file for '%s'", path);
         goto fail_open;
     }
 
     if (ftruncate(save->fd, save_chunks) == -1) {
-        err_errno("unable to grow file '%lx'", save_chunks);
+        errf_errno("unable to grow file '%lx'", save_chunks);
         goto fail_truncate;
     }
 
     save->cap = save_chunks;
     save->base = mmap(0, save->cap, PROT_WRITE, MAP_SHARED, save->fd, 0);
     if (save->base == MAP_FAILED) {
-        err_errno("unable to mmap '%s'", path);
+        errf_errno("unable to mmap '%s'", path);
         goto fail_mmap;
     }
 
@@ -131,34 +132,34 @@ struct save *save_file_load(const char *path)
 
     save->fd = open(path, O_RDONLY);
     if (save->fd == -1) {
-        err_errno("unable to open '%s'", path);
+        errf_errno("unable to open '%s'", path);
         goto fail_open;
     }
 
     struct stat stat = {0};
     int ret = fstat(save->fd, &stat);
     if (ret == -1) {
-        err_errno("unable to stat '%s'", path);
+        errf_errno("unable to stat '%s'", path);
         goto fail_stat;
     }
     save->cap = stat.st_size;
 
     save->base = mmap(0, save->cap, PROT_READ, MAP_PRIVATE, save->fd, 0);
     if (save->base == MAP_FAILED) {
-        err_errno("unable to mmap '%s'", path);
+        errf_errno("unable to mmap '%s'", path);
         goto fail_mmap;
     }
     save->it = save->base;
 
     uint64_t magic = save_read_type(save, typeof(magic));
     if (magic != save_magic_top) {
-        err_errno("invalid magic '%lx' on save '%s'", magic, path);
+        errf_errno("invalid magic '%lx' on save '%s'", magic, path);
         goto fail_magic;
     }
 
     uint64_t seal = save_read_type(save, typeof(magic));
     if (seal != save_magic_seal) {
-        err_errno("invalid seal '%lx' on save '%s'", seal, path);
+        errf_errno("invalid seal '%lx' on save '%s'", seal, path);
         goto fail_seal;
     }
 
@@ -181,16 +182,16 @@ static void save_seal(struct save *save)
 {
     size_t len = save_len(save);
     if (ftruncate(save->fd, len) == -1)
-        fail_errno("unable to truncate '%d' to '%zu'", save->fd, save->cap);
+        failf_errno("unable to truncate '%d' to '%zu'", save->fd, save->cap);
 
     if (msync(save->base, len, MS_SYNC) == -1)
-        fail_errno("unable to msync '%d'", save->fd);
+        failf_errno("unable to msync '%d'", save->fd);
 
     save->it = save->base + sizeof(save_magic_top);
     save_write_value(save, save_magic_seal);
 
     if (msync(save->base, save_len(save), MS_SYNC) == -1)
-        fail_errno("unable to msync header '%d'", save->fd);
+        failf_errno("unable to msync header '%d'", save->fd);
 
     char dst[PATH_MAX] = {0};
     strcpy(dst, basename(save->dst));
@@ -202,19 +203,19 @@ static void save_seal(struct save *save)
     snprintf(bak, sizeof(bak), "%s.bak", dst);
 
     int fd = open(dirname(save->dst), O_PATH);
-    if (fd == -1) fail_errno("unable open dir '%s' for file '%s'", save->dst, dst);
+    if (fd == -1) failf_errno("unable open dir '%s' for file '%s'", save->dst, dst);
 
     (void) unlinkat(fd, bak, 0);
     if (!linkat(fd, dst, fd, bak, 0)) // success
         (void) unlinkat(fd, dst, 0);
 
     if (linkat(fd, src, fd, dst, 0) == -1) {
-        fail_errno("unable to link '%s/%s' to '%s/%s' (%d)",
+        failf_errno("unable to link '%s/%s' to '%s/%s' (%d)",
                 save->dst, src, save->dst, dst, fd);
     }
 
     if (unlinkat(fd, src, 0) == -1)
-        err_errno("unable to unlink tmp file: '%s/%s' (%d)", save->dst, src, fd);
+        errf_errno("unable to unlink tmp file: '%s/%s' (%d)", save->dst, src, fd);
 
     close(fd);
 }
@@ -260,11 +261,11 @@ static void save_grow(struct save *save, size_t len)
     while (need >= cap) cap += save_chunks;
 
     if (save->fd && ftruncate(save->fd, cap) == -1)
-        fail_errno("unable to grow file '%lx'", cap);
+        failf_errno("unable to grow file '%lx'", cap);
 
     save->base = mremap(save->base, save->cap, cap, MREMAP_MAYMOVE);
     if (save->base == MAP_FAILED)
-        fail_errno("unable to remap '%p' from '%zu' to '%zu'", save->base, save->cap, cap);
+        failf_errno("unable to remap '%p' from '%zu' to '%zu'", save->base, save->cap, cap);
 
     save->cap = cap;
     save->it = save->base + it;
@@ -318,7 +319,7 @@ bool save_read_magic(struct save *save, enum save_magic exp)
     save_read(save, &value, sizeof(value));
     if (likely(value == exp)) return true;
 
-    err("invalid magic %x != %x", (unsigned) value, (unsigned) exp);
+    errf("invalid magic %x != %x", (unsigned) value, (unsigned) exp);
     return false;
 }
 

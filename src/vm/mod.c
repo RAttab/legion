@@ -7,7 +7,6 @@
 #include "game/save.h"
 #include "utils/fs.h"
 #include "utils/bits.h"
-#include "utils/log.h"
 #include "utils/str.h"
 #include "utils/htable.h"
 
@@ -248,7 +247,7 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
     #include "vm/op_xmacro.h"
 
         default: {
-            dbg("mod.dump.err: %x", *in);
+            dbgf("mod.dump.err: %x", *in);
             assert(false);
         }
         }
@@ -609,7 +608,7 @@ static void mods_file_compile(
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {
             struct mod_err *err = &mod->errs[i];
-            dbg("%s:%u:%u: %s", path, err->row+1, err->col+1, err->str);
+            dbgf("%s:%u:%u: %s", path, err->row+1, err->col+1, err->str);
         }
     }
 

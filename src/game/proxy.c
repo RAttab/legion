@@ -81,7 +81,7 @@ bool proxy_update(struct proxy *proxy)
                 .data = { .ack = ack_clone(&proxy->ack) },
             });
         }
-        else err0("unable to load state in proxy");
+        else err("unable to load state in proxy");
 
         sim_state_release(proxy->sim, save);
     }
