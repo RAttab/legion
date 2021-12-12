@@ -8,6 +8,8 @@
 #include "common.h"
 #include "game/sector.h"
 
+struct save;
+
 
 // -----------------------------------------------------------------------------
 // specs
@@ -94,22 +96,5 @@ inline void energy_step_end(struct energy *en)
 }
 
 
-inline void energy_save(const struct energy *en, struct save *save)
-{
-    save_write_magic(save, save_magic_energy);
-    save_write_value(save, en->solar);
-    save_write_value(save, en->kwheel);
-    save_write_value(save, en->battery);
-    save_write_value(save, en->current);
-    save_write_magic(save, save_magic_energy);
-}
-
-inline bool energy_load(struct energy *en, struct save *save)
-{
-    if (!save_read_magic(save, save_magic_energy)) return false;
-    save_read_into(save, &en->solar);
-    save_read_into(save, &en->kwheel);
-    save_read_into(save, &en->battery);
-    save_read_into(save, &en->current);
-    return save_read_magic(save, save_magic_energy);
-}
+void energy_save(const struct energy *, struct save *);
+bool energy_load(struct energy *, struct save *);

@@ -18,3 +18,4 @@
 #include "game/state.c"
 #include "game/proxy.c"
 #include "game/tech.c"
+#include "game/energy.c"

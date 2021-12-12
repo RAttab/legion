@@ -331,7 +331,7 @@ static void sim_cmd_save(struct sim *sim, const struct sim_cmd *cmd)
 {
     (void) cmd;
 
-    struct save *save = save_file_new("./legion.save", sim_save_version);
+    struct save *save = save_file_create("./legion.save", sim_save_version);
 
     save_write_magic(save, save_magic_sim);
     save_write_value(save, sim->speed);
@@ -351,7 +351,7 @@ static void sim_cmd_load(struct sim *sim, const struct sim_cmd *cmd)
 
     bool fail = false;
     struct save *save = save_file_load("./legion.save");
-    assert(save_version(save) == sim_save_version);
+    assert(save_file_version(save) == sim_save_version);
 
     if (!save_read_magic(save, save_magic_sim)) { fail = true; goto fail; }
     save_read_into(save, &sim->speed);
