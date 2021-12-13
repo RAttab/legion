@@ -6,13 +6,13 @@
 #include "common.h"
 #include "game/proxy.h"
 #include "game/sector.h"
-#include "game/state.h"
+#include "game/protocol.h"
 #include "game/chunk.h"
 #include "render/core.h"
 #include "utils/htable.h"
 #include "utils/hset.h"
 
-static void proxy_cmd(struct proxy *, const struct sim_cmd *);
+static void proxy_cmd(struct proxy *, const struct cmd *);
 
 
 // -----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ bool proxy_update(struct proxy *proxy)
     struct save *save = sim_state_read(proxy->sim);
     if (save) {
         if ((ok = state_load(proxy->state, save, &proxy->ack))) {
-            proxy_cmd(proxy, &(struct sim_cmd) {
+            proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_ACK,
                 .data = { .ack = ack_clone(&proxy->ack) },
             });
@@ -182,9 +182,9 @@ const struct log *proxy_logs(struct proxy *proxy)
 // cmd
 // -----------------------------------------------------------------------------
 
-static void proxy_cmd(struct proxy *proxy, const struct sim_cmd *src)
+static void proxy_cmd(struct proxy *proxy, const struct cmd *src)
 {
-    struct sim_cmd *dst = sim_cmd_write(proxy->sim);
+    struct cmd *dst = sim_cmd_write(proxy->sim);
     if (!dst) return core_log(st_error, "unable to send command '%d'", src->type);
 
     *sim_cmd_write(proxy->sim) = *src;
@@ -194,22 +194,22 @@ static void proxy_cmd(struct proxy *proxy, const struct sim_cmd *src)
 
 void proxy_quit(struct proxy *proxy)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_QUIT });
+    proxy_cmd(proxy, &(struct cmd) { .type = CMD_QUIT });
 }
 
 void proxy_save(struct proxy *proxy)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_SAVE });
+    proxy_cmd(proxy, &(struct cmd) { .type = CMD_SAVE });
 }
 
 void proxy_load(struct proxy *proxy)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_LOAD });
+    proxy_cmd(proxy, &(struct cmd) { .type = CMD_LOAD });
 }
 
 void proxy_set_speed(struct proxy *proxy, enum speed speed)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_SPEED,
                 .data = { .speed = speed },
             });
@@ -225,7 +225,7 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
     if (coord_eq(proxy->chunk, coord)) return NULL;
     proxy->chunk = coord;
 
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_CHUNK,
                 .data = { .chunk = coord },
             });
@@ -234,7 +234,7 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
 
 void proxy_io(struct proxy *proxy, enum io io, id_t dst, const word_t *args, uint8_t len)
 {
-    struct sim_cmd cmd = {
+    struct cmd cmd = {
         .type = CMD_IO,
         .data = { .io = { .io = io, .dst = dst, .len = len } },
     };
@@ -264,7 +264,7 @@ const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
     if (proxy->mod == id) return NULL;
     proxy->mod = id;
 
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD,
                 .data = { .mod = id },
             });
@@ -273,7 +273,7 @@ const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
 
 void proxy_mod_register(struct proxy *proxy, struct symbol name)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_REGISTER,
                 .data = { .mod_register = name },
             });
@@ -281,7 +281,7 @@ void proxy_mod_register(struct proxy *proxy, struct symbol name)
 
 void proxy_mod_publish(struct proxy *proxy, mod_maj_t maj)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_PUBLISH,
                 .data = { .mod_publish = { .maj = maj } },
             });
@@ -316,7 +316,7 @@ bool proxy_mod_name(struct proxy *proxy, mod_maj_t maj, struct symbol *dst)
 
 void proxy_mod_compile(struct proxy *proxy, mod_maj_t maj, const char *code, size_t len)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_COMPILE,
                 .data = { .mod_compile = { .maj = maj, .code = code, .len = len } },
             });

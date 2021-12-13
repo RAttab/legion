@@ -7,7 +7,7 @@
 */
 
 #include "vm/atoms.h"
-#include "game/state.h"
+#include "game/protocol.h"
 #include "utils/htable.h"
 
 

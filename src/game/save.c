@@ -652,22 +652,6 @@ bool save_read_vec64(struct save *save, struct vec64 **ret)
     return save_read_magic(save, save_magic_vec64);
 }
 
-void save_write_symbol(struct save *save, const struct symbol *symbol)
-{
-    save_write_magic(save, save_magic_symbol);
-    save_write_value(save, symbol->len);
-    save_write(save, symbol->c, symbol->len);
-    save_write_magic(save, save_magic_symbol);
-}
-
-bool save_read_symbol(struct save *save, struct symbol *dst)
-{
-    if (!save_read_magic(save, save_magic_symbol)) return false;
-    save_read_into(save, &dst->len);
-    save_read(save, dst->c, dst->len);
-    return save_read_magic(save, save_magic_symbol);
-}
-
 
 // -----------------------------------------------------------------------------
 // prof

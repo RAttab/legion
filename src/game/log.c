@@ -6,7 +6,7 @@
 #include "common.h"
 #include "game/log.h"
 #include "game/save.h"
-#include "game/state.h"
+#include "game/protocol.h"
 
 
 // -----------------------------------------------------------------------------

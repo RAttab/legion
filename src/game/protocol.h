@@ -1,4 +1,4 @@
-/* state.h
+/* protocol.h
    Rémi Attab (remi.attab@gmail.com), 30 Oct 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -18,6 +18,18 @@ struct atoms;
 struct mods_list;
 struct mod;
 struct save;
+
+
+// -----------------------------------------------------------------------------
+// status
+// -----------------------------------------------------------------------------
+
+enum status
+{
+    st_info = 0,
+    st_warn = 1,
+    st_error = 2,
+};
 
 
 // -----------------------------------------------------------------------------
@@ -64,6 +76,51 @@ void ack_free(const struct ack *);
 
 void ack_reset(struct ack *);
 void ack_reset_chunk(struct ack *);
+
+
+// -----------------------------------------------------------------------------
+// cmd
+// -----------------------------------------------------------------------------
+
+enum cmd_type
+{
+    CMD_NIL = 0,
+    CMD_QUIT,
+
+    CMD_SAVE,
+    CMD_LOAD,
+
+    CMD_ACK,
+    CMD_SPEED,
+    CMD_CHUNK,
+
+    CMD_MOD,
+    CMD_MOD_REGISTER,
+    CMD_MOD_PUBLISH,
+    CMD_MOD_COMPILE,
+
+    CMD_IO,
+};
+
+struct cmd
+{
+    enum cmd_type type;
+
+    union
+    {
+        const struct ack *ack;
+        enum speed speed;
+        struct coord chunk;
+        mod_t mod;
+        struct symbol mod_register;
+        struct { mod_maj_t maj; } mod_publish;
+        struct { mod_maj_t maj; const char *code; uint32_t len; } mod_compile;
+        struct { enum io io; id_t dst; uint8_t len; word_t args[4]; } io;
+    } data;
+};
+
+void cmd_save(const struct cmd *cmd, struct save *);
+bool cmd_load(struct cmd *cmd, struct save *);
 
 
 // -----------------------------------------------------------------------------

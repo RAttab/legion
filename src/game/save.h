@@ -46,6 +46,8 @@ enum legion_packed save_magic
     save_magic_state_compile = 0x31,
     save_magic_state_mod     = 0x32,
     save_magic_state_chunk   = 0x33,
+    save_magic_cmd           = 0x38,
+    save_magic_ack           = 0x39,
 
     save_magic_len,
 };
@@ -155,9 +157,6 @@ bool save_read_htable(struct save *, struct htable *);
 
 void save_write_vec64(struct save *, const struct vec64 *);
 bool save_read_vec64(struct save *, struct vec64 **);
-
-void save_write_symbol(struct save *, const struct symbol *);
-bool save_read_symbol(struct save *, struct symbol *);
 
 void save_prof(struct save *);
 void save_prof_dump(struct save *);

@@ -6,7 +6,7 @@
 #include "common.h"
 #include "game/sim.h"
 #include "game/save.h"
-#include "game/state.h"
+#include "game/protocol.h"
 #include "game/chunk.h"
 #include "utils/time.h"
 
@@ -58,7 +58,7 @@ struct sim
     struct
     {
         atomic_size_t read, write;
-        struct sim_cmd queue[sim_cmd_len];
+        struct cmd queue[sim_cmd_len];
     } legion_aligned(8) cmd;
 
     struct
@@ -229,7 +229,7 @@ static struct symbol sim_log_atom(struct sim *sim, word_t atom)
 // -----------------------------------------------------------------------------
 // Single producer & Single Consumer lockfree queue.
 
-struct sim_cmd * sim_cmd_write(struct sim *sim)
+struct cmd * sim_cmd_write(struct sim *sim)
 {
     size_t read = atomic_load_explicit(&sim->cmd.read, memory_order_acquire);
     size_t write = atomic_load_explicit(&sim->cmd.write, memory_order_relaxed);
@@ -249,7 +249,7 @@ void sim_cmd_push(struct sim *sim)
     assert(write - read <= sim_cmd_len);
 }
 
-static const struct sim_cmd * sim_cmd_read(struct sim *sim)
+static const struct cmd * sim_cmd_read(struct sim *sim)
 {
     size_t write = atomic_load_explicit(&sim->cmd.write, memory_order_acquire);
     size_t read = atomic_load_explicit(&sim->cmd.read, memory_order_relaxed);
@@ -327,7 +327,7 @@ static void sim_state_publish(struct sim *sim, struct save *save)
 // thread
 // -----------------------------------------------------------------------------
 
-static void sim_cmd_save(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_save(struct sim *sim, const struct cmd *cmd)
 {
     (void) cmd;
 
@@ -345,7 +345,7 @@ static void sim_cmd_save(struct sim *sim, const struct sim_cmd *cmd)
     sim_log(sim, st_info, "saved %zu bytes", bytes);
 }
 
-static void sim_cmd_load(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_load(struct sim *sim, const struct cmd *cmd)
 {
     (void) cmd;
 
@@ -374,7 +374,7 @@ static void sim_cmd_load(struct sim *sim, const struct sim_cmd *cmd)
     save_file_close(save);
 }
 
-static void sim_cmd_io(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_io(struct sim *sim, const struct cmd *cmd)
 {
     if (cmd->data.io.len > 4) {
         return sim_log(sim, st_error, "invalid length '%u' for IO command '%x:%s'",
@@ -411,7 +411,7 @@ static void sim_cmd_io(struct sim *sim, const struct sim_cmd *cmd)
             sim_log_id(cmd->data.io.dst).c);
 }
 
-static void sim_cmd_mod(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_mod(struct sim *sim, const struct cmd *cmd)
 {
     if (!mods_get(world_mods(sim->world), cmd->data.mod)) {
         return sim_log(sim, st_error, "unknown mod id '%u.%u'",
@@ -423,7 +423,7 @@ static void sim_cmd_mod(struct sim *sim, const struct sim_cmd *cmd)
     sim->mod.ts = world_time(sim->world);
 }
 
-static void sim_cmd_mod_register(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_mod_register(struct sim *sim, const struct cmd *cmd)
 {
     mod_t id = mods_register(world_mods(sim->world), &cmd->data.mod_register);
 
@@ -437,7 +437,7 @@ static void sim_cmd_mod_register(struct sim *sim, const struct sim_cmd *cmd)
             mod_maj(id), mod_ver(id));
 }
 
-static void sim_cmd_mod_compile(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_mod_compile(struct sim *sim, const struct cmd *cmd)
 {
     if (sim->compile.mod) mod_free(sim->compile.mod);
 
@@ -459,7 +459,7 @@ static void sim_cmd_mod_compile(struct sim *sim, const struct sim_cmd *cmd)
 
 }
 
-static void sim_cmd_publish(struct sim *sim, const struct sim_cmd *cmd)
+static void sim_cmd_publish(struct sim *sim, const struct cmd *cmd)
 {
     struct mods *mods = world_mods(sim->world);
     const struct mod *mod = sim->compile.mod;
@@ -518,7 +518,7 @@ static void sim_publish(struct sim *sim)
 
 static bool sim_cmd(struct sim *sim)
 {
-    const struct sim_cmd *cmd = NULL;
+    const struct cmd *cmd = NULL;
     while ((cmd = sim_cmd_read(sim)))
     {
         switch (cmd->type)

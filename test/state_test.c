@@ -12,7 +12,7 @@
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"
-#include "game/state.h"
+#include "game/protocol.h"
 #include "render/core.h"
 #include "items/io.h"
 #include "items/config.h"

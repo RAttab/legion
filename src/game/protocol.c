@@ -1,10 +1,10 @@
-/* state.c
+/* protocol.c
    Rémi Attab (remi.attab@gmail.com), 30 Oct 2021
    FreeBSD-style copyright and disclaimer apply
 */
 
 #include "common.h"
-#include "game/state.h"
+#include "game/protocol.h"
 #include "game/log.h"
 #include "game/chunk.h"
 #include "game/save.h"
@@ -42,6 +42,221 @@ void ack_reset_chunk(struct ack *ack)
 {
     htable_reset(&ack->chunk.provided);
     memset(&ack->chunk, 0, sizeof(ack->chunk));
+}
+
+static void ack_save(const struct ack *ack, struct save *save)
+{
+    save_write_magic(save, save_magic_ack);
+
+    save_write_value(save, ack->stream);
+    save_write_value(save, ack->time);
+    save_write_value(save, ack->atoms);
+
+    const struct chunk_ack *cack = &ack->chunk;
+    save_write_value(save, coord_to_u64(cack->coord));
+    save_write_value(save, cack->time);
+
+    save_write_value(save, (uint8_t) cack->provided.len);
+    for (const struct htable_bucket *it = htable_next(&cack->provided, NULL);
+         it; it = htable_next(&cack->provided, it))
+    {
+        save_write_value(save, (enum item) it->key);
+        save_write_value(save, it->value);
+    }
+
+    save_write_value(save, ring_ack_to_u64(cack->requested));
+    save_write_value(save, ring_ack_to_u64(cack->storage));
+    save_write_value(save, ring_ack_to_u64(cack->pills));
+
+    for (size_t i = 0; i < array_len(cack->active); ++i) {
+        if (!cack->active[i]) continue;
+        save_write_value(save, ITEM_ACTIVE_FIRST + i);
+        save_write_value(save, cack->active[i]);
+    }
+    save_write_value(save, (enum item) 0);
+
+    save_write_magic(save, save_magic_ack);
+}
+
+static struct ack *ack_load(struct save *save)
+{
+    if (!save_read_magic(save, save_magic_ack)) return NULL;
+
+    struct ack *ack = calloc(1, sizeof(*ack));
+
+    save_read_into(save, &ack->stream);
+    save_read_into(save, &ack->time);
+    save_read_into(save, &ack->atoms);
+
+    struct chunk_ack *cack = &ack->chunk;
+    cack->coord = coord_from_u64(save_read_type(save, uint64_t));
+    save_read_into(save, &cack->time);
+
+    size_t len = save_read_type(save, uint8_t);
+    htable_clear(&cack->provided);
+    htable_reserve(&cack->provided, len);
+    for (size_t i = 0; i < len; ++i) {
+        enum item key = save_read_type(save, typeof(key));
+        uint64_t value = save_read_type(save, typeof(value));
+
+        struct htable_ret ret = htable_put(&cack->provided, key, value);
+        assert(ret.ok);
+    }
+
+    cack->requested = ring_ack_from_u64(save_read_type(save, uint64_t));
+    cack->storage = ring_ack_from_u64(save_read_type(save, uint64_t));
+    cack->pills = ring_ack_from_u64(save_read_type(save, uint64_t));
+
+    memset(cack->active, 0, sizeof(cack->active));
+    while (true) {
+        enum item item = save_read_type(save, typeof(item));
+        if (!item) break;
+
+        hash_t hash = save_read_type(save, typeof(hash));
+        cack->active[item - ITEM_ACTIVE_FIRST] = hash;
+    }
+
+    if (!save_read_magic(save, save_magic_ack)) { free(ack); return NULL; }
+    return ack;
+}
+
+// -----------------------------------------------------------------------------
+// cmd
+// -----------------------------------------------------------------------------
+
+void cmd_save(const struct cmd *cmd, struct save *save)
+{
+    save_write_magic(save, save_magic_cmd);
+    save_write_value(save, cmd->type);
+
+    switch (cmd->type)
+    {
+
+    case CMD_NIL:
+    case CMD_QUIT: { break; }
+
+    case CMD_SAVE:
+    case CMD_LOAD: { break; }
+
+    case CMD_ACK: {
+        ack_save(cmd->data.ack, save);
+        break;
+    }
+
+    case CMD_SPEED: {
+        save_write_value(save, cmd->data.speed);
+        break;
+    }
+
+    case CMD_CHUNK: {
+        save_write_value(save, coord_to_u64(cmd->data.chunk));
+        break;
+    }
+
+    case CMD_MOD: {
+        save_write_value(save, cmd->data.mod);
+        break;
+    }
+
+    case CMD_MOD_REGISTER: {
+        symbol_save(&cmd->data.mod_register, save);
+        break;
+    }
+
+    case CMD_MOD_PUBLISH: {
+        save_write_value(save, cmd->data.mod_publish.maj);
+        break;
+    }
+
+    case CMD_MOD_COMPILE: {
+        save_write_value(save, cmd->data.mod_compile.maj);
+        save_write_value(save, cmd->data.mod_compile.len);
+        save_write(save, cmd->data.mod_compile.code, cmd->data.mod_compile.len);
+        break;
+    }
+
+    case CMD_IO: {
+        save_write_value(save, cmd->data.io.io);
+        save_write_value(save, cmd->data.io.dst);
+        save_write_value(save, cmd->data.io.len);
+        save_write(save, cmd->data.io.args,
+                cmd->data.io.len * sizeof(cmd->data.io.args[0]));
+        break;
+    }
+
+    default: { assert(false); }
+    }
+
+    save_write_magic(save, save_magic_cmd);
+}
+
+bool cmd_load(struct cmd *cmd, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_cmd)) return false;
+    save_read_into(save, &cmd->type);
+
+    switch (cmd->type)
+    {
+
+    case CMD_NIL:
+    case CMD_QUIT: { break; }
+
+    case CMD_SAVE:
+    case CMD_LOAD: { break; }
+
+    case CMD_ACK: {
+        if (!(cmd->data.ack = ack_load(save))) return false;
+        break;
+    }
+
+    case CMD_SPEED: {
+        save_read_into(save, &cmd->data.speed);
+        break;
+    }
+
+    case CMD_CHUNK: {
+        cmd->data.chunk = coord_from_u64(save_read_type(save, uint64_t));
+        break;
+    }
+
+    case CMD_MOD: {
+        save_read_into(save, &cmd->data.mod);
+        break;
+    }
+
+    case CMD_MOD_REGISTER: {
+        if (!symbol_load(&cmd->data.mod_register, save)) return false;
+        break;
+    }
+
+    case CMD_MOD_PUBLISH: {
+        save_read_into(save, &cmd->data.mod_publish.maj);
+        break;
+    }
+
+    case CMD_MOD_COMPILE: {
+        save_read_into(save, &cmd->data.mod_compile.maj);
+        save_read_into(save, &cmd->data.mod_compile.len);
+
+        char *code = calloc(1, cmd->data.mod_compile.len);
+        save_read(save, code, cmd->data.mod_compile.len);
+        cmd->data.mod_compile.code = code;
+        break;
+    }
+
+    case CMD_IO: {
+        save_read_into(save, &cmd->data.io.io);
+        save_read_into(save, &cmd->data.io.dst);
+        save_read_into(save, &cmd->data.io.len);
+        save_read(save, cmd->data.io.args,
+                cmd->data.io.len * sizeof(cmd->data.io.args[0]));
+        break;
+    }
+
+    default: { assert(false); }
+    }
+
+    return save_read_magic(save, save_magic_cmd);
 }
 
 
@@ -88,11 +303,6 @@ void state_free(struct state *state)
 
     free(state);
 }
-
-
-// -----------------------------------------------------------------------------
-// save
-// -----------------------------------------------------------------------------
 
 static void state_save_chunks(
         struct world *world, struct save *save, const struct ack *ack)

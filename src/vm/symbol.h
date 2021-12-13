@@ -10,6 +10,7 @@
 
 #include <ctype.h>
 
+struct save;
 
 // -----------------------------------------------------------------------------
 // symbol
@@ -68,3 +69,6 @@ inline bool symbol_char(char c)
 }
 
 size_t symbol_parse(const char *it, size_t len, struct symbol *value);
+
+void symbol_save(const struct symbol *sym, struct save *);
+bool symbol_load(struct symbol *sym, struct save *);
