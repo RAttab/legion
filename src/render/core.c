@@ -221,7 +221,8 @@ void core_init(void)
 
     core_populate();
     core.sim = sim_new(0);
-    core.proxy = proxy_new(core.sim);
+    core.proxy = proxy_new(sim_out(core.sim), sim_in(core.sim));
+    sim_thread(core.sim);
 
     cursor_init();
     ui_init();
@@ -229,8 +230,9 @@ void core_init(void)
 
 void core_close(void)
 {
+    sim_quit(core.sim);
     proxy_free(core.proxy);
-    sim_close(core.sim);
+    sim_free(core.sim);
 
     ui_close();
     cursor_close();
@@ -298,7 +300,7 @@ void core_push_event(enum event code, uint64_t d0, uint64_t d1)
 // status
 // -----------------------------------------------------------------------------
 
-void core_log_msg(enum status type, const char *msg, size_t len)
+void core_log_msg(enum status_type type, const char *msg, size_t len)
 {
     const char *prefix = NULL;
     switch (type) {
@@ -314,7 +316,7 @@ void core_log_msg(enum status type, const char *msg, size_t len)
     }
 }
 
-void core_logv(enum status type, const char *fmt, va_list args)
+void core_logv(enum status_type type, const char *fmt, va_list args)
 {
     static char msg[256] = {0};
     ssize_t len = vsnprintf(msg, sizeof(msg), fmt, args);
@@ -322,7 +324,7 @@ void core_logv(enum status type, const char *fmt, va_list args)
     core_log_msg(type, msg, len);
 }
 
-void core_log(enum status type, const char *fmt, ...)
+void core_log(enum status_type type, const char *fmt, ...)
 {
     va_list args = {0};
     va_start(args, fmt);

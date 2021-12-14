@@ -56,7 +56,7 @@ int16_t ui_status_height(void)
 
 void ui_status_set(
         struct ui_status *ui,
-        enum status type,
+        enum status_type type,
         const char *msg,
         size_t len)
 {

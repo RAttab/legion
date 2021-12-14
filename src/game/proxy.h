@@ -28,7 +28,7 @@ struct hset;
 
 struct proxy;
 
-struct proxy *proxy_new(struct sim *);
+struct proxy *proxy_new(struct save_ring *in, struct save_ring *out);
 void proxy_free(struct proxy *);
 
 bool proxy_update(struct proxy *);

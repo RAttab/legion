@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "ui/ui.h"
-#include "game/sim.h"
+#include "game/protocol.h"
 #include "SDL.h"
 
 struct proxy;
@@ -131,6 +131,6 @@ void core_push_event(enum event, uint64_t d0, uint64_t d1);
 // log
 // -----------------------------------------------------------------------------
 
-void core_log_msg(enum status, const char *msg, size_t len);
-void core_logv(enum status, const char *fmt, va_list);
-void core_log(enum status, const char *fmt, ...) legion_printf(2, 3);
+void core_log_msg(enum status_type, const char *msg, size_t len);
+void core_logv(enum status_type, const char *fmt, va_list);
+void core_log(enum status_type, const char *fmt, ...) legion_printf(2, 3);

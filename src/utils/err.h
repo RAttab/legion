@@ -78,6 +78,18 @@
         abort();                                \
     } while(false)
 
+#define fail_posix(errnum, msg)                 \
+    do {                                        \
+        err_posix(errnum, msg);                 \
+        abort();                                \
+    } while(false)
+
+#define failf_posix(errnum, fmt, ...)           \
+    do {                                        \
+        errf_posix(errnum, fmt, __VA_ARGS__);   \
+        abort();                                \
+    } while(false)
+
 
 // -----------------------------------------------------------------------------
 // sdl

@@ -13,8 +13,8 @@
 #include <stdatomic.h>
 #include <pthread.h>
 
-static void *sim_run(void *ctx);
-static void sim_publish(struct sim *);
+static void sim_publish_state(struct sim *);
+
 
 // -----------------------------------------------------------------------------
 // sim
@@ -22,8 +22,10 @@ static void sim_publish(struct sim *);
 
 enum
 {
-    sim_cmd_len = 8,
-    sim_log_len = 16,
+    sim_in_len = 100 * s_page_len,
+    sim_out_len = 2000 * s_page_len,
+    sim_log_len = 8,
+
     sim_save_version = 1,
 
     sim_prof_enabled = 0,
@@ -33,6 +35,7 @@ enum
 struct sim
 {
     pthread_t thread;
+    atomic_bool quit;
     ts_t next;
 
     struct ack ack;
@@ -47,118 +50,87 @@ struct sim
     struct { world_ts_t ts; mod_t id; } mod;
     struct { world_ts_t ts; const struct mod *mod; } compile;
 
-    atomic_bool quit;
+    struct save_ring *in, *out;
 
     struct
     {
-        atomic_size_t read, write;
-        struct sim_log queue[sim_log_len];
-    } legion_aligned(8) log;
-
-    struct
-    {
-        atomic_size_t read, write;
-        struct cmd queue[sim_cmd_len];
-    } legion_aligned(8) cmd;
-
-    struct
-    {
-        atomic_uintptr_t read, write;
-    } legion_aligned(8) state;
+        uint64_t read, write;
+        struct status queue[sim_log_len];
+    } log;
 };
 
 
 struct sim *sim_new(seed_t seed)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
-    sim->stream = 1;
 
+    sim->stream = 1;
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
     sim->chunk = sim->home;
     sim->speed = speed_normal;
-
+    sim->in = save_ring_new(sim_in_len);
+    sim->out = save_ring_new(sim_out_len);
     atomic_init(&sim->quit, false);
 
-    atomic_init(&sim->cmd.read, 0);
-    atomic_init(&sim->cmd.write, 0);
-
-    atomic_init(&sim->state.write, (uintptr_t) save_mem_new());
-    sim_publish(sim);
-
-    int err = pthread_create(&sim->thread, NULL, sim_run, sim);
-    if (err) {
-        errf_posix(err, "unable to create sim thread: fn=%p ctx=%p", sim_run, sim);
-        goto fail_pthread;
-    }
-
+    sim_publish_state(sim);
     return sim;
-
-  fail_pthread:
-    free(sim);
-    return NULL;
 }
 
-void sim_close(struct sim *sim)
+void sim_free(struct sim *sim)
 {
-    atomic_store_explicit(&sim->quit, true, memory_order_relaxed);
-
-    int err = pthread_join(sim->thread, NULL);
-    if (err) err_posix(err, "unable to join sim thread");
-
     world_free(sim->world);
-    save_mem_free((struct save *) atomic_load(&sim->state.read));
-    save_mem_free((struct save *) atomic_load(&sim->state.write));
+    save_ring_free(sim->in);
+    save_ring_free(sim->out);
+}
+
+struct save_ring *sim_in(struct sim *sim)
+{
+    return sim->in;
+}
+
+struct save_ring *sim_out(struct sim *sim)
+{
+    return sim->out;
 }
 
 
 // -----------------------------------------------------------------------------
 // log
 // -----------------------------------------------------------------------------
-// Single producer & Single Consumer lockfree queue.
+// Need to maintain a seperate log queue so that we can accumulate status
+// messages and transmit them after we've queued the state.
 
-
-static struct sim_log * sim_log_write(struct sim *sim)
+static struct status * sim_log_write(struct sim *sim)
 {
-    size_t read = atomic_load_explicit(&sim->log.read, memory_order_acquire);
-    size_t write = atomic_load_explicit(&sim->log.write, memory_order_relaxed);
-
-    assert(write >= read);
-    if (write - read >= sim_log_len) return NULL;
-
-    return sim->log.queue + (write % sim_log_len);
+    assert(sim->log.write >= sim->log.read);
+    if (sim->log.write - sim->log.read >= sim_log_len) return NULL;
+    return sim->log.queue + (sim->log.write % sim_log_len);
 }
 
 static void sim_log_push(struct sim *sim)
 {
-    size_t write = atomic_fetch_add_explicit(&sim->log.write, 1, memory_order_release);
-
-    size_t read = atomic_load_explicit(&sim->log.read, memory_order_relaxed);
-    assert(write >= read);
-    assert(write - read <= sim_log_len);
+    sim->log.write++;
+    assert(sim->log.write >= sim->log.read);
+    assert(sim->log.write - sim->log.read <= sim_log_len);
 }
 
-const struct sim_log * sim_log_read(struct sim *sim)
+static const struct status * sim_log_read(struct sim *sim)
 {
-    size_t write = atomic_load_explicit(&sim->log.write, memory_order_acquire);
-    size_t read = atomic_load_explicit(&sim->log.read, memory_order_relaxed);
+    assert(sim->log.write >= sim->log.read);
+    if (sim->log.write == sim->log.read) return NULL;
 
-    assert(write >= read);
-    if (write == read) return NULL;
-
-    return sim->log.queue + (read % sim_log_len);
+    return sim->log.queue + (sim->log.read % sim_log_len);
 }
 
-void sim_log_pop(struct sim *sim)
+static void sim_log_pop(struct sim *sim)
 {
-    size_t read = atomic_fetch_add_explicit(&sim->log.read, 1, memory_order_release);
-
-    size_t write = atomic_load_explicit(&sim->log.write, memory_order_relaxed);
-    assert(write >= read);
-    assert(write - read <= sim_log_len);
+    sim->log.read++;
+    assert(sim->log.write >= sim->log.read);
+    assert(sim->log.write - sim->log.read <= sim_log_len);
 }
 
-static void sim_logv_overflow(enum status type, const char *fmt, va_list args)
+static void sim_logv_overflow(enum status_type type, const char *fmt, va_list args)
 {
     static char msg[256] = {0};
     ssize_t len = vsnprintf(msg, sizeof(msg), fmt, args);
@@ -175,19 +147,19 @@ static void sim_logv_overflow(enum status type, const char *fmt, va_list args)
     errf("log overflow: <%s> %s\n", prefix, msg);
 }
 
-void sim_logv(struct sim *sim, enum status type, const char *fmt, va_list args)
+void sim_logv(struct sim *sim, enum status_type type, const char *fmt, va_list args)
 {
-    struct sim_log *log = sim_log_write(sim);
-    if (!log) return sim_logv_overflow(type, fmt, args);
+    struct status *status = sim_log_write(sim);
+    if (!status) return sim_logv_overflow(type, fmt, args);
 
-    ssize_t len = vsnprintf(log->msg, sizeof(log->msg), fmt, args);
+    ssize_t len = vsnprintf(status->msg, sizeof(status->msg), fmt, args);
     assert(len >= 0);
-    log->len = len;
+    status->len = len;
 
     sim_log_push(sim);
 }
 
-void sim_log(struct sim *sim, enum status type, const char *fmt, ...)
+void sim_log(struct sim *sim, enum status_type type, const char *fmt, ...)
 {
     va_list args = {0};
     va_start(args, fmt);
@@ -227,105 +199,6 @@ static struct symbol sim_log_atom(struct sim *sim, word_t atom)
 // -----------------------------------------------------------------------------
 // cmd
 // -----------------------------------------------------------------------------
-// Single producer & Single Consumer lockfree queue.
-
-struct cmd * sim_cmd_write(struct sim *sim)
-{
-    size_t read = atomic_load_explicit(&sim->cmd.read, memory_order_acquire);
-    size_t write = atomic_load_explicit(&sim->cmd.write, memory_order_relaxed);
-
-    assert(write >= read);
-    if (write - read >= sim_cmd_len) return NULL;
-
-    return sim->cmd.queue + (write % sim_cmd_len);
-}
-
-void sim_cmd_push(struct sim *sim)
-{
-    size_t write = atomic_fetch_add_explicit(&sim->cmd.write, 1, memory_order_release);
-
-    size_t read = atomic_load_explicit(&sim->cmd.read, memory_order_relaxed);
-    assert(write >= read);
-    assert(write - read <= sim_cmd_len);
-}
-
-static const struct cmd * sim_cmd_read(struct sim *sim)
-{
-    size_t write = atomic_load_explicit(&sim->cmd.write, memory_order_acquire);
-    size_t read = atomic_load_explicit(&sim->cmd.read, memory_order_relaxed);
-
-    assert(write >= read);
-    if (write == read) return NULL;
-
-    return sim->cmd.queue + (read % sim_cmd_len);
-}
-
-static void sim_cmd_pop(struct sim *sim)
-{
-    size_t read = atomic_fetch_add_explicit(&sim->cmd.read, 1, memory_order_release);
-
-    size_t write = atomic_load_explicit(&sim->cmd.write, memory_order_relaxed);
-    assert(write >= read);
-    assert(write - read <= sim_cmd_len);
-}
-
-
-// -----------------------------------------------------------------------------
-// state
-// -----------------------------------------------------------------------------
-// Weird custom handoff mechanism that's mostly lockfree and should work fairly
-// well while avoiding having to reallocate the persistence objects.
-
-struct save *sim_state_read(struct sim *sim)
-{
-    uintptr_t ptr = atomic_exchange_explicit(&sim->state.read, 0, memory_order_acquire);
-    assert(!ptr || ptr > 0x100);
-
-    struct save *save = (struct save *) ptr;
-    if (save) save_mem_reset(save);
-    return save;
-}
-
-void sim_state_release(struct sim *sim, struct save *save)
-{
-    if (!save) return;
-
-    uintptr_t ptr = (uintptr_t) save;
-    assert(!ptr || ptr > 0x100);
-    ptr = atomic_exchange_explicit(&sim->state.write, ptr, memory_order_release);
-    assert(!ptr);
-    assert(!ptr || ptr > 0x100);
-}
-
-static struct save *sim_state_write(struct sim *sim)
-{
-    uintptr_t ptr = 0;
-    do {
-        ptr = atomic_exchange_explicit(&sim->state.write, 0, memory_order_acquire);
-        assert(!ptr || ptr > 0x100);
-    } while (!ptr && !atomic_load_explicit(&sim->quit, memory_order_relaxed));
-    assert(!ptr || ptr > 0x100);
-
-    struct save *save = (struct save *) ptr;
-    if (save) save_mem_reset(save);
-    return save;
-}
-
-static void sim_state_publish(struct sim *sim, struct save *save)
-{
-    assert(save);
-
-    uintptr_t ptr = (uintptr_t) save;
-    assert(!ptr || ptr > 0x100);
-    ptr = atomic_exchange_explicit(&sim->state.read, ptr, memory_order_acquire);
-    assert(!ptr || ptr > 0x100);
-    if (ptr) atomic_store_explicit(&sim->state.write, ptr, memory_order_relaxed);
-}
-
-
-// -----------------------------------------------------------------------------
-// thread
-// -----------------------------------------------------------------------------
 
 static void sim_cmd_save(struct sim *sim, const struct cmd *cmd)
 {
@@ -348,6 +221,7 @@ static void sim_cmd_save(struct sim *sim, const struct cmd *cmd)
 static void sim_cmd_load(struct sim *sim, const struct cmd *cmd)
 {
     (void) cmd;
+    dbg("sim.cmd.load");
 
     bool fail = false;
     struct save *save = save_file_load("./legion.save");
@@ -487,10 +361,90 @@ static void sim_cmd_publish(struct sim *sim, const struct cmd *cmd)
             sim_log_mod(sim, mod_id).c, mod_maj(mod_id), mod_ver(mod_id));
 }
 
-static void sim_publish(struct sim *sim)
+static void sim_cmd(struct sim *sim)
 {
-    struct save *save = sim_state_write(sim);
-    if (!save) return;
+    while (true) {
+        struct save *save = save_ring_read(sim->in);
+
+        struct header head = {0};
+        if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
+
+        if (head.magic != header_magic) {
+            sim_log(sim, st_error, "invalid head magic: %x != %x",
+                    head.magic, header_magic);
+            save_ring_close(sim->in);
+            assert(false); // \todo will handle when doing multi-user.
+        }
+
+        if (head.type != header_cmd) {
+            sim_log(sim, st_error, "unexpected input header type: %u != %d",
+                    head.type, header_cmd);
+            save_ring_consume(save, head.len);
+            goto commit;
+        }
+
+        if (save_cap(save) < head.len) break;
+
+        struct cmd cmd = {0};
+        if (!cmd_load(&cmd, save)) {
+            sim_log(sim, st_error, "unable to load cmd '%x'",
+                    cmd.type);
+            goto commit;
+        }
+
+        switch (cmd.type)
+        {
+        case CMD_QUIT: {
+            atomic_store_explicit(&sim->quit, true, memory_order_relaxed);
+            break;
+        }
+
+        case CMD_SAVE: { sim_cmd_save(sim, &cmd); break; }
+        case CMD_LOAD: { sim_cmd_load(sim, &cmd); break; }
+
+        case CMD_ACK: {
+            memcpy(&sim->ack, cmd.data.ack, sizeof(sim->ack));
+            ack_free(cmd.data.ack);
+            break;
+        }
+
+        case CMD_SPEED: {
+            sim->speed = cmd.data.speed;
+            if (sim->speed == speed_normal) sim->next = ts_now();
+            break;
+        }
+
+        case CMD_CHUNK: { sim->chunk = cmd.data.chunk; break; }
+
+        case CMD_MOD: { sim_cmd_mod(sim, &cmd); break; }
+        case CMD_MOD_REGISTER: { sim_cmd_mod_register(sim, &cmd); break; }
+        case CMD_MOD_COMPILE: { sim_cmd_mod_compile(sim, &cmd); break; }
+        case CMD_MOD_PUBLISH: { sim_cmd_publish(sim, &cmd); break; }
+
+        case CMD_IO: { sim_cmd_io(sim, &cmd); break; }
+
+        default: { assert(false); }
+        }
+
+      commit:
+        save_ring_commit(sim->in, save);
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// publish
+// -----------------------------------------------------------------------------
+
+static void sim_publish_state(struct sim *sim)
+{
+    struct save *save = save_ring_write(sim->out);
+
+    struct header *head = save_bytes(save);
+    if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+        sim_log(sim, st_warn, "skip state publish: %zu", save_cap(save));
+        return;
+    }
 
     if (unlikely(sim_prof_enabled && core.init)) {
         if (!(world_time(sim->world) % sim_prof_freq))
@@ -512,56 +466,66 @@ static void sim_publish(struct sim *sim)
                 .ack = &sim->ack,
             });
 
-    save_prof_dump(save);
-    sim_state_publish(sim, save);
-}
+    // If this triggers, increase the ring size or detect eof in chunk and do
+    // some magical form of gradual state transmit. Short version, life not
+    // bueno.
+    assert(save_len(save) < sim_out_len);
 
-static bool sim_cmd(struct sim *sim)
-{
-    const struct cmd *cmd = NULL;
-    while ((cmd = sim_cmd_read(sim)))
-    {
-        switch (cmd->type)
-        {
-        case CMD_QUIT: { return false; }
-
-        case CMD_SAVE: { sim_cmd_save(sim, cmd); break; }
-        case CMD_LOAD: { sim_cmd_load(sim, cmd); break; }
-
-        case CMD_ACK: {
-            memcpy(&sim->ack, cmd->data.ack, sizeof(sim->ack));
-            ack_free(cmd->data.ack);
-            break;
-        }
-
-        case CMD_SPEED: {
-            sim->speed = cmd->data.speed;
-            if (sim->speed == speed_normal) sim->next = ts_now();
-            break;
-        }
-
-        case CMD_CHUNK: { sim->chunk = cmd->data.chunk; break; }
-
-        case CMD_MOD: { sim_cmd_mod(sim, cmd); break; }
-        case CMD_MOD_REGISTER: { sim_cmd_mod_register(sim, cmd); break; }
-        case CMD_MOD_COMPILE: { sim_cmd_mod_compile(sim, cmd); break; }
-        case CMD_MOD_PUBLISH: { sim_cmd_publish(sim, cmd); break; }
-
-        case CMD_IO: { sim_cmd_io(sim, cmd); break; }
-
-        default: { assert(false); }
-        }
-
-        sim_cmd_pop(sim);
+    if (save_eof(save)) {
+        sim_log(sim, st_warn, "skip state publish: %zu", save_cap(save));
+        return;
     }
 
-    return true;
+    save_prof_dump(save);
+
+    *head = make_header(header_state, save_len(save));
+    save_ring_commit(sim->out, save);
 }
 
-static void *sim_run(void *ctx)
+static void sim_publish_log(struct sim *sim)
 {
-    struct sim *sim = ctx;
+    const struct status *status = NULL;
+    while ((status = sim_log_read(sim))) {
+        struct save *save = save_ring_write(sim->out);
 
+        struct header *head = save_bytes(save);
+        if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+            sim_log(sim, st_warn, "skip log publish: %zu", save_cap(save));
+            return;
+        }
+
+        status_save(status, save);
+
+        if (save_len(save) == save_cap(save)) {
+            sim_log(sim, st_warn, "skip log publish: %zu", save_cap(save));
+            return;
+        }
+
+        *head = make_header(header_status, save_len(save));
+        save_ring_commit(sim->out, save);
+        sim_log_pop(sim);
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// step
+// -----------------------------------------------------------------------------
+
+void sim_step(struct sim *sim)
+{
+    // Makes commands mildly more responsive if we execute the step before
+    // we processs commands.
+    world_step(sim->world);
+
+    sim_cmd(sim);
+
+    sim_publish_state(sim);
+    sim_publish_log(sim);
+}
+
+void sim_loop(struct sim *sim)
+{
     enum { state_freq = 10 };
     ts_t sleep = ts_sec / state_freq;
     ts_t now = sim->next = ts_now();
@@ -570,28 +534,40 @@ static void *sim_run(void *ctx)
         if (atomic_load_explicit(&sim->quit, memory_order_relaxed)) break;
 
         switch (sim->speed) {
-        case speed_fast: { break; }
-        case speed_pause: { if (!sim_cmd(sim)) break; continue; }
-        case speed_normal: {
-            if (now < sim->next)
-                now = ts_sleep_until(sim->next);
-            break;
-        }
+        case speed_pause: { sim_cmd(sim); continue; }
+        case speed_slow: { sleep = sleep_slow; break; }
+        case speed_fast: { sleep = sleep_fast; break; }
         default: { assert(false); }
         }
 
-        // Makes commands mildly more responsive if we execute the step first.
-        world_step(sim->world);
-        if (!sim_cmd(sim)) break;
-        sim_publish(sim);
+        sim_step(sim);
 
         sim->next += sleep;
         if (sim->next <= now) {
-            dbgf("sim.late> now:%lu, next:%lu, sleep:%lu, ticks:%u",
-                    now, sim->next, sleep, world_time(sim->world));
-            while (sim->next <= now) sim->next += sleep;
+            if (sim->speed == speed_slow) {
+                dbgf("sim.late: now=%lu, next=%lu, sleep=%lu, ticks=%u",
+                        now, sim->next, sleep, world_time(sim->world));
+            }
+            sim->next = now;
         }
     }
+}
 
-    return NULL;
+void sim_quit(struct sim *sim)
+{
+    atomic_store_explicit(&sim->quit, true, memory_order_relaxed);
+
+    int err = pthread_join(sim->thread, NULL);
+    if (err) err_posix(err, "unable to join sim thread");
+}
+
+void sim_thread(struct sim *sim)
+{
+    void *sim_run(void *ctx)  { sim_loop(ctx); return NULL; }
+
+    int err = pthread_create(&sim->thread, NULL, sim_run, sim);
+    if (!err) return;
+
+    failf_posix(err, "unable to create sim thread: fn=%p ctx=%p",
+            sim_run, sim);
 }

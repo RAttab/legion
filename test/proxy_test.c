@@ -24,7 +24,7 @@ void check_basics(void)
     enum { seed = 123 };
 
     struct sim *sim = sim_new(123);
-    struct proxy *proxy = proxy_new(sim);
+    struct proxy *proxy = proxy_new(sim_out(sim), sim_in(sim));
 
     {
         const char eval[] = "(mod boot)";
@@ -60,11 +60,12 @@ void check_basics(void)
             assert(coord_eq(chunk_star(chunk)->coord, home));
         }
 
+        sim_step(sim);
         while (!proxy_update(proxy));
     }
 
     proxy_free(proxy);
-    sim_close(sim);
+    sim_free(sim);
 }
 
 

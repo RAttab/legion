@@ -14,7 +14,7 @@ declare -a SRC
 SRC=(items ui render game vm utils)
 
 declare -a TEST
-: ${TEST:="ring text lisp chunk lanes tech save state items proxy"}
+: ${TEST:="ring text lisp chunk lanes tech save protocol items proxy"}
 
 TIMEFORMAT="%3R"
 TIME="eval time"

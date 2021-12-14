@@ -21,18 +21,6 @@ struct save;
 
 
 // -----------------------------------------------------------------------------
-// status
-// -----------------------------------------------------------------------------
-
-enum status
-{
-    st_info = 0,
-    st_warn = 1,
-    st_error = 2,
-};
-
-
-// -----------------------------------------------------------------------------
 // speed
 // -----------------------------------------------------------------------------
 
@@ -44,6 +32,72 @@ enum legion_packed speed
 };
 
 static_assert(sizeof(enum speed) == 1);
+
+
+// -----------------------------------------------------------------------------
+// header
+// -----------------------------------------------------------------------------
+
+enum legion_packed { header_magic = 0xF0FCCF0FU };
+static_assert(sizeof(header_magic) == 4);
+
+enum legion_packed header_type
+{
+    header_nil = 0,
+    header_cmd = 1,
+    header_state = 2,
+    header_status = 3,
+};
+
+static_assert(sizeof(enum header_type) == 1);
+
+
+struct legion_packed header
+{
+    uint32_t magic:32;
+    uint32_t type:8;
+    uint32_t len:24;
+};
+
+static_assert(sizeof(struct header) == sizeof(uint64_t));
+
+
+inline struct header make_header(enum header_type type, size_t len)
+{
+    return (struct header) {
+        .magic = header_magic,
+        .type = type,
+        .len = len,
+    };
+}
+
+
+// -----------------------------------------------------------------------------
+// status
+// -----------------------------------------------------------------------------
+
+enum legion_packed status_type
+{
+    st_info = 0,
+    st_warn = 1,
+    st_error = 2,
+};
+
+static_assert(sizeof(enum status_type) == 1);
+
+
+struct legion_packed status
+{
+    enum status_type type;
+    uint8_t len;
+    char msg[126];
+};
+
+static_assert(sizeof(struct status) == 128);
+
+
+void status_save(const struct status *, struct save *);
+bool status_load(struct status *, struct save *);
 
 
 // -----------------------------------------------------------------------------
@@ -63,6 +117,7 @@ struct chunk_ack
     hash_t active[ITEMS_ACTIVE_LEN];
 };
 
+
 struct ack
 {
     uint64_t stream;
@@ -71,9 +126,8 @@ struct ack
     struct chunk_ack chunk;
 };
 
-const struct ack *ack_clone(const struct ack *);
-void ack_free(const struct ack *);
 
+void ack_free(const struct ack *);
 void ack_reset(struct ack *);
 void ack_reset_chunk(struct ack *);
 
@@ -84,23 +138,24 @@ void ack_reset_chunk(struct ack *);
 
 enum cmd_type
 {
-    CMD_NIL = 0,
-    CMD_QUIT,
+    CMD_NIL          = 0x00,
+    CMD_QUIT         = 0x01,
 
-    CMD_SAVE,
-    CMD_LOAD,
+    CMD_SAVE         = 0x10,
+    CMD_LOAD         = 0x11,
 
-    CMD_ACK,
-    CMD_SPEED,
-    CMD_CHUNK,
+    CMD_ACK          = 0x20,
+    CMD_SPEED        = 0x21,
+    CMD_CHUNK        = 0x22,
 
-    CMD_MOD,
-    CMD_MOD_REGISTER,
-    CMD_MOD_PUBLISH,
-    CMD_MOD_COMPILE,
+    CMD_MOD          = 0x30,
+    CMD_MOD_REGISTER = 0x31,
+    CMD_MOD_PUBLISH  = 0x32,
+    CMD_MOD_COMPILE  = 0x33,
 
-    CMD_IO,
+    CMD_IO           = 0x40,
 };
+
 
 struct cmd
 {

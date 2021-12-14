@@ -21,7 +21,7 @@ static void proxy_cmd(struct proxy *, const struct cmd *);
 
 struct proxy
 {
-    struct sim *sim;
+    struct save_ring *in, *out;
     struct state *state;
 
     struct htable sectors;
@@ -35,11 +35,12 @@ struct proxy
     struct ack ack;
 };
 
-struct proxy *proxy_new(struct sim *sim)
+struct proxy *proxy_new(struct save_ring *in, struct save_ring *out)
 {
     struct proxy *proxy = calloc(1, sizeof(*proxy));
     *proxy = (struct proxy) {
-        .sim = sim,
+        .in = in,
+        .out = out,
         .state = state_alloc(),
     };
 
@@ -69,30 +70,30 @@ void proxy_free(struct proxy *proxy)
     free(proxy);
 }
 
-bool proxy_update(struct proxy *proxy)
+
+// -----------------------------------------------------------------------------
+// update
+// -----------------------------------------------------------------------------
+
+static void proxy_update_status(struct proxy *, struct save *save)
 {
-    bool ok = false;
+    struct status status = {0};
+    if (!status_load(&status, save)) return;
 
-    struct save *save = sim_state_read(proxy->sim);
-    if (save) {
-        if ((ok = state_load(proxy->state, save, &proxy->ack))) {
-            proxy_cmd(proxy, &(struct cmd) {
+    core_log_msg(status.type, status.msg, status.len);
+}
+
+static bool proxy_update_state(struct proxy *proxy, struct save *save)
+{
+    if (!state_load(proxy->state, save, &proxy->ack)) {
+        err("unable to load state in proxy");
+        return false;
+    }
+
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = ack_clone(&proxy->ack) },
+                .data = { .ack = &proxy->ack }
             });
-        }
-        else err("unable to load state in proxy");
-
-        sim_state_release(proxy->sim, save);
-    }
-
-    const struct sim_log *log = NULL;
-    while ((log = sim_log_read(proxy->sim))) {
-        core_log_msg(log->type, log->msg, log->len);
-        sim_log_pop(proxy->sim);
-    }
-
-    if (!ok) return false;
 
     hset_clear(proxy->active_stars);
     hset_clear(proxy->active_sectors);
@@ -111,9 +112,34 @@ bool proxy_update(struct proxy *proxy)
     return true;
 }
 
-struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)
+bool proxy_update(struct proxy *proxy)
 {
-    return lisp_eval_const(proxy->lisp, src, len);
+    bool update = false;
+
+    while (true) {
+        struct save *save = save_ring_read(proxy->in);
+
+        struct header head = {0};
+        if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
+
+        if (head.magic != header_magic) {
+            core_log(st_warn, "invalid head magic: %x != %x",
+                    head.magic, header_magic);
+            break;
+        }
+
+        if (save_cap(save) < head.len) break;
+
+        switch (head.type) {
+        case header_status: { proxy_update_status(proxy, save); break; }
+        case header_state: { update = proxy_update_state(proxy, save); break; }
+        default: { assert(false); }
+        }
+
+        save_ring_commit(proxy->in, save);
+    }
+
+    return update;
 }
 
 
@@ -177,19 +203,37 @@ const struct log *proxy_logs(struct proxy *proxy)
     return proxy->state->log;
 }
 
+struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)
+{
+    return lisp_eval_const(proxy->lisp, src, len);
+}
+
 
 // -----------------------------------------------------------------------------
 // cmd
 // -----------------------------------------------------------------------------
 
-static void proxy_cmd(struct proxy *proxy, const struct cmd *src)
+static void proxy_cmd(struct proxy *proxy, const struct cmd *cmd)
 {
-    struct cmd *dst = sim_cmd_write(proxy->sim);
-    if (!dst) return core_log(st_error, "unable to send command '%d'", src->type);
+    struct save *save = save_ring_write(proxy->out);
 
-    *sim_cmd_write(proxy->sim) = *src;
+    struct header *head = save_bytes(save);
+    if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+        core_log(st_error, "unable to send command '%x' due to overflow",
+                cmd->type);
+        return;
+    }
 
-    sim_cmd_push(proxy->sim);
+    cmd_save(cmd, save);
+
+    if (save_eof(save)) {
+        core_log(st_error, "unable to send command '%x' due to overflow",
+                cmd->type);
+        return;
+    }
+
+    *head = make_header(header_cmd, save_len(save));
+    save_ring_commit(proxy->out, save);
 }
 
 void proxy_quit(struct proxy *proxy)

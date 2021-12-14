@@ -46,8 +46,9 @@ enum legion_packed save_magic
     save_magic_state_compile = 0x31,
     save_magic_state_mod     = 0x32,
     save_magic_state_chunk   = 0x33,
-    save_magic_cmd           = 0x38,
-    save_magic_ack           = 0x39,
+    save_magic_status        = 0x38,
+    save_magic_cmd           = 0x39,
+    save_magic_ack           = 0x3A,
 
     save_magic_len,
 };
@@ -64,7 +65,7 @@ struct save;
 bool save_eof(struct save *);
 size_t save_cap(struct save *);
 size_t save_len(struct save *);
-uint8_t *save_bytes(struct save *);
+void *save_bytes(struct save *);
 
 // -----------------------------------------------------------------------------
 // save_mem

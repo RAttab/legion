@@ -60,7 +60,7 @@ size_t save_len(struct save *save)
     return save->it - save->base;
 }
 
-uint8_t *save_bytes(struct save *save)
+void *save_bytes(struct save *save)
 {
     return save->base;
 }
@@ -296,8 +296,11 @@ void save_ring_commit(struct save_ring *ring, struct save *save)
 
 size_t save_ring_consume(struct save *save, size_t len)
 {
-    assert(save->it + len <= save->end);
+    if (save->it + len > save->end)
+        len = save->end - save->it;
+
     save->it += len;
+    return len;
 }
 
 

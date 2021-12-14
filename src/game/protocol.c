@@ -13,19 +13,33 @@
 #include "utils/vec.h"
 #include "utils/hset.h"
 
+
+// -----------------------------------------------------------------------------
+// status
+// -----------------------------------------------------------------------------
+
+void status_save(const struct status *status, struct save *save)
+{
+    save_write_magic(save, save_magic_status);
+    save_write_value(save, status->type);
+    save_write_value(save, status->len);
+    save_write(save, status->msg, status->len);
+    save_write_magic(save, save_magic_status);
+}
+
+bool status_load(struct status *status, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_status)) return false;
+    save_read_into(save, &status->type);
+    save_read_into(save, &status->len);
+    save_read(save, status->msg, status->len);
+    return save_read_magic(save, save_magic_status);
+}
+
+
 // -----------------------------------------------------------------------------
 // ack
 // -----------------------------------------------------------------------------
-
-const struct ack *ack_clone(const struct ack *src)
-{
-    struct ack *dst = calloc(1, sizeof(*dst));
-
-    memcpy(dst, src, sizeof(*src));
-    dst->chunk.provided = htable_clone(&src->chunk.provided);
-
-    return dst;
-}
 
 void ack_free(const struct ack *ack)
 {
@@ -70,7 +84,7 @@ static void ack_save(const struct ack *ack, struct save *save)
 
     for (size_t i = 0; i < array_len(cack->active); ++i) {
         if (!cack->active[i]) continue;
-        save_write_value(save, ITEM_ACTIVE_FIRST + i);
+        save_write_value(save, (enum item) (ITEM_ACTIVE_FIRST + i));
         save_write_value(save, cack->active[i]);
     }
     save_write_value(save, (enum item) 0);
@@ -81,7 +95,6 @@ static void ack_save(const struct ack *ack, struct save *save)
 static struct ack *ack_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_ack)) return NULL;
-
     struct ack *ack = calloc(1, sizeof(*ack));
 
     save_read_into(save, &ack->stream);
