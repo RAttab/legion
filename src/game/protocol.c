@@ -282,7 +282,7 @@ struct state *state_alloc(void)
     struct state *state = calloc(1, sizeof(*state));
 
     *state = (struct state) {
-        .speed = speed_normal,
+        .speed = speed_slow,
         .atoms = atoms_new(),
         .mods = mods_list_reserve(16),
         .chunks = vec64_reserve(16),

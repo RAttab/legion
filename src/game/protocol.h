@@ -27,7 +27,7 @@ struct save;
 enum legion_packed speed
 {
     speed_pause = 0,
-    speed_normal,
+    speed_slow,
     speed_fast,
 };
 

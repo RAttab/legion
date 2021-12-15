@@ -22,6 +22,9 @@ static void sim_publish_state(struct sim *);
 
 enum
 {
+    sim_freq_slow = 10,
+    sim_freq_fast = 100,
+
     sim_in_len = 100 * s_page_len,
     sim_out_len = 2000 * s_page_len,
     sim_log_len = 8,
@@ -68,7 +71,7 @@ struct sim *sim_new(seed_t seed)
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
     sim->chunk = sim->home;
-    sim->speed = speed_normal;
+    sim->speed = speed_slow;
     sim->in = save_ring_new(sim_in_len);
     sim->out = save_ring_new(sim_out_len);
     atomic_init(&sim->quit, false);
@@ -410,7 +413,7 @@ static void sim_cmd(struct sim *sim)
 
         case CMD_SPEED: {
             sim->speed = cmd.data.speed;
-            if (sim->speed == speed_normal) sim->next = ts_now();
+            if (sim->speed != speed_pause) sim->next = ts_now();
             break;
         }
 
@@ -526,19 +529,23 @@ void sim_step(struct sim *sim)
 
 void sim_loop(struct sim *sim)
 {
-    enum { state_freq = 10 };
-    ts_t sleep = ts_sec / state_freq;
+    const ts_t sleep_slow = ts_sec / sim_freq_slow;
+    const ts_t sleep_fast = ts_sec / sim_freq_fast;
     ts_t now = sim->next = ts_now();
 
     while (true) {
         if (atomic_load_explicit(&sim->quit, memory_order_relaxed)) break;
 
+        ts_t sleep = 0;
         switch (sim->speed) {
         case speed_pause: { sim_cmd(sim); continue; }
         case speed_slow: { sleep = sleep_slow; break; }
         case speed_fast: { sleep = sleep_fast; break; }
         default: { assert(false); }
         }
+
+        if (now < sim->next)
+            now = ts_sleep_until(sim->next);
 
         sim_step(sim);
 
