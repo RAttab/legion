@@ -201,7 +201,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
         ui_str_setc(&ui->debug_val.str, "attached");
         ui->debug_val.fg = rgba_green();
 
-        if (!old_debug || old_ip != state->vm.ip)
+        if (state->mod && (!old_debug || old_ip != state->vm.ip))
             core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
     }
     else {
