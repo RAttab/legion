@@ -25,17 +25,17 @@ struct save;
 struct sim;
 
 struct sim *sim_new(seed_t seed);
+struct sim *sim_load(void);
 void sim_free(struct sim *);
 
-struct save_ring *sim_in(struct sim *);
-struct save_ring *sim_out(struct sim *);
+struct sim_pipe;
+struct sim_pipe *sim_pipe_new(struct sim *);
+void sim_pipe_close(struct sim_pipe *);
+struct save_ring *sim_pipe_in(struct sim_pipe *);
+struct save_ring *sim_pipe_out(struct sim_pipe *);
 
 void sim_step(struct sim *);
 void sim_loop(struct sim *);
 
 void sim_thread(struct sim *);
 void sim_quit(struct sim *);
-
-void sim_logv(struct sim *, enum status_type, const char *fmt, va_list);
-void sim_log(struct sim *, enum status_type, const char *fmt, ...)
-    legion_printf(3, 4);

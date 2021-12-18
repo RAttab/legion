@@ -24,7 +24,11 @@ void check_basics(void)
     enum { seed = 123 };
 
     struct sim *sim = sim_new(123);
-    struct proxy *proxy = proxy_new(sim_out(sim), sim_in(sim));
+    struct sim_pipe *pipe = sim_pipe_new(sim);
+    struct proxy *proxy = proxy_new(sim_pipe_out(pipe), sim_pipe_in(pipe));
+
+    sim_step(sim);
+    assert(proxy_update(proxy));
 
     {
         const char eval[] = "(mod boot)";

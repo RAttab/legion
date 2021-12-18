@@ -32,7 +32,7 @@ struct proxy
     mod_t mod;
     struct coord chunk;
 
-    struct ack ack;
+    struct ack *ack;
 };
 
 struct proxy *proxy_new(struct save_ring *in, struct save_ring *out)
@@ -42,21 +42,19 @@ struct proxy *proxy_new(struct save_ring *in, struct save_ring *out)
         .in = in,
         .out = out,
         .state = state_alloc(),
+        .ack = ack_new(),
     };
-
-    proxy->lisp = lisp_new(proxy->state->mods, proxy->state->atoms);
-
-    bool updated = proxy_update(proxy);
-    assert(updated);
 
     proxy->mod = proxy->state->mod.id;
     proxy->chunk = proxy->state->chunk.coord;
+    proxy->lisp = lisp_new(proxy->state->mods, proxy->state->atoms);
 
     return proxy;
 }
 
 void proxy_free(struct proxy *proxy)
 {
+    ack_free(proxy->ack);
     state_free(proxy->state);
     hset_free(proxy->active_sectors);
     hset_free(proxy->active_stars);
@@ -85,14 +83,14 @@ static void proxy_update_status(struct proxy *, struct save *save)
 
 static bool proxy_update_state(struct proxy *proxy, struct save *save)
 {
-    if (!state_load(proxy->state, save, &proxy->ack)) {
+    if (!state_load(proxy->state, save, proxy->ack)) {
         err("unable to load state in proxy");
         return false;
     }
 
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = &proxy->ack }
+                .data = { .ack = proxy->ack }
             });
 
     hset_clear(proxy->active_stars);

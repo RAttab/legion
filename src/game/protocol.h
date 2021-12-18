@@ -127,7 +127,8 @@ struct ack
 };
 
 
-void ack_free(const struct ack *);
+struct ack *ack_new(void);
+void ack_free(struct ack *);
 void ack_reset(struct ack *);
 void ack_reset_chunk(struct ack *);
 
@@ -163,7 +164,7 @@ struct cmd
 
     union
     {
-        const struct ack *ack;
+        struct ack *ack;
         enum speed speed;
         struct coord chunk;
         mod_t mod;

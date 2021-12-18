@@ -220,9 +220,15 @@ void core_init(void)
     fonts_init(core.renderer);
 
     core_populate();
+
     core.sim = sim_new(0);
-    core.proxy = proxy_new(sim_out(core.sim), sim_in(core.sim));
+    struct sim_pipe *pipe = sim_pipe_new(core.sim);
+    core.proxy = proxy_new(sim_pipe_out(pipe), sim_pipe_in(pipe));
     sim_thread(core.sim);
+
+    // We need the initial state from the sim before we can initialize our
+    // UI. Not the greatest solution but it works so meh.
+    while (!proxy_update(core.proxy));
 
     cursor_init();
     ui_init();

@@ -13,7 +13,8 @@
 #include <stdatomic.h>
 #include <pthread.h>
 
-static void sim_publish_state(struct sim *);
+static void sim_cmd_load(struct sim *);
+static struct sim_pipe *sim_pipe_next(struct sim *sim, struct sim_pipe *start);
 
 
 // -----------------------------------------------------------------------------
@@ -41,19 +42,67 @@ struct sim
     atomic_bool quit;
     ts_t next;
 
-    struct ack ack;
-    uint64_t stream;
-
     struct world *world;
     struct coord home;
     enum speed speed;
 
-    struct coord chunk;
+    uint64_t stream;
 
+    atomic_uintptr_t pipes;
+};
+
+
+struct sim *sim_new(seed_t seed)
+{
+    struct sim *sim = calloc(1, sizeof(*sim));
+
+    sim->world = world_new(seed);
+    sim->home = world_populate(sim->world);
+    sim->speed = speed_slow;
+    sim->stream = 1;
+    atomic_init(&sim->quit, false);
+    return sim;
+}
+
+struct sim *sim_load(void)
+{
+    struct sim *sim = sim_new(0);
+    sim_cmd_load(sim);
+    return sim;
+}
+
+
+void sim_free(struct sim *sim)
+{
+    for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
+         pipe; pipe = sim_pipe_next(sim, pipe))
+        sim_pipe_close(pipe);
+
+    // We free as we iterate so doing an iteration should free everything. A bit
+    // weird but simpler then writing it out
+    for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
+         pipe; pipe = sim_pipe_next(sim, pipe))
+    {}
+
+    world_free(sim->world);
+    free(sim);
+}
+
+
+// -----------------------------------------------------------------------------
+// pipes
+// -----------------------------------------------------------------------------
+
+struct sim_pipe
+{
+    atomic_uintptr_t next;
+    atomic_bool closed;
+    struct save_ring *in, *out;
+
+    struct ack *ack;
+    struct coord chunk;
     struct { world_ts_t ts; mod_t id; } mod;
     struct { world_ts_t ts; const struct mod *mod; } compile;
-
-    struct save_ring *in, *out;
 
     struct
     {
@@ -62,39 +111,87 @@ struct sim
     } log;
 };
 
-
-struct sim *sim_new(seed_t seed)
+struct sim_pipe *sim_pipe_new(struct sim *sim)
 {
-    struct sim *sim = calloc(1, sizeof(*sim));
+    struct sim_pipe *pipe = calloc(1, sizeof(*pipe));
+    *pipe = (struct sim_pipe) {
+        .in = save_ring_new(sim_in_len),
+        .out = save_ring_new(sim_out_len),
+        .ack = ack_new(),
+        .chunk = sim->home,
+    };
 
-    sim->stream = 1;
-    sim->world = world_new(seed);
-    sim->home = world_populate(sim->world);
-    sim->chunk = sim->home;
-    sim->speed = speed_slow;
-    sim->in = save_ring_new(sim_in_len);
-    sim->out = save_ring_new(sim_out_len);
-    atomic_init(&sim->quit, false);
-
-    sim_publish_state(sim);
-    return sim;
+    uintptr_t next = atomic_load_explicit(&sim->pipes, memory_order_acquire);
+    do {
+        atomic_store_explicit(&pipe->next, next, memory_order_relaxed);
+    } while (!atomic_compare_exchange_weak_explicit(
+                    &sim->pipes, &next, (uintptr_t) pipe,
+                    memory_order_acq_rel,
+                    memory_order_relaxed));
+    return pipe;
 }
 
-void sim_free(struct sim *sim)
+static void sim_pipe_free(struct sim_pipe *pipe)
 {
-    world_free(sim->world);
-    save_ring_free(sim->in);
-    save_ring_free(sim->out);
+    if (!pipe) return;
+
+    if (pipe->ack) ack_free(pipe->ack);
+    if (pipe->compile.mod) mod_free(pipe->compile.mod);
+
+    save_ring_free(pipe->in);
+    save_ring_free(pipe->out);
+
+    free(pipe);
 }
 
-struct save_ring *sim_in(struct sim *sim)
+// To avoid use-after-free problems we defer the close operation to the
+// sim_pipe_next function which is only used in the sim thread. After the call
+// the poll thread should never refer to the object again.
+void sim_pipe_close(struct sim_pipe *pipe)
 {
-    return sim->in;
+    atomic_store_explicit(&pipe->closed, true, memory_order_release);
 }
 
-struct save_ring *sim_out(struct sim *sim)
+struct save_ring *sim_pipe_in(struct sim_pipe *pipe)
 {
-    return sim->out;
+    return pipe->in;
+}
+
+struct save_ring *sim_pipe_out(struct sim_pipe *pipe)
+{
+    return pipe->out;
+}
+
+// The close mechanism relies on the following assumptions:
+//
+// - After calling sim_pipe_close, the poll thread never touches the object
+// - sim_pipe_next is only called from a single thread; the sim thread
+// - There are no nested calls to sim_pipe_next
+//
+// If these assumptions are met then we can be sure that while traversing the
+// pipe list, sim_pipe_next holds the only reference to the pipe and it's
+// therefore safe to close.
+static struct sim_pipe *sim_pipe_next(struct sim *sim, struct sim_pipe *start)
+{
+    atomic_uintptr_t *it = start ? &start->next : &sim->pipes;
+    uintptr_t next = atomic_load_explicit(it, memory_order_acquire);
+
+    while (true) {
+        struct sim_pipe *pipe = (void *) next;
+        if (!pipe) return NULL;
+        if (!atomic_load_explicit(&pipe->closed, memory_order_acquire))
+            return pipe;
+
+        uintptr_t new = atomic_load_explicit(&pipe->next, memory_order_acquire);
+        bool ok = atomic_compare_exchange_weak_explicit(
+                        it, &next, new,
+                        memory_order_acq_rel,
+                        memory_order_relaxed);
+        if (ok) {
+            sim_pipe_free(pipe);
+            next = new;
+        }
+    }
 }
 
 
@@ -104,33 +201,33 @@ struct save_ring *sim_out(struct sim *sim)
 // Need to maintain a seperate log queue so that we can accumulate status
 // messages and transmit them after we've queued the state.
 
-static struct status * sim_log_write(struct sim *sim)
+static struct status *sim_log_write(struct sim_pipe *pipe)
 {
-    assert(sim->log.write >= sim->log.read);
-    if (sim->log.write - sim->log.read >= sim_log_len) return NULL;
-    return sim->log.queue + (sim->log.write % sim_log_len);
+    assert(pipe->log.write >= pipe->log.read);
+    if (pipe->log.write - pipe->log.read >= sim_log_len) return NULL;
+    return pipe->log.queue + (pipe->log.write % sim_log_len);
 }
 
-static void sim_log_push(struct sim *sim)
+static void sim_log_push(struct sim_pipe *pipe)
 {
-    sim->log.write++;
-    assert(sim->log.write >= sim->log.read);
-    assert(sim->log.write - sim->log.read <= sim_log_len);
+    pipe->log.write++;
+    assert(pipe->log.write >= pipe->log.read);
+    assert(pipe->log.write - pipe->log.read <= sim_log_len);
 }
 
-static const struct status * sim_log_read(struct sim *sim)
+static const struct status *sim_log_read(struct sim_pipe *pipe)
 {
-    assert(sim->log.write >= sim->log.read);
-    if (sim->log.write == sim->log.read) return NULL;
+    assert(pipe->log.write >= pipe->log.read);
+    if (pipe->log.write == pipe->log.read) return NULL;
 
-    return sim->log.queue + (sim->log.read % sim_log_len);
+    return pipe->log.queue + (pipe->log.read % sim_log_len);
 }
 
-static void sim_log_pop(struct sim *sim)
+static void sim_log_pop(struct sim_pipe *pipe)
 {
-    sim->log.read++;
-    assert(sim->log.write >= sim->log.read);
-    assert(sim->log.write - sim->log.read <= sim_log_len);
+    pipe->log.read++;
+    assert(pipe->log.write >= pipe->log.read);
+    assert(pipe->log.write - pipe->log.read <= sim_log_len);
 }
 
 static void sim_logv_overflow(enum status_type type, const char *fmt, va_list args)
@@ -150,25 +247,45 @@ static void sim_logv_overflow(enum status_type type, const char *fmt, va_list ar
     errf("log overflow: <%s> %s\n", prefix, msg);
 }
 
-void sim_logv(struct sim *sim, enum status_type type, const char *fmt, va_list args)
+static void sim_logv(
+        struct sim_pipe *pipe,
+        enum status_type type,
+        const char *fmt,
+        va_list args)
 {
-    struct status *status = sim_log_write(sim);
+    struct status *status = sim_log_write(pipe);
     if (!status) return sim_logv_overflow(type, fmt, args);
 
     ssize_t len = vsnprintf(status->msg, sizeof(status->msg), fmt, args);
     assert(len >= 0);
     status->len = len;
 
-    sim_log_push(sim);
+    sim_log_push(pipe);
 }
 
-void sim_log(struct sim *sim, enum status_type type, const char *fmt, ...)
+static legion_printf(3, 4)
+void sim_log(struct sim_pipe *pipe, enum status_type type, const char *fmt, ...)
 {
     va_list args = {0};
     va_start(args, fmt);
-    sim_logv(sim, type, fmt, args);
+    sim_logv(pipe, type, fmt, args);
     va_end(args);
 }
+
+static legion_printf(3, 4)
+void sim_log_all(struct sim *sim, enum status_type type, const char *fmt, ...)
+{
+    va_list args = {0};
+
+    for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
+         pipe; pipe = sim_pipe_next(sim, pipe))
+    {
+        va_start(args, fmt);
+        sim_logv(pipe, type, fmt, args);
+        va_end(args);
+    }
+}
+
 
 static struct symbol sim_log_id(id_t id)
 {
@@ -203,10 +320,8 @@ static struct symbol sim_log_atom(struct sim *sim, word_t atom)
 // cmd
 // -----------------------------------------------------------------------------
 
-static void sim_cmd_save(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_save(struct sim *sim)
 {
-    (void) cmd;
-
     struct save *save = save_file_create("./legion.save", sim_save_version);
 
     save_write_magic(save, save_magic_sim);
@@ -218,14 +333,11 @@ static void sim_cmd_save(struct sim *sim, const struct cmd *cmd)
     size_t bytes = save_len(save);
     save_file_close(save);
 
-    sim_log(sim, st_info, "saved %zu bytes", bytes);
+    sim_log_all(sim, st_info, "saved %zu bytes", bytes);
 }
 
-static void sim_cmd_load(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_load(struct sim *sim)
 {
-    (void) cmd;
-    dbg("sim.cmd.load");
-
     bool fail = false;
     struct save *save = save_file_load("./legion.save");
     assert(save_file_version(save) == sim_save_version);
@@ -245,24 +357,25 @@ static void sim_cmd_load(struct sim *sim, const struct cmd *cmd)
 
   fail:
     if (fail)
-        sim_log(sim, st_error, "save file is corrupted");
-    else sim_log(sim, st_info, "loaded %zu bytes", bytes);
+        sim_log_all(sim, st_error, "save file is corrupted");
+    else sim_log_all(sim, st_info, "loaded %zu bytes", bytes);
 
     save_file_close(save);
 }
 
-static void sim_cmd_io(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_io(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     if (cmd->data.io.len > 4) {
-        return sim_log(sim, st_error, "invalid length '%u' for IO command '%x:%s'",
+        return sim_log(pipe, st_error, "invalid length '%u' for IO command '%x:%s'",
                 cmd->data.io.len, cmd->data.io.io,
                 sim_log_atom(sim, cmd->data.io.io).c);
     }
 
-    struct chunk *chunk = world_chunk(sim->world, sim->chunk);
+    struct chunk *chunk = world_chunk(sim->world, pipe->chunk);
     if (!chunk) {
-        return sim_log(sim, st_error, "invalid star '%s' for IO command '%x:%s'",
-                sim_log_coord(sim->chunk).c,
+        return sim_log(pipe, st_error, "invalid star '%s' for IO command '%x:%s'",
+                sim_log_coord(pipe->chunk).c,
                 cmd->data.io.io,
                 sim_log_atom(sim, cmd->data.io.io).c);
     }
@@ -276,47 +389,50 @@ static void sim_cmd_io(struct sim *sim, const struct cmd *cmd)
             cmd->data.io.len);
 
     if (!ok) {
-        return sim_log(sim, st_error, "invalid dst '%s' for IO command '%x:%s'",
+        return sim_log(pipe, st_error, "invalid dst '%s' for IO command '%x:%s'",
                 sim_log_id(cmd->data.io.dst).c,
                 cmd->data.io.io,
                 sim_log_atom(sim, cmd->data.io.io).c);
     }
 
-    sim_log(sim, st_info, "IO command '%x:%s' sent to '%s'",
+    sim_log(pipe, st_info, "IO command '%x:%s' sent to '%s'",
             cmd->data.io.io,
             sim_log_atom(sim, cmd->data.io.io).c,
             sim_log_id(cmd->data.io.dst).c);
 }
 
-static void sim_cmd_mod(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_mod(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     if (!mods_get(world_mods(sim->world), cmd->data.mod)) {
-        return sim_log(sim, st_error, "unknown mod id '%u.%u'",
+        return sim_log(pipe, st_error, "unknown mod id '%u.%u'",
                 mod_maj(cmd->data.mod),
                 mod_ver(cmd->data.mod));
     }
 
-    sim->mod.id = cmd->data.mod;
-    sim->mod.ts = world_time(sim->world);
+    pipe->mod.id = cmd->data.mod;
+    pipe->mod.ts = world_time(sim->world);
 }
 
-static void sim_cmd_mod_register(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_mod_register(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     mod_t id = mods_register(world_mods(sim->world), &cmd->data.mod_register);
 
     if (!id) {
-        return sim_log(sim, st_error, "unable to register mod '%s'",
+        return sim_log(pipe, st_error, "unable to register mod '%s'",
                 cmd->data.mod_register.c);
     }
 
-    sim_log(sim, st_error, "mod '%s' registered with id '%u.%u'",
+    sim_log(pipe, st_error, "mod '%s' registered with id '%u.%u'",
             cmd->data.mod_register.c,
             mod_maj(id), mod_ver(id));
 }
 
-static void sim_cmd_mod_compile(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_mod_compile(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
-    if (sim->compile.mod) mod_free(sim->compile.mod);
+    if (pipe->compile.mod) mod_free(pipe->compile.mod);
 
     struct mod *compile = mod_compile(
             cmd->data.mod_compile.maj,
@@ -327,60 +443,60 @@ static void sim_cmd_mod_compile(struct sim *sim, const struct cmd *cmd)
     compile->id = make_mod(cmd->data.mod_compile.maj, 0);
     free((char *) cmd->data.mod_compile.code);
 
-    sim->compile.mod = compile;
-    sim->compile.ts = world_time(sim->world);
+    pipe->compile.mod = compile;
+    pipe->compile.ts = world_time(sim->world);
 
     if (compile->errs_len)
-        return sim_log(sim, st_warn, "%u compilation errors", compile->errs_len);
-    sim_log(sim, st_info, "Compilation finished");
-
+        return sim_log(pipe, st_warn, "%u compilation errors", compile->errs_len);
+    sim_log(pipe, st_info, "Compilation finished");
 }
 
-static void sim_cmd_publish(struct sim *sim, const struct cmd *cmd)
+static void sim_cmd_publish(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     struct mods *mods = world_mods(sim->world);
-    const struct mod *mod = sim->compile.mod;
+    const struct mod *mod = pipe->compile.mod;
 
     if (!mod || mod_maj(mod->id) != cmd->data.mod_publish.maj) {
-        return sim_log(sim, st_error, "unable to publish compiled mod: %x != %x",
+        return sim_log(pipe, st_error, "unable to publish compiled mod: %x != %x",
                 mod ? mod_maj(mod->id) : 0, cmd->data.mod_publish.maj);
     }
 
     if (mod->errs_len) {
-        return sim_log(sim, st_error, "unable to publish mod with errors: %u",
+        return sim_log(pipe, st_error, "unable to publish mod with errors: %u",
                 mod->errs_len);
     }
 
     mod_t mod_id = mods_set(mods, mod_maj(mod->id), mod);
     if (!mod_id) {
-        return sim_log(sim, st_error, "failed to publish mod '%s'",
+        return sim_log(pipe, st_error, "failed to publish mod '%s'",
                 sim_log_mod(sim, mod_id).c);
     }
 
-    sim->compile.mod = NULL;
-    sim->mod.id = mod_id;
-    sim->mod.ts = world_time(sim->world);
-    sim_log(sim, st_error, "mod '%s' published with id '%u.%u'",
+    pipe->compile.mod = NULL;
+    pipe->mod.id = mod_id;
+    pipe->mod.ts = world_time(sim->world);
+    sim_log(pipe, st_error, "mod '%s' published with id '%u.%u'",
             sim_log_mod(sim, mod_id).c, mod_maj(mod_id), mod_ver(mod_id));
 }
 
-static void sim_cmd(struct sim *sim)
+static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
 {
     while (true) {
-        struct save *save = save_ring_read(sim->in);
+        struct save *save = save_ring_read(pipe->in);
 
         struct header head = {0};
         if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
 
         if (head.magic != header_magic) {
-            sim_log(sim, st_error, "invalid head magic: %x != %x",
+            sim_log(pipe, st_error, "invalid head magic: %x != %x",
                     head.magic, header_magic);
-            save_ring_close(sim->in);
-            assert(false); // \todo will handle when doing multi-user.
+            save_ring_close(pipe->in);
+            return;
         }
 
         if (head.type != header_cmd) {
-            sim_log(sim, st_error, "unexpected input header type: %u != %d",
+            sim_log(pipe, st_error, "unexpected input header type: %u != %d",
                     head.type, header_cmd);
             save_ring_consume(save, head.len);
             goto commit;
@@ -390,8 +506,7 @@ static void sim_cmd(struct sim *sim)
 
         struct cmd cmd = {0};
         if (!cmd_load(&cmd, save)) {
-            sim_log(sim, st_error, "unable to load cmd '%x'",
-                    cmd.type);
+            sim_log(pipe, st_error, "unable to load cmd '%x'", cmd.type);
             goto commit;
         }
 
@@ -402,12 +517,12 @@ static void sim_cmd(struct sim *sim)
             break;
         }
 
-        case CMD_SAVE: { sim_cmd_save(sim, &cmd); break; }
-        case CMD_LOAD: { sim_cmd_load(sim, &cmd); break; }
+        case CMD_SAVE: { sim_cmd_save(sim); break; }
+        case CMD_LOAD: { sim_cmd_load(sim); break; }
 
         case CMD_ACK: {
-            memcpy(&sim->ack, cmd.data.ack, sizeof(sim->ack));
-            ack_free(cmd.data.ack);
+            if (pipe->ack) ack_free(pipe->ack);
+            pipe->ack = legion_xchg(&cmd.data.ack, NULL);
             break;
         }
 
@@ -417,21 +532,28 @@ static void sim_cmd(struct sim *sim)
             break;
         }
 
-        case CMD_CHUNK: { sim->chunk = cmd.data.chunk; break; }
+        case CMD_CHUNK: { pipe->chunk = cmd.data.chunk; break; }
 
-        case CMD_MOD: { sim_cmd_mod(sim, &cmd); break; }
-        case CMD_MOD_REGISTER: { sim_cmd_mod_register(sim, &cmd); break; }
-        case CMD_MOD_COMPILE: { sim_cmd_mod_compile(sim, &cmd); break; }
-        case CMD_MOD_PUBLISH: { sim_cmd_publish(sim, &cmd); break; }
+        case CMD_MOD: { sim_cmd_mod(sim, pipe, &cmd); break; }
+        case CMD_MOD_REGISTER: { sim_cmd_mod_register(sim, pipe, &cmd); break; }
+        case CMD_MOD_COMPILE: { sim_cmd_mod_compile(sim, pipe, &cmd); break; }
+        case CMD_MOD_PUBLISH: { sim_cmd_publish(sim, pipe, &cmd); break; }
 
-        case CMD_IO: { sim_cmd_io(sim, &cmd); break; }
+        case CMD_IO: { sim_cmd_io(sim, pipe, &cmd); break; }
 
         default: { assert(false); }
         }
 
       commit:
-        save_ring_commit(sim->in, save);
+        save_ring_commit(pipe->in, save);
     }
+}
+
+static void sim_cmd_all(struct sim *sim)
+{
+    for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
+         pipe; pipe = sim_pipe_next(sim, pipe))
+        sim_cmd(sim, pipe);
 }
 
 
@@ -439,13 +561,13 @@ static void sim_cmd(struct sim *sim)
 // publish
 // -----------------------------------------------------------------------------
 
-static void sim_publish_state(struct sim *sim)
+static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
 {
-    struct save *save = save_ring_write(sim->out);
+    struct save *save = save_ring_write(pipe->out);
 
     struct header *head = save_bytes(save);
     if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
-        sim_log(sim, st_warn, "skip state publish: %zu", save_cap(save));
+        sim_log(pipe, st_warn, "skip state publish: %zu", save_cap(save));
         return;
     }
 
@@ -454,59 +576,60 @@ static void sim_publish_state(struct sim *sim)
             save_prof(save);
     }
 
-    bool ack_mod = sim->ack.time > sim->mod.ts;
-    bool ack_compile = sim->ack.time > sim->compile.ts;
-    if (sim->stream != sim->ack.stream) ack_reset(&sim->ack);
+    bool ack_mod = pipe->ack->time > pipe->mod.ts;
+    bool ack_compile = pipe->ack->time > pipe->compile.ts;
+    if (sim->stream != pipe->ack->stream) ack_reset(pipe->ack);
 
     state_save(save, &(struct state_ctx) {
                 .stream = sim->stream,
                 .world = sim->world,
                 .speed = sim->speed,
                 .home = sim->home,
-                .chunk = sim->chunk,
-                .mod = !ack_mod ? sim->mod.id : 0,
-                .compile = !ack_compile ? sim->compile.mod : NULL,
-                .ack = &sim->ack,
+                .chunk = pipe->chunk,
+                .mod = !ack_mod ? pipe->mod.id : 0,
+                .compile = !ack_compile ? pipe->compile.mod : NULL,
+                .ack = pipe->ack,
             });
 
-    // If this triggers, increase the ring size or detect eof in chunk and do
-    // some magical form of gradual state transmit. Short version, life not
-    // bueno.
+    // If this triggers, increase the ring size or detect eof in chunk and
+    // do some magical form of gradual state transmit. Short version, life
+    // not bueno.
     assert(save_len(save) < sim_out_len);
 
     if (save_eof(save)) {
-        sim_log(sim, st_warn, "skip state publish: %zu", save_cap(save));
+        sim_log(pipe, st_warn, "skip state publish: %zu", save_cap(save));
         return;
     }
 
     save_prof_dump(save);
 
     *head = make_header(header_state, save_len(save));
-    save_ring_commit(sim->out, save);
+    save_ring_commit(pipe->out, save);
+    save_ring_wake_signal(pipe->out);
 }
 
-static void sim_publish_log(struct sim *sim)
+static void sim_publish_log(struct sim_pipe *pipe)
 {
     const struct status *status = NULL;
-    while ((status = sim_log_read(sim))) {
-        struct save *save = save_ring_write(sim->out);
+    while ((status = sim_log_read(pipe))) {
+        struct save *save = save_ring_write(pipe->out);
 
         struct header *head = save_bytes(save);
         if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
-            sim_log(sim, st_warn, "skip log publish: %zu", save_cap(save));
+            sim_log(pipe, st_warn, "skip log publish: %zu", save_cap(save));
             return;
         }
 
         status_save(status, save);
 
         if (save_len(save) == save_cap(save)) {
-            sim_log(sim, st_warn, "skip log publish: %zu", save_cap(save));
+            sim_log(pipe, st_warn, "skip log publish: %zu", save_cap(save));
             return;
         }
 
         *head = make_header(header_status, save_len(save));
-        save_ring_commit(sim->out, save);
-        sim_log_pop(sim);
+        save_ring_commit(pipe->out, save);
+        sim_log_pop(pipe);
     }
 }
 
@@ -517,14 +640,18 @@ static void sim_publish_log(struct sim *sim)
 
 void sim_step(struct sim *sim)
 {
-    // Makes commands mildly more responsive if we execute the step before
-    // we processs commands.
     world_step(sim->world);
 
-    sim_cmd(sim);
+    for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
+         pipe; pipe = sim_pipe_next(sim, pipe))
+    {
+        sim_cmd(sim, pipe);
 
-    sim_publish_state(sim);
-    sim_publish_log(sim);
+        sim_publish_state(sim, pipe);
+        sim_publish_log(pipe);
+
+        save_ring_wake_signal(pipe->out);
+    }
 }
 
 void sim_loop(struct sim *sim)
@@ -538,7 +665,7 @@ void sim_loop(struct sim *sim)
 
         ts_t sleep = 0;
         switch (sim->speed) {
-        case speed_pause: { sim_cmd(sim); continue; }
+        case speed_pause: { sim_cmd_all(sim); continue; }
         case speed_slow: { sleep = sleep_slow; break; }
         case speed_fast: { sleep = sleep_fast; break; }
         default: { assert(false); }

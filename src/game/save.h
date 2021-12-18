@@ -97,6 +97,9 @@ struct save *save_ring_write(struct save_ring *);
 void save_ring_commit(struct save_ring *, struct save *);
 
 size_t save_ring_consume(struct save *, size_t len);
+int save_ring_wake_fd(struct save_ring *);
+void save_ring_wake_signal(struct save_ring *);
+void save_ring_wake_drain(struct save_ring *);
 
 int save_ring_wake_fd(struct save_ring *);
 void save_ring_wake_signal(struct save_ring *);

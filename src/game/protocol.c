@@ -41,20 +41,26 @@ bool status_load(struct status *status, struct save *save)
 // ack
 // -----------------------------------------------------------------------------
 
-void ack_free(const struct ack *ack)
+struct ack *ack_new(void)
 {
-    free((struct ack *) ack);
+    return calloc(1, sizeof(struct ack));
+}
+
+void ack_free(struct ack *ack)
+{
+    htable_reset((struct htable *) &ack->chunk.provided);
+    free(ack);
 }
 
 void ack_reset(struct ack *ack)
 {
-    htable_reset(&ack->chunk.provided);
+    htable_clear(&ack->chunk.provided);
     memset(ack, 0, sizeof(*ack));
 }
 
 void ack_reset_chunk(struct ack *ack)
 {
-    htable_reset(&ack->chunk.provided);
+    htable_clear(&ack->chunk.provided);
     memset(&ack->chunk, 0, sizeof(ack->chunk));
 }
 
@@ -95,7 +101,7 @@ static void ack_save(const struct ack *ack, struct save *save)
 static struct ack *ack_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_ack)) return NULL;
-    struct ack *ack = calloc(1, sizeof(*ack));
+    struct ack *ack = ack_new();
 
     save_read_into(save, &ack->stream);
     save_read_into(save, &ack->time);
@@ -306,7 +312,7 @@ void state_free(struct state *state)
 
     if (state->compile) mod_free(state->compile);
     if (state->mod.mod) mod_free(state->mod.mod);
-    chunk_free(state->chunk.chunk);
+    if (state->chunk.chunk) chunk_free(state->chunk.chunk);
 
     for (const struct htable_bucket *it = htable_next(&state->lanes, NULL);
          it; it = htable_next(&state->lanes, it))

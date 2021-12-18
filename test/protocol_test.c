@@ -67,7 +67,7 @@ void check(void)
         assert(ok);
     }
 
-    struct ack ack = {0};
+    struct ack *ack = ack_new();
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
         world_log_push(world, make_coord(1, 1), make_id(1, 1), IO_PING, IOE_INVALID_STATE);
 
@@ -79,11 +79,11 @@ void check(void)
                     .mod = mod_id,
                     .chunk = home,
                     .compile = NULL,
-                    .ack = &ack,
+                    .ack = ack,
                 });
 
         save_mem_reset(save);
-        assert(state_load(state, save, &ack));
+        assert(state_load(state, save, ack));
 
         assert(state->seed == world_seed(world));
         assert(state->time == world_time(world));
@@ -170,6 +170,7 @@ void check(void)
         for (size_t step = 0; step < steps; ++step) world_step(world);
     }
 
+    ack_free(ack);
     state_free(state);
     save_mem_free(save);
     world_free(world);

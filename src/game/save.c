@@ -166,6 +166,12 @@ struct save_ring *save_ring_new(size_t cap)
         goto fail_mmap_ring;
     }
 
+    ring->wake = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+    if (ring->wake == -1) {
+        err_errno("unable to create eventfd for ring");
+        goto fail_eventfd;
+    }
+
     // The VMAs carry a reference to the fd so we don't need to keep track of
     // the original reference.
     close(fd);
@@ -173,6 +179,8 @@ struct save_ring *save_ring_new(size_t cap)
     ring->cap = cap;
     return ring;
 
+    close(ring->wake);
+  fail_eventfd:
   fail_mmap_ring:
     if (ring->base) munmap(ring->base, ring->cap);
     if (ring->loop) munmap(ring->loop, ring->cap);
@@ -186,6 +194,7 @@ struct save_ring *save_ring_new(size_t cap)
 
 void save_ring_free(struct save_ring *ring)
 {
+    close(ring->wake);
     munmap(ring->base, ring->cap);
     munmap(ring->loop, ring->cap);
     save_free(&ring->read.save);
@@ -301,6 +310,25 @@ size_t save_ring_consume(struct save *save, size_t len)
 
     save->it += len;
     return len;
+}
+
+int save_ring_wake_fd(struct save_ring *ring)
+{
+    return ring->wake;
+}
+
+void save_ring_wake_signal(struct save_ring *ring)
+{
+    uint64_t value = 1;
+    ssize_t ret = write(ring->wake, &value, sizeof(value));
+    if (ret == -1) fail_errno("unable to write to wake fd");
+}
+
+void save_ring_wake_drain(struct save_ring *ring)
+{
+    uint64_t value = 0;
+    ssize_t ret = read(ring->wake, &value, sizeof(value));
+    if (ret == -1) fail_errno("unable to read from wake fd");
 }
 
 
