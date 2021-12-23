@@ -6,7 +6,7 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "utils/sdl.h"
 
 
@@ -43,8 +43,8 @@ enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point cursor = core.cursor.point;
-        tooltip->w.pos = make_pos(cursor.x + core.cursor.size, cursor.y);
+        SDL_Point cursor = render.cursor.point;
+        tooltip->w.pos = make_pos(cursor.x + render.cursor.size, cursor.y);
 
         if (!tooltip->rect.w && !tooltip->rect.h)
             tooltip->visible = sdl_rect_contains(&tooltip->rect, &cursor);

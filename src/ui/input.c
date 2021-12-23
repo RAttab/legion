@@ -47,7 +47,7 @@ void ui_input_free(struct ui_input *input)
 
 void ui_input_focus(struct ui_input *input)
 {
-    core_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
+    render_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
 }
 
 static void ui_input_view_update(struct ui_input *input)
@@ -96,11 +96,11 @@ bool ui_input_eval(struct ui_input *input, word_t *ret)
     if (!input->buf.len) return false;
 
     struct lisp_ret eval =
-        proxy_eval(core.proxy, input->buf.c, input->buf.len);
+        proxy_eval(render.proxy, input->buf.c, input->buf.len);
     *ret = eval.value;
 
     if (!eval.ok)
-        core_log(st_error, "Invalid const LISP statement: '%s'", input->buf.c);
+        render_log(st_error, "Invalid const LISP statement: '%s'", input->buf.c);
     return eval.ok;
 }
 
@@ -144,7 +144,7 @@ void ui_input_render(
 
 static enum ui_ret ui_input_event_click(struct ui_input *input)
 {
-    SDL_Point cursor = core.cursor.point;
+    SDL_Point cursor = render.cursor.point;
     SDL_Rect rect = ui_widget_rect(&input->w);
 
     input->focused = sdl_rect_contains(&rect, &cursor);
@@ -153,7 +153,7 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     size_t col = (cursor.x - input->w.pos.x) / input->font->glyph_w;
     input->carret.col = legion_min(col, input->buf.len);
 
-    core_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
+    render_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
     return ui_consume;
 }
 
@@ -188,13 +188,13 @@ static enum ui_ret ui_input_event_ins(struct ui_input *input, char key, uint16_t
 
 static enum ui_ret ui_input_event_copy(struct ui_input *input)
 {
-    ui_clipboard_copy(&core.ui.board, input->buf.len, input->buf.c);
+    ui_clipboard_copy(&render.ui.board, input->buf.len, input->buf.c);
     return ui_consume;
 }
 
 static enum ui_ret ui_input_event_paste(struct ui_input *input)
 {
-    input->buf.len = ui_clipboard_paste(&core.ui.board, ui_input_cap, input->buf.c);
+    input->buf.len = ui_clipboard_paste(&render.ui.board, ui_input_cap, input->buf.c);
     input->carret.col = input->buf.len;
     ui_input_view_update(input);
     return ui_consume;
@@ -250,7 +250,7 @@ static enum ui_ret ui_input_event_user(struct ui_input *input, const SDL_Event *
 
 enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
 {
-    if (ev->type == core.event) return ui_input_event_user(input, ev);
+    if (ev->type == render.event) return ui_input_event_user(input, ev);
 
     switch (ev->type) {
 

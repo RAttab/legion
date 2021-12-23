@@ -44,7 +44,7 @@ void ui_code_free(struct ui_code *code)
 
 void ui_code_focus(struct ui_code *code)
 {
-    core_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
+    render_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
 }
 
 void ui_code_clear(struct ui_code *code)
@@ -264,7 +264,7 @@ static void ui_code_view_carret_at(struct ui_code *code, size_t row, size_t col)
 
 static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
 {
-    SDL_Point cursor = core.cursor.point;
+    SDL_Point cursor = render.cursor.point;
     SDL_Rect rect = ui_widget_rect(&code->w);
     if (!sdl_rect_contains(&rect, &cursor)) return false;
 
@@ -435,7 +435,7 @@ void ui_code_render(
 
 static enum ui_ret ui_code_event_click(struct ui_code *code)
 {
-    SDL_Point cursor = core.cursor.point;
+    SDL_Point cursor = render.cursor.point;
     SDL_Rect rect = ui_widget_rect(&code->w);
 
     code->focused = sdl_rect_contains(&rect, &cursor);
@@ -447,7 +447,7 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
 
     ui_code_view_carret_at(code, row, col);
 
-    core_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
+    render_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
     return ui_consume;
 }
 
@@ -602,7 +602,7 @@ static enum ui_ret ui_code_event_motion(struct ui_code *code)
 
 enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
 {
-    if (ev->type == core.event) return ui_code_event_user(code, ev);
+    if (ev->type == render.event) return ui_code_event_user(code, ev);
 
     enum ui_ret ret = ui_nil;
 

@@ -35,7 +35,7 @@ struct ui_topbar *ui_topbar_new(void)
     struct font *font = font_mono6;
     struct ui_topbar *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_topbar) {
-        .panel = ui_panel_menu(make_pos(0, 0), make_dim(core.rect.w, font->glyph_h + 8)),
+        .panel = ui_panel_menu(make_pos(0, 0), make_dim(render.rect.w, font->glyph_h + 8)),
 
         .save = ui_button_new(font, ui_str_c("save")),
         .load = ui_button_new(font, ui_str_c("load")),
@@ -78,12 +78,12 @@ void ui_topbar_free(struct ui_topbar *ui) {
 
 int16_t ui_topbar_height(void)
 {
-    return core.ui.topbar->panel.w.dim.h;
+    return render.ui.topbar->panel.w.dim.h;
 }
 
 static void ui_topbar_update_speed(struct ui_topbar *ui)
 {
-    switch (proxy_speed(core.proxy))
+    switch (proxy_speed(render.proxy))
     {
 
     case speed_pause: {
@@ -125,57 +125,57 @@ bool ui_topbar_event_user(struct ui_topbar *ui, SDL_Event *ev)
 
 bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event) return ui_topbar_event_user(ui, ev);
+    if (ev->type == render.event) return ui_topbar_event_user(ui, ev);
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_button_event(&ui->save, ev))) {
-        proxy_save(core.proxy);
+        proxy_save(render.proxy);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->load, ev))) {
-        proxy_load(core.proxy);
+        proxy_load(render.proxy);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->stop, ev))) {
-        if (proxy_speed(core.proxy) != speed_pause)
-            proxy_set_speed(core.proxy, speed_pause);
-        else proxy_set_speed(core.proxy, speed_slow);
+        if (proxy_speed(render.proxy) != speed_pause)
+            proxy_set_speed(render.proxy, speed_pause);
+        else proxy_set_speed(render.proxy, speed_slow);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fast, ev))) {
-        if (proxy_speed(core.proxy) != speed_fast)
-            proxy_set_speed(core.proxy, speed_fast);
-        else proxy_set_speed(core.proxy, speed_slow);
+        if (proxy_speed(render.proxy) != speed_fast)
+            proxy_set_speed(render.proxy, speed_fast);
+        else proxy_set_speed(render.proxy, speed_slow);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
-        core_push_event(EV_MAP_GOTO, coord_to_u64(proxy_home(core.proxy)), 0);
+        render_push_event(EV_MAP_GOTO, coord_to_u64(proxy_home(render.proxy)), 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->stars, ev))) {
-        core_push_event(EV_STARS_TOGGLE, 0, 0);
+        render_push_event(EV_STARS_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->tapes, ev))) {
-        core_push_event(EV_TAPES_TOGGLE, 0, 0);
+        render_push_event(EV_TAPES_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->mods, ev))) {
-        core_push_event(EV_MODS_TOGGLE, 0, 0);
+        render_push_event(EV_MODS_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->log, ev))) {
-        core_push_event(EV_LOG_TOGGLE, 0, 0);
+        render_push_event(EV_LOG_TOGGLE, 0, 0);
         return true;
     }
 
@@ -195,18 +195,18 @@ static void topbar_render_coord(
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
-    it += str_utoa(proxy_time(core.proxy), it, topbar_ticks_len);
+    it += str_utoa(proxy_time(render.proxy), it, topbar_ticks_len);
     *it = ' '; it++; assert(it < end);
 
     scale_t scale = 0;
     struct coord coord = {0};
-    if (map_active(core.ui.map)) {
-        scale = map_scale(core.ui.map);
-        coord = map_coord(core.ui.map);
+    if (map_active(render.ui.map)) {
+        scale = map_scale(render.ui.map);
+        coord = map_coord(render.ui.map);
     }
-    else if (factory_active(core.ui.factory)) {
-        scale = factory_scale(core.ui.factory);
-        coord = factory_coord(core.ui.factory);
+    else if (factory_active(render.ui.factory)) {
+        scale = factory_scale(render.ui.factory);
+        coord = factory_coord(render.ui.factory);
     }
 
     it += coord_str(coord, it, end - it);

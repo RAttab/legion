@@ -7,7 +7,7 @@
 #include "vm/mod.h"
 #include "game/tape.h"
 #include "game/tech.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "items/config.h"
 
 
@@ -67,7 +67,7 @@ void test_tech(void)
 
 int main(int, char **)
 {
-    core_populate();
+    sys_populate();
 
     test_tech();
 

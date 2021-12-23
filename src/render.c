@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "render/core.c"
+#include "render/render.c"
 #include "render/font.c"
 #include "render/sprites.c"
 #include "render/map.c"

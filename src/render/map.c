@@ -4,7 +4,7 @@
 */
 
 #include "render/ui.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "game/world.h"
 #include "utils/color.h"
 #include "utils/hset.h"
@@ -56,7 +56,7 @@ struct map *map_new(void)
 {
     struct map *map = calloc(1, sizeof(*map));
     *map = (struct map) {
-        .pos = proxy_home(core.proxy),
+        .pos = proxy_home(render.proxy),
         .scale = map_scale_default,
         .tex = NULL,
         .active = true,
@@ -65,10 +65,10 @@ struct map *map_new(void)
     };
 
     char path[PATH_MAX];
-    core_path_res("map.bmp", path, sizeof(path));
+    sys_path_res("map.bmp", path, sizeof(path));
 
     SDL_Surface *bmp = sdl_ptr(SDL_LoadBMP(path));
-    map->tex = sdl_ptr(SDL_CreateTextureFromSurface(core.renderer, bmp));
+    map->tex = sdl_ptr(SDL_CreateTextureFromSurface(render.renderer, bmp));
     SDL_FreeSurface(bmp);
 
     map->tex_star = (SDL_Rect) { .x = 0, .y = 0, .w = 100, .h = 100 };
@@ -99,7 +99,7 @@ scale_t map_scale(struct map *map)
 
 static struct coord map_project_coord(struct map *map, SDL_Point sdl)
 {
-    SDL_Rect rect = core.rect;
+    SDL_Rect rect = render.rect;
     int64_t x = sdl.x, y = sdl.y; // needed as a signed int
 
     int64_t rel_x = scale_mult(map->scale, x - rect.x - rect.w / 2);
@@ -128,7 +128,7 @@ static struct rect map_project_coord_rect(struct map *map, const SDL_Rect *sdl)
 
 static SDL_Point map_project_sdl(struct map *map, struct coord coord)
 {
-    SDL_Rect rect = core.rect;
+    SDL_Rect rect = render.rect;
     int64_t x = coord.x, y = coord.y; // needed as a signed int
 
     int64_t rel_x = scale_div(map->scale, x - map->pos.x);
@@ -142,7 +142,7 @@ static SDL_Point map_project_sdl(struct map *map, struct coord coord)
 
 struct coord map_coord(struct map *map)
 {
-    return map_project_coord(map, core.cursor.point);
+    return map_project_coord(map, render.cursor.point);
 }
 
 
@@ -164,7 +164,7 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
 
     case EV_STATE_LOAD: {
         if (coord_is_nil(map->pos))
-            map->pos = proxy_home(core.proxy);
+            map->pos = proxy_home(render.proxy);
         return false;
     }
 
@@ -177,7 +177,7 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
 
 bool map_event(struct map *map, SDL_Event *event)
 {
-    if (event->type == core.event) return map_event_user(map, event);
+    if (event->type == render.event) return map_event_user(map, event);
     if (!map->active) return false;
 
     switch (event->type)
@@ -206,7 +206,7 @@ bool map_event(struct map *map, SDL_Event *event)
         if (b->button == SDL_BUTTON_LEFT) map->panning = true;
 
         if (map->scale < map_thresh_stars) {
-            SDL_Point point = core.cursor.point;
+            SDL_Point point = render.cursor.point;
             size_t px = scale_div(map->scale, map_star_px);
             struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
                         .x = point.x - px / 2,
@@ -214,8 +214,8 @@ bool map_event(struct map *map, SDL_Event *event)
                         .h = px, .w = px,
                     });
 
-            const struct star *star = proxy_star_in(core.proxy, rect);
-            if (star) core_push_event(EV_STAR_SELECT, coord_to_u64(star->coord), 0);
+            const struct star *star = proxy_star_in(render.proxy, rect);
+            if (star) render_push_event(EV_STAR_SELECT, coord_to_u64(star->coord), 0);
         }
 
         break;
@@ -241,7 +241,7 @@ bool map_event(struct map *map, SDL_Event *event)
 
 static void map_render_areas(struct map *map, SDL_Renderer *renderer)
 {
-    struct rect rect = map_project_coord_rect(map, &core.rect);
+    struct rect rect = map_project_coord_rect(map, &render.rect);
 
     struct coord it = rect_next_area(rect, coord_nil());
     for (; !coord_is_nil(it); it = rect_next_area(rect, it)) {
@@ -263,7 +263,7 @@ static void map_render_areas(struct map *map, SDL_Renderer *renderer)
 
 static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
 {
-    struct rect rect = map_project_coord_rect(map, &core.rect);
+    struct rect rect = map_project_coord_rect(map, &render.rect);
 
     struct coord it = rect_next_sector(rect, coord_nil());
     for (; !coord_is_nil(it); it = rect_next_sector(rect, it)) {
@@ -278,7 +278,7 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
             .h = bot.y - top.y,
         };
 
-        if (proxy_active_sector(core.proxy, it)) {
+        if (proxy_active_sector(render.proxy, it)) {
             uint8_t alpha = 0xFF;
             if (map->scale < map_thresh_stars)
                 alpha = alpha * u64_log2(map->scale) / u64_log2(map_thresh_sector_low);
@@ -294,7 +294,7 @@ static void map_render_sectors(struct map *map, SDL_Renderer *renderer)
 static void map_render_lanes(
         struct map *map, SDL_Renderer *renderer, struct coord star)
 {
-    const struct hset *lanes = proxy_lanes_for(core.proxy, star);
+    const struct hset *lanes = proxy_lanes_for(render.proxy, star);
     if (!lanes || !lanes->len) return;
 
     SDL_Point src = map_project_sdl(map, star);
@@ -308,11 +308,11 @@ static void map_render_lanes(
 
 static void map_render_stars(struct map *map, SDL_Renderer *renderer)
 {
-    struct rect rect = map_project_coord_rect(map, &core.rect);
-    struct proxy_render_it it = proxy_render_it(core.proxy, rect);
+    struct rect rect = map_project_coord_rect(map, &render.rect);
+    struct proxy_render_it it = proxy_render_it(render.proxy, rect);
 
     const struct star *star = NULL;
-    while ((star = proxy_render_next(core.proxy, &it))) {
+    while ((star = proxy_render_next(render.proxy, &it))) {
         SDL_Point pos = map_project_sdl(map, star->coord);
 
         size_t px = scale_div(map->scale, map_star_px);
@@ -325,7 +325,7 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
         struct hsv hsv = {
             .h = ((double) star->hue) / 360,
             .s = 1.0 - (((double) star->energy) / UINT16_MAX),
-            .v = SDL_PointInRect(&core.cursor.point, &dst) ? 0.8 : 0.5,
+            .v = SDL_PointInRect(&render.cursor.point, &dst) ? 0.8 : 0.5,
         };
         struct rgba rgb = hsv_to_rgb(hsv);
 
@@ -334,7 +334,7 @@ static void map_render_stars(struct map *map, SDL_Renderer *renderer)
         sdl_err(SDL_SetTextureColorMod(map->tex, rgb.r, rgb.g, rgb.b));
         sdl_err(SDL_RenderCopy(renderer, map->tex, &map->tex_star, &dst));
 
-        if (proxy_active_star(core.proxy, star->coord)) {
+        if (proxy_active_star(render.proxy, star->coord)) {
             map_render_lanes(map, renderer, star->coord);
 
             dst = (SDL_Rect) {
@@ -356,7 +356,7 @@ void map_render(struct map *map, SDL_Renderer *renderer)
     if (!map->active) return;
 
     rgba_render(rgba_black(), renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &core.rect));
+    sdl_err(SDL_RenderFillRect(renderer, &render.rect));
 
     if (map->scale >= map_thresh_sector_low && map->scale < map_thresh_sector_high)
         map_render_sectors(map, renderer);

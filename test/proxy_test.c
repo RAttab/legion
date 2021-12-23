@@ -10,7 +10,7 @@
 #include "game/proxy.h"
 #include "game/chunk.h"
 #include "game/sector.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
 
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    core_populate();
+    sys_populate();
     check_basics();
 
     return 0;

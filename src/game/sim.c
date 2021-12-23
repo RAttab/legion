@@ -571,7 +571,7 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
         return;
     }
 
-    if (unlikely(sim_prof_enabled && core.init)) {
+    if (unlikely(sim_prof_enabled && render.init)) {
         if (!(world_time(sim->world) % sim_prof_freq))
             save_prof(save);
     }

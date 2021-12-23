@@ -1,4 +1,4 @@
-/* core.h
+/* render.h
    Rémi Attab (remi.attab@gmail.com), 14 Nov 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -69,10 +69,10 @@ enum event
 
 
 // -----------------------------------------------------------------------------
-// core
+// render
 // -----------------------------------------------------------------------------
 
-struct core
+struct render
 {
     bool init;
 
@@ -113,24 +113,21 @@ struct core
     } ui;
 };
 
-extern struct core core;
+extern struct render render;
 
-void core_init(void);
-void core_close(void);
-void core_populate(void);
+void render_init(void);
+void render_close(void);
 
-void core_path_res(const char *name, char *dst, size_t len);
+void render_run(void);
 
-void core_run(void);
-void core_quit(void);
-
-void core_push_event(enum event, uint64_t d0, uint64_t d1);
+void render_push_event(enum event, uint64_t d0, uint64_t d1);
+void render_quit(void);
 
 
 // -----------------------------------------------------------------------------
 // log
 // -----------------------------------------------------------------------------
 
-void core_log_msg(enum status_type, const char *msg, size_t len);
-void core_logv(enum status_type, const char *fmt, va_list);
-void core_log(enum status_type, const char *fmt, ...) legion_printf(2, 3);
+void render_log_msg(enum status_type, const char *msg, size_t len);
+void render_logv(enum status_type, const char *fmt, va_list);
+void render_log(enum status_type, const char *fmt, ...) legion_printf(2, 3);

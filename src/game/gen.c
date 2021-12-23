@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "render/core.h"
+#include "game/sys.h"
 #include "game/gen.h"
 #include "game/world.h"
 #include "game/sector.h"
@@ -338,7 +338,7 @@ static void gen_populate_rolls(
 static void gen_populate_stars(struct atoms *atoms)
 {
     char path[PATH_MAX] = {0};
-    core_path_res("gen/stars.lisp", path, sizeof(path));
+    sys_path_res("gen/stars.lisp", path, sizeof(path));
     struct mfile file = mfile_open(path);
 
     struct tokenizer tok = {0};
@@ -393,7 +393,7 @@ static void gen_populate_stars(struct atoms *atoms)
 static struct symbol *gen_populate_affix(const char *rel, size_t limit, size_t *ret)
 {
     char path[PATH_MAX] = {0};
-    core_path_res(rel, path, sizeof(path));
+    sys_path_res(rel, path, sizeof(path));
     struct mfile file = mfile_open(path);
 
     struct tokenizer tok = {0};

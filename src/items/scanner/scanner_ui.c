@@ -128,12 +128,12 @@ static bool ui_scanner_event(void *_ui, const SDL_Event *ev)
         default: { abort(); }
         }
 
-        ui_clipboard_copy_hex(&core.ui.board, coord_to_u64(coord));
+        ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(coord));
         return ret == ui_consume;
     }
 
     if ((ret = ui_link_event(&ui->result_val, ev))) {
-        ui_str_copy(&ui->result_val.str, &core.ui.board);
+        ui_str_copy(&ui->result_val.str, &render.ui.board);
         return ret == ui_consume;
     }
 

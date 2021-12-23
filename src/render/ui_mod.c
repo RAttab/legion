@@ -46,12 +46,12 @@ struct ui_mod *ui_mod_new(void)
     struct font *font = ui_mod_font();
 
     struct pos pos = make_pos(
-            ui_mods_width(core.ui.mods),
+            ui_mods_width(render.ui.mods),
             ui_topbar_height());
 
     struct dim dim = make_dim(
             (ui_code_num_len+1 + cols + 2) * font->glyph_w,
-            core.rect.h - pos.y - ui_status_height());
+            render.rect.h - pos.y - ui_status_height());
 
     struct ui_mod *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mod) {
@@ -145,14 +145,14 @@ static void ui_mod_action_clear(struct ui_mod *ui)
         mod_ver(ui->mod->id);
 
     struct symbol name = {0};
-    bool ok = proxy_mod_name(core.proxy, mod_maj(ui->id), &name);
+    bool ok = proxy_mod_name(render.proxy, mod_maj(ui->id), &name);
     ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_ver(ui->id));
     assert(ok);
 }
 
 static void ui_mod_action_select(struct ui_mod *ui)
 {
-    const struct mod *mod = proxy_mod(core.proxy, ui->id);
+    const struct mod *mod = proxy_mod(render.proxy, ui->id);
     if (!mod) { ui_mod_action(ui, ui_mod_select); return; }
 
     ui_mod_update(ui, mod, ui->select_ip);
@@ -161,7 +161,7 @@ static void ui_mod_action_select(struct ui_mod *ui)
 
 static void ui_mod_action_compile(struct ui_mod *ui)
 {
-    const struct mod *mod = proxy_mod_compile_result(core.proxy);
+    const struct mod *mod = proxy_mod_compile_result(render.proxy);
     if (!mod) return;
     assert(mod_maj(mod->id) == mod_maj(ui->id));
 
@@ -171,10 +171,10 @@ static void ui_mod_action_compile(struct ui_mod *ui)
 
 static void ui_mod_action_publish(struct ui_mod *ui)
 {
-    mod_t id = proxy_mod_id(core.proxy);
+    mod_t id = proxy_mod_id(render.proxy);
     if (!id) return;
 
-    const struct mod *mod = proxy_mod(core.proxy, id);
+    const struct mod *mod = proxy_mod(render.proxy, id);
     assert(mod_maj(id) == mod_maj(ui->id));
     assert(mod_ver(id) > mod_ver(ui->id));
     assert(mod);
@@ -223,7 +223,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
 
         ui_code_clear(&ui->code);
 
-        ui->id = mod_ver(id) ? id : proxy_mod_latest(core.proxy, mod_maj(id));
+        ui->id = mod_ver(id) ? id : proxy_mod_latest(render.proxy, mod_maj(id));
         ui->select_ip = ip;
         ui_mod_action_select(ui);
 
@@ -252,13 +252,13 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
 
 bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_mod_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_mod_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_panel_event(&ui->panel, ev))) {
         if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
-            core_push_event(EV_MOD_CLEAR, 0, 0);
+            render_push_event(EV_MOD_CLEAR, 0, 0);
         return ret != ui_skip;
     }
 
@@ -267,14 +267,14 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         char *buffer = calloc(len, sizeof(*buffer));
         text_to_str(&ui->code.text, buffer, len);
 
-        proxy_mod_compile(core.proxy, mod_maj(ui->id), buffer, len);
+        proxy_mod_compile(render.proxy, mod_maj(ui->id), buffer, len);
         ui_mod_action(ui, ui_mod_compile);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
         assert(ui->mod->errs_len == 0);
-        proxy_mod_publish(core.proxy, mod_maj(ui->id));
+        proxy_mod_publish(render.proxy, mod_maj(ui->id));
         ui_mod_action(ui, ui_mod_publish);
         return true;
     }
@@ -290,8 +290,8 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
-        assert(ui->id == proxy_mod_id(core.proxy));
-        ui_mod_update(ui, proxy_mod(core.proxy, ui->id), 0);
+        assert(ui->id == proxy_mod_id(render.proxy));
+        ui_mod_update(ui, proxy_mod(render.proxy, ui->id), 0);
         return true;
     }
 

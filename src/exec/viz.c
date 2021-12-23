@@ -8,7 +8,7 @@
 #include "items/item.h"
 #include "items/config.h"
 #include "utils/htable.h"
-#include "render/core.h"
+#include "render/render.h"
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -186,8 +186,6 @@ void viz_output(struct viz *viz)
 int viz_run(int argc, char **argv)
 {
     (void) argc, (void) argv;
-
-    core_populate();
 
     struct viz viz = {0};
     viz_graph(&viz);

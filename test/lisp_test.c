@@ -8,7 +8,7 @@
 #include "vm/mod.h"
 #include "vm/token.h"
 #include "vm/atoms.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "items/item.h"
 #include "items/config.h"
 #include "utils/fs.h"
@@ -324,7 +324,7 @@ bool check_dir(const char *path)
 
 int main(int argc, char **argv)
 {
-    core_populate();
+    sys_populate();
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/test/lisp", argc > 1 ? argv[1] : ".");

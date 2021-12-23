@@ -13,7 +13,7 @@
 #include "game/chunk.h"
 #include "game/world.h"
 #include "game/protocol.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "items/io.h"
 #include "items/config.h"
 #include "utils/vec.h"
@@ -42,7 +42,7 @@ void check(void)
 {
     enum { attempts = 5, steps = 100 };
 
-    core_populate();
+    sys_populate();
     struct world *world = world_new(0);
     struct coord home = world_populate(world);
     world_step(world); // to create all the objects.

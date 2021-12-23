@@ -5,7 +5,7 @@
 
 #include "ui/ui.h"
 #include "game/proxy.h"
-#include "render/core.h"
+#include "render/render.h"
 
 
 // -----------------------------------------------------------------------------
@@ -179,7 +179,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     }
     else {
         struct symbol mod = {0};
-        proxy_mod_name(core.proxy, mod_maj(state->mod->id), &mod);
+        proxy_mod_name(render.proxy, mod_maj(state->mod->id), &mod);
 
         ui->mod_val.fg = rgba_white();
         ui_str_set_symbol(&ui->mod_val.str, &mod);
@@ -202,7 +202,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
         ui->debug_val.fg = rgba_green();
 
         if (state->mod && (!old_debug || old_ip != state->vm.ip))
-            core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+            render_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
     }
     else {
         ui_str_setc(&ui->debug_val.str, "detached");
@@ -233,19 +233,19 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->breakpoint_val, ev))) {
         if (state->mod && state->breakpoint != IP_NIL)
-            core_push_event(EV_MOD_SELECT, state->mod->id, state->breakpoint);
+            render_push_event(EV_MOD_SELECT, state->mod->id, state->breakpoint);
         return ret == ui_consume;
     }
 
     if ((ret = ui_link_event(&ui->mod_val, ev))) {
         if (state->mod)
-            core_push_event(EV_MOD_SELECT, state->mod->id, 0);
+            render_push_event(EV_MOD_SELECT, state->mod->id, 0);
         return ret == ui_consume;
     }
 
     if ((ret = ui_link_event(&ui->ip_val, ev))) {
         if (state->mod)
-            core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+            render_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
         return ret == ui_consume;
     }
 

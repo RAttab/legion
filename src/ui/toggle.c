@@ -34,7 +34,7 @@ enum ui_ret ui_toggle_event(struct ui_toggle *toggle, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) {
             if (toggle->state == ui_toggle_hover) toggle->state = ui_toggle_idle;
         }
@@ -44,7 +44,7 @@ enum ui_ret ui_toggle_event(struct ui_toggle *toggle, const SDL_Event *ev)
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         toggle->state = toggle->state == ui_toggle_selected ?
             ui_toggle_idle : ui_toggle_selected;

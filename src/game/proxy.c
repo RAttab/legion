@@ -8,7 +8,7 @@
 #include "game/sector.h"
 #include "game/protocol.h"
 #include "game/chunk.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "utils/htable.h"
 #include "utils/hset.h"
 
@@ -78,7 +78,7 @@ static void proxy_update_status(struct proxy *, struct save *save)
     struct status status = {0};
     if (!status_load(&status, save)) return;
 
-    core_log_msg(status.type, status.msg, status.len);
+    render_log_msg(status.type, status.msg, status.len);
 }
 
 static bool proxy_update_state(struct proxy *proxy, struct save *save)
@@ -121,7 +121,7 @@ bool proxy_update(struct proxy *proxy)
         if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
 
         if (head.magic != header_magic) {
-            core_log(st_warn, "invalid head magic: %x != %x",
+            render_log(st_warn, "invalid head magic: %x != %x",
                     head.magic, header_magic);
             break;
         }
@@ -217,7 +217,7 @@ static void proxy_cmd(struct proxy *proxy, const struct cmd *cmd)
 
     struct header *head = save_bytes(save);
     if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
-        core_log(st_error, "unable to send command '%x' due to overflow",
+        render_log(st_error, "unable to send command '%x' due to overflow",
                 cmd->type);
         return;
     }
@@ -225,7 +225,7 @@ static void proxy_cmd(struct proxy *proxy, const struct cmd *cmd)
     cmd_save(cmd, save);
 
     if (save_eof(save)) {
-        core_log(st_error, "unable to send command '%x' due to overflow",
+        render_log(st_error, "unable to send command '%x' due to overflow",
                 cmd->type);
         return;
     }

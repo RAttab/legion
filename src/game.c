@@ -3,6 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "game/sys.c"
 #include "game/id.c"
 #include "game/coord.c"
 #include "game/log.c"

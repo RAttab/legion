@@ -8,7 +8,7 @@
 #include "game/tape.h"
 #include "items/item.h"
 #include "items/config.h"
-#include "render/core.h"
+#include "render/render.h"
 
 
 // -----------------------------------------------------------------------------
@@ -18,8 +18,6 @@
 int stats_run(int argc, char **argv)
 {
     (void) argc, (void) argv;
-
-    core_populate();
 
     struct symbol sym = {0};
     struct atoms *atoms = atoms_new();

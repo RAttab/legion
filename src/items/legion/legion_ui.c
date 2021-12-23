@@ -60,14 +60,14 @@ static void ui_legion_update(void *_ui, struct chunk *chunk, id_t id)
     struct ui_legion *ui = _ui;
 
     const struct im_legion *state = chunk_get(chunk, id);
-    if (!state) { core_push_event(EV_ITEM_CLEAR, 0, 0); return; }
+    if (!state) { render_push_event(EV_ITEM_CLEAR, 0, 0); return; }
 
     ui->type = id_item(state->id);
 
     if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
         struct symbol mod = {0};
-        proxy_mod_name(core.proxy, mod_maj(state->mod), &mod);
+        proxy_mod_name(render.proxy, mod_maj(state->mod), &mod);
         ui_str_set_symbol(&ui->mod_val.str, &mod);
     }
 

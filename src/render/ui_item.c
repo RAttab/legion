@@ -35,9 +35,9 @@ struct ui_item *ui_item_new(void)
 
     size_t width = 38 * ui_item_font()->glyph_w;
     struct pos pos = make_pos(
-            core.rect.w - width - ui_star_width(core.ui.star),
+            render.rect.w - width - ui_star_width(render.ui.star),
             ui_topbar_height());
-    struct dim dim = make_dim(width, core.rect.h - pos.y - ui_status_height());
+    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {
@@ -91,7 +91,7 @@ static void ui_item_update(struct ui_item *ui)
 
     ui_str_set_id(&ui->id_val.str, ui->id);
 
-    struct chunk *chunk = proxy_chunk(core.proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
     if ((ui->loading = !chunk)) return;
 
     void *state = ui_item_state(ui, ui->id);
@@ -153,24 +153,24 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
 
 bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_item_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_item_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) {
         if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
-            core_push_event(EV_ITEM_CLEAR, 0, 0);
+            render_push_event(EV_ITEM_CLEAR, 0, 0);
         return ret != ui_skip;
     }
 
     if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
 
     if ((ret = ui_button_event(&ui->io, ev))) {
-        core_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
+        render_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
         return true;
     }
 
     if ((ret = ui_link_event(&ui->id_val, ev))) {
-        ui_clipboard_copy_hex(&core.ui.board, ui->id);
+        ui_clipboard_copy_hex(&render.ui.board, ui->id);
         return true;
     }
 

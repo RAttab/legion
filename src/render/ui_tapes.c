@@ -46,7 +46,7 @@ struct ui_tapes *ui_tapes_new(void)
     struct font *font = ui_tapes_font();
     struct pos pos = make_pos(0, ui_topbar_height());
 
-    int height = core.rect.h - pos.y - ui_status_height();
+    int height = render.rect.h - pos.y - ui_status_height();
     int tree_w = (item_str_len + 3) * font->glyph_w;
     int tape_w = (item_str_len + 8 + 1) * font->glyph_w;
     struct dim dim = make_dim(tree_w + font->glyph_w, height);
@@ -122,7 +122,7 @@ static bool ui_tapes_selected(struct ui_tapes *ui)
 static void ui_tapes_update_cat(
         struct ui_tapes *ui, const char *name, enum item first, enum item last)
 {
-    const struct tech *tech = proxy_tech(core.proxy);
+    const struct tech *tech = proxy_tech(render.proxy);
 
     ui_node_t parent = ui_tree_index(&ui->tree);
     ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + ITEM_MAX), name);
@@ -173,7 +173,7 @@ static void ui_tapes_update(struct ui_tapes *ui)
                     ui->height));
 
     enum item item = ui->tree.selected;
-    const struct tech *tech = proxy_tech(core.proxy);
+    const struct tech *tech = proxy_tech(render.proxy);
     const struct tape *tape = tapes_get(item);
     assert(tape);
 
@@ -235,7 +235,7 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
 
 bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_tapes_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_tapes_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
@@ -249,7 +249,7 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
         if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
         if ((ret = ui_link_event(&ui->host_val, ev))) {
             enum item host = tape_host(tapes_get(ui->tree.selected));
-            core_push_event(EV_TAPE_SELECT, host, 0);
+            render_push_event(EV_TAPE_SELECT, host, 0);
             return true;
         }
     }
@@ -267,7 +267,7 @@ void ui_tapes_render_tape(
     if (ui_layout_is_nil(&inner)) return;
 
     struct font *font = ui_tapes_font();
-    const struct tech *tech = proxy_tech(core.proxy);
+    const struct tech *tech = proxy_tech(render.proxy);
     const struct tape *tape = tapes_get(ui->tree.selected);
 
     size_t first = ui_scroll_first(&ui->scroll);

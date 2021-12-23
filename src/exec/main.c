@@ -4,7 +4,8 @@
 */
 
 #include "common.h"
-#include "render/core.h"
+#include "game/sys.h"
+#include "render/render.h"
 
 // -----------------------------------------------------------------------------
 // main
@@ -12,10 +13,12 @@
 
 int main(int argc, char **argv)
 {
+    sys_populate();
+
     if (argc == 1) {
-        core_init();
-        core_run();
-        core_close();
+        render_init();
+        render_run();
+        render_close();
         return 0;
     }
 

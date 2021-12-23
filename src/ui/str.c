@@ -6,7 +6,7 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "game/id.h"
 #include "game/proxy.h"
 #include "items/item.h"
@@ -144,7 +144,7 @@ void ui_str_set_symbol(struct ui_str *str, const struct symbol *val)
 void ui_str_set_atom(struct ui_str *str, word_t word)
 {
     struct symbol sym = {0};
-    if (atoms_str(proxy_atoms(core.proxy), word, &sym))
+    if (atoms_str(proxy_atoms(render.proxy), word, &sym))
         ui_str_set_symbol(str, &sym);
     else ui_str_set_hex(str, word);
 }

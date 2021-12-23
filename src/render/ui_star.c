@@ -86,8 +86,8 @@ struct ui_star *ui_star_new(void)
 {
     struct font *font = ui_star_font();
     size_t width = 38 * font->glyph_w;
-    struct pos pos = make_pos(core.rect.w - width, ui_topbar_height());
-    struct dim dim = make_dim(width, core.rect.h - pos.y - ui_status_height());
+    struct pos pos = make_pos(render.rect.w - width, ui_topbar_height());
+    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
     struct ui_star *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_star) {
@@ -283,15 +283,15 @@ static void ui_star_update(struct ui_star *ui)
 {
     ui_str_set_coord(&ui->coord_val.str, ui->id);
 
-    struct chunk *chunk = proxy_chunk(core.proxy, ui->id);
+    struct chunk *chunk = proxy_chunk(render.proxy, ui->id);
     if (!chunk) {
-        const struct star *star = proxy_star_at(core.proxy, ui->id);
+        const struct star *star = proxy_star_at(render.proxy, ui->id);
         assert(star);
         ui->star = *star;
 
         {
-            seed_t seed = proxy_seed(core.proxy);
-            struct atoms *atoms = proxy_atoms(core.proxy);
+            seed_t seed = proxy_seed(render.proxy);
+            struct atoms *atoms = proxy_atoms(render.proxy);
 
             struct symbol sym = {0};
             word_t name = gen_name(ui->id, seed, atoms);
@@ -326,7 +326,7 @@ static void ui_star_update(struct ui_star *ui)
     {
         struct symbol sym = {0};
         word_t name = chunk_name(chunk);
-        if (atoms_str(proxy_atoms(core.proxy), name, &sym))
+        if (atoms_str(proxy_atoms(render.proxy), name, &sym))
             ui_str_set_symbol(&ui->name_val.str, &sym);
         else ui_str_set_hex(&ui->name_val.str, name);
     }
@@ -434,31 +434,31 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
 
 bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_star_event_user(ui, ev)) return false;
+    if (ev->type == render.event && ui_star_event_user(ui, ev)) return false;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) {
-        if (ret == ui_consume) core_push_event(EV_STAR_CLEAR, 0, 0);
+        if (ret == ui_consume) render_push_event(EV_STAR_CLEAR, 0, 0);
         return ret != ui_skip;
     }
 
     if ((ret = ui_button_event(&ui->goto_map, ev))) {
-        core_push_event(EV_MAP_GOTO, coord_to_u64(ui->id), 0);
+        render_push_event(EV_MAP_GOTO, coord_to_u64(ui->id), 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->goto_factory, ev))) {
-        core_push_event(EV_FACTORY_SELECT, coord_to_u64(ui->id), 0);
+        render_push_event(EV_FACTORY_SELECT, coord_to_u64(ui->id), 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->goto_log, ev))) {
-        core_push_event(EV_LOG_SELECT, coord_to_u64(ui->id), 0);
+        render_push_event(EV_LOG_SELECT, coord_to_u64(ui->id), 0);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
-        ui_clipboard_copy_hex(&core.ui.board, coord_to_u64(ui->star.coord));
+        ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(ui->star.coord));
         return true;
     }
 
@@ -489,7 +489,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         if ((ret = ui_toggles_event(&ui->control_list, ev, &ui->control_scroll, &toggle, NULL))) {
             enum event type = toggle->state == ui_toggle_selected ?
                 EV_ITEM_SELECT : EV_ITEM_CLEAR;
-            core_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
+            render_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
             return true;
         }
     }
@@ -502,7 +502,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         if ((ret = ui_toggles_event(&ui->factory_list, ev, &ui->factory_scroll, &toggle, NULL))) {
             enum event type = toggle->state == ui_toggle_selected ?
                 EV_ITEM_SELECT : EV_ITEM_CLEAR;
-            core_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
+            render_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
             return true;
         }
     }
