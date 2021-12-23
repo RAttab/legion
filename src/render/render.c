@@ -18,6 +18,8 @@
 #include "utils/err.h"
 #include "utils/time.h"
 
+#include <pthread.h>
+
 
 // -----------------------------------------------------------------------------
 // render
@@ -145,7 +147,7 @@ static void ui_event(SDL_Event *event)
     if (event->type == SDL_KEYDOWN) {
         if (event->key.keysym.sym == SDLK_q)
             if (event->key.keysym.mod & KMOD_CTRL)
-                render_quit();
+                render_push_quit();
     }
 
     if (ui_topbar_event(render.ui.topbar, event)) return;
@@ -183,7 +185,7 @@ static void ui_render(SDL_Renderer *renderer)
 // render
 // -----------------------------------------------------------------------------
 
-void render_init(void)
+void render_init(struct save_ring *in, struct save_ring *out)
 {
     render.init = true;
 
@@ -204,13 +206,10 @@ void render_init(void)
     render.focus = true;
     fonts_init(render.renderer);
 
-    render.sim = sim_new(0);
-    struct sim_pipe *pipe = sim_pipe_new(render.sim);
-    render.proxy = proxy_new(sim_pipe_out(pipe), sim_pipe_in(pipe));
-    sim_thread(render.sim);
-
     // We need the initial state from the sim before we can initialize our
     // UI. Not the greatest solution but it works so meh.
+    render.out = out;
+    render.proxy = proxy_new(in, out);
     while (!proxy_update(render.proxy));
 
     cursor_init();
@@ -219,9 +218,7 @@ void render_init(void)
 
 void render_close(void)
 {
-    sim_quit(render.sim);
     proxy_free(render.proxy);
-    sim_free(render.sim);
 
     ui_close();
     cursor_close();
@@ -232,40 +229,80 @@ void render_close(void)
     SDL_Quit();
 }
 
-void render_run(void)
+
+// -----------------------------------------------------------------------------
+// thread
+// -----------------------------------------------------------------------------
+
+static bool render_step(void)
+{
+    if (atomic_load_explicit(&render.join, memory_order_relaxed))
+        return false;
+
+    cursor_update();
+    if (proxy_update(render.proxy))
+        render_push_event(EV_STATE_UPDATE, 0, 0);
+
+    SDL_Event event = {0};
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) return false;
+        cursor_event(&event);
+        ui_event(&event);
+    }
+
+    save_ring_wake_signal(render.out);
+
+    {
+        sdl_err(SDL_RenderClear(render.renderer));
+
+        ui_render(render.renderer);
+        cursor_render(render.renderer);
+
+        SDL_RenderPresent(render.renderer);
+    }
+
+    return true;
+}
+
+void render_loop(void)
 {
     enum { fps_cap = 60 };
     ts_t sleep = ts_sec / fps_cap;
 
     ts_t ts = ts_now();
-    while (true) {
-        cursor_update();
-
-        SDL_Event event = {0};
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) return;
-            cursor_event(&event);
-            ui_event(&event);
-        }
-
-        if (proxy_update(render.proxy))
-            render_push_event(EV_STATE_UPDATE, 0, 0);
-
-        sdl_err(SDL_RenderClear(render.renderer));
-        ui_render(render.renderer);
-        cursor_render(render.renderer);
-        SDL_RenderPresent(render.renderer);
-
+    while (render_step()) {
         ts = ts_sleep_until(ts + sleep);
+
         render.ticks++;
         render_push_event(EV_TICK, render.ticks, 0);
     }
+
+    save_ring_close(render.out);
+    save_ring_wake_signal(render.out);
 }
 
-void render_quit(void)
+void render_thread(void)
 {
-    sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
+    void *render_run(void *) { render_loop(); return NULL; }
+
+    int err = pthread_create(&render.thread, NULL, render_run, NULL);
+    if (!err) return;
+
+    failf_posix(err, "unable to create render thread: fn=%p", render_run);
 }
+
+void render_join(void)
+{
+    atomic_store_explicit(&render.join, true, memory_order_relaxed);
+
+    int err = pthread_join(render.thread, NULL);
+    if (err) err_posix(err, "unable to join render thread");
+}
+
+
+// -----------------------------------------------------------------------------
+// events
+// -----------------------------------------------------------------------------
 
 void render_push_event(enum event code, uint64_t d0, uint64_t d1)
 {
@@ -277,6 +314,11 @@ void render_push_event(enum event code, uint64_t d0, uint64_t d1)
 
     int ret = sdl_err(SDL_PushEvent(&ev));
     assert(ret > 0);
+}
+
+void render_push_quit(void)
+{
+    sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
 }
 
 

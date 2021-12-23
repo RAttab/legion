@@ -8,7 +8,10 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "game/protocol.h"
+
 #include "SDL.h"
+#include <stdatomic.h>
+
 
 struct proxy;
 struct map;
@@ -80,11 +83,14 @@ struct render
     SDL_Window *window;
     SDL_Renderer *renderer;
 
+    pthread_t thread;
+    atomic_bool join;
+
     uint32_t event;
     uint64_t ticks;
     bool focus;
 
-    struct sim *sim;
+    struct save_ring *out;
     struct proxy *proxy;
 
     struct
@@ -115,13 +121,15 @@ struct render
 
 extern struct render render;
 
-void render_init(void);
+void render_init(struct save_ring *in, struct save_ring *out);
 void render_close(void);
 
-void render_run(void);
+void render_loop(void);
+void render_thread(void);
+void render_join(void);
 
 void render_push_event(enum event, uint64_t d0, uint64_t d1);
-void render_quit(void);
+void render_push_quit(void);
 
 
 // -----------------------------------------------------------------------------

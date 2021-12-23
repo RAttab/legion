@@ -15,13 +15,7 @@ int main(int argc, char **argv)
 {
     sys_populate();
 
-    if (argc == 1) {
-        render_init();
-        render_run();
-        render_close();
-        return 0;
-    }
-
+    if (argc == 1) return local_run();
     if (argc == 2) {
         if (!strcmp(argv[1], "--viz")) return viz_run(argc, argv);
         if (!strcmp(argv[1], "--stats")) return stats_run(argc, argv);

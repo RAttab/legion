@@ -24,6 +24,12 @@ struct save;
 
 struct sim;
 
+enum
+{
+    sim_in_len = 100 * s_page_len,
+    sim_out_len = 2000 * s_page_len,
+};
+
 struct sim *sim_new(seed_t seed);
 struct sim *sim_load(void);
 void sim_free(struct sim *);
@@ -38,4 +44,4 @@ void sim_step(struct sim *);
 void sim_loop(struct sim *);
 
 void sim_thread(struct sim *);
-void sim_quit(struct sim *);
+void sim_join(struct sim *);

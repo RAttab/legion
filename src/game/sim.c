@@ -26,8 +26,6 @@ enum
     sim_freq_slow = 10,
     sim_freq_fast = 100,
 
-    sim_in_len = 100 * s_page_len,
-    sim_out_len = 2000 * s_page_len,
     sim_log_len = 8,
 
     sim_save_version = 1,
@@ -39,7 +37,7 @@ enum
 struct sim
 {
     pthread_t thread;
-    atomic_bool quit;
+    atomic_bool join;
     ts_t next;
 
     struct world *world;
@@ -59,8 +57,8 @@ struct sim *sim_new(seed_t seed)
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
     sim->speed = speed_slow;
-    sim->stream = 1;
-    atomic_init(&sim->quit, false);
+    sim->stream = ts_now();
+    atomic_init(&sim->join, false);
     return sim;
 }
 
@@ -513,7 +511,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
         switch (cmd.type)
         {
         case CMD_QUIT: {
-            atomic_store_explicit(&sim->quit, true, memory_order_relaxed);
+            atomic_store_explicit(&sim->join, true, memory_order_relaxed);
             break;
         }
 
@@ -661,7 +659,7 @@ void sim_loop(struct sim *sim)
     ts_t now = sim->next = ts_now();
 
     while (true) {
-        if (atomic_load_explicit(&sim->quit, memory_order_relaxed)) break;
+        if (atomic_load_explicit(&sim->join, memory_order_relaxed)) break;
 
         ts_t sleep = 0;
         switch (sim->speed) {
@@ -687,9 +685,9 @@ void sim_loop(struct sim *sim)
     }
 }
 
-void sim_quit(struct sim *sim)
+void sim_join(struct sim *sim)
 {
-    atomic_store_explicit(&sim->quit, true, memory_order_relaxed);
+    atomic_store_explicit(&sim->join, true, memory_order_relaxed);
 
     int err = pthread_join(sim->thread, NULL);
     if (err) err_posix(err, "unable to join sim thread");
