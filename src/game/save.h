@@ -89,9 +89,6 @@ void save_ring_free(struct save_ring *);
 void save_ring_close(struct save_ring *);
 bool save_ring_closed(struct save_ring *);
 
-void save_ring_clear_reads(struct save_ring *);
-void save_ring_clear_writes(struct save_ring *);
-
 struct save *save_ring_read(struct save_ring *);
 struct save *save_ring_write(struct save_ring *);
 void save_ring_commit(struct save_ring *, struct save *);

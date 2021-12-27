@@ -119,7 +119,7 @@ struct save_ring
     size_t cap;
     void *base, *loop;
     atomic_bool closed;
-    struct { size_t exp; atomic_size_t pos; struct save save; } read, write;
+    struct { atomic_size_t pos; struct save save; } read, write;
     int wake;
 };
 
@@ -212,18 +212,6 @@ bool save_ring_closed(struct save_ring *ring)
     return atomic_load_explicit(&ring->closed, memory_order_relaxed);
 }
 
-void save_ring_clear_reads(struct save_ring *ring)
-{
-    size_t write = atomic_load_explicit(&ring->write.pos, memory_order_relaxed);
-    atomic_store_explicit(&ring->read.pos, write, memory_order_relaxed);
-}
-
-void save_ring_clear_writes(struct save_ring *ring)
-{
-    size_t read = atomic_load_explicit(&ring->read.pos, memory_order_relaxed);
-    atomic_store_explicit(&ring->write.pos, read, memory_order_relaxed);
-}
-
 struct save *save_ring_read(struct save_ring *ring)
 {
     // Acquire is on the writes because that's the chunk of memory we could
@@ -241,7 +229,6 @@ struct save *save_ring_read(struct save_ring *ring)
     if (read != write && save->end <= save->it)
         save->end += ring->cap;
 
-    ring->read.exp = read;
     assert(save->end >= save->it);
     assert((size_t) (save->end - save->base) <= ring->cap * 2);
     return save;
@@ -263,7 +250,6 @@ struct save *save_ring_write(struct save_ring *ring)
     if (read == write || save->end < save->it)
         save->end += ring->cap;
 
-    ring->write.exp = write;
     assert(save->end >= save->it);
     assert((size_t) (save->end - save->base) <= ring->cap * 2);
     return save;
@@ -276,27 +262,13 @@ void save_ring_commit(struct save_ring *ring, struct save *save)
     uint64_t read = 0, write = 0;
     if (save == &ring->write.save) {
         read = atomic_load_explicit(&ring->read.pos, memory_order_relaxed);
-        write = atomic_load_explicit(&ring->write.pos, memory_order_relaxed);
-
-        // skip update if a save_ring_clear happened since save_ring_read
-        bool ok = atomic_compare_exchange_strong_explicit(
-                &ring->write.pos, &ring->write.exp, write + delta,
-                memory_order_release,
-                memory_order_relaxed);
-
-        write = ok ? write + delta : ring->write.exp;
+        write = atomic_fetch_add_explicit(&ring->write.pos, delta, memory_order_release);
+        write += delta;
     }
     else if (save == &ring->read.save) {
-        read = atomic_load_explicit(&ring->read.pos, memory_order_relaxed);
         write = atomic_load_explicit(&ring->write.pos, memory_order_relaxed);
-
-        // skip update if a save_ring_clear happened since save_ring_read
-        bool ok = atomic_compare_exchange_strong_explicit(
-                &ring->read.pos, &ring->read.exp, read + delta,
-                memory_order_release,
-                memory_order_relaxed);
-
-        read = ok ? read + delta : ring->read.exp;
+        read = atomic_fetch_add_explicit(&ring->read.pos, delta, memory_order_release);
+        read += delta;
     }
     else assert(false);
 
