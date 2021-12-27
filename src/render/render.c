@@ -185,7 +185,7 @@ static void ui_render(SDL_Renderer *renderer)
 // render
 // -----------------------------------------------------------------------------
 
-void render_init(struct save_ring *in, struct save_ring *out)
+void render_init(struct proxy *proxy)
 {
     render.init = true;
 
@@ -208,8 +208,7 @@ void render_init(struct save_ring *in, struct save_ring *out)
 
     // We need the initial state from the sim before we can initialize our
     // UI. Not the greatest solution but it works so meh.
-    render.out = out;
-    render.proxy = proxy_new(in, out);
+    render.proxy = proxy;
     while (!proxy_update(render.proxy));
 
     cursor_init();
@@ -218,8 +217,6 @@ void render_init(struct save_ring *in, struct save_ring *out)
 
 void render_close(void)
 {
-    proxy_free(render.proxy);
-
     ui_close();
     cursor_close();
     fonts_close();
@@ -250,8 +247,6 @@ static bool render_step(void)
         ui_event(&event);
     }
 
-    save_ring_wake_signal(render.out);
-
     {
         sdl_err(SDL_RenderClear(render.renderer));
 
@@ -276,9 +271,6 @@ void render_loop(void)
         render.ticks++;
         render_push_event(EV_TICK, render.ticks, 0);
     }
-
-    save_ring_close(render.out);
-    save_ring_wake_signal(render.out);
 }
 
 void render_thread(void)

@@ -34,6 +34,13 @@ void log_free(struct log *log)
     free(log);
 }
 
+static void log_reset(struct log *log)
+{
+    size_t cap = log->cap;
+    memset(log, 0, sizeof(*log) + cap * sizeof(log->items[0]));
+    log->cap = cap;
+}
+
 void log_push(
         struct log *log,
         world_ts_t time,
@@ -57,7 +64,7 @@ const struct logi *log_next(const struct log *log, const struct logi *it)
     if (it == log->items + (log->it % log->cap)) return NULL;
     if (!it) it = log->items + (log->it % log->cap);
 
-    if (it > log->items) it--;
+    if (it > log->items) it--; // walk the log backwards
     else it = log->items + (log->cap - 1);
 
     return it->err ? it : NULL;
@@ -115,6 +122,7 @@ void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
 bool log_load_delta(struct log *log, struct save *save, world_ts_t ack)
 {
     if (!save_read_magic(save, save_magic_log)) return false;
+    if (!ack) log_reset(log);
 
     while (true) {
         world_ts_t time = save_read_type(save, typeof(time));

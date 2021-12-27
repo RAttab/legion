@@ -28,12 +28,23 @@ struct hset;
 
 struct proxy;
 
-struct proxy *proxy_new(struct save_ring *in, struct save_ring *out);
+struct proxy *proxy_new(void);
 void proxy_free(struct proxy *);
 
 bool proxy_update(struct proxy *);
 
 struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);
+
+
+// -----------------------------------------------------------------------------
+// pipe
+// -----------------------------------------------------------------------------
+
+struct proxy_pipe;
+struct proxy_pipe *proxy_pipe_new(struct proxy *, struct sim_pipe *);
+void proxy_pipe_close(struct proxy *, struct proxy_pipe *);
+struct save_ring *proxy_pipe_in(struct proxy_pipe *);
+struct save_ring *proxy_pipe_out(struct proxy_pipe *);
 
 
 // -----------------------------------------------------------------------------

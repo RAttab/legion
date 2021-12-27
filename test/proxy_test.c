@@ -24,8 +24,10 @@ void check_basics(void)
     enum { seed = 123 };
 
     struct sim *sim = sim_new(123);
-    struct sim_pipe *pipe = sim_pipe_new(sim);
-    struct proxy *proxy = proxy_new(sim_pipe_out(pipe), sim_pipe_in(pipe));
+    struct sim_pipe *sim_pipe = sim_pipe_new(sim);
+
+    struct proxy *proxy = proxy_new();
+    struct proxy_pipe *proxy_pipe = proxy_pipe_new(proxy, sim_pipe);
 
     sim_step(sim);
     assert(proxy_update(proxy));
@@ -68,7 +70,10 @@ void check_basics(void)
         while (!proxy_update(proxy));
     }
 
+    proxy_pipe_close(proxy, proxy_pipe);
     proxy_free(proxy);
+
+    sim_pipe_close(sim_pipe);
     sim_free(sim);
 }
 

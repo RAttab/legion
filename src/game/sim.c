@@ -574,9 +574,10 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
             save_prof(save);
     }
 
+    if (sim->stream != pipe->ack->stream) ack_reset(pipe->ack);
+
     bool ack_mod = pipe->ack->time > pipe->mod.ts;
     bool ack_compile = pipe->ack->time > pipe->compile.ts;
-    if (sim->stream != pipe->ack->stream) ack_reset(pipe->ack);
 
     state_save(save, &(struct state_ctx) {
                 .stream = sim->stream,

@@ -15,10 +15,16 @@ static_assert(EAGAIN == EWOULDBLOCK);
 // server
 // -----------------------------------------------------------------------------
 
-static struct { struct sim *sim; } server;
+static struct
+{
+    struct sim *sim;
+    struct sv_client *clients;
+} server;
 
 struct sv_client
 {
+    struct sv_client *next;
+
     int socket;
     bool read;
 
@@ -28,6 +34,31 @@ struct sv_client
     struct sim_pipe *pipe;
     struct save_ring *in, *out;
 };
+
+static void server_free(int poll, struct sv_client *client)
+{
+    int ret = epoll_ctl(poll, EPOLL_CTL_DEL, client->socket, NULL);
+    if (ret == -1) {
+        fail_errnof("unable to remove client socket '%d' from epoll",
+                client->socket);
+    }
+
+    int wake = save_ring_wake_fd(client->out);
+    int ret = epoll_ctl(poll, EPOLL_CTL_DEL, wake, NULL);
+    if (ret == -1) {
+        fail_errnof("unable to remove client wake '%d' from epoll", wake);
+    }
+
+    sim_pipe_close(client->pipe);
+    close(client->socket);
+
+    // My head hurts writting this.
+    struct sv_client **prev = &server.clients;
+    while (*prev != client) prev = &(*prev)->next;
+    *prev = client->next;
+
+    free(client);
+}
 
 static void server_accept(int poll, int listen)
 {
@@ -72,6 +103,9 @@ static void server_accept(int poll, int listen)
                     wake);
         }
     }
+
+    client->next = server.clients;
+    server.clients = clients;
 }
 
 static void server_client(int poll, struct sv_client *client, uint32_t events)
@@ -96,21 +130,7 @@ static void server_client(int poll, struct sv_client *client, uint32_t events)
     if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP) ||
             save_ring_closed(client->out))
     {
-        int ret = epoll_ctl(poll, EPOLL_CTL_DEL, client->socket, NULL);
-        if (ret == -1) {
-            fail_errnof("unable to remove client socket '%d' from epoll",
-                    client->socket);
-        }
-
-        int wake = save_ring_wake_fd(client->out);
-        int ret = epoll_ctl(poll, EPOLL_CTL_DEL, wake, NULL);
-        if (ret == -1) {
-            fail_errnof("unable to remove client wake '%d' from epoll", wake);
-        }
-
-        sim_pipe_close(client->pipe);
-        close(client->socket);
-        free(client);
+        server_free(poll, client);
         return;
     }
 
@@ -164,6 +184,10 @@ int server_run(const char *node, const char *service)
             else server_client(poll, ev->data.ptr, ev->events);
         }
     }
+
+    while (server.clients) server_free(server.clients);
+    close(listen);
+    epoll_close(poll);
 
     sim_join();
     sim_free();

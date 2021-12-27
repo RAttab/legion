@@ -90,8 +90,8 @@ struct render
     uint64_t ticks;
     bool focus;
 
-    struct save_ring *out;
     struct proxy *proxy;
+    struct proxy_pipe *pipe;
 
     struct
     {
@@ -121,7 +121,7 @@ struct render
 
 extern struct render render;
 
-void render_init(struct save_ring *in, struct save_ring *out);
+void render_init(struct proxy *);
 void render_close(void);
 
 void render_loop(void);

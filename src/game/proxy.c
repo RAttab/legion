@@ -12,6 +12,7 @@
 #include "utils/htable.h"
 #include "utils/hset.h"
 
+static struct proxy_pipe *proxy_pipe(struct proxy *);
 static void proxy_cmd(struct proxy *, const struct cmd *);
 
 
@@ -29,32 +30,23 @@ struct proxy
     struct hset *active_sectors;
     struct lisp *lisp;
 
-    mod_t mod;
-    struct coord chunk;
-
-    struct ack *ack;
+    struct { atomic_uintptr_t active, free; } pipe;
 };
 
-struct proxy *proxy_new(struct save_ring *in, struct save_ring *out)
+struct proxy *proxy_new(void)
 {
     struct proxy *proxy = calloc(1, sizeof(*proxy));
-    *proxy = (struct proxy) {
-        .in = in,
-        .out = out,
-        .state = state_alloc(),
-        .ack = ack_new(),
-    };
-
-    proxy->mod = proxy->state->mod.id;
-    proxy->chunk = proxy->state->chunk.coord;
+    proxy->state = state_alloc();
     proxy->lisp = lisp_new(proxy->state->mods, proxy->state->atoms);
-
     return proxy;
 }
 
 void proxy_free(struct proxy *proxy)
 {
-    ack_free(proxy->ack);
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (pipe) proxy_pipe_close(proxy, pipe);
+    (void) proxy_pipe(proxy); // frees any closed pipes.
+
     state_free(proxy->state);
     hset_free(proxy->active_sectors);
     hset_free(proxy->active_stars);
@@ -70,6 +62,91 @@ void proxy_free(struct proxy *proxy)
 
 
 // -----------------------------------------------------------------------------
+// pipe
+// -----------------------------------------------------------------------------
+
+struct proxy_pipe
+{
+    struct proxy_pipe *next;
+
+    struct sim_pipe *sim;
+    struct save_ring *in, *out;
+
+    struct ack *ack;
+    struct coord chunk;
+    mod_t mod;
+};
+
+struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
+{
+    struct proxy_pipe *pipe = calloc(1, sizeof(*pipe));
+    *pipe = (struct proxy_pipe) {
+        .sim = sim,
+        .in = sim ? sim_pipe_out(sim) : save_ring_new(sim_out_len),
+        .out = sim ? sim_pipe_in(sim) : save_ring_new(sim_in_len),
+        .ack = ack_new(),
+    };
+
+    uintptr_t old = atomic_exchange_explicit(
+            &proxy->pipe.active, (uintptr_t) pipe, memory_order_release);
+    assert(!old);
+
+    return pipe;
+}
+
+static void proxy_pipe_free(struct proxy_pipe *pipe)
+{
+    if (!pipe) return;
+
+    if (pipe->ack) ack_free(pipe->ack);
+    if (!pipe->sim) { // in local mode the pipe is shared and owned by sim.
+        save_ring_free(pipe->in);
+        save_ring_free(pipe->out);
+    }
+
+    free(pipe);
+}
+
+void proxy_pipe_close(struct proxy *proxy, struct proxy_pipe *pipe)
+{
+    struct proxy_pipe *old = (void *) atomic_exchange_explicit(
+            &proxy->pipe.active, (uintptr_t) NULL, memory_order_acquire);
+    assert(old == pipe);
+
+    uintptr_t next = atomic_load_explicit(&proxy->pipe.free, memory_order_acquire);
+    do {
+        pipe->next = (struct proxy_pipe *) next;
+    } while (!atomic_compare_exchange_weak_explicit(
+                    &proxy->pipe.free, &next, (uintptr_t) pipe,
+                    memory_order_acq_rel,
+                    memory_order_relaxed));
+}
+
+struct save_ring *proxy_pipe_in(struct proxy_pipe *pipe)
+{
+    return pipe->in;
+}
+
+struct save_ring *proxy_pipe_out(struct proxy_pipe *pipe)
+{
+    return pipe->out;
+}
+
+static struct proxy_pipe *proxy_pipe(struct proxy *proxy)
+{
+    struct proxy_pipe *pipe = (void *) atomic_exchange_explicit(
+            &proxy->pipe.free, (uintptr_t) NULL, memory_order_acquire);
+    while (pipe) {
+        struct proxy_pipe *next = pipe->next;
+        proxy_pipe_free(pipe);
+        pipe = next;
+    }
+
+    return (void *) atomic_load_explicit(&proxy->pipe.active, memory_order_acquire);
+}
+
+
+// -----------------------------------------------------------------------------
 // update
 // -----------------------------------------------------------------------------
 
@@ -81,16 +158,17 @@ static void proxy_update_status(struct proxy *, struct save *save)
     render_log_msg(status.type, status.msg, status.len);
 }
 
-static bool proxy_update_state(struct proxy *proxy, struct save *save)
+static bool proxy_update_state(
+        struct proxy *proxy, struct proxy_pipe *pipe, struct save *save)
 {
-    if (!state_load(proxy->state, save, proxy->ack)) {
+    if (!state_load(proxy->state, save, pipe->ack)) {
         err("unable to load state in proxy");
         return false;
     }
 
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = proxy->ack }
+                .data = { .ack = pipe->ack }
             });
 
     hset_clear(proxy->active_stars);
@@ -112,10 +190,12 @@ static bool proxy_update_state(struct proxy *proxy, struct save *save)
 
 bool proxy_update(struct proxy *proxy)
 {
-    bool update = false;
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (!pipe) return false;
 
+    bool update = false;
     while (true) {
-        struct save *save = save_ring_read(proxy->in);
+        struct save *save = save_ring_read(pipe->in);
 
         struct header head = {0};
         if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
@@ -130,12 +210,16 @@ bool proxy_update(struct proxy *proxy)
 
         switch (head.type) {
         case header_status: { proxy_update_status(proxy, save); break; }
-        case header_state: { update = proxy_update_state(proxy, save); break; }
+        case header_state: { update = proxy_update_state(proxy, pipe, save); break; }
         default: { assert(false); }
         }
 
-        save_ring_commit(proxy->in, save);
+        save_ring_commit(pipe->in, save);
     }
+
+    // if the pipe was reset make sure to restore our subscriptions
+    if (!coord_eq(pipe->chunk, proxy->state->chunk.coord))
+        proxy_chunk(proxy, proxy->state->chunk.coord);
 
     return update;
 }
@@ -213,7 +297,15 @@ struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)
 
 static void proxy_cmd(struct proxy *proxy, const struct cmd *cmd)
 {
-    struct save *save = save_ring_write(proxy->out);
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (!pipe) {
+        render_log(st_error,
+                "unable to send command '%x' while not connected to a server",
+                cmd->type);
+        return;
+    }
+
+    struct save *save = save_ring_write(pipe->out);
 
     struct header *head = save_bytes(save);
     if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
@@ -231,7 +323,8 @@ static void proxy_cmd(struct proxy *proxy, const struct cmd *cmd)
     }
 
     *head = make_header(header_cmd, save_len(save));
-    save_ring_commit(proxy->out, save);
+    save_ring_commit(pipe->out, save);
+    save_ring_wake_signal(pipe->out);
 }
 
 void proxy_quit(struct proxy *proxy)
@@ -259,13 +352,12 @@ void proxy_set_speed(struct proxy *proxy, enum speed speed)
 
 struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
 {
-    if (coord_eq(proxy->state->chunk.coord, coord)) {
-        assert(coord_is_nil(coord) == !proxy->state->chunk.chunk);
+    if (coord_eq(proxy->state->chunk.coord, coord))
         return proxy->state->chunk.chunk;
-    }
 
-    if (coord_eq(proxy->chunk, coord)) return NULL;
-    proxy->chunk = coord;
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (!pipe || coord_eq(pipe->chunk, coord)) return NULL;
+    pipe->chunk = coord;
 
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_CHUNK,
@@ -296,15 +388,18 @@ mod_t proxy_mod_id(struct proxy *proxy)
 
 const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
 {
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+
     if (proxy->state->mod.id == id) {
         const struct mod *mod = proxy->state->mod.mod;
         proxy->state->mod.mod = NULL;
-        proxy->mod = 0;
+        proxy->state->mod.id = 0;
+        if (pipe) pipe->mod = 0;
         return mod;
     }
 
-    if (proxy->mod == id) return NULL;
-    proxy->mod = id;
+    if (!pipe || pipe->mod == id) return NULL;
+    pipe->mod = id;
 
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD,
