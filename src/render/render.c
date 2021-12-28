@@ -188,6 +188,7 @@ static void ui_render(SDL_Renderer *renderer)
 void render_init(struct proxy *proxy)
 {
     render.init = true;
+    render.proxy = proxy;
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
@@ -205,11 +206,6 @@ void render_init(struct proxy *proxy)
 
     render.focus = true;
     fonts_init(render.renderer);
-
-    // We need the initial state from the sim before we can initialize our
-    // UI. Not the greatest solution but it works so meh.
-    render.proxy = proxy;
-    while (!proxy_update(render.proxy));
 
     cursor_init();
     ui_init();

@@ -37,6 +37,12 @@ struct proxy *proxy_new(void)
 {
     struct proxy *proxy = calloc(1, sizeof(*proxy));
     proxy->state = state_alloc();
+
+    // This is not great but our UI needs atoms to initialize so it's either
+    // this or waiting for the first update from the sim which we can't do when
+    // in client mode.
+    im_populate_atoms(proxy->state->atoms);
+
     proxy->lisp = lisp_new(proxy->state->mods, proxy->state->atoms);
     return proxy;
 }
