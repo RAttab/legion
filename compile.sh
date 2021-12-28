@@ -53,8 +53,8 @@ $ECHO "exec compilation..."
 $TIME $CC -o "legion" "${PREFIX}/src/exec.c" $LIBS $CFLAGS
 cp -r "${PREFIX}/res" .
 
-./legion --viz | dot -Tsvg > tapes.svg
-./legion --stats > stats.lisp
+./legion --graph | dot -Tsvg > tapes.svg
+./legion --items > items.lisp
 
 mkdir -p "test"
 $ECHO "test compilation..."

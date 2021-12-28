@@ -7,20 +7,87 @@
 #include "game/sys.h"
 #include "render/render.h"
 
+#include <getopt.h>
+
+
 // -----------------------------------------------------------------------------
 // main
 // -----------------------------------------------------------------------------
 
-int main(int argc, char **argv)
+static void usage(int code, const char *msg)
 {
-    sys_populate();
+    if (msg) fprintf(stderr, "%s\n\n", msg);
 
-    if (argc == 1) return local_run();
-    if (argc == 2) {
-        if (!strcmp(argv[1], "--viz")) return viz_run(argc, argv);
-        if (!strcmp(argv[1], "--stats")) return stats_run(argc, argv);
+    static const char usage[] =
+        "legion [--graph] [--items] [--local] [--server|--client <host>] [--port <port>]\n"
+        "  -h --help    Prints this message\n"
+        "  -g --graph   Output dotfile of tape graph to stdout\n"
+        "  -i --items   Dumps stats about item requirements\n"
+        "  -s --local   Starts the game locally; default command if none are provided\n"
+        "  -s --server  Starts a game server listening on the given host\n"
+        "  -c --client  Connects to the game server at the given host\n"
+        "  -p --port    Specifies the port used by the -s or -c option;\n"
+        "               default port is 18181 if none are provided\n"
+        "";
+    fprintf(stderr, usage);
+    exit(code);
+}
+
+int main(int argc, char *const argv[])
+{
+    const char *optstring = "+hgil:s:c:p:";
+    struct option longopts[] = {
+        { .val = 'h', .name = "help",   .has_arg = no_argument },
+        { .val = 'g', .name = "graph",  .has_arg = no_argument },
+        { .val = 'i', .name = "items",  .has_arg = no_argument },
+        { .val = 'l', .name = "local",  .has_arg = no_argument },
+        { .val = 's', .name = "server", .has_arg = required_argument },
+        { .val = 'c', .name = "client", .has_arg = required_argument },
+        { .val = 'p', .name = "port",   .has_arg = required_argument },
+        {0},
+    };
+
+    static struct {
+        bool graph, items, local, server, client;
+        const char *node;
+        const char *service;
+    } args;
+
+    args.service = "18181"; // Dihedral Prime beause it makes me sound smart.
+
+    bool done = false;
+    size_t commands = 0;
+    while (!done) {
+        switch (getopt_long(argc, argv, optstring, longopts, NULL))
+        {
+        case -1: { done = true; break; }
+        case 'h': { usage(0, NULL); }
+
+        case 'g': { args.graph = true; commands++; break; }
+        case 'i': { args.items = true; commands++; break; }
+        case 'l': { args.local = true; commands++; break; }
+
+        case 's': { args.server = true; args.node = optarg; commands++; break; }
+        case 'c': { args.client = true; args.node = optarg; commands++; break; }
+        case 'p': { args.service = optarg; break; }
+
+        case '?':
+        default: { usage(1, NULL); }
+        }
     }
 
-    assert(false);
-    return 1;
+    if (optind != argc) usage(1, "unexpected arguments");
+
+    if (commands == 0) args.local = true;
+    else if (commands > 1) usage(1, "too many commands provided");
+
+    sys_populate();
+
+    if (args.graph && !graph_run()) return 1;
+    if (args.items && !stats_run()) return 1;
+    if (args.local && !local_run()) return 1;
+    if (args.client && !client_run(args.node, args.service)) return 1;
+    if (args.server && !server_run(args.node, args.service)) return 1;
+
+    return 0;
 }

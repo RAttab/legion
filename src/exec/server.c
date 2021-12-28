@@ -7,6 +7,7 @@
 #include "utils/net.h"
 
 #include <sys/epoll.h>
+#include <sys/socket.h>
 
 static_assert(EAGAIN == EWOULDBLOCK);
 
@@ -15,15 +16,9 @@ static_assert(EAGAIN == EWOULDBLOCK);
 // server
 // -----------------------------------------------------------------------------
 
-static struct
+struct client
 {
-    struct sim *sim;
-    struct sv_client *clients;
-} server;
-
-struct sv_client
-{
-    struct sv_client *next;
+    struct client *next;
 
     int socket;
     bool read;
@@ -35,25 +30,32 @@ struct sv_client
     struct save_ring *in, *out;
 };
 
-static void server_free(int poll, struct sv_client *client)
+static struct
+{
+    struct sim *sim;
+    struct client *clients;
+} server;
+
+
+static void server_free(int poll, struct client *client)
 {
     int ret = epoll_ctl(poll, EPOLL_CTL_DEL, client->socket, NULL);
     if (ret == -1) {
-        fail_errnof("unable to remove client socket '%d' from epoll",
+        failf_errno("unable to remove client socket '%d' from epoll",
                 client->socket);
     }
 
     int wake = save_ring_wake_fd(client->out);
-    int ret = epoll_ctl(poll, EPOLL_CTL_DEL, wake, NULL);
+    ret = epoll_ctl(poll, EPOLL_CTL_DEL, wake, NULL);
     if (ret == -1) {
-        fail_errnof("unable to remove client wake '%d' from epoll", wake);
+        failf_errno("unable to remove client wake '%d' from epoll", wake);
     }
 
     sim_pipe_close(client->pipe);
     close(client->socket);
 
     // My head hurts writting this.
-    struct sv_client **prev = &server.clients;
+    struct client **prev = &server.clients;
     while (*prev != client) prev = &(*prev)->next;
     *prev = client->next;
 
@@ -65,13 +67,14 @@ static void server_accept(int poll, int listen)
     struct sockaddr_storage addr = {0};
     while (true) {
         socklen_t addr_len = sizeof(addr);
-        int socket = accept4(listen, &addr, &addr_len, SOCK_NONBLOCK);
+        struct sockaddr *addr_ptr = (struct sockaddr *) &addr;
+        int socket = accept4(listen, addr_ptr, &addr_len, SOCK_NONBLOCK);
         if (socket == -1) {
             if (errno == EAGAIN) return;
             fail_errno("unable to accept connection");
         }
 
-        struct sv_client *client = calloc(1, sizeof(*client));
+        struct client *client = calloc(1, sizeof(*client));
         *client = (struct client) {
             .socket = socket,
             .read = false,
@@ -87,28 +90,27 @@ static void server_accept(int poll, int listen)
                     .data = (union epoll_data) { .ptr = client },
                 });
         if (ret == -1) {
-            fail_errnof("unable to add client socket '%d' to epoll",
+            failf_errno("unable to add client socket '%d' to epoll",
                     client->socket);
         }
 
         // Note that while we could add the wake fd for client->in, out is
         // processed right after in so we can do both notifications with one fd.
-        ret = epoll_ctl(poll, EPOLL_CTL_ADD, save_ring_wake_fd(client->out),
-                &(struct epoll_event) {
+        int wake = save_ring_wake_fd(client->out);
+        ret = epoll_ctl(poll, EPOLL_CTL_ADD, wake, &(struct epoll_event) {
                     .events = EPOLLET | EPOLLIN,
                     .data = (union epoll_data) { .ptr = client },
                 });
         if (ret == -1) {
-            fail_errnof("unable to add client wake '%d' to epoll",
-                    wake);
+             failf_errno("unable to add client wake '%d' to epoll", wake);
         }
-    }
 
-    client->next = server.clients;
-    server.clients = clients;
+        client->next = server.clients;
+        server.clients = client;
+    }
 }
 
-static void server_client(int poll, struct sv_client *client, uint32_t events)
+static void server_events(int poll, struct client *client, uint32_t events)
 {
     save_ring_wake_drain(client->out);
 
@@ -117,13 +119,13 @@ static void server_client(int poll, struct sv_client *client, uint32_t events)
 
         ssize_t ret = read(client->socket, save_bytes(save), save_cap(save));
         if (ret == -1 && !(errno == EAGAIN || errno == EINTR)) {
-            fail_errnof("unable to read from client socket '%d'",
+            failf_errno("unable to read from client socket '%d'",
                     client->socket);
         }
 
         client->read = (size_t) ret == save_cap(save);
 
-        save_ring_consume(client->in, ret);
+        save_ring_consume(save, ret);
         save_ring_commit(client->in, save);
     }
 
@@ -141,19 +143,19 @@ static void server_client(int poll, struct sv_client *client, uint32_t events)
     if (save_cap(save)) {
         ssize_t ret = write(client->socket, save_bytes(save), save_cap(save));
         if (ret == -1 && !(errno == EAGAIN || errno == EINTR)) {
-            fail_errnof("unable to read from client socket '%d'",
+            failf_errno("unable to read from client socket '%d'",
                     client->socket);
         }
 
-        save_ring_consume(client->out, ret);
+        save_ring_consume(save, ret);
         save_ring_commit(client->out, save);
     }
 }
 
-int server_run(const char *node, const char *service)
+bool server_run(const char *node, const char *service)
 {
     server.sim = sim_load();
-    sim_thread();
+    sim_thread(server.sim);
 
     int poll = epoll_create1(EPOLL_CLOEXEC);
     if (poll == -1) fail_errno("unable to create epoll");
@@ -161,34 +163,51 @@ int server_run(const char *node, const char *service)
     int listen = socket_listen(node, service);
     if (listen == -1) fail("unable to create listen socket");
 
-    int ret = epoll_ctl(poll, EPOLL_CTL_ADD, &(struct epoll_event) {
+    int ret = epoll_ctl(poll, EPOLL_CTL_ADD, listen, &(struct epoll_event) {
                 .events = EPOLLET | EPOLLIN | EPOLLERR,
                 .data = (union epoll_data) { .fd = listen },
             });
     if (ret == -1) {
-        fail_errnof("unable to add listen fd '%d', to epoll", listen);
+        failf_errno("unable to add listen fd '%d', to epoll", listen);
     }
 
+    int sigint = sigintfd_new();
+    if (sigint == -1) return false;
+
+    ret = epoll_ctl(poll, EPOLL_CTL_ADD, sigint, &(struct epoll_event) {
+                .events = EPOLLET | EPOLLIN,
+                .data = (union epoll_data) { .fd = sigint },
+            });
+    if (ret == -1) failf_errno("unable to add sigint fd '%d' to epoll", sigint);
+
+    bool exit = false;
     struct epoll_event events[8] = {0};
-    while (true) {
-        int ready = epoll_wait(poll, &events, array_len(events), 1);
+
+    while (!exit) {
+        int ready = epoll_wait(poll, events, array_len(events), 1);
         if (ready == -1) {
             if (errno == EINTR) continue;
-            fail_errnof("unable to wait on epoll fd '%d'", poll);
+            failf_errno("unable to wait on epoll fd '%d'", poll);
         }
 
-        for (size_t i = 0; i < ready; ++i) {
-            const struct epoll_event *ev = events[i];
-            if (ev->data.fd == listen)
+        for (size_t i = 0; i < (size_t) ready; ++i) {
+            const struct epoll_event *ev = &events[i];
+
+            if (ev->data.fd == sigint) {
+                if (sigintfd_read(sigint)) exit = true;
+            }
+            else if (ev->data.fd == listen)
                 server_accept(poll, listen);
-            else server_client(poll, ev->data.ptr, ev->events);
+            else server_events(poll, ev->data.ptr, ev->events);
         }
     }
 
-    while (server.clients) server_free(server.clients);
+    while (server.clients) server_free(poll, server.clients);
     close(listen);
-    epoll_close(poll);
+    close(poll);
 
-    sim_join();
-    sim_free();
+    sim_join(server.sim);
+    sim_free(server.sim);
+
+    return true;
 }

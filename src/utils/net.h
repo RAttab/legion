@@ -13,3 +13,12 @@
 
 int socket_listen(const char *node, const char *service);
 int socket_connect(const char *node, const char *service);
+
+
+// -----------------------------------------------------------------------------
+// sigintfd
+// -----------------------------------------------------------------------------
+
+int sigintfd_new(void);
+bool sigintfd_read(int fd);
+void sigintfd_close(int fd);

@@ -1,4 +1,4 @@
-/* viz.c
+/* graph.c
    Rémi Attab (remi.attab@gmail.com), 14 Jul 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -62,46 +62,46 @@ void set_union(struct set *lhs, struct set *rhs)
 // graph
 // -----------------------------------------------------------------------------
 
-struct viz
+struct graph
 {
     struct set *items;
     struct htable graph;
     char *first, *it, *end;
 };
 
-void viz_write(struct viz *viz, const char *str)
+void graph_write(struct graph *graph, const char *str)
 {
-    size_t len = strnlen(str, viz->end - viz->it);
-    memcpy(viz->it, str, len);
-    viz->it += len;
+    size_t len = strnlen(str, graph->end - graph->it);
+    memcpy(graph->it, str, len);
+    graph->it += len;
 }
 
-legion_printf(2, 3) void viz_writef(struct viz *viz, const char *fmt, ...)
+legion_printf(2, 3) void graph_writef(struct graph *graph, const char *fmt, ...)
 {
     va_list args = {0};
     va_start(args, fmt);
-    viz->it += vsnprintf(viz->it, viz->end - viz->it, fmt, args);
+    graph->it += vsnprintf(graph->it, graph->end - graph->it, fmt, args);
     va_end(args);
 }
 
 
-void viz_graph(struct viz *viz)
+void graph_graph(struct graph *graph)
 {
-    viz->items = set_alloc();
+    graph->items = set_alloc();
     struct set *inputs = set_alloc();
     struct set *outputs = set_alloc();
-    htable_reserve(&viz->graph, 0xFF);
+    htable_reserve(&graph->graph, 0xFF);
 
     for (enum item item = 0; item < 0xFF; ++item) {
         const struct tape *tape = tapes_get(item);
         if (!tape) continue;
-        set_put(viz->items, item);
+        set_put(graph->items, item);
 
         size_t i = 0;
         for (struct tape_ret ret = tape_at(tape, i);
              ret.state != tape_eof; ++i, ret = tape_at(tape, i))
         {
-            set_put(viz->items, ret.item);
+            set_put(graph->items, ret.item);
             if (ret.state == tape_input) set_put(inputs, ret.item);
             if (ret.state == tape_output) set_put(outputs, ret.item);
         }
@@ -109,13 +109,13 @@ void viz_graph(struct viz *viz)
         for (enum item it = set_next(inputs, set_nil);
              it != set_nil; it = set_next(inputs, it))
         {
-            struct htable_ret ret = htable_get(&viz->graph, it);
+            struct htable_ret ret = htable_get(&graph->graph, it);
 
             struct set *edges = NULL;
             if (ret.ok) edges = (void *) ret.value;
             else {
                 edges = set_alloc();
-                ret = htable_put(&viz->graph, it, (uintptr_t) edges);
+                ret = htable_put(&graph->graph, it, (uintptr_t) edges);
                 assert(ret.ok);
             }
 
@@ -129,68 +129,65 @@ void viz_graph(struct viz *viz)
     free(outputs);
 }
 
-void viz_color(struct viz *viz, const char *color, enum item first, enum item last)
+void graph_color(struct graph *graph, const char *color, enum item first, enum item last)
 {
-    viz_writef(viz, "subgraph { node [color=%s]; ", color);
+    graph_writef(graph, "subgraph { node [color=%s]; ", color);
     for (enum item it = first; it < last; ++it) {
-        if (!set_test(viz->items, it)) continue;
-        viz_writef(viz, "\"%02x\" ", it);
+        if (!set_test(graph->items, it)) continue;
+        graph_writef(graph, "\"%02x\" ", it);
     }
-    viz_write(viz, "}\n");
+    graph_write(graph, "}\n");
 }
 
-void viz_dot(struct viz *viz)
+void graph_dot(struct graph *graph)
 {
     enum { len = s_page_len * 10 };
-    viz->first = calloc(len, sizeof(*viz->first));
-    viz->end = viz->first + len;
-    viz->it = viz->first;
+    graph->first = calloc(len, sizeof(*graph->first));
+    graph->end = graph->first + len;
+    graph->it = graph->first;
 
-    viz_write(viz, "strict digraph {\n");
+    graph_write(graph, "strict digraph {\n");
 
-    viz_color(viz, "blue", ITEM_NATURAL_FIRST, ITEM_SYNTH_FIRST);
-    viz_color(viz, "green", ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
-    viz_color(viz, "red", ITEM_ACTIVE_FIRST, ITEM_LOGISTICS_LAST);
+    graph_color(graph, "blue", ITEM_NATURAL_FIRST, ITEM_SYNTH_FIRST);
+    graph_color(graph, "green", ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
+    graph_color(graph, "red", ITEM_ACTIVE_FIRST, ITEM_LOGISTICS_LAST);
 
     char label[item_str_len] = {0};
     for (enum item it = 0; it < ITEM_MAX; ++it) {
-        if (!set_test(viz->items, it)) continue;
+        if (!set_test(graph->items, it)) continue;
         item_str(it, label, sizeof(label));
-        viz_writef(viz, "subgraph { \"%02x\" [label=\"%02x:%s\"] }\n", it, it, label);
+        graph_writef(graph, "subgraph { \"%02x\" [label=\"%02x:%s\"] }\n", it, it, label);
     }
 
-    for (const struct htable_bucket *it = htable_next(&viz->graph, NULL);
-         it; it = htable_next(&viz->graph, it))
+    for (const struct htable_bucket *it = htable_next(&graph->graph, NULL);
+         it; it = htable_next(&graph->graph, it))
     {
         enum item in = it->key;
-        viz_writef(viz, "\"%02x\" -> { ", in);
+        graph_writef(graph, "\"%02x\" -> { ", in);
 
         struct set *outputs = (void *) it->value;
         for (enum item it = set_next(outputs, set_nil);
              it != set_nil; it = set_next(outputs, it))
         {
-            viz_writef(viz, "\"%02x\" ", it);
+            graph_writef(graph, "\"%02x\" ", it);
         }
 
-        viz_write(viz, "}\n");
+        graph_write(graph, "}\n");
     }
 
-    viz_write(viz, "}\n");
+    graph_write(graph, "}\n");
 }
 
-void viz_output(struct viz *viz)
+void graph_output(struct graph *graph)
 {
-    write(1, viz->first, viz->it - viz->first);
+    write(1, graph->first, graph->it - graph->first);
 }
 
-int viz_run(int argc, char **argv)
+bool graph_run(void)
 {
-    (void) argc, (void) argv;
-
-    struct viz viz = {0};
-    viz_graph(&viz);
-    viz_dot(&viz);
-    viz_output(&viz);
-
-    return 0;
+    struct graph graph = {0};
+    graph_graph(&graph);
+    graph_dot(&graph);
+    graph_output(&graph);
+    return true;
 }
