@@ -9,6 +9,7 @@
 #include "render/render.h"
 #include "utils/net.h"
 #include "utils/time.h"
+#include "utils/sdl.h"
 
 #include <sys/epoll.h>
 
@@ -135,6 +136,8 @@ static bool client_events(int poll, struct server *server, int events)
 bool client_run(const char *node, const char *service)
 {
     client.proxy = proxy_new();
+
+    sdl_disable_signals();
     render_init(client.proxy);
     render_thread();
 
@@ -179,7 +182,8 @@ bool client_run(const char *node, const char *service)
         }
 
         if (!server) {
-            ts_t now = ts_sleep_until(reconn.ts);
+            ts_t now = ts_now();
+            if (now < reconn.ts) continue;
 
             dbgf("connecting to '%s:%s'", node, service);
             server = client_connect(poll, node, service);
@@ -192,7 +196,7 @@ bool client_run(const char *node, const char *service)
         }
     }
 
-    client_free(poll, server);
+    if (server) client_free(poll, server);
     sigintfd_close(sigint);
     close(poll);
 
