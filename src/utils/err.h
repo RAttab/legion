@@ -13,6 +13,23 @@
 
 
 // -----------------------------------------------------------------------------
+// info
+// -----------------------------------------------------------------------------
+
+#define info(msg)                                       \
+    do {                                                \
+        fprintf(stderr, "%s:%u: <inf> " msg "\n",       \
+                __FILE__, __LINE__);                    \
+    } while(false)
+
+#define infof(fmt, ...)                                 \
+    do {                                                \
+        fprintf(stderr, "%s:%u: <inf> " fmt "\n",       \
+                __FILE__, __LINE__, __VA_ARGS__);       \
+    } while(false)
+
+
+// -----------------------------------------------------------------------------
 // err
 // -----------------------------------------------------------------------------
 
@@ -68,13 +85,13 @@
 
 #define fail_errno(msg)                         \
     do {                                        \
-        err(msg);                               \
+        err_errno(msg);                         \
         abort();                                \
     } while(false)
 
 #define failf_errno(fmt, ...)                   \
     do {                                        \
-        errf(fmt, __VA_ARGS__);                 \
+        errf_errno(fmt, __VA_ARGS__);           \
         abort();                                \
     } while(false)
 

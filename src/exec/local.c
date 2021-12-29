@@ -13,9 +13,9 @@
 // local
 // -----------------------------------------------------------------------------
 
-int local_run(void)
+int local_run(const char *file)
 {
-    struct sim *sim = sim_new(0);
+    struct sim *sim = sim_new(0, file);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
     sim_thread(sim);
 

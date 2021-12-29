@@ -267,6 +267,8 @@ void render_loop(void)
         render.ticks++;
         render_push_event(EV_TICK, render.ticks, 0);
     }
+
+    atomic_store_explicit(&render.join, true, memory_order_relaxed);
 }
 
 void render_thread(void)
@@ -277,6 +279,11 @@ void render_thread(void)
     if (!err) return;
 
     failf_posix(err, "unable to create render thread: fn=%p", render_run);
+}
+
+bool render_done(void)
+{
+    return atomic_load_explicit(&render.join, memory_order_relaxed);
 }
 
 void render_join(void)

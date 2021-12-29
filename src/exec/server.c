@@ -107,6 +107,8 @@ static void server_accept(int poll, int listen)
 
         client->next = server.clients;
         server.clients = client;
+
+        infof("connected to '%s'", sockaddrs_str(&client->addr).c);
     }
 }
 
@@ -118,9 +120,15 @@ static void server_events(int poll, struct client *client, uint32_t events)
         struct save *save = save_ring_write(client->in);
 
         ssize_t ret = read(client->socket, save_bytes(save), save_cap(save));
-        if (ret == -1 && !(errno == EAGAIN || errno == EINTR)) {
-            failf_errno("unable to read from client socket '%d'",
-                    client->socket);
+        if (ret == -1) {
+            switch (errno) {
+            case EAGAIN: case EINTR: case ECONNRESET:  { ret = 0; break; }
+            default: {
+                failf_errno("unable to read from client socket '%d'",
+                        client->socket);
+                break;
+            }
+            }
         }
 
         client->read = (size_t) ret == save_cap(save);
@@ -132,6 +140,7 @@ static void server_events(int poll, struct client *client, uint32_t events)
     if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP) ||
             save_ring_closed(client->out))
     {
+        infof("disconnected from '%s'", sockaddrs_str(&client->addr).c);
         server_free(poll, client);
         return;
     }
@@ -152,9 +161,9 @@ static void server_events(int poll, struct client *client, uint32_t events)
     }
 }
 
-bool server_run(const char *node, const char *service)
+bool server_run(const char *file, const char *node, const char *service)
 {
-    server.sim = sim_load();
+    server.sim = sim_load(file);
     sim_thread(server.sim);
 
     int poll = epoll_create1(EPOLL_CLOEXEC);
@@ -180,6 +189,8 @@ bool server_run(const char *node, const char *service)
             });
     if (ret == -1) failf_errno("unable to add sigint fd '%d' to epoll", sigint);
 
+    infof("accepting connections on '%s:%s'", node, service);
+
     bool exit = false;
     struct epoll_event events[8] = {0};
 
@@ -202,11 +213,14 @@ bool server_run(const char *node, const char *service)
         }
     }
 
+    info("shutting down");
+
     while (server.clients) server_free(poll, server.clients);
     close(listen);
     close(poll);
 
     sim_join(server.sim);
+    sim_save(server.sim);
     sim_free(server.sim);
 
     return true;

@@ -300,7 +300,8 @@ void save_ring_wake_drain(struct save_ring *ring)
 {
     uint64_t value = 0;
     ssize_t ret = read(ring->wake, &value, sizeof(value));
-    if (ret == -1) fail_errno("unable to read from wake fd");
+    if (ret == -1 && errno != EAGAIN)
+        fail_errno("unable to read from wake fd");
 }
 
 

@@ -119,35 +119,31 @@ uint8_t save_file_version(struct save *);
 
 size_t save_write(struct save *, const void *src, size_t len);
 
-#define save_write_value(save, _value)                          \
-    do {                                                        \
-        typeof(_value) value = (_value);                        \
-        size_t ret = save_write(save, &value, sizeof(value));   \
-        assert(ret == sizeof(value));                           \
+#define save_write_value(save, _value)                  \
+    do {                                                \
+        typeof(_value) value = (_value);                \
+        (void) save_write(save, &value, sizeof(value)); \
     } while (false)
 
-#define save_write_from(save, _ptr)                             \
-    do {                                                        \
-        typeof(_ptr) ptr = (_ptr);                              \
-        size_t ret = save_write(save, ptr, sizeof(*ptr));       \
-        assert(ret == sizeof(*ptr));                            \
+#define save_write_from(save, _ptr)                     \
+    do {                                                \
+        typeof(_ptr) ptr = (_ptr);                      \
+        (void) save_write(save, ptr, sizeof(*ptr));     \
     } while (false)
 
 size_t save_read(struct save *, void *dst, size_t len);
 
-#define save_read_type(save, type)                              \
-    ({                                                          \
-        type value;                                             \
-        size_t ret = save_read(save, &value, sizeof(value));    \
-        assert(ret == sizeof(value));                           \
-        value;                                                  \
+#define save_read_type(save, type)                      \
+    ({                                                  \
+        type value;                                     \
+        (void) save_read(save, &value, sizeof(value));  \
+        value;                                          \
     })
 
-#define save_read_into(save, _ptr)                              \
-    do {                                                        \
-        typeof(_ptr) ptr = (_ptr);                              \
-        size_t ret = save_read(save, ptr, sizeof(*ptr));        \
-        assert(ret == sizeof(*ptr));                            \
+#define save_read_into(save, _ptr)                      \
+    do {                                                \
+        typeof(_ptr) ptr = (_ptr);                      \
+        (void) save_read(save, ptr, sizeof(*ptr));      \
     } while (false)
 
 void save_write_magic(struct save *, enum save_magic);

@@ -7,6 +7,10 @@
 
 #include "common.h"
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+
 // -----------------------------------------------------------------------------
 // socket
 // -----------------------------------------------------------------------------
@@ -14,6 +18,12 @@
 int socket_listen(const char *node, const char *service);
 int socket_connect(const char *node, const char *service);
 
+struct sockaddr_str { char c[INET6_ADDRSTRLEN]; char zero; };
+struct sockaddr_str sockaddr_str(struct sockaddr *addr);
+inline struct sockaddr_str sockaddrs_str(struct sockaddr_storage *addr)
+{
+    return sockaddr_str((struct sockaddr *) addr);
+}
 
 // -----------------------------------------------------------------------------
 // sigintfd

@@ -14,6 +14,7 @@
 #include <pthread.h>
 
 static void sim_cmd_load(struct sim *);
+static void sim_cmd_save(struct sim *);
 static struct sim_pipe *sim_pipe_next(struct sim *sim, struct sim_pipe *start);
 
 
@@ -45,12 +46,13 @@ struct sim
     enum speed speed;
 
     uint64_t stream;
-
     atomic_uintptr_t pipes;
+
+    char path[PATH_MAX];
 };
 
 
-struct sim *sim_new(seed_t seed)
+struct sim *sim_new(seed_t seed, const char *file)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
 
@@ -59,16 +61,21 @@ struct sim *sim_new(seed_t seed)
     sim->speed = speed_slow;
     sim->stream = ts_now();
     atomic_init(&sim->join, false);
+    strncpy(sim->path, file, sizeof(sim->path) - 1);
     return sim;
 }
 
-struct sim *sim_load(void)
+struct sim *sim_load(const char *file)
 {
-    struct sim *sim = sim_new(0);
+    struct sim *sim = sim_new(0, file);
     sim_cmd_load(sim);
     return sim;
 }
 
+void sim_save(struct sim *sim)
+{
+    sim_cmd_save(sim);
+}
 
 void sim_free(struct sim *sim)
 {
@@ -320,7 +327,7 @@ static struct symbol sim_log_atom(struct sim *sim, word_t atom)
 
 static void sim_cmd_save(struct sim *sim)
 {
-    struct save *save = save_file_create("./legion.save", sim_save_version);
+    struct save *save = save_file_create(sim->path, sim_save_version);
 
     save_write_magic(save, save_magic_sim);
     save_write_value(save, sim->speed);
@@ -336,9 +343,14 @@ static void sim_cmd_save(struct sim *sim)
 
 static void sim_cmd_load(struct sim *sim)
 {
+    struct save *save = save_file_load(sim->path);
+    if (!save) {
+        sim_log_all(sim, st_error, "unable to open '%s'", sim->path);
+        return;
+    }
+
     bool fail = false;
-    struct save *save = save_file_load("./legion.save");
-    assert(save_file_version(save) == sim_save_version);
+    if (save_file_version(save) != sim_save_version) { fail = true; goto fail; }
 
     if (!save_read_magic(save, save_magic_sim)) { fail = true; goto fail; }
     save_read_into(save, &sim->speed);
@@ -351,7 +363,7 @@ static void sim_cmd_load(struct sim *sim)
     world = legion_xchg(&sim->world, world);
     world_free(world);
 
-    sim->stream++;
+    sim->stream = ts_now();
 
   fail:
     if (fail)
@@ -678,7 +690,7 @@ void sim_loop(struct sim *sim)
         sim->next += sleep;
         if (sim->next <= now) {
             if (sim->speed == speed_slow) {
-                dbgf("sim.late: now=%lu, next=%lu, sleep=%lu, ticks=%u",
+                infof("sim.late: now=%lu, next=%lu, sleep=%lu, ticks=%u",
                         now, sim->next, sleep, world_time(sim->world));
             }
             sim->next = now;

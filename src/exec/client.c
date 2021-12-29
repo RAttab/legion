@@ -97,9 +97,16 @@ static bool client_events(int poll, struct server *server, int events)
         struct save *save = save_ring_write(server->in);
 
         ssize_t ret = read(server->socket, save_bytes(save), save_cap(save));
-        if (ret == -1 && !(errno == EAGAIN || errno == EINTR)) {
-            failf_errno("unable to read from server socket '%d'",
-                    server->socket);
+        if (ret == -1) {
+            switch (errno) {
+            case ECONNREFUSED: { events |= EPOLLHUP; } // fallthrough
+            case EAGAIN: case EINTR: case ECONNRESET:  { ret = 0; break; }
+            default: {
+                failf_errno("unable to read from server socket '%d'",
+                        server->socket);
+                break;
+            }
+            }
         }
 
         server->read = (size_t) ret == save_cap(save);
@@ -156,10 +163,13 @@ bool client_run(const char *node, const char *service)
     struct { ts_t ts; size_t inc; } reconn = { .ts = 0, .inc = 1 };
 
     bool exit = false;
+    bool connected = false;
     struct server *server = NULL;
     struct epoll_event events[8] = {0};
 
-    while (!exit) {
+    infof("connecting to '%s:%s'", node, service);
+
+    while (!exit && !render_done()) {
         int ready = epoll_wait(poll, events, array_len(events), 1);
         if (ready == -1) {
             if (errno == EINTR) continue;
@@ -175,8 +185,14 @@ bool client_run(const char *node, const char *service)
             }
 
             assert(server && server == ev->data.ptr);
-            if (!client_events(poll, ev->data.ptr, ev->events)) {
-                dbgf("lost connection to '%s:%s'", node, service);
+            if (client_events(poll, ev->data.ptr, ev->events)) {
+                if (!connected) infof("connected to '%s:%s'", node, service);
+                connected = true;
+                reconn.inc = 1;
+            }
+            else {
+                if (connected) infof("disconnected from '%s:%s'", node, service);
+                connected = false;
                 server = NULL;
             }
         }
@@ -184,17 +200,15 @@ bool client_run(const char *node, const char *service)
         if (!server) {
             ts_t now = ts_now();
             if (now < reconn.ts) continue;
+            reconn.inc = legion_min(reconn.inc * 2, (size_t) 60);
+            reconn.ts = (reconn.inc * ts_sec) + now;
 
-            dbgf("connecting to '%s:%s'", node, service);
+            infof("reconnecting to '%s:%s'", node, service);
             server = client_connect(poll, node, service);
-
-            if (server) reconn.inc = 1;
-            else {
-                reconn.inc = legion_min(reconn.inc * 2, (size_t) 60);
-                reconn.ts = (reconn.inc * ts_sec) + now;
-            }
         }
     }
+
+    info("shutting down");
 
     if (server) client_free(poll, server);
     sigintfd_close(sigint);

@@ -24,8 +24,8 @@ enum { socket_listen_backlog = 64 };
 static bool socket_nodelay(int fd)
 {
     int value = 1;
-    int err = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value));
-    if (!err) return true;
+    int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value));
+    if (ret == 0) return true;
 
     errf_errno("unable to disable naggle algorithm on fd '%d'", fd);
     return false;
@@ -56,7 +56,7 @@ int socket_listen(const char *node, const char *service)
         if (fd == -1) continue;
 
         if (!socket_nodelay(fd)) goto fail;
-        if (bind(fd, (struct sockaddr *) &it->ai_addr, it->ai_addrlen) == -1) goto fail;
+        if (bind(fd, it->ai_addr, it->ai_addrlen) == -1) goto fail;
         if (listen(fd, socket_listen_backlog) == -1) goto fail;
 
         result = fd;
@@ -69,7 +69,7 @@ int socket_listen(const char *node, const char *service)
     freeaddrinfo(list);
 
     if (result == -1) {
-        errf("unable to bind on host '%s' and service '%s'", node, service);
+        errf("unable to listen on socket for '%s:%s'", node, service);
         return -1;
     }
 
@@ -101,7 +101,9 @@ int socket_connect(const char *node, const char *service)
         if (fd == -1) continue;
 
         if (!socket_nodelay(fd)) goto fail;
-        if (connect(fd, (struct sockaddr *) &it->ai_addr, it->ai_addrlen) == -1) goto fail;
+        if (connect(fd, it->ai_addr, it->ai_addrlen) == -1) {
+            if (errno != EINPROGRESS) goto fail;
+        }
 
         result = fd;
         break;
@@ -113,12 +115,49 @@ int socket_connect(const char *node, const char *service)
     freeaddrinfo(list);
 
     if (result == -1) {
-        errf("unable to connect to node '%s' on service '%s'", node, service);
+        errf("unable to connect socket to '%s:%s'", node, service);
         return -1;
     }
 
     return result;
 }
+
+
+// -----------------------------------------------------------------------------
+// str
+// -----------------------------------------------------------------------------
+
+#include <arpa/inet.h>
+
+struct sockaddr_str sockaddr_str(struct sockaddr *addr)
+{
+    struct sockaddr_str str = {0};
+
+    const char *ret = NULL;
+    switch (addr->sa_family)
+    {
+
+    case AF_INET: {
+        ret = inet_ntop(
+                AF_INET, &((struct sockaddr_in *) addr)->sin_addr,
+                str.c, sizeof(str.c));
+        break;
+    }
+
+    case AF_INET6: {
+        ret = inet_ntop(
+                AF_INET, &((struct sockaddr_in6 *) addr)->sin6_addr,
+                str.c, sizeof(str.c));
+        break;
+    }
+
+    default: { assert(false); }
+    }
+
+    if (!ret) fail_errno("unable to convert sockaddr to string");
+    return str;
+}
+
 
 // -----------------------------------------------------------------------------
 // sigintfd

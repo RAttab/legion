@@ -19,8 +19,9 @@ static void usage(int code, const char *msg)
     if (msg) fprintf(stderr, "%s\n\n", msg);
 
     static const char usage[] =
-        "legion [--graph] [--items] [--local] [--server|--client <host>] [--port <port>]\n"
+        "legion [--graph] [--items] [--local] [--server|--client <host>] [--port <port>] [--file <path>]\n"
         "  -h --help    Prints this message\n"
+        "  -f --file    Load and save to the given path; default is './legion.save'\n"
         "  -g --graph   Output dotfile of tape graph to stdout\n"
         "  -i --items   Dumps stats about item requirements\n"
         "  -s --local   Starts the game locally; default command if none are provided\n"
@@ -35,9 +36,10 @@ static void usage(int code, const char *msg)
 
 int main(int argc, char *const argv[])
 {
-    const char *optstring = "+hgil:s:c:p:";
+    const char *optstring = "+hf:gil:s:c:p:";
     struct option longopts[] = {
         { .val = 'h', .name = "help",   .has_arg = no_argument },
+        { .val = 'f', .name = "file",   .has_arg = required_argument },
         { .val = 'g', .name = "graph",  .has_arg = no_argument },
         { .val = 'i', .name = "items",  .has_arg = no_argument },
         { .val = 'l', .name = "local",  .has_arg = no_argument },
@@ -49,11 +51,13 @@ int main(int argc, char *const argv[])
 
     static struct {
         bool graph, items, local, server, client;
+        const char *file;
         const char *node;
         const char *service;
     } args;
 
     args.service = "18181"; // Dihedral Prime beause it makes me sound smart.
+    args.file = "./legion.save";
 
     bool done = false;
     size_t commands = 0;
@@ -62,6 +66,8 @@ int main(int argc, char *const argv[])
         {
         case -1: { done = true; break; }
         case 'h': { usage(0, NULL); }
+
+        case 'f': { args.file = optarg; break; }
 
         case 'g': { args.graph = true; commands++; break; }
         case 'i': { args.items = true; commands++; break; }
@@ -85,9 +91,9 @@ int main(int argc, char *const argv[])
 
     if (args.graph && !graph_run()) return 1;
     if (args.items && !stats_run()) return 1;
-    if (args.local && !local_run()) return 1;
+    if (args.local && !local_run(args.file)) return 1;
     if (args.client && !client_run(args.node, args.service)) return 1;
-    if (args.server && !server_run(args.node, args.service)) return 1;
+    if (args.server && !server_run(args.file, args.node, args.service)) return 1;
 
     return 0;
 }

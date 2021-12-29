@@ -30,8 +30,9 @@ enum
     sim_out_len = 2000 * s_page_len,
 };
 
-struct sim *sim_new(seed_t seed);
-struct sim *sim_load(void);
+struct sim *sim_new(seed_t seed, const char *file);
+struct sim *sim_load(const char *file);
+void sim_save(struct sim *);
 void sim_free(struct sim *);
 
 struct sim_pipe;
