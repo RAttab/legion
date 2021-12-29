@@ -18,25 +18,25 @@
 
 #define err(msg)                                        \
     do {                                                \
-        fprintf(stderr, "fail<%s:%u> " msg "\n",        \
+        fprintf(stderr, "%s:%u: <err> " msg "\n",       \
                 __FILE__, __LINE__);                    \
     } while(false)
 
 #define errf(fmt, ...)                                  \
     do {                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt "\n",        \
+        fprintf(stderr, "%s:%u: <err> " fmt "\n",       \
                 __FILE__, __LINE__, __VA_ARGS__);       \
     } while(false)
 
 #define err_num(errnum, errstr, msg)                            \
     do {                                                        \
-        fprintf(stderr, "fail<%s:%u> " msg ": %s (%d)\n",       \
+        fprintf(stderr, "%s:%u: <err> " msg ": %s (%d)\n",      \
                 __FILE__, __LINE__, errstr, errnum);            \
     } while(false)
 
 #define errf_num(errnum, errstr, fmt, ...)                              \
     do {                                                                \
-        fprintf(stderr, "fail<%s:%u> " fmt ": %s (%d)\n",               \
+        fprintf(stderr, "%s:%u: <err> " fmt ": %s (%d)\n",              \
                 __FILE__, __LINE__, __VA_ARGS__, errstr, errnum);       \
     } while(false)
 
@@ -95,24 +95,24 @@
 // sdl
 // -----------------------------------------------------------------------------
 
-#define sdl_fail(p)                                                     \
-    {                                                                   \
-        fprintf(stderr, "sdl-fail<%s:%u> %s: %s\n",                     \
-                __FILE__, __LINE__, #p, SDL_GetError());                \
-        abort();                                                        \
+#define sdl_fail(p)                                             \
+    {                                                           \
+        fprintf(stderr, "%s:%u: <err> %s: %s\n",                \
+                __FILE__, __LINE__, #p, SDL_GetError());        \
+        abort();                                                \
     } while(false)
 
 
-#define sdl_err(p)                                                      \
-    ({                                                                  \
-        typeof(p) ret = (p);                                            \
-        if (unlikely(ret < 0)) sdl_fail(p);                             \
-        ret;                                                            \
+#define sdl_err(p)                              \
+    ({                                          \
+        typeof(p) ret = (p);                    \
+        if (unlikely(ret < 0)) sdl_fail(p);     \
+        ret;                                    \
     })
 
-#define sdl_ptr(p)                                                      \
-    ({                                                                  \
-        typeof(p) ret = (p);                                            \
-        if (unlikely(!ret)) sdl_fail(p);                                \
-        ret;                                                            \
+#define sdl_ptr(p)                              \
+    ({                                          \
+        typeof(p) ret = (p);                    \
+        if (unlikely(!ret)) sdl_fail(p);        \
+        ret;                                    \
     })
