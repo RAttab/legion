@@ -49,7 +49,7 @@ void ui_tape_free(struct ui_tape *ui)
 
 void ui_tape_update(struct ui_tape *ui, tape_packed_t state)
 {
-    const struct tape *tape = tape_packed_ptr(state);
+    const struct tape *tape = tapes_get(tape_packed_id(state));
 
     if (!tape) ui_str_setc(&ui->tape_val.str, "nil");
     else ui_str_set_item(&ui->tape_val.str, tape_id(tape));
@@ -87,7 +87,7 @@ void ui_tape_render(
 
     size_t first = ui_scroll_first(&ui->scroll);
     size_t last = ui_scroll_last(&ui->scroll);
-    const struct tape *tape = tape_packed_ptr(state);
+    const struct tape *tape = tapes_get(tape_packed_id(state));
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);

@@ -190,7 +190,7 @@ static bool im_extract_flow(const void *state, struct flow *flow)
         .rank = tapes_info(target)->rank,
     };
 
-    const struct tape *tape = tape_packed_ptr(extract->tape);
+    const struct tape *tape = tapes_get(target);
     struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
 
     switch (ret.state) {
