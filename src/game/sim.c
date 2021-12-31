@@ -706,7 +706,7 @@ void sim_join(struct sim *sim)
     if (err) err_posix(err, "unable to join sim thread");
 }
 
-void sim_thread(struct sim *sim)
+void sim_fork(struct sim *sim)
 {
     void *sim_run(void *ctx)  { sim_loop(ctx); return NULL; }
 

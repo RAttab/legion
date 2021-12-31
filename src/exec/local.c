@@ -17,7 +17,7 @@ int local_run(const char *file)
 {
     struct sim *sim = sim_new(0, file);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
-    sim_thread(sim);
+    sim_fork(sim);
 
     struct proxy *proxy = proxy_new();
     struct proxy_pipe *proxy_pipe = proxy_pipe_new(proxy, sim_pipe);

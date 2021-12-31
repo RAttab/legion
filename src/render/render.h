@@ -125,8 +125,8 @@ void render_init(struct proxy *);
 void render_close(void);
 
 void render_loop(void);
-void render_thread(void);
 bool render_done(void);
+void render_fork(void);
 void render_join(void);
 
 void render_push_event(enum event, uint64_t d0, uint64_t d1);

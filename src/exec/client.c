@@ -146,7 +146,7 @@ bool client_run(const char *node, const char *service)
 
     sdl_disable_signals();
     render_init(client.proxy);
-    render_thread();
+    render_fork();
 
     int poll = epoll_create1(EPOLL_CLOEXEC);
     if (poll == -1) fail_errno("unable to create epoll");

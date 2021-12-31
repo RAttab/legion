@@ -271,7 +271,12 @@ void render_loop(void)
     atomic_store_explicit(&render.join, true, memory_order_relaxed);
 }
 
-void render_thread(void)
+bool render_done(void)
+{
+    return atomic_load_explicit(&render.join, memory_order_relaxed);
+}
+
+void render_fork(void)
 {
     void *render_run(void *) { render_loop(); return NULL; }
 
@@ -279,11 +284,6 @@ void render_thread(void)
     if (!err) return;
 
     failf_posix(err, "unable to create render thread: fn=%p", render_run);
-}
-
-bool render_done(void)
-{
-    return atomic_load_explicit(&render.join, memory_order_relaxed);
 }
 
 void render_join(void)

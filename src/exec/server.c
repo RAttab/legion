@@ -164,7 +164,7 @@ static void server_events(int poll, struct client *client, uint32_t events)
 bool server_run(const char *file, const char *node, const char *service)
 {
     server.sim = sim_load(file);
-    sim_thread(server.sim);
+    sim_fork(server.sim);
 
     int poll = epoll_create1(EPOLL_CLOEXEC);
     if (poll == -1) fail_errno("unable to create epoll");
