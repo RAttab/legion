@@ -82,7 +82,6 @@ static word_t lisp_eval(struct lisp *lisp)
     case token_open: {
         lisp->depth++;
         struct token *token = lisp_expect(lisp, token_symbol);
-        lisp_index_at(lisp, token);
 
         uint64_t key = symbol_hash(&token->value.s);
         struct htable_ret ret = htable_get(&lisp_fn_eval, key);

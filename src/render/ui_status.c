@@ -31,8 +31,8 @@ struct ui_status *ui_status_new(void)
 {
     struct font *font = font_mono6;
 
-    struct dim dim = { .w = core.rect.w, .h = font->glyph_h + 8 };
-    struct pos pos = { .x = 0, .y = core.rect.h - dim.h };
+    struct dim dim = { .w = render.rect.w, .h = font->glyph_h + 8 };
+    struct pos pos = { .x = 0, .y = render.rect.h - dim.h };
 
     struct ui_status *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_status) {
@@ -51,12 +51,12 @@ void ui_status_free(struct ui_status *ui) {
 
 int16_t ui_status_height(void)
 {
-    return core.ui.status->panel.w.dim.h;
+    return render.ui.status->panel.w.dim.h;
 }
 
 void ui_status_set(
         struct ui_status *ui,
-        enum status type,
+        enum status_type type,
         const char *msg,
         size_t len)
 {

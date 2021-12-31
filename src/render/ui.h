@@ -65,7 +65,7 @@ int16_t ui_status_height(void);
 bool ui_status_event(struct ui_status *, SDL_Event *);
 void ui_status_render(struct ui_status *, SDL_Renderer *);
 
-void ui_status_set(struct ui_status *, enum status, const char *msg, size_t len);
+void ui_status_set(struct ui_status *, enum status_type, const char *msg, size_t len);
 
 
 // -----------------------------------------------------------------------------

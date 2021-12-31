@@ -26,7 +26,7 @@ struct ui_stars *ui_stars_new(void)
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (symbol_cap + 4) * font->glyph_w,
-            core.rect.h - pos.y - ui_status_height());
+            render.rect.h - pos.y - ui_status_height());
 
     struct ui_stars *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_stars) {
@@ -53,7 +53,7 @@ static void ui_stars_update(struct ui_stars *ui)
 
     ui_node_t parent = ui_node_nil;
     struct coord sector = coord_nil();
-    const struct vec64 *list = proxy_chunks(core.proxy);
+    const struct vec64 *list = proxy_chunks(render.proxy);
 
     size_t count = 0;
     for (size_t i = 0; i < list->len; ++i) {
@@ -71,7 +71,7 @@ static void ui_stars_update(struct ui_stars *ui)
 
         ui_str_set_atom(
                 ui_tree_add(&ui->tree, parent, coord_to_u64(star)),
-                proxy_star_name(core.proxy, star));
+                proxy_star_name(render.proxy, star));
         count++;
     }
 
@@ -132,7 +132,7 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
 
 bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_stars_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_stars_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
@@ -143,11 +143,11 @@ bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
         uint64_t user = ui->tree.selected;
         struct coord coord = coord_from_u64(user);
         if (user && !coord_eq(coord, coord_sector(coord))) {
-            core_push_event(EV_STAR_SELECT, user, 0);
-            if (map_active(core.ui.map))
-                core_push_event(EV_MAP_GOTO, user, 0);
-            if (factory_active(core.ui.factory))
-                core_push_event(EV_FACTORY_SELECT, user, 0);
+            render_push_event(EV_STAR_SELECT, user, 0);
+            if (map_active(render.ui.map))
+                render_push_event(EV_MAP_GOTO, user, 0);
+            if (factory_active(render.ui.factory))
+                render_push_event(EV_FACTORY_SELECT, user, 0);
         }
         return true;
     }

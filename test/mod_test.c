@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    core_populate();
+    sys_populate();
 
     test_compiler();
 

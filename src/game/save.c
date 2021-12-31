@@ -7,11 +7,13 @@
 #include "utils/vec.h"
 #include "utils/err.h"
 
+#include <stdatomic.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/eventfd.h>
 
 
 // -----------------------------------------------------------------------------
@@ -22,6 +24,7 @@ static const uint64_t save_magic_top = 0xFF4E4F4947454CFF;
 static const uint64_t save_magic_seal = 0xFF4C4547494F4EFF;
 static const size_t save_chunks = 10 * page_len;
 
+typedef void (*save_grow_fn_t) (struct save *, size_t len);
 
 struct save_prof
 {
@@ -32,31 +35,57 @@ struct save_prof
 
 struct save
 {
-    size_t cap;
-    void *base, *it;
-
-    int fd;
-    bool load;
-    uint8_t version;
-    char dst[PATH_MAX];
-
+    void *base, *end, *it;
+    save_grow_fn_t grow;
     struct save_prof *prof;
 };
+
+static void save_free(struct save *save)
+{
+    free(save->prof);
+}
+
+bool save_eof(struct save *save)
+{
+    return save_len(save) == save_cap(save);
+}
+
+size_t save_cap(struct save *save)
+{
+    return save->end - save->base;
+}
+
+size_t save_len(struct save *save)
+{
+    return save->it - save->base;
+}
+
+void *save_bytes(struct save *save)
+{
+    return save->base;
+}
+
+
+// -----------------------------------------------------------------------------
+// mem
+// -----------------------------------------------------------------------------
 
 struct save *save_mem_new(void)
 {
     struct save *save = calloc(1, sizeof(*save));
-    save->cap = save_chunks;
 
+    const size_t cap = save_chunks;
     const int prot = PROT_READ | PROT_WRITE;
     const int flags = MAP_PRIVATE | MAP_ANONYMOUS;
-    save->base = mmap(0, save->cap, prot, flags, 0, 0);
+    save->base = mmap(0, cap, prot, flags, 0, 0);
     if (save->base == MAP_FAILED) {
-        errf_errno("unable to mmap '%s'", "mem");
+        err_errno("unable to mmap 'mem'");
         goto fail_mmap;
     }
 
+    save->end = save->base + cap;
     save->it = save->base;
+
     return save;
 
   fail_mmap:
@@ -66,89 +95,344 @@ struct save *save_mem_new(void)
 
 void save_mem_reset(struct save *save)
 {
-    assert(!save->fd);
     save->it = save->base;
 }
 
 void save_mem_free(struct save *save)
 {
     if (!save) return;
-    assert(!save->fd);
-    munmap(save->base, save->cap);
-    free(save->prof);
+    munmap(save->base, save_cap(save));
+    save_free(save);
     free(save);
 }
 
-struct save *save_file_new(const char *path, uint8_t version)
+
+// -----------------------------------------------------------------------------
+// ring
+// -----------------------------------------------------------------------------
+// Implemented via the classical Magic Ring Buffer which maps the same memfd
+// area in two vmas back to back. Allows us to make a single read/write call to
+// the kernel even when we're wrapping around the ring.
+
+struct save_ring
 {
-    struct save *save = calloc(1, sizeof(*save));
-    save->load = false;
-    save->version = version;
-    strcpy(save->dst, path);
+    size_t cap;
+    void *base, *loop;
+    atomic_bool closed;
+    struct { atomic_size_t pos; struct save save; } read, write;
+    int wake;
+};
+
+// We rely on the fact that our cursors our 64 bits to avoid dealing with
+// overflows.
+static_assert(sizeof(atomic_size_t) == 8);
+
+struct save_ring *save_ring_new(size_t cap)
+{
+    struct save_ring *ring = calloc(1, sizeof(*ring));
+
+    // On linux, duplicating a VMA via mmap can only be achieved using an
+    // fd. memfd_create allows us to get an fd without touching the file-system.
+    int fd = memfd_create("legion.save.ring", MFD_CLOEXEC);
+    if (fd == -1) {
+        err_errno("unable to create memfd for ring");
+        goto fail_memfd;
+    }
+
+    if (ftruncate(fd, cap) == -1) {
+        err_errno("unable to resize memfd for ring");
+        goto fail_ftruncate;
+    }
+
+    assert(cap && cap % s_page_len == 0);
+    const int prot = PROT_READ | PROT_WRITE;
+
+    // To ensure back-to-back VMAs without accidently overwritting any other
+    // VMAs, we reserve a chunk of memory ahead of time.
+    void *ptr = mmap(0, cap * 2, prot, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    if (ptr == MAP_FAILED) {
+        err_errno("unable to reserve vma for ring");
+        goto fail_mmap_reserve;
+    }
+
+    // MAP_FIXED is safe because we're within the bounds of our reserved
+    // chunk. As a bonus, the two new VMAs completely replace the reserved VMA
+    // so we don't need to clean it up.
+    const int flags = MAP_SHARED_VALIDATE | MAP_FIXED;
+    ring->base = mmap(ptr, cap, prot, flags, fd, 0);
+    ring->loop = mmap(ptr + cap, cap, prot, flags, fd, 0);
+    if (ring->base == MAP_FAILED || ring->loop == MAP_FAILED) {
+        err_errno("unable to mmap file for ring");
+        goto fail_mmap_ring;
+    }
+
+    ring->wake = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+    if (ring->wake == -1) {
+        err_errno("unable to create eventfd for ring");
+        goto fail_eventfd;
+    }
+
+    // The VMAs carry a reference to the fd so we don't need to keep track of
+    // the original reference.
+    close(fd);
+
+    ring->cap = cap;
+    return ring;
+
+    close(ring->wake);
+  fail_eventfd:
+  fail_mmap_ring:
+    if (ring->base) munmap(ring->base, ring->cap);
+    if (ring->loop) munmap(ring->loop, ring->cap);
+  fail_mmap_reserve:
+  fail_ftruncate:
+    close(fd);
+  fail_memfd:
+    free(ring);
+    return NULL;
+}
+
+void save_ring_free(struct save_ring *ring)
+{
+    close(ring->wake);
+    munmap(ring->base, ring->cap);
+    munmap(ring->loop, ring->cap);
+    save_free(&ring->read.save);
+    save_free(&ring->write.save);
+    free(ring);
+}
+
+void save_ring_close(struct save_ring *ring)
+{
+    atomic_store_explicit(&ring->closed, true, memory_order_relaxed);
+}
+
+bool save_ring_closed(struct save_ring *ring)
+{
+    return atomic_load_explicit(&ring->closed, memory_order_relaxed);
+}
+
+struct save *save_ring_read(struct save_ring *ring)
+{
+    // Acquire is on the writes because that's the chunk of memory we could
+    // potentially read without it being fully written. We don't care if the
+    // previous chunk of read memory is fully read as we're not going to touch
+    // it.
+    uint64_t read = atomic_load_explicit(&ring->read.pos, memory_order_relaxed);
+    uint64_t write = atomic_load_explicit(&ring->write.pos, memory_order_acquire);
+
+    struct save *save = &ring->read.save;
+    save->end = ring->base + (write % ring->cap);
+    save->base = ring->base + (read % ring->cap);
+    save->it = save->base;
+
+    if (read != write && save->end <= save->it)
+        save->end += ring->cap;
+
+    assert(save->end >= save->it);
+    assert((size_t) (save->end - save->base) <= ring->cap * 2);
+    return save;
+}
+
+struct save *save_ring_write(struct save_ring *ring)
+{
+    // Acquire is on the writes because that's the chunk of memory we could
+    // potentially overwrite as it's being read. We don't care if the previous
+    // chunk of write memory is fully written as we're not going to touch it.
+    uint64_t write = atomic_load_explicit(&ring->write.pos, memory_order_relaxed);
+    uint64_t read = atomic_load_explicit(&ring->read.pos, memory_order_acquire);
+
+    struct save *save = &ring->write.save;
+    save->end = ring->base + (read % ring->cap);
+    save->base = ring->base + (write % ring->cap);
+    save->it = save->base;
+
+    if (read == write || save->end < save->it)
+        save->end += ring->cap;
+
+    assert(save->end >= save->it);
+    assert((size_t) (save->end - save->base) <= ring->cap * 2);
+    return save;
+}
+
+void save_ring_commit(struct save_ring *ring, struct save *save)
+{
+    uint64_t delta = save->it - save->base;
+
+    uint64_t read = 0, write = 0;
+    if (save == &ring->write.save) {
+        read = atomic_load_explicit(&ring->read.pos, memory_order_relaxed);
+        write = atomic_fetch_add_explicit(&ring->write.pos, delta, memory_order_release);
+        write += delta;
+    }
+    else if (save == &ring->read.save) {
+        write = atomic_load_explicit(&ring->write.pos, memory_order_relaxed);
+        read = atomic_fetch_add_explicit(&ring->read.pos, delta, memory_order_release);
+        read += delta;
+    }
+    else assert(false);
+
+    assert(read <= write);
+}
+
+size_t save_ring_consume(struct save *save, size_t len)
+{
+    if (save->it + len > save->end)
+        len = save->end - save->it;
+
+    save->it += len;
+    return len;
+}
+
+int save_ring_wake_fd(struct save_ring *ring)
+{
+    return ring->wake;
+}
+
+void save_ring_wake_signal(struct save_ring *ring)
+{
+    uint64_t value = 1;
+    ssize_t ret = write(ring->wake, &value, sizeof(value));
+    if (ret == -1) fail_errno("unable to write to wake fd");
+}
+
+void save_ring_wake_drain(struct save_ring *ring)
+{
+    uint64_t value = 0;
+    ssize_t ret = read(ring->wake, &value, sizeof(value));
+    if (ret == -1 && errno != EAGAIN)
+        fail_errno("unable to read from wake fd");
+}
+
+
+// -----------------------------------------------------------------------------
+// file
+// -----------------------------------------------------------------------------
+
+enum save_mode
+{
+    save_mode_nil = 0,
+    save_mode_write,
+    save_mode_read,
+};
+
+struct save_file
+{
+    int fd;
+    enum save_mode mode;
+    char dst[PATH_MAX];
+    uint8_t version;
+};
+
+static struct save_file *save_file_ptr(struct save *save)
+{
+    return (struct save_file *) (save + 1);
+}
+
+static void save_file_grow(struct save *save, size_t len)
+{
+    struct save_file *file = save_file_ptr(save);
+    assert(file->mode == save_mode_write);
+
+    size_t cap = save_cap(save);
+    const size_t old = save_len(save);
+    const size_t need = save_len(save) + len;
+
+    assert(need > cap);
+    while (need >= cap) cap += save_chunks;
+
+    if (file->fd && ftruncate(file->fd, cap) == -1)
+        failf_errno("unable to grow file '%lx'", cap);
+
+    save->base = mremap(save->base, save_cap(save), cap, MREMAP_MAYMOVE);
+    if (save->base == MAP_FAILED) {
+        failf_errno("unable to remap '%p' from '%zu' to '%zu'",
+                save->base, save_cap(save), cap);
+    }
+
+    save->it = save->base + old;
+    save->end = save->base + cap;
+}
+
+struct save *save_file_create(const char *path, uint8_t version)
+{
+    struct save *save = calloc(1, sizeof(*save) + sizeof(struct save_file));
+    struct save_file *file = save_file_ptr(save);
+
+    file->mode = save_mode_write;
+    file->version = version;
+    strcpy(file->dst, path);
+    save->grow = save_file_grow;
 
     char tmp[PATH_MAX] = {0};
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
 
     // need O_RD to mmap the fd because... reasons...
-    save->fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
-    if (save->fd == -1) {
+    file->fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
+    if (file->fd == -1) {
         errf_errno("unable to open tmp file for '%s'", path);
         goto fail_open;
     }
 
-    if (ftruncate(save->fd, save_chunks) == -1) {
+    if (ftruncate(file->fd, save_chunks) == -1) {
         errf_errno("unable to grow file '%lx'", save_chunks);
         goto fail_truncate;
     }
 
-    save->cap = save_chunks;
-    save->base = mmap(0, save->cap, PROT_WRITE, MAP_SHARED, save->fd, 0);
+    const size_t cap = save_chunks;
+    save->base = mmap(0, cap, PROT_WRITE, MAP_SHARED, file->fd, 0);
     if (save->base == MAP_FAILED) {
         errf_errno("unable to mmap '%s'", path);
         goto fail_mmap;
     }
 
+    save->end = save->base + cap;
     save->it = save->base;
 
     save_write_value(save, save_magic_top);
     save_write_value(save, (typeof(save_magic_seal)) 0);
-    save_write_value(save, save->version);
+    save_write_value(save, file->version);
 
     return save;
 
-    munmap(save->base, save->cap);
+    munmap(save->base, save_cap(save));
   fail_mmap:
   fail_truncate:
-    close(save->fd);
+    close(file->fd);
   fail_open:
-    free(save);
+    save_free(save);
     return NULL;
 }
 
 struct save *save_file_load(const char *path)
 {
-    struct save *save = calloc(1, sizeof(*save));
-    save->load = true;
+    struct save *save = calloc(1, sizeof(*save) + sizeof(struct save_file));
+    struct save_file *file = save_file_ptr(save);
 
-    save->fd = open(path, O_RDONLY);
-    if (save->fd == -1) {
+    file->mode = save_mode_read;
+    save->grow = save_file_grow;
+
+    file->fd = open(path, O_RDONLY);
+    if (file->fd == -1) {
         errf_errno("unable to open '%s'", path);
         goto fail_open;
     }
 
     struct stat stat = {0};
-    int ret = fstat(save->fd, &stat);
+    int ret = fstat(file->fd, &stat);
     if (ret == -1) {
         errf_errno("unable to stat '%s'", path);
         goto fail_stat;
     }
-    save->cap = stat.st_size;
 
-    save->base = mmap(0, save->cap, PROT_READ, MAP_PRIVATE, save->fd, 0);
+    const size_t cap = stat.st_size;
+    save->base = mmap(0, cap, PROT_READ, MAP_PRIVATE, file->fd, 0);
     if (save->base == MAP_FAILED) {
         errf_errno("unable to mmap '%s'", path);
         goto fail_mmap;
     }
+
+    save->end = save->base + cap;
     save->it = save->base;
 
     uint64_t magic = save_read_type(save, typeof(magic));
@@ -163,38 +447,41 @@ struct save *save_file_load(const char *path)
         goto fail_seal;
     }
 
-    save_read_into(save, &save->version);
+    save_read_into(save, &file->version);
 
     return save;
 
   fail_seal:
   fail_magic:
-    munmap(save->base, save->cap);
+    munmap(save->base, save_cap(save));
   fail_mmap:
   fail_stat:
-    close(save->fd);
+    close(file->fd);
   fail_open:
-    free(save);
+    save_free(save);
     return NULL;
 }
 
-static void save_seal(struct save *save)
+static void save_file_seal(struct save *save)
 {
+    struct save_file *file = save_file_ptr(save);
+    if (file->mode != save_mode_write) return;
+
     size_t len = save_len(save);
-    if (ftruncate(save->fd, len) == -1)
-        failf_errno("unable to truncate '%d' to '%zu'", save->fd, save->cap);
+    if (ftruncate(file->fd, len) == -1)
+        failf_errno("unable to truncate '%d' to '%zu'", file->fd, len);
 
     if (msync(save->base, len, MS_SYNC) == -1)
-        failf_errno("unable to msync '%d'", save->fd);
+        failf_errno("unable to msync '%d'", file->fd);
 
     save->it = save->base + sizeof(save_magic_top);
     save_write_value(save, save_magic_seal);
 
     if (msync(save->base, save_len(save), MS_SYNC) == -1)
-        failf_errno("unable to msync header '%d'", save->fd);
+        failf_errno("unable to msync header '%d'", file->fd);
 
     char dst[PATH_MAX] = {0};
-    strcpy(dst, basename(save->dst));
+    strcpy(dst, basename(file->dst));
 
     char src[PATH_MAX] = {0};
     snprintf(src, sizeof(src), "%s.tmp", dst);
@@ -202,8 +489,8 @@ static void save_seal(struct save *save)
     char bak[PATH_MAX] = {0};
     snprintf(bak, sizeof(bak), "%s.bak", dst);
 
-    int fd = open(dirname(save->dst), O_PATH);
-    if (fd == -1) failf_errno("unable open dir '%s' for file '%s'", save->dst, dst);
+    int fd = open(dirname(file->dst), O_PATH);
+    if (fd == -1) failf_errno("unable open dir '%s' for file '%s'", file->dst, dst);
 
     (void) unlinkat(fd, bak, 0);
     if (!linkat(fd, dst, fd, bak, 0)) // success
@@ -211,83 +498,55 @@ static void save_seal(struct save *save)
 
     if (linkat(fd, src, fd, dst, 0) == -1) {
         failf_errno("unable to link '%s/%s' to '%s/%s' (%d)",
-                save->dst, src, save->dst, dst, fd);
+                file->dst, src, file->dst, dst, fd);
     }
 
     if (unlinkat(fd, src, 0) == -1)
-        errf_errno("unable to unlink tmp file: '%s/%s' (%d)", save->dst, src, fd);
+        errf_errno("unable to unlink tmp file: '%s/%s' (%d)", file->dst, src, fd);
 
     close(fd);
 }
 
 void save_file_close(struct save *save)
 {
-    assert(save->fd);
-    if (!save->load) save_seal(save);
-
-    munmap(save->base, save->cap);
-    close(save->fd);
-    free(save->prof);
+    save_file_seal(save);
+    munmap(save->base, save_cap(save));
+    close(save_file_ptr(save)->fd);
+    save_free(save);
     free(save);
 }
 
-bool save_eof(struct save *save)
+uint8_t save_file_version(struct save *save)
 {
-    return save_len(save) == save->cap;
-}
-
-uint8_t save_version(struct save *save)
-{
-    return save->version;
-}
-
-size_t save_len(struct save *save)
-{
-    return save->it - save->base;
-}
-
-uint8_t *save_bytes(struct save *save)
-{
-    return save->base;
-}
-
-static void save_grow(struct save *save, size_t len)
-{
-    size_t need = save_len(save) + len;
-    if (likely(need <= save->cap)) return;
-
-    size_t it = save_len(save);
-    size_t cap = save->cap;
-    while (need >= cap) cap += save_chunks;
-
-    if (save->fd && ftruncate(save->fd, cap) == -1)
-        failf_errno("unable to grow file '%lx'", cap);
-
-    save->base = mremap(save->base, save->cap, cap, MREMAP_MAYMOVE);
-    if (save->base == MAP_FAILED)
-        failf_errno("unable to remap '%p' from '%zu' to '%zu'", save->base, save->cap, cap);
-
-    save->cap = cap;
-    save->it = save->base + it;
+    return save_file_ptr(save)->version;
 }
 
 
-void save_write(struct save *save, const void *src, size_t len)
+// -----------------------------------------------------------------------------
+// read/write
+// -----------------------------------------------------------------------------
+
+size_t save_write(struct save *save, const void *src, size_t len)
 {
-    assert(!save->fd || !save->load);
-    save_grow(save, len);
+    if (unlikely(save->it + len > save->end)) {
+        if (save->grow) save->grow(save, len);
+        else len = save->end - save->it;
+    }
 
     memcpy(save->it, src, len);
     save->it += len;
+    return len;
 }
 
-void save_read(struct save *save, void *dst, size_t len)
+size_t save_read(struct save *save, void *dst, size_t len)
 {
-    assert(!save->fd || save->load);
-    assert(save_len(save) + len <= save->cap);
+    if (unlikely(save->it + len > save->end))
+        len = save->end - save->it;
 
+    assert(save_len(save) + len <= save_cap(save));
     memcpy(dst, save->it, len);
     save->it += len;
+    return len;
 }
 
 
@@ -397,22 +656,10 @@ bool save_read_vec64(struct save *save, struct vec64 **ret)
     return save_read_magic(save, save_magic_vec64);
 }
 
-void save_write_symbol(struct save *save, const struct symbol *symbol)
-{
-    save_write_magic(save, save_magic_symbol);
-    save_write_value(save, symbol->len);
-    save_write(save, symbol->c, symbol->len);
-    save_write_magic(save, save_magic_symbol);
-}
 
-bool save_read_symbol(struct save *save, struct symbol *dst)
-{
-    if (!save_read_magic(save, save_magic_symbol)) return false;
-    save_read_into(save, &dst->len);
-    save_read(save, dst->c, dst->len);
-    return save_read_magic(save, save_magic_symbol);
-}
-
+// -----------------------------------------------------------------------------
+// prof
+// -----------------------------------------------------------------------------
 
 void save_prof(struct save *save)
 {
@@ -428,11 +675,11 @@ void save_prof_dump(struct save *save)
     if (!save->prof) return;
     struct save_prof *prof = save->prof;
 
-    char buffer[4096] = {0};
+    char buffer[s_page_len] = {0};
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
-    it += snprintf(it, end - it, "save: {%c:", save->fd ? 'f' : 'm');
+    it += snprintf(it, end - it, "save: {total:");
     it += str_scaled(save_len(save), it, end - it);
 
     for (enum save_magic magic = 0; magic < save_magic_len; ++magic) {

@@ -3,6 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "game/sys.c"
 #include "game/id.c"
 #include "game/coord.c"
 #include "game/log.c"
@@ -13,8 +14,9 @@
 #include "game/tape.c"
 #include "game/chunk.c"
 #include "game/active.c"
-#include "game/save.c"
-#include "game/sim.c"
-#include "game/state.c"
 #include "game/proxy.c"
 #include "game/tech.c"
+#include "game/energy.c"
+#include "game/sim.c"
+#include "game/protocol.c"
+#include "game/save.c"

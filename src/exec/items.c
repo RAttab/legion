@@ -1,4 +1,4 @@
-/* stats.c
+/* items.c
    Rémi Attab (remi.attab@gmail.com), 01 Aug 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -8,19 +8,15 @@
 #include "game/tape.h"
 #include "items/item.h"
 #include "items/config.h"
-#include "render/core.h"
+#include "render/render.h"
 
 
 // -----------------------------------------------------------------------------
-// stats
+// items
 // -----------------------------------------------------------------------------
 
-int stats_run(int argc, char **argv)
+bool stats_run(void)
 {
-    (void) argc, (void) argv;
-
-    core_populate();
-
     struct symbol sym = {0};
     struct atoms *atoms = atoms_new();
     im_populate_atoms(atoms);
@@ -52,5 +48,5 @@ int stats_run(int argc, char **argv)
     }
 
     atoms_free(atoms);
-    return 0;
+    return true;
 }

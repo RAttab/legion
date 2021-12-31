@@ -6,13 +6,14 @@
 #include "common.h"
 #include "game/proxy.h"
 #include "game/sector.h"
-#include "game/state.h"
+#include "game/protocol.h"
 #include "game/chunk.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "utils/htable.h"
 #include "utils/hset.h"
 
-static void proxy_cmd(struct proxy *, const struct sim_cmd *);
+static struct proxy_pipe *proxy_pipe(struct proxy *);
+static void proxy_cmd(struct proxy *, const struct cmd *);
 
 
 // -----------------------------------------------------------------------------
@@ -21,7 +22,7 @@ static void proxy_cmd(struct proxy *, const struct sim_cmd *);
 
 struct proxy
 {
-    struct sim *sim;
+    struct save_ring *in, *out;
     struct state *state;
 
     struct htable sectors;
@@ -29,33 +30,29 @@ struct proxy
     struct hset *active_sectors;
     struct lisp *lisp;
 
-    mod_t mod;
-    struct coord chunk;
-
-    struct ack ack;
+    struct { atomic_uintptr_t active, free; } pipe;
 };
 
-struct proxy *proxy_new(struct sim *sim)
+struct proxy *proxy_new(void)
 {
     struct proxy *proxy = calloc(1, sizeof(*proxy));
-    *proxy = (struct proxy) {
-        .sim = sim,
-        .state = state_alloc(),
-    };
+    proxy->state = state_alloc();
+
+    // This is not great but our UI needs atoms to initialize so it's either
+    // this or waiting for the first update from the sim which we can't do when
+    // in client mode.
+    im_populate_atoms(proxy->state->atoms);
 
     proxy->lisp = lisp_new(proxy->state->mods, proxy->state->atoms);
-
-    bool updated = proxy_update(proxy);
-    assert(updated);
-
-    proxy->mod = proxy->state->mod.id;
-    proxy->chunk = proxy->state->chunk.coord;
-
     return proxy;
 }
 
 void proxy_free(struct proxy *proxy)
 {
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (pipe) proxy_pipe_close(proxy, pipe);
+    (void) proxy_pipe(proxy); // frees any closed pipes.
+
     state_free(proxy->state);
     hset_free(proxy->active_sectors);
     hset_free(proxy->active_stars);
@@ -69,30 +66,116 @@ void proxy_free(struct proxy *proxy)
     free(proxy);
 }
 
-bool proxy_update(struct proxy *proxy)
+
+// -----------------------------------------------------------------------------
+// pipe
+// -----------------------------------------------------------------------------
+
+struct proxy_pipe
 {
-    bool ok = false;
+    struct proxy_pipe *next;
 
-    struct save *save = sim_state_read(proxy->sim);
-    if (save) {
-        if ((ok = state_load(proxy->state, save, &proxy->ack))) {
-            proxy_cmd(proxy, &(struct sim_cmd) {
+    struct sim_pipe *sim;
+    struct save_ring *in, *out;
+
+    struct ack *ack;
+    struct coord chunk;
+    mod_t mod;
+};
+
+struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
+{
+    struct proxy_pipe *pipe = calloc(1, sizeof(*pipe));
+    *pipe = (struct proxy_pipe) {
+        .sim = sim,
+        .in = sim ? sim_pipe_out(sim) : save_ring_new(sim_out_len),
+        .out = sim ? sim_pipe_in(sim) : save_ring_new(sim_in_len),
+        .ack = ack_new(),
+    };
+
+    uintptr_t old = atomic_exchange_explicit(
+            &proxy->pipe.active, (uintptr_t) pipe, memory_order_release);
+    assert(!old);
+
+    return pipe;
+}
+
+static void proxy_pipe_free(struct proxy_pipe *pipe)
+{
+    if (!pipe) return;
+
+    if (pipe->ack) ack_free(pipe->ack);
+    if (!pipe->sim) { // in local mode the pipe is shared and owned by sim.
+        save_ring_free(pipe->in);
+        save_ring_free(pipe->out);
+    }
+
+    free(pipe);
+}
+
+void proxy_pipe_close(struct proxy *proxy, struct proxy_pipe *pipe)
+{
+    struct proxy_pipe *old = (void *) atomic_exchange_explicit(
+            &proxy->pipe.active, (uintptr_t) NULL, memory_order_acquire);
+    assert(old == pipe);
+
+    uintptr_t next = atomic_load_explicit(&proxy->pipe.free, memory_order_acquire);
+    do {
+        pipe->next = (struct proxy_pipe *) next;
+    } while (!atomic_compare_exchange_weak_explicit(
+                    &proxy->pipe.free, &next, (uintptr_t) pipe,
+                    memory_order_acq_rel,
+                    memory_order_relaxed));
+}
+
+struct save_ring *proxy_pipe_in(struct proxy_pipe *pipe)
+{
+    return pipe->in;
+}
+
+struct save_ring *proxy_pipe_out(struct proxy_pipe *pipe)
+{
+    return pipe->out;
+}
+
+static struct proxy_pipe *proxy_pipe(struct proxy *proxy)
+{
+    struct proxy_pipe *pipe = (void *) atomic_exchange_explicit(
+            &proxy->pipe.free, (uintptr_t) NULL, memory_order_acquire);
+    while (pipe) {
+        struct proxy_pipe *next = pipe->next;
+        proxy_pipe_free(pipe);
+        pipe = next;
+    }
+
+    return (void *) atomic_load_explicit(&proxy->pipe.active, memory_order_acquire);
+}
+
+
+// -----------------------------------------------------------------------------
+// update
+// -----------------------------------------------------------------------------
+
+static void proxy_update_status(struct proxy *, struct save *save)
+{
+    struct status status = {0};
+    if (!status_load(&status, save)) return;
+
+    render_log_msg(status.type, status.msg, status.len);
+}
+
+static bool proxy_update_state(
+        struct proxy *proxy, struct proxy_pipe *pipe, struct save *save)
+{
+    if (!state_load(proxy->state, save, pipe->ack)) {
+        err("unable to load state in proxy");
+        return false;
+    }
+
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_ACK,
-                .data = { .ack = ack_clone(&proxy->ack) },
+                .data = { .ack = pipe->ack }
             });
-        }
-        else err("unable to load state in proxy");
-
-        sim_state_release(proxy->sim, save);
-    }
-
-    const struct sim_log *log = NULL;
-    while ((log = sim_log_read(proxy->sim))) {
-        core_log_msg(log->type, log->msg, log->len);
-        sim_log_pop(proxy->sim);
-    }
-
-    if (!ok) return false;
 
     hset_clear(proxy->active_stars);
     hset_clear(proxy->active_sectors);
@@ -111,9 +194,40 @@ bool proxy_update(struct proxy *proxy)
     return true;
 }
 
-struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)
+bool proxy_update(struct proxy *proxy)
 {
-    return lisp_eval_const(proxy->lisp, src, len);
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (!pipe) return false;
+
+    bool update = false;
+    while (true) {
+        struct save *save = save_ring_read(pipe->in);
+
+        struct header head = {0};
+        if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
+
+        if (head.magic != header_magic) {
+            render_log(st_warn, "invalid head magic: %x != %x",
+                    head.magic, header_magic);
+            break;
+        }
+
+        if (save_cap(save) < head.len) break;
+
+        switch (head.type) {
+        case header_status: { proxy_update_status(proxy, save); break; }
+        case header_state: { update = proxy_update_state(proxy, pipe, save); break; }
+        default: { assert(false); }
+        }
+
+        save_ring_commit(pipe->in, save);
+    }
+
+    // if the pipe was reset make sure to restore our subscriptions
+    if (!coord_eq(pipe->chunk, proxy->state->chunk.coord))
+        proxy_chunk(proxy, proxy->state->chunk.coord);
+
+    return update;
 }
 
 
@@ -177,39 +291,66 @@ const struct log *proxy_logs(struct proxy *proxy)
     return proxy->state->log;
 }
 
+struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)
+{
+    return lisp_eval_const(proxy->lisp, src, len);
+}
+
 
 // -----------------------------------------------------------------------------
 // cmd
 // -----------------------------------------------------------------------------
 
-static void proxy_cmd(struct proxy *proxy, const struct sim_cmd *src)
+static void proxy_cmd(struct proxy *proxy, const struct cmd *cmd)
 {
-    struct sim_cmd *dst = sim_cmd_write(proxy->sim);
-    if (!dst) return core_log(st_error, "unable to send command '%d'", src->type);
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (!pipe) {
+        render_log(st_error,
+                "unable to send command '%x' while not connected to a server",
+                cmd->type);
+        return;
+    }
 
-    *sim_cmd_write(proxy->sim) = *src;
+    struct save *save = save_ring_write(pipe->out);
 
-    sim_cmd_push(proxy->sim);
+    struct header *head = save_bytes(save);
+    if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+        render_log(st_error, "unable to send command '%x' due to overflow",
+                cmd->type);
+        return;
+    }
+
+    cmd_save(cmd, save);
+
+    if (save_eof(save)) {
+        render_log(st_error, "unable to send command '%x' due to overflow",
+                cmd->type);
+        return;
+    }
+
+    *head = make_header(header_cmd, save_len(save));
+    save_ring_commit(pipe->out, save);
+    save_ring_wake_signal(pipe->out);
 }
 
 void proxy_quit(struct proxy *proxy)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_QUIT });
+    proxy_cmd(proxy, &(struct cmd) { .type = CMD_QUIT });
 }
 
 void proxy_save(struct proxy *proxy)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_SAVE });
+    proxy_cmd(proxy, &(struct cmd) { .type = CMD_SAVE });
 }
 
 void proxy_load(struct proxy *proxy)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) { .type = CMD_LOAD });
+    proxy_cmd(proxy, &(struct cmd) { .type = CMD_LOAD });
 }
 
 void proxy_set_speed(struct proxy *proxy, enum speed speed)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_SPEED,
                 .data = { .speed = speed },
             });
@@ -217,15 +358,14 @@ void proxy_set_speed(struct proxy *proxy, enum speed speed)
 
 struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
 {
-    if (coord_eq(proxy->state->chunk.coord, coord)) {
-        assert(coord_is_nil(coord) == !proxy->state->chunk.chunk);
+    if (coord_eq(proxy->state->chunk.coord, coord))
         return proxy->state->chunk.chunk;
-    }
 
-    if (coord_eq(proxy->chunk, coord)) return NULL;
-    proxy->chunk = coord;
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+    if (!pipe || coord_eq(pipe->chunk, coord)) return NULL;
+    pipe->chunk = coord;
 
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_CHUNK,
                 .data = { .chunk = coord },
             });
@@ -234,7 +374,7 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
 
 void proxy_io(struct proxy *proxy, enum io io, id_t dst, const word_t *args, uint8_t len)
 {
-    struct sim_cmd cmd = {
+    struct cmd cmd = {
         .type = CMD_IO,
         .data = { .io = { .io = io, .dst = dst, .len = len } },
     };
@@ -254,17 +394,20 @@ mod_t proxy_mod_id(struct proxy *proxy)
 
 const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
 {
+    struct proxy_pipe *pipe = proxy_pipe(proxy);
+
     if (proxy->state->mod.id == id) {
         const struct mod *mod = proxy->state->mod.mod;
         proxy->state->mod.mod = NULL;
-        proxy->mod = 0;
+        proxy->state->mod.id = 0;
+        if (pipe) pipe->mod = 0;
         return mod;
     }
 
-    if (proxy->mod == id) return NULL;
-    proxy->mod = id;
+    if (!pipe || pipe->mod == id) return NULL;
+    pipe->mod = id;
 
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD,
                 .data = { .mod = id },
             });
@@ -273,7 +416,7 @@ const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
 
 void proxy_mod_register(struct proxy *proxy, struct symbol name)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_REGISTER,
                 .data = { .mod_register = name },
             });
@@ -281,7 +424,7 @@ void proxy_mod_register(struct proxy *proxy, struct symbol name)
 
 void proxy_mod_publish(struct proxy *proxy, mod_maj_t maj)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_PUBLISH,
                 .data = { .mod_publish = { .maj = maj } },
             });
@@ -316,7 +459,7 @@ bool proxy_mod_name(struct proxy *proxy, mod_maj_t maj, struct symbol *dst)
 
 void proxy_mod_compile(struct proxy *proxy, mod_maj_t maj, const char *code, size_t len)
 {
-    proxy_cmd(proxy, &(struct sim_cmd) {
+    proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_COMPILE,
                 .data = { .mod_compile = { .maj = maj, .code = code, .len = len } },
             });

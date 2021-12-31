@@ -107,7 +107,7 @@ struct factory *factory_new(void)
     };
 
     factory->tex = sdl_ptr(SDL_CreateTexture(
-                    core.renderer,
+                    render.renderer,
                     SDL_PIXELFORMAT_RGBA8888,
                     SDL_TEXTUREACCESS_TARGET,
                     factory->tex_rect.w, factory->tex_rect.h));
@@ -204,7 +204,7 @@ static ssize_t factory_col(struct factory *factory, struct flow_pos pos)
 static SDL_Point factory_project_sdl_point(
         struct factory *factory, struct flow_pos origin)
 {
-    SDL_Rect rect = core.rect;
+    SDL_Rect rect = render.rect;
     int64_t x = origin.x, y = origin.y;
 
     int64_t rel_x = scale_div(factory->scale, x - factory->pos.x);
@@ -238,7 +238,7 @@ static SDL_Rect factory_project_sdl_rect(
 static struct flow_pos factory_project_flow_pos(
         struct factory *factory, SDL_Point origin)
 {
-    SDL_Rect rect = core.rect;
+    SDL_Rect rect = render.rect;
     int64_t x = origin.x, y = origin.y;
 
     int64_t rel_x = scale_mult(factory->scale, x - rect.x - rect.w / 2);
@@ -320,7 +320,7 @@ static void factory_update(struct factory *factory)
         if (row) row->len = 0;
     }
 
-    struct chunk *chunk = proxy_chunk(core.proxy, factory->star);
+    struct chunk *chunk = proxy_chunk(render.proxy, factory->star);
     if (!chunk) {
         if (factory->flows) factory->flows->len = 0;
         if (factory->workers.ops) factory->workers.ops->len = 0;
@@ -397,7 +397,7 @@ static bool factory_event_user(struct factory *factory, SDL_Event *ev)
 
 static struct flow *factory_cursor_flow(struct factory *factory)
 {
-    struct flow_pos pos = factory_project_flow_pos(factory, core.cursor.point);
+    struct flow_pos pos = factory_project_flow_pos(factory, render.cursor.point);
 
     ssize_t row = factory_row(factory, pos);
     ssize_t col = factory_col(factory, pos);
@@ -412,13 +412,13 @@ static bool factory_event_click(struct factory *factory)
     struct flow *flow = factory_cursor_flow(factory);
     if (!flow) return false;
 
-    core_push_event(EV_ITEM_SELECT, flow->id, coord_to_u64(factory->star));
+    render_push_event(EV_ITEM_SELECT, flow->id, coord_to_u64(factory->star));
     return true;
 }
 
 bool factory_event(struct factory *factory, SDL_Event *ev)
 {
-    if (ev->type == core.event && factory_event_user(factory, ev)) return true;
+    if (ev->type == render.event && factory_event_user(factory, ev)) return true;
     if (!factory->active) return false;
 
     switch (ev->type)
@@ -563,10 +563,10 @@ void factory_render(struct factory *factory, SDL_Renderer *renderer)
     if (!factory->active) return;
 
     rgba_render(rgba_black(), renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &core.rect));
+    sdl_err(SDL_RenderFillRect(renderer, &render.rect));
 
     struct flow *cursor = factory_cursor_flow(factory);
-    struct flow_rect view = factory_project_flow_rect(factory, core.rect);
+    struct flow_rect view = factory_project_flow_rect(factory, render.rect);
 
     for (size_t i = 0; i < vec64_len(factory->grid); ++i) {
         struct vec16 *vec = (void *) factory->grid->vals[i];

@@ -8,7 +8,7 @@
 #include "game/sector.h"
 #include "game/chunk.h"
 #include "game/lanes.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "items/config.h"
 #include "utils/hset.h"
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    core_populate();
+    sys_populate();
 
     test_basics();
     test_speed();

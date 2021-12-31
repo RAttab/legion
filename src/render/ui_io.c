@@ -52,7 +52,7 @@ static struct ui_io_cmd ui_io_cmd(
     };
 
     struct symbol str = {0};
-    bool ok = atoms_str(proxy_atoms(core.proxy), id, &str);
+    bool ok = atoms_str(proxy_atoms(render.proxy), id, &str);
     assert(ok);
 
     ui_str_set_symbol(&cmd.name.str, &str);
@@ -161,9 +161,9 @@ struct ui_io *ui_io_new(void)
 
     size_t width = 38 * font->glyph_w;
     struct pos pos = make_pos(
-            core.rect.w - width - ui_item_width(core.ui.item) - ui_star_width(core.ui.star),
+            render.rect.w - width - ui_item_width(render.ui.item) - ui_star_width(render.ui.star),
             ui_topbar_height());
-    struct dim dim = make_dim(width, core.rect.h - pos.y - ui_status_height());
+    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
     struct ui_io *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_io) {
@@ -253,7 +253,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     case EV_STATE_UPDATE: {
         if (!ui_panel_is_visible(&ui->panel)) return false;
         if (coord_is_nil(ui->star)) return false;
-        ui->loading = !proxy_chunk(core.proxy, ui->star);
+        ui->loading = !proxy_chunk(render.proxy, ui->star);
         return false;
     }
 
@@ -292,7 +292,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
 
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
-    struct chunk *chunk = proxy_chunk(core.proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
     assert(chunk);
 
     size_t len = cmd->args;
@@ -324,12 +324,12 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     }
     }
 
-    proxy_io(core.proxy, cmd->id, ui->id, args, len);
+    proxy_io(render.proxy, cmd->id, ui->id, args, len);
 }
 
 bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_io_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_io_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
@@ -347,7 +347,7 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
             if (j + 1 == cmd->args) ui_io_exec(ui, cmd);
             else  {
                 struct ui_input *next = &cmd->arg[j+1].val;
-                core_push_event(EV_FOCUS_INPUT, (uintptr_t) next, 0);
+                render_push_event(EV_FOCUS_INPUT, (uintptr_t) next, 0);
             }
             return true;
         }

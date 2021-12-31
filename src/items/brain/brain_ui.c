@@ -5,7 +5,7 @@
 
 #include "ui/ui.h"
 #include "game/proxy.h"
-#include "render/core.h"
+#include "render/render.h"
 
 
 // -----------------------------------------------------------------------------
@@ -170,7 +170,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     bool ok = chunk_copy(chunk, id, &ui->state, ui->state_len);
     assert(ok);
 
-    if (!state->mod) {
+    if (!state->mod_id) {
         ui->mod_val.fg = rgba_gray(0x33);
         ui_str_setc(&ui->mod_val.str, "nil");
 
@@ -179,13 +179,13 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     }
     else {
         struct symbol mod = {0};
-        proxy_mod_name(core.proxy, mod_maj(state->mod->id), &mod);
+        proxy_mod_name(render.proxy, mod_maj(state->mod_id), &mod);
 
         ui->mod_val.fg = rgba_white();
         ui_str_set_symbol(&ui->mod_val.str, &mod);
 
         ui->mod_ver_val.fg = rgba_white();
-        ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod->id));
+        ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod_id));
     }
 
     if (state->mod_fault) {
@@ -201,8 +201,8 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
         ui_str_setc(&ui->debug_val.str, "attached");
         ui->debug_val.fg = rgba_green();
 
-        if (!old_debug || old_ip != state->vm.ip)
-            core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+        if (state->mod_id && (!old_debug || old_ip != state->vm.ip))
+            render_push_event(EV_MOD_SELECT, state->mod_id, state->vm.ip);
     }
     else {
         ui_str_setc(&ui->debug_val.str, "detached");
@@ -232,20 +232,20 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_link_event(&ui->breakpoint_val, ev))) {
-        if (state->mod && state->breakpoint != IP_NIL)
-            core_push_event(EV_MOD_SELECT, state->mod->id, state->breakpoint);
+        if (state->mod_id && state->breakpoint != IP_NIL)
+            render_push_event(EV_MOD_SELECT, state->mod_id, state->breakpoint);
         return ret == ui_consume;
     }
 
     if ((ret = ui_link_event(&ui->mod_val, ev))) {
-        if (state->mod)
-            core_push_event(EV_MOD_SELECT, state->mod->id, 0);
+        if (state->mod_id)
+            render_push_event(EV_MOD_SELECT, state->mod_id, 0);
         return ret == ui_consume;
     }
 
     if ((ret = ui_link_event(&ui->ip_val, ev))) {
-        if (state->mod)
-            core_push_event(EV_MOD_SELECT, state->mod->id, state->vm.ip);
+        if (state->mod_id)
+            render_push_event(EV_MOD_SELECT, state->mod_id, state->vm.ip);
         return ret == ui_consume;
     }
 

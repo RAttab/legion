@@ -6,7 +6,7 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "render/font.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "utils/sdl.h"
 
 
@@ -36,20 +36,20 @@ enum ui_ret ui_link_event(struct ui_link *link, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         link->state = sdl_rect_contains(&rect, &point) ? ui_link_hover : ui_link_idle;
         return ui_nil;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         link->state = ui_link_pressed;
         return ui_action;
     }
 
     case SDL_MOUSEBUTTONUP: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         link->state = sdl_rect_contains(&rect, &point) ? ui_link_hover : ui_link_idle;
         return ui_nil;
     }

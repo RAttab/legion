@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "ui/ui.h"
-#include "render/core.h"
+#include "render/render.h"
 #include "render/font.h"
 #include "utils/sdl.h"
 
@@ -41,7 +41,7 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) {
             button->state = ui_button_idle;
             return ui_nil;
@@ -51,14 +51,14 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         if (!button->disabled) button->state = ui_button_pressed;
         return ui_consume;
     }
 
     case SDL_MOUSEBUTTONUP: {
-        SDL_Point point = core.cursor.point;
+        SDL_Point point = render.cursor.point;
         button->state = sdl_rect_contains(&rect, &point) ?
             ui_button_hover : ui_button_idle;
         return ui_nil;

@@ -7,7 +7,7 @@
 #include "game/chunk.h"
 #include "game/sector.h"
 #include "game/active.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "items/config.h"
 
 
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    core_populate();
+    sys_populate();
 
     test_ports_1on1();
     test_ports_2on1();

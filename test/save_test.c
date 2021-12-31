@@ -10,7 +10,7 @@
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "items/io.h"
 #include "items/config.h"
 #include "utils/vec.h"
@@ -18,11 +18,11 @@
 #include <unistd.h>
 
 
-void check(const char *path)
+void check_file(const char *path)
 {
     enum { attempts = 5, steps = 100 };
 
-    core_populate();
+    sys_populate();
     struct world *old = world_new(0);
     struct coord coord = world_populate(old);
     world_step(old); // to create all the objects.
@@ -41,7 +41,7 @@ void check(const char *path)
 
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
         {
-            struct save *save = save_file_new(path, 1);
+            struct save *save = save_file_create(path, 1);
             assert(save);
             world_save(old, save);
             save_file_close(save);
@@ -84,12 +84,98 @@ void check(const char *path)
     world_free(old);
 }
 
+void check_ring(void)
+{
+    enum {
+        ring_cap = s_page_len,
+        partial_len = ring_cap / 2 + 107,
+    };
+
+    struct save_ring *ring = save_ring_new(ring_cap);
+    assert(ring);
+
+    for (uint8_t attempt = 0; attempt < 255; ++attempt) {
+        {
+            assert(save_cap(save_ring_read(ring)) == 0);
+
+            struct save *save = save_ring_write(ring);
+            assert(save_cap(save) == ring_cap);
+
+            uint8_t data[ring_cap] = {0};
+            memset(data, attempt, sizeof(data));
+
+            size_t ret = save_write(save, data, sizeof(data));
+            assert(ret == sizeof(data));
+
+            save_ring_commit(ring, save);
+        }
+
+        {
+            assert(save_cap(save_ring_write(ring)) == 0);
+
+            struct save *save = save_ring_read(ring);
+            assert(save_cap(save) == ring_cap);
+
+            uint8_t data[ring_cap] = {0};
+
+            size_t ret = save_read(save, data, sizeof(data));
+            assert(ret == sizeof(data));
+
+            for (size_t i = 0; i < sizeof(data); ++i)
+                assert(data[i] == attempt);
+
+            save_ring_commit(ring, save);
+        }
+
+        const uint8_t value = attempt + 128;
+
+        {
+            assert(save_cap(save_ring_read(ring)) == 0);
+
+            struct save *save = save_ring_write(ring);
+            assert(save_cap(save) == ring_cap);
+
+            uint8_t data[partial_len] = {0};
+            memset(data, value, sizeof(data));
+
+            size_t ret = save_write(save, data, sizeof(data));
+            assert(ret == sizeof(data));
+
+            save_ring_commit(ring, save);
+        }
+
+        {
+            assert(save_cap(save_ring_write(ring)) == ring_cap - partial_len);
+
+            struct save *save = save_ring_read(ring);
+            assert(save_cap(save) == partial_len);
+
+            uint8_t data[partial_len] = {0};
+
+            size_t ret = save_read(save, data, sizeof(data));
+            assert(ret == sizeof(data));
+
+            for (size_t i = 0; i < sizeof(data); ++i)
+                assert(data[i] == value);
+
+            save_ring_commit(ring, save);
+        }
+    }
+
+    assert(save_cap(save_ring_read(ring)) == 0);
+    assert(save_cap(save_ring_write(ring)) == ring_cap);
+
+    save_ring_free(ring);
+}
+
 int main(int argc, char **argv)
 {
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/test/test_save.legion", argc > 1 ? argv[1] : ".");
     (void) unlink(path);
 
-    check(path);
+    check_file(path);
+    check_ring();
+
     return 0;
 }

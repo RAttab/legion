@@ -29,7 +29,7 @@ struct ui_mods *ui_mods_new(void)
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (symbol_cap+5) * font->glyph_w,
-            core.rect.h - pos.y - ui_status_height());
+            render.rect.h - pos.y - ui_status_height());
 
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {
@@ -61,7 +61,7 @@ int16_t ui_mods_width(const struct ui_mods *ui)
 
 static void ui_mods_update(struct ui_mods *ui)
 {
-    const struct mods_list *list = proxy_mods(core.proxy);
+    const struct mods_list *list = proxy_mods(render.proxy);
     ui_toggles_resize(&ui->toggles, list->len);
     ui_scroll_update(&ui->scroll, list->len);
 
@@ -134,11 +134,11 @@ static void ui_mods_event_new(struct ui_mods *ui)
 {
     struct symbol name = {0};
     if (!ui_input_get_symbol(&ui->new_val, &name)) {
-        core_log(st_error, "Invalid module name: '%s'", name.c);
+        render_log(st_error, "Invalid module name: '%s'", name.c);
         return;
     }
 
-    proxy_mod_register(core.proxy, name);
+    proxy_mod_register(render.proxy, name);
 
     // \todo due to async nature, opening the mod right away is tricky. Defered
     // to later.
@@ -146,7 +146,7 @@ static void ui_mods_event_new(struct ui_mods *ui)
 
 bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_mods_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_mods_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
@@ -166,7 +166,7 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     struct ui_toggle *toggle = NULL;
     if ((ret = ui_toggles_event(&ui->toggles, ev, &ui->scroll, &toggle, NULL))) {
         enum event type = toggle->state == ui_toggle_selected ? EV_MOD_SELECT : EV_MOD_CLEAR;
-        core_push_event(type, make_mod(toggle->user, 0), 0);
+        render_push_event(type, make_mod(toggle->user, 0), 0);
         return true;
     }
 

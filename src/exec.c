@@ -3,7 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "exec/viz.c"
-#include "exec/stats.c"
+#include "exec/graph.c"
+#include "exec/items.c"
+#include "exec/local.c"
+#include "exec/client.c"
+#include "exec/server.c"
 #include "exec/main.c"
 

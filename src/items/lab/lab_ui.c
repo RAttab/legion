@@ -93,7 +93,7 @@ static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
     assert(state);
 
     ui_str_set_item(&ui->item_val.str, state->item);
-    im_lab_bits_update(&ui->bits, proxy_tech(core.proxy), state->item);
+    im_lab_bits_update(&ui->bits, proxy_tech(render.proxy), state->item);
 
     switch (state->state)
     {

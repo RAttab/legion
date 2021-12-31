@@ -5,7 +5,7 @@
 
 #include "game/tape.h"
 #include "vm/token.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "utils/fs.h"
 #include "utils/str.h"
 #include "utils/htable.h"
@@ -310,7 +310,7 @@ static void tapes_load_file(const char *path, struct atoms *atoms)
 void tapes_populate(struct atoms *atoms)
 {
     char path[PATH_MAX] = {0};
-    core_path_res("tapes", path, sizeof(path));
+    sys_path_res("tapes", path, sizeof(path));
 
     struct dir_it *it = dir_it(path);
 

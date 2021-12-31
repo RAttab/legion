@@ -342,7 +342,7 @@ struct mods *mods_load(struct save *save)
         struct mod_entry *entry = calloc(1, sizeof(*entry));
         save_read_into(save, &entry->maj);
         save_read_into(save, &entry->ver);
-        if (!save_read_symbol(save, &entry->str)) goto fail;
+        if (!symbol_load(&entry->str, save)) goto fail;
 
         struct htable_ret ret = htable_get(&mods->by_mod, make_mod(entry->maj, entry->ver));
         if (!ret.ok) goto fail;
@@ -376,7 +376,7 @@ void mods_save(const struct mods *mods, struct save *save)
         const struct mod_entry *entry = (const void *) it->value;
         save_write_value(save, entry->maj);
         save_write_value(save, entry->ver);
-        save_write_symbol(save, &entry->str);
+        symbol_save(&entry->str, save);
     }
 
     save_write_magic(save, save_magic_mods);
@@ -540,7 +540,7 @@ void mods_list_save(struct mods *mods, struct save *save)
         const struct mods_item *it = list->items + i;
         save_write_value(save, it->maj);
         save_write_value(save, it->ver);
-        save_write_symbol(save, &it->str);
+        symbol_save(&it->str, save);
     }
 
     save_write_magic(save, save_magic_mods);
@@ -564,7 +564,7 @@ bool mods_list_load_into(struct mods_list **ret, struct save *save)
         struct mods_item *it = list->items + i;
         save_read_into(save, &it->maj);
         save_read_into(save, &it->ver);
-        if (!save_read_symbol(save, &it->str)) return false;
+        if (!symbol_load(&it->str, save)) return false;
     }
 
     return save_read_magic(save, save_magic_mods);

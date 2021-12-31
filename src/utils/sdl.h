@@ -7,6 +7,9 @@
 
 #include "common.h"
 
+#include "SDL.h"
+
+
 // -----------------------------------------------------------------------------
 // sdl
 // -----------------------------------------------------------------------------
@@ -18,4 +21,9 @@ inline bool sdl_rect_contains(const SDL_Rect *rect, const SDL_Point *point)
     return
         x >= 0 && x < rect->w &&
         y >= 0 && y < rect->h;
+}
+
+inline void sdl_disable_signals(void)
+{
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 }

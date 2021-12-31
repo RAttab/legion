@@ -53,3 +53,19 @@ size_t symbol_parse(const char *it, size_t len, struct symbol *value)
     *value = make_symbol_len(first, it - first);
     return true;
 }
+
+void symbol_save(const struct symbol *sym, struct save *save)
+{
+    save_write_magic(save, save_magic_symbol);
+    save_write_value(save, sym->len);
+    save_write(save, sym->c, sym->len);
+    save_write_magic(save, save_magic_symbol);
+}
+
+bool symbol_load(struct symbol *sym, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_symbol)) return false;
+    save_read_into(save, &sym->len);
+    save_read(save, sym->c, sym->len);
+    return save_read_magic(save, save_magic_symbol);
+}

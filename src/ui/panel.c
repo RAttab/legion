@@ -65,13 +65,13 @@ void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 void ui_panel_show(struct ui_panel *panel)
 {
     panel->state = ui_panel_visible;
-    core_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
+    render_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
 }
 
 void ui_panel_hide(struct ui_panel *panel)
 {
     if (panel->state == ui_panel_focused)
-        core_push_event(EV_FOCUS_PANEL, 0, 0);
+        render_push_event(EV_FOCUS_PANEL, 0, 0);
     panel->state = ui_panel_hidden;
 }
 
@@ -93,7 +93,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     case SDL_MOUSEWHEEL:
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        panel->state = sdl_rect_contains(&rect, &core.cursor.point) ?
+        panel->state = sdl_rect_contains(&rect, &render.cursor.point) ?
             ui_panel_focused : ui_panel_visible;
         if (panel->state != ui_panel_focused) return ui_skip;
         // fallthrough
@@ -108,7 +108,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     }
 
     default: {
-        if (ev->type == core.event) {
+        if (ev->type == render.event) {
             if (ev->user.code == EV_FOCUS_PANEL) {
                 struct ui_panel *target = (void *) ev->user.data1;
                 panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
@@ -133,7 +133,7 @@ enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
 
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        return sdl_rect_contains(&rect, &core.cursor.point) ? ui_consume : ui_nil;
+        return sdl_rect_contains(&rect, &render.cursor.point) ? ui_consume : ui_nil;
     }
 
     default: { return ui_nil; }

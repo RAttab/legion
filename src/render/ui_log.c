@@ -66,7 +66,7 @@ struct ui_log *ui_log_new(void)
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (10 + symbol_cap * 3 + id_str_len + 2) * font->glyph_w,
-            core.rect.h - pos.y - ui_status_height());
+            render.rect.h - pos.y - ui_status_height());
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_log) {
@@ -104,7 +104,7 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
     ui_str_set_u64(&ui->time.str, it->time);
 
     ui->state.star = it->star;
-    word_t name = proxy_star_name(core.proxy, it->star);
+    word_t name = proxy_star_name(render.proxy, it->star);
     ui_str_set_atom(&ui->star.str, name);
 
     ui->state.id = it->id;
@@ -116,10 +116,10 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
 
 static void ui_log_update(struct ui_log *ui)
 {
-    const struct log *logs = proxy_logs(core.proxy);
+    const struct log *logs = proxy_logs(render.proxy);
 
     if (!coord_is_nil(ui->coord)) {
-        struct chunk *chunk = proxy_chunk(core.proxy, ui->coord);
+        struct chunk *chunk = proxy_chunk(render.proxy, ui->coord);
         if (!chunk) { ui->len = 0; return; }
         logs = chunk_logs(chunk);
     }
@@ -204,13 +204,13 @@ bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if (coord_is_nil(star) && (ret = ui_link_event(&ui->star, ev))) {
-        core_push_event(EV_STAR_SELECT, coord_to_u64(ui->state.star), 0);
+        render_push_event(EV_STAR_SELECT, coord_to_u64(ui->state.star), 0);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->id, ev))) {
         struct coord coord = coord_is_nil(star) ? ui->state.star : star;
-        core_push_event(EV_ITEM_SELECT, ui->state.id, coord_to_u64(coord));
+        render_push_event(EV_ITEM_SELECT, ui->state.id, coord_to_u64(coord));
         return true;
     }
 
@@ -219,7 +219,7 @@ bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
 
 bool ui_log_event(struct ui_log *ui, SDL_Event *ev)
 {
-    if (ev->type == core.event && ui_log_event_user(ui, ev)) return true;
+    if (ev->type == render.event && ui_log_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;

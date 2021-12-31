@@ -4,7 +4,7 @@
 */
 
 #include "font.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "utils/bits.h"
 
 
@@ -48,7 +48,7 @@ void fonts_init(SDL_Renderer *renderer)
     ft_err(FT_Init_FreeType(&ft_library));
 
     char path[PATH_MAX];
-    core_path_res("VeraMono-Bold.ttf", path, sizeof(path));
+    sys_path_res("VeraMono-Bold.ttf", path, sizeof(path));
 
     font_mono4 = font_open(renderer, path, 4);
     font_mono6 = font_open(renderer, path, 6);

@@ -10,7 +10,7 @@
 #include "game/proxy.h"
 #include "game/chunk.h"
 #include "game/sector.h"
-#include "render/core.h"
+#include "game/sys.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
 
@@ -23,8 +23,14 @@ void check_basics(void)
 {
     enum { seed = 123 };
 
-    struct sim *sim = sim_new(123);
-    struct proxy *proxy = proxy_new(sim);
+    struct sim *sim = sim_new(123, "./proxy.save");
+    struct sim_pipe *sim_pipe = sim_pipe_new(sim);
+
+    struct proxy *proxy = proxy_new();
+    struct proxy_pipe *proxy_pipe = proxy_pipe_new(proxy, sim_pipe);
+
+    sim_step(sim);
+    assert(proxy_update(proxy));
 
     {
         const char eval[] = "(mod boot)";
@@ -60,11 +66,15 @@ void check_basics(void)
             assert(coord_eq(chunk_star(chunk)->coord, home));
         }
 
+        sim_step(sim);
         while (!proxy_update(proxy));
     }
 
+    proxy_pipe_close(proxy, proxy_pipe);
     proxy_free(proxy);
-    sim_close(sim);
+
+    sim_pipe_close(sim_pipe);
+    sim_free(sim);
 }
 
 
@@ -72,7 +82,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    core_populate();
+    sys_populate();
     check_basics();
 
     return 0;

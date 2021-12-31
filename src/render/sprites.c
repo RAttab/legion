@@ -16,7 +16,7 @@ void sprites_init(SDL_Renderer *renderer)
 {
     char path[PATH_MAX] = {0};
 
-    core_path_res("items.bmp", path, sizeof(path));
+    sys_path_res("items.bmp", path, sizeof(path));
     sprites_items = sprites_open(renderer, path, 50, 50);
 }
 

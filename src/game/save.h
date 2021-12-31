@@ -46,6 +46,9 @@ enum legion_packed save_magic
     save_magic_state_compile = 0x31,
     save_magic_state_mod     = 0x32,
     save_magic_state_chunk   = 0x33,
+    save_magic_status        = 0x38,
+    save_magic_cmd           = 0x39,
+    save_magic_ack           = 0x3A,
 
     save_magic_len,
 };
@@ -59,46 +62,88 @@ static_assert(sizeof(enum save_magic) == 1);
 
 struct save;
 
+bool save_eof(struct save *);
+size_t save_cap(struct save *);
+size_t save_len(struct save *);
+void *save_bytes(struct save *);
+
+// -----------------------------------------------------------------------------
+// save_mem
+// -----------------------------------------------------------------------------
+
 struct save *save_mem_new(void);
-void save_mem_reset(struct save *);
 void save_mem_free(struct save *);
 
-struct save *save_file_new(const char *path, uint8_t version);
+void save_mem_reset(struct save *);
+
+
+// -----------------------------------------------------------------------------
+// save_ring
+// -----------------------------------------------------------------------------
+
+struct save_ring;
+
+struct save_ring *save_ring_new(size_t cap);
+void save_ring_free(struct save_ring *);
+
+void save_ring_close(struct save_ring *);
+bool save_ring_closed(struct save_ring *);
+
+struct save *save_ring_read(struct save_ring *);
+struct save *save_ring_write(struct save_ring *);
+void save_ring_commit(struct save_ring *, struct save *);
+
+size_t save_ring_consume(struct save *, size_t len);
+int save_ring_wake_fd(struct save_ring *);
+void save_ring_wake_signal(struct save_ring *);
+void save_ring_wake_drain(struct save_ring *);
+
+int save_ring_wake_fd(struct save_ring *);
+void save_ring_wake_signal(struct save_ring *);
+void save_ring_wake_drain(struct save_ring *);
+
+
+// -----------------------------------------------------------------------------
+// save_file
+// -----------------------------------------------------------------------------
+
+struct save *save_file_create(const char *path, uint8_t version);
 struct save *save_file_load(const char *path);
 void save_file_close(struct save *);
+uint8_t save_file_version(struct save *);
 
-bool save_eof(struct save *);
-uint8_t save_version(struct save *);
-size_t save_len(struct save *);
-uint8_t *save_bytes(struct save *);
 
-void save_write(struct save *, const void *src, size_t len);
+// -----------------------------------------------------------------------------
+// read/write
+// -----------------------------------------------------------------------------
+
+size_t save_write(struct save *, const void *src, size_t len);
 
 #define save_write_value(save, _value)                  \
     do {                                                \
         typeof(_value) value = (_value);                \
-        save_write(save, &value, sizeof(value));        \
+        (void) save_write(save, &value, sizeof(value)); \
     } while (false)
 
 #define save_write_from(save, _ptr)                     \
     do {                                                \
         typeof(_ptr) ptr = (_ptr);                      \
-        save_write(save, ptr, sizeof(*ptr));            \
+        (void) save_write(save, ptr, sizeof(*ptr));     \
     } while (false)
 
-void save_read(struct save *, void *dst, size_t len);
+size_t save_read(struct save *, void *dst, size_t len);
 
 #define save_read_type(save, type)                      \
     ({                                                  \
         type value;                                     \
-        save_read(save, &value, sizeof(value));         \
+        (void) save_read(save, &value, sizeof(value));  \
         value;                                          \
     })
 
-#define save_read_into(save, _ptr)                        \
-    do {                                                  \
-        typeof(_ptr) ptr = (_ptr);                        \
-        save_read(save, ptr, sizeof(*ptr));               \
+#define save_read_into(save, _ptr)                      \
+    do {                                                \
+        typeof(_ptr) ptr = (_ptr);                      \
+        (void) save_read(save, ptr, sizeof(*ptr));      \
     } while (false)
 
 void save_write_magic(struct save *, enum save_magic);
@@ -109,9 +154,6 @@ bool save_read_htable(struct save *, struct htable *);
 
 void save_write_vec64(struct save *, const struct vec64 *);
 bool save_read_vec64(struct save *, struct vec64 **);
-
-void save_write_symbol(struct save *, const struct symbol *);
-bool save_read_symbol(struct save *, struct symbol *);
 
 void save_prof(struct save *);
 void save_prof_dump(struct save *);
