@@ -84,6 +84,35 @@ size_t file_len(int fd)
     return stat.st_size;
 }
 
+bool file_tmpbak_swap(const char *path)
+{
+    char dst[PATH_MAX] = {0};
+    strcpy(dst, basename(path));
+
+    char src[PATH_MAX] = {0};
+    snprintf(src, sizeof(src), "%s.tmp", dst);
+
+    char bak[PATH_MAX] = {0};
+    snprintf(bak, sizeof(bak), "%s.bak", dst);
+
+    int fd = open(dirname(path), O_PATH);
+    if (fd == -1) failf_errno("unable open dir '%s' for file '%s'", path, dst);
+
+    (void) unlinkat(fd, bak, 0);
+    if (!linkat(fd, dst, fd, bak, 0)) // success
+        (void) unlinkat(fd, dst, 0);
+
+    if (linkat(fd, src, fd, dst, 0) == -1) {
+        failf_errno("unable to link '%s/%s' to '%s/%s' (%d)",
+                path, src, path, dst, fd);
+    }
+
+    if (unlinkat(fd, src, 0) == -1)
+        errf_errno("unable to unlink tmp file: '%s/%s' (%d)", path, src, fd);
+
+    close(fd);
+}
+
 
 // -----------------------------------------------------------------------------
 // mfile

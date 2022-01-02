@@ -480,31 +480,7 @@ static void save_file_seal(struct save *save)
     if (msync(save->base, save_len(save), MS_SYNC) == -1)
         failf_errno("unable to msync header '%d'", file->fd);
 
-    char dst[PATH_MAX] = {0};
-    strcpy(dst, basename(file->dst));
-
-    char src[PATH_MAX] = {0};
-    snprintf(src, sizeof(src), "%s.tmp", dst);
-
-    char bak[PATH_MAX] = {0};
-    snprintf(bak, sizeof(bak), "%s.bak", dst);
-
-    int fd = open(dirname(file->dst), O_PATH);
-    if (fd == -1) failf_errno("unable open dir '%s' for file '%s'", file->dst, dst);
-
-    (void) unlinkat(fd, bak, 0);
-    if (!linkat(fd, dst, fd, bak, 0)) // success
-        (void) unlinkat(fd, dst, 0);
-
-    if (linkat(fd, src, fd, dst, 0) == -1) {
-        failf_errno("unable to link '%s/%s' to '%s/%s' (%d)",
-                file->dst, src, file->dst, dst, fd);
-    }
-
-    if (unlinkat(fd, src, 0) == -1)
-        errf_errno("unable to unlink tmp file: '%s/%s' (%d)", file->dst, src, fd);
-
-    close(fd);
+    file_tmpbak_swap(file->dst);
 }
 
 void save_file_close(struct save *save)
