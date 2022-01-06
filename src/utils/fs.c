@@ -80,8 +80,17 @@ const char *dir_it_path(struct dir_it *it)
 size_t file_len(int fd)
 {
     struct stat stat = {0};
-    if (fstat(fd, &stat) < 0) failf_errno("failed to stat: %d", fd);
+    if (fstat(fd, &stat) < 0) failf_errno("failed to stat fd '%d'", fd);
     return stat.st_size;
+}
+
+bool file_exists(const char *path)
+{
+    struct stat stat = {0};
+    if (!stat(path &stat)) return true;
+    if (errno == ENOENT) return false;
+
+    failf_errno("unable to stat '%s'", path);
 }
 
 bool file_tmpbak_swap(const char *path)

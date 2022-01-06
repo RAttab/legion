@@ -161,9 +161,16 @@ static void server_events(int poll, struct client *client, uint32_t events)
     }
 }
 
-bool server_run(const char *file, const char *node, const char *service)
+bool server_run(
+        const char *node,
+        const char *service,
+        const char *save,
+        const char *config,
+        seed_t seed)
 {
-    server.sim = sim_load(file);
+    server.sim = sim_new(seed, save);
+    if (file_exists(save)) sim_load(server.sim);
+    sim_server(server.sim, config);
     sim_fork(server.sim);
 
     int poll = epoll_create1(EPOLL_CLOEXEC);

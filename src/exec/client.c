@@ -140,9 +140,10 @@ static bool client_events(int poll, struct server *server, int events)
     return true;
 }
 
-bool client_run(const char *node, const char *service)
+bool client_run(const char *node, const char *service, const char *config)
 {
     client.proxy = proxy_new();
+    proxy_auth(client.proxy, config);
 
     sdl_disable_signals();
     render_init(client.proxy);

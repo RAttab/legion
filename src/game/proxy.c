@@ -24,6 +24,7 @@ struct proxy
 {
     struct save_ring *in, *out;
     struct state *state;
+    seed_t seed;
 
     struct htable sectors;
     struct hset *active_stars;
@@ -31,6 +32,14 @@ struct proxy
     struct lisp *lisp;
 
     struct { atomic_uintptr_t active, free; } pipe;
+
+    struct {
+        token_t server;
+        struct user user;
+        struct symbol name;
+    } auth;
+
+    char config[PATH_MAX + 1];
 };
 
 struct proxy *proxy_new(void)
@@ -64,6 +73,47 @@ void proxy_free(struct proxy *proxy)
     htable_reset(&proxy->sectors);
 
     free(proxy);
+}
+
+
+// -----------------------------------------------------------------------------
+// config
+// -----------------------------------------------------------------------------
+
+static void proxy_config_write(struct proxy *proxy)
+{
+    struct config config = {0};
+    struct writer *out = config_write(&config, proxy->config);
+
+    writer_open(out);
+    writer_symbol_str(out, "client");
+    writer_field(out, "server", u64, proxy->auth.server);
+    writer_field(out, "name", symbol, &proxy->auth.name);
+    user_write(&proxy->auth.user, out);
+    writer_close(out);
+
+    config_close(&config);
+}
+
+static void proxy_config_read(struct proxy *proxy)
+{
+    struct config config = {0};
+    struct reader *in = config_read(&config, proxy->config);
+
+    reader_open(in);
+    reader_symbol_str(in, "client");
+    proxy->auth.server = reader_field(in, "server", u64);
+    proxy->auth.name = reader_field(in, "name", symbol);
+    if (!reader_peek_close(in)) user_read(&proxy->auth.user, in);
+    reader_close(in);
+
+    config_close(&config);
+}
+
+void proxy_auth(struct proxy *proxy, const char *config)
+{
+    strncpy(proxy->config, config, sizeof(proxy->config) - 1);
+    proxy_config_read(sim);
 }
 
 
@@ -176,6 +226,15 @@ static bool proxy_update_state(
                 .type = CMD_ACK,
                 .data = { .ack = pipe->ack }
             });
+
+    if (proxy->seed != proxy->state->seed) {
+        proxy->seed = proxy->state->seed;
+
+        for (struct htable_bucket *it = htable_next(&proxy->sectors, NULL);
+             it; it = htable_next(&proxy->sectors, it))
+            sector_free((void *) it->value);
+        htable_clear(&proxy->sectors);
+    }
 
     hset_clear(proxy->active_stars);
     hset_clear(proxy->active_sectors);
