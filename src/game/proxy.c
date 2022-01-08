@@ -147,6 +147,24 @@ struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
             &proxy->pipe.active, (uintptr_t) pipe, memory_order_release);
     assert(!old);
 
+    if (proxy->auth.user.id) {
+        proxy_cmd(proxy, &(struct cmd) {
+                    .type = CMD_AUTH,
+                    .data = {
+                        .server = proxy->auth.server,
+                        .id = proxy->auth.user.id,
+                        .private = proxy->auth.user.private,
+                    }});
+    }
+    else if (proxy.auth.server) {
+        proxy_cmd(proxy, &(struct cmd) {
+                    .type = CMD_USER,
+                    .data = {
+                        .server = proxy->auth.server,
+                        .name = proxy->auth.name,
+                    }});
+    }
+
     return pipe;
 }
 
@@ -253,6 +271,14 @@ static bool proxy_update_state(
     return true;
 }
 
+static void proxy_update_user(struct proxy *proxy, struct save *save)
+{
+    if (!user_load(&proxy->auth.users, save))
+        err("unable to load auth information");
+
+    proxy_config_write(proxy);
+}
+
 bool proxy_update(struct proxy *proxy)
 {
     struct proxy_pipe *pipe = proxy_pipe(proxy);
@@ -276,6 +302,7 @@ bool proxy_update(struct proxy *proxy)
         switch (head.type) {
         case header_status: { proxy_update_status(proxy, save); break; }
         case header_state: { update = proxy_update_state(proxy, pipe, save); break; }
+        case header_user: { proxy_update_auth(proxy, save); break; }
         default: { assert(false); }
         }
 

@@ -67,9 +67,6 @@ bool user_load(struct user *, struct save *);
 void user_write(const struct user *, struct writer *);
 void user_read(struct user *, struct reader *);
 
-void user_save_config(const struct user *, struct save *);
-bool user_load(struct user *, struct save *);
-
 
 // -----------------------------------------------------------------------------
 // users
@@ -87,11 +84,12 @@ struct users
 void users_init(struct users *);
 void users_free(struct users *);
 
-struct user *users_create(struct users *, token_t server, word_t atom);
+struct user *users_create(struct users *, word_t atom);
 struct user *users_atom(struct users *, word_t atom);
 struct user *users_id(struct users *, uid_t);
 
-bool users_auth(struct users *, token_t server, uid_t, token_t user);
+bool users_auth_server(struct users *, token_t);
+bool users_auth_user(struct users *, uid_t, token_t);
 bool users_grant(struct users *, uid_t, token_t);
 
 void users_write(const struct users *, struct atoms *, struct writer *);

@@ -133,6 +133,8 @@ struct sim_pipe
     atomic_bool closed;
     struct save_ring *in, *out;
 
+    struct { bool ok; struct user user; } auth;
+
     struct ack *ack;
     struct coord chunk;
     struct { world_ts_t ts; mod_t id; } mod;
@@ -153,6 +155,7 @@ struct sim_pipe *sim_pipe_new(struct sim *sim)
         .out = save_ring_new(sim_out_len),
         .ack = ack_new(),
         .chunk = sim->home,
+        .auth = { .ok = !sim->server },
     };
 
     uintptr_t next = atomic_load_explicit(&sim->pipes, memory_order_acquire);
@@ -402,6 +405,75 @@ void sim_load(struct sim *sim)
     save_file_close(save);
 }
 
+static void sim_cmd_user_response(struct sim_pipe *pipe)
+{
+    struct save *save = save_ring_write(pipe->out);
+
+    struct header *head = save_bytes(save);
+    if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+        sim_log(pipe, st_warn, "unable to return auth info: %zu", save_cap(save));
+        return;
+    }
+
+    user_save(&pipe->auth.user, save);
+
+    *head = make_header(header_auth, save_len(save));
+    save_ring_commit(pipe->out, save);
+    save_ring_wake_signal(pipe->out);
+}
+
+static void sim_cmd_user(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
+{
+    if (!users_auth_server(&sim->users, cmd->data.user.server)) {
+        sim_log(pipe, st_error, "invalid server token");
+        sim_pipe_close(pipe);
+        return;
+    }
+
+    word_t atom = atoms_make(world_atoms(sim->world), &cmd->data.user.name);
+    assert(atom);
+
+    struct user *user = users_create(&sim->users, atom);
+    if (!user) {
+        sim_log(pipe, st_error, "unable to create user '%s'",
+                cmd->data.user.name.c);
+        sim_pipe_close(pipe);
+        return;
+    }
+
+    pipe->auth.user = *user;
+    pipe->auth.ok = true;
+
+    sim_cmd_user_response(pipe);
+    sim_config_write(sim);
+}
+
+static void sim_cmd_auth(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
+{
+    if (!users_auth_server(&sim->users, cmd->data.user.server)) {
+        sim_log(pipe, st_error, "invalid server token");
+        sim_pipe_close(pipe);
+        return;
+    }
+
+    struct user *user =
+        users_auth(&sim->users, cmd->data.user.id, cmd->data.user.private);
+
+    if (!user) {
+        sim_log(pipe, st_error, "unable to login as user '%u'",
+                cmd->data.user.id);
+        sim_pipe_close(pipe);
+        return;
+    }
+
+    pipe->auth.user = *user;
+    pipe->auth.ok = true;
+
+    sim_cmd_user_response(pipe);
+}
+
 static void sim_cmd_io(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
@@ -558,6 +630,9 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
 
         case CMD_SAVE: { sim_save(sim); break; }
         case CMD_LOAD: { sim_load(sim); break; }
+
+        case CMD_USER: { sim_cmd_user(sim, pipe, &cmd); break; }
+        case CMD_USER: { sim_cmd_auth(sim, pipe, &cmd); break; }
 
         case CMD_ACK: {
             if (pipe->ack) ack_free(pipe->ack);

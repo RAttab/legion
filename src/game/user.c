@@ -107,7 +107,7 @@ static void users_insert(struct users *users, struct user *user)
     assert(ret.ok);
 }
 
-struct user *users_create(struct users *users, token_t server, word_t atom)
+struct user *users_create(struct users *users, word_t atom)
 {
     if (server != users->server) return NULL;
 
@@ -144,7 +144,12 @@ struct user *users_id(struct users *users, uid_t id)
 }
 
 
-bool users_auth(struct users *users, token_t server, uid_t id, token_t token)
+bool users_auth_server(struct users *users, token_t token)
+{
+    return token == users->token;
+}
+
+bool users_auth_user(struct users *users, uid_t id, token_t token)
 {
     if (server != users->server) return false;
 
