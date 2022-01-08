@@ -5,9 +5,9 @@
 
 #include "common.h"
 #include "game/user.h"
+#include "game/save.h"
 #include "vm/atoms.h"
 #include "utils/config.h"
-#include "utils/save.h"
 
 
 // -----------------------------------------------------------------------------
@@ -79,7 +79,8 @@ void users_init(struct users *users)
 {
     *users = (struct users) { .server = token() };
 
-    struct user *admin = users_create(users, make_symbol("admin"));
+    // \todo not sure what atom I should assign to the admin user.
+    struct user *admin = users_create(users, 0);
     assert(admin->id == 0);
     admin->access = -1ULL;
 }
@@ -93,28 +94,26 @@ void users_free(struct users *users)
 
 static void users_insert(struct users *users, struct user *user)
 {
-    users->avail |= uid_to_list(id);
+    users->avail |= user_to_uset(user->id);
 
     struct htable_ret ret = {0};
 
-    ret = htable_put(&users->ids, id, (uintptr_t) user);
+    ret = htable_put(&users->ids, user->id, (uintptr_t) user);
     assert(ret.ok);
 
-    ret = htable_put(&users->atoms, atom, (uintptr_t) user);
+    ret = htable_put(&users->atoms, user->atom, (uintptr_t) user);
     assert(ret.ok);
 
-    ret = htable_put(&users->grant, user->public, id);
+    ret = htable_put(&users->grant, user->public, user->id);
     assert(ret.ok);
 }
 
 struct user *users_create(struct users *users, word_t atom)
 {
-    if (server != users->server) return NULL;
-
     struct htable_ret ret = htable_get(&users->atoms, atom);
     if (ret.ok) return NULL;
 
-    uid_t id = 0;
+    user_t id = 0;
     while (id < 64 && uset_test(users->avail, id)) id++;
     if (id == 64) return NULL;
 
@@ -122,7 +121,7 @@ struct user *users_create(struct users *users, word_t atom)
     *user = (struct user) {
         .id = id,
         .atom = atom,
-        .accesss = uid_to_uset(id),
+        .access = user_to_uset(id),
         .public = token(),
         .private = token(),
     };
@@ -137,7 +136,7 @@ struct user *users_atom(struct users *users, word_t atom)
     return ret.ok ? (void *) ret.value : NULL;
 }
 
-struct user *users_id(struct users *users, uid_t id)
+struct user *users_id(struct users *users, user_t id)
 {
     struct htable_ret ret = htable_get(&users->ids, id);
     return ret.ok ? (void *) ret.value : NULL;
@@ -146,26 +145,24 @@ struct user *users_id(struct users *users, uid_t id)
 
 bool users_auth_server(struct users *users, token_t token)
 {
-    return token == users->token;
+    return token == users->server;
 }
 
-bool users_auth_user(struct users *users, uid_t id, token_t token)
+struct user *users_auth_user(struct users *users, user_t id, token_t token)
 {
-    if (server != users->server) return false;
-
     struct user *user = users_id(users, id);
-    return user && user->private == token;
+    return user && user->private == token ? user : NULL;
 }
 
-bool users_grant(struct users *users, uid_t id, token_t token)
+bool users_grant(struct users *users, user_t id, token_t token)
 {
-    struct user *user = users_get(users, id);
+    struct user *user = users_id(users, id);
     if (!user) return false;
 
     struct htable_ret ret = htable_get(&users->grant, token);
     if (!ret.ok) return false;
 
-    user->access |= uid_to_uset(ret.value);
+    user->access |= user_to_uset(ret.value);
     return true;
 }
 
@@ -176,7 +173,7 @@ void users_write(
     writer_symbol_str(out, "users");
     writer_field(out, "server", u64, users->server);
 
-    for (struct htable_bucket *it = htable_next(&users->ids, NULL);
+    for (const struct htable_bucket *it = htable_next(&users->ids, NULL);
          it; it = htable_next(&users->ids, it))
     {
         struct user *user = (void *) it->value;
@@ -196,23 +193,23 @@ void users_read(struct users *users, struct atoms *atoms, struct reader *in)
     users->server = reader_field(in, "server", u64);
 
     users->avail = 0;
-    htable_clear(users->ids);
-    htable_clear(users->atoms);
-    htable_clear(users->grant);
+    htable_clear(&users->ids);
+    htable_clear(&users->atoms);
+    htable_clear(&users->grant);
 
     while (!reader_peek_close(in)) {
         struct user *user = calloc(1, sizeof(*user));
         reader_open(in);
-        user->atom = reader_field_atom(out, "name", atoms);
+        user->atom = reader_field_atom(in, "name", atoms);
         user_read(user, in);
         reader_close(in);
 
         if (uset_test(users->avail, user->id))
-            reader_err("duplicate user id '%u'", user->id);
+            reader_err(in, "duplicate user id '%u'", user->id);
         if (!user->private)
-            reader_err("missing field 'private' for '%u'" user->id);
+            reader_err(in, "missing field 'private' for '%u'", user->id);
         if (!user->access)
-            reader_err("missing field 'access' for '%u'" user->id);
+            reader_err(in, "missing field 'access' for '%u'", user->id);
 
         users_insert(users, user);
     }

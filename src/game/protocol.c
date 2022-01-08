@@ -164,9 +164,9 @@ void cmd_save(const struct cmd *cmd, struct save *save)
     }
 
     case CMD_AUTH: {
-        save_write_value(save, cmd->data.user.server);
-        save_write_value(save, cmd->data.user.id);
-        save_write_value(save, cmd->data.user.private);
+        save_write_value(save, cmd->data.auth.server);
+        save_write_value(save, cmd->data.auth.id);
+        save_write_value(save, cmd->data.auth.private);
         break;
     }
 
@@ -243,9 +243,9 @@ bool cmd_load(struct cmd *cmd, struct save *save)
     }
 
     case CMD_AUTH: {
-        save_read_into(save, &cmd->data.user.server);
-        save_read_into(save, &cmd->data.user.id);
-        save_read_into(save, &cmd->data.user.private);
+        save_read_into(save, &cmd->data.auth.server);
+        save_read_into(save, &cmd->data.auth.id);
+        save_read_into(save, &cmd->data.auth.private);
         break;
     }
 

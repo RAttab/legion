@@ -10,6 +10,7 @@
 #include "game/world.h"
 #include "game/chunk.h"
 #include "game/tech.h"
+#include "game/user.h"
 #include "utils/htable.h"
 
 struct vec64;

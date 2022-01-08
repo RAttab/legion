@@ -7,6 +7,7 @@
 #include "game/sys.h"
 #include "game/user.h"
 #include "render/render.h"
+#include "utils/str.h"
 
 #include <getopt.h>
 
@@ -107,7 +108,7 @@ int main(int argc, char *const argv[])
         case 'p': { args.service = optarg; break; }
         case 's': {
             size_t len = strlen(optarg);
-            if (str_atox(optarg, len, args.seed) != len)
+            if (str_atox(optarg, len, &args.seed) != len)
                 usage(1, "invalid seed argument");
             break;
         };
@@ -129,9 +130,12 @@ int main(int argc, char *const argv[])
     {
     case cmd_graph:  { ok = graph_run(); break; }
     case cmd_items:  { ok = stats_run(); break; }
-    case cmd_local:  { ok = local_run(args.file, args.seed); break; }
+    case cmd_local:  { ok = local_run(args.save, args.seed); break; }
     case cmd_token:  { ok = true; fprintf(stdout, "%lx\n", token()); break; }
-    case cmd_client: { ok = client_run(args.node, args.service); break; }
+    case cmd_client: {
+        ok = client_run(args.node, args.service, args.config);
+        break;
+    }
     case cmd_server: {
         ok = server_run(args.node, args.service, args.save, args.config, args.seed);
         break;

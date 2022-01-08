@@ -9,6 +9,7 @@
 #include "game/protocol.h"
 #include "game/chunk.h"
 #include "utils/time.h"
+#include "utils/config.h"
 
 #include <stdatomic.h>
 #include <pthread.h>
@@ -417,7 +418,7 @@ static void sim_cmd_user_response(struct sim_pipe *pipe)
 
     user_save(&pipe->auth.user, save);
 
-    *head = make_header(header_auth, save_len(save));
+    *head = make_header(header_user, save_len(save));
     save_ring_commit(pipe->out, save);
     save_ring_wake_signal(pipe->out);
 }
@@ -452,18 +453,18 @@ static void sim_cmd_user(
 static void sim_cmd_auth(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
-    if (!users_auth_server(&sim->users, cmd->data.user.server)) {
+    if (!users_auth_server(&sim->users, cmd->data.auth.server)) {
         sim_log(pipe, st_error, "invalid server token");
         sim_pipe_close(pipe);
         return;
     }
 
-    struct user *user =
-        users_auth(&sim->users, cmd->data.user.id, cmd->data.user.private);
+    struct user *user = users_auth_user(
+            &sim->users, cmd->data.auth.id, cmd->data.auth.private);
 
     if (!user) {
         sim_log(pipe, st_error, "unable to login as user '%u'",
-                cmd->data.user.id);
+                cmd->data.auth.id);
         sim_pipe_close(pipe);
         return;
     }
@@ -632,7 +633,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
         case CMD_LOAD: { sim_load(sim); break; }
 
         case CMD_USER: { sim_cmd_user(sim, pipe, &cmd); break; }
-        case CMD_USER: { sim_cmd_auth(sim, pipe, &cmd); break; }
+        case CMD_AUTH: { sim_cmd_auth(sim, pipe, &cmd); break; }
 
         case CMD_ACK: {
             if (pipe->ack) ack_free(pipe->ack);

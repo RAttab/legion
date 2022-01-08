@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <libgen.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -79,24 +80,35 @@ const char *dir_it_path(struct dir_it *it)
 
 size_t file_len(int fd)
 {
-    struct stat stat = {0};
-    if (fstat(fd, &stat) < 0) failf_errno("failed to stat fd '%d'", fd);
-    return stat.st_size;
+    struct stat val = {0};
+    if (fstat(fd, &val) < 0) failf_errno("failed to stat fd '%d'", fd);
+    return val.st_size;
 }
 
 bool file_exists(const char *path)
 {
-    struct stat stat = {0};
-    if (!stat(path &stat)) return true;
+    struct stat val = {0};
+    if (!stat(path, &val)) return true;
     if (errno == ENOENT) return false;
 
     failf_errno("unable to stat '%s'", path);
 }
 
-bool file_tmpbak_swap(const char *path)
+void file_tmpbak_swap(const char *path)
 {
+    // basename and dirname are horrible functions. That's all I wanted or
+    // needed to say.
+
+    char basebuf[PATH_MAX] = {0};
+    strcpy(basebuf, path);
+    const char *base = basename(basebuf);
+
+    char dirbuf[PATH_MAX] = {0};
+    strcpy(dirbuf, path);
+    const char *dir = dirname(dirbuf);
+
     char dst[PATH_MAX] = {0};
-    strcpy(dst, basename(path));
+    strcpy(dst, base);
 
     char src[PATH_MAX] = {0};
     snprintf(src, sizeof(src), "%s.tmp", dst);
@@ -104,7 +116,7 @@ bool file_tmpbak_swap(const char *path)
     char bak[PATH_MAX] = {0};
     snprintf(bak, sizeof(bak), "%s.bak", dst);
 
-    int fd = open(dirname(path), O_PATH);
+    int fd = open(dir, O_PATH);
     if (fd == -1) failf_errno("unable open dir '%s' for file '%s'", path, dst);
 
     (void) unlinkat(fd, bak, 0);

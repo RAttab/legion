@@ -10,7 +10,6 @@
 #include <stdatomic.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <libgen.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/eventfd.h>

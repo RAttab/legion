@@ -4,6 +4,7 @@
 */
 
 #include "common.h"
+#include "utils/fs.h"
 #include "utils/net.h"
 
 #include <sys/epoll.h>

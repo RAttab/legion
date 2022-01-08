@@ -12,3 +12,4 @@
 #include "utils/color.c"
 #include "utils/htable.c"
 #include "utils/heap.c"
+#include "utils/config.c"

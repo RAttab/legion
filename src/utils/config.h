@@ -6,8 +6,8 @@
 #pragma once
 
 #include "common.h"
+#include "vm/token.h"
 #include "utils/fs.h"
-#include "utils/token.h"
 
 struct atoms;
 
@@ -35,39 +35,39 @@ struct symbol reader_symbol(struct reader *);
 uint64_t reader_symbol_hash(struct reader *);
 
 void reader_expect(struct reader *reader, hash_t);
-#define reader_key(reader, str) \
-    do { reader_expect((reader), symbol_hash_c(str)); } while (false)
+#define reader_key(_reader, _str) \
+    do { reader_expect((_reader), symbol_hash_c(_str)); } while (false)
 
-#define reader_err(reader, fmt, ...)            \
-    do { token_err(&((reader)->tok), fmt, __VA_ARGS__); } while (false)
+#define reader_err(_reader, _fmt, ...)            \
+    do { token_err(&((_reader)->tok), _fmt, __VA_ARGS__); } while (false)
 
 // This might be a little overboard for a macro...
-#define reader_field(reader, key, type)                                 \
+#define reader_field(_reader, _key, type)                               \
     ({                                                                  \
-        struct reader *in = (reader);                                   \
-        reader_open(in);                                                \
+        struct reader *_in = (_reader);                                 \
+        reader_open(_in);                                               \
                                                                         \
-        struct symbol sym = reader_symbol(in);                          \
-        if (symbol_hash(sym) != symbol_hash_c(key))                     \
-            reader_err("unexpected field key '%s'" sym.c);              \
+        struct symbol _sym = reader_symbol(_in);                        \
+        if (symbol_hash(&_sym) != symbol_hash_c(_key))                  \
+            reader_err(_in, "unexpected field key '%s'", _sym.c);       \
                                                                         \
-        typeof(reader_ ## type (in)) ret = reader_ ## type (in);        \
-        reader_close(in);                                               \
-        ret;                                                            \
+        typeof(reader_ ## type(_in)) _ret = reader_ ## type(_in);       \
+        reader_close(_in);                                              \
+        _ret;                                                           \
     })
 
-#define reader_field_atom(reader, key, atoms)                   \
-    ({                                                          \
-        struct reader *in = (reader);                           \
-        reader_open(in);                                        \
-                                                                \
-        struct symbol sym = reader_symbol(in);                  \
-        if (symbol_hash(sym) != symbol_hash_c(key))             \
-            reader_err("unexpected field key '%s'" sym.c);      \
-                                                                \
-        word_t ret = reader_atom (in, atoms);                   \
-        reader_close(in);                                       \
-        ret;                                                    \
+#define reader_field_atom(_reader, _key, _atoms)                        \
+    ({                                                                  \
+        struct reader *_in = (_reader);                                 \
+        reader_open(_in);                                               \
+                                                                        \
+        struct symbol _sym = reader_symbol(_in);                        \
+        if (symbol_hash(&_sym) != symbol_hash_c(_key))                  \
+            reader_err(_in, "unexpected field key '%s'", _sym.c);       \
+                                                                        \
+        word_t _ret = reader_atom (_in, _atoms);                        \
+        reader_close(_in);                                              \
+        _ret;                                                           \
     })
 
 
@@ -80,7 +80,7 @@ struct writer
     int fd;
     const char *path;
 
-    const char *base, *it, *end;
+    char *base, *it, *end;
     size_t depth;
 };
 
@@ -94,29 +94,29 @@ void writer_atom(struct writer *, struct atoms *, word_t);
 
 void writer_symbol(struct writer *, const struct symbol *);
 
-#define writer_symbol_str(writer, str)                                  \
+#define writer_symbol_str(_writer, _str)                                \
     do {                                                                \
-        static_assert(__builtin_constant_p(str));                       \
-        struct symbol symbol = make_symbol_len((str), sizeof(str));     \
-        writer_symbol((writer), &symbol);                               \
+        static_assert(__builtin_constant_p(_str));                      \
+        struct symbol _sym = make_symbol_len((_str), sizeof(_str));     \
+        writer_symbol((_writer), &_sym);                                \
     } while (false)
 
-#define writer_field(writer, key, type, val)    \
+#define writer_field(_writer, _key, type, _val) \
     do {                                        \
-        struct writer *out = (writer);          \
-        writer_open_nl(out);                    \
-        writer_symbol_str(out, (key));          \
-        writer_ ## type(out, (val));            \
-        writer_close(out);                      \
+        struct writer *_out = (_writer);        \
+        writer_open_nl(_out);                   \
+        writer_symbol_str(_out, (_key));        \
+        writer_ ## type(_out, (_val));          \
+        writer_close(_out);                     \
     } while (false)
 
-#define writer_field_atom(writer, key, atoms, val)      \
+#define writer_field_atom(_writer, _key, _atoms, _val)  \
     do {                                                \
-        struct writer *out = (writer);                  \
-        writer_open_nl(out);                            \
-        writer_symbol_str(out, (key));                  \
-        writer_atom(out, (atoms), (val));               \
-        writer_close(out);                              \
+        struct writer *_out = (_writer);                \
+        writer_open_nl(_out);                           \
+        writer_symbol_str(_out, (_key));                \
+        writer_atom(_out, (_atoms), (_val));            \
+        writer_close(_out);                             \
     } while (false)
 
 

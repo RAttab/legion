@@ -21,7 +21,7 @@ static void reader_init(struct reader *reader, const char *path)
 
 static void reader_free(struct reader *reader)
 {
-    mfile_close(reader->file);
+    mfile_close(&reader->file);
     if (!token_ctx_ok(reader->ctx)) exit(1);
     token_ctx_free(reader->ctx);
 }
@@ -66,7 +66,7 @@ word_t reader_atom(struct reader *reader, struct atoms *atoms)
     word_t ret = 0;
     struct token token = {0};
 
-    switch (token_next(&reader->tok, &token))
+    switch (token_next(&reader->tok, &token)->type)
     {
     case token_atom: { ret = atoms_get(atoms, &token.value.s); break; }
     case token_atom_make: { ret = atoms_make(atoms, &token.value.s); break; }
@@ -84,8 +84,8 @@ word_t reader_atom(struct reader *reader, struct atoms *atoms)
 struct symbol reader_symbol(struct reader *reader)
 {
     struct token token = {0};
-    if (!token_expect(&reader->tok, &token, token_symbol)) return 0;
-    return token.value.s;
+    return token_expect(&reader->tok, &token, token_symbol) ?
+        token.value.s : (struct symbol) {0};
 }
 
 hash_t reader_symbol_hash(struct reader *reader)
@@ -118,11 +118,11 @@ static void writer_init(struct writer *writer, const char *path)
     snprintf(tmp, sizeof(tmp), "%s.tmp", path);
 
     writer->fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
-    if (file->fd == -1)
+    if (writer->fd == -1)
         failf_errno("unable to open config tmp file for '%s'", path);
 
     if (ftruncate(writer->fd, writer_chunks) == -1)
-        failf_errno("unable to grow config tmp file '%lx'", writer_chunks);
+        failf_errno("unable to grow config tmp file '%x'", writer_chunks);
 
     const size_t cap = writer_chunks;
     writer->base = mmap(0, cap, PROT_WRITE, MAP_SHARED, writer->fd, 0);
@@ -138,6 +138,7 @@ static void writer_free(struct writer *writer)
     if (munmap(writer->base, writer->end - writer->base) == -1)
         failf_errno("unable to unmap writer for '%s'", writer->path);
 
+    size_t len = writer->it - writer->base;
     if (ftruncate(writer->fd, len) == -1)
         failf_errno("unable to truncate '%d' to '%zu'", writer->fd, len);
 
@@ -170,7 +171,7 @@ static void writer_ensure(struct writer *writer, size_t len)
                 writer->base, cap_old, cap);
     }
 
-    writer->it = writer->base + old;
+    writer->it = writer->base + len_old;
     writer->end = writer->base + cap;
 }
 
@@ -184,7 +185,7 @@ static void writer_write(struct writer *writer, const char *src, size_t len)
 static void writer_fill(struct writer *writer, char val, size_t len)
 {
     writer_ensure(writer, len);
-    memcpy(writer->it, val, len);
+    memset(writer->it, val, len);
     writer->it += len;
 }
 

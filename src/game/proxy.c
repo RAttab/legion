@@ -11,6 +11,7 @@
 #include "render/render.h"
 #include "utils/htable.h"
 #include "utils/hset.h"
+#include "utils/config.h"
 
 static struct proxy_pipe *proxy_pipe(struct proxy *);
 static void proxy_cmd(struct proxy *, const struct cmd *);
@@ -101,7 +102,7 @@ static void proxy_config_read(struct proxy *proxy)
     struct reader *in = config_read(&config, proxy->config);
 
     reader_open(in);
-    reader_symbol_str(in, "client");
+    reader_key(in, "client");
     proxy->auth.server = reader_field(in, "server", u64);
     proxy->auth.name = reader_field(in, "name", symbol);
     if (!reader_peek_close(in)) user_read(&proxy->auth.user, in);
@@ -113,7 +114,7 @@ static void proxy_config_read(struct proxy *proxy)
 void proxy_auth(struct proxy *proxy, const char *config)
 {
     strncpy(proxy->config, config, sizeof(proxy->config) - 1);
-    proxy_config_read(sim);
+    proxy_config_read(proxy);
 }
 
 
@@ -151,18 +152,20 @@ struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
         proxy_cmd(proxy, &(struct cmd) {
                     .type = CMD_AUTH,
                     .data = {
-                        .server = proxy->auth.server,
-                        .id = proxy->auth.user.id,
-                        .private = proxy->auth.user.private,
-                    }});
+                        .auth = {
+                            .server = proxy->auth.server,
+                            .id = proxy->auth.user.id,
+                            .private = proxy->auth.user.private,
+                        }}});
     }
-    else if (proxy.auth.server) {
+    else if (proxy->auth.server) {
         proxy_cmd(proxy, &(struct cmd) {
                     .type = CMD_USER,
                     .data = {
-                        .server = proxy->auth.server,
-                        .name = proxy->auth.name,
-                    }});
+                        .user = {
+                            .server = proxy->auth.server,
+                            .name = proxy->auth.name,
+                        }}});
     }
 
     return pipe;
@@ -248,7 +251,7 @@ static bool proxy_update_state(
     if (proxy->seed != proxy->state->seed) {
         proxy->seed = proxy->state->seed;
 
-        for (struct htable_bucket *it = htable_next(&proxy->sectors, NULL);
+        for (const struct htable_bucket *it = htable_next(&proxy->sectors, NULL);
              it; it = htable_next(&proxy->sectors, it))
             sector_free((void *) it->value);
         htable_clear(&proxy->sectors);
@@ -273,10 +276,9 @@ static bool proxy_update_state(
 
 static void proxy_update_user(struct proxy *proxy, struct save *save)
 {
-    if (!user_load(&proxy->auth.users, save))
-        err("unable to load auth information");
-
-    proxy_config_write(proxy);
+    if (user_load(&proxy->auth.user, save))
+        proxy_config_write(proxy);
+    else err("unable to load auth information");
 }
 
 bool proxy_update(struct proxy *proxy)
@@ -302,7 +304,7 @@ bool proxy_update(struct proxy *proxy)
         switch (head.type) {
         case header_status: { proxy_update_status(proxy, save); break; }
         case header_state: { update = proxy_update_state(proxy, pipe, save); break; }
-        case header_user: { proxy_update_auth(proxy, save); break; }
+        case header_user: { proxy_update_user(proxy, save); break; }
         default: { assert(false); }
         }
 
