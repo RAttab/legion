@@ -39,19 +39,20 @@ struct symbol make_symbol_len(const char *str, size_t len)
 }
 
 
-size_t symbol_parse(const char *it, size_t len, struct symbol *value)
+ssize_t symbol_parse(const char *base, size_t len, struct symbol *value)
 {
     assert(value);
 
+    const char *it = base;
     const char *end = it + len;
     it += str_skip_spaces(it, end - it);
 
     const char *first = it;
     while (it < end && symbol_char(*it)) it++;
-    if (it - first > symbol_cap) return false;
+    if (it - first > symbol_cap) return -1;
 
     *value = make_symbol_len(first, it - first);
-    return true;
+    return it - base;
 }
 
 void symbol_save(const struct symbol *sym, struct save *save)

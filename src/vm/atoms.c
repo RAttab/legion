@@ -271,7 +271,7 @@ word_t atoms_parse(struct atoms *atoms, const char *it, size_t len)
     it++;
 
     struct symbol symbol = {0};
-    if (!symbol_parse(it, end - it, &symbol)) return -1;
+    if (symbol_parse(it, end - it, &symbol) == -1) return -1;
 
     return make ?
         atoms_make(atoms, &symbol) :
