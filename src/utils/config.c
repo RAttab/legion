@@ -110,6 +110,8 @@ void reader_expect(struct reader *reader, hash_t hash)
 
 enum { writer_chunks = s_page_len };
 
+static void writer_out(struct writer *writer, char val);
+
 static void writer_init(struct writer *writer, const char *path)
 {
     writer->path = path;
@@ -135,8 +137,7 @@ static void writer_init(struct writer *writer, const char *path)
 
 static void writer_free(struct writer *writer)
 {
-    if (munmap(writer->base, writer->end - writer->base) == -1)
-        failf_errno("unable to unmap writer for '%s'", writer->path);
+    writer_out(writer, '\n');
 
     size_t len = writer->it - writer->base;
     if (ftruncate(writer->fd, len) == -1)
@@ -145,6 +146,8 @@ static void writer_free(struct writer *writer)
     if (msync(writer->base, len, MS_SYNC) == -1)
         failf_errno("unable to msync '%d'", writer->fd);
 
+    if (munmap(writer->base, writer->end - writer->base) == -1)
+        failf_errno("unable to unmap writer for '%s'", writer->path);
     close(writer->fd);
 
     file_tmpbak_swap(writer->path);
@@ -258,15 +261,20 @@ void writer_symbol(struct writer *writer, const struct symbol *val)
     writer_write(writer, val->c, val->len);
 }
 
-void writer_atom(struct writer *writer, struct atoms *atoms, word_t val)
+void writer_atom(struct writer *writer, const struct symbol *val)
+{
+    writer_space(writer);
+    writer_out(writer, '!');
+    writer_write(writer, val->c, val->len);
+}
+
+void writer_atom_fetch(struct writer *writer, struct atoms *atoms, word_t val)
 {
     struct symbol symbol = {0};
     if (!atoms_str(atoms, val, &symbol))
         failf("unknown atom for value '%lx'", val);
 
-    writer_space(writer);
-    writer_out(writer, '!');
-    writer_write(writer, symbol.c, symbol.len);
+    writer_atom(writer, &symbol);
 }
 
 

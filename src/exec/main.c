@@ -28,6 +28,7 @@ static void usage(int code, const char *msg)
         "       --client <host> [--port <port>] [--config <path>]\n"
         "       --server <host> [--port <port>] [--file <path>] [--config <path>]\n"
         "                       [--seed <seed>]\n"
+        "       --config <type> [--config <path>] [--name <name>] [--auth <token>]\n"
         "\n"
         "Commands:\n"
         "  -h --help    Prints this message\n"
@@ -37,6 +38,8 @@ static void usage(int code, const char *msg)
         "  -L --local   Starts the game locally; default command\n"
         "  -S --server  Starts a game server listening on the given host\n"
         "  -C --client  Connects to the game server at the given host\n"
+        "  -N --config  Creates a new config file of type \"client\" or\n"
+        "               \"server\" at the given path\n"
         "\n"
         "Arguments:\n"
         "  -f --file    Path to save file; default is './legion.save'\n"
@@ -45,6 +48,8 @@ static void usage(int code, const char *msg)
         "               default port is 18181 if none are provided\n"
         "  -s --seed    See when creating a new world formated as n 64 bit\n"
         "               hexadecimal value; Defaults to 0\n"
+        "  -n --name    Symbol representing the user on a server\n"
+        "  -a --auth    Authentication token for a server\n"
         "";
     fprintf(stderr, usage);
     exit(code);
@@ -52,7 +57,7 @@ static void usage(int code, const char *msg)
 
 int main(int argc, char *const argv[])
 {
-    const char *optstring = "+hGITLS:C:f:c:p:s:";
+    const char *optstring = "+hGITLN:S:C:f:c:p:s:n:a:";
     struct option longopts[] = {
         { .val = 'h', .name = "help",   .has_arg = no_argument },
 
@@ -62,11 +67,15 @@ int main(int argc, char *const argv[])
         { .val = 'L', .name = "local",  .has_arg = no_argument },
         { .val = 'S', .name = "server", .has_arg = required_argument },
         { .val = 'C', .name = "client", .has_arg = required_argument },
+        { .val = 'N', .name = "config", .has_arg = required_argument },
 
         { .val = 'f', .name = "file",   .has_arg = required_argument },
         { .val = 'c', .name = "config", .has_arg = required_argument },
         { .val = 'p', .name = "port",   .has_arg = required_argument },
         { .val = 's', .name = "seed",   .has_arg = required_argument },
+        { .val = 'n', .name = "name",   .has_arg = required_argument },
+        { .val = 'a', .name = "auth",   .has_arg = required_argument },
+
         {0},
     };
 
@@ -74,6 +83,7 @@ int main(int argc, char *const argv[])
         cmd_nil = 0,
         cmd_graph, cmd_items, cmd_token,
         cmd_local, cmd_server, cmd_client,
+        cmd_config,
     } cmd = cmd_nil;
 
     static struct {
@@ -81,7 +91,10 @@ int main(int argc, char *const argv[])
         const char *config;
         const char *node;
         const char *service;
+        const char *type;
         seed_t seed;
+        token_t auth;
+        struct symbol name;
     } args = {
         .save = "./legion.save",
         .config = "./legion.lisp",
@@ -99,19 +112,37 @@ int main(int argc, char *const argv[])
         case 'h': { usage(0, NULL); }
         case 'G': { cmd = cmd_graph; commands++; break; }
         case 'I': { cmd = cmd_items; commands++; break; }
+        case 'T': { cmd = cmd_token; commands++; break; }
         case 'L': { cmd = cmd_local; commands++; break; }
         case 'S': { cmd = cmd_server; commands++; args.node = optarg; break; }
         case 'C': { cmd = cmd_client; commands++; args.node = optarg; break; }
+        case 'N': { cmd = cmd_config; commands++; args.type = optarg; break; }
 
         case 'f': { args.save = optarg; break; }
         case 'c': { args.config = optarg; break; }
         case 'p': { args.service = optarg; break; }
+
         case 's': {
             size_t len = strlen(optarg);
             if (str_atox(optarg, len, &args.seed) != len)
                 usage(1, "invalid seed argument");
             break;
         };
+
+        case 'n': {
+            size_t len = strlen(optarg);
+            ssize_t ret = symbol_parse(optarg, len, &args.name);
+            if (ret < 0 || (size_t) ret != len)
+                usage(1, "invalid name argument");
+            break;
+        }
+
+        case 'a': {
+            size_t len = strlen(optarg);
+            if (str_atox(optarg, len, &args.auth) != len)
+                usage(1, "invalid auth argument");
+            break;
+        }
 
         case '?':
         default: { usage(1, NULL); }
@@ -138,6 +169,10 @@ int main(int argc, char *const argv[])
     }
     case cmd_server: {
         ok = server_run(args.node, args.service, args.save, args.config, args.seed);
+        break;
+    }
+    case cmd_config: {
+        ok = config_run(args.type, args.config, &args.name, args.auth);
         break;
     }
     default: { assert(false); }

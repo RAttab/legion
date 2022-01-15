@@ -90,8 +90,8 @@ void writer_open_nl(struct writer *);
 void writer_close(struct writer *);
 void writer_u64(struct writer *, uint64_t);
 void writer_word(struct writer *, word_t);
-void writer_atom(struct writer *, struct atoms *, word_t);
-
+void writer_atom_fetch(struct writer *, struct atoms *, word_t);
+void writer_atom(struct writer *, const struct symbol *);
 void writer_symbol(struct writer *, const struct symbol *);
 
 #define writer_symbol_str(_writer, _str)                                \
@@ -115,7 +115,7 @@ void writer_symbol(struct writer *, const struct symbol *);
         struct writer *_out = (_writer);                \
         writer_open_nl(_out);                           \
         writer_symbol_str(_out, (_key));                \
-        writer_atom(_out, (_atoms), (_val));            \
+        writer_atom_fetch(_out, (_atoms), (_val));      \
         writer_close(_out);                             \
     } while (false)
 

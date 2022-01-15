@@ -207,10 +207,11 @@ void users_read(struct users *users, struct atoms *atoms, struct reader *in)
     while (!reader_peek_close(in)) {
         struct user *user = calloc(1, sizeof(*user));
         reader_open(in);
-        user->atom = reader_field_atom(in, "name", atoms);
+        word_t atom = reader_field_atom(in, "name", atoms);
         user_read(user, in);
         reader_close(in);
 
+        if (!user->atom) user->atom = atom;
         if (uset_test(users->avail, user->id))
             reader_err(in, "duplicate user id '%u'", user->id);
         if (!user->private)
