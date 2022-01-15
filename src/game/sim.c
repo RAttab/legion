@@ -427,8 +427,10 @@ static void sim_cmd_user(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     if (!users_auth_server(&sim->users, cmd->data.user.server)) {
+        infof("failed server auth from '%s' with '%lx'",
+                cmd->data.user.name.c, cmd->data.user.server);
         sim_log(pipe, st_error, "invalid server token");
-        sim_pipe_close(pipe);
+        save_ring_close(pipe->out);
         return;
     }
 
@@ -437,25 +439,33 @@ static void sim_cmd_user(
 
     struct user *user = users_create(&sim->users, atom);
     if (!user) {
+        infof("failed to create user '%s'", cmd->data.user.name.c);
         sim_log(pipe, st_error, "unable to create user '%s'",
                 cmd->data.user.name.c);
-        sim_pipe_close(pipe);
+        save_ring_close(pipe->out);
         return;
     }
 
     pipe->auth.user = *user;
     pipe->auth.ok = true;
 
+    // \todo need a better way to ensure our user atom is persisted.
+    sim_save(sim);
+
     sim_cmd_user_response(pipe);
     sim_config_write(sim);
+
+    infof("user '%u:%s' created", user->id, cmd->data.user.name.c);
 }
 
 static void sim_cmd_auth(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     if (!users_auth_server(&sim->users, cmd->data.auth.server)) {
+        infof("failed server auth from '%u' with '%lx'",
+                cmd->data.auth.id, cmd->data.auth.server);
         sim_log(pipe, st_error, "invalid server token");
-        sim_pipe_close(pipe);
+        save_ring_close(pipe->out);
         return;
     }
 
@@ -463,9 +473,10 @@ static void sim_cmd_auth(
             &sim->users, cmd->data.auth.id, cmd->data.auth.private);
 
     if (!user) {
+        infof("failed to auth user '%u'", cmd->data.auth.id);
         sim_log(pipe, st_error, "unable to login as user '%u'",
                 cmd->data.auth.id);
-        sim_pipe_close(pipe);
+        save_ring_close(pipe->out);
         return;
     }
 
@@ -473,6 +484,11 @@ static void sim_cmd_auth(
     pipe->auth.ok = true;
 
     sim_cmd_user_response(pipe);
+
+    struct symbol name = {0};
+    bool ok = atoms_str(world_atoms(sim->world), user->atom, &name);
+    infof("user '%u:%s' authed", user->id, name.c);
+    assert(ok);
 }
 
 static void sim_cmd_io(
