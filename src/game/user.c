@@ -75,12 +75,19 @@ void user_read(struct user *user, struct reader *in)
 // users
 // -----------------------------------------------------------------------------
 
-void users_init(struct users *users)
+// Half-assed solution to use our user ids as the key to htable while user id 0
+// is a valid id. So instead of the usual +/- 1 shenanigans we | the key with
+// this mask.
+static uint64_t users_id_mask = 0x1UL << (sizeof(user_t) * 8);
+
+void users_init(struct users *users, struct atoms *atoms)
 {
     *users = (struct users) { .server = token() };
 
-    // \todo not sure what atom I should assign to the admin user.
-    struct user *admin = users_create(users, 0);
+    struct symbol sym = make_symbol("admin");
+    word_t atom = atoms_make(atoms, &sym);
+
+    struct user *admin = users_create(users, atom);
     assert(admin->id == 0);
     admin->access = -1ULL;
 }
@@ -98,7 +105,7 @@ static void users_insert(struct users *users, struct user *user)
 
     struct htable_ret ret = {0};
 
-    ret = htable_put(&users->ids, user->id, (uintptr_t) user);
+    ret = htable_put(&users->ids, user->id | users_id_mask, (uintptr_t) user);
     assert(ret.ok);
 
     ret = htable_put(&users->atoms, user->atom, (uintptr_t) user);
@@ -138,7 +145,7 @@ struct user *users_atom(struct users *users, word_t atom)
 
 struct user *users_id(struct users *users, user_t id)
 {
-    struct htable_ret ret = htable_get(&users->ids, id);
+    struct htable_ret ret = htable_get(&users->ids, id | users_id_mask);
     return ret.ok ? (void *) ret.value : NULL;
 }
 

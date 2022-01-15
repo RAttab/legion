@@ -81,7 +81,7 @@ struct users
     struct htable grant;
 };
 
-void users_init(struct users *);
+void users_init(struct users *, struct atoms *);
 void users_free(struct users *);
 
 struct user *users_create(struct users *, word_t atom);

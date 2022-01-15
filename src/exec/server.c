@@ -125,8 +125,8 @@ static void server_events(int poll, struct client *client, uint32_t events)
             switch (errno) {
             case EAGAIN: case EINTR: case ECONNRESET:  { ret = 0; break; }
             default: {
-                failf_errno("unable to read from client socket '%d'",
-                        client->socket);
+                failf_errno("unable to read from client '%s'",
+                        sockaddrs_str(&client->addr).c);
                 break;
             }
             }
@@ -138,9 +138,9 @@ static void server_events(int poll, struct client *client, uint32_t events)
         save_ring_commit(client->in, save);
     }
 
-    if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP) ||
-            save_ring_closed(client->out))
-    {
+    // If our connection is already closed then there's no reason to write out
+    // our ring buffer which would just fail anyway..
+    if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
         infof("disconnected from '%s'", sockaddrs_str(&client->addr).c);
         server_free(poll, client);
         return;
@@ -153,12 +153,21 @@ static void server_events(int poll, struct client *client, uint32_t events)
     if (save_cap(save)) {
         ssize_t ret = write(client->socket, save_bytes(save), save_cap(save));
         if (ret == -1 && !(errno == EAGAIN || errno == EINTR)) {
-            failf_errno("unable to read from client socket '%d'",
-                    client->socket);
+            failf_errno("unable to write to client '%s'",
+                    sockaddrs_str(&client->addr).c);
         }
 
         save_ring_consume(save, ret);
         save_ring_commit(client->out, save);
+    }
+
+    // If the server actively closed the connection then there's probably an
+    // error message queued so we want to make sure that our ring is written out
+    // before we close the connection.
+    if (save_ring_closed(client->out)) {
+        infof("closing connection to '%s'", sockaddrs_str(&client->addr).c);
+        server_free(poll, client);
+        return;
     }
 }
 

@@ -58,7 +58,7 @@ struct sim *sim_new(seed_t seed, const char *save)
     struct sim *sim = calloc(1, sizeof(*sim));
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
-    users_init(&sim->users);
+    users_init(&sim->users, world_atoms(sim->world));
     sim->speed = speed_slow;
     sim->stream = ts_now();
     atomic_init(&sim->join, false);
@@ -619,6 +619,12 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
         struct cmd cmd = {0};
         if (!cmd_load(&cmd, save)) {
             sim_log(pipe, st_error, "unable to load cmd '%x'", cmd.type);
+            goto commit;
+        }
+
+        if (!pipe->auth.ok && !(cmd.type == CMD_USER || cmd.type == CMD_AUTH)) {
+            sim_log(pipe, st_error, "user not authenticated");
+            save_ring_close(pipe->out);
             goto commit;
         }
 
