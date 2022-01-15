@@ -49,6 +49,7 @@ enum legion_packed save_magic
     save_magic_status        = 0x38,
     save_magic_cmd           = 0x39,
     save_magic_ack           = 0x3A,
+    save_magic_user          = 0x3B,
 
     save_magic_len,
 };

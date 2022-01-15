@@ -17,6 +17,7 @@
 #include "game/proxy.c"
 #include "game/tech.c"
 #include "game/energy.c"
+#include "game/user.c"
 #include "game/sim.c"
 #include "game/protocol.c"
 #include "game/save.c"

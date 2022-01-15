@@ -9,12 +9,11 @@
 #include "game/protocol.h"
 #include "game/chunk.h"
 #include "utils/time.h"
+#include "utils/config.h"
 
 #include <stdatomic.h>
 #include <pthread.h>
 
-static void sim_cmd_load(struct sim *);
-static void sim_cmd_save(struct sim *);
 static struct sim_pipe *sim_pipe_next(struct sim *sim, struct sim_pipe *start);
 
 
@@ -38,43 +37,34 @@ enum
 struct sim
 {
     pthread_t thread;
-    atomic_bool join;
+    atomic_bool join, reload;
     ts_t next;
 
     struct world *world;
+    struct users users;
     struct coord home;
     enum speed speed;
 
+    bool server;
     uint64_t stream;
     atomic_uintptr_t pipes;
 
-    char path[PATH_MAX];
+    char save[PATH_MAX + 1];
+    char config[PATH_MAX + 1];
 };
 
-
-struct sim *sim_new(seed_t seed, const char *file)
+struct sim *sim_new(seed_t seed, const char *save)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
-
     sim->world = world_new(seed);
     sim->home = world_populate(sim->world);
+    users_init(&sim->users, world_atoms(sim->world));
     sim->speed = speed_slow;
     sim->stream = ts_now();
     atomic_init(&sim->join, false);
-    strncpy(sim->path, file, sizeof(sim->path) - 1);
+    atomic_init(&sim->reload, false);
+    strncpy(sim->save, save, sizeof(sim->save) - 1);
     return sim;
-}
-
-struct sim *sim_load(const char *file)
-{
-    struct sim *sim = sim_new(0, file);
-    sim_cmd_load(sim);
-    return sim;
-}
-
-void sim_save(struct sim *sim)
-{
-    sim_cmd_save(sim);
 }
 
 void sim_free(struct sim *sim)
@@ -90,7 +80,47 @@ void sim_free(struct sim *sim)
     {}
 
     world_free(sim->world);
+    users_free(&sim->users);
     free(sim);
+}
+
+
+// -----------------------------------------------------------------------------
+// config
+// -----------------------------------------------------------------------------
+
+static void sim_config_write(struct sim *sim)
+{
+    struct config config = {0};
+    struct writer *out = config_write(&config, sim->config);
+
+    // \todo all the sim config options under (sim ...)
+    users_write(&sim->users, world_atoms(sim->world), out);
+
+    config_close(&config);
+}
+
+static void sim_config_read(struct sim *sim)
+{
+    struct config config = {0};
+    struct reader *in = config_read(&config, sim->config);
+
+    // \todo all the sim config options under (sim ...)
+    users_read(&sim->users, world_atoms(sim->world), in);
+
+    config_close(&config);
+}
+
+void sim_server(struct sim *sim, const char *config)
+{
+    sim->server = true;
+    strncpy(sim->config, config, sizeof(sim->config) - 1);
+    sim_config_read(sim);
+}
+
+void sim_server_reload(struct sim *sim)
+{
+    atomic_store_explicit(&sim->reload, true, memory_order_relaxed);
 }
 
 
@@ -103,6 +133,8 @@ struct sim_pipe
     atomic_uintptr_t next;
     atomic_bool closed;
     struct save_ring *in, *out;
+
+    struct { bool ok; struct user user; } auth;
 
     struct ack *ack;
     struct coord chunk;
@@ -124,6 +156,7 @@ struct sim_pipe *sim_pipe_new(struct sim *sim)
         .out = save_ring_new(sim_out_len),
         .ack = ack_new(),
         .chunk = sim->home,
+        .auth = { .ok = !sim->server },
     };
 
     uintptr_t next = atomic_load_explicit(&sim->pipes, memory_order_acquire);
@@ -325,9 +358,9 @@ static struct symbol sim_log_atom(struct sim *sim, word_t atom)
 // cmd
 // -----------------------------------------------------------------------------
 
-static void sim_cmd_save(struct sim *sim)
+void sim_save(struct sim *sim)
 {
-    struct save *save = save_file_create(sim->path, sim_save_version);
+    struct save *save = save_file_create(sim->save, sim_save_version);
 
     save_write_magic(save, save_magic_sim);
     save_write_value(save, sim->speed);
@@ -341,11 +374,11 @@ static void sim_cmd_save(struct sim *sim)
     sim_log_all(sim, st_info, "saved %zu bytes", bytes);
 }
 
-static void sim_cmd_load(struct sim *sim)
+void sim_load(struct sim *sim)
 {
-    struct save *save = save_file_load(sim->path);
+    struct save *save = save_file_load(sim->save);
     if (!save) {
-        sim_log_all(sim, st_error, "unable to open '%s'", sim->path);
+        sim_log_all(sim, st_error, "unable to open '%s'", sim->save);
         return;
     }
 
@@ -371,6 +404,91 @@ static void sim_cmd_load(struct sim *sim)
     else sim_log_all(sim, st_info, "loaded %zu bytes", bytes);
 
     save_file_close(save);
+}
+
+static void sim_cmd_user_response(struct sim_pipe *pipe)
+{
+    struct save *save = save_ring_write(pipe->out);
+
+    struct header *head = save_bytes(save);
+    if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+        sim_log(pipe, st_warn, "unable to return auth info: %zu", save_cap(save));
+        return;
+    }
+
+    user_save(&pipe->auth.user, save);
+
+    *head = make_header(header_user, save_len(save));
+    save_ring_commit(pipe->out, save);
+    save_ring_wake_signal(pipe->out);
+}
+
+static void sim_cmd_user(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
+{
+    if (!users_auth_server(&sim->users, cmd->data.user.server)) {
+        infof("failed server auth from '%s' with '%lx'",
+                cmd->data.user.name.c, cmd->data.user.server);
+        sim_log(pipe, st_error, "invalid server token");
+        save_ring_close(pipe->out);
+        return;
+    }
+
+    word_t atom = atoms_make(world_atoms(sim->world), &cmd->data.user.name);
+    assert(atom);
+
+    struct user *user = users_create(&sim->users, atom);
+    if (!user) {
+        infof("failed to create user '%s'", cmd->data.user.name.c);
+        sim_log(pipe, st_error, "unable to create user '%s'",
+                cmd->data.user.name.c);
+        save_ring_close(pipe->out);
+        return;
+    }
+
+    pipe->auth.user = *user;
+    pipe->auth.ok = true;
+
+    // \todo need a better way to ensure our user atom is persisted.
+    sim_save(sim);
+
+    sim_cmd_user_response(pipe);
+    sim_config_write(sim);
+
+    infof("user '%u:%s' created", user->id, cmd->data.user.name.c);
+}
+
+static void sim_cmd_auth(
+        struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
+{
+    if (!users_auth_server(&sim->users, cmd->data.auth.server)) {
+        infof("failed server auth from '%u' with '%lx'",
+                cmd->data.auth.id, cmd->data.auth.server);
+        sim_log(pipe, st_error, "invalid server token");
+        save_ring_close(pipe->out);
+        return;
+    }
+
+    struct user *user = users_auth_user(
+            &sim->users, cmd->data.auth.id, cmd->data.auth.private);
+
+    if (!user) {
+        infof("failed to auth user '%u'", cmd->data.auth.id);
+        sim_log(pipe, st_error, "unable to login as user '%u'",
+                cmd->data.auth.id);
+        save_ring_close(pipe->out);
+        return;
+    }
+
+    pipe->auth.user = *user;
+    pipe->auth.ok = true;
+
+    sim_cmd_user_response(pipe);
+
+    struct symbol name = {0};
+    bool ok = atoms_str(world_atoms(sim->world), user->atom, &name);
+    infof("user '%u:%s' authed", user->id, name.c);
+    assert(ok);
 }
 
 static void sim_cmd_io(
@@ -520,6 +638,12 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
             goto commit;
         }
 
+        if (!pipe->auth.ok && !(cmd.type == CMD_USER || cmd.type == CMD_AUTH)) {
+            sim_log(pipe, st_error, "user not authenticated");
+            save_ring_close(pipe->out);
+            goto commit;
+        }
+
         switch (cmd.type)
         {
         case CMD_QUIT: {
@@ -527,8 +651,11 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
             break;
         }
 
-        case CMD_SAVE: { sim_cmd_save(sim); break; }
-        case CMD_LOAD: { sim_cmd_load(sim); break; }
+        case CMD_SAVE: { sim_save(sim); break; }
+        case CMD_LOAD: { sim_load(sim); break; }
+
+        case CMD_USER: { sim_cmd_user(sim, pipe, &cmd); break; }
+        case CMD_AUTH: { sim_cmd_auth(sim, pipe, &cmd); break; }
 
         case CMD_ACK: {
             if (pipe->ack) ack_free(pipe->ack);
@@ -671,8 +798,12 @@ void sim_loop(struct sim *sim)
     const ts_t sleep_fast = ts_sec / sim_freq_fast;
     ts_t now = sim->next = ts_now();
 
-    while (true) {
-        if (atomic_load_explicit(&sim->join, memory_order_relaxed)) break;
+    while (!atomic_load_explicit(&sim->join, memory_order_relaxed)) {
+
+        // Should eventually get more complicated as we might need to close some
+        // pipes if we've invalidated active users but keep it simple for now.
+        if (atomic_exchange_explicit(&sim->reload, false, memory_order_relaxed))
+            sim_config_read(sim);
 
         ts_t sleep = 0;
         switch (sim->speed) {

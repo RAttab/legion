@@ -13,9 +13,9 @@
 // local
 // -----------------------------------------------------------------------------
 
-int local_run(const char *file)
+int local_run(const char *file, seed_t seed)
 {
-    struct sim *sim = sim_new(0, file);
+    struct sim *sim = sim_new(seed, file);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
     sim_fork(sim);
 

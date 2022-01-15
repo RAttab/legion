@@ -157,6 +157,19 @@ void cmd_save(const struct cmd *cmd, struct save *save)
     case CMD_SAVE:
     case CMD_LOAD: { break; }
 
+    case CMD_USER: {
+        save_write_value(save, cmd->data.user.server);
+        symbol_save(&cmd->data.user.name, save);
+        break;
+    }
+
+    case CMD_AUTH: {
+        save_write_value(save, cmd->data.auth.server);
+        save_write_value(save, cmd->data.auth.id);
+        save_write_value(save, cmd->data.auth.private);
+        break;
+    }
+
     case CMD_ACK: {
         ack_save(cmd->data.ack, save);
         break;
@@ -222,6 +235,19 @@ bool cmd_load(struct cmd *cmd, struct save *save)
 
     case CMD_SAVE:
     case CMD_LOAD: { break; }
+
+    case CMD_USER: {
+        save_read_into(save, &cmd->data.user.server);
+        symbol_load(&cmd->data.user.name, save);
+        break;
+    }
+
+    case CMD_AUTH: {
+        save_read_into(save, &cmd->data.auth.server);
+        save_read_into(save, &cmd->data.auth.id);
+        save_read_into(save, &cmd->data.auth.private);
+        break;
+    }
 
     case CMD_ACK: {
         if (!(cmd->data.ack = ack_load(save))) return false;

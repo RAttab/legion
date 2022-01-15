@@ -27,6 +27,9 @@ const char *dir_it_path(struct dir_it *);
 
 size_t file_len(int fd);
 
+bool file_exists(const char *path);
+void file_tmpbak_swap(const char *path);
+
 
 // -----------------------------------------------------------------------------
 // mfile

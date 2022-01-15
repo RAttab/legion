@@ -140,9 +140,10 @@ static bool client_events(int poll, struct server *server, int events)
     return true;
 }
 
-bool client_run(const char *node, const char *service)
+bool client_run(const char *node, const char *service, const char *config)
 {
     client.proxy = proxy_new();
+    proxy_auth(client.proxy, config);
 
     sdl_disable_signals();
     render_init(client.proxy);
@@ -184,7 +185,9 @@ bool client_run(const char *node, const char *service)
                 continue;
             }
 
-            assert(server && server == ev->data.ptr);
+            if (!server) continue;
+            assert(server == ev->data.ptr);
+
             if (client_events(poll, ev->data.ptr, ev->events)) {
                 if (!connected) infof("connected to '%s:%s'", node, service);
                 connected = true;
@@ -200,7 +203,7 @@ bool client_run(const char *node, const char *service)
         if (!server) {
             ts_t now = ts_now();
             if (now < reconn.ts) continue;
-            reconn.inc = legion_min(reconn.inc * 2, (size_t) 60);
+            reconn.inc = legion_min(reconn.inc * 2, (size_t) 20);
             reconn.ts = (reconn.inc * ts_sec) + now;
 
             infof("reconnecting to '%s:%s'", node, service);

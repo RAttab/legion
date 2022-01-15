@@ -473,8 +473,9 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     it++;
 
     struct symbol symbol = {0};
-    if (!symbol_parse(it, end - it, &symbol)) return NULL;
-    it += symbol.len;
+    ssize_t ret = symbol_parse(it, end - it, &symbol);
+    if (ret == -1) return NULL;
+    it += ret;
 
     mod_maj_t mod_maj = mods_find(mods, &symbol);
     if (!mod_maj) return NULL;

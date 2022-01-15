@@ -30,16 +30,20 @@ enum
     sim_out_len = 2000 * s_page_len,
 };
 
-struct sim *sim_new(seed_t seed, const char *file);
-struct sim *sim_load(const char *file);
-void sim_save(struct sim *);
+struct sim *sim_new(seed_t seed, const char *save);
 void sim_free(struct sim *);
+
+void sim_server(struct sim *, const char *config);
+void sim_server_reload(struct sim *);
 
 struct sim_pipe;
 struct sim_pipe *sim_pipe_new(struct sim *);
 void sim_pipe_close(struct sim_pipe *);
 struct save_ring *sim_pipe_in(struct sim_pipe *);
 struct save_ring *sim_pipe_out(struct sim_pipe *);
+
+void sim_save(struct sim *);
+void sim_load(struct sim *);
 
 void sim_step(struct sim *);
 void sim_loop(struct sim *);

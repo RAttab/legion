@@ -29,7 +29,7 @@ static_assert(sizeof(struct symbol) == 32);
 struct symbol make_symbol(const char *str);
 struct symbol make_symbol_len(const char *str, size_t len);
 
-inline uint64_t symbol_hash(const struct symbol *symbol)
+inline hash_t symbol_hash(const struct symbol *symbol)
 {
     return hash_bytes(hash_init(), symbol->c, symbol->len);
 }
@@ -68,7 +68,7 @@ inline bool symbol_char(char c)
     }
 }
 
-size_t symbol_parse(const char *it, size_t len, struct symbol *value);
+ssize_t symbol_parse(const char *it, size_t len, struct symbol *value);
 
 void symbol_save(const struct symbol *sym, struct save *);
 bool symbol_load(struct symbol *sym, struct save *);

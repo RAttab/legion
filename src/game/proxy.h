@@ -31,6 +31,7 @@ struct proxy;
 struct proxy *proxy_new(void);
 void proxy_free(struct proxy *);
 
+void proxy_auth(struct proxy *, const char *config);
 bool proxy_update(struct proxy *);
 
 struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);

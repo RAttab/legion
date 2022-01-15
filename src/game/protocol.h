@@ -10,6 +10,7 @@
 #include "game/world.h"
 #include "game/chunk.h"
 #include "game/tech.h"
+#include "game/user.h"
 #include "utils/htable.h"
 
 struct vec64;
@@ -47,6 +48,7 @@ enum legion_packed header_type
     header_cmd = 1,
     header_state = 2,
     header_status = 3,
+    header_user = 4,
 };
 
 static_assert(sizeof(enum header_type) == 1);
@@ -144,6 +146,8 @@ enum cmd_type
 
     CMD_SAVE         = 0x10,
     CMD_LOAD         = 0x11,
+    CMD_USER         = 0x12,
+    CMD_AUTH         = 0x13,
 
     CMD_ACK          = 0x20,
     CMD_SPEED        = 0x21,
@@ -164,6 +168,9 @@ struct cmd
 
     union
     {
+        struct { token_t server; struct symbol name; } user;
+        struct { token_t server; uid_t id; token_t private; } auth;
+
         struct ack *ack;
         enum speed speed;
         struct coord chunk;
