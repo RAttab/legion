@@ -24,7 +24,9 @@ void check_file(const char *path)
 
     sys_populate();
     struct world *old = world_new(0);
-    struct coord coord = world_populate(old);
+    world_populate(old);
+    struct coord coord = world_home(old, user_admin);
+
     world_step(old); // to create all the objects.
 
     {

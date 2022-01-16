@@ -23,7 +23,6 @@ struct tech
     struct htable research;
 };
 
-void tech_init(struct tech *);
 void tech_free(struct tech *);
 
 void tech_save(const struct tech *, struct save *);

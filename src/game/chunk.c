@@ -27,6 +27,7 @@ struct chunk
 {
     struct world *world;
     struct star star;
+    user_t owner;
     word_t name;
 
     world_ts_t updated;
@@ -94,7 +95,7 @@ struct chunk *chunk_alloc_empty(void)
 }
 
 struct chunk *chunk_alloc(
-        struct world *world, const struct star *star, word_t name)
+        struct world *world, const struct star *star, user_t owner, word_t name)
 {
     assert(world);
 
@@ -102,6 +103,7 @@ struct chunk *chunk_alloc(
     chunk->world = world;
     chunk->star = *star;
     chunk->name = name;
+    chunk->owner = owner;
     chunk->updated = world_time(world);
     return chunk;
 }
@@ -115,9 +117,7 @@ void chunk_free(struct chunk *chunk)
 
     for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
-    {
         ring32_free((void *) it->value);
-    }
     htable_reset(&chunk->provided);
 
     ring64_free(chunk->pills);
@@ -125,14 +125,12 @@ void chunk_free(struct chunk *chunk)
 
     for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
          it; it = htable_next(&chunk->listen, it))
-    {
         free((void *) it->value);
-    }
     htable_reset(&chunk->listen);
 
-    for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
+    for (struct active *it = active_next(chunk, NULL);
+         it; it = active_next(chunk, it))
         active_free(it);
-
     free(chunk);
 }
 
@@ -226,6 +224,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_magic(save, save_magic_chunk);
 
     save_write_value(save, chunk->name);
+    save_write_value(save, chunk->owner);
     star_save(&chunk->star, save);
 
     chunk_save_provided(chunk, save);
@@ -252,6 +251,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     chunk->world = world;
 
     save_read_into(save, &chunk->name);
+    save_read_into(save, &chunk->owner);
     star_load(&chunk->star, save);
 
     if (!chunk_load_provided(chunk, save)) goto fail;
@@ -366,6 +366,7 @@ void chunk_save_delta(
     save_write_magic(save, save_magic_chunk);
 
     save_write_value(save, chunk->name);
+    save_write_value(save, chunk->owner);
     star_save(&chunk->star, save);
 
     const struct chunk_ack *cack = &ack->chunk;
@@ -393,6 +394,7 @@ bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
     if (!save_read_magic(save, save_magic_chunk)) return false;
 
     save_read_into(save, &chunk->name);
+    save_read_into(save, &chunk->owner);
     if (!star_load(&chunk->star, save)) return false;
 
     if (!coord_eq(ack->chunk.coord, chunk->star.coord)) ack_reset_chunk(ack);
@@ -421,7 +423,12 @@ bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
 // ops
 // -----------------------------------------------------------------------------
 
-struct world *chunk_world(struct chunk *chunk)
+user_t chunk_owner(struct chunk *chunk)
+{
+    return chunk->owner;
+}
+
+struct world *chunk_world(const struct chunk *chunk)
 {
     assert(chunk->world);
     return chunk->world;
@@ -430,6 +437,11 @@ struct world *chunk_world(struct chunk *chunk)
 const struct star *chunk_star(const struct chunk *chunk)
 {
     return &chunk->star;
+}
+
+struct tech *chunk_tech(const struct chunk *chunk)
+{
+    return world_tech(chunk_world(chunk), chunk->owner);
 }
 
 world_ts_t chunk_updated(const struct chunk *chunk)
@@ -569,7 +581,7 @@ void chunk_log(struct chunk *chunk, id_t id, enum io io, enum ioe err)
 
     struct coord star = chunk->star.coord;
     log_push(chunk->log, world_time(chunk->world), star, id, io, err);
-    world_log_push(chunk->world, star, id, io, err);
+    world_log_push(chunk->world, chunk->owner, star, id, io, err);
 }
 
 const struct log *chunk_logs(struct chunk *chunk)
@@ -729,7 +741,11 @@ void chunk_lanes_launch(
     default: { assert(false); }
     }
 
-    world_lanes_launch(chunk->world, type, speed, chunk->star.coord, dst, data, len);
+    world_lanes_launch(
+            chunk->world,
+            chunk->owner, type, speed,
+            chunk->star.coord, dst,
+            data, len);
 }
 
 

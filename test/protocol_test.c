@@ -43,8 +43,11 @@ void check(void)
     enum { attempts = 5, steps = 100 };
 
     sys_populate();
+    const user_t user = user_admin;
     struct world *world = world_new(0);
-    struct coord home = world_populate(world);
+    world_populate(world);
+    struct coord home = world_home(world, user);
+
     world_step(world); // to create all the objects.
 
     struct save *save = save_mem_new();
@@ -69,13 +72,15 @@ void check(void)
 
     struct ack *ack = ack_new();
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
-        world_log_push(world, make_coord(1, 1), make_id(1, 1), IO_PING, IOE_INVALID_STATE);
+        world_log_push(world, user, make_coord(1, 1), make_id(1, 1), IO_PING, IOE_INVALID_STATE);
+        world_log_push(world, user, make_coord(2, 2), make_id(2, 2), IO_NAME, IOE_MISSING_ARG);
 
         save_mem_reset(save);
         state_save(save, &(struct state_ctx) {
                     .world = world,
+                    .access = user_to_uset(user),
+                    .user = user,
                     .speed = speed_fast,
-                    .home = home,
                     .mod = mod_id,
                     .chunk = home,
                     .compile = NULL,
@@ -129,13 +134,13 @@ void check(void)
         }
 
         {
-            const struct tech *tech = world_tech(world);
+            const struct tech *tech = world_tech(world, user);
             assert(tape_set_eq(&tech->known, &state->tech.known));
             assert(tape_set_eq(&tech->learned, &state->tech.learned));
             assert(htable_eq(&tech->research, &state->tech.research));
         }
 
-        const struct logi *wd_log = log_next(world_log(world), NULL);
+        const struct logi *wd_log = log_next(world_log(world, user), NULL);
         const struct logi *st_log = log_next(state->log, NULL);
         while (wd_log) {
             assert(coord_eq(wd_log->star, st_log->star));
@@ -144,7 +149,7 @@ void check(void)
             assert(wd_log->io == st_log->io);
             assert(wd_log->err == st_log->err);
 
-            wd_log = log_next(world_log(world), wd_log);
+            wd_log = log_next(world_log(world, user), wd_log);
             st_log = log_next(state->log, st_log);
         }
         assert(wd_log == st_log);

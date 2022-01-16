@@ -15,10 +15,11 @@
 
 legion_packed struct lane_data
 {
+    user_t owner;
     enum item item;
     bool forward;
     uint8_t len;
-    legion_pad(5);
+    legion_pad(4);
     word_t data[];
 };
 
@@ -352,7 +353,7 @@ bool lanes_list_load_into(struct htable *lanes, struct save *save)
 
 void lanes_launch(
         struct lanes *lanes,
-        enum item type, size_t speed,
+        user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len)
 {
@@ -374,6 +375,7 @@ void lanes_launch(
     {
         struct lane_data *data_ptr = heap_ptr(&lanes->data, data_index);
         *data_ptr = (struct lane_data) {
+            .owner = owner,
             .item = type,
             .forward = coord_eq(src, lane->src),
             .len = len,
@@ -401,7 +403,11 @@ void lanes_step(struct lanes *lanes)
 
             struct coord src = data->forward ? lane->src : lane->dst;
             struct coord dst = data->forward ? lane->dst : lane->src;
-            world_lanes_arrive(lanes->world, data->item, src, dst, data->data, data->len);
+            world_lanes_arrive(
+                    lanes->world,
+                    data->owner, data->item,
+                    src, dst,
+                    data->data, data->len);
 
             heap_del(&lanes->data, data_index, lane_data_len(data->len));
         }

@@ -21,32 +21,67 @@
 // world
 // -----------------------------------------------------------------------------
 
+struct world_user
+{
+    bool active;
+    user_t id;
+    struct coord home;
+    struct tech tech;
+    struct log *log;
+};
+
 struct world
 {
     seed_t seed;
     world_ts_t time;
 
-    struct tech tech;
     struct mods *mods;
     struct atoms *atoms;
 
     struct htable sectors;
     struct htable chunks;
     struct lanes lanes;
-    struct log *log;
+    struct world_user users[user_max];
 };
+
+
+// -----------------------------------------------------------------------------
+// user
+// -----------------------------------------------------------------------------
+
+static struct world_user *world_user(struct world *world, user_t id)
+{
+    assert(id < array_len(world->users));
+    struct world_user *user = world->users + id;
+    assert(user->active);
+    return user;
+}
+
+static struct world_user *world_user_next(
+        struct world *world, struct world_user *it)
+{
+    it = it ? it + 1 : world->users;
+    for (; it < world->users + array_len(world->users); it++) {
+        if (!it->active) continue;
+        return it;
+    }
+    return NULL;
+}
+
+
+// -----------------------------------------------------------------------------
+// world
+// -----------------------------------------------------------------------------
 
 struct world *world_new(seed_t seed)
 {
     struct world *world = calloc(1, sizeof(*world));
 
     world->seed = seed;
-    tech_init(&world->tech);
     world->atoms = atoms_new();
     world->mods = mods_new();
     lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
-    world->log = log_new(world_log_cap);
 
     return world;
 }
@@ -56,8 +91,6 @@ void world_free(struct world *world)
     atoms_free(world->atoms);
     mods_free(world->mods);
     lanes_free(&world->lanes);
-    log_free(world->log);
-    tech_free(&world->tech);
 
     for(const struct htable_bucket *it = htable_next(&world->chunks, NULL);
         it; it = htable_next(&world->chunks, it))
@@ -69,7 +102,83 @@ void world_free(struct world *world)
         sector_free((struct sector *) it->value);
     htable_reset(&world->sectors);
 
+    for (struct world_user *it = world_user_next(world, NULL);
+         it; it = world_user_next(world, it))
+    {
+        tech_free(&it->tech);
+        log_free(it->log);
+    }
+
     free(world);
+}
+
+
+// -----------------------------------------------------------------------------
+// save/load
+// -----------------------------------------------------------------------------
+
+static void world_save_users(struct world *world, struct save *save)
+{
+    for (struct world_user *it = world_user_next(world, NULL);
+         it; it = world_user_next(world, it))
+    {
+        save_write_value(save, it->id);
+        save_write_value(save, coord_to_u64(it->home));
+        tech_save(&it->tech, save);
+        log_save(it->log, save);
+    }
+
+    save_write_value(save, (user_t) 0xFF);
+}
+
+static bool world_load_users(struct world *world, struct save *save)
+{
+    for (struct world_user *it = world_user_next(world, NULL);
+         it; it = world_user_next(world, it))
+    {
+        log_free(it->log);
+        tech_free(&it->tech);
+    }
+    memset(world->users, 0, sizeof(world->users));
+
+    while (true) {
+        user_t id = save_read_type(save, typeof(id));
+        if (id == 0xFF) break;
+        assert(id < array_len(world->users));
+
+        struct world_user *user = world->users + id;
+        user->active = true;
+        user->id = id;
+        user->home = coord_from_u64(save_read_type(save, uint64_t));
+
+        if (!tech_load(&user->tech, save)) return false;
+        if (!(user->log = log_load(save))) return false;
+    }
+
+    return true;
+}
+
+
+void world_save(struct world *world, struct save *save)
+{
+    save_write_magic(save, save_magic_world);
+
+    save_write_value(save, world->seed);
+    save_write_value(save, world->time);
+
+    atoms_save(world->atoms, save);
+    mods_save(world->mods, save);
+    lanes_save(&world->lanes, save);
+    world_save_users(world, save);
+
+    save_write_value(save, (uint32_t) world->chunks.len);
+    for (const struct htable_bucket *it = htable_next(&world->chunks, NULL);
+         it; it = htable_next(&world->chunks, it))
+    {
+        chunk_save((struct chunk *) it->value, save);
+    }
+
+    save_write_magic(save, save_magic_world);
 }
 
 struct world *world_load(struct save *save)
@@ -80,8 +189,6 @@ struct world *world_load(struct save *save)
     save_read_into(save, &world->seed);
     save_read_into(save, &world->time);
 
-    if (!tech_load(&world->tech, save)) goto fail;
-
     if (world->atoms) atoms_free(world->atoms);
     if (!(world->atoms = atoms_load(save))) goto fail;
 
@@ -89,9 +196,7 @@ struct world *world_load(struct save *save)
     if (!(world->mods = mods_load(save))) goto fail;
 
     if (!lanes_load(&world->lanes, world, save)) goto fail;
-
-    if (world->log) log_free(world->log);
-    if (!(world->log = log_load(save))) goto fail;
+    if (!world_load_users(world, save)) goto fail;
 
     size_t chunks = save_read_type(save, uint32_t);
     htable_reserve(&world->chunks, chunks);
@@ -112,28 +217,10 @@ struct world *world_load(struct save *save)
     return NULL;
 }
 
-void world_save(struct world *world, struct save *save)
-{
-    save_write_magic(save, save_magic_world);
 
-    save_write_value(save, world->seed);
-    save_write_value(save, world->time);
-
-    tech_save(&world->tech, save);
-    atoms_save(world->atoms, save);
-    mods_save(world->mods, save);
-    lanes_save(&world->lanes, save);
-    log_save(world->log, save);
-
-    save_write_value(save, (uint32_t) world->chunks.len);
-    for (const struct htable_bucket *it = htable_next(&world->chunks, NULL);
-         it; it = htable_next(&world->chunks, it))
-    {
-        chunk_save((struct chunk *) it->value, save);
-    }
-
-    save_write_magic(save, save_magic_world);
-}
+// -----------------------------------------------------------------------------
+// basics
+// -----------------------------------------------------------------------------
 
 void world_step(struct world *world)
 {
@@ -157,10 +244,14 @@ world_ts_t world_time(struct world *world)
     return world->time;
 }
 
-
-struct tech *world_tech(struct world *world)
+struct coord world_home(struct world *world, user_t user)
 {
-    return &world->tech;
+    return world_user(world, user)->home;
+}
+
+struct tech *world_tech(struct world *world, user_t user)
+{
+    return &world_user(world, user)->tech;
 }
 
 struct atoms *world_atoms(struct world *world)
@@ -173,7 +264,8 @@ struct mods *world_mods(struct world *world)
     return world->mods;
 }
 
-struct chunk *world_chunk_alloc(struct world *world, struct coord coord)
+struct chunk *world_chunk_alloc(
+        struct world *world, struct coord coord, user_t user)
 {
     if (unlikely(coord_is_nil(coord))) return NULL;
 
@@ -187,7 +279,7 @@ struct chunk *world_chunk_alloc(struct world *world, struct coord coord)
     assert(star);
 
     word_t name = gen_name(coord, world->seed, world->atoms);
-    chunk = chunk_alloc(world, star, name);
+    chunk = chunk_alloc(world, star, user, name);
 
     uint64_t key = coord_to_u64(coord);
     struct htable_ret ret = htable_put(&world->chunks, key, (uintptr_t) chunk);
@@ -230,21 +322,27 @@ word_t world_star_name(struct world *world, struct coord coord)
 }
 
 
-struct log *world_log(struct world *world)
+struct log *world_log(struct world *world, user_t id)
 {
-    return world->log;
+    return world_user(world, id)->log;
 }
 
 void world_log_push(
-        struct world *world, struct coord star, id_t id, enum io io, enum ioe ioe)
+        struct world *world,
+        user_t owner,
+        struct coord star,
+        id_t id,
+        enum io io,
+        enum ioe ioe)
 {
-    log_push(world->log, world->time, star, id, io, ioe);
+    log_push(world_user(world, owner)->log, world->time, star, id, io, ioe);
 }
 
 
 // -----------------------------------------------------------------------------
 // scan
 // -----------------------------------------------------------------------------
+// This is user agnostic and should not be filtered.
 
 struct world_scan_it world_scan_it(struct world *world, struct coord coord)
 {
@@ -282,6 +380,7 @@ ssize_t world_scan(struct world *world, struct coord coord, enum item item)
 // chunk
 // -----------------------------------------------------------------------------
 
+// \todo Only used in one test so...
 struct vec64 *world_chunk_list(struct world *world)
 {
     struct vec64 *vec = vec64_reserve(world->chunks.len);
@@ -293,20 +392,19 @@ struct vec64 *world_chunk_list(struct world *world)
     return vec;
 }
 
-struct world_chunk_it world_chunk_it(struct world *world)
+struct world_chunk_it world_chunk_it(struct world *world, uset_t filter)
 {
-    return (struct world_chunk_it) {
-        .it = htable_next(&world->chunks, NULL),
-    };
+    (void) world;
+    return (struct world_chunk_it) { .filter = filter, .it = NULL };
 }
 
 struct chunk *world_chunk_next(struct world *world, struct world_chunk_it *it)
 {
-    if (!it->it) return NULL;
-
-    struct chunk *chunk = (void *) it->it->value;
-    it->it = htable_next(&world->chunks, it->it);
-    return chunk;
+    while ((it->it = htable_next(&world->chunks, it->it))) {
+        struct chunk *chunk = (void *) it->it->value;
+        if (uset_test(it->filter, chunk_owner(chunk))) return chunk;
+    }
+    return NULL;
 }
 
 
@@ -326,20 +424,20 @@ void world_lanes_list_save(struct world *world, struct save *save)
 
 void world_lanes_launch(
         struct world *world,
-        enum item type, size_t speed,
+        user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len)
 {
-    lanes_launch(&world->lanes, type, speed, src, dst, data, len);
+    lanes_launch(&world->lanes, owner, type, speed, src, dst, data, len);
 }
 
 void world_lanes_arrive(
         struct world *world,
-        enum item type,
+        user_t owner, enum item type,
         struct coord src, struct coord dst,
         const word_t *data, size_t len)
 {
-    struct chunk *chunk = world_chunk_alloc(world, dst);
+    struct chunk *chunk = world_chunk_alloc(world, dst, owner);
     assert(chunk);
 
     chunk_lanes_arrive(chunk, type, src, data, len);
@@ -367,14 +465,20 @@ static struct coord world_populate_home(struct sector *sector)
     return coord_nil();
 }
 
-struct coord world_populate(struct world *world)
+void world_populate_user(struct world *world, user_t id)
 {
-    im_populate_atoms(world->atoms);
-    mods_populate(world->mods, world->atoms);
-    tech_populate(&world->tech);
+    assert(id < array_len(world->users));
 
+    struct world_user *user = world->users + id;
+    assert(!user->active);
+
+    user->active = true;
+    user->id = id;
+    user->log = log_new(world_log_cap);
+    tech_populate(&user->tech);
+
+    struct rng rng = rng_make(token());
     struct sector *sector = NULL;
-    struct rng rng = rng_make(0);
 
     while (true) {
         if (sector) sector_free(sector);
@@ -382,17 +486,25 @@ struct coord world_populate(struct world *world)
         sector = gen_sector(coord_from_u64(rng_step(&rng)), world->seed);
         if (sector->stars_len < 100) continue;
 
-        struct coord home = world_populate_home(sector);
-        if (coord_is_nil(home)) continue;
+        user->home = world_populate_home(sector);
+        if (coord_is_nil(user->home)) continue;
 
         sector_free(sector);
 
-        struct chunk *chunk = world_chunk_alloc(world, home);
+        struct chunk *chunk = world_chunk_alloc(world, user->home, user->id);
         assert(chunk);
 
         for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++)
             chunk_create(chunk, *it);
 
-        return home;
+        break;
     }
+}
+
+
+void world_populate(struct world *world)
+{
+    im_populate_atoms(world->atoms);
+    mods_populate(world->mods, world->atoms);
+    world_populate_user(world, user_admin);
 }

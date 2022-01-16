@@ -11,12 +11,6 @@
 // tech
 // -----------------------------------------------------------------------------
 
-void tech_init(struct tech *tech)
-{
-    (void) tech;
-    // noop
-}
-
 void tech_free(struct tech *tech)
 {
     htable_reset(&tech->research);

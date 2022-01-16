@@ -15,7 +15,7 @@ void test_ports_1on1(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, 0);
+    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_EXTRACT, 1);
@@ -46,7 +46,7 @@ void test_ports_2on1(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, 0);
+    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
     id_t src0 = make_id(ITEM_EXTRACT, 1);
@@ -80,7 +80,7 @@ void test_ports_1on2(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, 0);
+    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_EXTRACT, 1);
@@ -117,7 +117,7 @@ void test_ports_reset(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, 0);
+    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
     id_t src = make_id(ITEM_EXTRACT, 1);

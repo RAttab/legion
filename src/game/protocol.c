@@ -319,10 +319,8 @@ struct state *state_alloc(void)
         .mods = mods_list_reserve(16),
         .chunks = vec64_reserve(16),
         .log = log_new(world_log_cap),
+        .chunk = { .chunk = chunk_alloc_empty() },
     };
-
-    state->chunk.chunk = chunk_alloc_empty();
-    tech_init(&state->tech);
 
     return state;
 }
@@ -350,15 +348,17 @@ void state_free(struct state *state)
 }
 
 static void state_save_chunks(
-        struct world *world, struct save *save, const struct ack *ack)
+        struct world *world,
+        struct save *save,
+        const struct state_ctx *ctx)
 {
     save_write_magic(save, save_magic_chunks);
 
     struct chunk *chunk = NULL;
-    struct world_chunk_it it = world_chunk_it(world);
+    struct world_chunk_it it = world_chunk_it(world, ctx->access);
 
     while ((chunk = world_chunk_next(world, &it))) {
-        if (chunk_updated(chunk) < ack->time) continue;
+        if (chunk_updated(chunk) < ctx->ack->time) continue;
         save_write_value(save, coord_to_u64(chunk_star(chunk)->coord));
         save_write_value(save, chunk_name(chunk));
     }
@@ -406,15 +406,15 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     save_write_value(save, world_seed(ctx->world));
     save_write_value(save, world_time(ctx->world));
     save_write_value(save, ctx->speed);
-    save_write_value(save, coord_to_u64(ctx->home));
+    save_write_value(save, coord_to_u64(world_home(ctx->world, ctx->user)));
     save_write_magic(save, save_magic_state_world);
 
     atoms_save_delta(world_atoms(ctx->world), save, ctx->ack);
     mods_list_save(world_mods(ctx->world), save);
-    state_save_chunks(ctx->world, save, ctx->ack);
+    state_save_chunks(ctx->world, save, ctx);
     world_lanes_list_save(ctx->world, save);
-    tech_save(world_tech(ctx->world), save);
-    log_save_delta(world_log(ctx->world), save, ctx->ack->time);
+    tech_save(world_tech(ctx->world, ctx->user), save);
+    log_save_delta(world_log(ctx->world, ctx->user), save, ctx->ack->time);
 
     {
         save_write_magic(save, save_magic_state_compile);

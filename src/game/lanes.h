@@ -40,7 +40,7 @@ bool lanes_list_load_into(struct htable *, struct save *);
 
 void lanes_launch(
         struct lanes *,
-        enum item type, size_t speed,
+        user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word_t *data, size_t len);
 

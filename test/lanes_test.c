@@ -59,17 +59,18 @@ void test_basics(void)
     struct world *world = world_new(0);
     const struct sector *sector = world_sector(world, coord_center());
 
+    const user_t user = 13;
     const size_t speed = 100;
     const enum item item = ITEM_PILL;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
 
     for (size_t iteration = 0; iteration < 5; ++iteration) {
-        world_lanes_launch(world, item, speed, src, dst, NULL, 0);
+        world_lanes_launch(world, user, item, speed, src, dst, NULL, 0);
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
-        world_lanes_launch(world, item, speed, dst, src, NULL, 0);
+        world_lanes_launch(world, user, item, speed, dst, src, NULL, 0);
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
@@ -84,6 +85,7 @@ void test_basics(void)
 
         assert(chunk_scan(chunk_src, item) > (ssize_t) iteration);
         assert(chunk_scan(chunk_dst, item) > (ssize_t) iteration);
+        assert(chunk_owner(chunk_dst) == user);
     }
 
     world_free(world);
@@ -101,11 +103,11 @@ void test_speed(void)
     const enum item item_fast = ITEM_MEMORY;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
-    struct chunk *chunk_dst = world_chunk_alloc(world, dst);
+    struct chunk *chunk_dst = world_chunk_alloc(world, dst, user_admin);
 
     for (size_t i = 0; i < count; ++i) {
-        world_lanes_launch(world, item_slow, speed_slow, src, dst, NULL, 0);
-        world_lanes_launch(world, item_fast, speed_fast, src, dst, NULL, 0);
+        world_lanes_launch(world, user_admin, item_slow, speed_slow, src, dst, NULL, 0);
+        world_lanes_launch(world, user_admin, item_fast, speed_fast, src, dst, NULL, 0);
         world_step(world);
     }
 

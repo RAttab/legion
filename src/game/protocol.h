@@ -229,10 +229,11 @@ void state_free(struct state *);
 struct state_ctx
 {
     uint64_t stream;
+    uset_t access;
+    user_t user;
 
     struct world *world;
     enum speed speed;
-    struct coord home;
 
     mod_t mod;
     struct coord chunk;

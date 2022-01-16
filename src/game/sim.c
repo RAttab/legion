@@ -42,7 +42,6 @@ struct sim
 
     struct world *world;
     struct users users;
-    struct coord home;
     enum speed speed;
 
     bool server;
@@ -57,7 +56,7 @@ struct sim *sim_new(seed_t seed, const char *save)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
     sim->world = world_new(seed);
-    sim->home = world_populate(sim->world);
+    world_populate(sim->world);
     users_init(&sim->users, world_atoms(sim->world));
     sim->speed = speed_slow;
     sim->stream = ts_now();
@@ -155,9 +154,13 @@ struct sim_pipe *sim_pipe_new(struct sim *sim)
         .in = save_ring_new(sim_in_len),
         .out = save_ring_new(sim_out_len),
         .ack = ack_new(),
-        .chunk = sim->home,
-        .auth = { .ok = !sim->server },
     };
+
+    if (!sim->server) {
+        pipe->auth.ok = true;
+        pipe->auth.user = *users_id(&sim->users, user_admin);
+        pipe->chunk = world_home(sim->world, user_admin);
+    }
 
     uintptr_t next = atomic_load_explicit(&sim->pipes, memory_order_acquire);
     do {
@@ -446,6 +449,8 @@ static void sim_cmd_user(
         return;
     }
 
+    world_populate_user(sim->world, user->id);
+    pipe->chunk = world_home(sim->world, user->id);
     pipe->auth.user = *user;
     pipe->auth.ok = true;
 
@@ -480,6 +485,7 @@ static void sim_cmd_auth(
         return;
     }
 
+    pipe->chunk = world_home(sim->world, user->id);
     pipe->auth.user = *user;
     pipe->auth.ok = true;
 
@@ -717,12 +723,14 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
 
     bool ack_mod = pipe->ack->time > pipe->mod.ts;
     bool ack_compile = pipe->ack->time > pipe->compile.ts;
+    struct user *user = &pipe->auth.user;
 
     state_save(save, &(struct state_ctx) {
                 .stream = sim->stream,
+                .access = user->access,
+                .user = user->id,
                 .world = sim->world,
                 .speed = sim->speed,
-                .home = sim->home,
                 .chunk = pipe->chunk,
                 .mod = !ack_mod ? pipe->mod.id : 0,
                 .compile = !ack_compile ? pipe->compile.mod : NULL,
@@ -785,10 +793,11 @@ void sim_step(struct sim *sim)
     {
         sim_cmd(sim, pipe);
 
-        sim_publish_state(sim, pipe);
-        sim_publish_log(pipe);
-
-        save_ring_wake_signal(pipe->out);
+        if (pipe->auth.ok) {
+            sim_publish_state(sim, pipe);
+            sim_publish_log(pipe);
+            save_ring_wake_signal(pipe->out);
+        }
     }
 }
 

@@ -13,11 +13,13 @@
 void test_txrx(void)
 {
     struct world *world = world_new(0);
+    world_populate(world);
+
     const struct sector *sector = world_sector(world, coord_center());
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
-    struct chunk *chunk_src = world_chunk_alloc(world, src);
-    struct chunk *chunk_dst = world_chunk_alloc(world, dst);
+    struct chunk *chunk_src = world_chunk_alloc(world, src, user_admin);
+    struct chunk *chunk_dst = world_chunk_alloc(world, dst, user_admin);
 
     chunk_create(chunk_src, ITEM_TRANSMIT);
     chunk_create(chunk_dst, ITEM_RECEIVE);
