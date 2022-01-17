@@ -100,6 +100,10 @@ struct log *log_load(struct save *save)
     return NULL;
 }
 
+// \todo would be nice to push the items in reverse order so we can avoid the
+// recursion on load but right now that means doing a bunch of scanning and
+// checks to figure out where the bottom is which is an annoying amount of code
+// to write.
 void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
 {
     save_write_magic(save, save_magic_log);
@@ -119,23 +123,30 @@ void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
     save_write_magic(save, save_magic_log);
 }
 
+// We need to push the items in reverse order that we read them so we use
+// recursion to invert the order that items are pushed.
+static bool log_load_delta_item(struct log *log, struct save *save, world_ts_t ack)
+{
+    world_ts_t time = save_read_type(save, typeof(time));
+    if (!time) return true;
+
+    struct coord star = coord_from_u64(save_read_type(save, uint64_t));
+    id_t id = save_read_type(save, typeof(id));
+    enum io io = save_read_type(save, typeof(io));
+    enum ioe ioe = save_read_type(save, typeof(ioe));
+
+    if (!log_load_delta_item(log, save, ack)) return false;
+
+    if (time > ack) log_push(log, time, star, id, io, ioe);
+    return true;
+}
+
 bool log_load_delta(struct log *log, struct save *save, world_ts_t ack)
 {
     if (!save_read_magic(save, save_magic_log)) return false;
     if (!ack) log_reset(log);
 
-    while (true) {
-        world_ts_t time = save_read_type(save, typeof(time));
-        if (!time) break;
-
-        struct coord star = coord_from_u64(save_read_type(save, uint64_t));
-        id_t id = save_read_type(save, typeof(id));
-        enum io io = save_read_type(save, typeof(io));
-        enum ioe ioe = save_read_type(save, typeof(ioe));
-
-        if (time <= ack) continue;
-        log_push(log, time, star, id, io, ioe);
-    }
+    log_load_delta_item(log, save, ack);
 
     return save_read_magic(save, save_magic_log);
 }
