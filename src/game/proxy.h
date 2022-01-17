@@ -32,7 +32,9 @@ struct proxy *proxy_new(void);
 void proxy_free(struct proxy *);
 
 void proxy_auth(struct proxy *, const char *config);
-bool proxy_update(struct proxy *);
+
+enum proxy_ret { proxy_nil = 0, proxy_updated, proxy_loaded };
+enum proxy_ret proxy_update(struct proxy *);
 
 struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);
 

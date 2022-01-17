@@ -235,12 +235,13 @@ static void proxy_update_status(struct proxy *, struct save *save)
     render_log_msg(status.type, status.msg, status.len);
 }
 
-static bool proxy_update_state(
+static enum proxy_ret proxy_update_state(
         struct proxy *proxy, struct proxy_pipe *pipe, struct save *save)
 {
+    uint64_t stream = proxy->state->stream;
     if (!state_load(proxy->state, save, pipe->ack)) {
         err("unable to load state in proxy");
-        return false;
+        return proxy_nil;
     }
 
     proxy_cmd(proxy, &(struct cmd) {
@@ -271,7 +272,7 @@ static bool proxy_update_state(
 
     lisp_context(proxy->lisp, proxy->state->mods, proxy->state->atoms);
 
-    return true;
+    return stream == proxy->state->stream ? proxy_updated : proxy_loaded;
 }
 
 static void proxy_update_user(struct proxy *proxy, struct save *save)
@@ -281,12 +282,12 @@ static void proxy_update_user(struct proxy *proxy, struct save *save)
     else err("unable to load auth information");
 }
 
-bool proxy_update(struct proxy *proxy)
+enum proxy_ret proxy_update(struct proxy *proxy)
 {
     struct proxy_pipe *pipe = proxy_pipe(proxy);
     if (!pipe) return false;
 
-    bool update = false;
+    enum proxy_ret ret = proxy_nil;
     while (true) {
         struct save *save = save_ring_read(pipe->in);
 
@@ -303,7 +304,7 @@ bool proxy_update(struct proxy *proxy)
 
         switch (head.type) {
         case header_status: { proxy_update_status(proxy, save); break; }
-        case header_state: { update = proxy_update_state(proxy, pipe, save); break; }
+        case header_state: { ret = proxy_update_state(proxy, pipe, save); break; }
         case header_user: { proxy_update_user(proxy, save); break; }
         default: { assert(false); }
         }
@@ -315,7 +316,7 @@ bool proxy_update(struct proxy *proxy)
     if (!coord_eq(pipe->chunk, proxy->state->chunk.coord))
         proxy_chunk(proxy, proxy->state->chunk.coord);
 
-    return update;
+    return ret;
 }
 
 

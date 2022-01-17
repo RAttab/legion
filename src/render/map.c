@@ -162,10 +162,15 @@ static bool map_event_user(struct map *map, SDL_Event *ev)
         return false;
     }
 
-    case EV_STATE_UPDATE:
-    case EV_STATE_LOAD: {
+    case EV_STATE_UPDATE: {
         if (coord_is_nil(map->pos))
             map->pos = proxy_home(render.proxy);
+        return false;
+    }
+
+    case EV_STATE_LOAD: {
+        map->active = true;
+        map->pos = proxy_home(render.proxy);
         return false;
     }
 

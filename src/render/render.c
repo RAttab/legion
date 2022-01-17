@@ -233,8 +233,13 @@ static bool render_step(void)
         return false;
 
     cursor_update();
-    if (proxy_update(render.proxy))
-        render_push_event(EV_STATE_UPDATE, 0, 0);
+
+    switch (proxy_update(render.proxy)) {
+    case proxy_nil: { break; }
+    case proxy_loaded: { render_push_event(EV_STATE_LOAD, 0, 0); } // fallthrough
+    case proxy_updated: { render_push_event(EV_STATE_UPDATE, 0, 0); break; }
+    default: { assert(false); }
+    }
 
     SDL_Event event = {0};
     while (SDL_PollEvent(&event)) {
