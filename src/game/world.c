@@ -321,6 +321,12 @@ word_t world_star_name(struct world *world, struct coord coord)
     return gen_name(coord, world->seed, world->atoms);
 }
 
+bool world_user_access(struct world *world, uset_t access, struct coord coord)
+{
+    struct chunk *chunk = world_chunk(world, coord);
+    return !chunk ? false : uset_test(access, chunk_owner(chunk));
+}
+
 
 struct log *world_log(struct world *world, user_t id)
 {
@@ -417,9 +423,9 @@ const struct hset *world_lanes_list(struct world *world, struct coord key)
     return lanes_list(&world->lanes, key);
 }
 
-void world_lanes_list_save(struct world *world, struct save *save)
+void world_lanes_list_save(struct world *world, struct save *save, uset_t filter)
 {
-    lanes_list_save(&world->lanes, save);
+    lanes_list_save(&world->lanes, save, world, filter);
 }
 
 void world_lanes_launch(

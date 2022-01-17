@@ -59,6 +59,7 @@ struct chunk *world_chunk(struct world *, struct coord);
 struct chunk *world_chunk_alloc(struct world *, struct coord, user_t);
 const struct sector *world_sector(struct world *, struct coord);
 word_t world_star_name(struct world *, struct coord);
+bool world_user_access(struct world *, uset_t, struct coord);
 
 enum { world_log_cap = 64 };
 struct log *world_log(struct world *, user_t);
@@ -101,7 +102,7 @@ struct chunk *world_chunk_next(struct world *, struct world_chunk_it *);
 // -----------------------------------------------------------------------------
 
 const struct hset *world_lanes_list(struct world *, struct coord key);
-void world_lanes_list_save(struct world *, struct save *);
+void world_lanes_list_save(struct world *, struct save *, uset_t);
 
 void world_lanes_launch(
         struct world *,

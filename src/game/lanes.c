@@ -292,7 +292,11 @@ const struct hset *lanes_list(struct lanes *lanes, struct coord key)
     return (void *) ret.value;
 }
 
-void lanes_list_save(struct lanes *lanes, struct save *save)
+void lanes_list_save(
+        struct lanes *lanes,
+        struct save *save,
+        struct world *world,
+        uset_t filter)
 {
     save_write_magic(save, save_magic_lanes);
     save_write_value(save, (uint32_t) lanes->lanes.len);
@@ -301,6 +305,11 @@ void lanes_list_save(struct lanes *lanes, struct save *save)
          it; it = htable_next(&lanes->lanes, it))
     {
         const struct lane *lane = (void *) it->value;
+
+        if (!world_user_access(world, filter, lane->src) &&
+                !world_user_access(world, filter, lane->dst))
+            continue;
+
         save_write_value(save, coord_to_u64(lane->src));
         save_write_value(save, coord_to_u64(lane->dst));
     }

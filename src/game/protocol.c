@@ -412,7 +412,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     atoms_save_delta(world_atoms(ctx->world), save, ctx->ack);
     mods_list_save(world_mods(ctx->world), save);
     state_save_chunks(ctx->world, save, ctx);
-    world_lanes_list_save(ctx->world, save);
+    world_lanes_list_save(ctx->world, save, ctx->access);
     tech_save(world_tech(ctx->world, ctx->user), save);
     log_save_delta(world_log(ctx->world, ctx->user), save, ctx->ack->time);
 
