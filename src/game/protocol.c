@@ -456,7 +456,14 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
     state->home = coord_from_u64(save_read_type(save, uint64_t));
     if (!save_read_magic(save, save_magic_state_world)) return false;
 
-    if (state->stream != ack->stream) ack_reset(ack);
+    // States that are strictly increasing, we need to clear them out manually
+    // on load as there's no ack information that we can use.
+    if (state->stream != ack->stream) {
+        ack_reset(ack);
+        state->mods->len = 0;
+        state->chunks->len = 0;
+        htable_clear(&state->names);
+    }
 
     if (!atoms_load_delta(state->atoms, save, ack)) return false;
     if (!mods_list_load_into(&state->mods, save)) return false;
