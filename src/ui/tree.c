@@ -48,6 +48,7 @@ void ui_tree_free(struct ui_tree *tree)
 
 struct ui_node *ui_tree_node(struct ui_tree *tree, ui_node_t index)
 {
+    if (!tree->len && !index) return NULL;
     assert(index < tree->len);
     return tree->nodes + index;
 }
@@ -134,6 +135,8 @@ static ui_node_t ui_tree_row(struct ui_tree *tree, size_t row)
 static bool ui_tree_leaf(struct ui_tree *tree, ui_node_t index)
 {
     struct ui_node *node = ui_tree_node(tree, index);
+    if (!node) return false;
+
     return index == tree->len - 1
         || (node + 1)->depth <= node->depth;
 }
@@ -161,7 +164,10 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
             ui_node_t index = ui_tree_row(tree, row);
             if (index == ui_node_nil) tree->hover = 0;
-            else tree->hover = ui_tree_node(tree, index)->user;
+            else {
+                struct ui_node *node = ui_tree_node(tree, index);
+                tree->hover = node ? node->user : 0;
+            }
         }
         return ui_nil;
     }
