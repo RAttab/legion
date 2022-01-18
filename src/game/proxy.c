@@ -148,7 +148,7 @@ struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
             &proxy->pipe.active, (uintptr_t) pipe, memory_order_release);
     assert(!old);
 
-    if (proxy->auth.user.id) {
+    if (proxy->auth.user.private) {
         proxy_cmd(proxy, &(struct cmd) {
                     .type = CMD_AUTH,
                     .data = {
