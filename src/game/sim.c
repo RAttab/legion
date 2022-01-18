@@ -551,7 +551,10 @@ static void sim_cmd_mod(
 static void sim_cmd_mod_register(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
-    mod_t id = mods_register(world_mods(sim->world), &cmd->data.mod_register);
+    mod_t id = mods_register(
+            world_mods(sim->world),
+            pipe->auth.user.id,
+            &cmd->data.mod_register);
 
     if (!id) {
         return sim_log(pipe, st_error, "unable to register mod '%s'",

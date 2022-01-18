@@ -68,8 +68,8 @@ void check_file(const char *path)
         vec64_free(old_atoms);
         vec64_free(new_atoms);
 
-        struct mods_list *old_mods = mods_list(world_mods(old));
-        struct mods_list *new_mods = mods_list(world_mods(new));
+        struct mods_list *old_mods = mods_list(world_mods(old), uset_all());
+        struct mods_list *new_mods = mods_list(world_mods(new), uset_all());
         assert(old_mods->len == new_mods->len);
         for (size_t i = 0; i < old_mods->len; ++i) {
             assert(old_mods->items[i].maj == new_mods->items[i].maj);

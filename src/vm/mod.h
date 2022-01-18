@@ -8,6 +8,8 @@
 #include "common.h"
 #include "vm/vm.h"
 #include "vm/symbol.h"
+#include "game/user.h"
+
 
 // -----------------------------------------------------------------------------
 // types
@@ -136,8 +138,9 @@ void mods_free(struct mods *);
 struct mods *mods_load(struct save *);
 void mods_save(const struct mods *, struct save *);
 
-mod_t mods_register(struct mods *, const struct symbol *name);
+mod_t mods_register(struct mods *, user_t, const struct symbol *name);
 bool mods_name(struct mods *, mod_maj_t, struct symbol *dst);
+user_t mods_owner(struct mods *, mod_maj_t);
 
 mod_t mods_set(struct mods *, mod_maj_t, const struct mod *);
 const struct mod *mods_get(struct mods *, mod_t);
@@ -160,10 +163,10 @@ struct mods_list
     struct mods_item items[];
 };
 
-struct mods_list *mods_list(struct mods *);
+struct mods_list *mods_list(struct mods *, uset_t);
 struct mods_list *mods_list_reserve(size_t len);
 
-void mods_list_save(struct mods *, struct save *);
+void mods_list_save(struct mods *, struct save *, uset_t);
 bool mods_list_load_into(struct mods_list **, struct save *);
 
 void mods_populate(struct mods *, struct atoms *);

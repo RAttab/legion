@@ -50,6 +50,8 @@ inline bool uset_test(uset_t list, user_t id)
     return list & user_to_uset(id);
 }
 
+inline uset_t uset_nil(void) { return 0UL; }
+inline uset_t uset_all(void) { return -1UL; }
 
 // -----------------------------------------------------------------------------
 // user

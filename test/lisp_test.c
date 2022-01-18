@@ -165,7 +165,7 @@ const struct mod *read_mod(
     assert(!token_eof(tok));
     size_t len = (tok->it - first) - 1;
 
-    mod_t id = mods_register(mods, name);
+    mod_t id = mods_register(mods, user_admin, name);
     assert(id);
 
     const struct mod *mod = mod_compile(mod_maj(id), first, len, mods, atoms);

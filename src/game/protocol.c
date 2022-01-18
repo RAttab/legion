@@ -410,7 +410,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     save_write_magic(save, save_magic_state_world);
 
     atoms_save_delta(world_atoms(ctx->world), save, ctx->ack);
-    mods_list_save(world_mods(ctx->world), save);
+    mods_list_save(world_mods(ctx->world), save, ctx->access);
     state_save_chunks(ctx->world, save, ctx);
     world_lanes_list_save(ctx->world, save, ctx->access);
     tech_save(world_tech(ctx->world, ctx->user), save);

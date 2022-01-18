@@ -102,7 +102,7 @@ void check(void)
             vec64_free(st_atoms);
         }
 
-        struct mods_list *wd_mods = mods_list(world_mods(world));
+        struct mods_list *wd_mods = mods_list(world_mods(world), user_to_uset(user));
         struct mods_list *st_mods = state->mods;
         assert(wd_mods->len == st_mods->len);
         for (size_t i = 0; i < wd_mods->len; ++i) {

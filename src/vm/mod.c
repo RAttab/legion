@@ -293,6 +293,7 @@ struct mod_entry
 {
     mod_maj_t maj;
     mod_ver_t ver;
+    user_t owner;
 
     struct symbol str;
     const struct mod *mod;
@@ -319,6 +320,29 @@ void mods_free(struct mods *mods)
     free(mods);
 }
 
+void mods_save(const struct mods *mods, struct save *save)
+{
+    save_write_magic(save, save_magic_mods);
+    save_write_value(save, mods->maj);
+
+    const struct htable_bucket *it = NULL;
+
+    save_write_value(save, mods->by_mod.len);
+    for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
+        mod_save((const struct mod *) it->value, save);
+
+    save_write_value(save, mods->by_maj.len);
+    for (it = htable_next(&mods->by_maj, NULL); it; it = htable_next(&mods->by_maj, it)) {
+        const struct mod_entry *entry = (const void *) it->value;
+        save_write_value(save, entry->maj);
+        save_write_value(save, entry->ver);
+        save_write_value(save, entry->owner);
+        symbol_save(&entry->str, save);
+    }
+
+    save_write_magic(save, save_magic_mods);
+}
+
 struct mods *mods_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_mods)) return NULL;
@@ -342,6 +366,7 @@ struct mods *mods_load(struct save *save)
         struct mod_entry *entry = calloc(1, sizeof(*entry));
         save_read_into(save, &entry->maj);
         save_read_into(save, &entry->ver);
+        save_read_into(save, &entry->owner);
         if (!symbol_load(&entry->str, save)) goto fail;
 
         struct htable_ret ret = htable_get(&mods->by_mod, make_mod(entry->maj, entry->ver));
@@ -360,36 +385,15 @@ struct mods *mods_load(struct save *save)
     return NULL;
 }
 
-void mods_save(const struct mods *mods, struct save *save)
-{
-    save_write_magic(save, save_magic_mods);
-    save_write_value(save, mods->maj);
 
-    const struct htable_bucket *it = NULL;
-
-    save_write_value(save, mods->by_mod.len);
-    for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
-        mod_save((const struct mod *) it->value, save);
-
-    save_write_value(save, mods->by_maj.len);
-    for (it = htable_next(&mods->by_maj, NULL); it; it = htable_next(&mods->by_maj, it)) {
-        const struct mod_entry *entry = (const void *) it->value;
-        save_write_value(save, entry->maj);
-        save_write_value(save, entry->ver);
-        symbol_save(&entry->str, save);
-    }
-
-    save_write_magic(save, save_magic_mods);
-}
-
-
-mod_t mods_register(struct mods *mods, const struct symbol *name)
+mod_t mods_register(struct mods *mods, user_t owner, const struct symbol *name)
 {
     if (mods_find(mods, name)) return 0;
 
     struct mod_entry *entry = calloc(1, sizeof(*entry));
     entry->maj = ++mods->maj;
     entry->str = *name;
+    entry->owner = owner;
 
     mod_t mod = make_mod(entry->maj, ++entry->ver);
     entry->mod = mod_nil(mod);
@@ -415,6 +419,16 @@ bool mods_name(struct mods *mods, mod_maj_t maj, struct symbol *dst)
     struct mod_entry *entry = (void *) ret.value;
     *dst = entry->str;
     return true;
+}
+
+user_t mods_owner(struct mods *mods, mod_maj_t maj)
+{
+    if (!maj) return -1;
+
+    struct htable_ret ret = htable_get(&mods->by_maj, maj);
+    if (!ret.ok) return -1;
+
+    return ((struct mod_entry *) ret.value)->owner;
 }
 
 mod_t mods_set(struct mods *mods, mod_maj_t maj, const struct mod *mod)
@@ -497,19 +511,22 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     return mods_get(mods, make_mod(mod_maj, mod_ver));
 }
 
-struct mods_list *mods_list(struct mods *mods)
+struct mods_list *mods_list(struct mods *mods, uset_t filter)
 {
     struct mods_list *ret = calloc(1,
             sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
-    ret->len = mods->by_maj.len;
-    ret->cap = ret->len;
+    ret->cap = mods->by_maj.len;
 
     const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
-    for (size_t i = 0; it; it = htable_next(&mods->by_maj, it), i++) {
+    for (; it; it = htable_next(&mods->by_maj, it)) {
         struct mod_entry *entry = (void *) it->value;
-        ret->items[i].maj = entry->maj;
-        ret->items[i].ver = entry->ver;
-        memcpy(&ret->items[i].str, &entry->str, sizeof(entry->str));
+        if (!uset_test(filter, entry->owner)) continue;
+
+        struct mods_item *item = ret->items + ret->len;
+        item->maj = entry->maj;
+        item->ver = entry->ver;
+        memcpy(&item->str, &entry->str, sizeof(entry->str));
+        ret->len++;
     }
 
     int mods_item_cmp(const void *lhs_, const void *rhs_)
@@ -531,9 +548,9 @@ struct mods_list *mods_list_reserve(size_t len)
     return list;
 }
 
-void mods_list_save(struct mods *mods, struct save *save)
+void mods_list_save(struct mods *mods, struct save *save, uset_t filter)
 {
-    struct mods_list *list = mods_list(mods);
+    struct mods_list *list = mods_list(mods, filter);
     save_write_magic(save, save_magic_mods);
 
     save_write_value(save, list->len);
@@ -591,7 +608,7 @@ static struct symbol mods_file_symbol(const char *path)
 static void mods_file_register(struct mods *mods, const char *path)
 {
     struct symbol name = mods_file_symbol(path);
-    mod_maj_t maj = mods_register(mods, &name);
+    mod_maj_t maj = mods_register(mods, user_admin, &name);
     assert(maj);
 }
 
