@@ -299,7 +299,6 @@ void lanes_list_save(
         uset_t filter)
 {
     save_write_magic(save, save_magic_lanes);
-    save_write_value(save, (uint32_t) lanes->lanes.len);
 
     for (const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
          it; it = htable_next(&lanes->lanes, it))
@@ -314,6 +313,7 @@ void lanes_list_save(
         save_write_value(save, coord_to_u64(lane->dst));
     }
 
+    save_write_value(save, (uint64_t) 0);
     save_write_magic(save, save_magic_lanes);
 }
 
@@ -334,10 +334,9 @@ bool lanes_list_load_into(struct htable *lanes, struct save *save)
     }
 
     if (!save_read_magic(save, save_magic_lanes)) return false;
-    uint32_t len = save_read_type(save, typeof(len));
 
-    for (size_t i = 0; i < len; ++i) {
-        uint64_t key = save_read_type(save, typeof(key));
+    uint64_t key = 0;
+    while ((key = save_read_type(save, typeof(key)))) {
         uint64_t val = save_read_type(save, typeof(val));
 
         void index(struct htable *lanes, uint64_t key, uint64_t val)
