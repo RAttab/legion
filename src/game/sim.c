@@ -57,7 +57,7 @@ struct sim *sim_new(seed_t seed, const char *save)
     struct sim *sim = calloc(1, sizeof(*sim));
     sim->world = world_new(seed);
     world_populate(sim->world);
-    users_init(&sim->users, world_atoms(sim->world));
+    users_init(&sim->users);
     sim->speed = speed_slow;
     sim->stream = ts_now();
     atomic_init(&sim->join, false);
@@ -94,7 +94,7 @@ static void sim_config_write(struct sim *sim)
     struct writer *out = config_write(&config, sim->config);
 
     // \todo all the sim config options under (sim ...)
-    users_write(&sim->users, world_atoms(sim->world), out);
+    users_write(&sim->users, out);
 
     config_close(&config);
 }
@@ -105,7 +105,7 @@ static void sim_config_read(struct sim *sim)
     struct reader *in = config_read(&config, sim->config);
 
     // \todo all the sim config options under (sim ...)
-    users_read(&sim->users, world_atoms(sim->world), in);
+    users_read(&sim->users, in);
 
     config_close(&config);
 }
@@ -437,10 +437,7 @@ static void sim_cmd_user(
         return;
     }
 
-    word_t atom = atoms_make(world_atoms(sim->world), &cmd->data.user.name);
-    assert(atom);
-
-    struct user *user = users_create(&sim->users, atom);
+    const struct user *user = users_create(&sim->users, &cmd->data.user.name);
     if (!user) {
         infof("failed to create user '%s'", cmd->data.user.name.c);
         sim_log(pipe, st_error, "unable to create user '%s'",
@@ -453,9 +450,6 @@ static void sim_cmd_user(
     pipe->chunk = world_home(sim->world, user->id);
     pipe->auth.user = *user;
     pipe->auth.ok = true;
-
-    // \todo need a better way to ensure our user atom is persisted.
-    sim_save(sim);
 
     sim_cmd_user_response(pipe);
     sim_config_write(sim);
@@ -474,7 +468,7 @@ static void sim_cmd_auth(
         return;
     }
 
-    struct user *user = users_auth_user(
+    const struct user *user = users_auth_user(
             &sim->users, cmd->data.auth.id, cmd->data.auth.private);
 
     if (!user) {
@@ -485,16 +479,17 @@ static void sim_cmd_auth(
         return;
     }
 
+    // There's a chance that the user state wasn't saved in which case creating
+    // a new state is our best option. Function is a noop if the user is already
+    // populated.
+    world_populate_user(sim->world, user->id);
+
     pipe->chunk = world_home(sim->world, user->id);
     pipe->auth.user = *user;
     pipe->auth.ok = true;
 
     sim_cmd_user_response(pipe);
-
-    struct symbol name = {0};
-    bool ok = atoms_str(world_atoms(sim->world), user->atom, &name);
-    infof("user '%u:%s' authed", user->id, name.c);
-    assert(ok);
+    infof("user '%u:%s' authed", user->id, user->name.c);
 }
 
 static void sim_cmd_io(

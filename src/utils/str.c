@@ -45,8 +45,12 @@ size_t str_atod(const char *src, size_t len, int64_t *dst)
 size_t str_atox(const char *src, size_t len, uint64_t *dst)
 {
     size_t i = 0;
-    uint8_t hex = 0;
+    if (len >= 2 && src[0] == '0' && src[1] == 'x') {
+        src += 2;
+        i += 2;
+    }
 
+    uint8_t hex = 0;
     for (*dst = 0; i < len && (hex = str_charhex(*src)) != 0xFF; ++i, ++src)
         *dst = (*dst << 4) | hex;
 

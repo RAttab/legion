@@ -16,7 +16,14 @@
 
 static void config_server(const char *path)
 {
-    struct symbol admin = make_symbol("admin");
+    struct user user = {
+        .id = 0,
+        .name = make_symbol("admin"),
+        .access = ((uset_t) -1ULL),
+        .public = token(),
+        .private = token(),
+
+    };
 
     struct config config = {0};
     struct writer *out = config_write(&config, path);
@@ -27,12 +34,8 @@ static void config_server(const char *path)
         writer_field(out, "server", u64, token());
 
         writer_open_nl(out);
-        writer_field(out, "name", atom, &admin);
-        writer_field(out, "id", u64, 0);
-        writer_field(out, "atom", word, 0);
-        writer_field(out, "access", u64, ((uset_t) -1ULL));
-        writer_field(out, "public", u64, token());
-        writer_field(out, "private", u64, token());
+        writer_symbol(out, &user.name);
+        user_write(&user, out),
         writer_close(out);
 
         writer_close(out);
@@ -52,9 +55,12 @@ static void config_client(
     writer_open(out);
     writer_symbol_str(out, "client");
     writer_field(out, "server", u64, auth);
-    writer_field(out, "name", symbol, name);
+
+    writer_open_nl(out);
+    writer_symbol(out, name);
     writer_close(out);
 
+    writer_close(out);
     config_close(&config);
 }
 

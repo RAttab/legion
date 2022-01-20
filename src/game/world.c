@@ -476,7 +476,7 @@ void world_populate_user(struct world *world, user_t id)
     assert(id < array_len(world->users));
 
     struct world_user *user = world->users + id;
-    assert(!user->active);
+    if (user->active) return;
 
     user->active = true;
     user->id = id;

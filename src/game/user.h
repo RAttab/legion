@@ -6,10 +6,9 @@
 #pragma once
 
 #include "common.h"
-#include "vm/vm.h"
+#include "vm/symbol.h"
 #include "utils/htable.h"
 
-struct atoms;
 struct reader;
 struct writer;
 struct save;
@@ -60,7 +59,7 @@ inline uset_t uset_all(void) { return -1UL; }
 struct user
 {
     user_t id;
-    word_t atom;
+    struct symbol name;
     uset_t access;
     token_t public, private;
 };
@@ -81,20 +80,20 @@ struct users
     token_t server;
     uset_t avail;
     struct htable ids;
-    struct htable atoms;
+    struct htable names;
     struct htable grant;
 };
 
-void users_init(struct users *, struct atoms *);
+void users_init(struct users *);
 void users_free(struct users *);
 
-struct user *users_create(struct users *, word_t atom);
-struct user *users_atom(struct users *, word_t atom);
-struct user *users_id(struct users *, user_t);
+struct user *users_create(struct users *, const struct symbol *);
+const struct user *users_name(struct users *, const struct symbol *);
+const struct user *users_id(struct users *, user_t);
 
 bool users_auth_server(struct users *, token_t);
-struct user *users_auth_user(struct users *, user_t, token_t);
+const struct user *users_auth_user(struct users *, user_t, token_t);
 bool users_grant(struct users *, user_t, token_t);
 
-void users_write(const struct users *, struct atoms *, struct writer *);
-void users_read(struct users *, struct atoms *, struct reader *);
+void users_write(const struct users *, struct writer *);
+void users_read(struct users *, struct reader *);
