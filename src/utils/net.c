@@ -162,12 +162,23 @@ struct sockaddr_str sockaddr_str(struct sockaddr *addr)
 // -----------------------------------------------------------------------------
 // sigintfd
 // -----------------------------------------------------------------------------
+// I just wanted to say that signals live in a world that is divorsed from logic
+// and that I gave up trying to make sense of them. The following code is the
+// result of brute-forced empirical testing.
 
 #include <sys/signalfd.h>
 #include <signal.h>
 
+
 int sigintfd_new(void)
 {
+    // Blocking the signal doesn't seem to be enough despite what the man-page
+    // says. This is true in the server where SDL is not at all involved.
+    struct sigaction act = { .sa_handler = SIG_IGN };
+    struct sigaction prev = {0};
+    assert(!sigaction(SIGINT, &act, &prev));
+    assert(prev.sa_handler == SIG_DFL);
+
     sigset_t set = {0};
     if (sigemptyset(&set) == -1)
         fail_errno("unable to initialize sigset");
@@ -186,6 +197,11 @@ int sigintfd_new(void)
 
 void sigintfd_close(int fd)
 {
+    struct sigaction prev = {0};
+    struct sigaction act = { .sa_handler = SIG_DFL };
+    assert(!sigaction(SIGINT, &act, &prev));
+    assert(prev.sa_handler == SIG_IGN);
+
     sigset_t set = {0};
     if (sigemptyset(&set) == -1)
         fail_errno("unable to initialize sigset");
@@ -210,7 +226,14 @@ bool sigintfd_read(int fd)
 
     ssize_t ret = read(fd, &info, sizeof(info));
     if (ret == -1) {
-        if (errno == EAGAIN) return false;
+        // Should really return false but empirical testing has left me
+        // completely and uterly confused. As such we're going to rely on the fd
+        // being triggered in epoll and kinda ignore the fact that read is as
+        // confused as I am. It's bad and makes no logical sense but I don't
+        // want to live in the world that signalfd is trying to give me. My only
+        // remaining option is to reject its reality and substitute my own.
+        if (errno == EAGAIN) return true;
+
         failf_errno("unable to read from sigintfd '%d'", fd);
     }
 
