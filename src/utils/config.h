@@ -35,7 +35,7 @@ struct symbol reader_symbol(struct reader *);
 uint64_t reader_symbol_hash(struct reader *);
 
 void reader_expect(struct reader *reader, hash_t);
-#define reader_key(_reader, _str) \
+#define reader_symbol_str(_reader, _str) \
     do { reader_expect((_reader), symbol_hash_c(_str)); } while (false)
 
 #define reader_err(_reader, _fmt, ...)            \

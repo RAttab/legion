@@ -104,7 +104,7 @@ static void proxy_config_read(struct proxy *proxy)
     struct reader *in = config_read(&config, proxy->config);
 
     reader_open(in);
-    reader_key(in, "client");
+    reader_symbol_str(in, "client");
     proxy->auth.server = reader_field(in, "server", u64);
 
     reader_open(in);

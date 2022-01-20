@@ -198,7 +198,7 @@ void users_write(const struct users *users, struct writer *out)
 void users_read(struct users *users, struct reader *in)
 {
     reader_open(in);
-    reader_key(in, "users");
+    reader_symbol_str(in, "users");
     users->server = reader_field(in, "server", u64);
 
     users->avail = 0;

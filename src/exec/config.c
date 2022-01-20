@@ -16,22 +16,30 @@
 
 static void config_server(const char *path)
 {
-    struct user user = {
-        .id = 0,
-        .name = make_symbol("admin"),
-        .access = ((uset_t) -1ULL),
-        .public = token(),
-        .private = token(),
-
-    };
 
     struct config config = {0};
     struct writer *out = config_write(&config, path);
 
     {
         writer_open(out);
+        writer_symbol_str(out, "server");
+        writer_field(out, "autosave", word, 6000);
+        writer_close(out);
+    }
+
+    {
+        writer_open_nl(out);
         writer_symbol_str(out, "users");
         writer_field(out, "server", u64, token());
+
+        struct user user = {
+            .id = 0,
+            .name = make_symbol("admin"),
+            .access = ((uset_t) -1ULL),
+            .public = token(),
+            .private = token(),
+
+        };
 
         writer_open_nl(out);
         writer_symbol(out, &user.name);

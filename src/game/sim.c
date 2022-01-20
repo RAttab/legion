@@ -44,6 +44,8 @@ struct sim
     struct users users;
     enum speed speed;
 
+    world_ts_t autosave;
+
     bool server;
     uint64_t stream;
     atomic_uintptr_t pipes;
@@ -93,9 +95,12 @@ static void sim_config_write(struct sim *sim)
     struct config config = {0};
     struct writer *out = config_write(&config, sim->config);
 
-    // \todo all the sim config options under (sim ...)
-    users_write(&sim->users, out);
+    writer_open_nl(out);
+    writer_symbol_str(out, "server");
+    writer_field(out, "autosave", word, sim->autosave);
+    writer_close(out);
 
+    users_write(&sim->users, out);
     config_close(&config);
 }
 
@@ -104,9 +109,12 @@ static void sim_config_read(struct sim *sim)
     struct config config = {0};
     struct reader *in = config_read(&config, sim->config);
 
-    // \todo all the sim config options under (sim ...)
-    users_read(&sim->users, in);
+    reader_open(in);
+    reader_symbol_str(in, "server");
+    sim->autosave = reader_field(in, "autosave", word);
+    reader_close(in);
 
+    users_read(&sim->users, in);
     config_close(&config);
 }
 
@@ -375,6 +383,7 @@ void sim_save(struct sim *sim)
     save_file_close(save);
 
     sim_log_all(sim, st_info, "saved %zu bytes", bytes);
+    infof("saved %zu bytes", bytes);
 }
 
 void sim_load(struct sim *sim)
@@ -824,6 +833,9 @@ void sim_loop(struct sim *sim)
             now = ts_sleep_until(sim->next);
 
         sim_step(sim);
+
+        if (sim->autosave && world_time(sim->world) % sim->autosave == 0)
+            sim_save(sim);
 
         sim->next += sleep;
         if (sim->next <= now) {
