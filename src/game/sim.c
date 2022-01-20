@@ -664,6 +664,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
             break;
         }
 
+        // \todo should probably restrict to admin only.
         case CMD_SAVE: { sim_save(sim); break; }
         case CMD_LOAD: { sim_load(sim); break; }
 
@@ -676,6 +677,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
             break;
         }
 
+        // \todo should probably restrict to admin only.
         case CMD_SPEED: {
             sim->speed = cmd.data.speed;
             if (sim->speed != speed_pause) sim->next = ts_now();
@@ -799,12 +801,10 @@ void sim_step(struct sim *sim)
          pipe; pipe = sim_pipe_next(sim, pipe))
     {
         sim_cmd(sim, pipe);
+        if (pipe->auth.ok) sim_publish_state(sim, pipe);
+        sim_publish_log(pipe);
 
-        if (pipe->auth.ok) {
-            sim_publish_state(sim, pipe);
-            sim_publish_log(pipe);
-            save_ring_wake_signal(pipe->out);
-        }
+        save_ring_wake_signal(pipe->out);
     }
 }
 
