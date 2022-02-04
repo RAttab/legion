@@ -37,6 +37,11 @@ bool reader_peek_close(struct reader *reader)
     return reader_peek(reader) == token_close;
 }
 
+bool reader_peek_eof(struct reader *reader)
+{
+    return reader_peek(reader) == token_nil;
+}
+
 void reader_open(struct reader *reader)
 {
     struct token token = {0};

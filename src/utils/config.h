@@ -24,6 +24,7 @@ struct reader
 
 enum token_type reader_peek(struct reader *);
 bool reader_peek_close(struct reader *);
+bool reader_peek_eof(struct reader *);
 
 void reader_open(struct reader *);
 void reader_close(struct reader *);

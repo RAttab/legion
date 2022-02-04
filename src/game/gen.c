@@ -14,6 +14,7 @@
 #include "utils/rng.h"
 #include "utils/vec.h"
 #include "utils/hash.h"
+#include "utils/config.h"
 
 
 // -----------------------------------------------------------------------------
@@ -252,82 +253,71 @@ struct sector *gen_sector(struct coord coord, seed_t seed)
 // -----------------------------------------------------------------------------
 
 
-static enum roll_type gen_populate_roll_type(struct tokenizer *tok)
+static enum roll_type gen_populate_roll_type(struct reader *in)
 {
-    struct token token = {0};
-    assert(token_expect(tok, &token, token_symbol));
-    uint64_t hash = symbol_hash(&token.value.s);
+    struct symbol type = reader_symbol(in);
+    uint64_t hash = symbol_hash(&type);
 
     if (hash == symbol_hash_c("one")) return roll_one;
     else if (hash == symbol_hash_c("rng")) return roll_rng;
     else if (hash == symbol_hash_c("one_of")) return roll_one_of;
     else if (hash == symbol_hash_c("all_of")) return roll_all_of;
 
-    token_err(tok, "invalid roll type: %s", token.value.s.c);
+    reader_err(in, "invalid roll type: %s", type.c);
     return roll_end;
 }
 
-static enum item gen_populate_roll_item(struct tokenizer *tok, struct atoms *atoms)
+static enum item gen_populate_roll_item(struct reader *in, struct atoms *atoms)
 {
-    struct token token = {0};
-    assert(token_expect(tok, &token, token_symbol));
-
-    word_t item = atoms_get(atoms, &token.value.s);
+    word_t item = reader_atom(in, atoms);
     if (item == ITEM_ENERGY) return item;
     if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST) return item;
 
-    token_err(tok, "invalid item atom: %s", token.value.s.c);
+    reader_err(in, "invalid item atom: %lx", item);
     return ITEM_ELEM_A;
 }
 
-static uint16_t gen_populate_roll_count(struct tokenizer *tok)
+static uint16_t gen_populate_roll_count(struct reader *in)
 {
-    struct token token = {0};
-    assert(token_expect(tok, &token, token_number));
+    word_t count = reader_word(in);
+    if (count >= 0 && count <= UINT16_MAX) return count;
 
-    word_t count = token.value.w;
-    if (count < 0 || count > UINT16_MAX) {
-        token_err(tok, "invalid count: %lx", token.value.w);
-        return 0;
-    }
-
-    return count;
+    reader_err(in, "invalid count: %lx", count);
+    return 0;
 }
 
 static void gen_populate_rolls(
-        struct tokenizer *tok, struct gen *gen, struct atoms *atoms)
+        struct reader *in, struct gen *gen, struct atoms *atoms)
 {
     struct roll *it = gen->rolls;
 
-    struct token token = {0};
-    while (token_next(tok, &token)->type != token_close) {
-        assert(token_assert(tok, &token, token_open));
-
+    while (!reader_peek_close(in)) {
+        reader_open(in);
         assert((size_t) (it - gen->rolls) < array_len(gen->rolls));
 
-        it->type = gen_populate_roll_type(tok);
+        it->type = gen_populate_roll_type(in);
 
         switch (it->type)
         {
         case roll_one: {
-            it->min = gen_populate_roll_item(tok, atoms);
-            it->count = gen_populate_roll_count(tok);
+            it->min = gen_populate_roll_item(in, atoms);
+            it->count = gen_populate_roll_count(in);
             break;
         }
 
         case roll_rng:
         case roll_one_of:
         case roll_all_of: {
-            it->min = gen_populate_roll_item(tok, atoms);
-            it->max = gen_populate_roll_item(tok, atoms);
-            it->count = gen_populate_roll_count(tok);
+            it->min = gen_populate_roll_item(in, atoms);
+            it->max = gen_populate_roll_item(in, atoms);
+            it->count = gen_populate_roll_count(in);
             break;
         }
 
         default: { assert(false); }
         }
 
-        assert(token_expect(tok, &token, token_close));
+        reader_close(in);
         it++;
     }
 
@@ -339,54 +329,35 @@ static void gen_populate_stars(struct atoms *atoms)
 {
     char path[PATH_MAX] = {0};
     sys_path_res("gen/stars.lisp", path, sizeof(path));
-    struct mfile file = mfile_open(path);
 
-    struct tokenizer tok = {0};
-    struct token_ctx *ctx = token_init_stderr(&tok, path, file.ptr, file.len);
+    struct config config = {0};
+    struct reader *in = config_read(&config, path);
 
     struct gen *it = gen.stars;
 
-    struct token token = {0};
-    while (token_next(&tok, &token)->type != token_nil) {
-        assert(token_assert(&tok, &token, token_open));
-
+    while (!reader_peek_eof(in)) {
+        reader_open(in);
         assert((size_t) (it - gen.stars) < array_len(gen.stars));
 
-        assert(token_expect(&tok, &token, token_symbol));
-        it->name = token.value.s;
+        it->name = reader_symbol(in);
 
-        while (token_next(&tok, &token)->type != token_close) {
-            assert(token_assert(&tok, &token, token_open));
+        word_t hue = reader_field(in, "hue", word);
+        assert(hue >= 0 && hue < 360);
+        it->hue = hue;
 
-            assert(token_expect(&tok, &token, token_symbol));
-            uint64_t hash = symbol_hash(&token.value.s);
+        it->weight = reader_field(in, "weight", word);
+        gen.stars_range += it->weight;
 
-            if (hash == symbol_hash_c("rolls"))
-                gen_populate_rolls(&tok, it, atoms);
+        reader_open(in);
+        reader_symbol_str(in, "rolls");
+        gen_populate_rolls(in, it, atoms);
+        reader_close(in);
 
-            else if (hash == symbol_hash_c("hue")) {
-                assert(token_expect(&tok, &token, token_number));
-                assert(token.value.w >= 0 && token.value.w < 360);
-                it->hue = token.value.w;
-                assert(token_expect(&tok, &token, token_close));
-            }
-
-            else if (hash == symbol_hash_c("weight")) {
-                assert(token_expect(&tok, &token, token_number));
-                it->weight = token.value.w;
-                gen.stars_range += token.value.w;
-                assert(token_expect(&tok, &token, token_close));
-            }
-
-            else assert(false);
-        }
-
+        reader_close(in);
         it++;
     }
 
-    assert(token_ctx_ok(ctx));
-    token_ctx_free(ctx);
-    mfile_close(&file);
+    config_close(&config);
 }
 
 
