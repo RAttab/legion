@@ -4,11 +4,11 @@
 */
 
 #include "game/tape.h"
-#include "vm/token.h"
 #include "game/sys.h"
 #include "utils/fs.h"
 #include "utils/str.h"
 #include "utils/htable.h"
+#include "utils/config.h"
 
 
 // -----------------------------------------------------------------------------
@@ -228,56 +228,47 @@ static struct tape *tapes_vec_output(
     return tape;
 }
 
-static enum item tapes_assert_item(
-        struct tokenizer *tok, struct token *token, struct atoms *atoms)
+static enum item tapes_expect_item(struct reader *in, struct atoms *atoms)
 {
-    assert(token_assert(tok, token, token_symbol));
+    word_t item = reader_atom(in, atoms);
+    if (item > 0 && item < ITEM_MAX) return item;
 
-    word_t item = atoms_get(atoms, &token->value.s);
-    if (item <= 0 || item >= ITEM_MAX) {
-        token_err(tok, "invalid item atom: %s", token->value.s.c);
-        assert(false);
-    }
-
-    return item;
-}
-
-static enum item tapes_expect_item(struct tokenizer *tok, struct atoms *atoms)
-{
-    struct token token = {0};
-    return tapes_assert_item(tok, token_next(tok, &token), atoms);
+    reader_err(in, "invalid item atom: %lx", item);
+    return ITEM_NIL;
 }
 
 static void tapes_load_tape(
-        enum item host, struct tokenizer *tok, struct atoms *atoms)
+        enum item host, struct reader *in, struct atoms *atoms)
 {
     energy_t energy = 0;
-    enum item id = tapes_expect_item(tok, atoms);
+    enum item id = tapes_expect_item(in, atoms);
 
     enum tapes_type type = tapes_nil;
     struct tapes_vec vec = {0};
-    struct token token = {0};
 
-    while (token_next(tok, &token)->type != token_close) {
-        assert(token_assert(tok, &token, token_open));
+    while (!reader_peek_close(in)) {
+        reader_open(in);
+        struct symbol field = reader_symbol(in);
+        uint64_t hash = symbol_hash(&field);
 
-        assert(token_expect(tok, &token, token_symbol));
-        uint64_t hash = symbol_hash(&token.value.s);
-
-        if (hash == symbol_hash_c("in")) type = tapes_in;
-        else if (hash == symbol_hash_c("out")) type = tapes_out;
-        else if (hash == symbol_hash_c("energy")) {
-            assert(token_expect(tok, &token, token_number));
-            energy = token.value.w;
-            assert(token_expect(tok, &token, token_close));
+        if (hash == symbol_hash_c("energy")) {
+            energy = reader_word(in);
+            reader_close(in);
             continue;
         }
-        else assert(false);
+        else if (hash == symbol_hash_c("in")) type = tapes_in;
+        else if (hash == symbol_hash_c("out")) type = tapes_out;
+        else {
+            reader_err(in, "unknown field: %s", field.c);
+            reader_close(in);
+            continue;
+        }
 
-        while (token_next(tok, &token)->type != token_close) {
-            enum item item = tapes_assert_item(tok, &token, atoms);
+        while (!reader_peek_close(in)) {
+            enum item item = tapes_expect_item(in, atoms);
             tapes_vec_push(&vec, item, type);
         }
+        reader_close(in);
     }
 
     tapes.index[id] = tapes_vec_output(&vec, id, host, energy);
@@ -285,25 +276,23 @@ static void tapes_load_tape(
 
 static void tapes_load_file(const char *path, struct atoms *atoms)
 {
-    struct mfile file = mfile_open(path);
+    struct config config = {0};
+    struct reader *in = config_read(&config, path);
 
-    struct tokenizer tok = {0};
-    struct token_ctx *ctx = token_init_stderr(&tok, path, file.ptr, file.len);
+    while (!reader_peek_eof(in)) {
+        reader_open(in);
 
-    struct token token = {0};
-    while (token_next(&tok, &token)->type != token_nil) {
-        assert(token_assert(&tok, &token, token_open));
-
-        enum item host = tapes_expect_item(&tok, atoms);
-        while (token_next(&tok, &token)->type != token_close) {
-            assert(token_assert(&tok, &token, token_open));
-            tapes_load_tape(host, &tok, atoms);
+        enum item host = tapes_expect_item(in, atoms);
+        while (!reader_peek_close(in)) {
+            reader_open(in);
+            tapes_load_tape(host, in, atoms);
+            reader_close(in);
         }
+
+        reader_close(in);
     }
 
-    assert(token_ctx_ok(ctx));
-    token_ctx_free(ctx);
-    mfile_close(&file);
+    config_close(&config);
 }
 
 
