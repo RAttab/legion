@@ -70,7 +70,7 @@ void check_basics(void)
         while (!proxy_update(proxy));
     }
 
-    proxy_pipe_close(proxy, proxy_pipe);
+    proxy_pipe_close(proxy_pipe);
     proxy_free(proxy);
 
     sim_pipe_close(sim_pipe);

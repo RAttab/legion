@@ -49,7 +49,7 @@ static void client_free(int poll, struct server *server)
         failf_errno("unable to remove client wake '%d' from epoll", wake);
     }
 
-    proxy_pipe_close(client.proxy, server->pipe);
+    proxy_pipe_close(server->pipe);
     close(server->socket);
     free(server);
 }
@@ -57,6 +57,8 @@ static void client_free(int poll, struct server *server)
 static struct server *client_connect(
         int poll, const char *node, const char *service)
 {
+    if (!proxy_pipe_ready(client.proxy)) return NULL;
+
     int socket = socket_connect(node, service);
     if (socket == -1) return NULL;
 

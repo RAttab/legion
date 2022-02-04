@@ -14,6 +14,7 @@
 #include "utils/config.h"
 
 static struct proxy_pipe *proxy_pipe(struct proxy *);
+static void proxy_pipe_free(struct proxy *, struct proxy_pipe *);
 static void proxy_cmd(struct proxy *, const struct cmd *);
 
 
@@ -32,7 +33,7 @@ struct proxy
     struct hset *active_sectors;
     struct lisp *lisp;
 
-    struct { atomic_uintptr_t active, free; } pipe;
+    atomic_uintptr_t pipe;
 
     struct {
         token_t server;
@@ -59,8 +60,7 @@ struct proxy *proxy_new(void)
 void proxy_free(struct proxy *proxy)
 {
     struct proxy_pipe *pipe = proxy_pipe(proxy);
-    if (pipe) proxy_pipe_close(proxy, pipe);
-    (void) proxy_pipe(proxy); // frees any closed pipes.
+    if (pipe) proxy_pipe_free(proxy, pipe);
 
     state_free(proxy->state);
     hset_free(proxy->active_sectors);
@@ -129,7 +129,7 @@ void proxy_auth(struct proxy *proxy, const char *config)
 
 struct proxy_pipe
 {
-    struct proxy_pipe *next;
+    atomic_bool closed;
 
     struct sim_pipe *sim;
     struct save_ring *in, *out;
@@ -138,6 +138,11 @@ struct proxy_pipe
     struct coord chunk;
     mod_t mod;
 };
+
+bool proxy_pipe_ready(struct proxy *proxy)
+{
+    return atomic_load_explicit(&proxy->pipe, memory_order_relaxed) == 0;
+}
 
 struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
 {
@@ -149,9 +154,8 @@ struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
         .ack = ack_new(),
     };
 
-    uintptr_t old = atomic_exchange_explicit(
-            &proxy->pipe.active, (uintptr_t) pipe, memory_order_release);
-    assert(!old);
+    assert(proxy_pipe_ready(proxy));
+    atomic_store_explicit(&proxy->pipe, (uintptr_t) pipe, memory_order_release);
 
     if (proxy->auth.user.private) {
         proxy_cmd(proxy, &(struct cmd) {
@@ -176,9 +180,11 @@ struct proxy_pipe *proxy_pipe_new(struct proxy *proxy, struct sim_pipe *sim)
     return pipe;
 }
 
-static void proxy_pipe_free(struct proxy_pipe *pipe)
+static void proxy_pipe_free(struct proxy *proxy, struct proxy_pipe *pipe)
 {
-    if (!pipe) return;
+    struct proxy_pipe *old = (void *) atomic_exchange_explicit(
+            &proxy->pipe, 0, memory_order_relaxed);
+    assert(pipe == old);
 
     if (pipe->ack) ack_free(pipe->ack);
     if (!pipe->sim) { // in local mode the pipe is shared and owned by sim.
@@ -189,19 +195,14 @@ static void proxy_pipe_free(struct proxy_pipe *pipe)
     free(pipe);
 }
 
-void proxy_pipe_close(struct proxy *proxy, struct proxy_pipe *pipe)
+static bool proxy_pipe_closed(struct proxy_pipe *pipe)
 {
-    struct proxy_pipe *old = (void *) atomic_exchange_explicit(
-            &proxy->pipe.active, (uintptr_t) NULL, memory_order_acquire);
-    assert(old == pipe);
+    return atomic_load_explicit(&pipe->closed, memory_order_acquire);
+}
 
-    uintptr_t next = atomic_load_explicit(&proxy->pipe.free, memory_order_acquire);
-    do {
-        pipe->next = (struct proxy_pipe *) next;
-    } while (!atomic_compare_exchange_weak_explicit(
-                    &proxy->pipe.free, &next, (uintptr_t) pipe,
-                    memory_order_acq_rel,
-                    memory_order_relaxed));
+void proxy_pipe_close(struct proxy_pipe *pipe)
+{
+    atomic_store_explicit(&pipe->closed, true, memory_order_release);
 }
 
 struct save_ring *proxy_pipe_in(struct proxy_pipe *pipe)
@@ -216,15 +217,7 @@ struct save_ring *proxy_pipe_out(struct proxy_pipe *pipe)
 
 static struct proxy_pipe *proxy_pipe(struct proxy *proxy)
 {
-    struct proxy_pipe *pipe = (void *) atomic_exchange_explicit(
-            &proxy->pipe.free, (uintptr_t) NULL, memory_order_acquire);
-    while (pipe) {
-        struct proxy_pipe *next = pipe->next;
-        proxy_pipe_free(pipe);
-        pipe = next;
-    }
-
-    return (void *) atomic_load_explicit(&proxy->pipe.active, memory_order_acquire);
+    return (void *) atomic_load_explicit(&proxy->pipe, memory_order_acquire);
 }
 
 
@@ -320,6 +313,9 @@ enum proxy_ret proxy_update(struct proxy *proxy)
     // if the pipe was reset make sure to restore our subscriptions
     if (!coord_eq(pipe->chunk, proxy->state->chunk.coord))
         proxy_chunk(proxy, proxy->state->chunk.coord);
+
+    if (proxy_pipe_closed(pipe))
+        proxy_pipe_free(proxy, pipe);
 
     return ret;
 }

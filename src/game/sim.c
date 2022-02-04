@@ -308,6 +308,7 @@ static void sim_logv(
     ssize_t len = vsnprintf(status->msg, sizeof(status->msg), fmt, args);
     assert(len >= 0);
     status->len = len;
+    status->type = type;
 
     sim_log_push(pipe);
 }
