@@ -32,6 +32,7 @@
 ;; If there's already an active legion in the star, bail.
 (when (progn (io &io_cas mem-id mem-home 0 1) (head))
   (reset))
+(io &io_log (self) !booting (progn (io &io_coord (self)) (head)))
 
 ;; Name
 (when (is-home)
@@ -210,6 +211,7 @@
 	     &io_ok))
 
   ;; We're all done so time to switch
+  (io &io_log (self) !i-am-legion 0)
   (load (mod os 2)))
 
 
