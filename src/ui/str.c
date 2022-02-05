@@ -101,13 +101,13 @@ void ui_str_setf(struct ui_str *str, const char *fmt, ...)
 void ui_str_set_u64(struct ui_str *str, uint64_t val)
 {
     assert(str->cap);
-    str->len = str_utoa(val, (char *)str->str, str->cap);
+    str->len = str_utoa(val, (char *)str->str, legion_min(str->cap, 20));
 }
 
 void ui_str_set_hex(struct ui_str *str, uint64_t val)
 {
     assert(str->cap);
-    str->len = str_utox(val, (char *)str->str,  str->cap);
+    str->len = str_utox(val, (char *)str->str, legion_min(str->cap, 16));
 }
 
 void ui_str_set_scaled(struct ui_str *str, uint64_t val)
