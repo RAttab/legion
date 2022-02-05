@@ -22,11 +22,10 @@ struct legion_packed logi
     struct coord star;
     world_ts_t time;
     id_t id;
-    enum io io;
-    enum ioe err;
+    word_t key, value;
 };
 
-static_assert(sizeof(struct logi) == 20);
+static_assert(sizeof(struct logi) == 32);
 
 
 // -----------------------------------------------------------------------------
@@ -38,7 +37,7 @@ struct log;
 struct log *log_new(size_t cap);
 void log_free(struct log *);
 
-void log_push(struct log *, world_ts_t, struct coord, id_t, enum io, enum ioe);
+void log_push(struct log *, world_ts_t, struct coord, id_t, word_t key, word_t value);
 const struct logi *log_next(const struct log *, const struct logi *it);
 
 void log_save(const struct log *, struct save *);

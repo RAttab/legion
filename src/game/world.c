@@ -338,10 +338,10 @@ void world_log_push(
         user_t owner,
         struct coord star,
         id_t id,
-        enum io io,
-        enum ioe ioe)
+        word_t key,
+        word_t value)
 {
-    log_push(world_user(world, owner)->log, world->time, star, id, io, ioe);
+    log_push(world_user(world, owner)->log, world->time, star, id, key, value);
 }
 
 

@@ -575,13 +575,13 @@ bool chunk_io(
 // log
 // -----------------------------------------------------------------------------
 
-void chunk_log(struct chunk *chunk, id_t id, enum io io, enum ioe err)
+void chunk_log(struct chunk *chunk, id_t id, word_t key, word_t value)
 {
     assert(chunk->world);
 
     struct coord star = chunk->star.coord;
-    log_push(chunk->log, world_time(chunk->world), star, id, io, err);
-    world_log_push(chunk->world, chunk->owner, star, id, io, err);
+    log_push(chunk->log, world_time(chunk->world), star, id, key, value);
+    world_log_push(chunk->world, chunk->owner, star, id, key, value);
 }
 
 const struct log *chunk_logs(struct chunk *chunk)

@@ -65,7 +65,7 @@ bool chunk_io(
         const word_t *args, size_t len);
 
 
-void chunk_log(struct chunk *, id_t, enum io, enum ioe);
+void chunk_log(struct chunk *, id_t, word_t key, word_t value);
 const struct log *chunk_logs(struct chunk *);
 
 

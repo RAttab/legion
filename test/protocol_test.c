@@ -146,8 +146,8 @@ void check(void)
             assert(coord_eq(wd_log->star, st_log->star));
             assert(wd_log->time == st_log->time);
             assert(wd_log->id == st_log->id);
-            assert(wd_log->io == st_log->io);
-            assert(wd_log->err == st_log->err);
+            assert(wd_log->key == st_log->key);
+            assert(wd_log->value == st_log->value);
 
             wd_log = log_next(world_log(world, user), wd_log);
             st_log = log_next(state->log, st_log);

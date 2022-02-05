@@ -27,8 +27,8 @@ struct ui_logi
     struct ui_label time;
     struct ui_link star;
     struct ui_link id;
-    struct ui_label io;
-    struct ui_label err;
+    struct ui_label key;
+    struct ui_label value;
 };
 
 struct ui_log
@@ -51,8 +51,8 @@ struct ui_logi ui_logi_new(void)
         .time = ui_label_new(font, ui_str_v(10)),
         .star = ui_link_new(font, ui_str_v(symbol_cap)),
         .id = ui_link_new(font, ui_str_v(id_str_len)),
-        .io = ui_label_new(font, ui_str_v(symbol_cap)),
-        .err = ui_label_new(font, ui_str_v(symbol_cap)),
+        .key = ui_label_new(font, ui_str_v(symbol_cap)),
+        .value = ui_label_new(font, ui_str_v(symbol_cap)),
     };
 
     ui.time.fg = rgba_gray(0x88);
@@ -65,7 +65,7 @@ struct ui_log *ui_log_new(void)
     struct font *font = ui_log_font();
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
-            (10 + symbol_cap * 3 + id_str_len + 2) * font->glyph_w,
+            (10 + symbol_cap * 3 + id_str_len + 3) * font->glyph_w,
             render.rect.h - pos.y - ui_status_height());
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
@@ -86,8 +86,8 @@ void ui_logi_free(struct ui_logi *ui)
     ui_label_free(&ui->time);
     ui_link_free(&ui->star);
     ui_link_free(&ui->id);
-    ui_label_free(&ui->io);
-    ui_label_free(&ui->err);
+    ui_label_free(&ui->key);
+    ui_label_free(&ui->value);
 }
 
 void ui_log_free(struct ui_log *ui)
@@ -110,8 +110,8 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
     ui->state.id = it->id;
     ui_str_set_id(&ui->id.str, it->id);
 
-    ui_str_set_atom(&ui->io.str, it->io);
-    ui_str_set_atom(&ui->err.str, it->err);
+    ui_str_set_atom(&ui->key.str, it->key);
+    ui_str_set_atom(&ui->value.str, it->value);
 }
 
 static void ui_log_update(struct ui_log *ui)
@@ -246,8 +246,9 @@ void ui_logi_render(
         ui_link_render(&ui->star, layout, renderer);
 
     ui_link_render(&ui->id, layout, renderer);
-    ui_label_render(&ui->io, layout, renderer);
-    ui_label_render(&ui->err, layout, renderer);
+    ui_label_render(&ui->key, layout, renderer);
+    ui_layout_sep_x(layout, font->glyph_w);
+    ui_label_render(&ui->value, layout, renderer);
 }
 
 void ui_log_render(struct ui_log *ui, SDL_Renderer *renderer)

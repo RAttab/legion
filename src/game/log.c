@@ -46,15 +46,15 @@ void log_push(
         world_ts_t time,
         struct coord star,
         id_t id,
-        enum io io,
-        enum ioe err)
+        word_t key,
+        word_t value)
 {
     log->items[log->it % log->cap] = (struct logi) {
         .time = time,
         .star = star,
         .id = id,
-        .io = io,
-        .err = err,
+        .key = key,
+        .value = value,
     };
     log->it++;
 };
@@ -67,7 +67,7 @@ const struct logi *log_next(const struct log *log, const struct logi *it)
     if (it > log->items) it--; // walk the log backwards
     else it = log->items + (log->cap - 1);
 
-    return it->err ? it : NULL;
+    return it->id ? it : NULL;
 }
 
 
@@ -115,8 +115,8 @@ void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
         save_write_value(save, it->time);
         save_write_value(save, coord_to_u64(it->star));
         save_write_value(save, it->id);
-        save_write_value(save, it->io);
-        save_write_value(save, it->err);
+        save_write_value(save, it->key);
+        save_write_value(save, it->value);
     }
     save_write_value(save, (world_ts_t) 0);
 
@@ -132,12 +132,12 @@ static bool log_load_delta_item(struct log *log, struct save *save, world_ts_t a
 
     struct coord star = coord_from_u64(save_read_type(save, uint64_t));
     id_t id = save_read_type(save, typeof(id));
-    enum io io = save_read_type(save, typeof(io));
-    enum ioe ioe = save_read_type(save, typeof(ioe));
+    word_t key = save_read_type(save, typeof(key));
+    word_t value = save_read_type(save, typeof(value));
 
     if (!log_load_delta_item(log, save, ack)) return false;
 
-    if (time > ack) log_push(log, time, star, id, io, ioe);
+    if (time > ack) log_push(log, time, star, id, key, value);
     return true;
 }
 
