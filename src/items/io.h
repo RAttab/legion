@@ -33,6 +33,7 @@ enum legion_packed io
 
     // Brain
     IO_ID         = IO_MIN + 0x10,
+    IO_LOG        = IO_MIN + 0x11,
     IO_TICK       = IO_MIN + 0x12,
     IO_COORD      = IO_MIN + 0x13,
     IO_NAME       = IO_MIN + 0x14,
