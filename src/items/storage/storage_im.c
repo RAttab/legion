@@ -53,11 +53,20 @@ static void im_storage_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_storage_io_status(
-        struct im_storage *storage, struct chunk *chunk, id_t src)
+static void im_storage_io_state(
+        struct im_storage *storage, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value = vm_pack(storage->count, storage->item);
-    chunk_io(chunk, IO_STATE, storage->id, src, &value, 1);
+    if (!im_check_args(chunk, storage->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_ITEM: { value = storage->item; break; }
+    case IO_LOOP: { value = storage->count; break; }
+    default: { chunk_log(chunk, storage->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, storage->id, src, &value, 1);
 }
 
 static void im_storage_io_reset(struct im_storage *storage, struct chunk *chunk)
@@ -96,7 +105,7 @@ static void im_storage_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, storage->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_storage_io_status(storage, chunk, src); return; }
+    case IO_STATE: { im_storage_io_state(storage, chunk, src, args, len); return; }
 
     case IO_ITEM: { im_storage_io_item(storage, chunk, args, len); return; }
 
@@ -109,7 +118,7 @@ static void im_storage_io(
 static const word_t im_storage_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_ITEM,
     IO_RESET,

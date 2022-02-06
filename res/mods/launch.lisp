@@ -25,7 +25,7 @@
       ((scan-star-ongoing 0)
        (scan-star-done
 	(io &io_scan scanner-star
-	    (coord-inc (progn (io &io_status scanner-star) (head))))))
+	    (coord-inc (progn (io &io_state scanner-star &io_target) (head))))))
       (star
        (when (check-star star)
 	 (let ((legion-id (legion)))

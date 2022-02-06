@@ -19,6 +19,12 @@ size_t im_receive_cap(const struct im_receive *receive)
     return 1;
 }
 
+static uint8_t im_receive_len(struct im_receive *receive)
+{
+    assert(im_receive_cap(receive) == 1);
+    return receive->head != receive->tail ? 1 : 0;
+}
+
 static void im_receive_init(void *state, struct chunk *chunk, id_t id)
 {
     struct im_receive *receive = state;
@@ -53,11 +59,21 @@ static void im_receive_reset(struct im_receive *receive, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_receive_io_status(
-        struct im_receive *receive, struct chunk *chunk, id_t src)
+static void im_receive_io_state(
+        struct im_receive *receive, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value = coord_to_u64(receive->target);
-    chunk_io(chunk, IO_STATE, receive->id, src, &value, 1);
+    if (!im_check_args(chunk, receive->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_TARGET: { value = coord_to_u64(receive->target); break; }
+    case IO_CHANNEL: { value = receive->channel; break; }
+    case IO_LOOP: { value = im_receive_len(receive); break; }
+    default: { chunk_log(chunk, receive->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, receive->id, src, &value, 1);
 }
 
 static void im_receive_io_channel(
@@ -145,7 +161,7 @@ static void im_receive_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, receive->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_receive_io_status(receive, chunk, src); return; }
+    case IO_STATE: { im_receive_io_state(receive, chunk, src, args, len); return; }
     case IO_RESET: { im_receive_reset(receive, chunk); return; }
 
     case IO_CHANNEL: { im_receive_io_channel(receive, chunk, args, len); return; }
@@ -161,7 +177,7 @@ static void im_receive_io(
 static const word_t im_receive_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
     IO_RESET,
 
     IO_CHANNEL,

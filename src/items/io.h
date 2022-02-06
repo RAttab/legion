@@ -24,12 +24,12 @@ enum legion_packed io
     IO_RETURN = IO_MIN + 0x04,
     IO_PING   = IO_MIN + 0x05,
     IO_PONG   = IO_MIN + 0x06,
-    IO_STATUS = IO_MIN + 0x07,
-    IO_STATE  = IO_MIN + 0x08,
-    IO_RESET  = IO_MIN + 0x09,
-    IO_ITEM   = IO_MIN + 0x0A,
-    IO_TAPE   = IO_MIN + 0x0B,
-    IO_MOD    = IO_MIN + 0x0C,
+    IO_STATE  = IO_MIN + 0x07,
+    IO_RESET  = IO_MIN + 0x08,
+    IO_ITEM   = IO_MIN + 0x09,
+    IO_TAPE   = IO_MIN + 0x0A,
+    IO_MOD    = IO_MIN + 0x0B,
+    IO_LOOP   = IO_MIN + 0x0C,
 
     // Brain
     IO_ID         = IO_MIN + 0x10,
@@ -63,6 +63,10 @@ enum legion_packed io
     IO_SCAN_VAL = IO_MIN + 0x84,
     IO_LAUNCH   = IO_MIN + 0x85,
     IO_TARGET   = IO_MIN + 0x86,
+
+    // State
+    IO_HAS_ITEM = IO_MIN + 0xF0,
+    IO_HAS_LOOP = IO_MIN + 0xF1,
 
     IO_MAX,
     IO_LEN = IO_MAX - IO_MIN,

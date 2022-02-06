@@ -62,11 +62,20 @@ static void im_deploy_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_deploy_io_status(
-        struct im_deploy *deploy, struct chunk *chunk, id_t src)
+static void im_deploy_io_state(
+        struct im_deploy *deploy, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value = vm_pack(deploy->loops, deploy->item);
-    chunk_io(chunk, IO_STATE, deploy->id, src, &value, 1);
+    if (!im_check_args(chunk, deploy->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_ITEM: { value = deploy->item; break; }
+    case IO_LOOP: { value = deploy->loops; break; }
+    default: { chunk_log(chunk, deploy->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, deploy->id, src, &value, 1);
 }
 
 static void im_deploy_io_item(
@@ -100,7 +109,7 @@ static void im_deploy_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, deploy->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_deploy_io_status(deploy, chunk, src); return; }
+    case IO_STATE: { im_deploy_io_state(deploy, chunk, src, args, len); return; }
 
     case IO_ITEM: { im_deploy_io_item(deploy, chunk, args, len); return; }
     case IO_RESET: { im_deploy_reset(deploy, chunk); return; }
@@ -112,7 +121,7 @@ static void im_deploy_io(
 static const word_t im_deploy_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_ITEM,
     IO_RESET

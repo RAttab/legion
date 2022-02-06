@@ -89,11 +89,19 @@ static void im_lab_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_lab_io_status(
-        struct im_lab *lab, struct chunk *chunk, id_t src)
+static void im_lab_io_state(
+        struct im_lab *lab, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t item = lab->item;
-    chunk_io(chunk, IO_STATE, lab->id, src, &item, 1);
+    if (!im_check_args(chunk, lab->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_ITEM: { value = lab->item; break; }
+    default: { chunk_log(chunk, lab->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, lab->id, src, &value, 1);
 }
 
 static void im_lab_io_item(
@@ -250,7 +258,7 @@ static void im_lab_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, lab->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_lab_io_status(lab, chunk, src); return; }
+    case IO_STATE: { im_lab_io_state(lab, chunk, src, args, len); return; }
 
     case IO_ITEM: { im_lab_io_item(lab, chunk, args, len); return; }
     case IO_RESET: { im_lab_reset(lab, chunk); return; }
@@ -267,7 +275,7 @@ static void im_lab_io(
 static const word_t im_lab_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_ITEM,
     IO_RESET,

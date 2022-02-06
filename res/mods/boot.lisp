@@ -23,21 +23,25 @@
 (defconst energy-target 100)
 (defconst specs-solar-div 1000)
 
+;; Sanity checks
 (defconst scan-id (id &item_scanner 1))
 (assert (= (io &io_ping scan-id) &io_ok))
-
 (defconst mem-id (id &item_memory 1))
 (assert (= (io &io_ping mem-id) &io_ok))
+(defconst deploy-id (id &item_deploy 1))
+(assert (= (io &io_ping deploy-id) &io_ok))
 
-;; If there's already an active legion in the star, bail.
-(when (progn (io &io_cas mem-id mem-home 0 1) (head))
-  (reset))
-(io &io_log (self) !booting (progn (io &io_coord (self)) (head)))
 
-;; Name
-(when (is-home)
-  (io &io_name (self) !Bob-The-Homeworld)
-  (io &io_set mem-id mem-home (progn (io &io_coord (self)) (head))))
+;; Home
+(progn
+  ;; If there's already an active legion in the star, bail.
+  (when (progn (io &io_cas mem-id mem-home 0 1) (head))
+    (reset))
+
+  (io &io_log (self) !booting (progn (io &io_coord (self)) (head)))
+  (when (is-home)
+    (io &io_name (self) !Bob-The-Homeworld)
+    (io &io_set mem-id mem-home (progn (io &io_coord (self)) (head)))))
 
 
 ;; Elem - Extract
@@ -69,6 +73,7 @@
   (deploy-tape &item_printer &item_retina printer-count)
 
   (set-tape 1 2 &item_printer &item_muscle))
+
 
 ;; Workers
 (progn
@@ -141,7 +146,7 @@
   (deploy-tape &item_condenser &item_elem_h condenser-count))
 
 
-;; Antenna
+;; Data logistics
 (progn
   (wait-tech &item_conductor)
   (deploy-tape &item_printer &item_conductor printer-count)
@@ -210,7 +215,6 @@
 		 (id &item_brain (count &item_brain)))
 	     &io_ok))
 
-  ;; We're all done so time to switch
   (io &io_log (self) !i-am-legion 0)
   (load (mod os 2)))
 
@@ -239,16 +243,14 @@
 (defun deploy-item (item n)
   (assert (= (io &io_tape (id &item_assembly 1) item n) &io_ok))
   (assert (= (io &io_item (id &item_deploy 1) item n) &io_ok))
-  (while (progn (assert (= (io &io_status (id &item_deploy 1)) &io_ok))
-		(/= (head) 0))))
+  (while (progn (io &io_state deploy-id &io_item) (/= (head) 0))))
 
 (defun deploy-tape (host tape n)
   (let ((id (+ (count host) 1)))
     (assert (> id 0))
     (assert (= (io &io_tape (id &item_assembly 1) host n) &io_ok))
     (assert (= (io &io_item (id &item_deploy 1) host n) &io_ok))
-    (while (progn (assert (= (io &io_status (id &item_deploy 1)) &io_ok))
-		  (/= (head) 0)))
+    (while (progn (io &io_state deploy-id &io_item) (/= (head) 0)))
     (set-tape id n host tape)))
 
 (defun count (item)

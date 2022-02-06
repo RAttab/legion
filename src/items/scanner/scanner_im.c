@@ -69,19 +69,33 @@ static void im_scanner_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_scanner_io_status(
-        struct im_scanner *scanner, struct chunk *chunk, id_t src)
+static void im_scanner_io_state(
+        struct im_scanner *scanner, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t target = 0;
+    if (!im_check_args(chunk, scanner->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
 
-    switch (scanner->state) {
-    case im_scanner_idle: { target = 0; break; }
-    case im_scanner_wide: { target = coord_to_u64(scanner->type.wide.coord); break; }
-    case im_scanner_target: { target = coord_to_u64(scanner->type.target.coord); break; }
-    default: { assert(false); }
+    switch (args[0])
+    {
+    case IO_TARGET: {
+        if (scanner->state == im_scanner_wide)
+            value = coord_to_u64(coord_sector(scanner->type.wide.coord));
+        if (scanner->state == im_scanner_target)
+            value = coord_to_u64(scanner->type.target.coord);
+        break;
     }
 
-    chunk_io(chunk, IO_STATE, scanner->id, src, &target, 1);
+    case IO_ITEM: {
+        if (scanner->state == im_scanner_target)
+            value = scanner->type.target.item;
+        break;
+    }
+
+    default: { chunk_log(chunk, scanner->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, scanner->id, src, &value, 1);
 }
 
 static void im_scanner_io_scan(
@@ -169,7 +183,7 @@ static void im_scanner_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, scanner->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_scanner_io_status(scanner, chunk, src); return; }
+    case IO_STATE: { im_scanner_io_state(scanner, chunk, src, args, len); return; }
 
     case IO_SCAN: { im_scanner_io_scan(scanner, chunk, args, len); return; }
     case IO_SCAN_VAL: { im_scanner_io_scan_val(scanner, chunk, src); return; }
@@ -182,7 +196,7 @@ static void im_scanner_io(
 static const word_t im_scanner_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_SCAN,
     IO_SCAN_VAL,

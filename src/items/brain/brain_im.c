@@ -182,18 +182,20 @@ static void im_brain_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_brain_io_status(
-        struct im_brain *brain, struct chunk *chunk, id_t src)
-{
-    word_t value = vm_pack(brain->msg.len, brain->mod_id);
-    chunk_io(chunk, IO_STATE, brain->id, src, &value, 1);
-}
-
 static void im_brain_io_state(
-        struct im_brain *brain, const word_t *args, size_t len)
+        struct im_brain *brain, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    for (size_t i = 0; i < len; ++i)
-        vm_push(&brain->vm, args[i]);
+    if (!im_check_args(chunk, brain->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_MOD: { value = brain->mod_id; break; }
+    case IO_DBG_BREAK: { value = brain->breakpoint; break; }
+    default: { chunk_log(chunk, brain->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, brain->id, src, &value, 1);
 }
 
 static void im_brain_io_mod(
@@ -264,9 +266,7 @@ static void im_brain_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, NULL, 0); return; }
     case IO_PONG: { return; } // the return value of chunk_io is all we really need.
 
-    case IO_STATUS: { im_brain_io_status(brain, chunk, src); return; }
-    case IO_STATE: { im_brain_io_state(brain, args, len); return; }
-
+    case IO_STATE: { im_brain_io_state(brain, chunk, src, args, len); return; }
     case IO_RESET: { im_brain_reset(brain); return; }
     case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
 
@@ -292,9 +292,7 @@ static const word_t im_brain_io_list[] =
     IO_PING,
     IO_PONG,
 
-    IO_STATUS,
     IO_STATE,
-
     IO_RESET,
     IO_MOD,
 

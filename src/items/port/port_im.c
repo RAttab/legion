@@ -71,14 +71,23 @@ static void im_port_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_port_io_status(
-        struct im_port *port, struct chunk *chunk, id_t src)
+static void im_port_io_state(
+        struct im_port *port, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value[] = {
-        vm_pack(port->want.count, port->want.item),
-        coord_to_u64(port->target),
-    };
-    chunk_io(chunk, IO_STATE, port->id, src, value, array_len(value));
+    if (!im_check_args(chunk, port->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_TARGET: { value = coord_to_u64(port->target); break; }
+    case IO_ITEM: { value = port->want.item; break; }
+    case IO_LOOP: { value = port->want.count; break; }
+    case IO_HAS_ITEM: { value = port->has.item; break; }
+    case IO_HAS_LOOP: { value = port->has.count; break; }
+    default: { chunk_log(chunk, port->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, port->id, src, &value, 1);
 }
 
 static void im_port_io_reset(struct im_port *port, struct chunk *chunk)
@@ -139,7 +148,7 @@ static void im_port_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, port->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_port_io_status(port, chunk, src); return; }
+    case IO_STATE: { im_port_io_state(port, chunk, src, args, len); return; }
 
     case IO_RESET: { im_port_io_reset(port, chunk); return; }
     case IO_ITEM: { im_port_io_item(port, chunk, args, len); return; }
@@ -153,7 +162,7 @@ static void im_port_io(
 static const word_t im_port_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_RESET,
     IO_ITEM,

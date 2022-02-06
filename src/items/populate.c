@@ -215,12 +215,12 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_RETURN),
     io_init(IO_PING),
     io_init(IO_PONG),
-    io_init(IO_STATUS),
     io_init(IO_STATE),
     io_init(IO_RESET),
     io_init(IO_ITEM),
     io_init(IO_TAPE),
     io_init(IO_MOD),
+    io_init(IO_LOOP),
 
     // Brain
     io_init(IO_ID),
@@ -254,6 +254,10 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_SCAN_VAL),
     io_init(IO_LAUNCH),
     io_init(IO_TARGET),
+
+    // State
+    io_init(IO_HAS_ITEM),
+    io_init(IO_HAS_LOOP),
 
     // Errors
     ioe_init(IOE_MISSING_ARG),

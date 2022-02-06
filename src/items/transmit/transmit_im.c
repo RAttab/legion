@@ -35,11 +35,20 @@ static void im_transmit_reset(struct im_transmit *transmit, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_transmit_io_status(
-        struct im_transmit *transmit, struct chunk *chunk, id_t src)
+static void im_transmit_io_state(
+        struct im_transmit *transmit, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value = coord_to_u64(transmit->target);
-    chunk_io(chunk, IO_STATE, transmit->id, src, &value, 1);
+    if (!im_check_args(chunk, transmit->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_TARGET: { value = coord_to_u64(transmit->target); break; }
+    case IO_CHANNEL: { value = transmit->channel; break; }
+    default: { chunk_log(chunk, transmit->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, transmit->id, src, &value, 1);
 }
 
 static void im_transmit_io_channel(
@@ -98,7 +107,7 @@ static void im_transmit_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, transmit->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_transmit_io_status(transmit, chunk, src); return; }
+    case IO_STATE: { im_transmit_io_state(transmit, chunk, src, args, len); return; }
     case IO_RESET: { im_transmit_reset(transmit, chunk); return; }
 
     case IO_CHANNEL: { im_transmit_io_channel(transmit, chunk, args, len); return; }
@@ -112,7 +121,7 @@ static void im_transmit_io(
 static const word_t im_transmit_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
     IO_RESET,
 
     IO_CHANNEL,

@@ -109,11 +109,20 @@ static void im_printer_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_printer_io_status(
-        struct im_printer *printer, struct chunk *chunk, id_t src)
+static void im_printer_io_state(
+        struct im_printer *printer, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value = vm_pack(printer->loops, tape_packed_id(printer->tape));
-    chunk_io(chunk, IO_STATE, printer->id, src, &value, 1);
+    if (!im_check_args(chunk, printer->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_TAPE: { value = tape_packed_id(printer->tape); break; }
+    case IO_LOOP: { value = printer->loops; break; }
+    default: { chunk_log(chunk, printer->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, printer->id, src, &value, 1);
 }
 
 static void im_printer_io_tape(
@@ -147,7 +156,7 @@ static void im_printer_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, printer->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_printer_io_status(printer, chunk, src); return; }
+    case IO_STATE: { im_printer_io_state(printer, chunk, src, args, len); return; }
 
     case IO_TAPE: { im_printer_io_tape(printer, chunk, args, len); return; }
     case IO_RESET: { im_printer_reset(printer, chunk); return; }
@@ -159,7 +168,7 @@ static void im_printer_io(
 static const word_t im_printer_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_TAPE,
     IO_RESET,

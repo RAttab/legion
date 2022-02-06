@@ -116,11 +116,20 @@ static void im_extract_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
-static void im_extract_io_status(
-        struct im_extract *extract, struct chunk *chunk, id_t src)
+static void im_extract_io_state(
+        struct im_extract *extract, struct chunk *chunk, id_t src,
+        const word_t *args, size_t len)
 {
-    word_t value = vm_pack(extract->loops, tape_packed_id(extract->tape));
-    chunk_io(chunk, IO_STATE, extract->id, src, &value, 1);
+    if (!im_check_args(chunk, extract->id, IO_STATE, len, 1)) return;
+    word_t value = 0;
+
+    switch (args[0]) {
+    case IO_TAPE: { value = tape_packed_id(extract->tape); break; }
+    case IO_LOOP: { value = extract->loops; break; }
+    default: { chunk_log(chunk, extract->id, IO_STATE, IOE_A0_INVALID); break; }
+    }
+
+    chunk_io(chunk, IO_RETURN, extract->id, src, &value, 1);
 }
 
 static void im_extract_io_tape(
@@ -154,7 +163,7 @@ static void im_extract_io(
     switch(io)
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, extract->id, src, NULL, 0); return; }
-    case IO_STATUS: { im_extract_io_status(extract, chunk, src); return; }
+    case IO_STATE: { im_extract_io_state(extract, chunk, src, args, len); return; }
 
     case IO_TAPE: { im_extract_io_tape(extract, chunk, args, len); return; }
     case IO_RESET: { im_extract_reset(extract, chunk); return; }
@@ -166,7 +175,7 @@ static void im_extract_io(
 static const word_t im_extract_io_list[] =
 {
     IO_PING,
-    IO_STATUS,
+    IO_STATE,
 
     IO_TAPE,
     IO_RESET,
