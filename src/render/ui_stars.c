@@ -4,6 +4,7 @@
 */
 
 #include "common.h"
+#include "game/gen.h"
 #include "render/ui.h"
 #include "ui/ui.h"
 
@@ -61,12 +62,10 @@ static void ui_stars_update(struct ui_stars *ui)
         if (!coord_eq(coord_sector(star), sector)) {
             sector = coord_sector(star);
             parent = ui_tree_index(&ui->tree);
-            ui_str_setf(ui_tree_add(&ui->tree, ui_node_nil, coord_to_u64(sector)),
-                    "%02x.%02x x %02x.%02x",
-                    (sector.x >> (coord_sector_bits + coord_area_bits)),
-                    (sector.x >> coord_sector_bits) & 0xFF,
-                    (sector.y >> (coord_sector_bits + coord_area_bits)),
-                    (sector.y >> coord_sector_bits) & 0xFF);
+
+            struct symbol name = gen_name_sector(sector, proxy_seed(render.proxy));
+            ui_str_set_symbol(
+                    ui_tree_add(&ui->tree, ui_node_nil, coord_to_u64(sector)), &name);
         }
 
         ui_str_set_atom(

@@ -7,7 +7,6 @@
 #include "game/gen.h"
 #include "game/world.h"
 #include "game/sector.h"
-#include "vm/token.h"
 #include "vm/symbol.h"
 #include "vm/atoms.h"
 #include "utils/fs.h"
@@ -32,12 +31,16 @@ enum
 
     gen_square_num = 256,
     gen_square_total = gen_square_num * gen_square_num,
+
+    gen_prefix_cap = 15,
+    gen_suffix_cap = 14,
 };
 
 static_assert(gen_square_size > gen_square_margin);
 static_assert(gen_square_num * gen_square_num > gen_stars_max * 2);
 static_assert(gen_square_num * gen_square_size == coord_sector_size);
 static_assert(gen_square_total > 0);
+static_assert(gen_prefix_cap + gen_suffix_cap + 1 == symbol_cap);
 
 
 enum legion_packed roll_type
@@ -64,16 +67,20 @@ struct gen
     struct roll rolls[8];
 };
 
+struct affix
+{
+    size_t len;
+    struct symbol name;
+    struct symbol *list;
+};
+
 static struct
 {
     struct gen stars[8];
     size_t stars_range;
 
-    size_t prefix_len;
-    const struct symbol *prefix;
-
-    size_t suffix_len;
-    const struct symbol *suffix;
+    struct affix prefix;
+    struct { size_t len; struct affix *list; } suffix;
 } gen;
 
 
@@ -91,12 +98,21 @@ static struct rng gen_rng(struct coord coord, seed_t seed)
 // name
 // -----------------------------------------------------------------------------
 
-word_t gen_name(struct coord coord, seed_t seed, struct atoms *atoms)
+struct gen_bits { size_t prefix, suffix; };
+
+struct gen_bits gen_name_bits(struct coord coord, seed_t seed, size_t suffixes)
 {
     uint64_t bits = hash_u64(gen_mix(coord, seed));
+    return (struct gen_bits) {
+        .prefix = u64_top(bits) % gen.prefix.len,
+        .suffix = u64_bot(bits) % suffixes,
+    };
+}
 
-    const struct symbol *prefix = &gen.prefix[u64_top(bits) % gen.prefix_len];
-    const struct symbol *suffix = &gen.suffix[u64_bot(bits) % gen.suffix_len];
+static struct symbol gen_name_symbol(
+        const struct symbol *prefix,
+        const struct symbol *suffix)
+{
     assert(prefix->len + suffix->len + 1 < symbol_cap);
 
     struct symbol name = *prefix;
@@ -104,6 +120,30 @@ word_t gen_name(struct coord coord, seed_t seed, struct atoms *atoms)
     name.len++;
     memcpy(name.c + name.len, suffix->c, suffix->len);
     name.len += suffix->len;
+    return name;
+
+}
+
+struct symbol gen_name_sector(struct coord coord, seed_t seed)
+{
+    struct gen_bits bits = {0};
+
+    bits = gen_name_bits(coord_sector(coord), seed, gen.suffix.len);
+    struct affix *suffix = gen.suffix.list + bits.suffix;
+
+    return gen_name_symbol(gen.prefix.list + bits.prefix, &suffix->name);
+}
+
+word_t gen_name_star(struct coord coord, seed_t seed, struct atoms *atoms)
+{
+    struct gen_bits bits = {0};
+
+    bits = gen_name_bits(coord_sector(coord), seed, gen.suffix.len);
+    struct affix *suffix = gen.suffix.list + bits.suffix;
+
+    bits = gen_name_bits(coord, seed, suffix->len);
+    struct symbol name = gen_name_symbol(
+            gen.prefix.list + bits.prefix, suffix->list + bits.suffix);
 
     return atoms_make(atoms, &name);
 }
@@ -360,45 +400,75 @@ static void gen_populate_stars(struct atoms *atoms)
     config_close(&config);
 }
 
-
-static struct symbol *gen_populate_affix(const char *rel, size_t limit, size_t *ret)
+static void gen_populate_affix(
+        struct affix *affix, struct reader *in, size_t limit)
 {
-    char path[PATH_MAX] = {0};
-    sys_path_res(rel, path, sizeof(path));
-    struct mfile file = mfile_open(path);
+    size_t cap = 8;
+    affix->list = calloc(cap, sizeof(*affix->list));
 
-    struct tokenizer tok = {0};
-    struct token_ctx *ctx = token_init_stderr(&tok, path, file.ptr, file.len);
+    reader_open(in);
+    affix->name = reader_symbol(in);
+    if (affix->name.len > gen_suffix_cap)
+        reader_err(in, "affix too long: '%s' > %zu", affix->name.c, limit);
 
-    size_t len = 0, cap = 32;
-    struct symbol *list = calloc(1, cap * sizeof(*list));
-
-    struct token token = {0};
-    while (token_next(&tok, &token)->type != token_nil) {
-        assert(token_assert(&tok, &token, token_symbol));
-
-        if (token.value.s.len > limit) {
-            token_err(&tok, "affix too long: %s", token.value.s.c);
-            continue;
+    while (!reader_peek_close(in)) {
+        if (affix->len == cap) {
+            cap *= 2;
+            affix->list = realloc(affix->list, cap * sizeof(*affix->list));
         }
 
-        if (len == cap) list = realloc(list, (cap *= 2) * sizeof(*list));
-        list[len] = token.value.s;
-        len++;
+        struct symbol *it = affix->list + affix->len;
+        *it = reader_symbol(in);
+        if (it->len > limit)
+            reader_err(in, "affix too long: '%s' > %zu", it->c, limit);
+
+        affix->len++;
     }
 
-    assert(token_ctx_ok(ctx));
-    token_ctx_free(ctx);
-    mfile_close(&file);
+    reader_close(in);
+}
 
-    *ret = len;
-    return realloc(list, len * sizeof(*list));
+static void gen_populate_prefix(void)
+{
+    char path[PATH_MAX] = {0};
+    sys_path_res("gen/prefix.lisp", path, sizeof(path));
+
+    struct config config = {0};
+    struct reader *in = config_read(&config, path);
+
+    gen_populate_affix(&gen.prefix, in, gen_prefix_cap);
+
+    config_close(&config);
+}
+
+static void gen_populate_suffix(void)
+{
+    char path[PATH_MAX] = {0};
+    sys_path_res("gen/suffix.lisp", path, sizeof(path));
+
+    struct config config = {0};
+    struct reader *in = config_read(&config, path);
+
+    size_t cap = 1;
+    gen.suffix.list = calloc(cap, sizeof(*gen.suffix.list));
+
+    while (!reader_peek_eof(in)) {
+        if (gen.suffix.len == cap) {
+            cap *= 2;
+            gen.suffix.list = realloc(gen.suffix.list, cap * sizeof(*gen.suffix.list));
+        }
+
+        gen_populate_affix(gen.suffix.list + gen.suffix.len, in, gen_suffix_cap);
+        gen.suffix.len++;
+    }
+
+    config_close(&config);
 }
 
 
 void gen_populate(struct atoms *atoms)
 {
     gen_populate_stars(atoms);
-    gen.prefix = gen_populate_affix("gen/prefix.lisp", 19, &gen.prefix_len);
-    gen.suffix = gen_populate_affix("gen/suffix.lisp", 10, &gen.suffix_len);
+    gen_populate_prefix();
+    gen_populate_suffix();
 }

@@ -621,7 +621,9 @@ bool proxy_active_sector(struct proxy *proxy, struct coord coord)
 word_t proxy_star_name(struct proxy *proxy, struct coord coord)
 {
     struct htable_ret ret = htable_get(&proxy->state->names, coord_to_u64(coord));
-    return ret.ok ? (word_t) ret.value : gen_name(coord, proxy->state->seed, proxy->state->atoms);
+    if (ret.ok) return (word_t) ret.value;
+
+    return gen_name_star(coord, proxy->state->seed, proxy->state->atoms);
 }
 
 const struct star *proxy_star_in(struct proxy *proxy, struct rect rect)

@@ -278,7 +278,7 @@ struct chunk *world_chunk_alloc(
     const struct star *star = sector_star_at(sector, coord);
     assert(star);
 
-    word_t name = gen_name(coord, world->seed, world->atoms);
+    word_t name = gen_name_star(coord, world->seed, world->atoms);
     chunk = chunk_alloc(world, star, user, name);
 
     uint64_t key = coord_to_u64(coord);
@@ -318,7 +318,7 @@ word_t world_star_name(struct world *world, struct coord coord)
     struct chunk *chunk = world_chunk(world, coord);
     if (chunk) return chunk_name(chunk);
 
-    return gen_name(coord, world->seed, world->atoms);
+    return gen_name_star(coord, world->seed, world->atoms);
 }
 
 bool world_user_access(struct world *world, uset_t access, struct coord coord)
