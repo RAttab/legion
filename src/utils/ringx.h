@@ -32,19 +32,23 @@ struct ringx_name
 };
 
 
-inline void ringx_fn(free) (struct ringx_name *ring) { free(ring); }
+inline legion_always_inline
+void ringx_fn(free) (struct ringx_name *ring) { free(ring); }
 
-inline size_t ringx_fn(cap) (const struct ringx_name *ring)
+inline legion_always_inline
+size_t ringx_fn(cap) (const struct ringx_name *ring)
 {
     return ring ? ring->cap : 0;
 }
 
-inline bool ringx_fn(empty) (const struct ringx_name *ring)
+inline legion_always_inline
+bool ringx_fn(empty) (const struct ringx_name *ring)
 {
     return ring->head == ring->tail;
 }
 
-inline size_t ringx_fn(len) (const struct ringx_name *ring)
+inline legion_always_inline
+size_t ringx_fn(len) (const struct ringx_name *ring)
 {
     return ring ? ring_delta(ring->tail, ring->head) : 0;
 }
@@ -53,7 +57,8 @@ inline size_t ringx_fn(len) (const struct ringx_name *ring)
 // ops
 // -----------------------------------------------------------------------------
 
-inline struct ringx_name *ringx_fn(reserve) (size_t size)
+inline legion_always_inline
+struct ringx_name *ringx_fn(reserve) (size_t size)
 {
     size_t cap = 1;
     while (cap < size) cap *= 2;
@@ -64,13 +69,15 @@ inline struct ringx_name *ringx_fn(reserve) (size_t size)
     return ring;
 }
 
-inline ringx_type ringx_fn(peek) (const struct ringx_name *ring)
+inline legion_always_inline
+ringx_type ringx_fn(peek) (const struct ringx_name *ring)
 {
     if (ringx_fn(empty)(ring)) return 0;
     return ring->vals[ring->tail % ring->cap];
 }
 
-inline ringx_type ringx_fn(pop) (struct ringx_name *ring)
+inline legion_always_inline
+ringx_type ringx_fn(pop) (struct ringx_name *ring)
 {
     if (ringx_fn(empty)(ring)) return 0;
     ringx_type val = legion_xchg(ring->vals + (ring->tail % ring->cap), 0);
