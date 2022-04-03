@@ -229,22 +229,8 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
 
 struct token *token_peek(struct tokenizer *tok, struct token *token)
 {
-    size_t row = tok->row;
-    size_t col = tok->col;
-    const char *base = tok->base;
-    const char *it = tok->it;
-    const char *end = tok->end;
-
-    struct token *ret = token_next(tok, token);
-    assert(ret == token);
-
-    tok->row = row;
-    tok->col = col;
-    tok->base = base;
-    tok->it = it;
-    tok->end = end;
-
-    return ret;
+    struct tokenizer copy = *tok;
+    return token_next(&copy, token);
 }
 
 struct token *token_assert(
