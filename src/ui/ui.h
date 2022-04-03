@@ -103,14 +103,17 @@ inline struct SDL_Rect ui_widget_rect(const struct ui_widget *widget)
 // layout
 // -----------------------------------------------------------------------------
 
+enum ui_layout_dir { ui_layout_right, ui_layout_left };
+
 struct ui_layout
 {
-    struct pos top;
-    struct dim dim;
-    struct dim pad;
+    struct
+    {
+        struct pos pos;
+        struct dim dim;
+    } base, row;
 
-    struct pos pos;
-    int16_t next_y;
+    enum ui_layout_dir dir;
 };
 
 enum { ui_layout_inf = -1 };
@@ -122,12 +125,12 @@ struct ui_layout ui_layout_inner(struct ui_layout *);
 void ui_layout_next_row(struct ui_layout *);
 void ui_layout_sep_x(struct ui_layout *, int16_t px);
 void ui_layout_sep_y(struct ui_layout *, int16_t px);
-void ui_layout_mid(struct ui_layout *, const struct ui_widget *);
-void ui_layout_right(struct ui_layout *, const struct ui_widget *);
+void ui_layout_mid(struct ui_layout *, int width);
+void ui_layout_dir(struct ui_layout *, enum ui_layout_dir);
 
 inline bool ui_layout_is_nil(struct ui_layout *layout)
 {
-    return pos_is_nil(layout->top) && dim_is_nil(layout->dim);
+    return pos_is_nil(layout->base.pos) && dim_is_nil(layout->base.dim);
 }
 
 

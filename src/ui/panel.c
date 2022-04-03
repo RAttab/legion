@@ -57,7 +57,7 @@ void ui_panel_free(struct ui_panel *panel)
 void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 {
     panel->w.dim = dim;
-    panel->layout.dim = make_dim(
+    panel->layout.base.dim = make_dim(
             dim.w - (ui_panel_margin.w * 2),
             dim.h - (ui_panel_margin.h * 2));
 }
@@ -166,11 +166,12 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
         panel->title.fg = panel->state == ui_panel_focused ? rgba_white() : rgba_gray(0xAA);
         ui_label_render(&panel->title, &layout, renderer);
 
-        ui_layout_right(&layout, &panel->close.w);
+        ui_layout_dir(&layout, ui_layout_left);
         ui_button_render(&panel->close, &layout, renderer);
 
         ui_layout_next_row(&layout);
         ui_layout_sep_y(&layout, 4);
+        ui_layout_dir(&layout, ui_layout_right);
     }
 
     return layout;

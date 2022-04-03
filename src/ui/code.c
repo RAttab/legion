@@ -307,7 +307,7 @@ void ui_code_render(
 
     struct font *font = code->font;
     code->w = code->scroll.w;
-    code->cols = (inner.dim.w / font->glyph_w) - 5;
+    code->cols = (inner.base.dim.w / font->glyph_w) - 5;
 
     // We need both code->cols and code->scroll.visible to initialize the view.
     if (unlikely(code->view.init)) {

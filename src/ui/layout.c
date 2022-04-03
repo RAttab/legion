@@ -14,69 +14,73 @@
 struct ui_layout ui_layout_new(struct pos pos, struct dim dim)
 {
     return (struct ui_layout) {
-        .top = make_pos(pos.x, pos.y),
-        .dim = make_dim(dim.w, dim.h),
-        .pad = make_dim(0, 0),
-        .pos = make_pos(pos.x, pos.y),
-        .next_y = pos.y,
+        .base = { .pos = pos, .dim = dim },
+        .row = { .pos = pos, .dim = { .w = dim.w, .h = 0 } },
+        .dir = ui_layout_right,
     };
 }
 
 void ui_layout_add(struct ui_layout *layout, struct ui_widget *widget)
 {
-    if (widget->dim.h == ui_layout_inf)
-        widget->dim.h = layout->dim.h - (layout->pos.y - layout->top.y);
     if (widget->dim.w == ui_layout_inf)
-        widget->dim.w = layout->dim.w - (layout->pos.x - layout->top.x);
+        widget->dim.w = layout->row.dim.w;
+    if (widget->dim.h == ui_layout_inf)
+        widget->dim.h = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
 
-    assert(layout->pos.x + widget->dim.w <= layout->top.x + layout->dim.w);
-    assert(layout->pos.y + widget->dim.h <= layout->top.y + layout->dim.h);
+    assert(layout->row.dim.w >= widget->dim.w);
+    assert(layout->row.pos.y + widget->dim.h <= layout->base.pos.y + layout->base.dim.h);
 
-    widget->pos = layout->pos;
-    layout->pos.x += widget->dim.w + layout->pad.w;
-    layout->next_y = legion_max(layout->next_y, layout->pos.y + widget->dim.h);
+    layout->row.dim.w -= widget->dim.w;
+    layout->row.dim.h = legion_max(layout->row.dim.h, widget->dim.h);
+
+    widget->pos = layout->row.pos;
+
+    if (layout->dir == ui_layout_right)
+        layout->row.pos.x += widget->dim.w;
+    else widget->pos.x += layout->row.dim.w;
 }
 
 struct ui_layout ui_layout_inner(struct ui_layout *layout)
 {
-    return ui_layout_new(layout->pos, make_dim(
-                    layout->dim.w - (layout->pos.x - layout->top.x),
-                    layout->next_y));
+    return ui_layout_new(layout->row.pos, layout->row.dim);
 }
 
 void ui_layout_next_row(struct ui_layout *layout)
 {
-    layout->pos.x = layout->top.x;
-    layout->pos.y = layout->next_y + layout->pad.h;
-    layout->next_y = layout->pos.y;
+    layout->row.pos.x = layout->base.pos.x;
+    layout->row.pos.y += layout->row.dim.h;
+
+    layout->row.dim.w = layout->base.dim.w;
+    layout->row.dim.h = 0;
 }
 
 void ui_layout_sep_x(struct ui_layout *layout, int16_t px)
 {
-    assert(layout->pos.x + px < layout->top.x + layout->dim.w);
+    assert(layout->row.dim.w >= px);
 
-    layout->pos.x += px;
+    if (layout->dir == ui_layout_right)
+        layout->row.pos.x += px;
+    layout->row.dim.w -= px;
 }
 
 void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
 {
-    assert(layout->next_y == layout->pos.y);
-    assert(layout->pos.y + px < layout->top.y + layout->dim.h);
+    assert(layout->row.dim.h == 0);
+    assert(layout->row.pos.y + px <= layout->base.pos.y + layout->base.dim.h);
 
-    layout->pos.y += px;
-    layout->next_y = layout->pos.y;
+    layout->row.pos.y += px;
 }
 
-void ui_layout_mid(struct ui_layout *layout, const struct ui_widget *widget)
+void ui_layout_mid(struct ui_layout *layout, int width)
 {
-    int16_t x = layout->top.x + (layout->dim.w/2 - widget->dim.w/2);
-    assert(layout->pos.x < x);
-    layout->pos.x = x;
+    int x = layout->base.pos.x + (layout->base.dim.w/2 - width/2);
+    assert(layout->row.pos.x < x);
+    layout->row.pos.x = x;
+    layout->row.dim.w = width;
 }
 
-void ui_layout_right(struct ui_layout *layout, const struct ui_widget *widget)
+void ui_layout_dir(struct ui_layout *layout, enum ui_layout_dir dir)
 {
-    int16_t x = layout->top.x + (layout->dim.w - layout->pad.w - widget->dim.w);
-    assert(layout->pos.x < x);
-    layout->pos.x = x;
+    assert(dir == ui_layout_right || dir == ui_layout_left);
+    layout->dir = dir;
 }

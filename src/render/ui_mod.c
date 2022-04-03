@@ -315,10 +315,10 @@ void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
     ui_button_render(&ui->mode, &layout, renderer);
     ui_button_render(&ui->indent, &layout, renderer);
 
-    ui_layout_right(&layout, &ui->reset.w);
-
+    ui_layout_dir(&layout, ui_layout_left);
     ui_button_render(&ui->reset, &layout, renderer);
 
+    ui_layout_dir(&layout, ui_layout_right);
     ui_layout_next_row(&layout);
     ui_layout_sep_y(&layout, font->glyph_h);
 
