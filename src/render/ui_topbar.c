@@ -20,6 +20,7 @@ struct ui_topbar
     struct ui_button stop, fast;
     struct ui_button home, stars, tapes, mods, log;
     struct ui_label coord;
+    struct ui_button man;
     struct ui_button close;
 };
 
@@ -50,6 +51,8 @@ struct ui_topbar *ui_topbar_new(void)
         .log = ui_button_new(font, ui_str_c("log")),
 
         .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
+
+        .man = ui_button_new(font, ui_str_c("?")),
         .close = ui_button_new(font, ui_str_c("x")),
     };
 
@@ -72,7 +75,10 @@ void ui_topbar_free(struct ui_topbar *ui) {
     ui_button_free(&ui->log);
 
     ui_label_free(&ui->coord);
+
+    ui_button_free(&ui->man);
     ui_button_free(&ui->close);
+
     free(ui);
 }
 
@@ -179,6 +185,11 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
         return true;
     }
 
+    if ((ret = ui_button_event(&ui->man, ev))) {
+        render_push_event(EV_MAN_TOGGLE, 0, 0);
+        return true;
+    }
+
     if ((ret = ui_button_event(&ui->close, ev))) {
         sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
         return true;
@@ -238,9 +249,11 @@ void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
     ui_button_render(&ui->mods, &layout, renderer);
     ui_button_render(&ui->log, &layout, renderer);
 
-    ui_layout_mid(&layout, &ui->coord.w);
-    topbar_render_coord(ui, &layout, renderer);
-
-    ui_layout_right(&layout, &ui->close.w);
+    ui_layout_dir(&layout, ui_layout_left);
     ui_button_render(&ui->close, &layout, renderer);
+    ui_layout_sep_x(&layout, 10);
+    ui_button_render(&ui->man, &layout, renderer);
+
+    ui_layout_mid(&layout, ui->coord.w.dim.w);
+    topbar_render_coord(ui, &layout, renderer);
 }

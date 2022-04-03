@@ -18,4 +18,5 @@
 #include "render/ui_log.c"
 #include "render/ui_item.c"
 #include "render/ui_io.c"
+#include "render/ui_man.c"
 

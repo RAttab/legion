@@ -127,6 +127,8 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         return false;
     }
 
+    case EV_MAN_GOTO:
+    case EV_MAN_TOGGLE:
     case EV_STAR_CLEAR: {
         ui_panel_hide(&ui->panel);
         ui->id = 0;

@@ -67,6 +67,9 @@ enum event
 
     EV_IO_TOGGLE,
 
+    EV_MAN_TOGGLE,
+    EV_MAN_GOTO,
+
     EV_MAX,
 };
 
@@ -116,6 +119,7 @@ struct render
         struct ui_star *star;
         struct ui_item *item;
         struct ui_io *io;
+        struct ui_man *man;
     } ui;
 };
 

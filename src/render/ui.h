@@ -156,3 +156,13 @@ struct ui_log *ui_log_new(void);
 void ui_log_free(struct ui_log *);
 bool ui_log_event(struct ui_log *, SDL_Event *);
 void ui_log_render(struct ui_log *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// man
+// -----------------------------------------------------------------------------
+struct ui_man;
+struct ui_man *ui_man_new(void);
+void ui_man_free(struct ui_man *);
+bool ui_man_event(struct ui_man *, SDL_Event *);
+void ui_man_render(struct ui_man *, SDL_Renderer *);

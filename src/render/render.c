@@ -122,6 +122,7 @@ static void ui_init(void)
     render.ui.star = ui_star_new();
     render.ui.item = ui_item_new();
     render.ui.io = ui_io_new();
+    render.ui.man = ui_man_new();
 }
 
 static void ui_close(void)
@@ -136,6 +137,8 @@ static void ui_close(void)
     ui_star_free(render.ui.star);
     ui_item_free(render.ui.item);
     ui_io_free(render.ui.io);
+    ui_man_free(render.ui.man);
+
     factory_free(render.ui.factory);
     map_free(render.ui.map);
 
@@ -160,6 +163,7 @@ static void ui_event(SDL_Event *event)
     if (ui_star_event(render.ui.star, event)) return;
     if (ui_item_event(render.ui.item, event)) return;
     if (ui_io_event(render.ui.io, event)) return;
+    if (ui_man_event(render.ui.man, event)) return;
     if (factory_event(render.ui.factory, event)) return;
     if (map_event(render.ui.map, event)) return;
 }
@@ -178,6 +182,7 @@ static void ui_render(SDL_Renderer *renderer)
     ui_star_render(render.ui.star, renderer);
     ui_item_render(render.ui.item, renderer);
     ui_io_render(render.ui.io, renderer);
+    ui_man_render(render.ui.man, renderer);
 }
 
 
