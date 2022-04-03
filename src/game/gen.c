@@ -413,8 +413,9 @@ static void gen_populate_affix(
 
     while (!reader_peek_close(in)) {
         if (affix->len == cap) {
-            cap *= 2;
-            affix->list = realloc(affix->list, cap * sizeof(*affix->list));
+            size_t new = cap * 2;
+            affix->list = realloc_zero(affix->list, cap, new, sizeof(*affix->list));
+            cap = new;
         }
 
         struct symbol *it = affix->list + affix->len;
@@ -454,8 +455,9 @@ static void gen_populate_suffix(void)
 
     while (!reader_peek_eof(in)) {
         if (gen.suffix.len == cap) {
-            cap *= 2;
-            gen.suffix.list = realloc(gen.suffix.list, cap * sizeof(*gen.suffix.list));
+            size_t new = cap * 2;
+            gen.suffix.list = realloc_zero(gen.suffix.list, cap, new, sizeof(*gen.suffix.list));
+            cap = new;
         }
 
         gen_populate_affix(gen.suffix.list + gen.suffix.len, in, gen_suffix_cap);

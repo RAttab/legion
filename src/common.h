@@ -116,6 +116,13 @@ inline void *alloc_cache(size_t n)
     return memset(aligned_alloc(n, n), 0, n);
 }
 
+inline void *realloc_zero(void *ptr, size_t old, size_t new, size_t size)
+{
+    ptr = realloc(ptr, new * size);
+    memset(ptr + (old * size), 0, (new - old) * size);
+    return ptr;
+}
+
 
 // -----------------------------------------------------------------------------
 // log
