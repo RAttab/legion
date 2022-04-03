@@ -13,7 +13,7 @@
 // local
 // -----------------------------------------------------------------------------
 
-int local_run(const char *file, seed_t seed)
+bool local_run(const char *file, seed_t seed)
 {
     struct sim *sim = sim_new(seed, file);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
@@ -33,5 +33,5 @@ int local_run(const char *file, seed_t seed)
     sim_join(sim);
     sim_free(sim);
 
-    return 0;
+    return true;
 }
