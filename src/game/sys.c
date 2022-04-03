@@ -7,6 +7,7 @@
 #include "game/sys.h"
 #include "game/tape.h"
 #include "game/gen.h"
+#include "game/man.h"
 #include "items/config.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
@@ -20,6 +21,7 @@ void sys_populate(void)
 {
     im_populate();
     mod_compiler_init();
+    man_populate();
 
     {
         struct atoms *atoms = atoms_new();

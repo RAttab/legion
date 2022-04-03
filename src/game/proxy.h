@@ -36,6 +36,7 @@ void proxy_auth(struct proxy *, const char *config);
 enum proxy_ret { proxy_nil = 0, proxy_updated, proxy_loaded };
 enum proxy_ret proxy_update(struct proxy *);
 
+struct lisp *proxy_lisp(struct proxy *);
 struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);
 
 

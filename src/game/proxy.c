@@ -381,6 +381,11 @@ const struct log *proxy_logs(struct proxy *proxy)
     return proxy->state->log;
 }
 
+struct lisp *proxy_lisp(struct proxy *proxy)
+{
+    return proxy->lisp;
+}
+
 struct lisp_ret proxy_eval(struct proxy *proxy, const char *src, size_t len)
 {
     return lisp_eval_const(proxy->lisp, src, len);
