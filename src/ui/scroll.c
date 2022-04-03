@@ -32,8 +32,10 @@ void ui_scroll_free(struct ui_scroll *scroll)
 
 void ui_scroll_move(struct ui_scroll *scroll, ssize_t inc)
 {
-    if (inc > 0 || scroll->first) scroll->first += inc;
-    scroll->first = legion_min(scroll->first, scroll->total - 1);
+    scroll->first = legion_bound(
+            (ssize_t) scroll->first + inc,
+            (ssize_t) 0,
+            (ssize_t) scroll->total);
 }
 
 void ui_scroll_update(struct ui_scroll *scroll, size_t total)
@@ -45,12 +47,17 @@ void ui_scroll_update(struct ui_scroll *scroll, size_t total)
 static SDL_Rect ui_scroll_rect(struct ui_scroll *scroll)
 {
     if (!scroll->total) return (SDL_Rect) {0};
-    return (SDL_Rect) {
+    SDL_Rect rect = {
         .x = scroll->w.pos.x + (scroll->w.dim.w - ui_scroll_width),
         .y = scroll->w.pos.y + ((scroll->w.dim.h * scroll->first) / scroll->total),
         .w = ui_scroll_width,
         .h = (scroll->w.dim.h * scroll->visible) / scroll->total,
     };
+
+    const int max = scroll->w.pos.y + scroll->w.dim.h;
+    if (rect.y + rect.h > max) rect.h = max - rect.y;
+
+    return rect;
 }
 
 
