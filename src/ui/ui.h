@@ -8,6 +8,7 @@
 #include "common.h"
 #include "items/item.h"
 #include "game/coord.h"
+#include "game/man.h"
 #include "utils/text.h"
 #include "utils/color.h"
 #include "vm/mod.h"
@@ -15,6 +16,7 @@
 
 struct font;
 struct hset;
+struct lisp;
 
 
 // -----------------------------------------------------------------------------
@@ -456,6 +458,31 @@ void ui_code_indent(struct ui_code *);
 
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
 void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// doc
+// -----------------------------------------------------------------------------
+
+struct ui_doc
+{
+    struct ui_widget w;
+    struct ui_scroll scroll;
+
+    struct { uint8_t pt, h, w; } font;
+    size_t cols;
+
+    page_t page;
+    struct man *man;
+};
+
+struct ui_doc ui_doc_new(struct dim, int pt);
+void ui_doc_free(struct ui_doc *);
+
+void ui_doc_open(struct ui_doc *, struct link, struct lisp *);
+
+enum ui_ret ui_doc_event(struct ui_doc *, const SDL_Event *);
+void ui_doc_render(struct ui_doc *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
