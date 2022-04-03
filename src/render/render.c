@@ -205,7 +205,7 @@ void render_init(struct proxy *proxy)
     if (render.event == (uint32_t) -1) sdl_fail();
 
     render.focus = true;
-    fonts_init(render.renderer);
+    fonts_populate(render.renderer);
 
     cursor_init();
     ui_init();

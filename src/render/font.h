@@ -27,13 +27,17 @@ struct font
     SDL_Texture *tex;
 };
 
+
+enum font_size { font_small = 0, font_big, font_size_max };
+enum font_style { font_nil = 0, font_bold, font_italic, font_style_max };
+struct font *make_font(enum font_size, enum font_style);
+
 extern struct font *font_mono4;
 extern struct font *font_mono6;
 extern struct font *font_mono8;
 extern struct font *font_mono10;
 
-
-void fonts_init(SDL_Renderer *);
+void fonts_populate(SDL_Renderer *);
 void fonts_close();
 
 struct font *font_open(SDL_Renderer *, const char *ttf, size_t px);

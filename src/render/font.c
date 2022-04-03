@@ -36,6 +36,19 @@ struct font *font_mono6;
 struct font *font_mono8;
 struct font *font_mono10;
 
+static struct font_repo { struct font *styles[font_style_max]; } fonts[font_size_max] = {0};
+
+struct font *make_font(enum font_size size, enum font_style style)
+{
+    assert(size < font_size_max);
+    assert(style < font_style_max);
+
+    struct font *font = fonts[size].styles[style];
+    assert(font);
+
+    return font;
+}
+
 
 // -----------------------------------------------------------------------------
 // title
@@ -43,22 +56,43 @@ struct font *font_mono10;
 
 FT_Library ft_library;
 
-void fonts_init(SDL_Renderer *renderer)
+void fonts_populate(SDL_Renderer *renderer)
 {
     ft_err(FT_Init_FreeType(&ft_library));
 
-    char path[PATH_MAX];
-    sys_path_res("VeraMono-Bold.ttf", path, sizeof(path));
+    void load_size(size_t index, uint8_t pt)
+    {
+        char path[PATH_MAX] = {0};
+        struct font_repo *repo = fonts + index;
 
-    font_mono4 = font_open(renderer, path, 4);
-    font_mono6 = font_open(renderer, path, 6);
-    font_mono8 = font_open(renderer, path, 8);
-    font_mono10 = font_open(renderer, path, 10);
+        sys_path_res("font/IbmPlexMonoRegular.otf", path, sizeof(path));
+        repo->styles[font_nil] = font_open(renderer, path, pt);
+
+        sys_path_res("font/IbmPlexMonoBold.otf", path, sizeof(path));
+        repo->styles[font_bold] = font_open(renderer, path, pt);
+
+        sys_path_res("font/IbmPlexMonoItalic.otf", path, sizeof(path));
+        repo->styles[font_italic] = font_open(renderer, path, pt);
+
+        assert(repo->styles[font_nil]->glyph_h == repo->styles[font_bold]->glyph_h);
+        assert(repo->styles[font_nil]->glyph_w == repo->styles[font_bold]->glyph_w);
+    }
+
+    load_size(font_small, 6);
+    load_size(font_big, 8);
+
+    font_mono6 = make_font(font_small, font_nil);
+    font_mono8 = make_font(font_big, font_nil);
 }
 
 void fonts_close()
 {
-    font_close(font_mono8);
+    for (uint8_t pt = 0; pt < array_len(fonts); ++pt) {
+        for (enum font_style st = 0; st < font_style_max; ++st) {
+            struct font *font = fonts[pt].styles[st];
+            if (font) font_close(font);
+        }
+    }
 }
 
 struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
@@ -114,7 +148,7 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
         size_t pixels = ft_bitmap->rows * ft_bitmap->width;
         uint32_t sdl_bitmap[pixels];
         for (size_t px = 0; px < pixels; ++px)
-            sdl_bitmap[px] = ft_bitmap->buffer[px] * 0x01010101;
+            sdl_bitmap[px] = (ft_bitmap->buffer[px] * 0x01000000) | 0x00FFFFFF;
 
         // Just to confirm that I actually understand how this shit works.
         assert(metrics->horiBearingX >> 6 == slot->bitmap_left);
