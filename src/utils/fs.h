@@ -7,6 +7,14 @@
 
 #include "common.h"
 
+// -----------------------------------------------------------------------------
+// path
+// -----------------------------------------------------------------------------
+
+bool path_is_dir(const char *path);
+bool path_is_file(const char *path);
+size_t path_concat(char *dst, size_t len, const char *base, const char *sub);
+
 
 // -----------------------------------------------------------------------------
 // dir_it

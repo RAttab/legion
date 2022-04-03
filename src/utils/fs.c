@@ -16,6 +16,45 @@
 
 
 // -----------------------------------------------------------------------------
+// path
+// -----------------------------------------------------------------------------
+
+bool path_is_dir(const char *path)
+{
+    struct stat ret = {0};
+    if (stat(path, &ret) == -1)
+        failf_errno("unable to stat '%s'", path);
+    return S_ISDIR(ret.st_mode);
+}
+
+bool path_is_file(const char *path)
+{
+    struct stat ret = {0};
+    if (stat(path, &ret) == -1)
+        failf_errno("unable to stat '%s'", path);
+    return S_ISREG(ret.st_mode);
+}
+
+// strncpy is nightmare fuel and I currently don't have strlcpy setup. So I'm
+// using the slightly slower but safer combo strnlen + memcpy.
+size_t path_concat(char *dst, size_t len, const char *base, const char *sub)
+{
+    size_t base_len = strnlen(base, len);
+    size_t sub_len = strnlen(sub, len);
+
+    size_t bytes = base_len + 1 + sub_len + 1;
+    assert(bytes < len);
+
+    memcpy(dst, base, base_len);
+    *(dst + base_len) = '/';
+    memcpy(dst + base_len + 1, sub, sub_len);
+    *(dst + base_len + 1 + sub_len) = '\0';
+
+    return bytes;
+}
+
+
+// -----------------------------------------------------------------------------
 // dir_it
 // -----------------------------------------------------------------------------
 
