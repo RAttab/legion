@@ -32,9 +32,7 @@ struct ui_stars *ui_stars_new(void)
     struct ui_stars *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_stars) {
         .panel = ui_panel_title(pos, dim, ui_str_v(16)),
-        .tree = ui_tree_new(
-                make_dim(ui_layout_inf, ui_layout_inf),
-                font, ui_str_v(symbol_cap)),
+        .tree = ui_tree_new(make_dim(ui_layout_inf, ui_layout_inf), font, symbol_cap),
     };
 
     ui_panel_hide(&ui->panel);

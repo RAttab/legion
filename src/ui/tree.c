@@ -14,14 +14,14 @@
 // tree
 // -----------------------------------------------------------------------------
 
-struct ui_tree ui_tree_new(struct dim dim, struct font *font, struct ui_str str)
+struct ui_tree ui_tree_new(struct dim dim, struct font *font, size_t chars)
 {
     return (struct ui_tree) {
         .w = ui_widget_new(dim.w, dim.h),
         .scroll = ui_scroll_new(dim, font->glyph_h),
 
         .font = font,
-        .str = str,
+        .str = ui_str_v(chars),
 
         .len = 0,
         .cap = 0,
@@ -66,9 +66,24 @@ void ui_tree_clear(struct ui_tree *tree)
     tree->selected = ui_node_nil;
 }
 
-void ui_tree_select(struct ui_tree *tree, uint64_t user)
+ui_node_t ui_tree_select(struct ui_tree *tree, uint64_t user)
 {
+    ui_node_t index = ui_tree_user(tree, user);
+    if (index == ui_node_nil) { tree->selected = 0; return index; }
     tree->selected = user;
+
+    struct ui_node *node = tree->nodes + index;
+    while (true) {
+        if (!node->leaf) {
+            node->open = true;
+            tree->open = hset_put(tree->open, node->user);
+        }
+
+        if (node->parent == ui_node_nil) break;
+        node = tree->nodes + node->parent;
+    }
+
+    return index;
 }
 
 void ui_tree_reset(struct ui_tree *tree)
@@ -90,20 +105,26 @@ struct ui_str *ui_tree_add(
     if (tree->len == tree->cap) {
         size_t old = tree->cap;
         tree->cap = tree->cap ? tree->cap * 2 : 8;
-        tree->nodes = realloc(tree->nodes, tree->cap * sizeof(*tree->nodes));
-
-        for (size_t i = old; i < tree->cap; ++i) {
-            tree->nodes[i].str = ui_str_clone(&tree->str);
-        }
+        tree->nodes = realloc_zero(tree->nodes, old, tree->cap, sizeof(*tree->nodes));
     }
 
     struct ui_node *node = tree->nodes + tree->len;
     tree->len++;
 
-    node->user = user;
-    node->open = hset_test(tree->open, user);
-    node->parent = parent;
-    node->depth = parent == ui_node_nil ? 0 : tree->nodes[parent].depth + 1;
+    *node = (struct ui_node) {
+        .leaf = true,
+        .open = hset_test(tree->open, user),
+        .depth = 0,
+        .str = ui_str_clone(&tree->str),
+        .user = user,
+        .parent = parent,
+    };
+
+    if (parent != ui_node_nil) {
+        struct ui_node *parent_node = tree->nodes + parent;
+        parent_node->leaf = false;
+        node->depth = parent_node->depth + 1;
+    }
 
     return &node->str;
 }
@@ -130,15 +151,6 @@ static ui_node_t ui_tree_row(struct ui_tree *tree, size_t row)
     for (size_t i = 1; i <= row; ++i)
         index = ui_tree_next(tree, index);
     return index;
-}
-
-static bool ui_tree_leaf(struct ui_tree *tree, ui_node_t index)
-{
-    struct ui_node *node = ui_tree_node(tree, index);
-    if (!node) return false;
-
-    return index == tree->len - 1
-        || (node + 1)->depth <= node->depth;
 }
 
 
@@ -183,14 +195,21 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         if (index == ui_node_nil) return ui_consume;
 
         struct ui_node *node = tree->nodes + index;
-        if (ui_tree_leaf(tree, index)) {
+
+        size_t col = (point.x - rect.x) / tree->font->glyph_w;
+        if (col < node->depth) return ui_consume;
+
+        if (!node->leaf && (!node->open || col == node->depth)) {
+            node->open = !node->open;
+            if (!node->open) hset_del(tree->open, node->user);
+            else tree->open = hset_put(tree->open, node->user);
+        }
+
+        if (node->user && col > node->depth) {
             tree->selected = node->user;
             return ui_action;
         }
 
-        node->open = !node->open;
-        if (!node->open) hset_del(tree->open, node->user);
-        else tree->open = hset_put(tree->open, node->user);
         return ui_consume;
     }
 
@@ -220,35 +239,38 @@ void ui_tree_render(
     if (ui_layout_is_nil(&inner)) return;
     tree->w = tree->scroll.w;
 
+    struct pos pos = inner.base.pos;
     size_t last = ui_scroll_last(&tree->scroll);
     size_t first = ui_scroll_first(&tree->scroll);
     ui_node_t index = ui_tree_row(tree, first);
 
     for (size_t i = first; i < last; ++i, index = ui_tree_next(tree, index)) {
         struct ui_node *node = tree->nodes + index;
-        struct ui_widget widget =
-            ui_widget_new(node->str.len * font->glyph_w, font->glyph_h);
-
-        ui_layout_sep_x(&inner, (2 * node->depth) * font->glyph_w);
-        ui_layout_add(&inner, &widget);
 
         struct rgba bg = rgba_nil();
-        if (node->user == tree->selected) bg = rgba_gray(0x22);
-        else if (node->user == tree->hover) bg = rgba_gray(0x44);
-        else if (!ui_tree_leaf(tree, index)) bg = rgba_gray_a(0x11, 0x88);
-        rgba_render(bg, renderer);
+        if (node->user == tree->selected) bg = rgba_gray_a(0xFF, 0x11);
+        else if (node->user == tree->hover) bg = rgba_gray_a(0xFF, 0x22);
 
-        SDL_Rect rect = ui_widget_rect(&widget);
-        if (!ui_tree_leaf(tree, index)) {
-            rect.x = inner.top.x;
-            rect.w = inner.dim.w;
+        rgba_render(bg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                            .x = pos.x, .y = pos.y,
+                            .w = inner.base.dim.w,
+                            .h = font->glyph_h
+                        }));
+
+        pos.x += (node->depth * font->glyph_w);
+
+        if (!node->leaf) {
+            const char *sigil = node->open ? "-" : "+";
+            font_render(font, renderer, pos_as_point(pos), rgba_white(), sigil, 1);
         }
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
+        pos.x += font->glyph_w;
 
         font_render(
-                font, renderer, pos_as_point(widget.pos), rgba_white(),
+                font, renderer, pos_as_point(pos), rgba_white(),
                 node->str.str, node->str.len);
 
-        ui_layout_next_row(&inner);
+        pos.x = inner.base.pos.x;
+        pos.y += font->glyph_h;
     }
 }

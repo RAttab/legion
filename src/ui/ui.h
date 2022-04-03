@@ -467,7 +467,7 @@ static legion_unused ui_node_t ui_node_nil = -1;
 
 struct ui_node
 {
-    bool open;
+    bool open, leaf;
     uint8_t depth;
     struct ui_str str;
     uint64_t user;
@@ -490,14 +490,14 @@ struct ui_tree
 };
 
 
-struct ui_tree ui_tree_new(struct dim, struct font *, struct ui_str);
+struct ui_tree ui_tree_new(struct dim, struct font *, size_t chars);
 void ui_tree_free(struct ui_tree *);
 
 struct ui_node *ui_tree_node(struct ui_tree *, ui_node_t);
 ui_node_t ui_tree_user(struct ui_tree *, uint64_t user);
 
 void ui_tree_clear(struct ui_tree *);
-void ui_tree_select(struct ui_tree *, uint64_t user);
+ui_node_t ui_tree_select(struct ui_tree *, uint64_t user);
 
 void ui_tree_reset(struct ui_tree *);
 ui_node_t ui_tree_index(struct ui_tree *);
