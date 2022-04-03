@@ -1,0 +1,34 @@
+{@asm/push}
+
+{!NAME}
+
+PUSH - assembly language instruction
+
+{!SYNOPSIS}
+
+({*PUSH} {_word})
+
+{!DESCRIPTION}
+
+Pushes the value {_word} on the stack. With {/asm/pop} forms the basic
+tools to manipulate the stack.
+
+{!STACK}
+
+Adds the value {_word} to the stack.
+
+{!FAULTS}
+
+{*FAULT_STACK} The stack is full and can't hold any additional values.
+
+{!EXAMPLES}
+
+{`
+(asm
+  (PUSH 1)
+  (POP))
+}
+
+{!RELATED}
+
+{/asm/pushr}, {/asm/pushf}, {/asm/pop}, {/asm/popr}

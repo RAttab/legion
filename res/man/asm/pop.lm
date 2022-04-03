@@ -1,0 +1,28 @@
+{@ASM/POP}
+
+{!NAME}
+POP - assembly language instruction
+
+{!SYNOPSIS}
+({*POP})
+
+{!DESCRIPTION}
+
+{!STACK}
+Removes one value from the stack
+
+{!FAULTS}
+{*STACK} There are no values that can be popped from the stack.
+
+{!EXAMPLES}
+{`
+(asm
+  (PUSH 1)
+  (POP))
+}
+
+{!RELATED}
+- {/asm/popr}
+- {/asm/push}
+- {/asm/pushr}
+- {/asm/pushf}
