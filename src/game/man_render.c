@@ -120,17 +120,17 @@ static void man_render_title(struct man_parser *parser)
     if (parser->man->text.len > 1)
         man_err(parser, "title markup must be at the top");
 
-    markup_str(markup, title, len);
+    man_render_str(parser, markup, title, len);
 
     size_t center = ((parser->cols.cap / 2) - (sizeof(man_title) / 2));
     assert(len + 1 < center);
-    markup_repeat(markup, ' ', center - markup->len);
-    markup_str(markup, man_title, sizeof(man_title));
+    man_render_repeat(parser, markup, ' ', center - markup->len);
+    man_render_str(parser, markup, man_title, sizeof(man_title));
 
     size_t end = parser->cols.cap - len;
     assert(center + sizeof(man_title) + 1 < end);
-    markup_repeat(markup, ' ', end - markup->len);
-    markup_str(markup, title, len);
+    man_render_repeat(parser, markup, ' ', end - markup->len);
+    man_render_str(parser, markup, title, len);
 
     (void) man_render_newline(parser);
     parser->indent = man_indent_section_abs;
@@ -144,7 +144,7 @@ static void man_render_section(struct man_parser *parser)
     man_mark_section(parser->man);
 
     struct markup *markup = man_markup(parser->man, markup_bold);
-    markup_str(markup, token.it, token.end - token.it);
+    man_render_str(parser, markup, token.it, token.end - token.it);
 
     (void) man_render_newline(parser);
     parser->indent = man_indent_section_abs;
@@ -159,8 +159,8 @@ static void man_render_topic(struct man_parser *parser)
     man_mark_section(parser->man);
 
     struct markup *markup = man_markup(parser->man, markup_bold);
-    markup_repeat(markup, ' ', man_indent_section_abs);
-    markup_str(markup, token.it, token.end - token.it);
+    man_render_repeat(parser, markup, ' ', man_indent_section_abs);
+    man_render_str(parser, markup, token.it, token.end - token.it);
 
     (void) man_render_newline(parser);
     parser->indent = man_indent_topic_abs;
@@ -200,8 +200,8 @@ static void man_render_list(struct man_parser *parser)
         man_err(parser, "list must be at the start of a new line");
 
     struct markup *markup = man_markup(parser->man, markup_bold);
-    markup_repeat(markup, ' ', parser->indent);
-    markup_str(markup, token.it, len);
+    man_render_repeat(parser, markup, ' ', parser->indent);
+    man_render_str(parser, markup, token.it, len);
 
     size_t col = markup->len;
     markup = man_markup(parser->man, markup_nil);
@@ -210,7 +210,7 @@ static void man_render_list(struct man_parser *parser)
     // The +1 in the if is to account for the space needed between the list
     // header and the text and the -1 in man_render_repeat is to account for the
     // space that is automatically added by man_render_append.
-    if (col + 1 < parser->indent)
+    if (col + 1 <= parser->indent)
         man_render_repeat(parser, markup, ' ', parser->indent - col - 1);
     else (void) man_render_newline(parser);
 }
