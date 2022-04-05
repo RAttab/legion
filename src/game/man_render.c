@@ -72,9 +72,13 @@ static void man_render_append(
     if (!markup->len) {
         if (prev->type == markup_eol)
             spaces = parser->indent;
-        if (prev->len && prev->text[prev->len - 1] == '(')
+
+        char c = prev->text[prev->len - 1];
+        if (prev->len && (c == '(' || c == '['))
             spaces = 0;
-        if (*token->it == ')')
+
+        c = *token->it;
+        if (c == ')' || c == ']')
             spaces = 0;
     }
 
