@@ -110,10 +110,10 @@ void ui_doc_render(
 
     struct pos pos = inner.base.pos;
     line_t line = doc->scroll.first;
+    const line_t end = line + doc->scroll.visible;
     const struct markup *it = man_line(doc->man, line);
 
-    while (it && line < doc->scroll.visible) {
-
+    while (it && line < end) {
         switch (it->type)
         {
 
@@ -122,6 +122,7 @@ void ui_doc_render(
         case markup_eol: {
             pos.x = inner.base.pos.x;
             pos.y += doc->font.h;
+            line++;
             break;
         }
 
@@ -160,7 +161,7 @@ void ui_doc_render(
         case markup_code: {
             struct font *font = make_font(doc->font.pt, font_nil);
 
-            rgba_render(rgba_gray_a(0x22, 0x22), renderer);
+            rgba_render(rgba_gray_a(0xFF, 0x11), renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = pos.x,
                                 .y = pos.y,

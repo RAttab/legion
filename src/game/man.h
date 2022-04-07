@@ -92,6 +92,8 @@ const struct markup *man_next(struct man *, const struct markup *);
 struct link man_link(const char *path, size_t len);
 struct link man_click(struct man *, line_t, uint8_t col);
 
+void man_dbg(struct man *);
+
 struct toc
 {
     struct link link;

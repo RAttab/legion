@@ -237,6 +237,39 @@ struct link man_click(struct man *man, line_t line, uint8_t col)
     return link_nil();
 }
 
+void man_dbg(struct man *man)
+{
+    dbgf("sections(%u):", man->sections->len);
+    for (section_t section = 0; section < man->sections->len; ++section)
+        dbgf("  %u -> %zu", section, man->sections->vals[section]);
+
+    dbgf("lines(%u):", man->lines->len);
+    for (line_t line = 0; line < man->lines->len; ++line)
+        dbgf("  %u -> %zu", line, man->lines->vals[line]);
+
+    dbgf("markup(%zu):", man->text.len);
+    for (size_t i = 0; i < man->text.len; ++i) {
+        const struct markup *it = man->text.list + i;
+
+        char type = 0;
+        switch (it->type)
+        {
+        case markup_nil: { type = '0'; break; }
+        case markup_eol: { type = 'n'; break; }
+        case markup_text: { type = 't'; break; }
+        case markup_underline: { type = 'u'; break; }
+        case markup_bold: { type = 'b'; break; }
+        case markup_code: { type = 'c'; break; }
+        case markup_link: { type = 'l'; break; }
+        default: { type = '?'; break; }
+        }
+
+        dbgf("  %03zu: %p, type=%c, lk={%02u,%02u}, len=%02u, text=%.*s",
+                i, it, type, it->link.page, it->link.section,
+                it->len, (unsigned) it->len, it->text);
+    }
+}
+
 
 // -----------------------------------------------------------------------------
 // toc
