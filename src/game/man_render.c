@@ -12,7 +12,8 @@
 enum
 {
     man_indent_section_abs = 4,
-    man_indent_topic_abs = 8,
+    man_indent_topic_header_abs = 2,
+    man_indent_topic_body_abs = 8,
 
     man_indent_list_rel = 8,
     man_indent_code_rel = 0,
@@ -53,9 +54,32 @@ static void man_render_append(
         struct man_parser *parser,
         const struct man_token *token)
 {
-    size_t spaces = 1;
     size_t len = token->end - token->it;
     struct markup *markup = man_current(parser->man);
+
+    // \todo this is really bad but can't really think of a better solution at
+    // the moment.
+    size_t spaces = 1;
+    if (!markup->len) {
+        struct markup *prev = man_previous(parser->man);
+
+        if (prev->type == markup_eol)
+            spaces = parser->indent;
+
+        else {
+            if (prev->len) {
+                switch (prev->text[prev->len - 1]) {
+                case '(': case '[': { spaces = 0; break; }
+                default: { break; }
+                }
+            }
+
+            switch (*token->it) {
+            case ')': case ']': case ',': case '.': { spaces = 0; break; }
+            default: { break; }
+            }
+        }
+    }
 
     if (parser->cols.curr + spaces + len > parser->cols.cap) {
         // \todo line justitication should happen here.
@@ -64,22 +88,7 @@ static void man_render_append(
         struct markup *new = man_markup(parser->man, markup_nil);
         markup_continue(new, markup);
         markup = new;
-    }
-
-    // \todo this is really bad but can't really think of a better solution at
-    // the moment.
-    struct markup *prev = man_previous(parser->man);
-    if (!markup->len) {
-        if (prev->type == markup_eol)
-            spaces = parser->indent;
-
-        char c = prev->text[prev->len - 1];
-        if (prev->len && (c == '(' || c == '['))
-            spaces = 0;
-
-        c = *token->it;
-        if (c == ')' || c == ']')
-            spaces = 0;
+        spaces = parser->indent;
     }
 
     if (!markup->type) markup->type = markup_text;
@@ -163,11 +172,11 @@ static void man_render_topic(struct man_parser *parser)
     man_mark_section(parser->man);
 
     struct markup *markup = man_markup(parser->man, markup_bold);
-    man_render_repeat(parser, markup, ' ', man_indent_section_abs);
+    man_render_repeat(parser, markup, ' ', man_indent_topic_header_abs);
     man_render_str(parser, markup, token.it, token.end - token.it);
 
     (void) man_render_newline(parser);
-    parser->indent = man_indent_topic_abs;
+    parser->indent = man_indent_topic_body_abs;
     parser->list = false;
 }
 
