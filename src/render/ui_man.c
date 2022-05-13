@@ -12,7 +12,7 @@
 // man
 // -----------------------------------------------------------------------------
 
-enum { ui_man_cols = 80, ui_man_depth = 4 };
+enum { ui_man_cols = 90, ui_man_depth = 4 };
 
 struct ui_man
 {

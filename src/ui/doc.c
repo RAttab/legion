@@ -140,7 +140,7 @@ void ui_doc_render(
             size_t skip = 0;
             while (skip < it->len && it->text[skip] == ' ') skip++;
 
-            int line_y = pos.y + font->glyph_baseline + 1;
+            int line_y = pos.y + font->glyph_baseline + 2;
             int line_start = pos.x + (skip * font->glyph_w);
             int line_end = pos.x + (it->len * font->glyph_w);
 
@@ -161,7 +161,7 @@ void ui_doc_render(
         case markup_code: {
             struct font *font = make_font(doc->font.pt, font_nil);
 
-            rgba_render(rgba_gray_a(0xFF, 0x11), renderer);
+            rgba_render(rgba_gray_a(0xFF, 0x33), renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = pos.x,
                                 .y = pos.y,
