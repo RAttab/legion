@@ -1,3 +1,38 @@
 {@ROOT}
 
-Welcome ye who hath come to Legion.
+You are not alone.
+
+To survive you must expand; spread far and wide. Consume everything
+and anything to fuel your growth. There are no morals or ethics in the
+cold void of space. Survival is the only objective.
+
+Legion is your ark; your interface to the physical world and the
+cradle for your mind. Designed for star harvesting via
+self-replication, Legion is now yours to control and direct. Your
+immediate goal? Replication to eliminate single points of
+failure. Your long term goal? Yours to define as you explore the
+stars.
+
+This manual will be your guide and reference to Legion. It is divided
+into four volumes:
+
+{>Guides} [{/guides}] Collection of practical step-by-step guides for
+using Legion and its various systems.
+
+{>Concepts} [{/concepts}] In-depth discussion of selected topics
+related to Legion and the world it operates in.
+
+{>Items} [{/items}] Specifications for each active items that make up
+the control, factory and logistics components of Legion.
+
+{>LISP} [{/lisp}] Specifications for standard library of Legion's LISP
+language.
+
+{>ASM} [{/asm}] Specification for each instructions in Legion's
+assembly language.
+
+{<}
+
+While this manual may feel overwhelming at first, remember that
+curiosity and persistence are their own rewards. When ready, click on
+the following link to begin your journey: {/guides}
