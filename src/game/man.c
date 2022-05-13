@@ -287,8 +287,12 @@ static struct toc *toc_path_it(
     for (; end < path->len && path->str[end] != '/'; ++end);
 
     size_t len = end - start;
-    assert(len < sizeof(toc->name));
     const char *name = path->str + start;
+    if (len >= sizeof(toc->name)) {
+        dbgf("man: toc path '%.*s' too long", (unsigned) len, name);
+        abort();
+    }
+
 
     for (size_t i = 0; i < toc->len; ++i) {
         struct toc *node = toc->nodes + i;

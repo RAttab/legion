@@ -13,7 +13,7 @@ enum
 {
     man_indent_section_abs = 4,
     man_indent_topic_header_abs = 2,
-    man_indent_topic_body_abs = 8,
+    man_indent_topic_body_abs = 4,
 
     man_indent_list_rel = 8,
     man_indent_code_rel = 0,
@@ -108,7 +108,9 @@ static void man_render_paragraph(struct man_parser *parser)
 {
     if (man_current(parser->man)->type != markup_eol)
         (void) man_render_newline(parser);
-    (void) man_render_newline(parser);
+
+    if (man_previous(parser->man)->type != markup_eol)
+        (void) man_render_newline(parser);
 }
 
 static void man_render_comment(struct man_parser *parser)
@@ -162,6 +164,9 @@ static void man_render_section(struct man_parser *parser)
     (void) man_render_newline(parser);
     parser->indent = man_indent_section_abs;
     parser->list = false;
+
+    while (man_parser_peek(parser).type == man_token_paragraph)
+        man_parser_next(parser);
 }
 
 static void man_render_topic(struct man_parser *parser)
@@ -178,6 +183,9 @@ static void man_render_topic(struct man_parser *parser)
     (void) man_render_newline(parser);
     parser->indent = man_indent_topic_body_abs;
     parser->list = false;
+
+    while (man_parser_peek(parser).type == man_token_paragraph)
+        man_parser_next(parser);
 }
 
 static void man_render_link(struct man_parser *parser)
@@ -271,7 +279,7 @@ static void man_render_code(struct man_parser *parser)
         }
 
         if (!len && prologue) continue;
-        else prologue = true;
+        else prologue = false;
 
         struct markup *markup = man_markup(parser->man, markup_code);
         man_render_repeat(parser, markup, ' ', indent);

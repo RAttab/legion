@@ -112,6 +112,21 @@ enum man_token_type
     man_token_paragraph,
 };
 
+const char *man_token_type_str(enum man_token_type type)
+{
+    switch (type)
+    {
+    case man_token_nil: { return "nil"; }
+    case man_token_eof: { return "eof"; }
+    case man_token_line: { return "line"; }
+    case man_token_word: { return "word"; }
+    case man_token_close: { return "close"; }
+    case man_token_markup: { return "markup"; }
+    case man_token_paragraph: { return "para"; }
+    default: { assert(false); }
+    }
+}
+
 struct man_token
 {
     enum man_token_type type;
@@ -212,6 +227,12 @@ static struct man_token man_parser_next(struct man_parser *parser)
     }
 
     }
+}
+
+static struct man_token man_parser_peek(struct man_parser *parser)
+{
+    struct man_parser copy = *parser;
+    return man_parser_next(&copy);
 }
 
 static struct man_token man_parser_until_close(struct man_parser *parser)
