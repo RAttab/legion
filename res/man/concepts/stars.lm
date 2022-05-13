@@ -1,0 +1,85 @@
+{@CONCEPTS/STARS}
+
+{!INTRODUCTION}
+Something something introduction to legion's control interface.
+
+Might want to give some story candy here as the beginning is going to
+be quite dry.
+
+
+{!TIME}
+- Time is represented in the topbar of the interface as the ever
+  increasing number.
+
+- How it is experienced within legion is relative and
+  controllable. There's no distinctive unit as there's no universal
+  frame of reference.
+
+- Control is limited by the growth of legion as the processing
+  requirements make it harder to speed up time.
+
+- The controls for time are also present in the topbar. These buttons
+  are very likely to change so don't spend too much time on this
+  aspect of the doc.
+
+
+{!COORDINATES}
+- Position in the universe is represented in the topbar of the
+  interface.
+
+- Coordinates are composed of X and Y numbers split up the follow
+  format for easier digestion:
+
+{`AA.SS.XXXX x AA.SS.XXXXX}
+
+{>AA} The top level coordinate space is split up into 256 by 256
+{*areas}. Areas are a logical subdivision which exists to more easily
+parse coordinates. Area coordinates are encoded as a pair of 8 bit
+values.
+
+{>SS} Each area is subdivided into 256 by 256 {*sector}. Sectors are a
+logical grouping of stars that used by items like the {_scanner} to
+frame queries about the star system. Sector coordinates are encoded as
+a pair of 8 bit values.
+
+{>XXXX} Locations within a sector are represented by a pair of 16 bit
+values.
+
+{<}
+
+
+{!STARS}
+- Each star is an isolated island seperate from each other by vast
+  distances. Travel and communication between stars is limited only by
+  time. It's still quite slow and therefore impractical for many of
+  legion's systems.
+
+- Operations within a star are generally simplified and automated by
+  Legion sub-systems. Operations between stars will need to be handled
+  by the controller.
+
+- To investigate the content of any star, simply click on it in the
+  interface. Highlighted stars indicate the presence of another legion
+  instance. A list of active stars is also available in the topbar
+  menu.
+
+- Legion's growth is fueled by energy and elements. Both are limited
+  and no single star can fully accomodate legions wide range of
+  functionality. Besides survival, this will be your main drive to
+  expand and grow. {*Don't wait until you run out of resources}
+
+- energy is provided by the star itself and can be harnessed via
+  different logistics items to power the various supply and logistic
+  network part of your factory.
+
+- There are 16 naturally occuring elements that you will find in
+  various quantities within different stars. Matter is finite within a
+  star, once it's used up, it's gone.
+
+
+{!NEXT}
+- {/concepts/factory} will explore how Legion interacts with its
+  environment.
+
+
+{!RELATED}
