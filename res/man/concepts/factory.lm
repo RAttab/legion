@@ -1,0 +1,163 @@
+{@CONCEPTS/FACTORY}
+{%TODO: The word item is coming up too much. Need a synonym for active
+item}
+
+{!SYNOPSIS}
+At its heart, Legion is a supply chain network.
+
+{!ITEMS}
+Supply chain is broken up into 3 categories:
+
+{>Factory} Heart of the supply chain. Manipulates items and is
+designed for automation.
+
+{>Logistics} Support systems for the factory. These are automated
+subsystems that encompasses the micro-management of the factory.
+
+{>Control} Control and automation layer. High level interface that the
+operator will interact with the most.
+{<}
+
+{%TODO: Need to make the distinction between active and passive item
+and this is where we give them a proper name}
+
+
+{!FACTORY}
+- The factory can be broken down into 3 major components
+
+{>Extract} Intake step of the factory where elements are extracted
+from the environment and are made available to the rest of the
+factory. As an example {_&item_extract} can be used to extract
+{_&item_elem_a} and make it available to the transformation step of
+the factory.
+
+{>Transform} This step takes elements and items as input and
+transforms them into something else. Typically this will generate new
+items that will be made available to the rest of the factory. As an
+example {_&item_printer} can take a number of {_&item_elem_a} to
+generate an {_&item_muscle}.
+
+{>Deploy} Outake step of the factory where completed item can be
+activated. As an example {_&item_deploy} can take as an input an
+{_&item_extract} which will then be activated and made available for
+programming.
+
+{<}
+
+
+{?Identifiers}
+- Each active component of the factory is given an ID that is to refer
+  to it.
+
+- Each ID is composed of an item type and an automatically assigned
+  sequential number. Here's a few example of distinct item ids:
+
+{`
+(id &item_extract 1)
+(id &item_extract 2)
+(id &item_printer 1)
+}
+
+- The id for newly created items are predictable.
+
+
+{?Port}
+- Ports is the standard interface used by the components of the
+  factory to interact with each other.
+
+- Each active item in the factory has one port by which items are
+  imported or exported. To import an item, the item is requested via
+  the port. To export an item, the item is provided via the port.
+
+- Requests are marked green within Legion's interface and provided
+  items are marked as blue.
+
+- The worker logistics layer is responsible for matching requests with
+  provided items [{/concepts/factory/logistics/workers}].
+
+{%TODO: Will need to change the wording of for request/provide as it's
+really awkward. I think import/export will probably work better but
+it's still a bit awkward.}
+
+{?Tapes}
+- Tapes are used throughout the factory to represent the recipe used
+  to create items. They are composed of the following:
+
+{>Id} The handle by which the recipe can be refered to which also
+represents the item being created by this recipe. Typically this value
+will be used when issuing {_&io_tape} IO operations.
+
+{>Host} The type of active items that can run this recipe. As an
+example the tape for {_&item_elem_a} can only be executed by
+{_&item_extract} which is the host.
+
+{>Energy} The energy cost that must be supplied by the energy
+logistics layer for the recipe to complete
+[{/concepts/factory/logistics/energy}].
+
+{>Tape} A sequential series of items that will need to be imported and
+then exported from the active item.
+
+{<}
+
+- In short, when configured with a tape, an item will sequentially
+  follow the recipe in the tape to make import and exports using the
+  port.
+
+- Tapes form a dependency graph that acts as the high level blueprint
+  for the factory. As an example, {%TODO: provide example}
+  
+
+{!LOGISTICS}
+blah
+
+
+{?Workers}
+blah
+
+
+{?Energy}
+blah
+
+
+{!CONTROL}
+- Legion will replicate itself and expand alot. Micro-managing would
+  be time-consuming and impractical. Automation is key to survival.
+
+- Automation done through Legion modules. Programs written by you to
+  automate the control of the factory.
+
+- The IO Interface to control items is it's programable
+  interface. Practicing the use of modules over direct command is
+  encouraged.
+
+- The range of control
+
+
+{?IO}
+- Each item is controled with IO instructions. A subset of these IO
+  instructions are available in the interface.
+
+- Typically these should be executed through modules. Direct touch is
+  sometimes required.
+
+(io {_command} {_target} {_arguments})
+
+- {_command} is used to determine which IO operation will be invoked
+  on item designated by {_target}. {_arguments} will modify the
+  behaviour of the command.
+
+{`(io &io_item (id &item_extract 1) &item_elem_a)}
+
+- In this example, we're issuing the command to an extractor to
+  extract the element A from its environment.
+
+- Which IO command is available on which item is speced in the
+  {/items} volume.
+
+
+
+{!NEXT}
+
+
+{!RELATED}
