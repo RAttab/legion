@@ -436,12 +436,22 @@ void man_populate(void)
     // Pre-create key nodes in the toc to enforce logical ordering
     struct toc *root = &mans.toc;
     (void) toc_path(root, make_man_path("/root"));
+    (void) toc_path(root, make_man_path("/guides"));
+    (void) toc_path(root, make_man_path("/guides/factory"));
+    (void) toc_path(root, make_man_path("/guides/mods"));
+    (void) toc_path(root, make_man_path("/guides/debug"));
+    (void) toc_path(root, make_man_path("/guides/flow"));
+    (void) toc_path(root, make_man_path("/guides/variables"));
+    (void) toc_path(root, make_man_path("/guides/introspection"));
+    (void) toc_path(root, make_man_path("/guides/io-return"));
     (void) toc_path(root, make_man_path("/concepts"));
+    (void) toc_path(root, make_man_path("/concepts/stars"));
+    (void) toc_path(root, make_man_path("/concepts/factory"));
     (void) toc_path(root, make_man_path("/concepts/cpu"));
-    (void) toc_path(root, make_man_path("/concepts/io"));
-    (void) toc_path(root, make_man_path("/asm"));
-    (void) toc_path(root, make_man_path("/lisp"));
+    (void) toc_path(root, make_man_path("/concepts/lisp"));
     (void) toc_path(root, make_man_path("/items"));
+    (void) toc_path(root, make_man_path("/lisp"));
+    (void) toc_path(root, make_man_path("/asm"));
 
     char path[PATH_MAX] = {0};
     sys_path_res("man", path, sizeof(path));
@@ -449,9 +459,9 @@ void man_populate(void)
         fail("unable to index man pages");
 
     // Sort the toc nodes to enfore sane ordering on the reference pages.
-    toc_sort(toc_path(root, make_man_path("/asm")));
-    toc_sort(toc_path(root, make_man_path("/lisp")));
     toc_sort(toc_path(root, make_man_path("/items")));
+    toc_sort(toc_path(root, make_man_path("/lisp")));
+    toc_sort(toc_path(root, make_man_path("/asm")));
 }
 
 

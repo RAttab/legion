@@ -1,0 +1,42 @@
+{@GUIDES}
+
+This volume contains a collection of practical step-by-step guides to
+introduce the various systems of Legion. The coverage is intentionally
+kept shallow to avoid information overload. For an in-depth look at
+the topics covered in this volume refer to the {/concepts} volume.
+
+We recommend that new Legion operators begin by reading the following
+chapters in sequence:
+
+{>Factory} [{/guides/factory}] Introduction to the manual setup of a
+basic factory. Includes a the introduction of several key concepts for
+the operation of legion as well as gives a basic walkthrough the
+Legion interface.
+
+{>Mods} [{/guides/mods}] Guided automation of the factory from the
+previous chapter through the introduction of the LISP programming
+language.
+
+{<}
+
+After having internalized the basics, you may delve into the following
+advanced chapters in any order as needed:
+
+{>Debug} [{/guides/debug}] Introduction to the debugging facility
+within Legion as well as a brief overview of Legion's assembly
+language.
+
+{>Flow} [{/guides/flow}] Introduction to the control flow functions
+available in LISP which also includes a discussion on stack
+management.
+
+{>Variables} [{/guides/variables}] Introduction to the LISP variables
+which also includes a discussion on register management.
+
+{>Introspection} [{/guides/introspection}] Introduces the mechanisms
+available for mods to query the state of the factory or the stars.
+
+{>IO Return} [{/guides/io-return}] Introduces how to handle IO
+commands that return multiple values.
+
+{<}

@@ -1,0 +1,233 @@
+{@GUIDES/FACTORY}
+
+{!SYNOPSIS}
+
+This chapter aims to introduce Legion's factory capabilities by
+setting up a simple supply chain to create extractors. While the
+emphasis of Legion is on automation, we will instead focus on using
+the manual controls as it's both simpler and provides a necessary
+foundation for troubleshooting. The automation functionalities will be
+introduced in the next chapter {/guides/mods}.
+
+
+{!STAR}
+
+All factories feed on the resources provided and available around
+stars and, as a result, all factory-related controls are located
+within the star interface. To get started, first locate the
+highlighted star on the galaxy map and click it. Note that the {_home}
+topbar button can always be used to recenter the map around your home
+star.
+
+Clicking on the star will open up the star interface which can roughly
+be broken down into three sections: views, resources and items.
+
+
+{?View}
+
+The available views for a star can be accessed via the buttons at the
+top of the star interface. For this guide, we'll be using the
+{_factory} view so that we can visually see the changes that we're
+making to the factory as we're making them. As you switch to the
+factory view you'll notice the star map will become completely
+blank. This is normal as all active items within the factory are
+currently idle.
+
+If you need to return to the star map, either click on the {_map} view
+button or click on the {_home} topbar button.
+
+
+{?Resources}
+
+Skipping over the star name and it's coordinate, the next information
+displayed on the star interface relates to the resources available:
+
+{>Energy} Resource used to power the various active items of Legion's
+factory. Since all the starting active items are self-powered, this
+resource can be safely ignored in this guide.
+
+{>Elements} The raw materials that will be extracted and processed by
+the factory. There are a total of eleven naturally occurring resources
+each labelled with a single letter ranging from A to K. The quantity
+available is displayed next to the letter and will slowly decrease as
+the factory consumes them.
+
+{<}
+
+You must always remember that the resources of a star are
+finite. Expansion to nearby star is the only means by which you can
+avoid being stranded.
+
+
+{?Items}
+
+The final section in the star interface is the list of active items
+that make up your factory which are broken up into three categories:
+
+{>Control} Items related to the automation and communication layer of
+the factory. All fresh instances of Legions comes bundled with one
+brain, one memory and one scanner. These items are outside the scope
+of this guide and an introduction can be found in later chapters.
+
+{>Factory} Items that form the meat and potatoes of our factory. All
+fresh instances of Legion comes bundled with two extractors, two
+printers, two assemblers and one deployer. Each of these items will be
+discussed in the next section.
+
+{>Logistics} Items and information related to the logistics layer of
+the factory. All fresh instances of Legion comes bundled with two
+workers. The functionalities provided by this layer are out-of-scope
+of this guide.
+
+{<}
+
+
+{!FACTORY}
+
+Before we start setting up our first factory, make sure that you have
+your home star selected, have switched to the factory view and have
+opened up the factory category in the active items list of your home
+star.
+
+The most basic flow for a Legion factory can be summarized into three
+phases: extract, transform and deploy.
+
+
+{?Extract}
+
+The extraction phase involves the gathering of raw resources from the
+star. For this guide, we will use extractors to extract the elements A
+and B from the star which we will then transform into additional
+extractors.
+
+To begin the extraction process, we'll issue IO commands to our two
+extractors. IO commands is the mechanism used to interact with all
+active items within Legion. While it's controls may seem somewhat
+clunky at first, it's design is motivated by the automation layer
+which is discussed in {/guides/mods}.
+
+You can access the IO interface for our first extractor by clicking
+{_000001.extract} in the active items list which will open the item
+state interface. In this interface you can view the current state of
+the item which should be blank due to it being idle. Next, click on
+the {_IO} view button at the top of the state interface to open the IO
+command interface. This interface will give you access to the
+following IO commands:
+
+{>io_reset} Command to reset the item back to its idle state and
+discard any extracted resources.
+
+{>io_tape} Command to program the extractor with a given tape. This is
+the command we'll use to begin our extraction process.
+
+{<}
+
+Tapes are simple programs used to automate active items within the
+factory. They're composed of a linear sequence of input and output
+items and are keyed by their target output item. As an example, tape
+{_&item_elem_a} contains only a single output step for item
+{_&item_elem_a}. This tape can be executed by extractors to extract
+element A from the star and make it available to the factory. A full
+list of tapes can be explored at your convenience by clicking on
+{_tape} topbar button.
+
+To program our extractor to extract element A, we'll execute the
+{_io_tape} command which requires the following input fields:
+
+{>id} Key of the tape to execute. Since we want to extract element A,
+enter the id {_&item_elem_a} in the input field.
+
+{>loop} Number of iterations of the tape we want to execute. Enter the
+value {_0} in the input field to indicate that the tape will run until
+we run out of element A on the star.
+
+{>exec} Once all the input fields have been filled, click the {_exec}
+button to execute the IO command.
+
+{<}
+
+After the command has been executed, you'll immediately notice that
+the state interface will now display the tape being executed and that
+a new box representing our extractor will appear in the factory
+view. Since we don't have any consumers for the extracted item, the
+state of our extractor will not change any further.
+
+For the rest of this guide we'll also need to have access to element
+B. To do so, repeat the process but with extractor {_000002.extract}
+and the key {_&item_elem_b}. Once completed, you show see two boxes in
+the factory view representing both our extractors and both elements A
+and B ready to be consumed.
+
+
+{?Transform}
+
+The next phase involves transforming our raw elements into
+intermediary items using printers which will then be assembled into an
+extractor using an assembler. Printers and assemblers are also
+programmed using the {_io_tape} command and so the process in this
+section will be very similar to the process in the previous section.
+
+The tape for {_&item_extract}, our end goal, requires as input the
+items {_&item_muscle} and {_&item_nodule} each of which can be created
+by programming printers with their respective tapes. We can start by
+navigating to the IO interface of {_000001.printer} and executing the
+{_io_tape} command with the tape id {_&item_muscle}. Repeat the
+process with {_000002.printer} and the tape id {_&item_nodule} and
+finally with {_000001.assembly} with the tape id {_&item_extract}.
+
+You'll notice that as you execute each of these IO commands, the
+factory view will not only display new boxes for each of the newly
+programmed active items, but lines will start to appear in between the
+boxes. These lines are a representation of the workers logistics
+system which is responsible for moving the output of active items into
+the input of other active items. We are currently limited to only two
+lines per factory cycle as we currently only have two workers in our
+logistics layer. Increasing the overall throughput of the factory
+requires the creation of additional workers.
+
+
+{?Deploy}
+
+If the previous steps completed without issues, the assembler should
+have an {_&item_extract} completed and ready to be consumed. This is a
+problem as the item is still considered to be passive and is treated
+like any other intermediary item within the factory. To make the
+transition from passive to active item, we'll need to deploy it using
+a deployer.
+
+Deployers function in a very similar fashion to our other active items
+with the exception that instead of being programmed using tapes, we'll
+instead use the {_io_item} command to directly indicate which item we
+wish to activate.
+
+Once again, you can begin by navigating to the IO interface of the
+{_000001.deploy} item where you'll notice that the input fields
+{_io_item} are the same as {_io_tape}. We'll use the key
+{_&item_extract} for the id field and, to avoid creating an infinite
+number of extractor, we will use a loop value of {_2}.
+
+Once the IO command is executed, you will notice that the pending
+extractor will immediately be consumed by the deployer and will now be
+available in the active item list as {_00003.extract}. Additionally,
+you'll notice that the factory will automatically begin building the
+next extractor which will also, eventually, be deployed as item
+{_000004.extract}. Once the final extractor is completed and our loop
+limit is reached, the deployer's state will automatically be reset and
+the factory will eventually settle back into an idle state.
+
+
+{!NEXT}
+
+We now have a factory that can be used to produce any number of
+extractors. To deepen your understanding of the concepts in this
+chapter, you may attempt to follow a similar process to setup a
+factory for printers, assemblers and workers. Keep in mind that you'll
+need to reference the tapes for these components and their dependent
+inputs which are located in the {_tape} topbar menu.
+
+Once all these fundamental concepts are well understood you may
+proceed to work through the automation guide in the {/guides/mods}
+chapter.
+
+
+{!RELATED}

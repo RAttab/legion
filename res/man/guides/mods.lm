@@ -1,0 +1,385 @@
+{@GUIDES/MODS}
+
+{!SYNOPSIS}
+
+This chapter aims to automate and extend the factory created in
+{/guides/factory} using mods. Mods are programs created in Legion's
+Internal System Programming (LISP) language that are used to control
+the various actives items within a star. In this guide we will
+primarily focus on a few core concepts for mods which we will act as a
+foundation for learning the full array of functionalities available
+through mods.
+
+This chapter assumes that you've read and internalized the concepts
+introduced within {/guides/factory} as these concepts acts as the
+foundation for this guide.
+
+
+{!EDITOR}
+
+Within Legion, mods are managed independently of stars and have their
+own interface which can be accessed by clicking on the {_mods} topbar
+button. This new interface will be mostly blank with an input field at
+the top which is used to create new mods. We'll start by creating a
+new mod which we'll name {_bob-the-mod}. Once a name has been entered
+in the input field, click the {_+} button to create the mod. This
+should add a new entry in the list below the input field which you may
+now click to open the mod editor.
+
+The mod editor is where you will be spending most of your time within
+Legion as mods will sit at the very heart of all factories. This
+editor therefore warrants a brief rundown:
+
+{>version} The title bar of the mod window will display the mod name
+followed by a doted number which represents the version of the
+mod. While not relevant for this guide, it's worth noting that mods
+are versioned and multiple versions of a mod can be in use at a time.
+
+{>editor} The input field that takes up the majority of the mod window
+is where mods are written, edited and viewed using the LISP
+language. We'll discuss the programming language later in this
+chapter.
+
+{>compile} Before a mod can be used, it must first be compiled to
+check it for syntax errors. Any syntax errors will be highlighted in
+red in the editor and hovering over the error will display a tooltip
+explaining the error. Compiling and editing a mod has no effect on the
+various Legion systems and can be done as frequently as needed.
+
+{>publish} Once a mod is compiled and error-free, it can be
+published. When published, a mod will be assigned a new version number
+which will make it visible to the rest of the Legion
+systems. Publishing always creates a new version of the mod and so any
+existing versions of the mod currently being executed will not be
+affected. This new mod will need to be manually propagated for it to
+take effect.
+
+{>asm} While LISP is a convenient way of writing and reading mods, it
+is not what the Legion processor consumes. Instead compiling a mod
+will transform it into an alternate representation which can be viewed
+by clicking on the {_asm} button. Note that the details of the
+assembly language is out-of-scope of this guide and is described in
+the {/asm} volume.
+
+{>indent} As mods become bigger and more complex, readability becomes
+more and more of an issue that needs to be managed. While this is a
+deep topic, a good place to start is with consistent code formatting
+which can be accomplished by clicking the {_indent} button.
+
+{>reset} Removes all modifications that were done to the mod,
+effectively reverting it back to the current version. This is a
+destructive operation so use with care.
+
+{<}
+
+While the many controls may seem a bit overwhelming, a typical
+programming loop will follow this pattern:
+
+{>open} Either create a new mod or open an existing mod.
+
+{>edit} Use the editor to make the needed modifications.
+
+{>indent} Indent the mod to give it a consistent formatting.
+
+{>compile} Compile the mod and fix any errors until it compiles
+without errors.
+
+{>publish} Publish the mod to make it available to the factory.
+
+{<}
+
+
+{!LISP}
+
+The LISP language is designed to have a simple and easy to pick up
+syntax. While its simplicity may seem restrictive at first, the
+restrictive nature of the Legion processor does not allow for complex
+programming constructs. Instead emphasis was placed on other aspects
+of the language which will be explored in {/concepts/lisp}.
+
+The language itself has only four major syntax components: comments,
+numbers, atoms and functions.
+
+
+{?Comments}
+
+Comments are used to provides notes and other useful human readable
+information within a mod. Their content is entirely ignored by the
+compiler.
+
+To create a comment, simply insert a {_;} character which will turn
+the rest of the line into a comment. The following are a few example
+of comments:
+
+{`
+; The following code adds two numbers together.
+(+ 1 2)
+
+(* 2 2) ; Inline comments are also supported.
+
+; This is a multi-line comment that is very long for the purpose of
+; demonstrating multi-line comments.
+(= 1 1)
+}
+
+
+{?Numbers}
+
+Numbers are the only data-types within the Legion processor which
+implies that everything you do within LISP will involve manipulating
+numbers. The numbers themselves can be in the range of
+-9,223,372,036,854,775,808 to 9,223,372,036,854,775,808 which is large
+enough to hold star coordinates. Unfortunately, floating point numbers
+are not supported by the Legion processor so all arithmetic operations
+must be done on natural numbers.
+
+The following are a few examples of numbers as would be represented in
+a LISP mod:
+
+{`
+0 ; Zero
+
+; Positive numbers
+123
+9223372036854775808
+
+; Negative numbers
+-321
+-9223372036854775808
+}
+
+
+{?Atoms}
+
+Atoms are symbolic names that the LISP compiler will consistently
+associate with the same number across mods. They're used to make code
+easier to read and are extensively used by the Legion system to
+provide various useful constants.
+
+Atoms are referenced using the {_!} character and are typically made
+up of lowercase letters and numbers where dashes and underscores are
+used as a word separators. When compiling, if a referenced atom
+doesn't exist then it is automatically created and assigned a
+number. To suppress this behaviour, the {_&} character can be used
+instead which will generate a compilation error if the atom doesn't
+exist. It's generally used with system atoms to quickly detect typos.
+
+Here are a few example of atom usage:
+
+{`
+!an_atom ; First use of an atom will create it
+!an_atom ; Subsequent use of the atom will return the same number
+
+&an_atom      ; Atom exists so no compilation errors will be raised
+&another_atom ; Atom doesn't exist so a compilation error will be raised
+
+; Example of atoms provided by the Legion system which we used in the
+; previous chapter to setup our extractor factory.
+&io_tape
+&item_elem_a
+&item_extract
+}
+
+
+{?Functions}
+
+Functions are the bread and butter of the LISP language and use the
+same consistent syntax to represent all operations that can be done
+within the language:
+
+({_name} {_arguments})
+
+{>name} The name of the function to invoke which can range from
+symbolic names such as {_add}, {_assert} or {_if} to arithmetic
+operands such as {_+}, {_*}, {_/=}.
+
+{>arguments} A list of zero or more arguments to be supplied to the
+function. These arguments may be either numbers, atoms or function
+calls.
+
+{>return} Like their mathematical counter-part, all LISP functions
+return a single number which allows function calls to be nested
+easily. As an example, {_(+ 1 2)} will return the number 3.
+
+{<}
+
+The following are several example of function calls:
+
+{`
+; Simple function call
+(+ 1 2)
+
+; Nested function calls
+(+ 1 (+ 2 3))
+
+; A real use case using multiple nested functions.
+(assert (= (io &io_ping (id &item_extract 1)) &io_ok))
+}
+
+You can find a full rundown of functions provided by the Legion system
+in {/lisp} but that may be somewhat overwhelming at first. The guides
+{/guides/flow} and {/guides/variables} contain a more curated
+introduction to commonly used functions within LISP. Additionally,
+we'll explore the {_io} function in the next section as it's key to
+being able to manipulate active items within our factory.
+
+
+{!IO}
+
+While we do have a basic understanding of the LISP language, we're
+still missing a method to interact with active items that make up our
+factory. We'll do this using the {_io} function which is used to
+execute the IO commands that we explored in the previous guide. It
+uses the following syntax:
+
+(io {_command} {_target} {_arguments})
+
+{>command} Specifies which IO command to send and will typically be
+one of the system provided atoms. As an example, the {_&io_tape} atom
+can be used to issue the IO command of the same name to program an
+active item with a specific tape.
+
+{>target} Specifies which items within our factory we will be
+targeting for our IO command. Items are referenced by their
+identifiers which can be constructed using the {_id} function:
+
+(id {_type} {_seq})
+
+Where {_type} is the system atom representing the item type and {_seq}
+is the sequential identifier of the item of that type. As an example:
+
+{`(id &item_extract 1)}
+
+Will reference the extractor {_000001.extract} within the active item
+list.
+
+{>arguments} A list of zero or more arguments to be provided to the IO
+commands. This is specific to each IO command and is documented along
+with the IO command itself in the {/items} section. For the
+{_&io_tape} command, the arguments would be the tape id and the loop
+count that we've discussed in the previous chapter.
+
+{>return} Every IO command will either return {_&io_ok} if the command
+could be sent to the target or {_&io_fail} if the target was
+unreachable. It is possible for IO commands to return additional
+values but processing these values require more advance LISP
+constructs which are outside of the scope of this chapter.
+
+{<}
+
+The following is a simple example of the {_&io_ping} command which can
+be used to test whether a target item exists:
+
+{`
+(assert
+  (=
+    (io &io_ping (id &item_extract 1))
+    &io_ok))
+}
+
+In this example, {_&io_ping} takes no arguments and will be sent to
+the extractor {_000001.extract} within our factory. The return value
+is then tested against the atom {_&io_ok} to see if the call has
+succeeded. The result of the test is given to the {_assert} function
+which will raise an error and halt execution if the result of our test
+indicated that the call did not reach our target.
+
+The full list of IO commands available for each item along with their
+expected arguments are available in the {/items} volume. To handle IO
+commands that return multiple values reference the guide
+{/guides/io-return}.
+
+
+{!FACTORY}
+
+Now that we've covered all the core concepts required, we can finally
+start encapsulating our factory from the previous chapter into a
+mod. You can begin by navigating back to the mod we created at the
+very beginning of chapter which we called {_bob-the-mod}. Next, we
+will enter within the editor the IO commands that are equivalent to
+the manual steps we took in the previous chapter:
+
+{`
+; Extract
+(io &io_tape (id &item_extract 1) &item_elem_a)
+(io &io_tape (id &item_extract 2) &item_elem_b)
+
+; Transform
+(io &io_tape (id &item_printer 1) &item_muscle)
+(io &io_tape (id &item_printer 2) &item_nodule)
+(io &io_tape (id &item_assembly 1) &item_extract)
+
+; Deploy
+; Here we include the loop count in the IO command
+(io &io_item (id &item_deploy 1) &item_extract 2)
+}
+
+As you can see, this is much more terse then endlessly navigating the
+various interfaces to issue the commands one by one. As your factory
+scales up, using mods will quickly become the only manageable means by
+which you can control your factory.
+
+To run the mod, first ensure that it compiles without error then
+complete the programming loop by clicking the {_publish} button. Next,
+open up the interface for your home star and navigate to the control
+section of the item listing which contains all the active items that
+are used to control and automate the factory. The item we're
+interested in for now is the brain which houses a Legion processor
+that can execute our mod. Unlike the other active items, the state
+interface for brains is rather more complex as the Legion processor is
+significantly more complex then the items we've seen so far. The
+details of the Legion processor are out-of-scope for this guide and
+will be explored piecemeal in later guides.
+
+As with the other active items we've dealt with so far, brains are
+also controlled via IO commands which can be accessed by clicking the
+IO button at the top of the state interface. Once again, many new IO
+commands are available for brains but we'll focus on the {_io_mod}
+command for now. This command is used to instruct the brain to start
+executing a specific mod which can be specified using this value:
+
+{`(mod bob-the-mod)}
+
+Where {_bob-the-mod} is the name of our mod. By default the {_mod}
+function will always use the latest available version of a mod but a
+specific version can also be supplied. It's worth noting that all IO
+input fields supports a subset of the LISP language known as constant
+expressions. The details of these expressions are out-of-scope of this
+guide but can be summarized to any expression that does not require
+runtime information to evaluate.
+
+Once the IO command is sent, the brain will begin executing the IO
+commands in our mod in order which will be reflected in the factory
+view of the star. In the meantime, the state interface of the brain
+will start to change rapidly before being reset back to it's default
+state which happens automatically once a mod terminates.
+
+As before, the factory should eventually finish and deploy two new
+extractors. If this doesn't happen, it's very likely that there's a
+bug within the mod. This will happen and the tools to debug
+problematic mods will be introduced in the {/guides/debug}
+chapter. For now, start by making sure that the mod is an exact copy
+of the one provided in this man page and then redo the compile-loop
+and execute the IO command again.
+
+
+{!NEXT}
+
+To internalize the concepts introduced in this guide, follow in the
+steps of the previous chapter and extend your mod to also construct
+printers, extractors and workers. As a reminder, the {_tape} topbar
+menu can be used to explore the various tapes and their dependencies.
+
+This concludes the guided tour of the Legion systems. Your goal from
+now on is to expand and grow. This will require the creation of new
+{_&item_legion} that you launch to nearby stars. A process that you
+can entirely automate using the introspection facilities introduced in
+{/guides/introspection} and the programming concepts introduced in
+{/guides/flow} and {/guides/variables}. For additional reading
+material, consult {/guides} or {/root} to find any topics that you may
+find interesting.
+
+Remember, you are not alone.
+
+
+{!RELATED}
