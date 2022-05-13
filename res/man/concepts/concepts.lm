@@ -1,3 +1,29 @@
 {@CONCEPTS}
 
-blah
+This volume contains an introduction and description of the various
+concepts required to operate the Legion system. It's meant to act as a
+tutorial and leaves the low-level detail and specifications to the
+subsequent volumes in this manual.
+
+Concepts covered in this volume include:
+
+{>Stars} [{/concepts/stars}] Delves into Legion's environment and the
+interface used to interact with it.
+
+{>Factory} [{/concepts/factory}] Introduces the concept of the factory
+by which you will control Legion's supply chain and replication
+mechanisms.
+
+{>CPU} [{/concepts/cpu}] Specifications for the Legion CPU which is
+used to automate the supply and logistics networks. Also included is
+an introduction to the assembly language.
+
+{>LISP} [{/concepts/lisp}] Introduction to Legion's Internal System
+Programing (LISP) language used to create the modules that drive the
+CPU.
+
+{>Lanes}
+
+{>Energy}
+
+{<}
