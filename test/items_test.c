@@ -42,7 +42,7 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
 
 int main(int, char **)
 {
-    sys_populate();
+    sys_populate_tests();
 
     test_txrx();
 

@@ -451,6 +451,7 @@ void ui_code_focus(struct ui_code *);
 void ui_code_clear(struct ui_code *);
 void ui_code_set_code(struct ui_code *, const struct mod *, ip_t);
 void ui_code_set_disassembly(struct ui_code *, const struct mod *, ip_t);
+void ui_code_set_text(struct ui_code *code, const char *text, size_t len);
 
 ip_t ui_code_ip(struct ui_code *);
 void ui_code_goto(struct ui_code *, ip_t);

@@ -99,17 +99,9 @@ void ui_code_goto(struct ui_code *code, ip_t ip)
     ui_code_view_update(code);
 }
 
-static void ui_code_set(
-        struct ui_code *code, const struct mod *mod, ip_t ip, bool disassembly)
+static void ui_code_set(struct ui_code *code, ip_t ip)
 {
-    code->mod = mod;
-    code->disassembly = disassembly;
-
-    if (!disassembly) text_from_str(&code->text, mod->src, mod->src_len);
-    else {
-        text_clear(&code->text);
-        code->text = mod_disasm(code->mod);
-    }
+    assert(code->mod);
     assert(code->text.first);
 
     ui_scroll_update(&code->scroll, code->text.lines);
@@ -137,12 +129,33 @@ static void ui_code_set(
 
 void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)
 {
-    ui_code_set(code, mod, ip, false);
+    code->mod = mod;
+    code->disassembly = false;
+
+    text_from_str(&code->text, mod->src, mod->src_len);
+
+    ui_code_set(code, ip);
 }
 
 void ui_code_set_disassembly(struct ui_code *code, const struct mod *mod, ip_t ip)
 {
-    ui_code_set(code, mod, ip, true);
+    code->mod = mod;
+    code->disassembly = true;
+
+    text_clear(&code->text);
+    code->text = mod_disasm(code->mod);
+
+    ui_code_set(code, ip);
+}
+
+void ui_code_set_text(struct ui_code *code, const char *text, size_t len)
+{
+    assert(code->mod);
+    code->disassembly = false;
+
+    text_from_str(&code->text, text, len);
+
+    ui_code_set(code, 0);
 }
 
 void ui_code_indent(struct ui_code *code)

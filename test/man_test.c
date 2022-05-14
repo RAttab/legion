@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate();
+    sys_populate_tests();
     struct atoms *atoms = atoms_new();
     im_populate_atoms(atoms);
     struct mods_list *mods = calloc(1, sizeof(*mods));

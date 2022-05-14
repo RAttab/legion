@@ -70,20 +70,8 @@ struct save *save_file_create(const char *path, uint8_t version)
     strcpy(file->dst, path);
     save->grow = save_file_grow;
 
-    char tmp[PATH_MAX] = {0};
-    snprintf(tmp, sizeof(tmp), "%s.tmp", path);
-
-    // need O_RD to mmap the fd because... reasons...
-    file->fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
-    if (file->fd == -1) {
-        errf_errno("unable to open tmp file for '%s'", path);
-        goto fail_open;
-    }
-
-    if (ftruncate(file->fd, save_chunks) == -1) {
-        errf_errno("unable to grow file '%lx'", save_chunks);
-        goto fail_truncate;
-    }
+    file->fd = file_create_tmp(path, save_chunks);
+    if (file->fd < 0) goto fail_create;
 
     const size_t cap = save_chunks;
     save->base = mmap(0, cap, PROT_WRITE, MAP_SHARED, file->fd, 0);
@@ -103,9 +91,8 @@ struct save *save_file_create(const char *path, uint8_t version)
 
     munmap(save->base, save_cap(save));
   fail_mmap:
-  fail_truncate:
     close(file->fd);
-  fail_open:
+  fail_create:
     save_free(save);
     return NULL;
 }
@@ -186,7 +173,7 @@ static void save_file_seal(struct save *save)
     if (msync(save->base, save_len(save), MS_SYNC) == -1)
         failf_errno("unable to msync header '%d'", file->fd);
 
-    file_tmpbak_swap(file->dst);
+    file_tmp_swap(file->dst);
 }
 
 void save_file_close(struct save *save)

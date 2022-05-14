@@ -14,6 +14,7 @@
 bool path_is_dir(const char *path);
 bool path_is_file(const char *path);
 size_t path_concat(char *dst, size_t len, const char *base, const char *sub);
+const char *path_home(void);
 
 
 // -----------------------------------------------------------------------------
@@ -34,9 +35,10 @@ const char *dir_it_path(struct dir_it *);
 // -----------------------------------------------------------------------------
 
 size_t file_len(int fd);
-
 bool file_exists(const char *path);
-void file_tmpbak_swap(const char *path);
+
+int file_create_tmp(const char *path, size_t len);
+void file_tmp_swap(const char *path);
 
 
 // -----------------------------------------------------------------------------
@@ -51,3 +53,17 @@ struct mfile
 
 struct mfile mfile_open(const char *path);
 void mfile_close(struct mfile *);
+
+
+// -----------------------------------------------------------------------------
+// mfilew
+// -----------------------------------------------------------------------------
+
+struct mfilew
+{
+    char *ptr;
+    size_t len;
+};
+
+struct mfilew mfilew_create_tmp(const char *path, size_t len);
+void mfilew_close(struct mfilew *);

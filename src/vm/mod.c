@@ -4,6 +4,7 @@
 */
 
 #include "vm/vm.h"
+#include "game/sys.h"
 #include "game/save.h"
 #include "utils/fs.h"
 #include "utils/bits.h"
@@ -638,7 +639,8 @@ static void mods_file_compile(
 // register before we compile.
 void mods_populate(struct mods *mods, struct atoms *atoms)
 {
-    const char *path = "res/mods";
+    char path[PATH_MAX] = {0};
+    sys_path_mods(path, sizeof(path));
 
     {
         struct dir_it *it = dir_it(path);

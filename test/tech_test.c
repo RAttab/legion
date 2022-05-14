@@ -67,7 +67,7 @@ void test_tech(void)
 
 int main(int, char **)
 {
-    sys_populate();
+    sys_populate_tests();
 
     test_tech();
 

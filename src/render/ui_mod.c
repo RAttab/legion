@@ -8,6 +8,7 @@
 #include "render/ui.h"
 #include "ui/ui.h"
 #include "vm/mod.h"
+#include "utils/fs.h"
 
 
 // -----------------------------------------------------------------------------
@@ -34,6 +35,7 @@ struct ui_mod
     struct ui_panel panel;
     struct ui_button compile, publish;
     struct ui_button mode, indent;
+    struct ui_button import, export;
     struct ui_button reset;
     struct ui_code code;
 };
@@ -60,6 +62,8 @@ struct ui_mod *ui_mod_new(void)
         .publish = ui_button_new(font, ui_str_c("publish")),
         .mode = ui_button_new(font, ui_str_v(4)),
         .indent = ui_button_new(font, ui_str_c("indent")),
+        .import = ui_button_new(font, ui_str_c("import")),
+        .export = ui_button_new(font, ui_str_c("export")),
         .reset = ui_button_new(font, ui_str_c("reset")),
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
     };
@@ -79,6 +83,8 @@ void ui_mod_free(struct ui_mod *ui)
     ui_button_free(&ui->publish);
     ui_button_free(&ui->mode);
     ui_button_free(&ui->indent);
+    ui_button_free(&ui->import);
+    ui_button_free(&ui->export);
     ui_button_free(&ui->reset);
     ui_code_free(&ui->code);
     free(ui);
@@ -181,6 +187,45 @@ static void ui_mod_action_publish(struct ui_mod *ui)
 
     ui->id = mod->id;
     ui_mod_action_clear(ui);
+}
+
+static void ui_mod_import(struct ui_mod *ui)
+{
+    struct symbol name = {0};
+    bool ok = proxy_mod_name(render.proxy, mod_maj(ui->id), &name);
+    assert(ok);
+
+    char path[PATH_MAX] = {0};
+    sys_path_mod(name.c, path, sizeof(path));
+
+    if (!file_exists(path)) {
+        render_log(st_error,
+                "unable to import mod '%s': '%s' doesn't exist", name.c, path);
+    }
+
+    struct mfile file = mfile_open(path);
+    ui_code_set_text(&ui->code, file.ptr, file.len);
+    mfile_close(&file);
+
+    render_log(st_info, "mod '%s' imported from '%s'", name.c, path);
+}
+
+static void ui_mod_export(struct ui_mod *ui)
+{
+    struct symbol name = {0};
+    bool ok = proxy_mod_name(render.proxy, mod_maj(ui->id), &name);
+    assert(ok);
+
+    char path[PATH_MAX] = {0};
+    sys_path_mod(name.c, path, sizeof(path));
+
+    struct mfilew file = mfilew_create_tmp(path, ui->code.text.bytes);
+    text_to_str(&ui->code.text, file.ptr, file.len);
+    mfilew_close(&file);
+
+    file_tmp_swap(path);
+
+    render_log(st_info, "mod '%s' exported to '%s'", name.c, path);
 }
 
 static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
@@ -289,6 +334,16 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         return true;
     }
 
+    if ((ret = ui_button_event(&ui->import, ev))) {
+        ui_mod_import(ui);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->export, ev))) {
+        ui_mod_export(ui);
+        return true;
+    }
+
     if ((ret = ui_button_event(&ui->reset, ev))) {
         assert(ui->id == proxy_mod_id(render.proxy));
         ui_mod_update(ui, proxy_mod(render.proxy, ui->id), 0);
@@ -314,6 +369,11 @@ void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 
     ui_button_render(&ui->mode, &layout, renderer);
     ui_button_render(&ui->indent, &layout, renderer);
+
+    ui_layout_sep_x(&layout, 6);
+
+    ui_button_render(&ui->import, &layout, renderer);
+    ui_button_render(&ui->export, &layout, renderer);
 
     ui_layout_dir(&layout, ui_layout_left);
     ui_button_render(&ui->reset, &layout, renderer);

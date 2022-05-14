@@ -42,7 +42,7 @@ void check(void)
 {
     enum { attempts = 5, steps = 100 };
 
-    sys_populate();
+    sys_populate_tests();
     const user_t user = user_admin;
     struct world *world = world_new(0);
     world_populate(world);

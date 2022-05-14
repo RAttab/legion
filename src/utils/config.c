@@ -121,15 +121,8 @@ static void writer_init(struct writer *writer, const char *path)
 {
     writer->path = path;
 
-    char tmp[PATH_MAX] = {0};
-    snprintf(tmp, sizeof(tmp), "%s.tmp", path);
-
-    writer->fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
-    if (writer->fd == -1)
-        failf_errno("unable to open config tmp file for '%s'", path);
-
-    if (ftruncate(writer->fd, writer_chunks) == -1)
-        failf_errno("unable to grow config tmp file '%x'", writer_chunks);
+    writer->fd = file_create_tmp(path, writer_chunks);
+    if (writer->fd < 0) abort();
 
     const size_t cap = writer_chunks;
     writer->base = mmap(0, cap, PROT_WRITE, MAP_SHARED, writer->fd, 0);
@@ -155,7 +148,7 @@ static void writer_free(struct writer *writer)
         failf_errno("unable to unmap writer for '%s'", writer->path);
     close(writer->fd);
 
-    file_tmpbak_swap(writer->path);
+    file_tmp_swap(writer->path);
 }
 
 static void writer_ensure(struct writer *writer, size_t len)

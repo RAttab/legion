@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate();
+    sys_populate_tests();
     check_basics();
 
     return 0;

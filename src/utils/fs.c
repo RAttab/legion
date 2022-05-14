@@ -19,6 +19,14 @@
 // path
 // -----------------------------------------------------------------------------
 
+
+const char *path_home(void)
+{
+    const char *home = getenv("HOME");
+    if (!home) fail("unable to determine home directory");
+    return home;
+}
+
 bool path_is_dir(const char *path)
 {
     struct stat ret = {0};
@@ -133,7 +141,31 @@ bool file_exists(const char *path)
     failf_errno("unable to stat '%s'", path);
 }
 
-void file_tmpbak_swap(const char *path)
+int file_create_tmp(const char *path, size_t len)
+{
+    char tmp[PATH_MAX] = {0};
+    snprintf(tmp, sizeof(tmp), "%s.tmp", path);
+
+    int fd = open(tmp, O_CREAT | O_TRUNC | O_RDWR, 0640);
+    if (fd == -1) {
+        errf_errno("unable to open tmp file for '%s'", path);
+        goto fail_open;
+    }
+
+    if (ftruncate(fd, len) == -1) {
+        errf_errno("unable to grow file '%lx'", len);
+        goto fail_truncate;
+    }
+
+    return fd;
+
+  fail_truncate:
+    close(fd);
+  fail_open:
+    return -1;
+}
+
+void file_tmp_swap(const char *path)
 {
     // basename and dirname are horrible functions. That's all I wanted or
     // needed to say.
@@ -196,6 +228,29 @@ struct mfile mfile_open(const char *path)
 }
 
 void mfile_close(struct mfile *file)
+{
+    munmap((void *) file->ptr, file->len);
+}
+
+// -----------------------------------------------------------------------------
+// mfilew
+// -----------------------------------------------------------------------------
+
+struct mfilew mfilew_create_tmp(const char *path, size_t len)
+{
+    int fd = file_create_tmp(path, len);
+    if (fd < 0) failf_errno("unable to create tmp file: %s", path);
+
+    struct mfilew file = { .len = len };
+
+    file.ptr = mmap(0, file.len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (file.ptr == MAP_FAILED) failf_errno("failed to mmap: %s", path);
+
+    close(fd);
+    return file;
+}
+
+void mfilew_close(struct mfilew *file)
 {
     munmap((void *) file->ptr, file->len);
 }

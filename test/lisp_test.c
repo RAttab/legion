@@ -324,7 +324,7 @@ bool check_dir(const char *path)
 
 int main(int argc, char **argv)
 {
-    sys_populate();
+    sys_populate_tests();
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/test/lisp", argc > 1 ? argv[1] : ".");
