@@ -487,6 +487,44 @@ void ui_doc_render(struct ui_doc *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// list
+// -----------------------------------------------------------------------------
+
+struct ui_entry
+{
+    struct ui_str str;
+    uint64_t user;
+};
+
+struct ui_list
+{
+    struct ui_widget w;
+    struct ui_scroll scroll;
+
+    struct font *font;
+    struct ui_str str;
+
+    size_t len, cap;
+    struct ui_entry *entries;
+
+    uint64_t hover, selected;
+};
+
+
+struct ui_list ui_list_new(struct dim, struct font *, size_t chars);
+void ui_list_free(struct ui_list *);
+
+void ui_list_clear(struct ui_list *);
+bool ui_list_select(struct ui_list *, uint64_t user);
+
+void ui_list_reset(struct ui_list *);
+struct ui_str *ui_list_add(struct ui_list *, uint64_t user);
+
+enum ui_ret ui_list_event(struct ui_list *, const SDL_Event *);
+void ui_list_render(struct ui_list *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // tree
 // -----------------------------------------------------------------------------
 
