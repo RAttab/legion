@@ -50,9 +50,7 @@ struct ui_star
 
     struct ui_button control, factory, logistic;
 
-    id_t selected;
-    struct ui_scroll control_scroll, factory_scroll;
-    struct ui_toggles control_list, factory_list;
+    struct ui_tree control_list, factory_list;
 
     struct ui_label pills, pills_val;
 
@@ -113,11 +111,8 @@ struct ui_star *ui_star_new(void)
         .factory = ui_button_new(font, ui_str_c("factory")),
         .logistic = ui_button_new(font, ui_str_c("logistic")),
 
-        .control_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .control_list = ui_toggles_new(font, ui_str_v(id_str_len)),
-
-        .factory_scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .factory_list = ui_toggles_new(font, ui_str_v(id_str_len)),
+        .control_list = ui_tree_new(make_dim(ui_layout_inf, ui_layout_inf), font, id_str_len),
+        .factory_list = ui_tree_new(make_dim(ui_layout_inf, ui_layout_inf), font, id_str_len),
 
         .pills = ui_label_new(font, ui_str_c("pills: ")),
         .pills_val = ui_label_new(font, ui_str_v(10)),
@@ -203,10 +198,8 @@ void ui_star_free(struct ui_star *ui) {
     ui_button_free(&ui->factory);
     ui_button_free(&ui->logistic);
 
-    ui_scroll_free(&ui->control_scroll);
-    ui_scroll_free(&ui->factory_scroll);
-    ui_toggles_free(&ui->control_list);
-    ui_toggles_free(&ui->factory_list);
+    ui_tree_free(&ui->control_list);
+    ui_tree_free(&ui->factory_list);
 
     ui_label_free(&ui->workers.workers);
     ui_label_free(&ui->workers.workers_val);
@@ -259,23 +252,26 @@ int16_t ui_star_width(const struct ui_star *ui)
 }
 
 static void ui_star_update_list(
-        struct ui_star *ui, struct chunk *chunk,
-        struct ui_toggles *toggles, struct ui_scroll *scroll,
-        im_list_t filter)
+        struct chunk *chunk, struct ui_tree *tree, im_list_t filter)
 {
+    ui_tree_reset(tree);
+
+    enum item item = ITEM_NIL;
+    ui_node_t parent = ui_node_nil;
     struct vec64 *ids = chunk_list_filter(chunk, filter);
-    ui_toggles_resize(toggles, ids->len);
-    ui_scroll_update(scroll, ids->len);
 
     for (size_t i = 0; i < ids->len; ++i) {
         id_t id = ids->vals[i];
-        struct ui_toggle *toggle = &toggles->items[i];
 
-        toggle->user = id;
-        ui_str_set_id(&toggle->str, id);
+        if (item != id_item(id)) {
+            item = id_item(id);
+            parent = ui_tree_index(tree);
+            ui_str_set_item(ui_tree_add(tree, ui_node_nil, make_id(item, 0)), item);
+        }
+
+        ui_str_set_id(ui_tree_add(tree, parent, id), id);
     }
 
-    ui_toggles_select(toggles, ui->selected);
     vec64_free(ids);
 }
 
@@ -300,10 +296,10 @@ static void ui_star_update(struct ui_star *ui)
             assert(ok);
         }
 
-        ui_toggles_resize(&ui->control_list, 0);
-        ui_scroll_update(&ui->control_scroll, 0);
-        ui_toggles_resize(&ui->factory_list, 0);
-        ui_scroll_update(&ui->factory_scroll, 0);
+        ui_tree_clear(&ui->control_list);
+        ui_tree_reset(&ui->control_list);
+        ui_tree_clear(&ui->factory_list);
+        ui_tree_reset(&ui->factory_list);
 
         ui_str_set_u64(&ui->pills_val.str, 0);
 
@@ -332,8 +328,8 @@ static void ui_star_update(struct ui_star *ui)
     }
 
     ui->star = *chunk_star(chunk);
-    ui_star_update_list(ui, chunk, &ui->control_list, &ui->control_scroll, im_list_control);
-    ui_star_update_list(ui, chunk, &ui->factory_list, &ui->factory_scroll, im_list_factory);
+    ui_star_update_list(chunk, &ui->control_list, im_list_control);
+    ui_star_update_list(chunk, &ui->factory_list, im_list_factory);
 
     ui_str_set_u64(&ui->pills_val.str, chunk_scan(chunk, ITEM_PILL));
 
@@ -381,7 +377,8 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     case EV_STATE_LOAD: {
         ui_panel_hide(&ui->panel);
         ui->id = coord_nil();
-        ui->selected = 0;
+        ui_tree_clear(&ui->control_list);
+        ui_tree_clear(&ui->factory_list);
         return false;
     }
 
@@ -403,7 +400,8 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     case EV_STAR_CLEAR: {
         ui->id = coord_nil();
         ui_panel_hide(&ui->panel);
-        ui->selected = 0;
+        ui_tree_clear(&ui->control_list);
+        ui_tree_clear(&ui->factory_list);
         return false;
     }
 
@@ -414,18 +412,17 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
             ui_star_update(ui);
         }
 
-        ui->selected = (uintptr_t) ev->user.data1;
-        ui_toggles_select(&ui->control_list, ui->selected);
-        ui_toggles_select(&ui->factory_list, ui->selected);
+        id_t selected = (uintptr_t) ev->user.data1;
+        ui_tree_select(&ui->control_list, selected);
+        ui_tree_select(&ui->factory_list, selected);
 
         ui_panel_show(&ui->panel);
         return false;
     }
 
     case EV_ITEM_CLEAR: {
-        ui->selected = 0;
-        ui_toggles_clear(&ui->control_list);
-        ui_toggles_clear(&ui->factory_list);
+        ui_tree_clear(&ui->control_list);
+        ui_tree_clear(&ui->factory_list);
         return false;
     }
 
@@ -482,31 +479,18 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return true;
     }
 
-
-    if (ui->control.disabled) {
-        if ((ret = ui_scroll_event(&ui->control_scroll, ev)))
-            return true;
-
-        struct ui_toggle *toggle = NULL;
-        if ((ret = ui_toggles_event(&ui->control_list, ev, &ui->control_scroll, &toggle, NULL))) {
-            enum event type = toggle->state == ui_toggle_selected ?
-                EV_ITEM_SELECT : EV_ITEM_CLEAR;
-            render_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
-            return true;
-        }
+    if (ui->control.disabled && (ret = ui_tree_event(&ui->control_list, ev))) {
+        id_t id = ui->control_list.selected;
+        if (ret == ui_action && id_bot(id))
+            render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
+        return true;
     }
 
-    if (ui->factory.disabled) {
-        if ((ret = ui_scroll_event(&ui->factory_scroll, ev)))
-            return true;
-
-        struct ui_toggle *toggle = NULL;
-        if ((ret = ui_toggles_event(&ui->factory_list, ev, &ui->factory_scroll, &toggle, NULL))) {
-            enum event type = toggle->state == ui_toggle_selected ?
-                EV_ITEM_SELECT : EV_ITEM_CLEAR;
-            render_push_event(type, toggle->user, coord_to_u64(ui->star.coord));
-            return true;
-        }
+    if (ui->factory.disabled && (ret = ui_tree_event(&ui->factory_list, ev))) {
+        id_t id = ui->factory_list.selected;
+        if (ret == ui_action && id_bot(id))
+            render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
+        return true;
     }
 
     return ui_panel_event_consume(&ui->panel, ev);
@@ -571,17 +555,11 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     ui_layout_next_row(&layout);
     ui_layout_sep_y(&layout, font->glyph_h);
 
-    if (ui->control.disabled) {
-        struct ui_layout inner = ui_scroll_render(&ui->control_scroll, &layout, renderer);
-        if (ui_layout_is_nil(&inner)) return;
-        ui_toggles_render(&ui->control_list, &inner, renderer, &ui->control_scroll);
-    }
+    if (ui->control.disabled)
+        ui_tree_render(&ui->control_list, &layout, renderer);
 
-    if (ui->factory.disabled) {
-        struct ui_layout inner = ui_scroll_render(&ui->factory_scroll, &layout, renderer);
-        if (ui_layout_is_nil(&inner)) return;
-        ui_toggles_render(&ui->factory_list, &inner, renderer, &ui->factory_scroll);
-    }
+    if (ui->factory.disabled)
+        ui_tree_render(&ui->factory_list, &layout, renderer);
 
     if (ui->logistic.disabled) {
         ui_label_render(&ui->pills, &layout, renderer);
