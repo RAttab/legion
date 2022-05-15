@@ -323,57 +323,6 @@ inline size_t ui_scroll_last(const struct ui_scroll *scroll)
 
 
 // -----------------------------------------------------------------------------
-// toggle
-// -----------------------------------------------------------------------------
-
-enum ui_toggle_state
-{
-    ui_toggle_idle = 0,
-    ui_toggle_hover,
-    ui_toggle_selected,
-};
-
-struct ui_toggle
-{
-    struct ui_widget w;
-    struct ui_str str;
-
-    struct font *font;
-    uint64_t user;
-
-    enum ui_toggle_state state;
-};
-
-struct ui_toggle ui_toggle_new(struct font *, struct ui_str);
-void ui_toggle_free(struct ui_toggle *);
-enum ui_ret ui_toggle_event(struct ui_toggle *, const SDL_Event *);
-void ui_toggle_render(struct ui_toggle *, struct ui_layout *, SDL_Renderer *);
-
-
-struct ui_toggles
-{
-    struct font *font;
-    struct ui_str str;
-
-    size_t len, cap;
-    struct ui_toggle *items;
-};
-
-struct ui_toggles ui_toggles_new(struct font *, struct ui_str);
-void ui_toggles_free(struct ui_toggles *);
-void ui_toggles_resize(struct ui_toggles *, size_t len);
-
-void ui_toggles_clear(struct ui_toggles *);
-void ui_toggles_select(struct ui_toggles *, uint64_t user);
-
-enum ui_ret ui_toggles_event(
-        struct ui_toggles *, const SDL_Event *, const struct ui_scroll *,
-        struct ui_toggle **r_toggle, size_t *r_index);
-void ui_toggles_render(
-        struct ui_toggles *, struct ui_layout *, SDL_Renderer *, const struct ui_scroll *);
-
-
-// -----------------------------------------------------------------------------
 // input
 // -----------------------------------------------------------------------------
 
