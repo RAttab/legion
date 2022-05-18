@@ -203,7 +203,7 @@ void render_init(struct proxy *proxy)
 
     sdl_err(SDL_CreateWindowAndRenderer(
                     render.rect.w, render.rect.h,
-                    SDL_WINDOW_BORDERLESS,
+                    SDL_WINDOW_FULLSCREEN,
                     &render.window, &render.renderer));
 
     render.event = SDL_RegisterEvents(1);
