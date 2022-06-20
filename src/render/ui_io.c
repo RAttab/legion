@@ -130,10 +130,11 @@ enum
 
     ui_io_set,
     ui_io_cas,
+    ui_io_probe,
     ui_io_scan,
-    ui_io_scan_val,
     ui_io_launch,
     ui_io_target,
+    ui_io_value,
 
     ui_io_max,
 };
@@ -186,10 +187,11 @@ struct ui_io *ui_io_new(void)
 
             [ui_io_set] = ui_io_cmd2(font, IO_SET,   "index: ", "value: "),
             [ui_io_cas] = ui_io_cmd3(font, IO_CAS,   "index: ", "test:  ", "value: "),
-            [ui_io_scan] = ui_io_cmd2(font, IO_SCAN, "coord: ", "item:  "),
-            [ui_io_scan_val] = ui_io_cmd0(font, IO_SCAN_VAL),
+            [ui_io_probe] = ui_io_cmd2(font, IO_PROBE, "item:  ", "coord: "),
+            [ui_io_scan] = ui_io_cmd1(font, IO_SCAN, "coord: "),
             [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
             [ui_io_target] = ui_io_cmd1(font, IO_TARGET, "dest:  "),
+            [ui_io_value] = ui_io_cmd0(font, IO_VALUE),
         },
     };
 

@@ -219,8 +219,17 @@
       !item_memory)
   (out !item_brain))
 
+ (!item_prober
+  (in !item_lung
+      !item_nodule
+      !item_eye
+      !item_eye
+      !item_eye)
+  (out !item_prober))
+
  (!item_scanner
   (in !item_lung
+      !item_engram
       !item_nodule
       !item_eye
       !item_eye
@@ -246,7 +255,7 @@
       !item_deploy
       !item_memory
       !item_brain
-      !item_scanner
+      !item_prober
       !item_nodule
       !item_cortex
       !item_cortex)

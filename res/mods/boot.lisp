@@ -24,8 +24,8 @@
 (defconst specs-solar-div 1000)
 
 ;; Sanity checks
-(defconst scan-id (id &item_scanner 1))
-(assert (= (io &io_ping scan-id) &io_ok))
+(defconst prober-id (id &item_prober 1))
+(assert (= (io &io_ping prober-id) &io_ok))
 (defconst mem-id (id &item_memory 1))
 (assert (= (io &io_ping mem-id) &io_ok))
 (defconst deploy-id (id &item_deploy 1))
@@ -111,7 +111,8 @@
 
 ;; Legions
 (progn
-  (deploy-item &item_scanner 2)
+  (deploy-item &item_prober 1)
+  (deploy-item &item_scanner 1)
   (deploy-item &item_brain 1)
   (let ((id-brain (id &item_brain (count &item_brain))))
     (assert (= (io &io_mod id-brain (mod launch 2)) &io_ok)))
@@ -122,6 +123,7 @@
   (deploy-tape &item_assembly &item_assembly active-count)
   (deploy-tape &item_assembly &item_deploy active-count)
   (deploy-tape &item_assembly &item_brain active-count)
+  (deploy-tape &item_assembly &item_prober active-count)
   (deploy-tape &item_assembly &item_scanner active-count)
   (deploy-item &item_legion legion-count))
 
@@ -254,9 +256,9 @@
     (set-tape id n host tape)))
 
 (defun count (item)
-  (io &io_scan scan-id (progn (io &io_coord (self)) (head)) item)
+  (io &io_probe prober-id item (progn (io &io_coord (self)) (head)))
   (let ((count -1))
-    (while (< count 0) (set count (progn (io &io_scan_val scan-id) (head))))
+    (while (< count 0) (set count (progn (io &io_value prober-id) (head))))
     count))
 
 (defun wait-tech (item)

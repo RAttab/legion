@@ -17,6 +17,7 @@
 #include "items/port/port.c"
 #include "items/printer/printer.c"
 #include "items/receive/receive.c"
+#include "items/prober/prober.c"
 #include "items/scanner/scanner.c"
 #include "items/storage/storage.c"
 #include "items/test/test.c"

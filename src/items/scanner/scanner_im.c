@@ -13,6 +13,8 @@
 // -----------------------------------------------------------------------------
 
 static const word_t im_scanner_empty = -1;
+static const uint64_t im_scanner_div = 1000;
+
 
 static void im_scanner_init(void *state, struct chunk *chunk, id_t id)
 {
@@ -23,21 +25,21 @@ static void im_scanner_init(void *state, struct chunk *chunk, id_t id)
     scanner->result = im_scanner_empty;
 }
 
-static uint64_t im_scanner_div(enum item item)
-{
-    switch (item)
-    {
-    case ITEM_SCANNER: { return 1000; }
-    default: { abort(); }
-    }
-}
-
 static void im_scanner_reset(struct im_scanner *scanner)
 {
-    scanner->state = im_scanner_idle;
+    scanner->it.coord = coord_nil();
     scanner->result = im_scanner_empty;
     scanner->work.left = 0;
     scanner->work.cap = 0;
+}
+
+static uint8_t im_scanner_work(struct im_scanner *scanner, struct chunk *chunk)
+{
+    struct coord origin = chunk_star(chunk)->coord;
+    struct coord next = world_scan_peek(chunk_world(chunk), &scanner->it);
+
+    uint64_t delta = coord_dist(origin, next) / im_scanner_div;
+    return delta < UINT8_MAX ? delta : UINT8_MAX;
 }
 
 
@@ -49,19 +51,14 @@ static void im_scanner_step(void *state, struct chunk *chunk)
 {
     struct im_scanner *scanner = state;
 
-    if (scanner->state == im_scanner_idle) return;
+    if (coord_is_nil(scanner->it.coord)) return;
     if (scanner->result != im_scanner_empty) return;
     if (scanner->work.left) { scanner->work.left--; return; }
 
-    struct world *world = chunk_world(chunk);
+    struct coord coord = world_scan_next(chunk_world(chunk), &scanner->it);
 
-    if (scanner->state == im_scanner_wide)
-        scanner->result = coord_to_u64(world_scan_next(world, &scanner->type.wide));
-    else {
-        ssize_t ret = world_scan(
-                world, scanner->type.target.coord, scanner->type.target.item);
-        scanner->result = ret < 0 ? 0 : ret;
-    }
+    if (coord_is_nil(coord)) im_scanner_reset(scanner);
+    else scanner->result = coord_to_u64(coord);
 }
 
 
@@ -78,20 +75,7 @@ static void im_scanner_io_state(
 
     switch (args[0])
     {
-    case IO_TARGET: {
-        if (scanner->state == im_scanner_wide)
-            value = coord_to_u64(coord_sector(scanner->type.wide.coord));
-        if (scanner->state == im_scanner_target)
-            value = coord_to_u64(scanner->type.target.coord);
-        break;
-    }
-
-    case IO_ITEM: {
-        if (scanner->state == im_scanner_target)
-            value = scanner->type.target.item;
-        break;
-    }
-
+    case IO_TARGET: { value = coord_to_u64(coord_sector(scanner->it.coord)); break; }
     default: { chunk_log(chunk, scanner->id, IO_STATE, IOE_A0_INVALID); break; }
     }
 
@@ -105,72 +89,28 @@ static void im_scanner_io_scan(
     if (!im_check_args(chunk, scanner->id, IO_SCAN, len, 1)) return;
 
     struct coord coord = coord_from_u64(args[0]);
-    if (!coord_validate(args[0]))
-        return chunk_log(chunk, scanner->id, IO_SCAN, IOE_A0_INVALID);
-
-    enum item item = len >= 2 ? args[1] : ITEM_NIL;
-    if (len >= 2 && !item_validate(args[1]))
-        return chunk_log(chunk, scanner->id, IO_SCAN, IOE_A1_INVALID);
-
-    if (!item) {
-        coord = coord_sector(coord);
-        coord = make_coord(
-                coord.x + coord_sector_size/2,
-                coord.y + coord_sector_size/2);
-
-        scanner->state = im_scanner_wide;
-        scanner->type.wide = world_scan_it(chunk_world(chunk), coord);
-    }
-    else {
-        scanner->state = im_scanner_target;
-        scanner->type.target.item = item;
-        scanner->type.target.coord = coord;
-    }
 
     struct coord origin = chunk_star(chunk)->coord;
-    uint64_t delta = coord_dist(origin, coord);
-    delta /= im_scanner_div(id_item(scanner->id));
+    if (coord_is_nil(coord)) coord = origin;
 
-    if (delta >= UINT8_MAX) {
-        im_scanner_reset(scanner);
-        return chunk_log(chunk, scanner->id, IO_SCAN, IOE_OUT_OF_RANGE);
-    }
-
-    scanner->work.cap = scanner->work.left = delta;
+    scanner->it = world_scan_it(chunk_world(chunk), coord_sector(coord));
+    scanner->work.cap = scanner->work.left = im_scanner_work(scanner, chunk);
     scanner->result = im_scanner_empty;
 }
 
-static void im_scanner_io_scan_val(
+static void im_scanner_io_value(
         struct im_scanner *scanner, struct chunk *chunk, id_t src)
 {
     chunk_io(chunk, IO_RETURN, scanner->id, src, &scanner->result, 1);
+    if (scanner->result == im_scanner_empty) return;
 
-    switch (scanner->state)
-    {
-
-    case im_scanner_idle: { break; }
-
-    case im_scanner_target: {
-        if (scanner->result != im_scanner_empty)
-            im_scanner_reset(scanner);
-        break;
+    if (!scanner->result) {
+        im_scanner_reset(scanner);
+        return;
     }
 
-    case im_scanner_wide: {
-        if (scanner->result == im_scanner_empty) break;
-
-        if (!scanner->result) {
-            im_scanner_reset(scanner);
-            break;
-        }
-
-        scanner->work.left = scanner->work.cap;
-        scanner->result = im_scanner_empty;
-        break;
-    }
-
-    default: { assert(false); }
-    }
+    scanner->work.cap = scanner->work.left = im_scanner_work(scanner, chunk);
+    scanner->result = im_scanner_empty;
 }
 
 static void im_scanner_io(
@@ -186,7 +126,7 @@ static void im_scanner_io(
     case IO_STATE: { im_scanner_io_state(scanner, chunk, src, args, len); return; }
 
     case IO_SCAN: { im_scanner_io_scan(scanner, chunk, args, len); return; }
-    case IO_SCAN_VAL: { im_scanner_io_scan_val(scanner, chunk, src); return; }
+    case IO_VALUE: { im_scanner_io_value(scanner, chunk, src); return; }
     case IO_RESET: { im_scanner_reset(scanner); return; }
 
     default: { return; }
@@ -199,6 +139,6 @@ static const word_t im_scanner_io_list[] =
     IO_STATE,
 
     IO_SCAN,
-    IO_SCAN_VAL,
+    IO_VALUE,
     IO_RESET,
 };

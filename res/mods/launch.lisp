@@ -9,23 +9,23 @@
 (defconst mem-id (id &item_memory 1))
 (assert (= (io &io_ping mem-id) &io_ok))
 
-(defconst scanner-star (id &item_scanner 2))
-(assert (= (io &io_ping scanner-star) &io_ok))
+(defconst scanner-id (id &item_scanner 1))
+(assert (= (io &io_ping scanner-id) &io_ok))
 
-(defconst scanner-count (id &item_scanner 3))
-(assert (= (io &io_ping scanner-count) &io_ok))
+(defconst prober-id (id &item_prober 2))
+(assert (= (io &io_ping prober-id) &io_ok))
 
 
 (let ((mem-index 1))
-  (io &io_scan scanner-star
+  (io &io_scan scanner-id
       (coord-inc (progn (io &io_coord (self)) (head))))
 
   (while 1
-    (case (progn (io &io_scan_val scanner-star) (head))
+    (case (progn (io &io_value scanner-id) (head))
       ((scan-star-ongoing 0)
        (scan-star-done
-	(io &io_scan scanner-star
-	    (coord-inc (progn (io &io_state scanner-star &io_target) (head))))))
+	(io &io_scan scanner-id
+	    (coord-inc (progn (io &io_state scanner-id &io_target) (head))))))
       (star
        (when (check-star star)
 	 (let ((legion-id (legion)))
@@ -65,10 +65,10 @@
 
 
 (defun count (coord item)
-  (io &io_scan scanner-count coord item)
+  (io &io_probe prober-id item coord)
   (let ((count -1))
     (while (< count 0)
-      (set count (progn (io &io_scan_val scanner-count) (head))))
+      (set count (progn (io &io_value prober-id) (head))))
     count))
 
 

@@ -18,6 +18,7 @@
 #include "items/port/port.h"
 #include "items/printer/printer.h"
 #include "items/receive/receive.h"
+#include "items/prober/prober.h"
 #include "items/scanner/scanner.h"
 #include "items/storage/storage.h"
 #include "items/test/test.h"
@@ -112,6 +113,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_ASSEMBLY,     "assembly",  bits_s, work_s, im_printer_config),
     im_init_cfg(ITEM_MEMORY,       "memory",    bits_s, work_s, im_memory_config),
     im_init_cfg(ITEM_BRAIN,        "brain",     bits_s, work_s, im_brain_config),
+    im_init_cfg(ITEM_PROBER,       "prober",    bits_s, work_s, im_prober_config),
     im_init_cfg(ITEM_SCANNER,      "scanner",   bits_s, work_s, im_scanner_config),
     im_init_cfg(ITEM_LEGION,       "legion",    bits_s, work_s, im_legion_config),
     im_init_cfg(ITEM_LAB,          "lab",       bits_s, work_s, im_lab_config),
@@ -145,6 +147,7 @@ const enum item im_list_control_arr[] =
 {
     ITEM_MEMORY,
     ITEM_BRAIN,
+    ITEM_PROBER,
     ITEM_SCANNER,
     ITEM_LEGION,
 
@@ -250,8 +253,9 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_GET),
     io_init(IO_SET),
     io_init(IO_CAS),
+    io_init(IO_PROBE),
     io_init(IO_SCAN),
-    io_init(IO_SCAN_VAL),
+    io_init(IO_VALUE),
     io_init(IO_LAUNCH),
     io_init(IO_TARGET),
 

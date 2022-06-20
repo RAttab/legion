@@ -359,12 +359,18 @@ struct world_scan_it world_scan_it(struct world *world, struct coord coord)
     };
 }
 
-struct coord world_scan_next(struct world *world, struct world_scan_it *it)
+struct coord world_scan_peek(struct world *world, const struct world_scan_it *it)
 {
     const struct sector *sector = world_sector(world, it->coord);
     if (it->index >= sector->stars_len) return coord_nil();
 
     struct coord result = sector->stars[it->index].coord;
+    return result;
+}
+
+struct coord world_scan_next(struct world *world, struct world_scan_it *it)
+{
+    struct coord result = world_scan_peek(world, it);
     it->index++;
     return result;
 }

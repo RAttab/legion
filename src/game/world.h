@@ -79,6 +79,7 @@ struct legion_packed world_scan_it
 
 struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);
+struct coord world_scan_peek(struct world *, const struct world_scan_it *);
 
 ssize_t world_scan(struct world *, struct coord, enum item);
 

@@ -66,7 +66,8 @@
   (worker  (nodule stem limb lung))
   (memory  (nodule engram))
   (brain   (nodule cortex memory))
-  (scanner (nodule eye lung))
+  (prober  (nodule eye lung))
+  (scanner (nodule eye engram lung))
   (legion  (nodule lung cortex ...))
   (lab     (nodule cortex limb vein))))
 

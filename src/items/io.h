@@ -30,6 +30,7 @@ enum legion_packed io
     IO_TAPE   = IO_MIN + 0x0A,
     IO_MOD    = IO_MIN + 0x0B,
     IO_LOOP   = IO_MIN + 0x0C,
+    IO_VALUE  = IO_MIN + 0x0D,
 
     // Brain
     IO_ID         = IO_MIN + 0x10,
@@ -60,7 +61,7 @@ enum legion_packed io
     IO_SET      = IO_MIN + 0x81,
     IO_CAS      = IO_MIN + 0x82,
     IO_SCAN     = IO_MIN + 0x83,
-    IO_SCAN_VAL = IO_MIN + 0x84,
+    IO_PROBE    = IO_MIN + 0x84,
     IO_LAUNCH   = IO_MIN + 0x85,
     IO_TARGET   = IO_MIN + 0x86,
 

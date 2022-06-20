@@ -1,4 +1,4 @@
-/* scanner.h
+/* prober.h
    Rémi Attab (remi.attab@gmail.com), 20 Aug 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -19,17 +19,20 @@ struct im_config;
 // scan
 // -----------------------------------------------------------------------------
 
-struct legion_packed im_scanner
+struct legion_packed im_prober
 {
     id_t id;
 
     struct { uint8_t left; uint8_t cap; } work;
-    legion_pad(2);
 
-    struct world_scan_it it;
+    enum item item;
+    legion_pad(1);
+    struct coord coord;
+
     word_t result;
+
 };
 
-static_assert(sizeof(struct im_scanner) == 32);
+static_assert(sizeof(struct im_prober) == 24);
 
-void im_scanner_config(struct im_config *);
+void im_prober_config(struct im_config *);

@@ -15,6 +15,9 @@
 (defconst mem-tree-home 6)
 (assert (= (io &io_ping mem-tree-id) &io_ok))
 
+(defconst prober-id (id &item_prober 1))
+(assert (= (io &io_ping prober-id) &io_ok))
+
 
 ;; -----------------------------------------------------------------------------
 ;; api
@@ -136,7 +139,7 @@
 (defun msg (index) (io &io_get mem-id (+ mem-pck-msg index)) (head))
 
 (defun count (item)
-  (let ((coord (progn (assert (= (io &io_coord (self)) &io_ok)) (head))))
-    (assert (= (io &io_scan (id &item_scanner 1) coord item) &io_ok))
-    (assert (= (io &io_scan_val (id &item_scanner 1)) &io_ok))
+  (let ((coord (progn (io &io_coord (self)) (head))))
+    (io &io_probe (id &item_prober 1) item coord)
+    (io &io_value (id &item_prober 1))
     (head)))
