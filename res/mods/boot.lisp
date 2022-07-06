@@ -7,6 +7,8 @@
 ;; (mod launch 2) module and research to get to antenna is done via
 ;; the (mod lab 2) module.
 
+(defconst max-depth 1)
+
 (defconst extract-count 2)
 (defconst condenser-count 2)
 (defconst printer-count 4)
@@ -14,11 +16,7 @@
 (defconst worker-count 20)
 (defconst lab-count 4)
 (defconst active-count 1)
-(defconst legion-count 3)
-(defconst antenna-count (+ legion-count 1))
 (defconst storage-count 4)
-
-(defconst mem-home 6)
 
 (defconst energy-target 100)
 (defconst specs-solar-div 1000)
@@ -26,22 +24,15 @@
 ;; Sanity checks
 (defconst prober-id (id &item_prober 1))
 (assert (= (io &io_ping prober-id) &io_ok))
-(defconst mem-id (id &item_memory 1))
-(assert (= (io &io_ping mem-id) &io_ok))
 (defconst deploy-id (id &item_deploy 1))
 (assert (= (io &io_ping deploy-id) &io_ok))
 
 
 ;; Home
 (progn
-  ;; If there's already an active legion in the star, bail.
-  (when (progn (io &io_cas mem-id mem-home 0 1) (head))
-    (reset))
-
-  (io &io_log (self) !booting (progn (io &io_coord (self)) (head)))
-  (when (is-home)
-    (io &io_name (self) !Bob-The-Homeworld)
-    (io &io_set mem-id mem-home (progn (io &io_coord (self)) (head)))))
+  (when (> (count &item_brain) 1) (reset))
+  (when (call (os is-home)) (io &io_name (self) !Bob-The-Homeworld))
+  (io &io_log (self) !booting (progn (io &io_coord (self)) (head))))
 
 
 ;; Elem - Extract
@@ -99,6 +90,15 @@
   (assert (= (io &io_reset (id &item_assembly 2)) &io_ok)))
 
 
+;; OS - we reserve the juicy brain ids for os
+(defconst brain-os-id (id &item_brain 2))
+(defconst brain-exec-id (id &item_brain 3))
+(progn
+  (deploy-item &item_brain 2)
+  (assert (= (io &io_ping brain-os-id) &io_ok))
+  (assert (= (io &io_ping brain-exec-id) &io_ok)))
+
+
 ;; Labs
 (progn
   (deploy-item &item_lab lab-count)
@@ -107,25 +107,6 @@
   (let ((id-brain (id &item_brain (count &item_brain))))
     (assert (= (io &io_mod id-brain (mod lab 2)) &io_ok))
     (assert (= (io &io_send id-brain !lab_count lab-count) &io_ok))))
-
-
-;; Legions
-(progn
-  (deploy-item &item_prober 1)
-  (deploy-item &item_scanner 1)
-  (deploy-item &item_brain 1)
-  (let ((id-brain (id &item_brain (count &item_brain))))
-    (assert (= (io &io_mod id-brain (mod launch 2)) &io_ok)))
-
-  (deploy-tape &item_assembly &item_worker active-count)
-  (deploy-tape &item_assembly &item_extract active-count)
-  (deploy-tape &item_assembly &item_printer active-count)
-  (deploy-tape &item_assembly &item_assembly active-count)
-  (deploy-tape &item_assembly &item_deploy active-count)
-  (deploy-tape &item_assembly &item_brain active-count)
-  (deploy-tape &item_assembly &item_prober active-count)
-  (deploy-tape &item_assembly &item_scanner active-count)
-  (deploy-item &item_legion legion-count))
 
 
 ;; Energy - Solar
@@ -147,30 +128,50 @@
   (deploy-tape &item_condenser &item_elem_g condenser-count)
   (deploy-tape &item_condenser &item_elem_h condenser-count))
 
-
-;; Data logistics
+;; OS - data network and boot
 (progn
+  ;; Antenna's for parent
   (wait-tech &item_conductor)
   (deploy-tape &item_printer &item_conductor printer-count)
-
   (wait-tech &item_antenna)
   (deploy-tape &item_assembly &item_antenna assembly-count)
-
   (wait-tech &item_transmit)
-  (deploy-item &item_transmit antenna-count)
-
+  (deploy-item &item_transmit 1)
   (wait-tech &item_receive)
-  (deploy-item &item_receive antenna-count)
+  (deploy-item &item_receive 1)
 
-  (while (count &item_legion))
+  ;; This brain is used as the execution thread for os.
+  (deploy-item &item_memory (call (os memory-need)))
+  (call (os boot) brain-os-id brain-exec-id))
 
-  ;; Launch is responsible for filling (id &item_memory 1) with our
-  ;; children stars while the parent is filled in automatically when
-  ;; legion is deployed.
-  (for (i (if (is-home) 1 0)) (< i antenna-count) (+ i 1)
-       (let ((coord (progn (io &io_get mem-id i) (head))))
-	 (assert (= (io &io_target (id &item_transmit (+ i 1)) coord) &io_ok))
-	 (assert (= (io &io_target (id &item_receive (+ i 1)) coord) &io_ok)))))
+
+;; Legions
+(when (<= (call (os depth)) max-depth)
+
+  (wait-tech &item_scanner)
+  (deploy-item &item_scanner 1)
+  (deploy-item &item_prober 1)
+  (deploy-item &item_brain 1)
+
+  (assert (= (count &item_scanner) 1))
+  (assert (= (count &item_prober) 2))
+  (let ((brain-id (id &item_brain (count &item_brain))))
+    (io &io_mod brain-id (mod launch 2)) &io_ok)
+
+  (deploy-tape &item_assembly &item_worker active-count)
+  (deploy-tape &item_assembly &item_extract active-count)
+  (deploy-tape &item_assembly &item_printer active-count)
+  (deploy-tape &item_assembly &item_assembly active-count)
+  (deploy-tape &item_assembly &item_deploy active-count)
+  (deploy-tape &item_assembly &item_brain active-count)
+  (deploy-tape &item_assembly &item_prober active-count)
+  (deploy-tape &item_assembly &item_scanner active-count)
+
+  (let ((n (call (os child-cap))))
+    (deploy-item &item_transmit n)
+    (deploy-item &item_receive n)
+    (deploy-item &item_legion n)))
+
 
 
 ;; Pill logistics
@@ -188,7 +189,7 @@
   (wait-tech &item_port)
   (deploy-item &item_port 2)
 
-  (when (is-home)
+  (when (call (os is-home))
     (deploy-item &item_storage (* 11 storage-count))
     (for (i 0) (< i 11) (+ i 1)
 	 (set-item (+ (* i storage-count) 1)
@@ -197,36 +198,20 @@
 		   (+ &item_elem_a i))))
 
   (deploy-item &item_brain 1)
-  (let ((id-brain (id &item_brain (count &item_brain))))
-    (assert (= (io &io_mod id-brain (mod port 2)) &io_ok))
-    (assert (= (io &io_send id-brain !child_count legion-count) &io_ok)))
+  (let ((brain-id (id &item_brain (count &item_brain))))
+    (assert (= (io &io_mod brain-id (mod port 2)) &io_ok)))
 
   ;; We build it after to give (mod port) a chance to boot up and set
   ;; up the ports.
   (wait-tech &item_pill)
   (deploy-item &item_pill 10))
 
-
-;; OS
-(progn
-  ;; This brain is used as the execution thread for os.
-  (deploy-item &item_brain 1)
-  (deploy-item &item_memory 1)
-  (assert (= (io &io_set
-		 (id &item_memory (count &item_memory)) 0
-		 (id &item_brain (count &item_brain)))
-	     &io_ok))
-
-  (io &io_log (self) !i-am-legion 0)
-  (load (mod os 2)))
+(io &io_log (self) !done (progn (io &io_coord (self)) (head)))
 
 
 ;; -----------------------------------------------------------------------------
 ;; utils
 ;; -----------------------------------------------------------------------------
-
-(defun is-home ()
-  (if (progn (io &io_get mem-id 0) (head)) 0 1))
 
 (defun set-tape (id n host tape)
   (assert (> id 0))

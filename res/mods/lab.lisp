@@ -5,13 +5,13 @@
 ;; somewhere and this seems as good a time as any.
 
 (let ((n (recv-count)))
-  ;; T0 - Elem
+  ;; Elems
   (lab n &item_elem_a)
   (lab n &item_elem_b)
   (lab n &item_elem_c)
   (lab n &item_elem_d)
 
-  ;; T0 - Passives
+  ;; T0
   (lab n &item_muscle)
   (lab n &item_nodule)
   (lab n &item_vein)

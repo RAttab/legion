@@ -1,145 +1,175 @@
 ;; Galactic OS
 
 ;; -----------------------------------------------------------------------------
-;; constants
+;; consts
 ;; -----------------------------------------------------------------------------
 
-(defconst mem-id (id &item_memory 2))
-(defconst mem-brain 0)
-(defconst mem-pck-src 2)
-(defconst mem-pck-len 3)
-(defconst mem-pck-msg 4)
-(assert (= (io &io_ping mem-id) &io_ok))
 
-(defconst mem-tree-id (id &item_memory 1))
-(defconst mem-tree-home 6)
-(assert (= (io &io_ping mem-tree-id) &io_ok))
+(defconst net-id (id &item_memory 1))
+(defconst net-parent 0)
+(defconst net-len 1)
+(defconst net-child 2)
+(defconst net-child-cap (- 7 net-child))
+(assert (= (io &io_ping net-id) &io_ok))
 
-(defconst prober-id (id &item_prober 1))
-(assert (= (io &io_ping prober-id) &io_ok))
+(defconst state-id (id &item_memory 2))
+(defconst state-home 0)
+(defconst state-depth 1)
+(defconst state-exec 2)
+(assert (= (io &io_ping state-id) &io_ok))
 
+(defconst packet-id (id &item_memory 3))
+(defconst packet-src 0)
+(defconst packet-len 1)
+(defconst packet-data 2)
+(assert (= (io &io_ping packet-id) &io_ok))
 
-;; -----------------------------------------------------------------------------
-;; api
-;; -----------------------------------------------------------------------------
-
-(defun os-home ()
-  (let ((home (progn (io &io_get mem-tree-id mem-tree-home) (head))))
-    (when (= home 1) (set home 0))
-
-    (when (not home)
-      (io &io_transmit (id &item_transmit 1) !os_home))
-
-    (while (not home)
-      (when (progn (io &io_receive (id &item_receive 1)) (head))
-	(assert (= (head) !os_home))
-	(set home (head))))
-
-    (io &io_set mem-tree-id mem-tree-home home)
-    home))
+(defconst memory-count 3)
 
 
 ;; -----------------------------------------------------------------------------
-;; loop
+;; state
 ;; -----------------------------------------------------------------------------
+
+(defun memory-need () memory-count)
+
+(defun child-cap () net-child-cap)
+
+(defun child-count ()
+  (io &io_get net-id net-len)
+  (head))
+
+(defun depth ()
+  (io &io_get state-id state-depth)
+  (head))
+
+(defun home ()
+  (io &io_get state-id state-home)
+  (head))
+
+(defun is-home ()
+  (io &io_get net-id net-parent)
+  (not (head)))
+
+(defun packet (ix)
+  (io &io_get packet-id (+ packet-data ix))
+  (head))
+
+(defun exec (mod)
+  (io &io_mod (progn (io &io_get state-id state-exec) (head)) mod))
+
+(defun child (index)
+  (assert (< index net-child-cap))
+  (io &io_get net-id (+ net-child index))
+  (head))
+
+
+
+;; -----------------------------------------------------------------------------
+;; net
+;; -----------------------------------------------------------------------------
+
+(defun net-connect ()
+  (assert (= (io &io_ping (id &item_transmit 1)) &io_ok))
+  (assert (= (io &io_ping (id &item_receive 1)) &io_ok))
+
+  (case (progn (io &io_get net-id net-parent) (head))
+    ((0 (io &io_set state-id state-home (progn (io &io_coord (self)) (head)))))
+
+    (parent
+     (io &io_target (id &item_transmit 1) parent)
+     (io &io_target (id &item_receive 1) parent)
+     (io &io_transmit (id &item_transmit 1) !os-connect)
+     (while (not (progn (io &io_get state-id state-home) (head)))
+       (when (progn (io &io_receive (id &item_receive 1)) (head))
+	 (assert (= (head) !os-accept))
+	 (let ((home (head))) (io &io_set state-id state-home home))
+	 (let ((depth (head))) (io &io_set state-id state-depth depth)))))))
+
+(defun net-accept ()
+  (io &io_transmit
+      (id &item_transmit (progn (io &io_get packet-id packet-src) (head)))
+      !os-accept
+      (progn (io &io_get state-id state-home) (head))
+      (+ (progn (io &io_get state-id state-depth) (head)) 1)))
+
+(defun net-child (coord)
+  (assert coord)
+  (let ((child-ix (progn (io &io_get net-id net-len) (head)))
+	(child-id (+ child-ix 2)))
+    (assert (= (io &io_ping (id &item_transmit child-id)) &io_ok))
+    (assert (= (io &io_ping (id &item_receive child-id)) &io_ok))
+
+    (io &io_target (id &item_transmit child-id) coord)
+    (io &io_target (id &item_receive child-id) coord)
+    (io &io_set net-id (+ net-child child-ix) coord)
+    (io &io_set net-id net-len (+ child-ix 1))))
+
+
+;; -----------------------------------------------------------------------------
+;; os
+;; -----------------------------------------------------------------------------
+
+(defun boot (os-id exec-id)
+  (assert (= (io &io_ping os-id) &io_ok))
+  (assert (= (io &io_ping exec-id) &io_ok))
+
+  (net-connect)
+  (io &io_set state-id state-exec exec-id)
+  (io &io_mod os-id (mod)))
+
 
 (while 1
   (when (poll)
-    (case (msg 0)
-      ((!os_run (propagate) (run (msg 1)))
-       (!os_update (propagate) (load (msg 1)))
-       (!os_quit (propagate) (reset))
-       (!os_home (home)))
-      (msg (propagate)))))
+    (case (packet 0)
+      ((!os-connect (net-accept))
+       (!os-exec (propagate) (exec (packet 1)))
+       (!os-update (propagate) (load (packet 1)))
+       (!os-quit (propagate) (reset)))
+      (data (propagate)))))
 
 
-;; Look through all our reception points (the brain's msg buffer and
-;; our &item_receive) for commands received. If there's something save
-;; it to mem for further processing (keeping it on the stack would
-;; basically guarantee stack overflows).
 (defun poll ()
-  (let ((msg-len 0))
+  (io &io_set packet-id packet-src 0)
 
-    ;; Commands sent directly to the brain
-    (when (= (io &io_recv (self)) &io_ok)
-      (set msg-len (head))
-      (io &io_set mem-id mem-pck-src 0))
+  (let ((recv-len (if (= (io &io_recv (self)) &io_ok) (head) 0)))
 
-    ;; Commands received from one of our &item_receive
-    (let ((to-poll (count &item_receive)))
-      (for (i 1) (and (<= i to-poll) (not msg-len)) (+ i 1)
-	   (when (= (io &io_receive (id &item_receive i)) &io_ok) (set msg-len (head)))
-	   (when msg-len (io &io_set mem-id mem-pck-src i))))
+    (let ((to-poll (+ (progn (io &io_get net-id net-len) (head)) 1)))
+      (for (i 1) (and (<= i to-poll) (not recv-len)) (+ i 1)
+	   (set recv-len (progn (io &io_receive (id &item_receive i)) (head)))
+	   (when recv-len (io &io_set packet-id packet-src i))))
 
-    ;; Save the rest of the message to mem
-    (io &io_set mem-id mem-pck-len msg-len)
-    (for (i 0) (< i msg-len) (+ i 1)
-	 (let ((part (head))) (io &io_set mem-id (+ mem-pck-msg i) part)))
+    (io &io_set packet-id packet-len recv-len)
+    (for (i 0) (< i recv-len) (+ i 1)
+	 (let ((part (head)))
+	   (io &io_set packet-id (+ packet-data i) part)))
 
-    msg-len))
+    recv-len))
 
 
-;; Transmit the command in mem to all &item_transmit that are not
-;; mem-pck-src (the source of the command)
+;; Propagates the packet stored in packet id to the network; skipping
+;; packet-src.
 (defun propagate ()
-  (let ((len (count &item_transmit))
-	(src (progn (io &io_get mem-id mem-pck-src) (head))))
+  (assert (> (progn (io &io_get packet-id packet-len) (head)) 0))
 
-    (for (i 1) (<= i len) (+ i 1)
-	 (when (/= (id &item_receive i) (id &item_receive src))
-	   (case (progn (io &io_get mem-id mem-pck-len) (head))
+  (let ((to-send (+ (progn (io &io_get net-id net-len) (head)) 1))
+	(to-skip (progn (io &io_get packet-id packet-src) (head))))
+
+    (for (i 1) (<= i to-send) (+ i 1)
+	 (when (/= i to-skip)
+	   (case (progn (io &io_get packet-id packet-len) (head))
+
 	     ((1
 	       (io &io_transmit (id &item_transmit i)
-		   (progn (io &io_get mem-id mem-pck-len) (head))
-		   (progn (io &io_get mem-id (+ mem-pck-msg 0)) (head))))
+		   (progn (io &io_get packet-id (+ packet-data 0)) (head))))
+
 	      (2
 	       (io &io_transmit (id &item_transmit i)
-		   (progn (io &io_get mem-id mem-pck-len) (head))
-		   (progn (io &io_get mem-id (+ mem-pck-msg 0)) (head))
-		   (progn (io &io_get mem-id (+ mem-pck-msg 1)) (head))))
+		   (progn (io &io_get packet-id (+ packet-data 0)) (head))
+		   (progn (io &io_get packet-id (+ packet-data 1)) (head))))
+
 	      (3
 	       (io &io_transmit (id &item_transmit i)
-		   (progn (io &io_get mem-id mem-pck-len) (head))
-		   (progn (io &io_get mem-id (+ mem-pck-msg 0)) (head))
-		   (progn (io &io_get mem-id (+ mem-pck-msg 1)) (head))
-		   (progn (io &io_get mem-id (+ mem-pck-msg 2)) (head))))))))))
-
-
-;; -----------------------------------------------------------------------------
-;; commands
-;; -----------------------------------------------------------------------------
-
-;; Execute the given mod on our executor brain who was created by boot
-;; and whose id is in mem-brain
-(defun run (mod)
-  (let ((brain-id (progn (io &io_get mem-id mem-brain) (head))))
-    (assert (= (io &io_mod brain-id mod) &io_ok))))
-
-(defun home ()
-  (let ((home (progn (io &io_get mem-tree-id mem-tree-home) (head)))
-	(src (progn (io &io_get mem-id mem-pck-src) (head))))
-
-    (when (= home 1) (set home 0))
-    (when (not home)
-      (io &io_transmit (id &item_transmit 1) !os_home))
-
-    (while (not home)
-      (when (progn (io &io_receive (id &item_receive 1)) (head))
-	(assert (= (head) !os_home))
-	(set home (head))))
-
-    (io &io_set mem-tree-id mem-tree-home home)
-    (assert (= (io &io_transmit (id &item_transmit src) !os_home home) &io_ok))))
-
-
-;; -----------------------------------------------------------------------------
-;; misc
-;; -----------------------------------------------------------------------------
-
-(defun msg (index) (io &io_get mem-id (+ mem-pck-msg index)) (head))
-
-(defun count (item)
-  (let ((coord (progn (io &io_coord (self)) (head))))
-    (io &io_probe (id &item_prober 1) item coord)
-    (io &io_value (id &item_prober 1))
-    (head)))
+		   (progn (io &io_get packet-id (+ packet-data 0)) (head))
+		   (progn (io &io_get packet-id (+ packet-data 1)) (head))
+		   (progn (io &io_get packet-id (+ packet-data 2)) (head))))))))))

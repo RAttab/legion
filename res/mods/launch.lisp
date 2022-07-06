@@ -6,9 +6,6 @@
 (defconst scan-star-ongoing -1)
 (defconst scan-star-done 0)
 
-(defconst mem-id (id &item_memory 1))
-(assert (= (io &io_ping mem-id) &io_ok))
-
 (defconst scanner-id (id &item_scanner 1))
 (assert (= (io &io_ping scanner-id) &io_ok))
 
@@ -16,26 +13,23 @@
 (assert (= (io &io_ping prober-id) &io_ok))
 
 
-(let ((mem-index 1))
-  (io &io_scan scanner-id
-      (coord-inc (progn (io &io_coord (self)) (head))))
+(io &io_scan scanner-id
+    (coord-inc (progn (io &io_coord (self)) (head))))
 
-  (while 1
-    (case (progn (io &io_value scanner-id) (head))
-      ((scan-star-ongoing 0)
-       (scan-star-done
-	(io &io_scan scanner-id
-	    (coord-inc (progn (io &io_state scanner-id &io_target) (head))))))
-      (star
-       (when (check-star star)
-	 (let ((legion-id (legion)))
-	   (assert (= (io &io_ping legion-id) &io_ok))
+(while 1
+  (case (progn (io &io_value scanner-id) (head))
+    ((scan-star-ongoing 0)
+     (scan-star-done
+      (io &io_scan scanner-id
+	  (coord-inc (progn (io &io_state scanner-id &io_target) (head))))))
+    (star
+     (when (check-star star)
+       (let ((legion-id (legion)))
+	 (assert (= (io &io_ping legion-id) &io_ok))
 
-	   (io &io_mod legion-id (mod boot 2))
-	   (io &io_launch legion-id star)
-
-	   (io &io_set mem-id mem-index star)
-	   (set mem-index (+ mem-index 1))))))))
+	 (io &io_mod legion-id (mod boot 2))
+	 (io &io_launch legion-id star)
+	 (call (os net-child) star))))))
 
 
 (defconst min-energy 2000)
@@ -53,6 +47,7 @@
 		  1)))))))))
 
 
+;; We're incrementing the packed coord
 (defconst inc-y (bsl 1 (+ 16)))
 (defconst inc-x (bsl 1 (+ 32 16)))
 (defun coord-inc (coord)
