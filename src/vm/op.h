@@ -71,7 +71,6 @@ enum legion_packed op_code
 
     OP_IO     = 0x68,
     OP_IOS    = 0x69,
-    OP_IOR    = 0x6A,
 
     OP_PACK   = 0x80,
     OP_UNPACK = 0x81,

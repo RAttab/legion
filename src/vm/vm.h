@@ -48,8 +48,8 @@ struct legion_packed vm
     uint8_t flags, sp; // u16 - u32
     uint32_t tsc; // -> u64
 
-    uint8_t io, ior;
-    legion_pad(2);
+    uint8_t io;
+    legion_pad(3);
 
     ip_t ip;
     word_t regs[4]; // half of the cacheline

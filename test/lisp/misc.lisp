@@ -34,16 +34,16 @@
 
 (misc/io-0
  (mod (io !io_nil (id 1 2)))
- (check (flags 0x1) (io 1) (ior 0xff) (sp 1) (s 0 0x010001000002)))
+ (check (flags 0x1) (io 1) (sp 1) (s 0 0x010001000002)))
 
 (misc/io-1
  (mod (io !io_nil (id 1 2) 1))
- (check (flags 0x1) (io 2) (ior 0xff)
+ (check (flags 0x1) (io 2)
 	(sp 2) (s 0 0x010001000002) (s 1 1)))
 
 (misc/io-2
  (mod (io !io_nil (id 1 2) 1 2))
- (check (flags 0x1) (io 3) (ior 0xff)
+ (check (flags 0x1) (io 3)
 	(sp 3) (s 0 0x010001000002) (s 1 1) (s 2 2)))
 
 

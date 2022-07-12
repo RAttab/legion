@@ -48,7 +48,6 @@ enum field_type
     field_clock,
     field_stack,
     field_io,
-    field_ior,
     field_ip,
     field_sp,
     field_si,
@@ -88,7 +87,6 @@ struct field token_field(struct tokenizer *tok, struct atoms *atoms)
     if (hash == symbol_hash_c("C")) set(field_clock, "speed");
     else if (hash == symbol_hash_c("S")) set(field_stack, "stack");
     else if (hash == symbol_hash_c("io")) set(field_io, "io");
-    else if (hash == symbol_hash_c("ior")) set(field_ior, "ior");
     else if (hash == symbol_hash_c("ip")) set(field_ip, "ip");
     else if (hash == symbol_hash_c("sp")) set(field_sp, "sp");
     else if (hash == symbol_hash_c("s")) field.type = field_si;
@@ -205,7 +203,6 @@ bool check_mod(
         case field_clock: { ok = check_u64(str, vm->specs.speed, exp) && ok; break; }
         case field_stack: { ok = check_u64(str, vm->specs.stack, exp) && ok; break; }
         case field_io:    { ok = check_u64(str, vm->io, exp) && ok; break; }
-        case field_ior:   { ok = check_u64(str, vm->ior, exp) && ok; break; }
         case field_ip:    { ok = check_u64(str, vm->ip, exp) && ok; break; }
         case field_sp:    { ok = check_u64(str, vm->sp, exp) && ok; break; }
         case field_si:    { ok = check_u64(str, vm->stack[field.index], exp) && ok; break; }

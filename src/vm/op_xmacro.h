@@ -65,7 +65,6 @@ op_fn(FAULT, nil)
 
 op_fn(IO, len)
 op_fn(IOS, nil)
-op_fn(IOR, reg)
 
 op_fn(PACK, nil)
 op_fn(UNPACK, nil)

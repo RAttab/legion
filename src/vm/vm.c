@@ -105,9 +105,8 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
             (unsigned) vm->specs.stack, (unsigned) vm->specs.speed);
     dst += n; len -= n;
 
-    n = snprintf(dst, len, "gen:   { ip=%08x, sp=%02x, flags:%02x, io:{n:%02x, r:%02x}, tsc:%08x }\n",
-            vm->ip, (unsigned) vm->sp, (unsigned) vm->flags,
-            (unsigned) vm->io, (unsigned) vm->ior, vm->tsc);
+    n = snprintf(dst, len, "gen:   { ip=%08x, sp=%02x, flags:%02x, io:%02x }, tsc:%08x }\n",
+            vm->ip, (unsigned) vm->sp, (unsigned) vm->flags, (unsigned) vm->io, vm->tsc);
     dst += n; len -= n;
 
     n = snprintf(dst, len, "reg:   [ 0:%016lx 1:%016lx 2:%016lx 3:%016lx ]\n",
@@ -200,7 +199,6 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
 
         [OP_IO]     = &&op_io,
         [OP_IOS]    = &&op_ios,
-        [OP_IOR]    = &&op_ior,
 
         [OP_PACK]   = &&op_pack,
         [OP_UNPACK] = &&op_unpack,
@@ -422,20 +420,12 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
       op_fault: { vm->flags |= FLAG_FAULT_USER; return VM_FAULT; }
 
       op_io:  {
-            vm->ior = 0xFF;
             vm->io = vm_code(uint8_t);
             vm->flags |= FLAG_IO;
             return 0;
         }
       op_ios: {
-            vm->ior = 0;
             vm->io = vm_pop();
-            vm->flags |= FLAG_IO;
-            return 0;
-        }
-      op_ior: {
-            vm->ior = vm_code(reg_t) + 1;
-            vm->io = vm->regs[vm->ior - 1];
             vm->flags |= FLAG_IO;
             return 0;
         }

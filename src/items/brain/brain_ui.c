@@ -28,7 +28,7 @@ struct ui_brain
     struct ui_label msg, msg_len, msg_index, msg_val;
 
     struct ui_label spec, spec_stack, spec_speed, spec_sep;
-    struct ui_label io, io_val, ior, ior_val;
+    struct ui_label io, io_val;
     struct ui_label tsc, tsc_val;
     struct ui_label ip;
     struct ui_link ip_val;
@@ -75,10 +75,8 @@ static void *ui_brain_alloc(struct font *font)
         .spec_speed = ui_label_new(font, ui_str_v(u8_len)),
         .spec_sep = ui_label_new(font, ui_str_c("  speed: ")),
 
-        .io = ui_label_new(font, ui_str_c("io:    ")),
+        .io = ui_label_new(font, ui_str_c("io:   ")),
         .io_val = ui_label_new(font, ui_str_v(u8_len)),
-        .ior = ui_label_new(font, ui_str_c("  ior:   ")),
-        .ior_val = ui_label_new(font, ui_str_v(u8_len)),
 
         .tsc = ui_label_new(font, ui_str_c("tsc:  ")),
         .tsc_val = ui_label_new(font, ui_str_v(u32_len)),
@@ -135,8 +133,6 @@ static void ui_brain_free(void *_ui)
 
     ui_label_free(&ui->io);
     ui_label_free(&ui->io_val);
-    ui_label_free(&ui->ior);
-    ui_label_free(&ui->ior_val);
 
     ui_label_free(&ui->tsc);
     ui_label_free(&ui->tsc_val);
@@ -218,7 +214,6 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
     ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
     ui_str_set_hex(&ui->io_val.str, state->vm.io);
-    ui_str_set_hex(&ui->ior_val.str, state->vm.ior);
     ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
     ui_str_set_hex(&ui->ip_val.str, state->vm.ip);
     ui_scroll_update(&ui->scroll, state->vm.sp);
@@ -307,8 +302,6 @@ static void ui_brain_render(
 
     ui_label_render(&ui->io, layout, renderer);
     ui_label_render(&ui->io_val, layout, renderer);
-    ui_label_render(&ui->ior, layout, renderer);
-    ui_label_render(&ui->ior_val, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_label_render(&ui->tsc, layout, renderer);
