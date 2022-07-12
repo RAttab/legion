@@ -35,8 +35,7 @@
 ;; utils
 ;; -----------------------------------------------------------------------------
 
-(defun now ()
-  (progn (io &io_tick (self)) (head)))
+(defun now () (ior &io_tick (self)))
 
 (defun cycle-elem ()
   (io &io_item port-elem-id

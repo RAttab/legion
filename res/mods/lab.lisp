@@ -42,10 +42,9 @@
 
 
 (defun lab (n item)
+  (assert (= (io &io_ping (id &item_lab 1)) &io_ok))
   (for (id 1) (<= id n) (+ id 1) (io &io_item (id &item_lab id) item))
-  (for (known 0) (not known)
-       (progn (assert (= (io &io_item_known (id &item_lab 1) item) &io_ok))
-	      (head))))
+  (for (known 0) (not known) (ior &io_item_known (id &item_lab 1) item)))
 
 
 ;; This is technically unecessary but it lets me test the send/recv

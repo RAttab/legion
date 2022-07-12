@@ -32,7 +32,7 @@
 (progn
   (when (> (count &item_brain) 1) (reset))
   (when (call (os is-home)) (io &io_name (self) !Bob-The-Homeworld))
-  (io &io_log (self) !booting (progn (io &io_coord (self)) (head))))
+  (io &io_log (self) !booting (ior &io_coord (self))))
 
 
 ;; Elem - Extract
@@ -206,7 +206,7 @@
   (wait-tech &item_pill)
   (deploy-item &item_pill 10))
 
-(io &io_log (self) !done (progn (io &io_coord (self)) (head)))
+(io &io_log (self) !done (ior &io_coord (self)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -230,23 +230,22 @@
 (defun deploy-item (item n)
   (assert (= (io &io_tape (id &item_assembly 1) item n) &io_ok))
   (assert (= (io &io_item (id &item_deploy 1) item n) &io_ok))
-  (while (progn (io &io_state deploy-id &io_item) (/= (head) 0))))
+  (while (/= (ior &io_state deploy-id &io_item) 0)))
 
 (defun deploy-tape (host tape n)
   (let ((id (+ (count host) 1)))
     (assert (> id 0))
     (assert (= (io &io_tape (id &item_assembly 1) host n) &io_ok))
     (assert (= (io &io_item (id &item_deploy 1) host n) &io_ok))
-    (while (progn (io &io_state deploy-id &io_item) (/= (head) 0)))
+    (while (/= (ior &io_state deploy-id &io_item) 0))
     (set-tape id n host tape)))
 
 (defun count (item)
-  (io &io_probe prober-id item (progn (io &io_coord (self)) (head)))
+  (io &io_probe prober-id item (ior &io_coord (self)))
   (let ((count -1))
-    (while (< count 0) (set count (progn (io &io_value prober-id) (head))))
+    (while (< count 0) (set count (ior &io_value prober-id)))
     count))
 
 (defun wait-tech (item)
-  (while
-      (progn (assert (= (io &io_tape_known (id &item_lab 1) item) &io_ok))
-	     (= (head) 0))))
+  (assert (= (io &io_ping (id &item_lab 1)) &io_ok))
+  (while (= (ior &io_tape_known (id &item_lab 1) item) 0)))

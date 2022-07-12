@@ -13,15 +13,14 @@
 (assert (= (io &io_ping prober-id) &io_ok))
 
 
-(io &io_scan scanner-id
-    (coord-inc (progn (io &io_coord (self)) (head))))
+(io &io_scan scanner-id (coord-inc (ior &io_coord (self))))
 
 (while 1
-  (case (progn (io &io_value scanner-id) (head))
+  (case (ior &io_value scanner-id)
     ((scan-star-ongoing 0)
      (scan-star-done
       (io &io_scan scanner-id
-	  (coord-inc (progn (io &io_state scanner-id &io_target) (head))))))
+	  (coord-inc (ior &io_state scanner-id &io_target)))))
     (star
      (when (check-star star)
        (let ((legion-id (legion)))
@@ -51,7 +50,7 @@
 (defconst inc-y (bsl 1 (+ 16)))
 (defconst inc-x (bsl 1 (+ 32 16)))
 (defun coord-inc (coord)
-  (case (rem (progn (io &io_tick (self)) (head)) 5)
+  (case (rem (ior &io_tick (self)) 5)
     ((0 (+ coord inc-x))
      (1 (- coord inc-x))
      (2 (+ coord inc-y))
@@ -62,13 +61,12 @@
 (defun count (coord item)
   (io &io_probe prober-id item coord)
   (let ((count -1))
-    (while (< count 0)
-      (set count (progn (io &io_value prober-id) (head))))
+    (while (< count 0) (set count (ior &io_value prober-id)))
     count))
 
 
 (defun legion ()
-  (let ((coord-self (progn (io &io_coord (self)) (head))))
+  (let ((coord-self (ior &io_coord (self))))
     (while (= (count coord-self &item_legion) 0))
     (let ((id (id &item_legion 1)))
       (while (= (io &io_ping id) &io_fail) (set id (+ id 1)))

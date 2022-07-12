@@ -842,6 +842,13 @@ static void lisp_fn_io(struct lisp *lisp)
     lisp_write_value(lisp, (uint8_t) len);
 }
 
+// shorthand for the very common pattern:
+//   (progn (io <op> <args>) (head))
+static void lisp_fn_ior(struct lisp *lisp)
+{
+    lisp_fn_io(lisp);
+    lisp_write_op(lisp, OP_POP);
+}
 
 static void lisp_fn_sub(struct lisp *lisp)
 {
@@ -1038,6 +1045,7 @@ static void lisp_fn_register(void)
     register_fn(self);
     register_fn(mod);
     register_fn(io);
+    register_fn(ior);
 
     register_fn(not);
     register_fn(and);

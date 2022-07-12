@@ -36,32 +36,26 @@
 (defun child-cap () net-child-cap)
 
 (defun child-count ()
-  (io &io_get net-id net-len)
-  (head))
+  (ior &io_get net-id net-len))
 
 (defun depth ()
-  (io &io_get state-id state-depth)
-  (head))
+  (ior &io_get state-id state-depth))
 
 (defun home ()
-  (io &io_get state-id state-home)
-  (head))
+  (ior &io_get state-id state-home))
 
 (defun is-home ()
-  (io &io_get net-id net-parent)
-  (not (head)))
+  (not (ior &io_get net-id net-parent)))
 
 (defun packet (ix)
-  (io &io_get packet-id (+ packet-data ix))
-  (head))
+  (ior &io_get packet-id (+ packet-data ix)))
 
 (defun exec (mod)
-  (io &io_mod (progn (io &io_get state-id state-exec) (head)) mod))
+  (io &io_mod (ior &io_get state-id state-exec) mod))
 
 (defun child (index)
   (assert (< index net-child-cap))
-  (io &io_get net-id (+ net-child index))
-  (head))
+  (ior &io_get net-id (+ net-child index)))
 
 
 
@@ -73,29 +67,29 @@
   (assert (= (io &io_ping (id &item_transmit 1)) &io_ok))
   (assert (= (io &io_ping (id &item_receive 1)) &io_ok))
 
-  (case (progn (io &io_get net-id net-parent) (head))
-    ((0 (io &io_set state-id state-home (progn (io &io_coord (self)) (head)))))
+  (case (ior &io_get net-id net-parent)
+    ((0 (io &io_set state-id state-home (ior &io_coord (self)))))
 
     (parent
      (io &io_target (id &item_transmit 1) parent)
      (io &io_target (id &item_receive 1) parent)
      (io &io_transmit (id &item_transmit 1) !os-connect)
-     (while (not (progn (io &io_get state-id state-home) (head)))
-       (when (progn (io &io_receive (id &item_receive 1)) (head))
+     (while (not (ior &io_get state-id state-home))
+       (when (ior &io_receive (id &item_receive 1))
 	 (assert (= (head) !os-accept))
 	 (let ((home (head))) (io &io_set state-id state-home home))
 	 (let ((depth (head))) (io &io_set state-id state-depth depth)))))))
 
 (defun net-accept ()
   (io &io_transmit
-      (id &item_transmit (progn (io &io_get packet-id packet-src) (head)))
+      (id &item_transmit (ior &io_get packet-id packet-src))
       !os-accept
-      (progn (io &io_get state-id state-home) (head))
-      (+ (progn (io &io_get state-id state-depth) (head)) 1)))
+      (ior &io_get state-id state-home)
+      (+ (ior &io_get state-id state-depth) 1)))
 
 (defun net-child (coord)
   (assert coord)
-  (let ((child-ix (progn (io &io_get net-id net-len) (head)))
+  (let ((child-ix (ior &io_get net-id net-len))
 	(child-id (+ child-ix 2)))
     (assert (= (io &io_ping (id &item_transmit child-id)) &io_ok))
     (assert (= (io &io_ping (id &item_receive child-id)) &io_ok))
@@ -134,9 +128,9 @@
 
   (let ((recv-len (if (= (io &io_recv (self)) &io_ok) (head) 0)))
 
-    (let ((to-poll (+ (progn (io &io_get net-id net-len) (head)) 1)))
+    (let ((to-poll (+ (ior &io_get net-id net-len) 1)))
       (for (i 1) (and (<= i to-poll) (not recv-len)) (+ i 1)
-	   (set recv-len (progn (io &io_receive (id &item_receive i)) (head)))
+	   (set recv-len (ior &io_receive (id &item_receive i)))
 	   (when recv-len (io &io_set packet-id packet-src i))))
 
     (io &io_set packet-id packet-len recv-len)
@@ -150,26 +144,26 @@
 ;; Propagates the packet stored in packet id to the network; skipping
 ;; packet-src.
 (defun propagate ()
-  (assert (> (progn (io &io_get packet-id packet-len) (head)) 0))
+  (assert (> (ior &io_get packet-id packet-len) 0))
 
-  (let ((to-send (+ (progn (io &io_get net-id net-len) (head)) 1))
-	(to-skip (progn (io &io_get packet-id packet-src) (head))))
+  (let ((to-send (+ (ior &io_get net-id net-len) 1))
+	(to-skip (ior &io_get packet-id packet-src)))
 
     (for (i 1) (<= i to-send) (+ i 1)
 	 (when (/= i to-skip)
-	   (case (progn (io &io_get packet-id packet-len) (head))
+	   (case (ior &io_get packet-id packet-len)
 
 	     ((1
 	       (io &io_transmit (id &item_transmit i)
-		   (progn (io &io_get packet-id (+ packet-data 0)) (head))))
+		   (ior &io_get packet-id (+ packet-data 0))))
 
 	      (2
 	       (io &io_transmit (id &item_transmit i)
-		   (progn (io &io_get packet-id (+ packet-data 0)) (head))
-		   (progn (io &io_get packet-id (+ packet-data 1)) (head))))
+		   (ior &io_get packet-id (+ packet-data 0))
+		   (ior &io_get packet-id (+ packet-data 1))))
 
 	      (3
 	       (io &io_transmit (id &item_transmit i)
-		   (progn (io &io_get packet-id (+ packet-data 0)) (head))
-		   (progn (io &io_get packet-id (+ packet-data 1)) (head))
-		   (progn (io &io_get packet-id (+ packet-data 2)) (head))))))))))
+		   (ior &io_get packet-id (+ packet-data 0))
+		   (ior &io_get packet-id (+ packet-data 1))
+		   (ior &io_get packet-id (+ packet-data 2))))))))))
