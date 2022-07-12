@@ -25,6 +25,7 @@ enum
 {
     sim_freq_slow = 10,
     sim_freq_fast = 100,
+    sim_freq_faster = 1000,
 
     sim_log_len = 8,
 
@@ -702,13 +703,6 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
     }
 }
 
-static void sim_cmd_all(struct sim *sim)
-{
-    for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
-         pipe; pipe = sim_pipe_next(sim, pipe))
-        sim_cmd(sim, pipe);
-}
-
 
 // -----------------------------------------------------------------------------
 // publish
@@ -796,7 +790,8 @@ static void sim_publish_log(struct sim_pipe *pipe)
 
 void sim_step(struct sim *sim)
 {
-    world_step(sim->world);
+    if (sim->speed != speed_pause)
+        world_step(sim->world);
 
     for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
          pipe; pipe = sim_pipe_next(sim, pipe))
@@ -811,10 +806,7 @@ void sim_step(struct sim *sim)
 
 void sim_loop(struct sim *sim)
 {
-    const ts_t sleep_slow = ts_sec / sim_freq_slow;
-    const ts_t sleep_fast = ts_sec / sim_freq_fast;
     ts_t now = sim->next = ts_now();
-
     while (!atomic_load_explicit(&sim->join, memory_order_relaxed)) {
 
         // Should eventually get more complicated as we might need to close some
@@ -824,9 +816,11 @@ void sim_loop(struct sim *sim)
 
         ts_t sleep = 0;
         switch (sim->speed) {
-        case speed_pause: { sim_cmd_all(sim); continue; }
-        case speed_slow: { sleep = sleep_slow; break; }
-        case speed_fast: { sleep = sleep_fast; break; }
+        case speed_pause:
+        case speed_slow:    { sleep = ts_sec / sim_freq_slow; break; }
+        case speed_fast:    { sleep = ts_sec / sim_freq_fast; break; }
+        case speed_faster:  { sleep = ts_sec / sim_freq_faster; break; }
+        case speed_fastest: { sleep = 0; break; }
         default: { assert(false); }
         }
 

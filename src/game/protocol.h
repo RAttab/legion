@@ -30,6 +30,8 @@ enum legion_packed speed
     speed_pause = 0,
     speed_slow,
     speed_fast,
+    speed_faster,
+    speed_fastest,
 };
 
 static_assert(sizeof(enum speed) == 1);

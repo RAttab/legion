@@ -17,7 +17,7 @@ struct ui_topbar
 {
     struct ui_panel panel;
     struct ui_button save, load;
-    struct ui_button stop, fast;
+    struct ui_button pause, slow, fast, faster, fastest;
     struct ui_button home, stars, tapes, mods, log;
     struct ui_label coord;
     struct ui_button man;
@@ -41,8 +41,11 @@ struct ui_topbar *ui_topbar_new(void)
         .save = ui_button_new(font, ui_str_c("save")),
         .load = ui_button_new(font, ui_str_c("load")),
 
-        .stop = ui_button_new(font, ui_str_c("stop")),
-        .fast = ui_button_new(font, ui_str_c("fast")),
+        .pause = ui_button_new(font, ui_str_c("||")),
+        .slow = ui_button_new(font, ui_str_c(">")),
+        .fast = ui_button_new(font, ui_str_c(">>")),
+        .faster = ui_button_new(font, ui_str_c(">>>")),
+        .fastest = ui_button_new(font, ui_str_c(">>|")),
 
         .home = ui_button_new(font, ui_str_c("home")),
         .stars = ui_button_new(font, ui_str_c("stars")),
@@ -65,8 +68,11 @@ void ui_topbar_free(struct ui_topbar *ui) {
     ui_button_free(&ui->save);
     ui_button_free(&ui->load);
 
-    ui_button_free(&ui->stop);
+    ui_button_free(&ui->pause);
+    ui_button_free(&ui->slow);
     ui_button_free(&ui->fast);
+    ui_button_free(&ui->faster);
+    ui_button_free(&ui->fastest);
 
     ui_button_free(&ui->home);
     ui_button_free(&ui->stars);
@@ -89,27 +95,19 @@ int16_t ui_topbar_height(void)
 
 static void ui_topbar_update_speed(struct ui_topbar *ui)
 {
+    ui->pause.disabled = false;
+    ui->slow.disabled = false;
+    ui->fast.disabled = false;
+    ui->faster.disabled = false;
+    ui->fastest.disabled = false;
+
     switch (proxy_speed(render.proxy))
     {
-
-    case speed_pause: {
-        ui_str_setc(&ui->stop.str, "run");
-        ui_str_setc(&ui->fast.str, "fast");
-        break;
-    }
-
-    case speed_slow: {
-        ui_str_setc(&ui->stop.str, "stop");
-        ui_str_setc(&ui->fast.str, "fast");
-        break;
-    }
-
-    case speed_fast: {
-        ui_str_setc(&ui->stop.str, "stop");
-        ui_str_setc(&ui->fast.str, "slow");
-        break;
-    }
-
+    case speed_pause: { ui->pause.disabled = true; break; }
+    case speed_slow: { ui->slow.disabled = true; break; }
+    case speed_fast: { ui->fast.disabled = true; break; }
+    case speed_faster: { ui->faster.disabled = true; break; }
+    case speed_fastest: { ui->fastest.disabled = true; break; }
     default: { assert(false); }
     }
 }
@@ -146,17 +144,28 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
         return true;
     }
 
-    if ((ret = ui_button_event(&ui->stop, ev))) {
-        if (proxy_speed(render.proxy) != speed_pause)
-            proxy_set_speed(render.proxy, speed_pause);
-        else proxy_set_speed(render.proxy, speed_slow);
+    if ((ret = ui_button_event(&ui->pause, ev))) {
+        proxy_set_speed(render.proxy, speed_pause);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->slow, ev))) {
+        proxy_set_speed(render.proxy, speed_slow);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fast, ev))) {
-        if (proxy_speed(render.proxy) != speed_fast)
-            proxy_set_speed(render.proxy, speed_fast);
-        else proxy_set_speed(render.proxy, speed_slow);
+        proxy_set_speed(render.proxy, speed_fast);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->faster, ev))) {
+        proxy_set_speed(render.proxy, speed_faster);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->fastest, ev))) {
+        proxy_set_speed(render.proxy, speed_fastest);
         return true;
     }
 
@@ -238,8 +247,11 @@ void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
     ui_button_render(&ui->load, &layout, renderer);
     ui_layout_sep_x(&layout, 10);
 
-    ui_button_render(&ui->stop, &layout, renderer);
+    ui_button_render(&ui->pause, &layout, renderer);
+    ui_button_render(&ui->slow, &layout, renderer);
     ui_button_render(&ui->fast, &layout, renderer);
+    ui_button_render(&ui->faster, &layout, renderer);
+    ui_button_render(&ui->fastest, &layout, renderer);
     ui_layout_sep_x(&layout, 10);
 
     ui_button_render(&ui->home, &layout, renderer);
