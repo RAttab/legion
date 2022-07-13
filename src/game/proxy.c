@@ -25,6 +25,7 @@ static void proxy_cmd(struct proxy *, const struct cmd *);
 struct proxy
 {
     struct save_ring *in, *out;
+    const struct mod *mod;
     struct state *state;
     seed_t seed;
 
@@ -136,7 +137,6 @@ struct proxy_pipe
 
     struct ack *ack;
     struct coord chunk;
-    mod_t mod;
 };
 
 bool proxy_pipe_ready(struct proxy *proxy)
@@ -270,7 +270,8 @@ static enum proxy_ret proxy_update_state(
 
     lisp_context(proxy->lisp, proxy->state->mods, proxy->state->atoms);
 
-    return stream == proxy->state->stream ? proxy_updated : proxy_loaded;
+    return stream && proxy->state->stream != stream ?
+        proxy_loaded : proxy_updated;
 }
 
 static void proxy_update_user(struct proxy *proxy, struct save *save)
@@ -280,12 +281,24 @@ static void proxy_update_user(struct proxy *proxy, struct save *save)
     else err("unable to load auth information");
 }
 
+static enum proxy_ret proxy_update_mod(struct proxy *proxy, struct save *save)
+{
+    const struct mod *mod = mod_load(save);
+    if (!mod) {
+        err("unable to load mod information");
+        return proxy_nil;
+    }
+
+    mod_free(legion_xchg(&proxy->mod, mod));
+    return proxy_updated;
+}
+
 enum proxy_ret proxy_update(struct proxy *proxy)
 {
     struct proxy_pipe *pipe = proxy_pipe(proxy);
     if (!pipe) return false;
 
-    enum proxy_ret ret = proxy_nil;
+    enum proxy_ret result = proxy_nil;
     while (true) {
         struct save *save = save_ring_read(pipe->in);
 
@@ -299,14 +312,17 @@ enum proxy_ret proxy_update(struct proxy *proxy)
         }
 
         if (save_cap(save) < head.len) break;
+        enum proxy_ret ret = proxy_nil;
 
         switch (head.type) {
         case header_status: { proxy_update_status(proxy, save); break; }
         case header_state: { ret = proxy_update_state(proxy, pipe, save); break; }
         case header_user: { proxy_update_user(proxy, save); break; }
+        case header_mod: { ret = proxy_update_mod(proxy, save); break; }
         default: { assert(false); }
         }
 
+        if (result != proxy_loaded && ret != proxy_nil) result = ret;
         save_ring_commit(pipe->in, save);
     }
 
@@ -317,7 +333,7 @@ enum proxy_ret proxy_update(struct proxy *proxy)
     if (proxy_pipe_closed(pipe))
         proxy_pipe_free(proxy, pipe);
 
-    return ret;
+    return result;
 }
 
 
@@ -482,31 +498,19 @@ void proxy_io(struct proxy *proxy, enum io io, id_t dst, const word_t *args, uin
 // mod
 // -----------------------------------------------------------------------------
 
-mod_t proxy_mod_id(struct proxy *proxy)
+const struct mod *proxy_mod(struct proxy *proxy)
 {
-    return proxy->state->mod.id;
+    const struct mod *mod = proxy->mod;
+    proxy->mod = NULL;
+    return mod;
 }
 
-const struct mod *proxy_mod(struct proxy *proxy, mod_t id)
+void proxy_mod_select(struct proxy *proxy, mod_t id)
 {
-    struct proxy_pipe *pipe = proxy_pipe(proxy);
-
-    if (proxy->state->mod.id == id) {
-        const struct mod *mod = proxy->state->mod.mod;
-        proxy->state->mod.mod = NULL;
-        proxy->state->mod.id = 0;
-        if (pipe) pipe->mod = 0;
-        return mod;
-    }
-
-    if (!pipe || pipe->mod == id) return NULL;
-    pipe->mod = id;
-
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD,
                 .data = { .mod = id },
             });
-    return NULL;
 }
 
 void proxy_mod_register(struct proxy *proxy, struct symbol name)
@@ -558,13 +562,6 @@ void proxy_mod_compile(struct proxy *proxy, mod_maj_t maj, const char *code, siz
                 .type = CMD_MOD_COMPILE,
                 .data = { .mod_compile = { .maj = maj, .code = code, .len = len } },
             });
-}
-
-const struct mod *proxy_mod_compile_result(struct proxy *proxy)
-{
-    const struct mod *mod = proxy->state->compile;
-    proxy->state->compile = NULL;
-    return mod;
 }
 
 

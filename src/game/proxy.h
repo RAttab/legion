@@ -86,8 +86,8 @@ void proxy_io(struct proxy *, enum io, id_t dst, const word_t *args, uint8_t len
 // mod
 // -----------------------------------------------------------------------------
 
-mod_t proxy_mod_id(struct proxy *);
-const struct mod *proxy_mod(struct proxy *, mod_t);
+const struct mod *proxy_mod(struct proxy *);
+void proxy_mod_select(struct proxy *, mod_t);
 void proxy_mod_register(struct proxy *, struct symbol name);
 void proxy_mod_publish(struct proxy *, mod_maj_t);
 mod_t proxy_mod_latest(struct proxy *, mod_maj_t);
@@ -95,7 +95,6 @@ bool proxy_mod_name(struct proxy *, mod_maj_t, struct symbol *dst);
 
 // transfer ownership of code to proxy.
 void proxy_mod_compile(struct proxy *, mod_maj_t, const char *code, size_t len);
-const struct mod *proxy_mod_compile_result(struct proxy *);
 
 
 // -----------------------------------------------------------------------------

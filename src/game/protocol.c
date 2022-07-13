@@ -334,8 +334,6 @@ void state_free(struct state *state)
     log_free(state->log);
     htable_reset(&state->names);
 
-    if (state->compile) mod_free(state->compile);
-    if (state->mod.mod) mod_free(state->mod.mod);
     if (state->chunk.chunk) chunk_free(state->chunk.chunk);
 
     for (const struct htable_bucket *it = htable_next(&state->lanes, NULL);
@@ -417,24 +415,6 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     log_save_delta(world_log(ctx->world, ctx->user), save, ctx->ack->time);
 
     {
-        save_write_magic(save, save_magic_state_compile);
-        if (!ctx->compile) save_write_value(save, (mod_t) 0);
-        else {
-            save_write_value(save, ctx->compile->id);
-            mod_save(ctx->compile, save);
-        }
-        save_write_magic(save, save_magic_state_compile);
-    }
-
-    {
-        save_write_magic(save, save_magic_state_mod);
-        save_write_value(save, ctx->mod);
-        const struct mod *mod = mods_get(world_mods(ctx->world), ctx->mod);
-        if (mod) mod_save(mod, save);
-        save_write_magic(save, save_magic_state_mod);
-    }
-
-    {
         save_write_magic(save, save_magic_state_chunk);
         struct chunk *chunk = world_chunk(ctx->world, ctx->chunk);
         if (!chunk) save_write_value(save, (uint64_t) 0);
@@ -471,24 +451,6 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
     if (!lanes_list_load_into(&state->lanes, save)) return false;
     if (!tech_load(&state->tech, save)) return false;
     if (!log_load_delta(state->log, save, ack->time)) return false;
-
-    {
-        if (!save_read_magic(save, save_magic_state_compile)) return false;
-        if (state->compile) mod_free(state->compile);
-        state->compile = NULL;
-        mod_t id = save_read_type(save, typeof(id));
-        if (id) state->compile = mod_load(save);
-        if (!save_read_magic(save, save_magic_state_compile)) return false;
-    }
-
-    {
-        if (!save_read_magic(save, save_magic_state_mod)) return false;
-        if (state->mod.mod) mod_free(state->mod.mod);
-        state->mod.mod = NULL;
-        save_read_into(save, &state->mod.id);
-        if (state->mod.id) state->mod.mod = mod_load(save);
-        if (!save_read_magic(save, save_magic_state_mod)) return false;
-    }
 
     {
         if (!save_read_magic(save, save_magic_state_chunk)) return false;

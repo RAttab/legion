@@ -15,6 +15,7 @@
 #include <pthread.h>
 
 static struct sim_pipe *sim_pipe_next(struct sim *sim, struct sim_pipe *start);
+static void sim_publish_mod(struct sim_pipe *pipe, const struct mod *mod);
 
 
 // -----------------------------------------------------------------------------
@@ -146,8 +147,7 @@ struct sim_pipe
 
     struct ack *ack;
     struct coord chunk;
-    struct { world_ts_t ts; mod_t id; } mod;
-    struct { world_ts_t ts; const struct mod *mod; } compile;
+    const struct mod *compile;
 
     struct
     {
@@ -186,7 +186,7 @@ static void sim_pipe_free(struct sim_pipe *pipe)
     if (!pipe) return;
 
     if (pipe->ack) ack_free(pipe->ack);
-    if (pipe->compile.mod) mod_free(pipe->compile.mod);
+    mod_free(pipe->compile);
 
     save_ring_free(pipe->in);
     save_ring_free(pipe->out);
@@ -355,7 +355,7 @@ static struct symbol sim_log_coord(struct coord coord)
 static struct symbol sim_log_mod(struct sim *sim, mod_t mod)
 {
     struct symbol str = {0};
-    mods_name(world_mods(sim->world), mod, &str);
+    mods_name(world_mods(sim->world), mod_maj(mod), &str);
     return str;
 }
 
@@ -544,14 +544,14 @@ static void sim_cmd_io(
 static void sim_cmd_mod(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
-    if (!mods_get(world_mods(sim->world), cmd->data.mod)) {
+    const struct mod *mod = mods_get(world_mods(sim->world), cmd->data.mod);
+    if (!mod) {
         return sim_log(pipe, st_error, "unknown mod id '%u.%u'",
                 mod_maj(cmd->data.mod),
                 mod_ver(cmd->data.mod));
     }
 
-    pipe->mod.id = cmd->data.mod;
-    pipe->mod.ts = world_time(sim->world);
+    sim_publish_mod(pipe, mod);
 }
 
 static void sim_cmd_mod_register(
@@ -575,7 +575,7 @@ static void sim_cmd_mod_register(
 static void sim_cmd_mod_compile(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
-    if (pipe->compile.mod) mod_free(pipe->compile.mod);
+    if (pipe->compile) mod_free(pipe->compile);
 
     struct mod *compile = mod_compile(
             cmd->data.mod_compile.maj,
@@ -586,10 +586,10 @@ static void sim_cmd_mod_compile(
     compile->id = make_mod(cmd->data.mod_compile.maj, 0);
     free((char *) cmd->data.mod_compile.code);
 
-    pipe->compile.mod = compile;
-    pipe->compile.ts = world_time(sim->world);
+    pipe->compile = compile;
+    sim_publish_mod(pipe, pipe->compile);
 
-    if (compile->errs_len)
+    if (pipe->compile->errs_len)
         return sim_log(pipe, st_warn, "%u compilation errors", compile->errs_len);
     sim_log(pipe, st_info, "Compilation finished");
 }
@@ -598,7 +598,7 @@ static void sim_cmd_publish(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
     struct mods *mods = world_mods(sim->world);
-    const struct mod *mod = pipe->compile.mod;
+    const struct mod *mod = pipe->compile;
 
     if (!mod || mod_maj(mod->id) != cmd->data.mod_publish.maj) {
         return sim_log(pipe, st_error, "unable to publish compiled mod: %x != %x",
@@ -616,10 +616,10 @@ static void sim_cmd_publish(
                 sim_log_mod(sim, mod_id).c);
     }
 
-    pipe->compile.mod = NULL;
-    pipe->mod.id = mod_id;
-    pipe->mod.ts = world_time(sim->world);
-    sim_log(pipe, st_error, "mod '%s' published with id '%u.%u'",
+    sim_publish_mod(pipe, mod);
+
+    pipe->compile = NULL;
+    sim_log(pipe, st_info, "mod '%s' published with id '%u.%u'",
             sim_log_mod(sim, mod_id).c, mod_maj(mod_id), mod_ver(mod_id));
 }
 
@@ -725,10 +725,7 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
 
     if (sim->stream != pipe->ack->stream) ack_reset(pipe->ack);
 
-    bool ack_mod = pipe->ack->time > pipe->mod.ts;
-    bool ack_compile = pipe->ack->time > pipe->compile.ts;
     struct user *user = &pipe->auth.user;
-
     state_save(save, &(struct state_ctx) {
                 .stream = sim->stream,
                 .access = user->access,
@@ -736,8 +733,6 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
                 .world = sim->world,
                 .speed = sim->speed,
                 .chunk = pipe->chunk,
-                .mod = !ack_mod ? pipe->mod.id : 0,
-                .compile = !ack_compile ? pipe->compile.mod : NULL,
                 .ack = pipe->ack,
             });
 
@@ -781,6 +776,26 @@ static void sim_publish_log(struct sim_pipe *pipe)
         save_ring_commit(pipe->out, save);
         sim_log_pop(pipe);
     }
+}
+
+static void sim_publish_mod(struct sim_pipe *pipe, const struct mod *mod)
+{
+    struct save *save = save_ring_write(pipe->out);
+    struct header *head = save_bytes(save);
+
+    if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
+        sim_log(pipe, st_warn, "skip log publish: %zu", save_cap(save));
+        return;
+    }
+
+    mod_save(mod, save);
+    if (save_len(save) == save_cap(save)) {
+        sim_log(pipe, st_warn, "skip mod publish: %zu", save_cap(save));
+        return;
+    }
+
+    *head = make_header(header_mod, save_len(save));
+    save_ring_commit(pipe->out, save);
 }
 
 

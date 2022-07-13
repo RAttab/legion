@@ -257,8 +257,6 @@ void save_prof_dump(struct save *save)
         case save_magic_energy: { str = "nrg"; break; }
 
         case save_magic_state_world:   { str = "swd"; break; }
-        case save_magic_state_compile: { str = "scp"; break; }
-        case save_magic_state_mod:     { str = "smd"; break; }
         case save_magic_state_chunk:   { str = "sck"; break; }
 
         default: { assert(false); }

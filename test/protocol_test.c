@@ -56,13 +56,11 @@ void check(void)
     struct state *state = state_alloc();
     assert(state);
 
-    mod_t mod_id = 0;
     {
         struct symbol name = make_symbol("boot");
         struct mods *mods = world_mods(world);
         const struct mod *mod = mods_latest(mods, mods_find(mods, &name));
         assert(mod);
-        mod_id = mod->id;
 
         word_t arg = mod->id;
         struct chunk *chunk = world_chunk(world, home);
@@ -81,9 +79,7 @@ void check(void)
                     .access = user_to_uset(user),
                     .user = user,
                     .speed = speed_fast,
-                    .mod = mod_id,
                     .chunk = home,
-                    .compile = NULL,
                     .ack = ack,
                 });
 
@@ -153,10 +149,6 @@ void check(void)
             st_log = log_next(state->log, st_log);
         }
         assert(wd_log == st_log);
-
-        assert(!state->compile);
-        assert(state->mod.id == mod_id);
-        assert(state->mod.mod->id == mod_id);
 
         {
             struct chunk *wd_chunk = world_chunk(world, home);

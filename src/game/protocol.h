@@ -51,6 +51,7 @@ enum legion_packed header_type
     header_state = 2,
     header_status = 3,
     header_user = 4,
+    header_mod = 5,
 };
 
 static_assert(sizeof(enum header_type) == 1);
@@ -208,13 +209,6 @@ struct state
     struct htable names;
     struct tech tech;
     struct log *log;
-    const struct mod *compile;
-
-    struct
-    {
-        mod_t id;
-        const struct mod *mod;
-    } mod;
 
     struct
     {
@@ -236,10 +230,7 @@ struct state_ctx
 
     struct world *world;
     enum speed speed;
-
-    mod_t mod;
     struct coord chunk;
-    const struct mod *compile;
 
     const struct ack *ack;
 };
