@@ -300,8 +300,8 @@ static enum roll_type gen_populate_roll_type(struct reader *in)
 
     if (hash == symbol_hash_c("one")) return roll_one;
     else if (hash == symbol_hash_c("rng")) return roll_rng;
-    else if (hash == symbol_hash_c("one_of")) return roll_one_of;
-    else if (hash == symbol_hash_c("all_of")) return roll_all_of;
+    else if (hash == symbol_hash_c("one-of")) return roll_one_of;
+    else if (hash == symbol_hash_c("all-of")) return roll_all_of;
 
     reader_err(in, "invalid roll type: %s", type.c);
     return roll_end;

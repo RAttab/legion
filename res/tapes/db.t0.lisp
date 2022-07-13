@@ -2,272 +2,272 @@
 ;; extract
 ;; -----------------------------------------------------------------------------
 
-(!item_extract
- (!item_elem_a (out !item_elem_a))
- (!item_elem_b (out !item_elem_b))
- (!item_elem_c (out !item_elem_c))
- (!item_elem_d (out !item_elem_d)))
+(!item-extract
+ (!item-elem-a (out !item-elem-a))
+ (!item-elem-b (out !item-elem-b))
+ (!item-elem-c (out !item-elem-c))
+ (!item-elem-d (out !item-elem-d)))
 
 
 ;; -----------------------------------------------------------------------------
 ;; printer
 ;; -----------------------------------------------------------------------------
 
-(!item_printer
+(!item-printer
 
- (!item_muscle
-  (in !item_elem_a
-      !item_elem_a
-      !item_elem_a)
-  (out !item_muscle))
+ (!item-muscle
+  (in !item-elem-a
+      !item-elem-a
+      !item-elem-a)
+  (out !item-muscle))
 
- (!item_nodule
-  (in !item_elem_a
-      !item_elem_b
-      !item_elem_b
-      !item_elem_a)
-  (out !item_nodule))
+ (!item-nodule
+  (in !item-elem-a
+      !item-elem-b
+      !item-elem-b
+      !item-elem-a)
+  (out !item-nodule))
 
- (!item_vein
-  (in !item_elem_a
-      !item_elem_c
-      !item_elem_a)
-  (out !item_vein))
+ (!item-vein
+  (in !item-elem-a
+      !item-elem-c
+      !item-elem-a)
+  (out !item-vein))
 
- (!item_bone
-  (in !item_elem_b
-      !item_elem_b
-      !item_elem_b
-      !item_elem_b
-      !item_elem_b)
-  (out !item_bone))
+ (!item-bone
+  (in !item-elem-b
+      !item-elem-b
+      !item-elem-b
+      !item-elem-b
+      !item-elem-b)
+  (out !item-bone))
 
- (!item_tendon
-  (in !item_elem_b
-      !item_elem_a
-      !item_elem_a
-      !item_elem_a
-      !item_elem_b)
-  (out !item_tendon))
+ (!item-tendon
+  (in !item-elem-b
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-b)
+  (out !item-tendon))
 
- (!item_lens
-  (in !item_elem_b
-      !item_elem_c
-      !item_elem_c
-      !item_elem_b)
-  (out !item_lens))
+ (!item-lens
+  (in !item-elem-b
+      !item-elem-c
+      !item-elem-c
+      !item-elem-b)
+  (out !item-lens))
 
- (!item_nerve
-  (in !item_elem_c
-      !item_elem_c
-      !item_elem_c)
-  (out !item_nerve))
+ (!item-nerve
+  (in !item-elem-c
+      !item-elem-c
+      !item-elem-c)
+  (out !item-nerve))
 
- (!item_neuron
-  (in !item_elem_c
-      !item_elem_a
-      !item_elem_c
-      !item_elem_a
-      !item_elem_c)
-  (out !item_neuron))
+ (!item-neuron
+  (in !item-elem-c
+      !item-elem-a
+      !item-elem-c
+      !item-elem-a
+      !item-elem-c)
+  (out !item-neuron))
 
- (!item_retina
-  (in !item_elem_c
-      !item_elem_b
-      !item_elem_b
-      !item_elem_c)
-  (out !item_retina)))
+ (!item-retina
+  (in !item-elem-c
+      !item-elem-b
+      !item-elem-b
+      !item-elem-c)
+  (out !item-retina)))
 
 
 ;; -----------------------------------------------------------------------------
 ;; assembly - passives
 ;; -----------------------------------------------------------------------------
 
-(!item_assembly
+(!item-assembly
 
- (!item_limb
-  (in !item_bone
-      !item_bone
-      !item_tendon
-      !item_tendon
-      !item_muscle
-      !item_muscle)
-  (out !item_limb))
+ (!item-limb
+  (in !item-bone
+      !item-bone
+      !item-tendon
+      !item-tendon
+      !item-muscle
+      !item-muscle)
+  (out !item-limb))
 
- (!item_spinal
-  (in !item_nerve
-      !item_vein
-      !item_nerve
-      !item_vein
-      !item_nerve)
-  (out !item_spinal))
+ (!item-spinal
+  (in !item-nerve
+      !item-vein
+      !item-nerve
+      !item-vein
+      !item-nerve)
+  (out !item-spinal))
 
- (!item_stem
-  (in !item_neuron
-      !item_neuron
-      !item_vein
-      !item_neuron
-      !item_neuron)
-  (out !item_stem))
+ (!item-stem
+  (in !item-neuron
+      !item-neuron
+      !item-vein
+      !item-neuron
+      !item-neuron)
+  (out !item-stem))
 
- (!item_lung
-  (in !item_stem
-      !item_nerve
-      !item_muscle
-      !item_muscle
-      !item_muscle
-      !item_nerve)
-  (out !item_lung))
+ (!item-lung
+  (in !item-stem
+      !item-nerve
+      !item-muscle
+      !item-muscle
+      !item-muscle
+      !item-nerve)
+  (out !item-lung))
 
- (!item_engram
-  (in !item_nerve
-      !item_neuron
-      !item_neuron
-      !item_nerve
-      !item_neuron
-      !item_neuron
-      !item_nerve)
-  (out !item_engram))
+ (!item-engram
+  (in !item-nerve
+      !item-neuron
+      !item-neuron
+      !item-nerve
+      !item-neuron
+      !item-neuron
+      !item-nerve)
+  (out !item-engram))
 
- (!item_cortex
-  (in !item_stem
-      !item_vein
-      !item_neuron
-      !item_neuron
-      !item_neuron
-      !item_vein
-      !item_neuron
-      !item_neuron
-      !item_neuron
-      !item_vein)
-  (out !item_cortex))
+ (!item-cortex
+  (in !item-stem
+      !item-vein
+      !item-neuron
+      !item-neuron
+      !item-neuron
+      !item-vein
+      !item-neuron
+      !item-neuron
+      !item-neuron
+      !item-vein)
+  (out !item-cortex))
 
- (!item_eye
-  (in !item_retina
-      !item_lens
-      !item_lens
-      !item_lens
-      !item_retina)
-  (out !item_eye)))
+ (!item-eye
+  (in !item-retina
+      !item-lens
+      !item-lens
+      !item-lens
+      !item-retina)
+  (out !item-eye)))
 
 
 ;; -----------------------------------------------------------------------------
 ;; assembly - active
 ;; -----------------------------------------------------------------------------
 
-(!item_assembly
+(!item-assembly
 
- (!item_deploy
-  (in !item_spinal
-      !item_nodule
-      !item_spinal)
-  (out !item_deploy))
+ (!item-deploy
+  (in !item-spinal
+      !item-nodule
+      !item-spinal)
+  (out !item-deploy))
 
- (!item_extract
-  (in !item_muscle
-      !item_muscle
-      !item_nodule
-      !item_muscle
-      !item_muscle)
-  (out !item_extract))
+ (!item-extract
+  (in !item-muscle
+      !item-muscle
+      !item-nodule
+      !item-muscle
+      !item-muscle)
+  (out !item-extract))
 
- (!item_printer
-  (in !item_vein
-      !item_vein
-      !item_nodule
-      !item_vein
-      !item_vein)
-  (out !item_printer))
+ (!item-printer
+  (in !item-vein
+      !item-vein
+      !item-nodule
+      !item-vein
+      !item-vein)
+  (out !item-printer))
 
- (!item_assembly
-  (in !item_limb
-      !item_limb
-      !item_vein
-      !item_nodule
-      !item_vein
-      !item_limb
-      !item_limb)
-  (out !item_assembly))
+ (!item-assembly
+  (in !item-limb
+      !item-limb
+      !item-vein
+      !item-nodule
+      !item-vein
+      !item-limb
+      !item-limb)
+  (out !item-assembly))
 
- (!item_worker
-  (in !item_lung
-      !item_lung
-      !item_stem
-      !item_nodule
-      !item_stem
-      !item_limb
-      !item_limb)
-  (out !item_worker))
+ (!item-worker
+  (in !item-lung
+      !item-lung
+      !item-stem
+      !item-nodule
+      !item-stem
+      !item-limb
+      !item-limb)
+  (out !item-worker))
 
- (!item_memory
-  (in !item_engram
-      !item_engram
-      !item_engram
-      !item_nodule
-      !item_engram
-      !item_engram
-      !item_engram)
-  (out !item_memory))
+ (!item-memory
+  (in !item-engram
+      !item-engram
+      !item-engram
+      !item-nodule
+      !item-engram
+      !item-engram
+      !item-engram)
+  (out !item-memory))
 
- (!item_brain
-  (in !item_memory
-      !item_cortex
-      !item_cortex
-      !item_nodule
-      !item_cortex
-      !item_cortex
-      !item_memory)
-  (out !item_brain))
+ (!item-brain
+  (in !item-memory
+      !item-cortex
+      !item-cortex
+      !item-nodule
+      !item-cortex
+      !item-cortex
+      !item-memory)
+  (out !item-brain))
 
- (!item_prober
-  (in !item_lung
-      !item_nodule
-      !item_eye
-      !item_eye
-      !item_eye)
-  (out !item_prober))
+ (!item-prober
+  (in !item-lung
+      !item-nodule
+      !item-eye
+      !item-eye
+      !item-eye)
+  (out !item-prober))
 
- (!item_scanner
-  (in !item_lung
-      !item_engram
-      !item_nodule
-      !item_eye
-      !item_eye
-      !item_eye
-      !item_eye
-      !item_eye)
-  (out !item_scanner))
+ (!item-scanner
+  (in !item-lung
+      !item-engram
+      !item-nodule
+      !item-eye
+      !item-eye
+      !item-eye
+      !item-eye
+      !item-eye)
+  (out !item-scanner))
 
- (!item_legion
-  (in !item_lung
-      !item_lung
-      !item_lung
-      !item_nodule
-      !item_worker
-      !item_worker
-      !item_extract
-      !item_extract
-      !item_printer
-      !item_printer
-      !item_assembly
-      !item_assembly
-      !item_deploy
-      !item_deploy
-      !item_memory
-      !item_brain
-      !item_prober
-      !item_nodule
-      !item_cortex
-      !item_cortex)
-  (out !item_legion))
+ (!item-legion
+  (in !item-lung
+      !item-lung
+      !item-lung
+      !item-nodule
+      !item-worker
+      !item-worker
+      !item-extract
+      !item-extract
+      !item-printer
+      !item-printer
+      !item-assembly
+      !item-assembly
+      !item-deploy
+      !item-deploy
+      !item-memory
+      !item-brain
+      !item-prober
+      !item-nodule
+      !item-cortex
+      !item-cortex)
+  (out !item-legion))
 
- (!item_lab
-  (in !item_limb
-      !item_limb
-      !item_vein
-      !item_nodule
-      !item_nodule
-      !item_vein
-      !item_cortex
-      !item_cortex)
-  (out !item_lab)))
+ (!item-lab
+  (in !item-limb
+      !item-limb
+      !item-vein
+      !item-nodule
+      !item-nodule
+      !item-vein
+      !item-cortex
+      !item-cortex)
+  (out !item-lab)))

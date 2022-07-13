@@ -252,6 +252,6 @@
 
 (misc/id
  (mod
-  (defconst X (id &item_data 0xFFFFFF))
+  (defconst X (id &item-data 0xFFFFFF))
   (assert (= X 0xF0FFFFFF)))
  (check))

@@ -167,17 +167,17 @@ exist. It's generally used with system atoms to quickly detect typos.
 Here are a few example of atom usage:
 
 {`
-!an_atom ; First use of an atom will create it
-!an_atom ; Subsequent use of the atom will return the same number
+!an-atom ; First use of an atom will create it
+!an-atom ; Subsequent use of the atom will return the same number
 
-&an_atom      ; Atom exists so no compilation errors will be raised
-&another_atom ; Atom doesn't exist so a compilation error will be raised
+&an-atom      ; Atom exists so no compilation errors will be raised
+&another-atom ; Atom doesn't exist so a compilation error will be raised
 
 ; Example of atoms provided by the Legion system which we used in the
 ; previous chapter to setup our extractor factory.
-&io_tape
-&item_elem_a
-&item_extract
+&io-tape
+&item-elem-a
+&item-extract
 }
 
 
@@ -213,7 +213,7 @@ The following are several example of function calls:
 (+ 1 (+ 2 3))
 
 ; A real use case using multiple nested functions.
-(assert (= (io &io_ping (id &item_extract 1)) &io_ok))
+(assert (= (io &io-ping (id &item-extract 1)) &io-ok))
 }
 
 You can find a full rundown of functions provided by the Legion system
@@ -235,7 +235,7 @@ uses the following syntax:
 (io {_command} {_target} {_arguments})
 
 {>command} Specifies which IO command to send and will typically be
-one of the system provided atoms. As an example, the {_&io_tape} atom
+one of the system provided atoms. As an example, the {_&io-tape} atom
 can be used to issue the IO command of the same name to program an
 active item with a specific tape.
 
@@ -248,7 +248,7 @@ identifiers which can be constructed using the {_id} function:
 Where {_type} is the system atom representing the item type and {_seq}
 is the sequential identifier of the item of that type. As an example:
 
-{`(id &item_extract 1)}
+{`(id &item-extract 1)}
 
 Will reference the extractor {_000001.extract} within the active item
 list.
@@ -256,30 +256,30 @@ list.
 {>arguments} A list of zero or more arguments to be provided to the IO
 commands. This is specific to each IO command and is documented along
 with the IO command itself in the {/items} section. For the
-{_&io_tape} command, the arguments would be the tape id and the loop
+{_&io-tape} command, the arguments would be the tape id and the loop
 count that we've discussed in the previous chapter.
 
-{>return} Every IO command will either return {_&io_ok} if the command
-could be sent to the target or {_&io_fail} if the target was
+{>return} Every IO command will either return {_&io-ok} if the command
+could be sent to the target or {_&io-fail} if the target was
 unreachable. It is possible for IO commands to return additional
 values but processing these values require more advance LISP
 constructs which are outside of the scope of this chapter.
 
 {<}
 
-The following is a simple example of the {_&io_ping} command which can
+The following is a simple example of the {_&io-ping} command which can
 be used to test whether a target item exists:
 
 {`
 (assert
   (=
-    (io &io_ping (id &item_extract 1))
-    &io_ok))
+    (io &io-ping (id &item-extract 1))
+    &io-ok))
 }
 
-In this example, {_&io_ping} takes no arguments and will be sent to
+In this example, {_&io-ping} takes no arguments and will be sent to
 the extractor {_000001.extract} within our factory. The return value
-is then tested against the atom {_&io_ok} to see if the call has
+is then tested against the atom {_&io-ok} to see if the call has
 succeeded. The result of the test is given to the {_assert} function
 which will raise an error and halt execution if the result of our test
 indicated that the call did not reach our target.
@@ -301,17 +301,17 @@ the manual steps we took in the previous chapter:
 
 {`
 ; Extract
-(io &io_tape (id &item_extract 1) &item_elem_a)
-(io &io_tape (id &item_extract 2) &item_elem_b)
+(io &io-tape (id &item-extract 1) &item-elem-a)
+(io &io-tape (id &item-extract 2) &item-elem-b)
 
 ; Transform
-(io &io_tape (id &item_printer 1) &item_muscle)
-(io &io_tape (id &item_printer 2) &item_nodule)
-(io &io_tape (id &item_assembly 1) &item_extract)
+(io &io-tape (id &item-printer 1) &item-muscle)
+(io &io-tape (id &item-printer 2) &item-nodule)
+(io &io-tape (id &item-assembly 1) &item-extract)
 
 ; Deploy
 ; Here we include the loop count in the IO command
-(io &io_item (id &item_deploy 1) &item_extract 2)
+(io &io-item (id &item-deploy 1) &item-extract 2)
 }
 
 As you can see, this is much more terse then endlessly navigating the
@@ -334,7 +334,7 @@ will be explored piecemeal in later guides.
 As with the other active items we've dealt with so far, brains are
 also controlled via IO commands which can be accessed by clicking the
 IO button at the top of the state interface. Once again, many new IO
-commands are available for brains but we'll focus on the {_io_mod}
+commands are available for brains but we'll focus on the {_io-mod}
 command for now. This command is used to instruct the brain to start
 executing a specific mod which can be specified using this value:
 
@@ -372,7 +372,7 @@ menu can be used to explore the various tapes and their dependencies.
 
 This concludes the guided tour of the Legion systems. Your goal from
 now on is to expand and grow. This will require the creation of new
-{_&item_legion} that you launch to nearby stars. A process that you
+{_&item-legion} that you launch to nearby stars. A process that you
 can entirely automate using the introspection facilities introduced in
 {/guides/introspection} and the programming concepts introduced in
 {/guides/flow} and {/guides/variables}. For additional reading

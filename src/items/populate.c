@@ -292,6 +292,7 @@ static void populate_atom(struct atoms *atoms, const char *str, word_t value)
     struct symbol symbol = make_symbol_len(str, len);
     for (size_t i = 0; i < symbol.len; ++i) {
         char c = tolower(symbol.c[i]);
+        if (c == '_') c = '-';
         if (c) symbol.c[i] = c;
     }
 
