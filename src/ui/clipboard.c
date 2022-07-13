@@ -33,7 +33,7 @@ size_t ui_clipboard_paste(struct ui_clipboard *board, size_t len, char *dst)
 static void ui_clipboard_grow(struct ui_clipboard *board, size_t len)
 {
     if (likely(len <= board->cap)) return;
-    board->str = realloc(board, len);
+    board->str = realloc(board->str, len);
     board->cap = len;
 }
 

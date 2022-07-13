@@ -147,7 +147,7 @@ bool hset_del(struct hset *hs, uint64_t key)
 
 const uint64_t *hset_next(const struct hset *hs, const uint64_t *it)
 {
-    if (!hs->set) return NULL;
+    if (!hs) return NULL;
 
     size_t i = 0;
     if (it) i = (it - hs->set) + 1;
