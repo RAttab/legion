@@ -30,6 +30,13 @@ void active_free(struct active *active)
 {
     free(active->arena);
     free(active->ports);
+    if (active->cap > 64)
+        vec64_free((void *) active->free);
+
+    active->count = 0;
+    active->free = 0;
+    active->len = 0;
+    active->cap = 0;
 }
 
 void active_delete(struct active *active, id_t id)
@@ -45,6 +52,8 @@ void active_delete(struct active *active, id_t id)
     }
 
     active->count--;
+    if (!active->count && !active->create)
+        active_free(active);
 }
 
 inline bool active_deleted(struct active *active, size_t index)
