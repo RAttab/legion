@@ -1,3 +1,5 @@
+;; [ EL ]-----------------------------------------------------------------------
+
 (elems
  ((a b c d) extract solids)
  ((e f)     extract solids-nomad)
@@ -20,11 +22,11 @@
 ;;
 ;; Goal is to achive self-replication via production of a legion. Acts
 ;; as the tutorial and worlds won't be connected until T1.
-
-
+;;
 ;; This phase is all about booting until you're able to make all
 ;; available tapes. It's pretty rigid due to imposed limitations of
 ;; the starting set.
+
 (boot-factory
  (printer
   (muscle (a))
@@ -121,21 +123,55 @@
 ;; single star phase. Main new mechanic is nomad which allows for the
 ;; exploitation of stars not viable for a legion boot.
 ;;
-;; Burner: probably the first thing to unlock as collider outputs
-;; should tend to all output garbage elements.
+;; Collider: every tape outputs garbage element o as well as the
+;; desired element. Burner required to get rid of garbage
+;; element. First unlocked element required to unlock nomad and then
+;; the other three unlocked by nomad which unlocks all but one of the
+;; remaining elements.
 ;;
-;; Teleio: always active on channel 0 and omni directional since it's
-;; unlikely to share a world with an RX antenna.
+;; Burner: Used to make collider work. Should probably have a duration
+;; based on the item so that more then one is required. Energy output
+;; and burn time should depend on the item being burned.
 ;;
-;; Nomad: Loads item through IO_ITEM. Can be programmed with one IO
-;; command on deploy which allows for either teleio or brain with a
-;; mod.
+;; Packer: Allows to make active items passive again. Can either take
+;; an id or a a type and a count. If count is zero then all of type
+;; are packed.
+;;
+;; Nomad: Main purpose is to exploit stars that can't sustain a legion
+;; which will unlocks all but one of the natural
+;; elements. Multi-function item with many io ops:
+;;
+;; - IO_ITEM: stores active items to be unloaded at
+;;   destination. Storage has a cap on number of types and on stack
+;;   size. On arrival all stored items are activated.
+;;
+;; - IO_MOD: Can be configured with a mod that will be executed on the
+;;   first activated brain. Required to make nomad
+;;   automatable. Alternative would be to rely only teleio but that
+;;   sounds annoying.
+;;
+;;  - IO_GET/IO_SET: Has a few words of memory and these IO ops will
+;;    act exactly like memory. Required to hold things like the origin
+;;    coord and whatever else state would be useful for
+;;    automation. Alternative would again to rely exclusively on
+;;    teleio.
+;;
+;;  - IO_LAUNCH: Send nomad to target and activate all stored
+;;    items. Can take an id as argument to load the last brain before
+;;    launching; solves the chicken-egg problem of the brain not being
+;;    able to load itself into nomad while also sending the command to
+;;    launch it.
+;;
+;; Teleio: Remote IO execution but can't return any data. Only
+;; supports channel 0 and should probably be omni-directional to
+;; simplify it's configuration when dealing with remote worlds. It's
+;; main role is to give an alternative method of using Nomad or remote
+;; colonies created by nomad: centralized control vs independent
+;; function.
 ;;
 ;; Charge: Will take in battery as input and output charged
 ;; battery. Discharge will invert. charged batteries can't be deployed
 ;; but plain batteries can.
-;;
-;; Siphon: I'm not entirely sure it has a purpose in T2
 ;;
 ;; Energy: Power is the limiting factor for how much you can do in a
 ;; single star. Otherwise, you can single star + nomad the entire game
@@ -144,11 +180,63 @@
 ;; scheme.
 ;;
 ;; T3 will probably ramp up the costs of tapes quite a bit given that
-;; inifinit access to resources.
+;; we'll have infinit access to resources.
 
 (composite
- (collider)
- (assembly
-  (nomad ())))
+ (collider
+  (m o (a d g))) ;; a b c d g h -> m o
 
-(nomad)
+ (printer
+  ;; heat-exchange
+  ;; burner - furnace - no m
+  ;; packer - freezer
+  ;; nomad - propulsion + internal-power - will want to make these multi-stage
+  )
+
+ (assembly
+  (burner ()) ;; not m
+  (packer ())
+  (nomad (memory packer pill))
+  (teleio ())))
+
+(nomad
+ (collider
+  (n o (?)) ;; e f i j
+  (l o (h n m)))
+
+ (printer
+  ;; battery
+  ;; charger/discharger - something conductive
+  ;; library -
+  )
+
+ (assembly
+  (battery)
+  (charger)
+  (discharger)
+  (library)
+  (eidetic-brain (brain library))) ;; printer item for (dis)charger
+
+
+;; [ T3 ]-----------------------------------------------------------------------
+ ;;
+;; Major focus here is on eelem K which is omni present in small
+;; quantities and very slowly replenishes over time.
+ ;;
+ ;; Tech unlocks are mostly around setting up the factories for K
+ ;; which are required for everything in T4. Will also introduce
+ ;; overseer which is a big automation layer for mass ressources
+ ;; production and harvesting.
+ ;;
+ ;; Will also introduce the concept of channels for communication as
+ ;; well as more memory/brain upgrades.
+
+(siphon
+ (assembly
+  (siphon))) ;; l
+
+
+;; [ T4 ]-----------------------------------------------------------------------
+;;
+;; This is the end game with big and weird projects to build which
+;; should ultimately culminate into building Z which... ends the game?
