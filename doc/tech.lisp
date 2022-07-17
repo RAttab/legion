@@ -143,7 +143,12 @@
 ;;
 ;; - IO_ITEM: stores active items to be unloaded at
 ;;   destination. Storage has a cap on number of types and on stack
-;;   size. On arrival all stored items are activated.
+;;   size. On arrival all stored items are activated. Typical cargo:
+;;   > brain / teleio
+;;   > worker
+;;   > extract + condenser
+;;   > port + pills
+;;   > transmit + receive
 ;;
 ;; - IO_MOD: Can be configured with a mod that will be executed on the
 ;;   first activated brain. Required to make nomad
@@ -187,6 +192,7 @@
   (m o (a d g))) ;; a b c d g h -> m o
 
  (printer
+  ;; collider - ???
   ;; heat-exchange
   ;; burner - furnace - no m
   ;; packer - freezer
@@ -194,6 +200,7 @@
   )
 
  (assembly
+  (collider ())
   (burner ()) ;; not m
   (packer ())
   (nomad (memory packer pill))
