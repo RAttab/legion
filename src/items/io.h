@@ -52,9 +52,13 @@ enum legion_packed io
     IO_ITEM_KNOWN = IO_MIN + 0x23,
 
     // TX/RX
-    IO_CHANNEL       = IO_MIN + 0x30,
-    IO_TRANSMIT      = IO_MIN + 0x31,
-    IO_RECEIVE       = IO_MIN + 0x32,
+    IO_CHANNEL  = IO_MIN + 0x30,
+    IO_TRANSMIT = IO_MIN + 0x31,
+    IO_RECEIVE  = IO_MIN + 0x32,
+    // Nomad
+    IO_PACK     = IO_MIN + 0x38,
+    IO_LOAD     = IO_MIN + 0x39,
+    IO_UNLOAD   = IO_MIN + 0x3A,
 
     // Misc
     IO_GET      = IO_MIN + 0x80,
@@ -89,7 +93,8 @@ enum legion_packed ioe
     IOE_INVALID_STATE = IOE_MIN + 0x01,
     IOE_VM_FAULT      = IOE_MIN + 0x02,
     IOE_STARVED       = IOE_MIN + 0x03,
-    IOE_OUT_OF_RANGE  = IOE_MIN + 0x12,
+    IOE_OUT_OF_RANGE  = IOE_MIN + 0x04,
+    IOE_OUT_OF_SPACE  = IOE_MIN + 0x05,
 
     IOE_A0_INVALID = IOE_MIN + 0x10,
     IOE_A0_UNKNOWN = IOE_MIN + 0x11,

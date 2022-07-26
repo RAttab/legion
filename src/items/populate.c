@@ -127,6 +127,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config),
     // Active - T2
     im_init_cfg(ITEM_PACKER,       "packer",    bits_m, work_m, im_packer_config),
+    im_init_cfg(ITEM_NOMAD,        "nomad",     bits_m, work_m, im_nomad_config),
 
     // Logistics
     im_init(ITEM_WORKER,  "worker",  bits_s, work_s),
@@ -251,6 +252,10 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_CHANNEL),
     io_init(IO_TRANSMIT),
     io_init(IO_RECEIVE),
+    // Nomad
+    io_init(IO_PACK),
+    io_init(IO_LOAD),
+    io_init(IO_UNLOAD),
 
     // Misc
     io_init(IO_GET),
@@ -272,6 +277,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     ioe_init(IOE_VM_FAULT),
     ioe_init(IOE_STARVED),
     ioe_init(IOE_OUT_OF_RANGE),
+    ioe_init(IOE_OUT_OF_SPACE),
     ioe_init(IOE_A0_INVALID),
     ioe_init(IOE_A0_UNKNOWN),
     ioe_init(IOE_A1_INVALID),
