@@ -105,18 +105,7 @@
       !item-nerve
       !item-bone
       !item-bone)
-  (out !item-antenna))
-
- (!item-accelerator
-  (in !item-conductor
-      !item-conductor
-      !item-nerve
-      !item-field
-      !item-field
-      !item-nerve
-      !item-conductor
-      !item-conductor)
-  (out !item-accelerator)))
+  (out !item-antenna)))
 
 
 ;; -----------------------------------------------------------------------------

@@ -145,7 +145,7 @@
 ;;   destination. Storage has a cap on number of types and on stack
 ;;   size. On arrival all stored items are activated. Typical cargo:
 ;;   > brain / teleio
-;;   > worker
+;;   > worker + solar
 ;;   > extract + condenser
 ;;   > port + pills
 ;;   > transmit + receive
@@ -208,8 +208,8 @@
 
 (nomad
  (collider
-  (n o (?)) ;; e f i j
-  (l o (h n m)))
+  (n o (b d e))
+  (l o (h i m n)))
 
  (printer
   ;; battery

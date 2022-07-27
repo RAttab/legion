@@ -12,7 +12,7 @@
 // rng
 // -----------------------------------------------------------------------------
 
-struct rng { uint64_t x; };
+struct legion_packed rng { uint64_t x; };
 struct rng rng_make(uint64_t seed);
 
 inline uint64_t rng_max() { return (uint64_t) -1UL; }

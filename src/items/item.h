@@ -100,7 +100,10 @@ enum legion_packed item
     ITEM_CONDUCTOR     = ITEM_PASSIVE_FIRST + 0x15, // printer
     ITEM_GALVANIC      = ITEM_PASSIVE_FIRST + 0x16,
     ITEM_ANTENNA       = ITEM_PASSIVE_FIRST + 0x17, // assembly
-    ITEM_ACCELERATOR   = ITEM_PASSIVE_FIRST + 0x18,
+
+    // T2
+    ITEM_ACCELERATOR   = ITEM_PASSIVE_FIRST + 0x20,
+
 
     ITEM_PASSIVE_LAST,
 
