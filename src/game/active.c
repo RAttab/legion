@@ -39,21 +39,32 @@ void active_free(struct active *active)
     active->cap = 0;
 }
 
-void active_delete(struct active *active, id_t id)
+bool active_delete(struct active *active, id_t id)
 {
     size_t index = id_bot(id)-1;
-    if (index >= active->len) return;
+    if (index >= active->len) return false;
 
-    if (likely(active->cap <= 64))
-        active->free |= 1ULL << index;
+    bool found = false;
+    if (likely(active->cap <= 64)){
+        const uint64_t mask = 1ULL << index;
+
+        found = active->free & mask;
+        active->free |= mask;
+    }
     else {
         struct vec64 *vec = (void *) active->free;
-        vec->vals[index / 64] |= 1ULL << (index % 64);
+        const uint64_t mask = 1ULL << (index % 64);
+        const size_t ix = index / 64;
+
+        found = vec->vals[ix] & mask;
+        vec->vals[ix] |= mask;
     }
 
     active->count--;
     if (!active->count && !active->create)
         active_free(active);
+
+    return found;
 }
 
 inline bool active_deleted(struct active *active, size_t index)
@@ -169,6 +180,17 @@ size_t active_count(struct active *active)
     return active->count;
 }
 
+
+id_t active_last(struct active *active)
+{
+    for (size_t i = 0; i < active->len; ++i) {
+        size_t ix = active->len - i - 1;
+        if (!active_deleted(active, ix))
+            return make_id(active->type, ix);
+    }
+
+    return 0;
+}
 
 void active_list(struct active *active, struct vec64 *ids)
 {

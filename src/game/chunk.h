@@ -49,11 +49,12 @@ word_t chunk_name(struct chunk *);
 void chunk_rename(struct chunk *, word_t);
 bool chunk_harvest(struct chunk *, enum item item);
 
+id_t chunk_last(struct chunk *, enum item);
 struct vec64 *chunk_list(struct chunk *);
 struct vec64 *chunk_list_filter(struct chunk *, im_list_t filter);
 const void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
-void chunk_delete(struct chunk *, id_t id);
+bool chunk_delete(struct chunk *, id_t id);
 void chunk_create(struct chunk *, enum item);
 void chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len);
 
@@ -92,8 +93,8 @@ void chunk_lanes_launch(
 void chunk_ports_reset(struct chunk *, id_t);
 bool chunk_ports_produce(struct chunk *, id_t, enum item);
 bool chunk_ports_consumed(struct chunk *, id_t);
-void chunk_ports_request(struct chunk *, id_t, enum item);
 enum item chunk_ports_consume(struct chunk *, id_t);
+void chunk_ports_request(struct chunk *, id_t, enum item);
 
 
 struct workers

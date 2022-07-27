@@ -474,6 +474,11 @@ struct workers chunk_workers(struct chunk *chunk)
     return chunk->workers;
 }
 
+id_t chunk_last(struct chunk *chunk, enum item item)
+{
+    return active_last(active_index_assert(chunk, item));
+}
+
 struct vec64* chunk_list(struct chunk *chunk)
 {
     size_t sum = 0;
@@ -544,9 +549,9 @@ void chunk_create_from(
     active_create_from(active_index_assert(chunk, item), chunk, data, len);
 }
 
-void chunk_delete(struct chunk *chunk, id_t id)
+bool chunk_delete(struct chunk *chunk, id_t id)
 {
-    active_delete(active_index_assert(chunk, id_item(id)), id);
+    bool active_delete(active_index_assert(chunk, id_item(id)), id);
 }
 
 void chunk_step(struct chunk *chunk)

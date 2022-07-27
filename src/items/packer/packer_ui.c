@@ -1,25 +1,25 @@
-/* deploy_ui.c
-   Rémi Attab (remi.attab@gmail.com), 08 Jul 2021
+/* packer_ui.c
+   Rémi Attab (remi.attab@gmail.com), 17 Jul 2022
    FreeBSD-style copyright and disclaimer apply
 */
 
 #include "ui/ui.h"
 
 // -----------------------------------------------------------------------------
-// deploy
+// packer
 // -----------------------------------------------------------------------------
 
-struct ui_deploy
+struct ui_packer
 {
     struct ui_label item, item_val;
     struct ui_label loops, loops_val;
     struct ui_label state, state_val;
 };
 
-static void *ui_deploy_alloc(struct font *font)
+static void *ui_packer_alloc(struct font *font)
 {
-    struct ui_deploy *ui = calloc(1, sizeof(*ui));
-    *ui = (struct ui_deploy) {
+    struct ui_packer *ui = calloc(1, sizeof(*ui));
+    *ui = (struct ui_packer) {
         .item = ui_label_new(font, ui_str_c("item:  ")),
         .item_val = ui_label_new(font, ui_str_v(item_str_len)),
 
@@ -33,9 +33,9 @@ static void *ui_deploy_alloc(struct font *font)
     return ui;
 }
 
-static void ui_deploy_free(void *_ui)
+static void ui_packer_free(void *_ui)
 {
-    struct ui_deploy *ui = _ui;
+    struct ui_packer *ui = _ui;
 
     ui_label_free(&ui->item);
     ui_label_free(&ui->item_val);
@@ -49,31 +49,31 @@ static void ui_deploy_free(void *_ui)
     free(ui);
 }
 
-static void ui_deploy_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_packer_update(void *_ui, struct chunk *chunk, id_t id)
 {
-    struct ui_deploy *ui = _ui;
+    struct ui_packer *ui = _ui;
 
-    const struct im_deploy *deploy = chunk_get(chunk, id);
-    assert(deploy);
+    const struct im_packer *packer = chunk_get(chunk, id);
+    assert(packer);
 
-    if (deploy->item) {
-        ui_str_set_item(&ui->item_val.str, deploy->item);
-        ui_str_setc(&ui->state_val.str, deploy->waiting ? "waiting" : "working");
+    if (packer->item) {
+        ui_str_set_item(&ui->item_val.str, packer->item);
+        ui_str_setc(&ui->state_val.str, packer->waiting ? "waiting" : "working");
     }
     else {
         ui_str_setc(&ui->item_val.str, "nil");
         ui_str_setc(&ui->state_val.str, "idle");
     }
 
-    if (deploy->loops != loops_inf)
-        ui_str_set_u64(&ui->loops_val.str, deploy->loops);
+    if (packer->loops != loops_inf)
+        ui_str_set_u64(&ui->loops_val.str, packer->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 }
 
-static void ui_deploy_render(
+static void ui_packer_render(
         void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_deploy *ui = _ui;
+    struct ui_packer *ui = _ui;
 
     ui_label_render(&ui->item, layout, renderer);
     ui_label_render(&ui->item_val, layout, renderer);
