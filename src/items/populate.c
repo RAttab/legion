@@ -127,6 +127,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config),
     // Active - T2
     im_init_cfg(ITEM_COLLIDER,     "collider",  bits_m, work_m, im_collider_config),
+    im_init_cfg(ITEM_BURNER,       "burner",    bits_m, work_m, im_burner_config),
     im_init_cfg(ITEM_PACKER,       "packer",    bits_m, work_m, im_packer_config),
     im_init_cfg(ITEM_NOMAD,        "nomad",     bits_m, work_m, im_nomad_config),
 

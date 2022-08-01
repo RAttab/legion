@@ -19,6 +19,8 @@ struct atoms;
 
 struct tape;
 
+typedef uint8_t work_t;
+
 typedef uint8_t tape_it_t;
 inline bool tape_it_validate(word_t word) { return word >= 0 && word <= UINT8_MAX; }
 
@@ -39,7 +41,7 @@ enum item tape_id(const struct tape *);
 size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
 energy_t tape_energy(const struct tape *);
-uint8_t tape_work(const struct tape *);
+work_t tape_work(const struct tape *);
 struct tape_ret tape_at(const struct tape *, tape_it_t index);
 
 

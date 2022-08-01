@@ -23,5 +23,6 @@
 #include "items/test/test.c"
 #include "items/transmit/transmit.c"
 #include "items/collider/collider.c"
+#include "items/burner/burner.c"
 #include "items/packer/packer.c"
 #include "items/nomad/nomad.c"
