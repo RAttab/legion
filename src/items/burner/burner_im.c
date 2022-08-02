@@ -25,15 +25,7 @@ static void im_burner_init(void *state, struct chunk *chunk, id_t id)
 static void im_burner_reset(struct im_burner *burner, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, burner->id);
-
-    burner->op = im_burner_nil;
-    burner->item = 0;
-    burner->output = 0;
-
-    burner->waiting = false;
-    burner->loops = 0;
-    burner->work.left = 0;
-    burner->work.cap = 0;
+    legion_zero_from(burner, op);
 }
 
 
@@ -132,7 +124,7 @@ static void im_burner_io_item(
         burner->output += i;
     }
 
-    burner->work.cap = legion_max(1, u64_log2(sum));
+    burner->work.cap = legion_max(1UL, u64_log2(sum));
 }
 
 static void im_burner_io(

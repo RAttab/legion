@@ -11,14 +11,14 @@
 
 struct ui_burner
 {
-    struct { enum im_burner_op op } state;
+    struct { enum im_burner_op op; } state;
 
     struct font *font;
     struct ui_label item, item_val;
     struct ui_label output, output_val;
     struct ui_label loops, loops_val;
     struct ui_label op, op_val;
-    struct ui_label state, state_val;
+    struct ui_label waiting, waiting_val;
     struct ui_label work, work_left, work_sep, work_cap;
 };
 
@@ -31,8 +31,8 @@ static void *ui_burner_alloc(struct font *font)
         .item = ui_label_new(font, ui_str_c("item:  ")),
         .item_val = ui_label_new(font, ui_str_v(item_str_len)),
 
-        .loops = ui_label_new(font, ui_str_c("output: ")),
-        .loops_val = ui_label_new(font, ui_str_v(4)),
+        .output = ui_label_new(font, ui_str_c("output: ")),
+        .output_val = ui_label_new(font, ui_str_v(4)),
 
         .loops = ui_label_new(font, ui_str_c("loops: ")),
         .loops_val = ui_label_new(font, ui_str_v(4)),
@@ -40,8 +40,8 @@ static void *ui_burner_alloc(struct font *font)
         .op = ui_label_new(font, ui_str_c("op: ")),
         .op_val = ui_label_new(font, ui_str_v(8)),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .waiting = ui_label_new(font, ui_str_c("state: ")),
+        .waiting_val = ui_label_new(font, ui_str_v(8)),
 
         .work = ui_label_new(font, ui_str_c("work: ")),
         .work_left = ui_label_new(font, ui_str_v(3)),
@@ -63,14 +63,14 @@ static void ui_burner_free(void *_ui)
     ui_label_free(&ui->output);
     ui_label_free(&ui->output_val);
 
-    ui_label_free(&ui->op);
-    ui_label_free(&ui->op_val);
-
     ui_label_free(&ui->loops);
     ui_label_free(&ui->loops_val);
 
-    ui_label_free(&ui->state);
-    ui_label_free(&ui->state_val);
+    ui_label_free(&ui->op);
+    ui_label_free(&ui->op_val);
+
+    ui_label_free(&ui->waiting);
+    ui_label_free(&ui->waiting_val);
 
     ui_label_free(&ui->work);
     ui_label_free(&ui->work_left);
@@ -112,7 +112,7 @@ static void ui_burner_update(void *_ui, struct chunk *chunk, id_t id)
 
     case im_burner_in: {
         ui_str_setc(&ui->op_val.str, "input");
-        ui_str_setc(&ui->state_val.str, burner->waiting ? "waiting" : "working");
+        ui_str_setc(&ui->waiting_val.str, burner->waiting ? "waiting" : "working");
         break;
     }
 
@@ -140,7 +140,7 @@ static void ui_burner_render(
     ui_label_render(&ui->output_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(ui->font->glyph_y);
+    ui_layout_sep_y(layout, ui->font->glyph_h);
 
     ui_label_render(&ui->loops, layout, renderer);
     ui_label_render(&ui->loops_val, layout, renderer);
@@ -155,8 +155,8 @@ static void ui_burner_render(
     case im_burner_nil: { break; }
 
     case im_burner_in: {
-        ui_label_render(&ui->state, layout, renderer);
-        ui_label_render(&ui->state_val, layout, renderer);
+        ui_label_render(&ui->waiting, layout, renderer);
+        ui_label_render(&ui->waiting_val, layout, renderer);
         ui_layout_next_row(layout);
         break;
     }

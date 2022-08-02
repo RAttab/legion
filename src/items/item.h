@@ -117,7 +117,7 @@ enum legion_packed item
     // Energy - energy producers should be executed first before all other
     // active items so that they energy they produce can be available to the
     // other active items.
-    ITEM_BURNER = ITEM_ACTIVE_FIRST + 0x00 // T2
+    ITEM_BURNER = ITEM_ACTIVE_FIRST + 0x00, // T2
 
     // T0
     ITEM_DEPLOY   = ITEM_ACTIVE_FIRST + 0x10,

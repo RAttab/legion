@@ -551,7 +551,7 @@ void chunk_create_from(
 
 bool chunk_delete(struct chunk *chunk, id_t id)
 {
-    bool active_delete(active_index_assert(chunk, id_item(id)), id);
+    return active_delete(active_index_assert(chunk, id_item(id)), id);
 }
 
 void chunk_step(struct chunk *chunk)

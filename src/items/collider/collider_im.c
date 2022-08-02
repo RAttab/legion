@@ -46,13 +46,7 @@ static void im_collider_load(void *state, struct chunk *chunk)
 static void im_collider_reset(struct im_collider *collider, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, collider->id);
-    collider->op = im_collider_nil;
-    collider->work.left = 0;
-    collider->work.cap = 0;
-    collider->loops = 0;
-    collider->waiting = false;
-    collider->item = 0;
-    collider->tape = 0;
+    legion_zero_from(collider, op);
 }
 
 
@@ -60,11 +54,11 @@ static void im_collider_reset(struct im_collider *collider, struct chunk *chunk)
 // step
 // -----------------------------------------------------------------------------
 
-static void im_collider_setp_grow(
+static void im_collider_step_grow(
         struct im_collider *collider, struct chunk *chunk)
 {
     if (!collider->waiting) {
-        chunk_request(chunk, im_collider_grow_item);
+        chunk_ports_request(chunk, collider->id, im_collider_grow_item);
         collider->waiting = true;
         return;
     }
@@ -76,7 +70,7 @@ static void im_collider_setp_grow(
     collider->rate = im_collider_rate(collider->size);
 
     collider->loops--;
-    if (!collider->loops) im_collider_reset(collider);
+    if (!collider->loops) im_collider_reset(collider, chunk);
 }
 
 static void im_collider_step_in(
@@ -84,7 +78,7 @@ static void im_collider_step_in(
 {
     const struct tape *tape = tape_packed_ptr(collider->tape);
     struct tape_ret ret = tape_at(tape, tape_packed_it(collider->tape));
-    assert(ret.state = tape_input);
+    assert(ret.state == tape_input);
 
     if (!collider->waiting) {
         chunk_ports_request(chunk, collider->id, ret.item);
@@ -94,7 +88,7 @@ static void im_collider_step_in(
 
     enum item consumed = chunk_ports_consume(chunk, collider->id);
     if (!consumed) return;
-    assert(consumed == item);
+    assert(consumed == ret.item);
 
     collider->waiting = false;
     collider->tape = tape_packed_it_inc(collider->tape);
@@ -126,10 +120,8 @@ static void im_collider_step_work(
 static void im_collider_step_out(
         struct im_collider *collider, struct chunk *chunk)
 {
-    const struct tape *tape = tape_packed_ptr(collider->tape);
-
     if (!collider->waiting) {
-        uint8_t sample = rng_uni(&collider->rng, 1, im_collider_grow_max);
+        uint8_t sample = rng_uni(&collider->rng, 1, im_collider_size_max);
         collider->out.item = sample < collider->rate ?
             tape_packed_id(collider->tape) : im_collider_junk;
 
@@ -150,7 +142,7 @@ static void im_collider_step_out(
     collider->loops--;
     if (collider->loops) return;
 
-    im_collider_reset(collider);
+    im_collider_reset(collider, chunk);
 }
 
 static void im_collider_step(void *state, struct chunk *chunk)
@@ -188,7 +180,9 @@ static void im_collider_io_state(
     chunk_io(chunk, IO_RETURN, collider->id, src, &value, 1);
 }
 
-static void im_collider_io_grow(struct im_collider *collider, struct chunk *chunk)
+static void im_collider_io_grow(
+        struct im_collider *collider, struct chunk *chunk,
+        const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, collider->id, IO_TAPE, len, 1)) return;
 
@@ -234,7 +228,7 @@ static void im_collider_io(
     case IO_PING: { chunk_io(chunk, IO_PONG, collider->id, src, NULL, 0); return; }
     case IO_STATE: { im_collider_io_state(collider, chunk, src, args, len); return; }
 
-    case IO_GROW: { im_collider_io_grow(collider, chunk); return; }
+    case IO_GROW: { im_collider_io_grow(collider, chunk, args, len); return; }
     case IO_TAPE: { im_collider_io_tape(collider, chunk, args, len); return; }
     case IO_RESET: { im_collider_reset(collider, chunk); return; }
 
@@ -260,9 +254,6 @@ static const word_t im_collider_io_list[] =
 static bool im_collider_flow(const void *state, struct flow *flow)
 {
     const struct im_collider *collider = state;
-
-    enum item item = ITEM_NIL;
-    enum tape_state state = tape_eof;
 
     switch (collider->op)
     {
@@ -295,18 +286,18 @@ static bool im_collider_flow(const void *state, struct flow *flow)
             .rank = tapes_info(ret.item)->rank,
             .in = ret.item,
             .tape_it = it,
-            .tape_it = tape_len(tape);
+            .tape_len = tape_len(tape),
         };
         return true;
     }
 
     case im_collider_out: {
-        if (!collider->out) return false;
+        if (!collider->out.item) return false;
         *flow = (struct flow) {
             .id = collider->id,
             .loops = collider->loops,
             .target = tape_packed_id(collider->tape),
-            .rank = tapes_info(collider->out)->rank,
+            .rank = tapes_info(collider->out.item)->rank,
             .out = collider->out.item,
             .tape_it = collider->out.it,
             .tape_len = collider->out.len,

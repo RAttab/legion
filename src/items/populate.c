@@ -23,6 +23,10 @@
 #include "items/storage/storage.h"
 #include "items/test/test.h"
 #include "items/transmit/transmit.h"
+#include "items/collider/collider.h"
+#include "items/burner/burner.h"
+#include "items/packer/packer.h"
+#include "items/nomad/nomad.h"
 
 
 // -----------------------------------------------------------------------------

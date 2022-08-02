@@ -1,4 +1,4 @@
-f/* nomad_im.c
+/* nomad_im.c
    Rémi Attab (remi.attab@gmail.com), 17 Jul 2022
    FreeBSD-style copyright and disclaimer apply
 
@@ -23,8 +23,8 @@ f/* nomad_im.c
 static struct im_nomad_cargo *im_nomad_cargo_load(
         struct im_nomad *nomad, enum item item)
 {
-    for (size_t i = 0; i < array_len(data->cargo); ++i) {
-        struct im_nomad_cargo *cargo = data->cargo + i;
+    for (size_t i = 0; i < array_len(nomad->cargo); ++i) {
+        struct im_nomad_cargo *cargo = nomad->cargo + i;
         if (!cargo->item || cargo->item == item) return cargo;
     }
     return NULL;
@@ -33,8 +33,8 @@ static struct im_nomad_cargo *im_nomad_cargo_load(
 static struct im_nomad_cargo *im_nomad_cargo_unload(
         struct im_nomad *nomad, enum item item)
 {
-    for (size_t i = 0; i < array_len(data->cargo); ++i) {
-        struct im_nomad_cargo *cargo = data->cargo + i;
+    for (size_t i = 0; i < array_len(nomad->cargo); ++i) {
+        struct im_nomad_cargo *cargo = nomad->cargo + i;
         if (cargo->item == item) return cargo;
     }
     return NULL;
@@ -62,7 +62,7 @@ static void im_nomad_cargo_dec(struct im_nomad_cargo *cargo, enum item item)
 // nomad
 // -----------------------------------------------------------------------------
 
-static size_t im_nomad_port_reset(struct im_nomad *nomad)
+static void im_nomad_port_reset(struct im_nomad *nomad, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, nomad->id);
     nomad->op = im_nomad_nil;
@@ -71,11 +71,12 @@ static size_t im_nomad_port_reset(struct im_nomad *nomad)
     nomad->waiting = false;
 }
 
-static size_t im_nomad_port_setup(
+static void im_nomad_port_setup(
         struct im_nomad *nomad,
+        struct chunk *chunk,
         enum im_nomad_op op,
         enum item item,
-        loop_t loops)
+        loops_t loops)
 {
     chunk_ports_reset(chunk, nomad->id);
     nomad->op = op;
@@ -94,11 +95,8 @@ static void im_nomad_init(void *state, struct chunk *chunk, id_t id)
 
 static void im_nomad_reset(struct im_nomad *nomad, struct chunk *chunk)
 {
-    im_nomad_port_reset(nomad);
-    nomad->target = {0};
-    nomad->mod = 0;
-    memset(nomad->data, 0, sizeof(nomad->data));
-    memset(nomad->cargo, 0, sizeof(nomad->cargo));
+    im_nomad_port_reset(nomad, chunk);
+    legion_zero_from(nomad, mod);
 }
 
 
@@ -106,7 +104,7 @@ enum
 {
     im_nomad_data_cargo = 4,
     im_nomad_data_len =
-      1 + im_nomad_data_len + (im_nomad_cargo_len / im_nomad_data_cargo),
+      1 + im_nomad_memory_len + (im_nomad_cargo_len / im_nomad_data_cargo),
 };
 
 static_assert(
@@ -136,15 +134,15 @@ static void im_nomad_make(
     nomad->id = id;
     {
         nomad->mod = data[0];
-        nomad->data[0] = data[1];
-        nomad->data[1] = data[2];
-        nomad->data[2] = data[3];
+        nomad->memory[0] = data[1];
+        nomad->memory[1] = data[2];
+        nomad->memory[2] = data[3];
         im_nomad_decode_cargo(nomad, 0, data[4]);
         im_nomad_decode_cargo(nomad, 1, data[5]);
         im_nomad_decode_cargo(nomad, 2, data[6]);
     }
 
-    mod_t mod = nomad->mod;
+    word_t mod = nomad->mod;
 
     for (size_t i = 0; i < im_nomad_cargo_len; ++i) {
         struct im_nomad_cargo *cargo = nomad->cargo + i;
@@ -159,7 +157,7 @@ static void im_nomad_make(
             default: { chunk_create(chunk, cargo->item); break; }
             }
 
-            im_nomda_cargo_dec(cargo);
+            im_nomad_cargo_dec(cargo, cargo->item);
         }
     }
 }
@@ -171,8 +169,8 @@ static void im_nomad_make(
 
 static void im_nomad_step_pack(struct im_nomad *nomad, struct chunk *chunk)
 {
-    id_t id = chunk_last(chunk, packer->item);
-    if (!id) { im_nomad_port_reset(nomad); return; }
+    id_t id = chunk_last(chunk, nomad->item);
+    if (!id) { im_nomad_port_reset(nomad, chunk); return; }
 
     bool ok = chunk_delete(chunk, id);
     assert(ok);
@@ -181,13 +179,13 @@ static void im_nomad_step_pack(struct im_nomad *nomad, struct chunk *chunk)
     im_nomad_cargo_inc(cargo, nomad->item);
 
     nomad->loops--;
-    if (!nomad->loops) im_nomad_port_reset(nomad);
+    if (!nomad->loops) im_nomad_port_reset(nomad, chunk);
 }
 
 static void im_nomad_step_load(struct im_nomad *nomad, struct chunk *chunk)
 {
     if (!nomad->waiting) {
-        chunk_request(chunk, nomad->item);
+        chunk_ports_request(chunk, nomad->id, nomad->item);
         nomad->waiting = true;
         return;
     }
@@ -199,13 +197,13 @@ static void im_nomad_step_load(struct im_nomad *nomad, struct chunk *chunk)
 
     nomad->waiting = false;
     nomad->loops--;
-    if (!nomad->loops) im_nomad_port_reset(nomad);
+    if (!nomad->loops) im_nomad_port_reset(nomad, chunk);
 }
 
 static void im_nomad_step_unload(struct im_nomad *nomad, struct chunk *chunk)
 {
     if (!nomad->waiting) {
-        chunk_produce(chunk, nomad->item);
+        chunk_ports_produce(chunk, nomad->id, nomad->item);
         nomad->waiting = true;
         return;
     }
@@ -217,7 +215,7 @@ static void im_nomad_step_unload(struct im_nomad *nomad, struct chunk *chunk)
 
     nomad->waiting = false;
     nomad->loops--;
-    if (!nomad->loops) im_nomad_port_reset(nomad);
+    if (!nomad->loops) im_nomad_port_reset(nomad, chunk);
 }
 
 static void im_nomad_step(void *state, struct chunk *chunk)
@@ -300,11 +298,11 @@ static void im_nomad_io_pack(
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
     if (!cargo) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
 
-    loop_t loops = loops_io(len > 1 ? args[1] : loops_inf);
+    loops_t loops = loops_io(len > 1 ? args[1] : loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
     if (!loops) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
 
-    im_nomad_port_setup(nomad, im_nomad_pack, item, loops);
+    im_nomad_port_setup(nomad, chunk, im_nomad_pack, item, loops);
 }
 
 static void im_nomad_io_load(
@@ -314,8 +312,6 @@ static void im_nomad_io_load(
     if (!im_check_args(chunk, nomad->id, IO_ITEM, len, 1)) return;
 
     enum item item = args[0];
-    loop_t loops = loops_io(len > 1 ? args[1] : loops_inf);
-
     if (!item_validate(args[0]))
         return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
 
@@ -327,11 +323,11 @@ static void im_nomad_io_load(
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
     if (!cargo) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
 
-    loop_t loops = loops_io(len > 1 ? args[1] : loops_inf);
+    loops_t loops = loops_io(len > 1 ? args[1] : loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
     if (!loops) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
 
-    im_nomad_port_setup(nomad, im_nomad_load, item, loops);
+    im_nomad_port_setup(nomad, chunk, im_nomad_load, item, loops);
 }
 
 static void im_nomad_io_unload(
@@ -353,7 +349,7 @@ static void im_nomad_io_unload(
     struct im_nomad_cargo *cargo = im_nomad_cargo_unload(nomad, item);
     if (!cargo) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
 
-    im_nomad_port_setup(nomad, im_nomad_unload, item, cargo->count);
+    im_nomad_port_setup(nomad, chunk, im_nomad_unload, item, cargo->count);
 }
 
 static void im_nomad_io_mod(
@@ -377,12 +373,12 @@ static void im_nomad_io_get(
     if (!im_check_args(chunk, nomad->id, IO_GET, len, 1)) goto fail;
 
     uint8_t index = args[0];
-    if (args[0] < 0 || args[0] >= array_len(nomad->data)) {
+    if (args[0] < 0 || (size_t) args[0] >= array_len(nomad->memory)) {
         chunk_log(chunk, nomad->id, IO_GET, IOE_A0_INVALID);
         goto fail;
     }
 
-    word_t value = nomad->data[index];
+    word_t value = nomad->memory[index];
     chunk_io(chunk, IO_RETURN, nomad->id, src, &value, 1);
     return;
 
@@ -401,10 +397,10 @@ static void im_nomad_io_set(
     if (!im_check_args(chunk, nomad->id, IO_SET, len, 2)) return;
 
     uint8_t index = args[0];
-    if (args[0] < 0 || args[0] >= array_len(nomad->data))
+    if (args[0] < 0 || (size_t) args[0] >= array_len(nomad->memory))
         return chunk_log(chunk, nomad->id, IO_GET, IOE_A0_INVALID);
 
-    nomad->data[index] = args[1];
+    nomad->memory[index] = args[1];
 }
 
 
@@ -420,16 +416,16 @@ static void im_nomad_io_launch(
 
     const word_t data[im_nomad_data_len] = {
         nomad->mod,
-        nomad->data[0],
-        nomad->data[1],
-        nomad->data[2],
-        nomad_cargo_encode(nomad, 0),
-        nomad_cargo_encode(nomad, 1),
-        nomad_cargo_encode(nomad, 2),
+        nomad->memory[0],
+        nomad->memory[1],
+        nomad->memory[2],
+        im_nomad_encode_cargo(nomad, 0),
+        im_nomad_encode_cargo(nomad, 1),
+        im_nomad_encode_cargo(nomad, 2),
     };
 
     chunk_lanes_launch(
-            chunk, id_item(nomad->id), im_nomad_speed, dst, data, array_len(data]);
+            chunk, id_item(nomad->id), im_nomad_speed, dst, data, array_len(data));
     chunk_delete(chunk, nomad->id);
 }
 
@@ -448,7 +444,7 @@ static void im_nomad_io(
     case IO_RESET: { im_nomad_reset(nomad, chunk); return; }
 
     case IO_MOD: { im_nomad_io_mod(nomad, chunk, args, len); return; }
-    case IO_GET: { im_nomad_io_get(nomad, chunk, args, len); return; }
+    case IO_GET: { im_nomad_io_get(nomad, chunk, src, args, len); return; }
     case IO_SET: { im_nomad_io_set(nomad, chunk, args, len); return; }
 
     case IO_ID: { im_nomad_io_id(nomad, chunk, args, len); return; }
@@ -466,7 +462,7 @@ static const word_t im_nomad_io_list[] =
 {
     IO_PING,
     IO_STATE,
-    IO_RESET
+    IO_RESET,
 
     IO_MOD,
     IO_GET,

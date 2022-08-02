@@ -13,7 +13,7 @@ struct ui_nomad
 {
     struct
     {
-        word_t data[im_nomad_data_len];
+        word_t memory[im_nomad_memory_len];
         struct im_nomad_cargo cargo[im_nomad_cargo_len];
     } state;
 
@@ -22,11 +22,11 @@ struct ui_nomad
     struct ui_label op, op_val;
     struct ui_label item, item_val;
     struct ui_label loops, loops_val;
-    struct ui_label state, state_val;
+    struct ui_label waiting, waiting_val;
 
     struct ui_label mod, mod_val;
 
-    struct ui_label data, data_index, data_val;
+    struct ui_label memory, memory_index, memory_val;
     struct ui_label cargo, cargo_count, cargo_item;
     struct ui_scroll scroll;
 };
@@ -46,15 +46,15 @@ static void *ui_nomad_alloc(struct font *font)
         .loops = ui_label_new(font, ui_str_c("loops: ")),
         .loops_val = ui_label_new(font, ui_str_v(4)),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .waiting = ui_label_new(font, ui_str_c("state: ")),
+        .waiting_val = ui_label_new(font, ui_str_v(8)),
 
         .mod = ui_label_new(font, ui_str_c("mod: ")),
         .mod_val = ui_label_new(font, ui_str_v(symbol_cap)),
 
-        .data = ui_label_new(font, ui_str_c("data: ")),
-        .data_index = ui_label_new(font, ui_str_v(2)),
-        .data_val = ui_label_new(font, ui_str_v(16)),
+        .memory = ui_label_new(font, ui_str_c("memory: ")),
+        .memory_index = ui_label_new(font, ui_str_v(2)),
+        .memory_val = ui_label_new(font, ui_str_v(16)),
 
         .cargo = ui_label_new(font, ui_str_c("cargo: ")),
         .cargo_count = ui_label_new(font, ui_str_v(3)),
@@ -62,8 +62,8 @@ static void *ui_nomad_alloc(struct font *font)
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
     };
 
-    ui->data_index.fg = rgba_gray(0x88);
-    ui->data_index.bg = rgba_gray_a(0x44, 0x88);
+    ui->memory_index.fg = rgba_gray(0x88);
+    ui->memory_index.bg = rgba_gray_a(0x44, 0x88);
 
     ui->cargo_count.fg = rgba_gray(0x88);
     ui->cargo_count.bg = rgba_gray_a(0x44, 0x88);
@@ -84,15 +84,15 @@ static void ui_nomad_free(void *_ui)
     ui_label_free(&ui->loops);
     ui_label_free(&ui->loops_val);
 
-    ui_label_free(&ui->state);
-    ui_label_free(&ui->state_val);
+    ui_label_free(&ui->waiting);
+    ui_label_free(&ui->waiting_val);
 
     ui_label_free(&ui->mod);
     ui_label_free(&ui->mod_val);
 
-    ui_label_free(&ui->data);
-    ui_label_free(&ui->data_index);
-    ui_label_free(&ui->data_val);
+    ui_label_free(&ui->memory);
+    ui_label_free(&ui->memory_index);
+    ui_label_free(&ui->memory_val);
 
     ui_label_free(&ui->cargo);
     ui_label_free(&ui->cargo_count);
@@ -121,14 +121,14 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, id_t id)
 
     if (nomad->item) {
         ui_str_set_item(&ui->item_val.str, nomad->item);
-        ui_str_setc(&ui->state_val.str, nomad->waiting ? "waiting" : "working");
+        ui_str_setc(&ui->waiting_val.str, nomad->waiting ? "waiting" : "working");
 
         if (nomad->op == im_nomad_load) ui->item_val.fg = rgba_green();
         if (nomad->op == im_nomad_unload) ui->item_val.fg = rgba_blue();
     }
     else {
         ui_str_setc(&ui->item_val.str, "nil");
-        ui_str_setc(&ui->state_val.str, "idle");
+        ui_str_setc(&ui->waiting_val.str, "idle");
     }
 
     if (nomad->loops != loops_inf)
@@ -143,7 +143,7 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, id_t id)
     }
 
     ui_scroll_update(&ui->scroll, array_len(nomad->cargo));
-    memcpy(ui->state.data, nomad->data, sizeof(nomad->data));
+    memcpy(ui->state.memory, nomad->memory, sizeof(nomad->memory));
     memcpy(ui->state.cargo, nomad->cargo, sizeof(nomad->cargo));
 }
 
@@ -174,8 +174,8 @@ static void ui_nomad_render(
     ui_label_render(&ui->loops_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, layout, renderer);
-    ui_label_render(&ui->state_val, layout, renderer);
+    ui_label_render(&ui->waiting, layout, renderer);
+    ui_label_render(&ui->waiting_val, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, ui->font->glyph_h);
@@ -187,18 +187,18 @@ static void ui_nomad_render(
     ui_layout_sep_y(layout, ui->font->glyph_h);
 
     {
-        ui_label_render(&ui->data, layout, renderer);
+        ui_label_render(&ui->memory, layout, renderer);
         ui_layout_next_row(layout);
 
-        for (size_t i = 0; i < array_len(ui->state.data); ++i) {
-            ui_str_set_u64(&ui->data_index.str, i);
-            ui_label_render(&ui->data_data, layout, renderer);
+        for (size_t i = 0; i < array_len(ui->state.memory); ++i) {
+            ui_str_set_u64(&ui->memory_index.str, i);
+            ui_label_render(&ui->memory_index, layout, renderer);
 
-            ui_layout_sep_x(&inner, ui->font->glyph_w);
+            ui_layout_sep_x(layout, ui->font->glyph_w);
 
-            ui_str_set_hex(&ui->data_val.str, state->data[i]);
-            ui_label_render(&ui->data_val, &layout, renderer);
-            ui_layout_next_row(&layout);
+            ui_str_set_hex(&ui->memory_val.str, ui->state.memory[i]);
+            ui_label_render(&ui->memory_val, layout, renderer);
+            ui_layout_next_row(layout);
         }
     }
 
@@ -223,8 +223,8 @@ static void ui_nomad_render(
             ui_layout_sep_x(&inner, ui->font->glyph_w);
 
             ui_str_set_item(&ui->cargo_item.str, cargo->item);
-            ui_label_render(&ui->cargo_item, &layout, renderer);
-            ui_layout_next_row(&layout);
+            ui_label_render(&ui->cargo_item, layout, renderer);
+            ui_layout_next_row(layout);
         }
     }
 }

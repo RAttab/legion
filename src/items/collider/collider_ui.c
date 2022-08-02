@@ -28,7 +28,7 @@ struct ui_collider
 
     struct ui_label item, item_val;
     struct ui_label loops, loops_val;
-    struct ui_label state, state_val;
+    struct ui_label waiting, waiting_val;
     struct ui_tape tape;
 
     struct ui_label energy, energy_val;
@@ -53,13 +53,13 @@ static void *ui_collider_alloc(struct font *font)
         .op_val = ui_label_new(font, ui_str_v(8)),
 
         .item = ui_label_new(font, ui_str_c("item: ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str-len)),
+        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
 
         .loops = ui_label_new(font, ui_str_c("loops: ")),
         .loops_val = ui_label_new(font, ui_str_v(4)),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .waiting = ui_label_new(font, ui_str_c("state: ")),
+        .waiting_val = ui_label_new(font, ui_str_v(8)),
 
         .energy = ui_label_new(font, ui_str_c("energy: ")),
         .energy_val = ui_label_new(font, ui_str_v(8)),
@@ -97,8 +97,8 @@ static void ui_collider_free(void *_ui)
     ui_label_free(&ui->loops);
     ui_label_free(&ui->loops_val);
 
-    ui_label_free(&ui->state);
-    ui_label_free(&ui->state_val);
+    ui_label_free(&ui->waiting);
+    ui_label_free(&ui->waiting_val);
 
     ui_label_free(&ui->energy);
     ui_label_free(&ui->energy_val);
@@ -126,7 +126,7 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, id_t id)
     ui_str_set_u64(&ui->size_val.str, state->size);
     ui_str_set_u64(&ui->rate_val.str, im_collider_rate(state->size));
 
-    ui->state.op = op;
+    ui->state.op = state->op;
     ui->state.tape = 0;
 
     switch (state->op)
@@ -156,7 +156,7 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, id_t id)
         const struct tape *tape = tape_packed_ptr(state->tape);
         ui_str_set_u64(&ui->size_val.str, tape_energy(tape));
 
-        ui_str_set_u64(&ui->work_val.str, state->work.left);
+        ui_str_set_u64(&ui->work_left.str, state->work.left);
         ui_str_set_u64(&ui->work_cap.str, state->work.cap);
         break;
     }
@@ -164,7 +164,7 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, id_t id)
     case im_collider_out: {
         ui_str_setc(&ui->op_val.str, "output");
         ui_str_set_item(&ui->item.str, state->out.item);
-        ui_str_set_u64(&ui->out_val.str, state->out.it);
+        ui_str_set_u64(&ui->out_left.str, state->out.it);
         ui_str_set_u64(&ui->out_cap.str, state->out.len);
         break;
     }
@@ -177,7 +177,7 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, id_t id)
         ui_str_set_u64(&ui->loops_val.str, state->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 
-    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
+    ui_str_setc(&ui->waiting_val.str, state->waiting ? "waiting" : "working");
 }
 
 static bool ui_collider_event(void *_ui, const SDL_Event *ev)
@@ -185,7 +185,7 @@ static bool ui_collider_event(void *_ui, const SDL_Event *ev)
     struct ui_collider *ui = _ui;
 
     if (ui->state.op == im_collider_in)
-        return ui_tape_event(&ui->tape, ui->tape_state, ev);
+        return ui_tape_event(&ui->tape, ui->state.tape, ev);
     return false;
 }
 
@@ -202,7 +202,7 @@ static void ui_collider_render(
     ui_label_render(&ui->rate_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(ui->font->glyph_h);
+    ui_layout_sep_y(layout, ui->font->glyph_h);
 
     ui_label_render(&ui->op, layout, renderer);
     ui_label_render(&ui->op_val, layout, renderer);
@@ -216,8 +216,8 @@ static void ui_collider_render(
     {
 
     case im_collider_grow: {
-        ui_label_render(&ui->state, layout, renderer);
-        ui_label_render(&ui->state_val, layout, renderer);
+        ui_label_render(&ui->waiting, layout, renderer);
+        ui_label_render(&ui->waiting_val, layout, renderer);
         ui_layout_next_row(layout);
 
         ui_label_render(&ui->item, layout, renderer);
@@ -227,8 +227,8 @@ static void ui_collider_render(
     }
 
     case im_collider_in: {
-        ui_label_render(&ui->state, layout, renderer);
-        ui_label_render(&ui->state_val, layout, renderer);
+        ui_label_render(&ui->waiting, layout, renderer);
+        ui_label_render(&ui->waiting_val, layout, renderer);
         ui_layout_next_row(layout);
 
         ui_layout_sep_y(layout, ui->font->glyph_h);

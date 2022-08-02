@@ -25,9 +25,7 @@ static void im_packer_init(void *state, struct chunk *chunk, id_t id)
 static void im_packer_reset(struct im_packer *packer, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, packer->id);
-    packer->item = 0;
-    packer->loops = 0;
-    packer->waiting = false;
+    legion_zero_from(packer, item);
 }
 
 
@@ -42,12 +40,12 @@ static void im_packer_step(void *state, struct chunk *chunk)
 
     if (!packer->waiting) {
         id_t id = chunk_last(chunk, packer->item);
-        if (!id) { packer_reset(packer, chunk); return; }
+        if (!id) { im_packer_reset(packer, chunk); return; }
 
         bool ok = chunk_delete(chunk, id);
         assert(ok);
 
-        chunk_ports_produce(chunk, packer->item);
+        chunk_ports_produce(chunk, packer->id, packer->item);
         packer->waiting = true;
         return;
     }
@@ -151,7 +149,7 @@ static const word_t im_packer_io_list[] =
 {
     IO_PING,
     IO_STATE,
-    IO_RESET
+    IO_RESET,
 
     IO_ID,
     IO_ITEM,

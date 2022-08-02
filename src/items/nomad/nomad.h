@@ -38,7 +38,8 @@ static_assert(sizeof(struct im_nomad_cargo) == 2);
 
 enum
 {
-    im_nomad_data_len = 3,
+    im_nomad_speed = 100,
+    im_nomad_memory_len = 3,
     im_nomad_cargo_len = 12,
     im_nomad_cargo_max = UINT8_MAX,
 };
@@ -58,7 +59,7 @@ struct legion_packed im_nomad
     legion_pad(3);
 
     struct im_nomad_cargo cargo[im_nomad_cargo_len];
-    word_t data[im_nomad_data_len];
+    word_t memory[im_nomad_memory_len];
 };
 
 static_assert(sizeof(struct im_nomad) == 64);

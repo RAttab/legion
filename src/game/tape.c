@@ -284,7 +284,7 @@ static void tapes_load_tape(
         reader_close(in);
     }
 
-    tapes.index[id] = tapes_vec_output(&vec, id, host, energy);
+    tapes.index[id] = tapes_vec_output(&vec, id, host, energy, work);
 }
 
 static void tapes_load_file(const char *path, struct atoms *atoms)

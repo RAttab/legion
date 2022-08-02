@@ -80,7 +80,7 @@ struct ports *active_ports(struct active *active, id_t id);
 bool active_copy(struct active *, id_t id, void *dst, size_t len);
 void active_create(struct active *);
 void active_create_from(struct active *, struct chunk *, const word_t *data, size_t len);
-void active_delete(struct active *, id_t id);
+bool active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
