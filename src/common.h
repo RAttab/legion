@@ -83,6 +83,14 @@
         *p1 = legion_xchg(p0, *p1);             \
     } while(false)
 
+#define legion_zero_from(ptr, field)            \
+    do {                                        \
+        typeof(ptr) tp = (ptr);                 \
+        void *start = &(tp->field);             \
+        void *end = tp + 1;                     \
+        memset(start, 0, end - start);          \
+    } while (false);
+
 
 // -----------------------------------------------------------------------------
 // types
