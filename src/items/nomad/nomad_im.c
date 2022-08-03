@@ -20,6 +20,16 @@
 // cargo
 // -----------------------------------------------------------------------------
 
+static size_t im_nomad_cargo_count(struct im_nomad *nomad)
+{
+    size_t n = 0;
+    for (size_t i = 0; i < array_len(nomad->cargo); ++i) {
+        struct im_nomad_cargo *cargo = nomad->cargo + i;
+        if (cargo->item) n++;
+    }
+    return n;
+}
+
 static struct im_nomad_cargo *im_nomad_cargo_load(
         struct im_nomad *nomad, enum item item)
 {
@@ -244,8 +254,27 @@ static void im_nomad_io_state(
     word_t value = 0;
 
     switch (args[0]) {
+    case IO_MOD: { value = nomad->mod; break; }
     case IO_ITEM: { value = nomad->item; break; }
     case IO_LOOP: { value = nomad->loops; break; }
+
+    case IO_CARGO: {
+        if (len == 1) {
+            value = im_nomad_cargo_count(nomad);
+            break;
+        }
+
+        enum item item = args[1];
+        if (!item_validate(args[1])) {
+            chunk_log(chunk, nomad->id, IO_STATE, IOE_A1_INVALID);
+            break;
+        }
+
+        const struct im_nomad_cargo *cargo = im_nomad_cargo_unload(nomad, item);
+        if (cargo) value = cargo->count;
+        break;
+    }
+
     default: { chunk_log(chunk, nomad->id, IO_STATE, IOE_A0_INVALID); break; }
     }
 

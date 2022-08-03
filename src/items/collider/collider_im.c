@@ -171,9 +171,19 @@ static void im_collider_io_state(
     if (!im_check_args(chunk, collider->id, IO_STATE, len, 1)) return;
     word_t value = 0;
 
-    switch (args[0]) {
+    switch (args[0])
+    {
+    case IO_SIZE: { value = collider->size; break; }
+    case IO_RATE: { value = collider->rate; break; }
+
     case IO_TAPE: { value = tape_packed_id(collider->tape); break; }
     case IO_LOOP: { value = collider->loops; break; }
+
+    case IO_WORK: {
+        value = collider->tape ? tape_work(tape_packed_ptr(collider->tape)) : 0;
+        break;
+    }
+
     default: { chunk_log(chunk, collider->id, IO_STATE, IOE_A0_INVALID); break; }
     }
 

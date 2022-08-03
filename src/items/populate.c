@@ -276,6 +276,11 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     // State
     io_init(IO_HAS_ITEM),
     io_init(IO_HAS_LOOP),
+    io_init(IO_SIZE),
+    io_init(IO_RATE),
+    io_init(IO_WORK),
+    io_init(IO_OUTPUT),
+    io_init(IO_CARGO),
 
     // Errors
     ioe_init(IOE_MISSING_ARG),

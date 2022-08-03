@@ -89,6 +89,8 @@ static void im_burner_io_state(
     switch (args[0]) {
     case IO_ITEM: { value = burner->item; break; }
     case IO_LOOP: { value = burner->loops; break; }
+    case IO_WORK: { value = burner->work.cap; break; }
+    case IO_OUTPUT: { value = burner->output; break; }
     default: { chunk_log(chunk, burner->id, IO_STATE, IOE_A0_INVALID); break; }
     }
 

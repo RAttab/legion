@@ -73,6 +73,11 @@ enum legion_packed io
     // State
     IO_HAS_ITEM = IO_MIN + 0xF0,
     IO_HAS_LOOP = IO_MIN + 0xF1,
+    IO_SIZE     = IO_MIN + 0xF2,
+    IO_RATE     = IO_MIN + 0xF3,
+    IO_WORK     = IO_MIN + 0xF4,
+    IO_OUTPUT   = IO_MIN + 0xF5,
+    IO_CARGO    = IO_MIN + 0xF6,
 
     IO_MAX,
     IO_LEN = IO_MAX - IO_MIN,
