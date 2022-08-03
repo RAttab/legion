@@ -92,7 +92,7 @@ static void im_collider_step_in(
 
     collider->waiting = false;
     collider->tape = tape_packed_it_inc(collider->tape);
-    if (tape_at(tape, tape_packed_it(collider->tape)).state != tape_eof) return;
+    if (tape_at(tape, tape_packed_it(collider->tape)).state == tape_input) return;
 
     collider->op = im_collider_work;
     collider->work.left = collider->work.cap = tape_work(tape);

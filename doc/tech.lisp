@@ -192,24 +192,37 @@
   (m o (a d g))) ;; a b c d g h -> m o
 
  (printer
-  ;; collider - ???
-  ;; heat-exchange
-  ;; burner - furnace - no m
-  ;; packer - freezer
-  ;; nomad - propulsion + internal-power - will want to make these multi-stage
-  )
+  (biosteel o (b h m))
+  (neurosteel o (d h m))
+  (reactor o (a c h m)))
 
  (assembly
-  (collider ())
-  (burner ()) ;; not m
-  (packer ())
-  (nomad (memory packer pill))
+  (accelerator (conductor nerve field))
+  (collider (brain nodule accelerator storage))
+
+  (heat-exchange (biosteel conductor))
+
+  ;; Relliance on m will require a bootstrap to store o before we can
+  ;; burn it.
+  (furnace (heat-exchange))
+  (burner (furnace worker battery))
+
+  (freezer (heat-exchange))
+  (packer (furnace worker))
+
+  (m-reactor (biosteel neurosteel heat-exhange))
+  (m-condenser (biosteel field))
+  (m-release (biosteel))
+  (m-lung (m-reactor m-condenser m-release))
+
+  (nomad (storage memory packer pill m-reactor m-lung))
+
   (teleio ())))
 
 (nomad
  (collider
   (n o (b d e))
-  (l o (h i m n)))
+  (l o (h m n)))
 
  (printer
   ;; battery

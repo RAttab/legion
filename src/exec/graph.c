@@ -92,7 +92,7 @@ void graph_graph(struct graph *graph)
     struct set *outputs = set_alloc();
     htable_reserve(&graph->graph, 0xFF);
 
-    for (enum item item = 0; item < 0xFF; ++item) {
+    for (enum item item = 0; item < ITEM_MAX; ++item) {
         const struct tape *tape = tapes_get(item);
         if (!tape) continue;
         set_put(graph->items, item);
@@ -148,9 +148,10 @@ void graph_dot(struct graph *graph)
 
     graph_write(graph, "strict digraph {\n");
 
-    graph_color(graph, "blue", ITEM_NATURAL_FIRST, ITEM_SYNTH_FIRST);
-    graph_color(graph, "green", ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
-    graph_color(graph, "red", ITEM_ACTIVE_FIRST, ITEM_LOGISTICS_LAST);
+    graph_color(graph, "blue",   ITEM_NATURAL_FIRST, ITEM_NATURAL_LAST);
+    graph_color(graph, "purple", ITEM_SYNTH_FIRST,   ITEM_SYNTH_LAST);
+    graph_color(graph, "green",  ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
+    graph_color(graph, "red",    ITEM_ACTIVE_FIRST,  ITEM_LOGISTICS_LAST);
 
     char label[item_str_len] = {0};
     for (enum item it = 0; it < ITEM_MAX; ++it) {

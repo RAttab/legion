@@ -4,8 +4,14 @@
 
 (!item-condenser
 
- (!item-elem-g (energy 1) (out !item-elem-g))
- (!item-elem-h (energy 1) (out !item-elem-h)))
+ (!item-elem-g
+  (energy 1)
+  (out !item-elem-g))
+
+ (!item-elem-h
+  (energy 1)
+  (in !item-elem-d)
+  (out !item-elem-h)))
 
 
 ;; -----------------------------------------------------------------------------
