@@ -142,30 +142,6 @@
       !item-elem-d)
   (out !item-elem-o
        !item-neurosteel
-       !item-elem-o))
-
- (!item-reactor
-  (in !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-c
-      !item-elem-c
-      !item-elem-h
-      !item-elem-m
-      !item-elem-h
-      !item-elem-m
-      !item-elem-h
-      !item-elem-m
-      !item-elem-h
-      !item-elem-c
-      !item-elem-c
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a)
-  (out !item-elem-o
-       !item-elem-o
-       !item-reactor
-       !item-elem-o
        !item-elem-o)))
 
 

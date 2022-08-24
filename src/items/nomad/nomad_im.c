@@ -300,7 +300,7 @@ static void im_nomad_io_id(
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
     if (!cargo || cargo->count == im_nomad_cargo_max)
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
+        return chunk_log(chunk, nomad->id, IO_ID, IOE_OUT_OF_SPACE);
 
     if (!chunk_delete(chunk, id))
         return chunk_log(chunk, nomad->id, IO_ID, IOE_A0_INVALID);
@@ -312,24 +312,24 @@ static void im_nomad_io_pack(
         struct im_nomad *nomad, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, IO_PACK, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, IO_PACK, IOE_A0_INVALID);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, IO_PACK, IOE_A0_INVALID);
 
-    if (!im_check_known(chunk, nomad->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, nomad->id, IO_PACK, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
-    if (!cargo) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
+    if (!cargo) return chunk_log(chunk, nomad->id, IO_PACK, IOE_OUT_OF_SPACE);
 
     loops_t loops = loops_io(len > 1 ? args[1] : loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
-    if (!loops) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
+    if (!loops) return chunk_log(chunk, nomad->id, IO_PACK, IOE_OUT_OF_SPACE);
 
     im_nomad_port_setup(nomad, chunk, im_nomad_pack, item, loops);
 }
@@ -338,23 +338,23 @@ static void im_nomad_io_load(
         struct im_nomad *nomad, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, IO_LOAD, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, IO_LOAD, IOE_A0_INVALID);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, IO_LOAD, IOE_A0_INVALID);
 
-    if (!im_check_known(chunk, nomad->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, nomad->id, IO_LOAD, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
-    if (!cargo) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
+    if (!cargo) return chunk_log(chunk, nomad->id, IO_LOAD, IOE_OUT_OF_SPACE);
 
     loops_t loops = loops_io(len > 1 ? args[1] : loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
-    if (!loops) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_OUT_OF_SPACE);
+    if (!loops) return chunk_log(chunk, nomad->id, IO_LOAD, IOE_OUT_OF_SPACE);
 
     im_nomad_port_setup(nomad, chunk, im_nomad_load, item, loops);
 }
@@ -363,20 +363,20 @@ static void im_nomad_io_unload(
         struct im_nomad *nomad, struct chunk *chunk,
         const word_t *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, IO_UNLOAD, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, IO_UNLOAD, IOE_A0_INVALID);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, IO_UNLOAD, IOE_A0_INVALID);
 
-    if (!im_check_known(chunk, nomad->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, nomad->id, IO_UNLOAD, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_unload(nomad, item);
-    if (!cargo) return chunk_log(chunk, nomad->id, IO_ITEM, IOE_A0_INVALID);
+    if (!cargo) return chunk_log(chunk, nomad->id, IO_UNLOAD, IOE_A0_INVALID);
 
     im_nomad_port_setup(nomad, chunk, im_nomad_unload, item, cargo->count);
 }
@@ -442,6 +442,31 @@ static void im_nomad_io_launch(
     struct coord dst = coord_from_u64(args[0]);
     if (!coord_validate(args[0]))
         return chunk_log(chunk, nomad->id, IO_MOD, IOE_A0_INVALID);
+
+    // Given that a brain can't both be packed and still be able to issue
+    // IO_LAUNCH, IO_LAUNCH has an optional argument that acts like IO_ID prior
+    // to launching.
+    if (len > 1) {
+        id_t id = args[1];
+        enum item item = id_item(id);
+
+        if (!item_validate(args[1]))
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A0_INVALID);
+
+        if (!item_is_active(item) && !item_is_logistics(item))
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A0_INVALID);
+
+        if (!im_check_known(chunk, nomad->id, IO_LAUNCH, item)) return;
+
+        struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
+        if (!cargo || cargo->count == im_nomad_cargo_max)
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_OUT_OF_SPACE);
+
+        if (!chunk_delete(chunk, id))
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A0_INVALID);
+
+        im_nomad_cargo_inc(cargo, nomad->item);
+    }
 
     const word_t data[im_nomad_data_len] = {
         nomad->mod,

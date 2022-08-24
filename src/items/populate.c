@@ -192,6 +192,7 @@ const enum item im_list_factory_arr[] =
 
     ITEM_PACKER,
     ITEM_COLLIDER,
+    ITEM_NOMAD,
 
     0,
 };
@@ -282,6 +283,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_VALUE),
     io_init(IO_LAUNCH),
     io_init(IO_TARGET),
+    io_init(IO_GROW),
 
     // State
     io_init(IO_HAS_ITEM),

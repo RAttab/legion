@@ -38,7 +38,24 @@
   (lab n &item-magnet)
   (lab n &item-field)
   (lab n &item-storage)
-  (lab n &item-ferrofluid))
+  (lab n &item-ferrofluid)
+
+  ;; T2
+  (lab n &item-brain)
+  (lab n &item-elem-h)
+  (lab n &item-accelerator)
+  (lab n &item-galvanic)
+  (lab n &item-battery)
+  (lab n &item-elem-m)
+  (lab n &item-elem-o)
+  (lab n &item-biosteel)
+  (lab n &item-heat-exchange)
+  (lab n &item-furnace)
+  (lab n &item-pill)
+  (lab n &item-neurosteel)
+  (lab n &item-m-reactor)
+  (lab n &item-m-condenser)
+  (lab n &item-m-lung))
 
 
 (defun lab (n item)

@@ -149,6 +149,7 @@
 ;;   > extract + condenser
 ;;   > port + pills
 ;;   > transmit + receive
+;;   > scanner + prober
 ;;
 ;; - IO_MOD: Can be configured with a mod that will be executed on the
 ;;   first activated brain. Required to make nomad

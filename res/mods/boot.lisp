@@ -206,6 +206,107 @@
   (wait-tech &item-pill)
   (deploy-item &item-pill 10))
 
+
+
+;; Collider
+
+(defconst collider-id (id &item-collider 1))
+(defconst collider-size 100)
+
+(progn
+  (wait-tech &item-accelerator)
+  (deploy-tape &item-assembly &item-accelerator 2)
+
+  (wait-tech &item-collider)
+  (deploy-tape &item-assembly &item-collider 1)
+
+  (io &io-grow collider-id collider-size)
+  (while (< (ior &io-state collider-id &io-size) collider-size))
+
+  (wait-tech &item-elem-m)
+  (io &io-tape collider-id &item-elem-m)
+
+  ;; Until we have a burner we need to store the garbage o elements
+  (deploy-item &item-storage storage-count)
+  (set-item (- (count &item-storage) storage-count)
+	    storage-count
+	    &item-storage
+	    &item-elem-o)
+
+  ;; Burner
+  (wait-tech &item-galvanic)
+  (deploy-tape &item-printer &item-galvanic 2)
+  (wait-tech &item-battery)
+  (deploy-tape &item-assembly &item-battery 2)
+  (wait-tech &item-biosteel)
+  (deploy-tape &item-printer &item-biosteel 2)
+  (wait-tech &item-furnace)
+  (deploy-tape &item-assembly &item-furnace 2)
+  (wait-tech &item-heat-exchange)
+  (deploy-tape &item-assembly &item-heat-exchange 2)
+  (wait-tech &item-burner)
+
+  (deploy-item &item-burner 8)
+  (set-item 1 8 &item-burner &item-elem-o))
+
+
+;; Nomad
+
+;; Must match values in nomad mod
+(defconst nomad-ix-home 1)
+(defconst nomad-ix-elem 2)
+(defconst nomad-ix-port 3)
+(defconst nomad-ix-nomad 1)
+(defconst nomad-ix-prober 2)
+(defconst nomad-ix-scanner 3)
+
+(progn
+  (deploy-tape &item-assembly &item-pill 1)
+  (wait-tech &item-neurosteel)
+  (deploy-tape &item-printer &item-neurosteel 2)
+  (wait-tech &item-freezer)
+  (deploy-tape &item-assembly &item-freezer 2)
+  (wait-tech &item-packer)
+  (deploy-tape &item-assembly &item-packer 1)
+  (wait-tech &item-m-reactor)
+  (deploy-tape &item-assembly &item-m-reactor 1)
+  (wait-tech &item-m-condenser)
+  (deploy-tape &item-assembly &item-m-condenser 1)
+  (wait-tech &item-m-release)
+  (deploy-tape &item-assembly &item-m-release 1)
+  (wait-tech &item-m-lung)
+  (deploy-tape &item-assembly &item-m-lung 1)
+
+  (deploy-tape &item-assembly &item-condenser 1)
+  (deploy-tape &item-assembly &item-transmit 1)
+  (deploy-tape &item-assembly &item-receive 1)
+  (deploy-tape &item-assembly &item-prober 1)
+  (deploy-tape &item-assembly &item-port 1)
+
+  (wait-tech &item-nomad)
+  (deploy-item &item-assembly &item-nomad 4)
+  (io &io-set (id &item-nomad 1) nomad-ix-elem &item-elem-e)
+  (io &io-set (id &item-nomad 2) nomad-ix-elem &item-elem-f)
+  (io &io-set (id &item-nomad 3) nomad-ix-elem &item-elem-i)
+  (io &io-set (id &item-nomad 4) nomad-ix-elem &item-elem-j)
+
+  (for (it 1) (<= it 4) (+ it 1)
+       (deploy-item &item-assembly &item-port 1)
+       (io &io-set (id &item-nomad it) nomad-ix-home (ior &io-coord (self)))
+       (io &io-set (id &item-nomad it) nomad-ix-port (id &item-port (count &item-port)))
+
+       (deploy-item &item-assembly &item-memory 1)
+       (let ((state-id (id &item-memory (count &item-memory))))
+	 (io &io-set state-id nomad-ix-nomad (id &item-nomad it))
+	 (deploy-item &item-assembly &item-prober 1)
+	 (io &io-set state-id nomad-ix-prober (id &item-prober (count &item-prober)))
+	 (deploy-item &item-assembly &item-scanner 1)
+	 (io &io-set state-id nomad-ix-scanner (id &item-scanner (count &item-scanner)))
+
+	 (deploy-item &item-assembly &item-brain 1)
+	 (io &io-send (id &item-brain (count &item-brain)) state-id)
+	 (io &io-mod (id &item-brain (count &item-brain)) (mod nomad 2)))))
+
 (io &io-log (self) !done (ior &io-coord (self)))
 
 

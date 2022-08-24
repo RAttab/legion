@@ -1,0 +1,167 @@
+;; Manages the booting and roaming operations of a nomad
+
+(defconst pill-batch 100)
+(defconst extract-count 4)
+
+
+(defconst ix-home 1)
+(defconst ix-elem 2)
+(defconst ix-port 3)
+
+(defconst ix-nomad 1)
+(defconst ix-prober 2)
+(defconst ix-scanner 3)
+(defconst ix-target 7)
+
+;; The boot mod places sends a message to the brain before loading the
+;; mod. Using this message we can easily tell whether we're booting in
+;; the homeworld or whether we're roadming.
+(if (ior &io-recv (self))
+    (boot (head) (head) (head))
+    (roam))
+
+
+;; -----------------------------------------------------------------------------
+;; booting
+;; -----------------------------------------------------------------------------
+
+(defun boot (state-id)
+  (let ((nomad-id (ior &io-get state-id ix-nomad)))
+    (load-item nomad-id &item-memory 1)
+    (load-item nomad-id &item-worker 4)
+    (load-item nomad-id &item-solar 20)
+    (load-item nomad-id &item-port 1)
+    (load-item nomad-id &item-pill 4)
+    (load-item nomad-id &item-transmit 1)
+    (load-item nomad-id &item-receive 1)
+    (if (>= (ior &io-get nomad-id ix-elem) &item-elem-i)
+	(load-item nomad-id &item-condenser extract-count)
+	(load-item nomad-id &item-extract extract-count)))
+  (scan state-id)
+  (launch state-id))
+
+(defun load-item (nomad-id item n)
+  (io &io-load nomad-id item n)
+  (while (/= (ior &io-state nomad-id &io-item) 0)))
+
+
+;; -----------------------------------------------------------------------------
+;; roaming
+;; -----------------------------------------------------------------------------
+
+(defun roam ()
+
+  ;; Setup
+  (let ((elem (ior &io-get (id &item-nomad 1) ix-elem)))
+    (let ((extract (if (>= elem &item-elem-i) &item-condenser &item-extract)))
+      (for (i 1) (<= i extract-count) (+ i 1)
+	   (io &io-tape (id extract i) elem)))
+
+    (let ((home (ior &io-get (id &item-nomad 1) ix-home)))
+      (io &io-target (id &item-transmit 1) home)
+      (io &io-target (id &item-receive 1) home)
+      (io &io-send (id &item-transmit 1)
+	  !os-roam-unpack
+	  (ior &io-coord (self))
+	  (pack elem (ior &io-get (id &item-nomad 1) ix-port)))
+
+      (io &io-target (id &item-port 1) home)
+      (io &io-item (id &item-port 1) elem pill-batch)))
+
+  ;; Extract + Scan
+  (progn
+    (io &io-set (id &item-memory 1) ix-nomad (id &item-nomad 1))
+    (io &io-set (id &item-memory 1) ix-prober (id &item-prober 1))
+    (io &io-set (id &item-memory 1) ix-scanner (id &item-scanner 1))
+    (io &io-set (id &item-memory 1) ix-target 0)
+    (scan (id &item-memory 1))
+
+    (let ((elem (ior &io-get (id &item-nomad 1) ix-elem)))
+      (while (> (ior &io-probe (id &item-prober 1) elem) 0)))
+
+    (io &io-send (id &item-transmit 1)
+	!os-roam-pack
+	(ior &io-get (id &item-memory 1) ix-target)
+	(ior &io-get (id &item-nomad 1) ix-port))
+    (while (not (ior &io-recv (id &item-receive 1))))
+    (assert (= (head) !os-roam-next)))
+
+  ;; Pack
+  (progn
+    (pack-item (id &item-nomad 1) &item-worker)
+    (pack-item (id &item-nomad 1) &item-solar)
+    (pack-item (id &item-nomad 1) &item-transmit)
+    (pack-item (id &item-nomad 1) &item-receive)
+    (pack-item (id &item-nomad 1) &item-port)
+    (pack-item (id &item-nomad 1) &item-pill)
+    (if (>= (ior &io-get (id &item-nomad 1) ix-elem) &item-elem-i)
+	(pack-item (id &item-nomad 1) &item-condenser)
+	(pack-item (id &item-nomad 1) &item-extract)))
+
+  ;; Launch
+  (launch (id &item-memory 1)))
+
+(defun pack-item (nomad-id item)
+  (io &io-pack nomad-id item)
+  (while (/= (ior &io-state nomad-id &io-item) 0)))
+
+
+;; -----------------------------------------------------------------------------
+;; launch
+;; -----------------------------------------------------------------------------
+
+(defun launch (state-id)
+  (let ((nomad-id (ior &io-get state-id ix-nomad))
+	(target (ior &io-get state-id ix-target)))
+    (pack nomad-id (ior &io-get state-id ix-prober))
+    (pack nomad-id (ior &io-get state-id ix-scanner))
+    (pack nomad-id state-id)
+    (io &io-mod nomad-id (mod nomad 2))
+    (io &io-launch nomad-id target (ior &io-id (self))))
+  (fault))
+
+
+;; -----------------------------------------------------------------------------
+;; scan
+;; -----------------------------------------------------------------------------
+
+(defconst scan-ongoing -1)
+(defconst scan-done 0)
+
+(defun scan (state-id)
+  (io &io-scan
+      (ior &io-get state-id ix-scanner)
+      (ior &io-coord (self)))
+
+  (while (not (ior &io-get state-id ix-target))
+
+    (case (ior &io-value (ior &io-get state-id ix-scanner))
+      ((scan-ongoing 0)
+       (scan-done
+	(io &io-scan
+	    (ior &io-get state-id ix-scanner)
+	    (coord-inc (ior &io-state (ior &io-get state-id ix-scanner) &io-target)))))
+
+      (star
+       (when (probe star
+		    (ior &io-get state-id ix-prober)
+		    (ior &io-get (ior &io-get state-id ix-nomad) ix-elem))
+	 (io &io-set state-id ix-target star))))))
+
+
+(defun probe (coord prober-id elem)
+  (io &io-probe prober-id elem coord)
+  (let ((count scan-ongoing))
+    (while (= count scan-ongoing) (set count (ior &io-value prober-id)))
+    count))
+
+;; We're incrementing the packed coord
+(defconst inc-y (bsl 1 (+ 16)))
+(defconst inc-x (bsl 1 (+ 32 16)))
+(defun coord-inc (coord)
+  (case (rem (ior &io-tick (self)) 5)
+    ((0 (+ coord inc-x))
+     (1 (- coord inc-x))
+     (2 (+ coord inc-y))
+     (3 (- coord inc-y))
+     (4 coord))))

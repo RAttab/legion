@@ -101,6 +101,24 @@
 
 
 ;; -----------------------------------------------------------------------------
+;; roam
+;; -----------------------------------------------------------------------------
+
+(defun roam-unpack (coord packed)
+  (let ((port (unpack packed))
+	(elem (head)))
+    (io &io-item port elem 100)
+    (io &io-target port coord)))
+
+(defun roam-pack (coord port)
+  (io &io-reset port)
+  (let ((src (ior &io-get packet-id packet-src)))
+    (io &io-send (id &item-transmit src) !os-roam-next)
+    (io &io-target (id &item-transmit src) coord)
+    (io &io-target (id &item-receive src) coord)))
+
+
+;; -----------------------------------------------------------------------------
 ;; os
 ;; -----------------------------------------------------------------------------
 
@@ -119,7 +137,9 @@
       ((!os-connect (net-accept))
        (!os-exec (propagate) (exec (packet 1)))
        (!os-update (propagate) (load (packet 1)))
-       (!os-quit (propagate) (reset)))
+       (!os-quit (propagate) (reset))
+       (!os-roam-unpack (roam-unpack (packet 1) (packet 2)))
+       (!os-roam-pack (roam-pack (packet 1))))
       (data (propagate)))))
 
 
