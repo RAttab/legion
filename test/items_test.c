@@ -34,6 +34,7 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
 // -----------------------------------------------------------------------------
 
 #include "items/txrx.c"
+#include "items/storage.c"
 
 
 // -----------------------------------------------------------------------------
@@ -45,6 +46,7 @@ int main(int, char **)
     sys_populate_tests();
 
     test_txrx();
+    test_storage();
 
     return 0;
 }

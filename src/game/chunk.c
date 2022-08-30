@@ -871,7 +871,10 @@ static bool chunk_ports_step_queue(
 
     id_t src = ring32_pop(provided);
     if (!src) { chunk->workers.clean++; goto nomatch; }
-    if (src == dst) goto nomatch; // storage can assign to self
+    if (src == dst) { // storage can end up being both src and dst.
+        ring32_push(provided, src);
+        goto nomatch;
+    }
 
     struct ports *out = active_ports(active_index_assert(chunk, id_item(src)), src);
     assert(out && out->out == in->in);
