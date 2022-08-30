@@ -82,7 +82,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_ELEM_Y, "elem-y", bits_s, work_s),
     im_init(ITEM_ELEM_Z, "elem-z", bits_s, work_s),
 
-    // Passivce - T0
+    // Passive - T0
     im_init(ITEM_MUSCLE,        "muscle",        bits_s, work_s),
     im_init(ITEM_NODULE,        "nodule",        bits_s, work_s),
     im_init(ITEM_VEIN,          "vein",          bits_s, work_s),
@@ -121,6 +121,8 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_M_RELEASE     , "m-release",     bits_m, work_m),
     im_init(ITEM_M_LUNG        , "m-lung",        bits_m, work_m),
 
+    // Active - First
+    im_init_cfg(ITEM_BURNER,       "burner",    bits_m, work_m, im_burner_config),
     // Active - T0
     im_init_cfg(ITEM_DEPLOY,       "deploy",    bits_s, work_s, im_deploy_config),
     im_init_cfg(ITEM_EXTRACT,      "extract",   bits_s, work_s, im_extract_config),
@@ -141,7 +143,6 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config),
     // Active - T2
     im_init_cfg(ITEM_COLLIDER,     "collider",  bits_m, work_m, im_collider_config),
-    im_init_cfg(ITEM_BURNER,       "burner",    bits_m, work_m, im_burner_config),
     im_init_cfg(ITEM_PACKER,       "packer",    bits_m, work_m, im_packer_config),
     im_init_cfg(ITEM_NOMAD,        "nomad",     bits_m, work_m, im_nomad_config),
 
@@ -179,6 +180,8 @@ im_list_t im_list_control = im_list_control_arr;
 
 const enum item im_list_factory_arr[] =
 {
+    ITEM_BURNER,
+
     ITEM_DEPLOY,
     ITEM_EXTRACT,
     ITEM_PRINTER,

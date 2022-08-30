@@ -41,6 +41,7 @@
   (lab n &item-ferrofluid)
 
   ;; T2
+  (lab n &item-memory)
   (lab n &item-brain)
   (lab n &item-elem-h)
   (lab n &item-accelerator)

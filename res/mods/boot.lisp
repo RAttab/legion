@@ -218,7 +218,7 @@
   (deploy-tape &item-assembly &item-accelerator 2)
 
   (wait-tech &item-collider)
-  (deploy-tape &item-assembly &item-collider 1)
+  (deploy-item &item-assembly &item-collider 1)
 
   (io &io-grow collider-id collider-size)
   (while (< (ior &io-state collider-id &io-size) collider-size))

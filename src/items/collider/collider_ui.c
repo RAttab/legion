@@ -215,6 +215,8 @@ static void ui_collider_render(
     switch (ui->state.op)
     {
 
+    case im_collider_nil: { break; }
+
     case im_collider_grow: {
         ui_label_render(&ui->waiting, layout, renderer);
         ui_label_render(&ui->waiting_val, layout, renderer);
