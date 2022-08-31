@@ -92,7 +92,6 @@ static void im_storage_io_item(
     if (item == storage->item) return;
     im_storage_io_reset(storage, chunk);
     storage->item = item;
-    storage->count = 0;
 }
 
 static void im_storage_io(

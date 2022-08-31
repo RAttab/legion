@@ -32,7 +32,6 @@ void im_nomad_config(struct im_config *config)
     config->ui.alloc = ui_nomad_alloc;
     config->ui.free = ui_nomad_free;
     config->ui.update = ui_nomad_update;
-    config->ui.event = ui_nomad_event;
     config->ui.render = ui_nomad_render;
 
     config->io_list = im_nomad_io_list;

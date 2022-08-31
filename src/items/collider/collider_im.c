@@ -139,7 +139,7 @@ static void im_collider_step_out(
     collider->op = im_collider_in;
     collider->tape = tape_packed_it_zero(collider->tape);
 
-    collider->loops--;
+    if (collider->loops != loops_inf) collider->loops--;
     if (collider->loops) return;
 
     im_collider_reset(collider, chunk);
@@ -303,11 +303,12 @@ static bool im_collider_flow(const void *state, struct flow *flow)
 
     case im_collider_out: {
         if (!collider->out.item) return false;
+        enum item out = tape_packed_id(collider->tape);
         *flow = (struct flow) {
             .id = collider->id,
             .loops = collider->loops,
-            .target = tape_packed_id(collider->tape),
-            .rank = tapes_info(collider->out.item)->rank,
+            .target = out,
+            .rank = tapes_info(out)->rank,
             .out = collider->out.item,
             .tape_it = collider->out.it,
             .tape_len = collider->out.len,

@@ -146,7 +146,7 @@
 (defun poll ()
   (io &io-set packet-id packet-src 0)
 
-  (let ((recv-len (if (= (io &io-recv (self)) &io-ok) (head) 0)))
+  (let ((recv-len (ior &io-recv (self))))
 
     (let ((to-poll (+ (ior &io-get net-id net-len) 1)))
       (for (i 1) (and (<= i to-poll) (not recv-len)) (+ i 1)

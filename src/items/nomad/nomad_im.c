@@ -290,7 +290,7 @@ static void im_nomad_io_id(
     id_t id = args[0];
     enum item item = id_item(id);
 
-    if (!item_validate(args[0]))
+    if (!id_validate(args[0]))
         return chunk_log(chunk, nomad->id, IO_ID, IOE_A0_INVALID);
 
     if (!item_is_active(item) && !item_is_logistics(item))
@@ -450,11 +450,11 @@ static void im_nomad_io_launch(
         id_t id = args[1];
         enum item item = id_item(id);
 
-        if (!item_validate(args[1]))
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A0_INVALID);
+        if (!id_validate(args[1]))
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A1_INVALID);
 
         if (!item_is_active(item) && !item_is_logistics(item))
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A0_INVALID);
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A1_INVALID);
 
         if (!im_check_known(chunk, nomad->id, IO_LAUNCH, item)) return;
 
@@ -463,9 +463,9 @@ static void im_nomad_io_launch(
             return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_OUT_OF_SPACE);
 
         if (!chunk_delete(chunk, id))
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A0_INVALID);
+            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A1_INVALID);
 
-        im_nomad_cargo_inc(cargo, nomad->item);
+        im_nomad_cargo_inc(cargo, item);
     }
 
     const word_t data[im_nomad_data_len] = {

@@ -19,6 +19,9 @@ void energy_save(const struct energy *en, struct save *save)
     save_write_value(save, en->kwheel);
     save_write_value(save, en->battery);
     save_write_value(save, en->current);
+    save_write_value(save, en->produced);
+    save_write_value(save, en->consumed);
+    save_write_value(save, en->need);
     save_write_magic(save, save_magic_energy);
 }
 
@@ -29,5 +32,8 @@ bool energy_load(struct energy *en, struct save *save)
     save_read_into(save, &en->kwheel);
     save_read_into(save, &en->battery);
     save_read_into(save, &en->current);
+    save_read_into(save, &en->produced);
+    save_read_into(save, &en->consumed);
+    save_read_into(save, &en->need);
     return save_read_magic(save, save_magic_energy);
 }

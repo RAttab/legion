@@ -108,9 +108,6 @@ static void im_burner_io_item(
     if (!item_validate(args[0]))
         return chunk_log(chunk, burner->id, IO_ITEM, IOE_A0_INVALID);
 
-    if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, burner->id, IO_ITEM, IOE_A0_INVALID);
-
     if (!im_check_known(chunk, burner->id, IO_ITEM, item)) return;
 
     im_burner_reset(burner, chunk);
@@ -118,12 +115,15 @@ static void im_burner_io_item(
     burner->item = item;
     burner->loops = loops_io(len > 1 ? args[1] : loops_inf);
 
-    size_t sum = 0;
-    const struct tape_info *info = tapes_info(item);
-    for (enum item i = 0; i < array_len(info->elems); ++i) {
-        if (!info->elems[i]) continue;
-        sum += info->elems[i];
-        burner->output += i;
+    size_t sum = 1;
+    if (item_is_elem(item)) burner->output = item;
+    else {
+        const struct tape_info *info = tapes_info(item);
+        for (enum item i = 0; i < array_len(info->elems); ++i) {
+            if (!info->elems[i]) continue;
+            sum += info->elems[i];
+            burner->output += i;
+        }
     }
 
     burner->work.cap = legion_max(1UL, u64_log2(sum));
@@ -167,12 +167,15 @@ static bool im_burner_flow(const void *state, struct flow *flow)
     const struct im_burner *burner = state;
     if (!burner->item) return false;
 
+    enum item rank_item = burner->item;
+    if (rank_item == ITEM_ELEM_O) rank_item = ITEM_ELEM_M;
+
     *flow = (struct flow) {
         .id = burner->id,
         .loops = burner->loops,
         .target = burner->item,
         .in = burner->item,
-        .rank = tapes_info(burner->item)->rank + 1,
+        .rank = tapes_info(rank_item)->rank + 1,
     };
     return true;
 }

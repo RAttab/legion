@@ -466,12 +466,12 @@ static struct coord world_populate_home(struct sector *sector)
         const struct star *star = &sector->stars[i];
 
         if (star_scan(star, ITEM_ENERGY) < 10000) continue;
-        if (star_scan(star, ITEM_ELEM_A) < 20000) continue;
-        if (star_scan(star, ITEM_ELEM_B) < 20000) continue;
-        if (star_scan(star, ITEM_ELEM_C) < 20000) continue;
-        if (star_scan(star, ITEM_ELEM_D) < 10000) continue;
-        if (star_scan(star, ITEM_ELEM_G) < 1000) continue;
-        if (star_scan(star, ITEM_ELEM_H) < 1000) continue;
+        if (star_scan(star, ITEM_ELEM_A) < 50000) continue;
+        if (star_scan(star, ITEM_ELEM_B) < 50000) continue;
+        if (star_scan(star, ITEM_ELEM_C) < 50000) continue;
+        if (star_scan(star, ITEM_ELEM_D) < 50000) continue;
+        if (star_scan(star, ITEM_ELEM_G) < 20000) continue;
+        if (star_scan(star, ITEM_ELEM_H) < 20000) continue;
         return star->coord;
     }
     return coord_nil();

@@ -4,20 +4,20 @@
 (defconst extract-count 4)
 
 
-(defconst ix-home 1)
-(defconst ix-elem 2)
-(defconst ix-port 3)
+(defconst ix-home 0)
+(defconst ix-elem 1)
+(defconst ix-port 2)
 
-(defconst ix-nomad 1)
-(defconst ix-prober 2)
-(defconst ix-scanner 3)
-(defconst ix-target 7)
+(defconst ix-nomad 0)
+(defconst ix-prober 1)
+(defconst ix-scanner 2)
+(defconst ix-target 6)
 
 ;; The boot mod places sends a message to the brain before loading the
 ;; mod. Using this message we can easily tell whether we're booting in
 ;; the homeworld or whether we're roadming.
 (if (ior &io-recv (self))
-    (boot (head) (head) (head))
+    (boot (head))
     (roam))
 
 
@@ -83,7 +83,7 @@
 	!os-roam-pack
 	(ior &io-get (id &item-memory 1) ix-target)
 	(ior &io-get (id &item-nomad 1) ix-port))
-    (while (not (ior &io-recv (id &item-receive 1))))
+    (while (not (ior &io-receive (id &item-receive 1))))
     (assert (= (head) !os-roam-next)))
 
   ;; Pack
@@ -143,9 +143,10 @@
 	    (coord-inc (ior &io-state (ior &io-get state-id ix-scanner) &io-target)))))
 
       (star
-       (when (probe star
+       (when (> (probe star
 		    (ior &io-get state-id ix-prober)
 		    (ior &io-get (ior &io-get state-id ix-nomad) ix-elem))
+		2000)
 	 (io &io-set state-id ix-target star))))))
 
 

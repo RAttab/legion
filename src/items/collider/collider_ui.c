@@ -22,7 +22,7 @@ struct ui_collider
     struct font *font;
 
     struct ui_label size, size_val;
-    struct ui_label rate, rate_val;
+    struct ui_label rate, rate_val, rate_pct;
 
     struct ui_label op, op_val;
 
@@ -47,7 +47,8 @@ static void *ui_collider_alloc(struct font *font)
         .size_val = ui_label_new(font, ui_str_v(3)),
 
         .rate = ui_label_new(font, ui_str_c("rate: ")),
-        .rate_val = ui_label_new(font, ui_str_v(4)),
+        .rate_val = ui_label_new(font, ui_str_v(2)),
+        .rate_pct = ui_label_new(font, ui_str_c("%")),
 
         .op = ui_label_new(font, ui_str_c("op: ")),
         .op_val = ui_label_new(font, ui_str_v(8)),
@@ -154,7 +155,7 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, id_t id)
         ui_str_setc(&ui->op_val.str, "working");
 
         const struct tape *tape = tape_packed_ptr(state->tape);
-        ui_str_set_u64(&ui->size_val.str, tape_energy(tape));
+        ui_str_set_u64(&ui->energy_val.str, tape_energy(tape));
 
         ui_str_set_u64(&ui->work_left.str, state->work.left);
         ui_str_set_u64(&ui->work_cap.str, state->work.cap);
@@ -163,8 +164,8 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, id_t id)
 
     case im_collider_out: {
         ui_str_setc(&ui->op_val.str, "output");
-        ui_str_set_item(&ui->item.str, state->out.item);
-        ui_str_set_u64(&ui->out_left.str, state->out.it);
+        ui_str_set_item(&ui->item_val.str, state->out.item);
+        ui_str_set_u64(&ui->out_left.str, state->out.it + 1);
         ui_str_set_u64(&ui->out_cap.str, state->out.len);
         break;
     }
@@ -200,6 +201,7 @@ static void ui_collider_render(
 
     ui_label_render(&ui->rate, layout, renderer);
     ui_label_render(&ui->rate_val, layout, renderer);
+    ui_label_render(&ui->rate_pct, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_layout_sep_y(layout, ui->font->glyph_h);
@@ -211,6 +213,8 @@ static void ui_collider_render(
     ui_label_render(&ui->loops, layout, renderer);
     ui_label_render(&ui->loops_val, layout, renderer);
     ui_layout_next_row(layout);
+
+    ui_layout_sep_y(layout, ui->font->glyph_h);
 
     switch (ui->state.op)
     {

@@ -60,8 +60,14 @@ void tech_learn(struct tech *tech, enum item item)
         if (!info) continue;
 
         size_t intersect = tape_set_intersect(&tech->learned, &info->reqs);
-        if (intersect == tape_set_len(&info->reqs))
+        if (intersect == tape_set_len(&info->reqs)) {
             tape_set_put(&tech->known, it);
+
+            // We want to unlock elem-o whenever we unlock elem-m. Problem is
+            // that elem-o doesn't have a tape which means that we need a
+            // special shim for it. Not elegant but whatever.
+            if (it == ITEM_ELEM_M) tape_set_put(&tech->known, ITEM_ELEM_O);
+        }
     }
 }
 

@@ -17,6 +17,7 @@
 (defconst lab-count 4)
 (defconst active-count 1)
 (defconst storage-count 4)
+(defconst o-storage-count 16)
 
 (defconst energy-target 100)
 (defconst specs-solar-div 1000)
@@ -105,8 +106,8 @@
   (deploy-item &item-brain 1)
 
   (let ((id-brain (id &item-brain (count &item-brain))))
-    (assert (= (io &io-mod id-brain (mod lab 2)) &io-ok))
-    (assert (= (io &io-send id-brain !lab-count lab-count) &io-ok))))
+    (assert (= (io &io-send id-brain !lab-count lab-count) &io-ok))
+    (assert (= (io &io-mod id-brain (mod lab 2)) &io-ok))))
 
 
 ;; Energy - Solar
@@ -211,7 +212,7 @@
 ;; Collider
 
 (defconst collider-id (id &item-collider 1))
-(defconst collider-size 100)
+(defconst collider-size 16)
 
 (progn
   (wait-tech &item-accelerator)
@@ -227,11 +228,17 @@
   (io &io-tape collider-id &item-elem-m)
 
   ;; Until we have a burner we need to store the garbage o elements
-  (deploy-item &item-storage storage-count)
-  (set-item (- (count &item-storage) storage-count)
-	    storage-count
+  (deploy-item &item-storage o-storage-count)
+  (set-item (- (count &item-storage) (- o-storage-count 1))
+	    o-storage-count
 	    &item-storage
 	    &item-elem-o)
+
+  (deploy-item &item-storage storage-count)
+  (set-item (- (count &item-storage) (- storage-count 1))
+	    storage-count
+	    &item-storage
+	    &item-elem-m)
 
   ;; Burner
   (wait-tech &item-galvanic)
@@ -240,25 +247,25 @@
   (deploy-tape &item-assembly &item-battery 2)
   (wait-tech &item-biosteel)
   (deploy-tape &item-printer &item-biosteel 2)
-  (wait-tech &item-furnace)
-  (deploy-tape &item-assembly &item-furnace 2)
   (wait-tech &item-heat-exchange)
   (deploy-tape &item-assembly &item-heat-exchange 2)
-  (wait-tech &item-burner)
+  (wait-tech &item-furnace)
+  (deploy-tape &item-assembly &item-furnace 2)
 
-  (deploy-item &item-burner 8)
-  (set-item 1 8 &item-burner &item-elem-o))
+  (wait-tech &item-burner)
+  (deploy-item &item-burner 4)
+  (set-item 1 4 &item-burner &item-elem-o))
 
 
 ;; Nomad
 
 ;; Must match values in nomad mod
-(defconst nomad-ix-home 1)
-(defconst nomad-ix-elem 2)
-(defconst nomad-ix-port 3)
-(defconst nomad-ix-nomad 1)
-(defconst nomad-ix-prober 2)
-(defconst nomad-ix-scanner 3)
+(defconst nomad-ix-home 0)
+(defconst nomad-ix-elem 1)
+(defconst nomad-ix-port 2)
+(defconst nomad-ix-nomad 0)
+(defconst nomad-ix-prober 1)
+(defconst nomad-ix-scanner 2)
 
 (progn
   (deploy-tape &item-assembly &item-pill 1)

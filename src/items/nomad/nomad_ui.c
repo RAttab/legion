@@ -28,7 +28,6 @@ struct ui_nomad
 
     struct ui_label memory, memory_index, memory_val;
     struct ui_label cargo, cargo_count, cargo_item;
-    struct ui_scroll scroll;
 };
 
 static void *ui_nomad_alloc(struct font *font)
@@ -59,7 +58,6 @@ static void *ui_nomad_alloc(struct font *font)
         .cargo = ui_label_new(font, ui_str_c("cargo: ")),
         .cargo_count = ui_label_new(font, ui_str_v(3)),
         .cargo_item = ui_label_new(font, ui_str_v(item_str_len)),
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
     };
 
     ui->memory_index.fg = rgba_gray(0x88);
@@ -97,7 +95,6 @@ static void ui_nomad_free(void *_ui)
     ui_label_free(&ui->cargo);
     ui_label_free(&ui->cargo_count);
     ui_label_free(&ui->cargo_item);
-    ui_scroll_free(&ui->scroll);
 
     free(ui);
 }
@@ -142,19 +139,8 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, id_t id)
         ui_str_set_symbol(&ui->mod_val.str, &mod);
     }
 
-    ui_scroll_update(&ui->scroll, array_len(nomad->cargo));
     memcpy(ui->state.memory, nomad->memory, sizeof(nomad->memory));
     memcpy(ui->state.cargo, nomad->cargo, sizeof(nomad->cargo));
-}
-
-static bool ui_nomad_event(void *_ui, const SDL_Event *ev)
-{
-    struct ui_nomad *ui = _ui;
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
-
-    return false;
 }
 
 static void ui_nomad_render(
@@ -204,27 +190,19 @@ static void ui_nomad_render(
 
     ui_layout_sep_y(layout, ui->font->glyph_h);
 
-    {
-        ui_label_render(&ui->cargo, layout, renderer);
+    ui_label_render(&ui->cargo, layout, renderer);
+    ui_layout_next_row(layout);
+
+    for (size_t i = 0; i < im_nomad_cargo_len; ++i) {
+        struct im_nomad_cargo *cargo = ui->state.cargo + i;
+
+        ui_str_set_u64(&ui->cargo_count.str, cargo->count);
+        ui_label_render(&ui->cargo_count, layout, renderer);
+
+        ui_layout_sep_x(layout, ui->font->glyph_w);
+
+        ui_str_set_item(&ui->cargo_item.str, cargo->item);
+        ui_label_render(&ui->cargo_item, layout, renderer);
         ui_layout_next_row(layout);
-
-        struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
-        if (ui_layout_is_nil(&inner)) return;
-
-        size_t first = ui_scroll_first(&ui->scroll);
-        size_t last = ui_scroll_last(&ui->scroll);
-
-        for (size_t i = first; i < last; ++i) {
-            struct im_nomad_cargo *cargo = ui->state.cargo + i;
-
-            ui_str_set_u64(&ui->cargo_count.str, cargo->count);
-            ui_label_render(&ui->cargo_count, layout, renderer);
-
-            ui_layout_sep_x(&inner, ui->font->glyph_w);
-
-            ui_str_set_item(&ui->cargo_item.str, cargo->item);
-            ui_label_render(&ui->cargo_item, layout, renderer);
-            ui_layout_next_row(layout);
-        }
     }
 }

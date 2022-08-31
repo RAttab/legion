@@ -111,7 +111,6 @@ static void im_brain_log(
 
 static bool im_brain_step_recv(struct im_brain *brain)
 {
-    if (!brain->msg.len) return false;
     im_brain_recv(brain, brain->msg.data, brain->msg.len);
     brain->msg = (struct im_packet) {0};
     return true;

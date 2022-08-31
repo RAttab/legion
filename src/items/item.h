@@ -212,6 +212,11 @@ enum
 
 static_assert(ITEMS_NATURAL_LEN + ITEMS_SYNTH_LEN == 26);
 
+inline bool item_is_elem(enum item item)
+{
+    return item < ITEM_SYNTH_LAST;
+}
+
 inline bool item_is_active(enum item item)
 {
     return item >= ITEM_ACTIVE_FIRST && item < ITEM_ACTIVE_LAST;

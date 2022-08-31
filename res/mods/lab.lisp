@@ -4,7 +4,11 @@
 ;; there are easier ways to get it, we need to test that functionality
 ;; somewhere and this seems as good a time as any.
 
-(let ((n (recv-count)))
+(io &io-recv (self))
+(assert (= (head) 2))
+(assert (= (head) !lab-count))
+(let ((n (head)))
+
   ;; Elems
   (lab n &item-elem-a)
   (lab n &item-elem-b)
@@ -48,30 +52,21 @@
   (lab n &item-galvanic)
   (lab n &item-battery)
   (lab n &item-elem-m)
-  (lab n &item-elem-o)
   (lab n &item-biosteel)
   (lab n &item-heat-exchange)
   (lab n &item-furnace)
   (lab n &item-pill)
   (lab n &item-neurosteel)
+  (lab n &item-freezer)
+  (lab n &item-worker)
   (lab n &item-m-reactor)
   (lab n &item-m-condenser)
-  (lab n &item-m-lung))
+  (lab n &item-m-release)
+  (lab n &item-m-lung)
+  (lab n &item-packer))
 
 
 (defun lab (n item)
   (assert (= (io &io-ping (id &item-lab 1)) &io-ok))
   (for (id 1) (<= id n) (+ id 1) (io &io-item (id &item-lab id) item))
   (for (known 0) (not known) (ior &io-item-known (id &item-lab 1) item)))
-
-
-;; This is technically unecessary but it lets me test the send/recv
-;; mechanism.
-(defun recv-count ()
-  (let ((n 0))
-    (while (= n 0)
-       (set n (when (= (io &io-recv 0) &io-ok)
-		(assert (= (head) 2))
-		(assert (= (head) !lab-count))
-		(head))))
-    n))

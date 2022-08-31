@@ -771,8 +771,12 @@ void chunk_ports_reset(struct chunk *chunk, id_t id)
     struct ports *ports = active_ports(active, id);
     if (!ports) return;
 
-    if (ports->in_state == ports_requested)
-        ring32_replace(chunk->requested, id, 0);
+    if (ports->in_state == ports_requested) {
+        if (id_item(id) == ITEM_STORAGE)
+            ring32_replace(chunk->storage, id, 0);
+        else
+            ring32_replace(chunk->requested, id, 0);
+    }
 
     if (ports->out) {
         struct htable_ret ret = htable_get(&chunk->provided, ports->out);

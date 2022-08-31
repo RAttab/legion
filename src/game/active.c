@@ -44,11 +44,10 @@ bool active_delete(struct active *active, id_t id)
     size_t index = id_bot(id)-1;
     if (index >= active->len) return false;
 
-    bool found = false;
     if (likely(active->cap <= 64)){
         const uint64_t mask = 1ULL << index;
 
-        found = active->free & mask;
+        if (active->free & mask) return false;
         active->free |= mask;
     }
     else {
@@ -56,7 +55,7 @@ bool active_delete(struct active *active, id_t id)
         const uint64_t mask = 1ULL << (index % 64);
         const size_t ix = index / 64;
 
-        found = vec->vals[ix] & mask;
+        if (vec->vals[ix] & mask) return false;
         vec->vals[ix] |= mask;
     }
 
@@ -64,7 +63,7 @@ bool active_delete(struct active *active, id_t id)
     if (!active->count && !active->create)
         active_free(active);
 
-    return found;
+    return true;
 }
 
 inline bool active_deleted(struct active *active, size_t index)
