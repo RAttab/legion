@@ -44,8 +44,8 @@ static void im_port_step(void *state, struct chunk *chunk)
         if (!chunk_ports_produce(chunk, port->id, port->has.item)) return;
         port->has.count--;
 
-        if (!port->has.count) port->has.item = port->want.item;
-        return;
+        if (port->has.count) return;
+        port->has.item = port->want.item;
     }
 
     if (port->has.count < port->want.count) {

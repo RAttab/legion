@@ -1,4 +1,4 @@
-/* storage.c
+/* storage_test.c
    Rémi Attab (remi.attab@gmail.com), 30 Aug 2022
    FreeBSD-style copyright and disclaimer apply
 */
@@ -10,24 +10,6 @@
 // -----------------------------------------------------------------------------
 // test
 // -----------------------------------------------------------------------------
-
-void step_for(struct world *world, world_ts_t ticks)
-{
-    for (world_ts_t ts = 0; ts < ticks; ++ts) world_step(world);
-}
-
-size_t storage_count(struct chunk *chunk, id_t storage_id, id_t test_id)
-{
-    const word_t io_loop = IO_LOOP;
-    const struct im_test *test = chunk_get(chunk, test_id);
-
-    chunk_io(chunk, IO_STATE, test_id, storage_id, &io_loop, 1);
-    assert(test->io == IO_RETURN);
-    assert(test->src == storage_id);
-    assert(test->len == 1);
-
-    return test->args[0];
-}
 
 void test_storage(void)
 {

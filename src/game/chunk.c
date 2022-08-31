@@ -732,13 +732,13 @@ bool chunk_lanes_dock(struct chunk *chunk, word_t *data)
 
 void chunk_lanes_launch(
         struct chunk *chunk,
-        enum item type, size_t speed,
+        enum item item, size_t speed,
         struct coord dst,
         const word_t *data, size_t len)
 {
     assert(chunk->world);
 
-    switch (type)
+    switch (item)
     {
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: { break; }
     case ITEM_PILL: { break; }
@@ -748,7 +748,7 @@ void chunk_lanes_launch(
 
     world_lanes_launch(
             chunk->world,
-            chunk->owner, type, speed,
+            chunk->owner, item, speed,
             chunk->star.coord, dst,
             data, len);
 }
@@ -871,7 +871,9 @@ static bool chunk_ports_step_queue(
 
     id_t src = ring32_pop(provided);
     if (!src) { chunk->workers.clean++; goto nomatch; }
-    if (src == dst) { // storage can end up being both src and dst.
+
+    // Moving to and from storage just adds noise.
+    if (id_item(src) == ITEM_STORAGE && id_item(dst) == ITEM_STORAGE) {
         ring32_push(provided, src);
         goto nomatch;
     }

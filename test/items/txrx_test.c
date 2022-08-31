@@ -1,4 +1,4 @@
-/* txrx.c
+/* txrx_test.c
    Rémi Attab (remi.attab@gmail.com), 28 Aug 2021
    FreeBSD-style copyright and disclaimer apply
 */
@@ -43,7 +43,7 @@ void test_txrx(void)
 
     { // unconfigured
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
-        wait(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_speed, src, dst);
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
     }
@@ -53,7 +53,7 @@ void test_txrx(void)
         chunk_io(chunk_src, IO_TARGET, 0, id_tx, &target, 1);
 
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
-        wait(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_speed, src, dst);
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
     }
@@ -68,7 +68,7 @@ void test_txrx(void)
     for (size_t it = 0; it < 5; ++it) {
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
 
-        wait(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_speed, src, dst);
 
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, IO_RECV, id_rx, packet, array_len(packet)));
@@ -82,7 +82,7 @@ void test_txrx(void)
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
 
-        wait(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_speed, src, dst);
 
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, IO_RECV, id_rx, packet, array_len(packet)));
@@ -96,7 +96,7 @@ void test_txrx(void)
         chunk_io(chunk_dst, IO_RESET, 0, id_rx, NULL, 0);
 
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
-        wait(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_speed, src, dst);
         chunk_io(chunk_dst, IO_RECEIVE, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, IO_RECV, id_rx, NULL, 0));
 
