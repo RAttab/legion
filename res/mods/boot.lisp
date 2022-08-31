@@ -218,7 +218,7 @@
   (deploy-tape &item-assembly &item-accelerator 2)
 
   (wait-tech &item-collider)
-  (deploy-item &item-assembly &item-collider 1)
+  (deploy-item &item-collider 1)
 
   (io &io-grow collider-id collider-size)
   (while (< (ior &io-state collider-id &io-size) collider-size))
@@ -284,26 +284,26 @@
   (deploy-tape &item-assembly &item-port 1)
 
   (wait-tech &item-nomad)
-  (deploy-item &item-assembly &item-nomad 4)
+  (deploy-item &item-nomad 4)
   (io &io-set (id &item-nomad 1) nomad-ix-elem &item-elem-e)
   (io &io-set (id &item-nomad 2) nomad-ix-elem &item-elem-f)
   (io &io-set (id &item-nomad 3) nomad-ix-elem &item-elem-i)
   (io &io-set (id &item-nomad 4) nomad-ix-elem &item-elem-j)
 
   (for (it 1) (<= it 4) (+ it 1)
-       (deploy-item &item-assembly &item-port 1)
+       (deploy-item &item-port 1)
        (io &io-set (id &item-nomad it) nomad-ix-home (ior &io-coord (self)))
        (io &io-set (id &item-nomad it) nomad-ix-port (id &item-port (count &item-port)))
 
-       (deploy-item &item-assembly &item-memory 1)
+       (deploy-item &item-memory 1)
        (let ((state-id (id &item-memory (count &item-memory))))
 	 (io &io-set state-id nomad-ix-nomad (id &item-nomad it))
-	 (deploy-item &item-assembly &item-prober 1)
+	 (deploy-item &item-prober 1)
 	 (io &io-set state-id nomad-ix-prober (id &item-prober (count &item-prober)))
-	 (deploy-item &item-assembly &item-scanner 1)
+	 (deploy-item &item-scanner 1)
 	 (io &io-set state-id nomad-ix-scanner (id &item-scanner (count &item-scanner)))
 
-	 (deploy-item &item-assembly &item-brain 1)
+	 (deploy-item &item-brain 1)
 	 (io &io-send (id &item-brain (count &item-brain)) state-id)
 	 (io &io-mod (id &item-brain (count &item-brain)) (mod nomad 2)))))
 
