@@ -506,8 +506,10 @@ void world_populate_user(struct world *world, user_t id)
         struct chunk *chunk = world_chunk_alloc(world, user->home, user->id);
         assert(chunk);
 
-        for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++)
-            chunk_create(chunk, *it);
+        for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++) {
+            bool ok = chunk_create(chunk, *it);
+            assert(ok);
+        }
 
         break;
     }

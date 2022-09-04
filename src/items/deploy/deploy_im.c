@@ -50,7 +50,8 @@ static void im_deploy_step(void *state, struct chunk *chunk)
     if (!ret) return;
     assert(ret == deploy->item);
 
-    chunk_create(chunk, deploy->item);
+    if (!chunk_create(chunk, deploy->item))
+        chunk_log(chunk, deploy->id, IO_STEP, IOE_OUT_OF_SPACE);
 
     deploy->waiting = false;
     if (deploy->loops != loops_inf) --deploy->loops;

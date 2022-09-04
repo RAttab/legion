@@ -535,18 +535,18 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
     }
 }
 
-void chunk_create(struct chunk *chunk, enum item item)
+bool chunk_create(struct chunk *chunk, enum item item)
 {
-    if (chunk_create_logistics(chunk, item)) return;
-    active_create(active_index_assert(chunk, item));
+    if (chunk_create_logistics(chunk, item)) return true;
+    return active_create(active_index_assert(chunk, item));
 }
 
-void chunk_create_from(
+bool chunk_create_from(
         struct chunk *chunk, enum item item, const word_t *data, size_t len)
 {
 
-    if (chunk_create_logistics(chunk, item)) { assert(!len); return; }
-    active_create_from(active_index_assert(chunk, item), chunk, data, len);
+    if (chunk_create_logistics(chunk, item)) { assert(!len); return true; }
+    return active_create_from(active_index_assert(chunk, item), chunk, data, len);
 }
 
 bool chunk_delete(struct chunk *chunk, id_t id)
@@ -704,7 +704,8 @@ void chunk_lanes_arrive(
     {
 
     case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
-        chunk_create_from(chunk, item, data, len);
+        if (!chunk_create_from(chunk, item, data, len))
+            chunk_log(chunk, make_id(item, 0), IO_ARRIVE, IOE_OUT_OF_SPACE);
         break;
     }
 

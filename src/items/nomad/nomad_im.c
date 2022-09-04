@@ -158,13 +158,22 @@ static void im_nomad_make(
         struct im_nomad_cargo *cargo = nomad->cargo + i;
 
         while (cargo->item) {
-            switch (cargo->item) {
+            switch (cargo->item)
+            {
+
             case ITEM_BRAIN: {
-                chunk_create_from(chunk, cargo->item, &mod, mod ? 1 : 0);
-                mod = 0;
+                if (!chunk_create_from(chunk, cargo->item, &mod, mod ? 1 : 0))
+                    chunk_log(chunk, nomad->id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                else mod = 0;
                 break;
             }
-            default: { chunk_create(chunk, cargo->item); break; }
+
+            default: {
+                if (!chunk_create(chunk, cargo->item))
+                    chunk_log(chunk, nomad->id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                break;
+            }
+
             }
 
             im_nomad_cargo_dec(cargo, cargo->item);

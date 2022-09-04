@@ -41,16 +41,17 @@ static_assert(sizeof(struct ports) == 4);
 // active
 // -----------------------------------------------------------------------------
 
+enum { active_cap = 256 };
 
 legion_packed struct active
 {
     bool skip;
     enum item type;
     uint8_t size;
-    legion_pad(5);
+    legion_pad(1);
 
-    uint16_t count, len, cap;
-    uint16_t create;
+    uint8_t count, len, cap;
+    uint8_t create;
 
     void *arena;
     struct ports *ports;
@@ -58,7 +59,8 @@ legion_packed struct active
 
     im_step_t step;
     im_io_t io;
-    legion_pad(8);
+
+    legion_pad(8 * 2);
 };
 
 static_assert(sizeof(struct active) == s_cache_line);
@@ -78,8 +80,8 @@ void *active_get(struct active *, id_t id);
 struct ports *active_ports(struct active *active, id_t id);
 
 bool active_copy(struct active *, id_t id, void *dst, size_t len);
-void active_create(struct active *);
-void active_create_from(struct active *, struct chunk *, const word_t *data, size_t len);
+bool active_create(struct active *);
+bool active_create_from(struct active *, struct chunk *, const word_t *data, size_t len);
 bool active_delete(struct active *, id_t id);
 
 void active_step(struct active *, struct chunk *);

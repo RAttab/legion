@@ -261,16 +261,21 @@ static void active_grow(struct active *active)
 // Given that an item can replicate itself through this function (assembler
 // generating a new assembler), moving the pointers around would break things so
 // we prefer to defer to creation process.
-void active_create(struct active *active)
+bool active_create(struct active *active)
 {
+    if (active->count + active->create == active_cap) return false;
+
     active->create++;
+    return true;
 }
 
 // This creation function is not used for replication (...yet) which means that
 // we don't need to defer the creation (... yet)
-void active_create_from(
+bool active_create_from(
         struct active *active, struct chunk *chunk, const word_t *data, size_t len)
 {
+    if (active->count + active->create == active_cap) return false;
+
     const struct im_config *config = im_config_assert(active->type);
     assert(config->im.make);
 
@@ -286,6 +291,8 @@ void active_create_from(
 
     config->im.make(item, chunk, id, data, len);
     active->count++;
+
+    return true;
 }
 
 void active_step(

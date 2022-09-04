@@ -55,8 +55,8 @@ struct vec64 *chunk_list_filter(struct chunk *, im_list_t filter);
 const void *chunk_get(struct chunk *, id_t);
 bool chunk_copy(struct chunk *, id_t, void *dst, size_t len);
 bool chunk_delete(struct chunk *, id_t id);
-void chunk_create(struct chunk *, enum item);
-void chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len);
+bool chunk_create(struct chunk *, enum item);
+bool chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len);
 
 
 void chunk_step(struct chunk *);

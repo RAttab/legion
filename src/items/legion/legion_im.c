@@ -57,10 +57,27 @@ static void im_legion_make(
 
     for (const enum item *it = im_legion_cargo(id_item(id)); *it; ++it) {
 
-        switch (*it) {
-        case ITEM_BRAIN:  { chunk_create_from(chunk, *it, &mod, src ? 1 : 0);  break; }
-        case ITEM_MEMORY: { chunk_create_from(chunk, *it, &src, mod ? 1 : 0);  break; }
-        default: { chunk_create(chunk, *it); }
+        switch (*it)
+        {
+
+        case ITEM_BRAIN:  {
+            if (!chunk_create_from(chunk, *it, &mod, src ? 1 : 0))
+                chunk_log(chunk, id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+            break;
+        }
+
+        case ITEM_MEMORY: {
+            if (!chunk_create_from(chunk, *it, &src, mod ? 1 : 0))
+                chunk_log(chunk, id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+            break;
+        }
+
+        default: {
+            if (!chunk_create(chunk, *it))
+                chunk_log(chunk, id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+            break;
+        }
+
         }
     }
 

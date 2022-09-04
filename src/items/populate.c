@@ -239,6 +239,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_OK),
     io_init(IO_FAIL),
     io_init(IO_STEP),
+    io_init(IO_ARRIVE),
     io_init(IO_RETURN),
     io_init(IO_PING),
     io_init(IO_PONG),
