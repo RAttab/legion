@@ -55,7 +55,7 @@ static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_t id)
 {
     brain->mod_id = id;
     brain->mod = id ? mods_get(world_mods(chunk_world(chunk)), id) : NULL;
-    brain->mod_fault = id && !brain->mod;
+    brain->fault = id && !brain->mod;
 }
 
 static uint8_t im_brain_speed(struct im_brain *brain)
@@ -150,7 +150,7 @@ static void im_brain_step_io(
 
 static void im_brain_vm_step(struct im_brain *brain, struct chunk *chunk)
 {
-    if (!brain->mod || brain->mod_fault || vm_fault(&brain->vm)) return;
+    if (!brain->mod || brain->fault || vm_fault(&brain->vm)) return;
 
     mod_t mod = vm_exec(&brain->vm, brain->mod);
     if (brain->vm.ip == brain->breakpoint) brain->debug = true;

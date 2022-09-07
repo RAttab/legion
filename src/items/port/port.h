@@ -21,6 +21,9 @@ enum { im_port_speed = 100 };
 struct legion_packed im_port
 {
     id_t id;
+
+    legion_pad(2);
+
     struct legion_packed { enum item item; uint8_t count; } has, want;
     struct coord target;
 };

@@ -22,16 +22,13 @@ struct legion_packed im_brain
 {
     id_t id;
 
-    mod_t mod_id;
-    const struct mod *mod;
-    bool mod_fault;
-
-    legion_pad(2);
-
+    bool fault;
     bool debug;
     ip_t breakpoint;
 
-    legion_pad(8);
+    mod_t mod_id;
+    legion_pad(12);
+    const struct mod *mod;
 
     struct im_packet msg;
 

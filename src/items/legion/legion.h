@@ -21,6 +21,9 @@ enum { im_legion_speed = 100 };
 struct legion_packed im_legion
 {
     id_t id;
+
+    legion_pad(2);
+
     mod_t mod;
 };
 

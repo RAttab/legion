@@ -22,6 +22,7 @@ struct legion_packed logi
     struct coord star;
     world_ts_t time;
     id_t id;
+    legion_pad(2);
     word_t key, value;
 };
 

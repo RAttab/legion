@@ -20,9 +20,12 @@ struct im_config;
 struct legion_packed im_deploy
 {
     id_t id;
-    loops_t loops;
+
     enum item item;
+    loops_t loops;
     bool waiting;
+
+    legion_pad(3);
 };
 
 static_assert(sizeof(struct im_deploy) == 8);

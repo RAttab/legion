@@ -17,6 +17,7 @@
 
 static void chunk_ports_step(struct chunk *);
 
+
 // -----------------------------------------------------------------------------
 // cargo
 // -----------------------------------------------------------------------------
@@ -36,8 +37,8 @@ struct chunk
 
     // Ports
     struct htable provided;
-    struct ring32 *requested;
-    struct ring32 *storage;
+    struct ring16 *requested;
+    struct ring16 *storage;
 
     // Logistics
     struct energy energy;
@@ -82,8 +83,8 @@ struct chunk *chunk_alloc_empty(void)
     struct chunk *chunk = calloc(1, sizeof(*chunk));
     *chunk = (struct chunk) {
         .log = log_new(chunk_log_cap),
-        .requested = ring32_reserve(16),
-        .storage = ring32_reserve(1),
+        .requested = ring16_reserve(16),
+        .storage = ring16_reserve(1),
         .pills = ring64_reserve(2),
         .workers.ops = vec64_reserve(1),
     };
@@ -112,20 +113,16 @@ void chunk_free(struct chunk *chunk)
 {
     log_free(chunk->log);
 
-    ring32_free(chunk->requested);
-    ring32_free(chunk->storage);
+    ring16_free(chunk->requested);
+    ring16_free(chunk->storage);
 
     for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
-        ring32_free((void *) it->value);
+        ring16_free((void *) it->value);
     htable_reset(&chunk->provided);
 
     ring64_free(chunk->pills);
     vec64_free(chunk->workers.ops);
-
-    for (const struct htable_bucket *it = htable_next(&chunk->listen, NULL);
-         it; it = htable_next(&chunk->listen, it))
-        free((void *) it->value);
     htable_reset(&chunk->listen);
 
     for (struct active *it = active_next(chunk, NULL);
@@ -146,7 +143,7 @@ static void chunk_save_provided(struct chunk *chunk, struct save *save)
          it; it = htable_next(&chunk->provided, it))
     {
         save_write_value(save, (enum item) it->key);
-        ring32_save((struct ring32 *) it->value, save);
+        ring16_save((struct ring16 *) it->value, save);
     }
 }
 
@@ -158,7 +155,7 @@ static bool chunk_load_provided(struct chunk *chunk, struct save *save)
     for (size_t i = 0; i < len; ++i) {
         enum item item = save_read_type(save, typeof(item));
 
-        struct ring32 *ring = ring32_load(save);
+        struct ring16 *ring = ring16_load(save);
         if (!ring) return false;
 
         struct htable_ret ret = htable_put(&chunk->provided, item, (uintptr_t) ring);
@@ -175,7 +172,7 @@ static void chunk_save_listen(struct chunk *chunk, struct save *save)
          it; it = htable_next(&chunk->listen, it))
     {
         save_write_value(save, it->key);
-        save_write(save, (id_t *) it->value, im_channel_max * sizeof(id_t));
+        save_write_value(save, it->value);
     }
 }
 
@@ -185,15 +182,12 @@ static bool chunk_load_listen(struct chunk *chunk, struct save *save)
     htable_reserve(&chunk->listen, len);
     for (size_t i = 0; i < len; ++i) {
         uint64_t src = save_read_type(save, typeof(src));
+        uint64_t chans = save_read_type(save, typeof(chans));
+
         struct htable_ret ret = htable_get(&chunk->listen, src);
-
-        id_t *channels = (void *) ret.value;
-        if (!ret.ok) channels = calloc(im_channel_max, sizeof(*channels));
-        save_read(save, channels, im_channel_max * sizeof(*channels));
-
         if (ret.ok)
-            ret = htable_xchg(&chunk->listen, src, (uintptr_t) channels);
-        else ret = htable_put(&chunk->listen, src, (uintptr_t) channels);
+            ret = htable_xchg(&chunk->listen, src, chans);
+        else ret = htable_put(&chunk->listen, src, chans);
         assert(ret.ok);
     }
 
@@ -228,8 +222,8 @@ void chunk_save(struct chunk *chunk, struct save *save)
     star_save(&chunk->star, save);
 
     chunk_save_provided(chunk, save);
-    ring32_save(chunk->requested, save);
-    ring32_save(chunk->storage, save);
+    ring16_save(chunk->requested, save);
+    ring16_save(chunk->storage, save);
 
     ring64_save(chunk->pills, save);
     energy_save(&chunk->energy, save);
@@ -255,8 +249,8 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     star_load(&chunk->star, save);
 
     if (!chunk_load_provided(chunk, save)) goto fail;
-    if (!(chunk->requested = ring32_load(save))) goto fail;
-    if (!(chunk->storage = ring32_load(save))) goto fail;
+    if (!(chunk->requested = ring16_load(save))) goto fail;
+    if (!(chunk->storage = ring16_load(save))) goto fail;
 
     if (!(chunk->pills = ring64_load(save))) goto fail;
     if (!energy_load(&chunk->energy, save)) goto fail;
@@ -287,11 +281,11 @@ static void chunk_save_delta_provided(
         struct ring_ack rack = ring_ack_from_u64(ret.value);
 
         // Optimization to avoid sending full deltas for acknowledged empty rings.
-        struct ring32 *ring = (void *) it->value;
+        struct ring16 *ring = (void *) it->value;
         if (rack.head == rack.tail && ring->head == ring->tail) continue;
 
         save_write_value(save, (enum item) it->key);
-        ring32_save_delta(ring, save, &rack);
+        ring16_save_delta(ring, save, &rack);
     }
 
     save_write_value(save, (enum item) 0);
@@ -307,10 +301,10 @@ static bool chunk_load_delta_provided(
         struct ring_ack rack = ring_ack_from_u64(ret_ack.value);
 
         struct htable_ret ret = htable_get(&chunk->provided, item);
-        struct ring32 *ring = (void *) ret.value;
+        struct ring16 *ring = (void *) ret.value;
 
-        if (!ring32_load_delta(&ring, save, &rack)) {
-            if (!ret.ok) ring32_free(ring);
+        if (!ring16_load_delta(&ring, save, &rack)) {
+            if (!ret.ok) ring16_free(ring);
             return false;
         }
 
@@ -374,8 +368,8 @@ void chunk_save_delta(
     if (!coord_eq(ack->chunk.coord, chunk->star.coord)) cack = &cack_nil;
 
     chunk_save_delta_provided(chunk, save, cack);
-    ring32_save_delta(chunk->requested, save, &cack->requested);
-    ring32_save_delta(chunk->storage, save, &cack->storage);
+    ring16_save_delta(chunk->requested, save, &cack->requested);
+    ring16_save_delta(chunk->storage, save, &cack->storage);
 
     ring64_save_delta(chunk->pills, save, &cack->pills);
     energy_save(&chunk->energy, save);
@@ -400,8 +394,8 @@ bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
     if (!coord_eq(ack->chunk.coord, chunk->star.coord)) ack_reset_chunk(ack);
 
     if (!chunk_load_delta_provided(chunk, save, &ack->chunk)) return false;
-    if (!ring32_load_delta(&chunk->requested, save, &ack->chunk.requested)) return false;
-    if (!ring32_load_delta(&chunk->storage, save, &ack->chunk.storage)) return false;
+    if (!ring16_load_delta(&chunk->requested, save, &ack->chunk.requested)) return false;
+    if (!ring16_load_delta(&chunk->storage, save, &ack->chunk.storage)) return false;
 
     if (!ring64_load_delta(&chunk->pills, save, &ack->chunk.pills)) return false;
     if (!energy_load(&chunk->energy, save)) return false;
@@ -642,39 +636,39 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
 void chunk_lanes_listen(
         struct chunk *chunk, id_t id, struct coord src, uint8_t chan)
 {
-    assert(chan < im_channel_max);
+    assert(chan < im_channels_max);
 
     const uint64_t key = coord_to_u64(src);
     struct htable_ret ret = htable_get(&chunk->listen, key);
 
-    id_t *channels = (void *) ret.value;
-    if (!ret.ok) {
-        channels = calloc(im_channel_max, sizeof(*channels));
-        ret = htable_put(&chunk->listen, key, (uintptr_t) channels);
-        assert(ret.ok);
-    }
+    struct im_channels channels = im_channels_from_u64(ret.value);
+    if (!channels.c[chan]) channels.c[chan] = id;
+    uint64_t value = im_channels_as_u64(channels);
 
-    if (!channels[chan]) channels[chan] = id;
+    if (ret.ok)
+        ret = htable_xchg(&chunk->listen, key, value);
+    else ret = htable_put(&chunk->listen, key, value);
+    assert(ret.ok);
 }
 
 void chunk_lanes_unlisten(
         struct chunk *chunk, id_t id, struct coord src, uint8_t chan)
 {
-    assert(chan < im_channel_max);
+    assert(chan < im_channels_max);
 
     const uint64_t key = coord_to_u64(src);
     struct htable_ret ret = htable_get(&chunk->listen, key);
     if (!ret.ok) return;
 
-    id_t *channels = (void *) ret.value;
-    if (channels[chan] != id) return;
+    struct im_channels channels = im_channels_from_u64(ret.value);
+    if (channels.c[chan] != id) return;
 
-    channels[chan] = 0;
+    channels.c[chan] = 0;
+    uint64_t value = im_channels_as_u64(channels);
 
-    for (size_t i = 0; i < im_channel_max; ++i)
-        if (channels[i]) return;
-    free(channels);
-    ret = htable_del(&chunk->listen, key);
+    if (value)
+        ret = htable_xchg(&chunk->listen, key, value);
+    else ret = htable_del(&chunk->listen, key);
     assert(ret.ok);
 }
 
@@ -689,7 +683,8 @@ static void chunk_lanes_receive(
     struct htable_ret ret = htable_get(&chunk->listen, coord_to_u64(src));
     if (!ret.ok) return;
 
-    id_t dst = ((id_t *) ret.value)[packet_chan];
+    struct im_channels channels = im_channels_from_u64(ret.value);
+    id_t dst = channels.c[packet_chan];
     if (!dst) return;
 
     chunk_io(chunk, IO_RECV, 0, dst, data, len);
@@ -759,7 +754,7 @@ void chunk_lanes_launch(
 // ports
 // -----------------------------------------------------------------------------
 
-static void ring32_replace(struct ring32 *ring, uint32_t old, uint32_t new)
+static void ring16_replace(struct ring16 *ring, uint32_t old, uint32_t new)
 {
     for (size_t i = 0; i < ring->cap; ++i) {
         if (ring->vals[i] == old) ring->vals[i] = new;
@@ -774,16 +769,16 @@ void chunk_ports_reset(struct chunk *chunk, id_t id)
 
     if (ports->in_state == ports_requested) {
         if (id_item(id) == ITEM_STORAGE)
-            ring32_replace(chunk->storage, id, 0);
+            ring16_replace(chunk->storage, id, 0);
         else
-            ring32_replace(chunk->requested, id, 0);
+            ring16_replace(chunk->requested, id, 0);
     }
 
     if (ports->out) {
         struct htable_ret ret = htable_get(&chunk->provided, ports->out);
         assert(ret.ok);
 
-        ring32_replace((struct ring32 *) ret.value, id, 0);
+        ring16_replace((struct ring16 *) ret.value, id, 0);
     }
 
     *ports = (struct ports) {0};
@@ -798,18 +793,18 @@ bool chunk_ports_produce(struct chunk *chunk, id_t id, enum item item)
     if (ports->out != ITEM_NIL) return false;
     ports->out = item;
 
-    struct ring32 *provided = NULL;
+    struct ring16 *provided = NULL;
     struct htable_ret hret = htable_get(&chunk->provided, item);
 
-    if (likely(hret.ok)) provided = (struct ring32 *) hret.value;
+    if (likely(hret.ok)) provided = (struct ring16 *) hret.value;
     else {
-        provided = ring32_reserve(1);
+        provided = ring16_reserve(1);
         hret = htable_put(&chunk->provided, item, (uint64_t) provided);
         assert(hret.ok);
     }
     assert(provided);
 
-    struct ring32 *rret = ring32_push(provided, id);
+    struct ring16 *rret = ring16_push(provided, id);
     if (unlikely(rret != provided)) {
         hret = htable_xchg(&chunk->provided, item, (uint64_t) rret);
         assert(hret.ok);
@@ -838,8 +833,8 @@ void chunk_ports_request(struct chunk *chunk, id_t id, enum item item)
     ports->in_state = ports_requested;
 
     if (id_item(id) == ITEM_STORAGE)
-        chunk->storage = ring32_push(chunk->storage, id);
-    else chunk->requested = ring32_push(chunk->requested, id);
+        chunk->storage = ring16_push(chunk->storage, id);
+    else chunk->requested = ring16_push(chunk->requested, id);
 }
 
 enum item chunk_ports_consume(struct chunk *chunk, id_t id)
@@ -856,12 +851,12 @@ enum item chunk_ports_consume(struct chunk *chunk, id_t id)
 }
 
 static bool chunk_ports_step_queue(
-        struct chunk *chunk, struct ring32 *requested, id_t *stop)
+        struct chunk *chunk, struct ring16 *requested, id_t *stop)
 {
-    if (ring32_empty(requested)) return false;
-    if (*stop && *stop == ring32_peek(requested)) return false;
+    if (ring16_empty(requested)) return false;
+    if (*stop && *stop == ring16_peek(requested)) return false;
 
-    id_t dst = ring32_pop(requested);
+    id_t dst = ring16_pop(requested);
     if (!dst)  { chunk->workers.clean++; return true; }
 
     struct ports *in = active_ports(active_index_assert(chunk, id_item(dst)), dst);
@@ -870,16 +865,16 @@ static bool chunk_ports_step_queue(
     struct htable_ret hret = htable_get(&chunk->provided, in->in);
     if (!hret.ok) goto nomatch;
 
-    struct ring32 *provided = (struct ring32 *) hret.value;
+    struct ring16 *provided = (struct ring16 *) hret.value;
     assert(provided);
-    if (ring32_empty(provided)) goto nomatch;
+    if (ring16_empty(provided)) goto nomatch;
 
-    id_t src = ring32_pop(provided);
+    id_t src = ring16_pop(provided);
     if (!src) { chunk->workers.clean++; goto nomatch; }
 
     // Moving to and from storage just adds noise.
     if (id_item(src) == ITEM_STORAGE && id_item(dst) == ITEM_STORAGE) {
-        ring32_push(provided, src);
+        ring16_push(provided, src);
         goto nomatch;
     }
 
@@ -896,7 +891,7 @@ static bool chunk_ports_step_queue(
 
   nomatch:
     {
-        struct ring32 *rret = ring32_push(requested, dst);
+        struct ring16 *rret = ring16_push(requested, dst);
         assert(rret == requested);
         if (!*stop) *stop = dst;
         chunk->workers.fail++;
@@ -909,7 +904,7 @@ static void chunk_ports_step(struct chunk *chunk)
     chunk->workers.idle = 0;
     chunk->workers.fail = 0;
     chunk->workers.clean = 0;
-    chunk->workers.queue = ring32_len(chunk->requested);
+    chunk->workers.queue = ring16_len(chunk->requested);
     chunk->workers.ops->len = 0;
 
     size_t worker = 0;

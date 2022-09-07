@@ -24,7 +24,8 @@ struct legion_packed im_scanner
     id_t id;
 
     struct { uint8_t left; uint8_t cap; } work;
-    legion_pad(2);
+
+    legion_pad(4);
 
     struct world_scan_it it;
     word_t result;

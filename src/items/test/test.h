@@ -26,7 +26,7 @@ struct legion_packed im_test
     id_t src;
     enum io io;
     uint8_t len;
-    legion_pad(1);
+    legion_pad(4);
     word_t args[7];
 };
 

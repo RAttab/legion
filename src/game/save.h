@@ -18,11 +18,12 @@ struct symbol;
 enum legion_packed save_magic
 {
     save_magic_vec64  = 0x01,
-    save_magic_ring32 = 0x02,
-    save_magic_ring64 = 0x03,
-    save_magic_htable = 0x04,
-    save_magic_symbol = 0x05,
-    save_magic_heap   = 0x06,
+    save_magic_ring16 = 0x02,
+    save_magic_ring32 = 0x03,
+    save_magic_ring64 = 0x04,
+    save_magic_htable = 0x05,
+    save_magic_symbol = 0x06,
+    save_magic_heap   = 0x07,
 
     save_magic_sim      = 0x10,
     save_magic_world    = 0x11,

@@ -184,7 +184,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
         ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod_id));
     }
 
-    if (state->mod_fault) {
+    if (state->fault) {
         ui_str_setc(&ui->mod_fault_val.str, "true");
         ui->mod_fault_val.fg = rgba_red();
     }

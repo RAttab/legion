@@ -58,7 +58,7 @@ static void im_transmit_io_channel(
     if (!im_check_args(chunk, transmit->id, IO_CHANNEL, len, 1)) return;
 
     uint8_t channel = args[0];
-    if (args[0] < 0 || args[0] >= im_channel_max)
+    if (args[0] < 0 || args[0] >= im_channels_max)
         return chunk_log(chunk, transmit->id, IO_CHANNEL, IOE_A0_INVALID);
 
     transmit->channel = channel;

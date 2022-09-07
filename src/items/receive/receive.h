@@ -21,10 +21,11 @@ struct legion_packed im_receive
 {
     id_t id;
 
-    legion_pad(1);
-
     uint8_t channel;
     uint8_t head, tail;
+
+    legion_pad(3);
+
     struct coord target;
 
     struct im_packet buffer[];

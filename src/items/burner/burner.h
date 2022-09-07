@@ -35,6 +35,8 @@ struct legion_packed im_burner
     bool waiting;
     loops_t loops;
     struct { work_t left, cap; } work;
+
+    legion_pad(3);
 };
 
 static_assert(sizeof(struct im_burner) == 12);

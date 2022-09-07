@@ -83,7 +83,7 @@ static void im_receive_io_channel(
     if (!im_check_args(chunk, receive->id, IO_CHANNEL, len, 1)) return;
 
     uint8_t channel = args[0];
-    if (args[0] < 0 || args[0] >= im_channel_max)
+    if (args[0] < 0 || args[0] >= im_channels_max)
         return chunk_log(chunk, receive->id, IO_CHANNEL, IOE_A0_INVALID);
 
     im_receive_unlisten(receive, chunk);
@@ -144,7 +144,7 @@ static void im_receive_io_recv(
     struct im_packet *packet = receive->buffer + head;
     im_packet_unpack(args[0], &packet->chan, &packet->len);
 
-    if (packet->len >= len || packet->chan >= im_channel_max)
+    if (packet->len >= len || packet->chan >= im_channels_max)
         return chunk_log(chunk, receive->id, IO_RECV, IOE_A0_INVALID);
 
     memcpy(packet->data, args + 1, packet->len * sizeof(packet->data[0]));

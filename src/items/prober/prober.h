@@ -24,11 +24,11 @@ struct legion_packed im_prober
     id_t id;
 
     struct { uint8_t left; uint8_t cap; } work;
-
     enum item item;
-    legion_pad(1);
-    struct coord coord;
 
+    legion_pad(3);
+
+    struct coord coord;
     word_t result;
 
 };

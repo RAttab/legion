@@ -49,14 +49,16 @@ struct legion_packed im_nomad
 {
     id_t id;
 
-    mod_t mod;
-
     enum im_nomad_op op;
     enum item item;
     loops_t loops;
     bool waiting;
 
-    legion_pad(3);
+    legion_pad(2);
+
+    mod_t mod;
+
+    legion_pad(4);
 
     struct im_nomad_cargo cargo[im_nomad_cargo_len];
     word_t memory[im_nomad_memory_len];

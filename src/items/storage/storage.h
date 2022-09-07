@@ -20,12 +20,14 @@ enum { im_storage_max = UINT8_MAX };
 struct legion_packed im_storage
 {
     id_t id;
-    bool waiting;
+
     enum item item;
     uint8_t count;
+    bool waiting;
+
     legion_pad(1);
 };
 
-static_assert(sizeof(struct im_storage) == 8);
+static_assert(sizeof(struct im_storage) == 6);
 
 void im_storage_config(struct im_config *);

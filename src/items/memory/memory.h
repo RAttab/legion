@@ -20,7 +20,7 @@ struct legion_packed im_memory
 {
     id_t id;
     uint8_t len;
-    legion_pad(3);
+    legion_pad(5);
     word_t data[];
 };
 

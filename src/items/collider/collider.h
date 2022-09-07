@@ -49,7 +49,7 @@ struct legion_packed im_collider
     struct { uint8_t left, cap; } work;
     struct { enum item item; uint8_t it, len; } out;
 
-    legion_pad(1);
+    legion_pad(4);
 
     struct rng rng;
     tape_packed_t tape;

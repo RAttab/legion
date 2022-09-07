@@ -20,11 +20,14 @@ struct im_config;
 struct legion_packed im_packer
 {
     id_t id;
+
     enum item item;
     loops_t loops;
     bool waiting;
+
+    legion_pad(1);
 };
 
-static_assert(sizeof(struct im_packer) == 8);
+static_assert(sizeof(struct im_packer) == 6);
 
 void im_packer_config(struct im_config *);
