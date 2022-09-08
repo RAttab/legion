@@ -15,7 +15,7 @@ static const uint64_t save_magic_top = 0xFF4E4F4947454CFF;
 static const uint64_t save_magic_seal = 0xFF4C4547494F4EFF;
 static const size_t save_chunks = 10 * page_len;
 
-typedef void (*save_grow_fn_t) (struct save *, size_t len);
+typedef void (*save_grow_fn) (struct save *, size_t len);
 
 struct save_prof
 {
@@ -27,7 +27,7 @@ struct save_prof
 struct save
 {
     void *base, *end, *it;
-    save_grow_fn_t grow;
+    save_grow_fn grow;
     struct save_prof *prof;
 };
 
