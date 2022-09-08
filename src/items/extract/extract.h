@@ -21,7 +21,7 @@ struct legion_packed im_extract
 {
     id id;
 
-    loops_t loops;
+    loops loops;
     bool waiting;
 
     tape_packed tape;

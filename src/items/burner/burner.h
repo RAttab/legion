@@ -33,7 +33,7 @@ struct legion_packed im_burner
     uint8_t output;
 
     bool waiting;
-    loops_t loops;
+    loops loops;
     struct { work left, cap; } work;
 
     legion_pad(3);
