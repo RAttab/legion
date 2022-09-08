@@ -197,9 +197,9 @@ inline bool item_validate(word word) { return word > 0 && word < ITEM_MAX; }
 // Categories
 // -----------------------------------------------------------------------------
 
-typedef const enum item *im_list_t;
-extern im_list_t im_list_control;
-extern im_list_t im_list_factory;
+typedef const enum item *im_list;
+extern im_list im_list_control;
+extern im_list im_list_factory;
 
 enum
 {

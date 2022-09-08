@@ -486,14 +486,14 @@ struct vec64* chunk_list(struct chunk *chunk)
     return ids;
 }
 
-struct vec64* chunk_list_filter(struct chunk *chunk, im_list_t filter)
+struct vec64* chunk_list_filter(struct chunk *chunk, im_list filter)
 {
     size_t sum = 0;
-    for (im_list_t it = filter; *it; it++)
+    for (im_list it = filter; *it; it++)
         sum += active_count(active_index_assert(chunk, *it));
 
     struct vec64 *ids = vec64_reserve(sum);
-    for (im_list_t it = filter; *it; it++)
+    for (im_list it = filter; *it; it++)
         active_list(active_index_assert(chunk, *it), ids);
 
     return ids;

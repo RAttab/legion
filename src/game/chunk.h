@@ -51,7 +51,7 @@ bool chunk_harvest(struct chunk *, enum item item);
 
 id chunk_last(struct chunk *, enum item);
 struct vec64 *chunk_list(struct chunk *);
-struct vec64 *chunk_list_filter(struct chunk *, im_list_t filter);
+struct vec64 *chunk_list_filter(struct chunk *, im_list filter);
 const void *chunk_get(struct chunk *, id);
 bool chunk_copy(struct chunk *, id, void *dst, size_t len);
 bool chunk_delete(struct chunk *, id id);

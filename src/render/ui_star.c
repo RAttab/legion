@@ -252,7 +252,7 @@ int16_t ui_star_width(const struct ui_star *ui)
 }
 
 static void ui_star_update_list(
-        struct chunk *chunk, struct ui_tree *tree, im_list_t filter)
+        struct chunk *chunk, struct ui_tree *tree, im_list filter)
 {
     ui_tree_reset(tree);
 

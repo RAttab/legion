@@ -175,7 +175,7 @@ const enum item im_list_control_arr[] =
 
     0,
 };
-im_list_t im_list_control = im_list_control_arr;
+im_list im_list_control = im_list_control_arr;
 
 
 const enum item im_list_factory_arr[] =
@@ -199,7 +199,7 @@ const enum item im_list_factory_arr[] =
 
     0,
 };
-im_list_t im_list_factory = im_list_factory_arr;
+im_list im_list_factory = im_list_factory_arr;
 
 
 const struct im_config *im_config(enum item item)
