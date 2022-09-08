@@ -25,7 +25,7 @@ static uint8_t im_receive_len(struct im_receive *receive)
     return receive->head != receive->tail ? 1 : 0;
 }
 
-static void im_receive_init(void *state, struct chunk *chunk, id_t id)
+static void im_receive_init(void *state, struct chunk *chunk, id id)
 {
     struct im_receive *receive = state;
     (void) chunk;
@@ -60,7 +60,7 @@ static void im_receive_reset(struct im_receive *receive, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_receive_io_state(
-        struct im_receive *receive, struct chunk *chunk, id_t src,
+        struct im_receive *receive, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, receive->id, IO_STATE, len, 1)) return;
@@ -107,7 +107,7 @@ static void im_receive_io_target(
 }
 
 static void im_receive_io_receive(
-        struct im_receive *receive, struct chunk *chunk, id_t src)
+        struct im_receive *receive, struct chunk *chunk, id src)
 {
     size_t len = 0;
     word_t data[im_packet_max] = {0};
@@ -153,7 +153,7 @@ static void im_receive_io_recv(
 
 static void im_receive_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_receive *receive = state;

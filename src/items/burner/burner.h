@@ -26,7 +26,7 @@ enum legion_packed im_burner_op
 
 struct legion_packed im_burner
 {
-    id_t id;
+    id id;
 
     enum im_burner_op op;
     enum item item;

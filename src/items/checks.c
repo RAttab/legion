@@ -15,7 +15,7 @@
 // -----------------------------------------------------------------------------
 
 inline bool im_check_args(
-        struct chunk *chunk, id_t id, enum io io, size_t len, size_t exp)
+        struct chunk *chunk, id id, enum io io, size_t len, size_t exp)
 {
     if (likely(len >= exp)) return true;
     chunk_log(chunk, id, io, IOE_MISSING_ARG);
@@ -23,7 +23,7 @@ inline bool im_check_args(
 }
 
 inline bool im_check_known(
-        struct chunk *chunk, id_t id, enum io io, enum item item)
+        struct chunk *chunk, id id, enum io io, enum item item)
 {
     struct tech *tech = chunk_tech(chunk);
     if (tech_known(tech, item)) return true;

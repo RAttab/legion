@@ -26,7 +26,7 @@ enum legion_packed im_lab_state
 
 struct legion_packed im_lab
 {
-    id_t id;
+    id id;
 
     enum item item;
     enum im_lab_state state;

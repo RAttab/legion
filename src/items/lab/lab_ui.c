@@ -85,7 +85,7 @@ void im_lab_bits_update(
     }
 }
 
-static void ui_lab_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_lab_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_lab *ui = _ui;
 

@@ -17,7 +17,7 @@ static struct font *ui_item_font(void) { return font_mono6; }
 
 struct ui_item
 {
-    id_t id;
+    id id;
     struct coord star;
     bool loading;
 
@@ -78,7 +78,7 @@ int16_t ui_item_width(struct ui_item *ui)
     return ui->panel.w.dim.w;
 }
 
-static void *ui_item_state(struct ui_item *ui, id_t id)
+static void *ui_item_state(struct ui_item *ui, id id)
 {
     void *state =  ui->states[id_item(id) - ITEM_ACTIVE_FIRST];
     assert(state);

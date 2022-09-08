@@ -74,16 +74,16 @@ void active_save(const struct active *, struct save *save);
 
 size_t active_count(struct active *);
 
-id_t active_last(struct active *);
+id active_last(struct active *);
 void active_list(struct active *, struct vec64 *ids);
-void *active_get(struct active *, id_t id);
-struct ports *active_ports(struct active *active, id_t id);
+void *active_get(struct active *, id id);
+struct ports *active_ports(struct active *active, id id);
 
-bool active_copy(struct active *, id_t id, void *dst, size_t len);
+bool active_copy(struct active *, id id, void *dst, size_t len);
 bool active_create(struct active *);
 bool active_create_from(struct active *, struct chunk *, const word_t *data, size_t len);
-bool active_delete(struct active *, id_t id);
+bool active_delete(struct active *, id id);
 
 void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
-        enum io io, id_t src, id_t dst, const word_t *args, size_t len);
+        enum io io, id src, id dst, const word_t *args, size_t len);

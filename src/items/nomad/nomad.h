@@ -47,7 +47,7 @@ enum
 
 struct legion_packed im_nomad
 {
-    id_t id;
+    id id;
 
     enum im_nomad_op op;
     enum item item;

@@ -16,7 +16,7 @@ static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_t id);
 // -----------------------------------------------------------------------------
 
 
-static void im_brain_init(void *state, struct chunk *chunk, id_t id)
+static void im_brain_init(void *state, struct chunk *chunk, id id)
 {
     struct im_brain *brain = state;
     (void) chunk;
@@ -31,7 +31,7 @@ static void im_brain_init(void *state, struct chunk *chunk, id_t id)
 }
 
 static void im_brain_make(
-        void *state, struct chunk *chunk, id_t id, const word_t *data, size_t len)
+        void *state, struct chunk *chunk, id id, const word_t *data, size_t len)
 {
     struct im_brain *brain = state;
     im_brain_init(brain, chunk, id);
@@ -182,7 +182,7 @@ static void im_brain_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_brain_io_state(
-        struct im_brain *brain, struct chunk *chunk, id_t src,
+        struct im_brain *brain, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_STATE, len, 1)) return;
@@ -253,7 +253,7 @@ static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)
 
 static void im_brain_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_brain *brain = state;

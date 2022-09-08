@@ -20,7 +20,7 @@ static size_t im_memory_len(enum item type)
     }
 }
 
-static void im_memory_init(void *state, struct chunk *chunk, id_t id)
+static void im_memory_init(void *state, struct chunk *chunk, id id)
 {
     struct im_memory *memory = state;
     (void) chunk;
@@ -30,7 +30,7 @@ static void im_memory_init(void *state, struct chunk *chunk, id_t id)
 }
 
 static void im_memory_make(
-        void *state, struct chunk *chunk, id_t id, const word_t *data, size_t len)
+        void *state, struct chunk *chunk, id id, const word_t *data, size_t len)
 {
     struct im_memory *memory = state;
     im_memory_init(memory, chunk, id);
@@ -48,7 +48,7 @@ static void im_memory_make(
 // -----------------------------------------------------------------------------
 
 static void im_memory_io_state(
-        struct im_memory *memory, struct chunk *chunk, id_t src,
+        struct im_memory *memory, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_STATE, len, 1)) return;
@@ -63,7 +63,7 @@ static void im_memory_io_state(
 
 static void im_memory_io_get(
         struct im_memory *memory, struct chunk *chunk,
-        id_t src,
+        id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_GET, len, 1)) goto fail;
@@ -101,7 +101,7 @@ static void im_memory_io_set(
 
 static void im_memory_io_cas(
         struct im_memory *memory, struct chunk *chunk,
-        id_t src,
+        id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_CAS, len, 3)) goto fail;
@@ -130,7 +130,7 @@ static void im_memory_io_cas(
 
 static void im_memory_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_memory *memory = state;

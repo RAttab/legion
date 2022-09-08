@@ -19,7 +19,7 @@ enum { im_storage_max = UINT8_MAX };
 
 struct legion_packed im_storage
 {
-    id_t id;
+    id id;
 
     enum item item;
     uint8_t count;

@@ -13,7 +13,7 @@
 // packer
 // -----------------------------------------------------------------------------
 
-static void im_packer_init(void *state, struct chunk *chunk, id_t id)
+static void im_packer_init(void *state, struct chunk *chunk, id id)
 {
     (void) chunk;
 
@@ -39,7 +39,7 @@ static void im_packer_step(void *state, struct chunk *chunk)
     if (!packer->item) return;
 
     if (!packer->waiting) {
-        id_t id = chunk_last(chunk, packer->item);
+        id id = chunk_last(chunk, packer->item);
         if (!id) { im_packer_reset(packer, chunk); return; }
 
         bool ok = chunk_delete(chunk, id);
@@ -62,7 +62,7 @@ static void im_packer_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_packer_io_state(
-        struct im_packer *packer, struct chunk *chunk, id_t src,
+        struct im_packer *packer, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, packer->id, IO_STATE, len, 1)) return;
@@ -84,7 +84,7 @@ static void im_packer_io_id(
 {
     if (!im_check_args(chunk, packer->id, IO_ID, len, 1)) return;
 
-    id_t id = args[0];
+    id id = args[0];
     enum item item = id_item(id);
 
     if (!id_validate(args[0]))
@@ -127,7 +127,7 @@ static void im_packer_io_item(
 
 static void im_packer_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_packer *packer = state;

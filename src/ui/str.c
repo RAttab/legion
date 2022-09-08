@@ -116,7 +116,7 @@ void ui_str_set_scaled(struct ui_str *str, uint64_t val)
     str->len = str_scaled(val, (char *)str->str,  str->cap);
 }
 
-void ui_str_set_id(struct ui_str *str, id_t val)
+void ui_str_set_id(struct ui_str *str, id val)
 {
     assert(str->cap);
     str->len = id_str(val, (char *) str->str, str->cap);

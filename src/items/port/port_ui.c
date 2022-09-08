@@ -71,7 +71,7 @@ static void ui_port_free(void *_ui)
     free(ui);
 }
 
-static void ui_port_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_port_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_port *ui = _ui;
 

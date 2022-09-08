@@ -12,7 +12,7 @@
 // legion
 // -----------------------------------------------------------------------------
 
-static void im_legion_init(void *state, struct chunk *chunk, id_t id)
+static void im_legion_init(void *state, struct chunk *chunk, id id)
 {
     struct im_legion *legion = state;
     (void) chunk;
@@ -48,7 +48,7 @@ const enum item *im_legion_cargo(enum item type)
 }
 
 static void im_legion_make(
-        void *state, struct chunk *chunk, id_t id, const word_t *data, size_t len)
+        void *state, struct chunk *chunk, id id, const word_t *data, size_t len)
 {
     (void) state;
 
@@ -89,7 +89,7 @@ static void im_legion_make(
 // -----------------------------------------------------------------------------
 
 static void im_legion_io_state(
-        struct im_legion *legion, struct chunk *chunk, id_t src,
+        struct im_legion *legion, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, legion->id, IO_STATE, len, 1)) return;
@@ -143,7 +143,7 @@ static void im_legion_io_launch(
 
 static void im_legion_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_legion *legion = state;

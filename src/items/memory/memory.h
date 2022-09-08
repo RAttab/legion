@@ -18,7 +18,7 @@ struct im_config;
 
 struct legion_packed im_memory
 {
-    id_t id;
+    id id;
     uint8_t len;
     legion_pad(5);
     word_t data[];

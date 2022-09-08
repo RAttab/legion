@@ -261,7 +261,7 @@ static void ui_star_update_list(
     struct vec64 *ids = chunk_list_filter(chunk, filter);
 
     for (size_t i = 0; i < ids->len; ++i) {
-        id_t id = ids->vals[i];
+        id id = ids->vals[i];
 
         if (item != id_item(id)) {
             item = id_item(id);
@@ -412,7 +412,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
             ui_star_update(ui);
         }
 
-        id_t selected = (uintptr_t) ev->user.data1;
+        id selected = (uintptr_t) ev->user.data1;
         ui_tree_select(&ui->control_list, selected);
         ui_tree_select(&ui->factory_list, selected);
 
@@ -480,14 +480,14 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     }
 
     if (ui->control.disabled && (ret = ui_tree_event(&ui->control_list, ev))) {
-        id_t id = ui->control_list.selected;
+        id id = ui->control_list.selected;
         if (ret == ui_action && id_bot(id))
             render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
         return true;
     }
 
     if (ui->factory.disabled && (ret = ui_tree_event(&ui->factory_list, ev))) {
-        id_t id = ui->factory_list.selected;
+        id id = ui->factory_list.selected;
         if (ret == ui_action && id_bot(id))
             render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
         return true;

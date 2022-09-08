@@ -55,7 +55,7 @@ static void ui_legion_free(void *_ui)
     free(ui);
 }
 
-static void ui_legion_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_legion_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_legion *ui = _ui;
 

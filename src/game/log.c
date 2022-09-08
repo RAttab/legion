@@ -45,7 +45,7 @@ void log_push(
         struct log *log,
         world_ts_t time,
         struct coord star,
-        id_t id,
+        id id,
         word_t key,
         word_t value)
 {
@@ -131,7 +131,7 @@ static bool log_load_delta_item(struct log *log, struct save *save, world_ts_t a
     if (!time) return true;
 
     struct coord star = coord_from_u64(save_read_type(save, uint64_t));
-    id_t id = save_read_type(save, typeof(id));
+    id id = save_read_type(save, typeof(id));
     word_t key = save_read_type(save, typeof(key));
     word_t value = save_read_type(save, typeof(value));
 

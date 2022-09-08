@@ -753,7 +753,7 @@ static void lisp_fn_id(struct lisp *lisp)
 
     lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_PUSH);
-    lisp_write_value(lisp, (word_t) 24);
+    lisp_write_value(lisp, (word_t) id_shift);
     lisp_write_op(lisp, OP_BSL);
 
     if (!lisp_stmt(lisp)) { // index

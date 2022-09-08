@@ -79,7 +79,7 @@ void proxy_save(struct proxy *);
 void proxy_load(struct proxy *);
 void proxy_set_speed(struct proxy *, enum speed);
 struct chunk *proxy_chunk(struct proxy *, struct coord);
-void proxy_io(struct proxy *, enum io, id_t dst, const word_t *args, uint8_t len);
+void proxy_io(struct proxy *, enum io, id dst, const word_t *args, uint8_t len);
 
 
 // -----------------------------------------------------------------------------

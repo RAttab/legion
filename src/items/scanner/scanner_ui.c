@@ -72,7 +72,7 @@ static void ui_scanner_free(void *_ui)
 }
 
 
-static void ui_scanner_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_scanner_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_scanner *ui = _ui;
     const struct im_scanner *state = &ui->state;

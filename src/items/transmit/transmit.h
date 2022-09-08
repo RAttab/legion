@@ -21,7 +21,7 @@ enum { im_transmit_speed = 500 };
 
 struct legion_packed im_transmit
 {
-    id_t id;
+    id id;
 
     legion_pad(1);
 

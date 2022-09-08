@@ -19,7 +19,7 @@ struct im_config;
 
 struct legion_packed im_extract
 {
-    id_t id;
+    id id;
 
     loops_t loops;
     bool waiting;

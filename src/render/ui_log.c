@@ -21,7 +21,7 @@ struct ui_logi
     struct
     {
         struct coord star;
-        id_t id;
+        id id;
     } state;
 
     struct ui_label time;

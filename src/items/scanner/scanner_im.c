@@ -16,7 +16,7 @@ static const word_t im_scanner_empty = -1;
 static const uint64_t im_scanner_div = 1000;
 
 
-static void im_scanner_init(void *state, struct chunk *chunk, id_t id)
+static void im_scanner_init(void *state, struct chunk *chunk, id id)
 {
     struct im_scanner *scanner = state;
     (void) chunk;
@@ -67,7 +67,7 @@ static void im_scanner_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_scanner_io_state(
-        struct im_scanner *scanner, struct chunk *chunk, id_t src,
+        struct im_scanner *scanner, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, scanner->id, IO_STATE, len, 1)) return;
@@ -99,7 +99,7 @@ static void im_scanner_io_scan(
 }
 
 static void im_scanner_io_value(
-        struct im_scanner *scanner, struct chunk *chunk, id_t src)
+        struct im_scanner *scanner, struct chunk *chunk, id src)
 {
     chunk_io(chunk, IO_RETURN, scanner->id, src, &scanner->result, 1);
     if (scanner->result == im_scanner_empty) return;
@@ -115,7 +115,7 @@ static void im_scanner_io_value(
 
 static void im_scanner_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_scanner *scanner = state;

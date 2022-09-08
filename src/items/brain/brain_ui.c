@@ -155,7 +155,7 @@ static void ui_brain_free(void *_ui)
     free(ui);
 }
 
-static void ui_brain_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_brain_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_brain *ui = _ui;
     const struct im_brain *state = &ui->state;

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "game/id.h"
 #include "game/coord.h"
 #include "game/user.h"
 #include "items/io.h"
@@ -64,7 +65,7 @@ bool world_user_access(struct world *, uset_t, struct coord);
 enum { world_log_cap = 64 };
 struct log *world_log(struct world *, user_t);
 void world_log_push(
-        struct world *, user_t, struct coord, id_t, word_t key, word_t value);
+        struct world *, user_t, struct coord, id, word_t key, word_t value);
 
 
 // -----------------------------------------------------------------------------

@@ -483,7 +483,7 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
     return NULL;
 }
 
-void proxy_io(struct proxy *proxy, enum io io, id_t dst, const word_t *args, uint8_t len)
+void proxy_io(struct proxy *proxy, enum io io, id dst, const word_t *args, uint8_t len)
 {
     struct cmd cmd = {
         .type = CMD_IO,

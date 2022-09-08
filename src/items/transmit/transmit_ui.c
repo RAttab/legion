@@ -42,7 +42,7 @@ static void ui_transmit_free(void *_ui)
     free(ui);
 }
 
-static void ui_transmit_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_transmit_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_transmit *ui = _ui;
 

@@ -20,7 +20,7 @@ enum { im_port_speed = 100 };
 
 struct legion_packed im_port
 {
-    id_t id;
+    id id;
 
     legion_pad(2);
 

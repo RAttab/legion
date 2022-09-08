@@ -141,7 +141,7 @@ enum
 
 struct ui_io
 {
-    id_t id;
+    id id;
     struct coord star;
 
     size_t list_len;

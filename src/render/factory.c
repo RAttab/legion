@@ -282,7 +282,7 @@ static bool factory_flow_intersect(struct flow_rect a, struct flow_rect b)
 // -----------------------------------------------------------------------------
 
 static bool factory_make_flow(
-        struct factory *factory, uint16_t index, struct chunk *chunk, id_t id)
+        struct factory *factory, uint16_t index, struct chunk *chunk, id id)
 {
     struct flow *flow = &factory->flows->vals[index];
     flow->tape_len = 0;
@@ -531,7 +531,7 @@ static void factory_render_op(
 {
     struct htable_ret ret = {0};
 
-    id_t src_id = 0, dst_id = 0;
+    id src_id = 0, dst_id = 0;
     chunk_workers_ops(op, &src_id, &dst_id);
 
     ret = htable_get(&factory->index, src_id);

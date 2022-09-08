@@ -13,7 +13,7 @@
 // lab
 // -----------------------------------------------------------------------------
 
-static void im_lab_init(void *state, struct chunk *chunk, id_t id)
+static void im_lab_init(void *state, struct chunk *chunk, id id)
 {
     struct im_lab *lab = state;
     (void) chunk;
@@ -90,7 +90,7 @@ static void im_lab_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_lab_io_state(
-        struct im_lab *lab, struct chunk *chunk, id_t src,
+        struct im_lab *lab, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_STATE, len, 1)) return;
@@ -129,7 +129,7 @@ static void im_lab_io_item(
 
 static void im_lab_io_tape_at(
         struct im_lab *lab, struct chunk *chunk,
-        id_t src,
+        id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_TAPE_AT, len, 2)) goto fail;
@@ -172,7 +172,7 @@ static void im_lab_io_tape_at(
 
 static void im_lab_io_tape_known(
         struct im_lab *lab, struct chunk *chunk,
-        id_t src,
+        id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_TAPE_KNOWN, len, 1)) goto fail;
@@ -198,7 +198,7 @@ static void im_lab_io_tape_known(
 
 static void im_lab_io_item_bits(
         struct im_lab *lab, struct chunk *chunk,
-        id_t src,
+        id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_ITEM_BITS, len, 1)) goto fail;
@@ -224,7 +224,7 @@ static void im_lab_io_item_bits(
 
 static void im_lab_io_item_known(
         struct im_lab *lab, struct chunk *chunk,
-        id_t src,
+        id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_ITEM_KNOWN, len, 1)) goto fail;
@@ -250,7 +250,7 @@ static void im_lab_io_item_known(
 
 static void im_lab_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_lab *lab = state;

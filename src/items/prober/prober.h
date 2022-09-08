@@ -21,7 +21,7 @@ struct im_config;
 
 struct legion_packed im_prober
 {
-    id_t id;
+    id id;
 
     struct { uint8_t left; uint8_t cap; } work;
     enum item item;

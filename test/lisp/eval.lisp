@@ -244,14 +244,14 @@
 ;; misc
 ;; -----------------------------------------------------------------------------
 
-(misc/pack
+(eval/pack
  (mod
   (defconst X (pack 1 2))
   (assert (= X 0x0000000200000001)))
  (check))
 
-(misc/id
+(eval/id
  (mod
-  (defconst X (id &item-data 0xFFFFFF))
-  (assert (= X 0xF0FFFFFF)))
+  (defconst X (id &item-data 0xAA))
+  (assert (= X 0xF0AA)))
  (check))

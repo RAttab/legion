@@ -21,7 +21,7 @@ struct legion_packed logi
 {
     struct coord star;
     world_ts_t time;
-    id_t id;
+    id id;
     legion_pad(2);
     word_t key, value;
 };
@@ -38,7 +38,7 @@ struct log;
 struct log *log_new(size_t cap);
 void log_free(struct log *);
 
-void log_push(struct log *, world_ts_t, struct coord, id_t, word_t key, word_t value);
+void log_push(struct log *, world_ts_t, struct coord, id, word_t key, word_t value);
 const struct logi *log_next(const struct log *, const struct logi *it);
 
 void log_save(const struct log *, struct save *);

@@ -74,7 +74,7 @@ static void ui_prober_free(void *_ui)
 }
 
 
-static void ui_prober_update(void *_ui, struct chunk *chunk, id_t id)
+static void ui_prober_update(void *_ui, struct chunk *chunk, id id)
 {
     struct ui_prober *ui = _ui;
     const struct im_prober *state = &ui->state;

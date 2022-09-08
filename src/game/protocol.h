@@ -172,7 +172,7 @@ struct cmd
     union
     {
         struct { token_t server; struct symbol name; } user;
-        struct { token_t server; uid_t id; token_t private; } auth;
+        struct { token_t server; user_t id; token_t private; } auth;
 
         struct ack *ack;
         enum speed speed;
@@ -181,7 +181,7 @@ struct cmd
         struct symbol mod_register;
         struct { mod_maj_t maj; } mod_publish;
         struct { mod_maj_t maj; const char *code; uint32_t len; } mod_compile;
-        struct { enum io io; id_t dst; uint8_t len; word_t args[4]; } io;
+        struct { enum io io; id dst; uint8_t len; word_t args[4]; } io;
     } data;
 };
 

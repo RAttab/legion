@@ -12,14 +12,14 @@
 // impl
 // -----------------------------------------------------------------------------
 
-static void im_test_init(void *state, struct chunk *chunk, id_t id)
+static void im_test_init(void *state, struct chunk *chunk, id id)
 {
     (void) state, (void) chunk, (void) id;
 }
 
 bool im_test_check(
         const struct im_test *test,
-        enum io io, id_t src, const word_t *args, size_t len)
+        enum io io, id src, const word_t *args, size_t len)
 {
     bool ok = true;
 
@@ -50,7 +50,7 @@ bool im_test_check(
 
 static void im_test_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_test *test = state;

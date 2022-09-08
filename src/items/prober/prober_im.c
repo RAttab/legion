@@ -15,7 +15,7 @@
 static const word_t im_prober_empty = -1;
 static const uint64_t im_prober_div = 1000;
 
-static void im_prober_init(void *state, struct chunk *chunk, id_t id)
+static void im_prober_init(void *state, struct chunk *chunk, id id)
 {
     struct im_prober *prober = state;
     (void) chunk;
@@ -56,7 +56,7 @@ static void im_prober_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_prober_io_state(
-        struct im_prober *prober, struct chunk *chunk, id_t src,
+        struct im_prober *prober, struct chunk *chunk, id src,
         const word_t *args, size_t len)
 {
     if (!im_check_args(chunk, prober->id, IO_STATE, len, 1)) return;
@@ -102,7 +102,7 @@ static void im_prober_io_probe(
 }
 
 static void im_prober_io_value(
-        struct im_prober *prober, struct chunk *chunk, id_t src)
+        struct im_prober *prober, struct chunk *chunk, id src)
 {
     chunk_io(chunk, IO_RETURN, prober->id, src, &prober->result, 1);
 
@@ -112,7 +112,7 @@ static void im_prober_io_value(
 
 static void im_prober_io(
         void *state, struct chunk *chunk,
-        enum io io, id_t src,
+        enum io io, id src,
         const word_t *args, size_t len)
 {
     struct im_prober *prober = state;

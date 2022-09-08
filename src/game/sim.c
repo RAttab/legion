@@ -338,7 +338,7 @@ void sim_log_all(struct sim *sim, enum status_type type, const char *fmt, ...)
 }
 
 
-static struct symbol sim_log_id(id_t id)
+static struct symbol sim_log_id(id id)
 {
     struct symbol str = {0};
     id_str(id, str.c, sizeof(str.c));
