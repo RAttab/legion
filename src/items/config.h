@@ -25,22 +25,22 @@ struct ui_layout;
 // fn
 // -----------------------------------------------------------------------------
 
-typedef void (*im_config_t) (struct im_config *);
+typedef void (*im_config_fn) (struct im_config *);
 
-typedef void (*im_init_t) (void *state, struct chunk *, id id);
-typedef void (*im_make_t) (
+typedef void (*im_init_fn) (void *state, struct chunk *, id id);
+typedef void (*im_make_fn) (
         void *state, struct chunk *, id id, const word *data, size_t len);
-typedef void (*im_load_t) (void *state, struct chunk *);
-typedef void (*im_step_t) (void *state, struct chunk *);
-typedef void (*im_io_t) (
+typedef void (*im_load_fn) (void *state, struct chunk *);
+typedef void (*im_step_fn) (void *state, struct chunk *);
+typedef void (*im_io_fn) (
         void *state, struct chunk *, enum io, id src, const word *args, size_t len);
-typedef bool (*im_flow_t) (const void *state, struct flow *);
+typedef bool (*im_flow_fn) (const void *state, struct flow *);
 
-typedef void *(*im_ui_alloc_t)  (struct font *);
-typedef void  (*im_ui_free_t)   (void *state);
-typedef void  (*im_ui_update_t) (void *state, struct chunk *, id);
-typedef bool  (*im_ui_event_t)  (void *state, const SDL_Event *);
-typedef void  (*im_ui_render_t) (void *state, struct ui_layout *, SDL_Renderer *);
+typedef void *(*im_ui_alloc_fn)  (struct font *);
+typedef void  (*im_ui_free_fn)   (void *state);
+typedef void  (*im_ui_update_fn) (void *state, struct chunk *, id);
+typedef bool  (*im_ui_event_fn)  (void *state, const SDL_Event *);
+typedef void  (*im_ui_render_fn) (void *state, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ struct im_config
 
     const char *atom;
 
-    im_config_t init;
+    im_config_fn init;
 
     size_t size;
 
@@ -65,21 +65,21 @@ struct im_config
 
     struct
     {
-        im_init_t init;
-        im_make_t make;
-        im_load_t load;
-        im_step_t step;
-        im_io_t io;
-        im_flow_t flow;
+        im_init_fn init;
+        im_make_fn make;
+        im_load_fn load;
+        im_step_fn step;
+        im_io_fn io;
+        im_flow_fn flow;
     } im;
 
     struct
     {
-        im_ui_alloc_t alloc;
-        im_ui_free_t free;
-        im_ui_update_t update;
-        im_ui_event_t event;
-        im_ui_render_t render;
+        im_ui_alloc_fn alloc;
+        im_ui_free_fn free;
+        im_ui_update_fn update;
+        im_ui_event_fn event;
+        im_ui_render_fn render;
     } ui;
 
     size_t io_list_len;

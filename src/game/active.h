@@ -57,8 +57,8 @@ legion_packed struct active
     struct ports *ports;
     uint64_t free;
 
-    im_step_t step;
-    im_io_t io;
+    im_step_fn step;
+    im_io_fn io;
 
     legion_pad(8 * 2);
 };
