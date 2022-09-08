@@ -12,7 +12,7 @@
 // index
 // -----------------------------------------------------------------------------
 
-typedef word_t (*lisp_eval_t) (struct lisp *);
+typedef word_t (*lisp_eval_fn) (struct lisp *);
 
 static struct htable lisp_fn_eval = {0};
 
@@ -90,7 +90,7 @@ static word_t lisp_eval(struct lisp *lisp)
             return 0;
         }
 
-        word_t value = ((lisp_eval_t) ret.value)(lisp);
+        word_t value = ((lisp_eval_fn) ret.value)(lisp);
         lisp_assert_close(lisp, lisp_next(lisp));
         return value;
     }
@@ -305,7 +305,7 @@ static word_t lisp_eval_id(struct lisp *lisp)
 // index
 // -----------------------------------------------------------------------------
 
-static void lisp_register_eval(uint64_t key, lisp_eval_t eval)
+static void lisp_register_eval(uint64_t key, lisp_eval_fn eval)
 {
     struct htable_ret ret = htable_put(&lisp_fn_eval, key, (uintptr_t) eval);
     assert(ret.ok);
