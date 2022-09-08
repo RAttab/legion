@@ -50,7 +50,7 @@ static bool lisp_stmt(struct lisp *lisp)
         uint64_t key = symbol_hash(&token->value.s);
 
         if ((ret = htable_get(&lisp->symb.fn, key)).ok)
-            ((lisp_fn_t) ret.value)(lisp);
+            ((lisp_fn) ret.value)(lisp);
         else lisp_call(lisp);
 
         return true;

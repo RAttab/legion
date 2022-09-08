@@ -19,8 +19,6 @@
 // lisp
 // -----------------------------------------------------------------------------
 
-typedef uint64_t lisp_regs_t[4];
-
 struct lisp_req
 {
     struct lisp_req *next;
@@ -55,7 +53,7 @@ struct lisp
         struct htable fn;
         struct htable req;
         struct htable jmp;
-        lisp_regs_t regs;
+        uint64_t regs[4];
     } symb;
 
     struct
@@ -499,13 +497,13 @@ static void lisp_label_unknown(struct lisp *lisp)
 // implementation
 // -----------------------------------------------------------------------------
 
-typedef void (*lisp_fn_t) (struct lisp *);
+typedef void (*lisp_fn) (struct lisp *);
 
-static struct htable lisp_fn = {0};
+static struct htable lisp_fns = {0};
 
-static void lisp_register_fn(uint64_t key, lisp_fn_t fn)
+static void lisp_register_fn(uint64_t key, lisp_fn fn)
 {
-    struct htable_ret ret = htable_put(&lisp_fn, key, (uintptr_t) fn);
+    struct htable_ret ret = htable_put(&lisp_fns, key, (uintptr_t) fn);
     assert(ret.ok);
 }
 
@@ -535,7 +533,7 @@ struct mod *mod_compile(
     lisp.mod_maj = mod_maj;
     lisp.mods = mods;
     lisp.atoms = atoms;
-    lisp.symb.fn = htable_clone(&lisp_fn);
+    lisp.symb.fn = htable_clone(&lisp_fns);
     token_init(&lisp.in, src, len, lisp_err_token, &lisp);
 
     {

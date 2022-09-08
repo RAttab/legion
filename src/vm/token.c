@@ -34,7 +34,7 @@ const char *token_type_str(enum token_type type)
 void token_init(
         struct tokenizer *tok,
         const char *src, size_t len,
-        token_err_fn_t fn, void *ctx)
+        token_err_fn fn, void *ctx)
 {
     assert(src);
 

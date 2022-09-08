@@ -45,7 +45,7 @@ struct token
 // tokenizer
 // -----------------------------------------------------------------------------
 
-typedef void (*token_err_fn_t) (void *, const char *fmt, ...);
+typedef void (*token_err_fn) (void *, const char *fmt, ...);
 
 struct tokenizer
 {
@@ -53,13 +53,13 @@ struct tokenizer
     const char *base, *it, *end;
 
     void *err_ctx;
-    token_err_fn_t err_fn;
+    token_err_fn err_fn;
 };
 
 void token_init(
         struct tokenizer *,
         const char *src, size_t len,
-        token_err_fn_t fn, void *ctx);
+        token_err_fn fn, void *ctx);
 
 bool token_eof(const struct tokenizer *);
 char token_inc(struct tokenizer *);
