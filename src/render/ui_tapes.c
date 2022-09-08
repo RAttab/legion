@@ -123,7 +123,7 @@ static void ui_tapes_update_cat(
 {
     const struct tech *tech = proxy_tech(render.proxy);
 
-    ui_node_t parent = ui_tree_index(&ui->tree);
+    ui_node parent = ui_tree_index(&ui->tree);
     ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + ITEM_MAX), name);
 
     for (enum item it = first; it < last; ++it) {

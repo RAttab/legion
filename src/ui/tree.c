@@ -46,16 +46,16 @@ void ui_tree_free(struct ui_tree *tree)
 }
 
 
-struct ui_node *ui_tree_node(struct ui_tree *tree, ui_node_t index)
+struct ui_node *ui_tree_node(struct ui_tree *tree, ui_node index)
 {
     if (!tree->len && !index) return NULL;
     assert(index < tree->len);
     return tree->nodes + index;
 }
 
-ui_node_t ui_tree_user(struct ui_tree *tree, uint64_t user)
+ui_node ui_tree_user(struct ui_tree *tree, uint64_t user)
 {
-    for (ui_node_t i = 0; i < tree->len; ++i) {
+    for (ui_node i = 0; i < tree->len; ++i) {
         if (tree->nodes[i].user == user) return i;
     }
     return ui_node_nil;
@@ -66,9 +66,9 @@ void ui_tree_clear(struct ui_tree *tree)
     tree->selected = ui_node_nil;
 }
 
-ui_node_t ui_tree_select(struct ui_tree *tree, uint64_t user)
+ui_node ui_tree_select(struct ui_tree *tree, uint64_t user)
 {
-    ui_node_t index = ui_tree_user(tree, user);
+    ui_node index = ui_tree_user(tree, user);
     if (index == ui_node_nil) { tree->selected = 0; return index; }
     tree->selected = user;
 
@@ -91,13 +91,13 @@ void ui_tree_reset(struct ui_tree *tree)
     tree->len = 0;
 }
 
-ui_node_t ui_tree_index(struct ui_tree *tree)
+ui_node ui_tree_index(struct ui_tree *tree)
 {
     return tree->len;
 }
 
 struct ui_str *ui_tree_add(
-        struct ui_tree *tree, ui_node_t parent, uint64_t user)
+        struct ui_tree *tree, ui_node parent, uint64_t user)
 {
     assert(user);
     assert(parent == ui_node_nil || parent < tree->len);
@@ -129,7 +129,7 @@ struct ui_str *ui_tree_add(
     return &node->str;
 }
 
-static ui_node_t ui_tree_next(struct ui_tree *tree, ui_node_t index)
+static ui_node ui_tree_next(struct ui_tree *tree, ui_node index)
 {
     if (index >= tree->len) return ui_node_nil;
 
@@ -145,9 +145,9 @@ static ui_node_t ui_tree_next(struct ui_tree *tree, ui_node_t index)
     return index < tree->len ? index : ui_node_nil;
 }
 
-static ui_node_t ui_tree_row(struct ui_tree *tree, size_t row)
+static ui_node ui_tree_row(struct ui_tree *tree, size_t row)
 {
-    ui_node_t index = 0;
+    ui_node index = 0;
     for (size_t i = 1; i <= row; ++i)
         index = ui_tree_next(tree, index);
     return index;
@@ -174,7 +174,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
             size_t row = (point.y - rect.y) / tree->font->glyph_h;
             row += ui_scroll_first(&tree->scroll);
 
-            ui_node_t index = ui_tree_row(tree, row);
+            ui_node index = ui_tree_row(tree, row);
             if (index == ui_node_nil) tree->hover = 0;
             else {
                 struct ui_node *node = ui_tree_node(tree, index);
@@ -191,7 +191,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         size_t row = (point.y - rect.y) / tree->font->glyph_h;
         row += ui_scroll_first(&tree->scroll);
 
-        ui_node_t index = ui_tree_row(tree, row);
+        ui_node index = ui_tree_row(tree, row);
         if (index == ui_node_nil) return ui_consume;
 
         struct ui_node *node = tree->nodes + index;
@@ -230,7 +230,7 @@ void ui_tree_render(
     if (!tree->len) ui_scroll_update(&tree->scroll, 0);
     else {
         size_t n = 1;
-        ui_node_t index = 0;
+        ui_node index = 0;
         while ((index = ui_tree_next(tree, index)) < tree->len) n++;
         ui_scroll_update(&tree->scroll, n);
     }
@@ -242,7 +242,7 @@ void ui_tree_render(
     struct pos pos = inner.base.pos;
     size_t last = ui_scroll_last(&tree->scroll);
     size_t first = ui_scroll_first(&tree->scroll);
-    ui_node_t index = ui_tree_row(tree, first);
+    ui_node index = ui_tree_row(tree, first);
 
     for (size_t i = first; i < last; ++i, index = ui_tree_next(tree, index)) {
         struct ui_node *node = tree->nodes + index;

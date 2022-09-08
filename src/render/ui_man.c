@@ -25,7 +25,7 @@ struct ui_man
 
 
 static void ui_man_toc(
-        struct ui_man *ui, const struct toc *toc, ui_node_t parent)
+        struct ui_man *ui, const struct toc *toc, ui_node parent)
 {
     for (size_t i = 0; i < toc->len; ++i) {
         const struct toc *child = toc->nodes + i;
@@ -33,7 +33,7 @@ static void ui_man_toc(
         uint64_t user = link_to_u64(child->link);
         if (!user) failf("missing man page for '%s'", child->name);
 
-        ui_node_t node = ui_tree_index(&ui->toc);
+        ui_node node = ui_tree_index(&ui->toc);
         ui_str_setv(ui_tree_add(&ui->toc, parent, user), child->name, sizeof(child->name));
         ui_man_toc(ui, child, node);
     }

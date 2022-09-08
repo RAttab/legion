@@ -50,7 +50,7 @@ static void ui_stars_update(struct ui_stars *ui)
 {
     ui_tree_reset(&ui->tree);
 
-    ui_node_t parent = ui_node_nil;
+    ui_node parent = ui_node_nil;
     struct coord sector = coord_nil();
     const struct vec64 *list = proxy_chunks(render.proxy);
 
