@@ -23,7 +23,7 @@ struct legion_packed logi
     world_ts_t time;
     id id;
     legion_pad(2);
-    word_t key, value;
+    word key, value;
 };
 
 static_assert(sizeof(struct logi) == 32);
@@ -38,7 +38,7 @@ struct log;
 struct log *log_new(size_t cap);
 void log_free(struct log *);
 
-void log_push(struct log *, world_ts_t, struct coord, id, word_t key, word_t value);
+void log_push(struct log *, world_ts_t, struct coord, id, word key, word value);
 const struct logi *log_next(const struct log *, const struct logi *it);
 
 void log_save(const struct log *, struct save *);

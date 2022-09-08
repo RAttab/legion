@@ -19,7 +19,7 @@ static void im_test_init(void *state, struct chunk *chunk, id id)
 
 bool im_test_check(
         const struct im_test *test,
-        enum io io, id src, const word_t *args, size_t len)
+        enum io io, id src, const word *args, size_t len)
 {
     bool ok = true;
 
@@ -51,7 +51,7 @@ bool im_test_check(
 static void im_test_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_test *test = state;
     (void) chunk;

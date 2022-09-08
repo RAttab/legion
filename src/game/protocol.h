@@ -177,11 +177,11 @@ struct cmd
         struct ack *ack;
         enum speed speed;
         struct coord chunk;
-        mod_t mod;
+        mod_id mod;
         struct symbol mod_register;
         struct { mod_maj_t maj; } mod_publish;
         struct { mod_maj_t maj; const char *code; uint32_t len; } mod_compile;
-        struct { enum io io; id dst; uint8_t len; word_t args[4]; } io;
+        struct { enum io io; id dst; uint8_t len; word args[4]; } io;
     } data;
 };
 

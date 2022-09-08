@@ -79,7 +79,7 @@ void proxy_save(struct proxy *);
 void proxy_load(struct proxy *);
 void proxy_set_speed(struct proxy *, enum speed);
 struct chunk *proxy_chunk(struct proxy *, struct coord);
-void proxy_io(struct proxy *, enum io, id dst, const word_t *args, uint8_t len);
+void proxy_io(struct proxy *, enum io, id dst, const word *args, uint8_t len);
 
 
 // -----------------------------------------------------------------------------
@@ -87,10 +87,10 @@ void proxy_io(struct proxy *, enum io, id dst, const word_t *args, uint8_t len);
 // -----------------------------------------------------------------------------
 
 const struct mod *proxy_mod(struct proxy *);
-void proxy_mod_select(struct proxy *, mod_t);
+void proxy_mod_select(struct proxy *, mod_id);
 void proxy_mod_register(struct proxy *, struct symbol name);
 void proxy_mod_publish(struct proxy *, mod_maj_t);
-mod_t proxy_mod_latest(struct proxy *, mod_maj_t);
+mod_id proxy_mod_latest(struct proxy *, mod_maj_t);
 bool proxy_mod_name(struct proxy *, mod_maj_t, struct symbol *dst);
 
 // transfer ownership of code to proxy.
@@ -115,6 +115,6 @@ bool proxy_active_star(struct proxy *, struct coord);
 bool proxy_active_sector(struct proxy *, struct coord);
 struct sector *proxy_sector(struct proxy *, struct coord);
 
-word_t proxy_star_name(struct proxy *, struct coord);
+word proxy_star_name(struct proxy *, struct coord);
 const struct star *proxy_star_in(struct proxy *, struct rect);
 const struct star *proxy_star_at(struct proxy *, struct coord);

@@ -62,7 +62,7 @@ void vm_io_fault(struct vm *vm)
     vm->flags |= FLAG_FAULT_IO;
 }
 
-void vm_push(struct vm *vm, word_t word)
+void vm_push(struct vm *vm, word word)
 {
     if (unlikely(vm->sp == vm->specs.stack)) {
         vm->flags |= FLAG_FAULT_STACK;
@@ -71,7 +71,7 @@ void vm_push(struct vm *vm, word_t word)
     vm->stack[vm->sp++] = word;
 }
 
-size_t vm_io_read(struct vm *vm, word_t *dst)
+size_t vm_io_read(struct vm *vm, word *dst)
 {
     vm->flags &= ~FLAG_IO;
     if (vm->io > vm_io_cap) { vm_io_fault(vm); return 0; }
@@ -133,7 +133,7 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
 // -----------------------------------------------------------------------------
 
 
-mod_t vm_exec(struct vm *vm, const struct mod *mod)
+mod_id vm_exec(struct vm *vm, const struct mod *mod)
 {
     if (unlikely(vm_fault(vm))) return VM_FAULT;
     if (unlikely(vm->flags & FLAG_SUSPENDED)) return 0;
@@ -265,50 +265,50 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
 
       op_noop: { continue; }
 
-      op_push: { vm_push(vm_code(word_t)); continue; }
-      op_pushr: { vm_push(vm->regs[vm_code(reg_t)]); continue; }
+      op_push: { vm_push(vm_code(word)); continue; }
+      op_pushr: { vm_push(vm->regs[vm_code(reg)]); continue; }
       op_pushf: { vm_push(vm->flags); continue; }
 
       op_pop: { vm_pop(); continue; }
-      op_popr: { vm->regs[vm_code(reg_t)] = vm_pop(); continue; }
+      op_popr: { vm->regs[vm_code(reg)] = vm_pop(); continue; }
 
       op_dupe: { vm_push(vm_peek()); continue; }
       op_swap: {
             vm_ensure(2);
-            word_t tmp = vm_stack(0);
+            word tmp = vm_stack(0);
             vm_stack(0) = vm_stack(1);
             vm_stack(1) = tmp;
             continue;
         }
 
       op_arg0: {
-            uint8_t sp = vm_code(reg_t);
+            uint8_t sp = vm_code(reg);
             vm_ensure(sp);
-            word_t tmp = vm_stack(sp);
+            word tmp = vm_stack(sp);
             vm_stack(sp) = vm->regs[0];
             vm->regs[0] = tmp;
             continue;
         }
       op_arg1: {
-            uint8_t sp = vm_code(reg_t);
+            uint8_t sp = vm_code(reg);
             vm_ensure(sp);
-            word_t tmp = vm_stack(sp);
+            word tmp = vm_stack(sp);
             vm_stack(sp) = vm->regs[1];
             vm->regs[1] = tmp;
             continue;
         }
       op_arg2: {
-            uint8_t sp = vm_code(reg_t);
+            uint8_t sp = vm_code(reg);
             vm_ensure(sp);
-            word_t tmp = vm_stack(sp);
+            word tmp = vm_stack(sp);
             vm_stack(sp) = vm->regs[2];
             vm->regs[2] = tmp;
             continue;
         }
       op_arg3: {
-            uint8_t sp = vm_code(reg_t);
+            uint8_t sp = vm_code(reg);
             vm_ensure(sp);
-            word_t tmp = vm_stack(sp);
+            word tmp = vm_stack(sp);
             vm_stack(sp) = vm->regs[3];
             vm->regs[3] = tmp;
             continue;
@@ -390,29 +390,29 @@ mod_t vm_exec(struct vm *vm, const struct mod *mod)
       op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) -  vm_stack(1); vm_pop(); continue; }
 
       op_ret: {
-            mod_t mod_id = 0; ip_t ip = 0;
+            mod_id mod_id = 0; ip ip = 0;
             vm_unpack(vm_pop(), &mod_id, &ip);
             vm->ip = ip;
             if (unlikely(mod_id)) return mod_id;
             continue;
         }
       op_call: {
-            mod_t mod_id = 0; ip_t ip = 0;
-            vm_unpack(vm_code(word_t), &mod_id, &ip);
+            mod_id mod_id = 0; ip ip = 0;
+            vm_unpack(vm_code(word), &mod_id, &ip);
             vm_push(vm_pack(unlikely(mod_id) ? mod->id : 0, vm->ip));
             vm->ip = ip;
             if (unlikely(mod_id)) { return mod_id; }
             continue;
         }
       op_load: {
-            word_t mod_id = vm_pop();
+            word mod_id = vm_pop();
             if (unlikely(mod_id > UINT32_MAX)) { vm->flags |= FLAG_FAULT_CODE; return VM_FAULT; }
             vm_reset(vm);
             return mod_id;
         }
-      op_jmp: { vm->ip = vm_code(ip_t); continue; }
-      op_jz:  { ip_t dst = vm_code(ip_t); if (!vm_pop()) vm->ip = dst; continue; }
-      op_jnz: { ip_t dst = vm_code(ip_t); if ( vm_pop()) vm->ip = dst; continue; }
+      op_jmp: { vm->ip = vm_code(ip); continue; }
+      op_jz:  { ip dst = vm_code(ip); if (!vm_pop()) vm->ip = dst; continue; }
+      op_jnz: { ip dst = vm_code(ip); if ( vm_pop()) vm->ip = dst; continue; }
 
       op_reset: { vm_reset(vm); return VM_RESET; }
       op_yield: { return 0; }

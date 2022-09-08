@@ -91,10 +91,10 @@ static void im_lab_step(void *state, struct chunk *chunk)
 
 static void im_lab_io_state(
         struct im_lab *lab, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_ITEM: { value = lab->item; break; }
@@ -106,7 +106,7 @@ static void im_lab_io_state(
 
 static void im_lab_io_item(
         struct im_lab *lab, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_ITEM, len, 1)) return;
 
@@ -130,7 +130,7 @@ static void im_lab_io_item(
 static void im_lab_io_tape_at(
         struct im_lab *lab, struct chunk *chunk,
         id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_TAPE_AT, len, 2)) goto fail;
 
@@ -154,7 +154,7 @@ static void im_lab_io_tape_at(
         goto fail;
     }
 
-    word_t result = 0;
+    word result = 0;
     struct tape_ret ret = tape_at(tape, index);
     if (ret.state == tape_input || ret.state == tape_output)
         result = vm_pack(ret.item, ret.state);
@@ -164,7 +164,7 @@ static void im_lab_io_tape_at(
 
   fail:
     {
-        word_t fail = 0;
+        word fail = 0;
         chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
     }
     return;
@@ -173,7 +173,7 @@ static void im_lab_io_tape_at(
 static void im_lab_io_tape_known(
         struct im_lab *lab, struct chunk *chunk,
         id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_TAPE_KNOWN, len, 1)) goto fail;
 
@@ -184,13 +184,13 @@ static void im_lab_io_tape_known(
     }
 
     struct tech *tech = chunk_tech(chunk);
-    word_t known = tech_known(tech, item) ? 1 : 0;
+    word known = tech_known(tech, item) ? 1 : 0;
     chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
     return;
 
   fail:
     {
-        word_t fail = 0;
+        word fail = 0;
         chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
     }
     return;
@@ -199,7 +199,7 @@ static void im_lab_io_tape_known(
 static void im_lab_io_item_bits(
         struct im_lab *lab, struct chunk *chunk,
         id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_ITEM_BITS, len, 1)) goto fail;
 
@@ -210,13 +210,13 @@ static void im_lab_io_item_bits(
     }
 
     struct tech *tech = chunk_tech(chunk);
-    word_t bits = tech_learned_bits(tech, item);
+    word bits = tech_learned_bits(tech, item);
     chunk_io(chunk, IO_RETURN, lab->id, src, &bits, 1);
     return;
 
   fail:
     {
-        word_t fail = 0;
+        word fail = 0;
         chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
     }
     return;
@@ -225,7 +225,7 @@ static void im_lab_io_item_bits(
 static void im_lab_io_item_known(
         struct im_lab *lab, struct chunk *chunk,
         id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, lab->id, IO_ITEM_KNOWN, len, 1)) goto fail;
 
@@ -236,13 +236,13 @@ static void im_lab_io_item_known(
     }
 
     struct tech *tech = chunk_tech(chunk);
-    word_t known = tech_learned(tech, item) ? 1 : 0;
+    word known = tech_learned(tech, item) ? 1 : 0;
     chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
     return;
 
   fail:
     {
-        word_t fail = 0;
+        word fail = 0;
         chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
     }
     return;
@@ -251,7 +251,7 @@ static void im_lab_io_item_known(
 static void im_lab_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_lab *lab = state;
 
@@ -272,7 +272,7 @@ static void im_lab_io(
     }
 }
 
-static const word_t im_lab_io_list[] =
+static const word im_lab_io_list[] =
 {
     IO_PING,
     IO_STATE,

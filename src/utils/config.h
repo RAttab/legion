@@ -29,8 +29,8 @@ bool reader_peek_eof(struct reader *);
 void reader_open(struct reader *);
 void reader_close(struct reader *);
 uint64_t reader_u64(struct reader *);
-word_t reader_word(struct reader *);
-word_t reader_atom(struct reader *, struct atoms *);
+word reader_word(struct reader *);
+word reader_atom(struct reader *, struct atoms *);
 
 struct symbol reader_symbol(struct reader *);
 uint64_t reader_symbol_hash(struct reader *);
@@ -66,7 +66,7 @@ void reader_expect(struct reader *reader, hash_t);
         if (symbol_hash(&_sym) != symbol_hash_c(_key))                  \
             reader_err(_in, "unexpected field key '%s'", _sym.c);       \
                                                                         \
-        word_t _ret = reader_atom (_in, _atoms);                        \
+        word _ret = reader_atom (_in, _atoms);                        \
         reader_close(_in);                                              \
         _ret;                                                           \
     })
@@ -90,8 +90,8 @@ void writer_open(struct writer *);
 void writer_open_nl(struct writer *);
 void writer_close(struct writer *);
 void writer_u64(struct writer *, uint64_t);
-void writer_word(struct writer *, word_t);
-void writer_atom_fetch(struct writer *, struct atoms *, word_t);
+void writer_word(struct writer *, word);
+void writer_atom_fetch(struct writer *, struct atoms *, word);
 void writer_atom(struct writer *, const struct symbol *);
 void writer_symbol(struct writer *, const struct symbol *);
 

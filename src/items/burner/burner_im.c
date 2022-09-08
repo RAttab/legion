@@ -81,10 +81,10 @@ static void im_burner_step(void *state, struct chunk *chunk)
 
 static void im_burner_io_state(
         struct im_burner *burner, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, burner->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_ITEM: { value = burner->item; break; }
@@ -99,7 +99,7 @@ static void im_burner_io_state(
 
 static void im_burner_io_item(
         struct im_burner *burner, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, burner->id, IO_ITEM, len, 1)) return;
 
@@ -132,7 +132,7 @@ static void im_burner_io_item(
 static void im_burner_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_burner *burner = state;
 
@@ -148,7 +148,7 @@ static void im_burner_io(
     }
 }
 
-static const word_t im_burner_io_list[] =
+static const word im_burner_io_list[] =
 {
     IO_PING,
     IO_STATE,

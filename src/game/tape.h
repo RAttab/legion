@@ -22,7 +22,7 @@ struct tape;
 typedef uint8_t work_t;
 
 typedef uint8_t tape_it_t;
-inline bool tape_it_validate(word_t word) { return word >= 0 && word <= UINT8_MAX; }
+inline bool tape_it_validate(word word) { return word >= 0 && word <= UINT8_MAX; }
 
 enum tape_state
 {

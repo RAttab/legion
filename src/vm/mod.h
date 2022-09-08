@@ -23,15 +23,15 @@ struct atoms;
 typedef uint16_t mod_maj_t;
 typedef uint16_t mod_ver_t;
 
-inline mod_t make_mod(mod_maj_t maj, mod_ver_t ver)
+inline mod_id make_mod(mod_maj_t maj, mod_ver_t ver)
 {
     assert(!(maj >> 15));
     return maj << 16 | ver;
 }
 
-inline mod_maj_t mod_maj(mod_t mod) { return mod >> 16; }
-inline mod_ver_t mod_ver(mod_t mod) { return ((1 << 16) - 1) & mod; }
-inline bool mod_validate(word_t word) { return word > 0 && word <= UINT32_MAX; }
+inline mod_maj_t mod_maj(mod_id mod) { return mod >> 16; }
+inline mod_ver_t mod_ver(mod_id mod) { return ((1 << 16) - 1) & mod; }
+inline bool mod_validate(word word) { return word > 0 && word <= UINT32_MAX; }
 
 
 // -----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ static_assert(sizeof(struct mod_err) == s_cache_line);
 struct legion_packed mod_index
 {
     uint32_t row, col, len;
-    ip_t ip;
+    ip ip;
 };
 
 static_assert(sizeof(struct mod_index) == 16);
@@ -63,7 +63,7 @@ static_assert(sizeof(struct mod_index) == 16);
 struct legion_packed mod_pub
 {
     uint64_t key;
-    ip_t ip;
+    ip ip;
     legion_pad(4);
 };
 
@@ -72,7 +72,7 @@ static_assert(sizeof(struct mod_pub) == 16);
 
 struct legion_packed mod
 {
-    mod_t id;
+    mod_id id;
 
     uint32_t len;
     uint32_t src_len;
@@ -121,11 +121,11 @@ struct text mod_disasm(const struct mod *);
 size_t mod_dump(const struct mod *, char *dst, size_t len);
 size_t mod_hexdump(const struct mod *, char *dst, size_t len);
 
-static const ip_t MOD_PUB_UNKNOWN = -1;
-ip_t mod_pub(const struct mod *, uint64_t key);
+static const ip MOD_PUB_UNKNOWN = -1;
+ip mod_pub(const struct mod *, uint64_t key);
 
-struct mod_index mod_index(const struct mod *, ip_t ip);
-ip_t mod_byte(const struct mod *, size_t row, size_t col);
+struct mod_index mod_index(const struct mod *, ip ip);
+ip mod_byte(const struct mod *, size_t row, size_t col);
 
 
 // -----------------------------------------------------------------------------
@@ -138,12 +138,12 @@ void mods_free(struct mods *);
 struct mods *mods_load(struct save *);
 void mods_save(const struct mods *, struct save *);
 
-mod_t mods_register(struct mods *, user_t, const struct symbol *name);
+mod_id mods_register(struct mods *, user_t, const struct symbol *name);
 bool mods_name(struct mods *, mod_maj_t, struct symbol *dst);
 user_t mods_owner(struct mods *, mod_maj_t);
 
-mod_t mods_set(struct mods *, mod_maj_t, const struct mod *);
-const struct mod *mods_get(struct mods *, mod_t);
+mod_id mods_set(struct mods *, mod_maj_t, const struct mod *);
+const struct mod *mods_get(struct mods *, mod_id);
 const struct mod *mods_latest(struct mods *, mod_maj_t);
 
 mod_maj_t mods_find(struct mods *, const struct symbol *name);
@@ -181,7 +181,7 @@ struct lisp;
 struct lisp_ret
 {
     bool ok;
-    word_t value;
+    word value;
 };
 
 struct lisp *lisp_new(struct mods_list *, struct atoms *);

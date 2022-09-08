@@ -99,7 +99,7 @@ static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
     }
 
     case EV_MOD_SELECT: {
-        mod_t mod = (uintptr_t) ev->user.data1;
+        mod_id mod = (uintptr_t) ev->user.data1;
         ui_list_select(&ui->mods, mod_maj(mod));
 
         if (!ui_panel_is_visible(&ui->panel)) {

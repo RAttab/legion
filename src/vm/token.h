@@ -37,7 +37,7 @@ struct token
 {
     enum token_type type;
     uint32_t row, col, len;
-    union { struct symbol s; word_t w; } value;
+    union { struct symbol s; word w; } value;
 };
 
 

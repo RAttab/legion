@@ -30,7 +30,7 @@ struct energy;
 struct chunk;
 
 struct chunk *chunk_alloc_empty(void);
-struct chunk *chunk_alloc(struct world *, const struct star *, user_t, word_t name);
+struct chunk *chunk_alloc(struct world *, const struct star *, user_t, word name);
 void chunk_free(struct chunk *);
 
 void chunk_save(struct chunk *, struct save *);
@@ -45,8 +45,8 @@ const struct star *chunk_star(const struct chunk *);
 struct tech *chunk_tech(const struct chunk *);
 world_ts_t chunk_updated(const struct chunk *);
 
-word_t chunk_name(struct chunk *);
-void chunk_rename(struct chunk *, word_t);
+word chunk_name(struct chunk *);
+void chunk_rename(struct chunk *, word);
 bool chunk_harvest(struct chunk *, enum item item);
 
 id chunk_last(struct chunk *, enum item);
@@ -56,17 +56,17 @@ const void *chunk_get(struct chunk *, id);
 bool chunk_copy(struct chunk *, id, void *dst, size_t len);
 bool chunk_delete(struct chunk *, id id);
 bool chunk_create(struct chunk *, enum item);
-bool chunk_create_from(struct chunk *, enum item, const word_t *data, size_t len);
+bool chunk_create_from(struct chunk *, enum item, const word *data, size_t len);
 
 
 void chunk_step(struct chunk *);
 bool chunk_io(
         struct chunk *,
         enum io io, id src, id dst,
-        const word_t *args, size_t len);
+        const word *args, size_t len);
 
 
-void chunk_log(struct chunk *, id, word_t key, word_t value);
+void chunk_log(struct chunk *, id, word key, word value);
 const struct log *chunk_logs(struct chunk *);
 
 
@@ -76,18 +76,18 @@ struct energy *chunk_energy(struct chunk *);
 ssize_t chunk_scan(struct chunk *, enum item);
 
 
-bool chunk_lanes_dock(struct chunk *, word_t *data);
+bool chunk_lanes_dock(struct chunk *, word *data);
 void chunk_lanes_listen(struct chunk *, id, struct coord src, uint8_t chan);
 void chunk_lanes_unlisten(struct chunk *, id, struct coord src, uint8_t chan);
 void chunk_lanes_arrive(
         struct chunk *,
         enum item, struct coord src,
-        const word_t *data, size_t len);
+        const word *data, size_t len);
 void chunk_lanes_launch(
         struct chunk *,
         enum item item, size_t speed,
         struct coord dst,
-        const word_t *data, size_t len);
+        const word *data, size_t len);
 
 
 void chunk_ports_reset(struct chunk *, id);

@@ -272,7 +272,7 @@ bool active_create(struct active *active)
 // This creation function is not used for replication (...yet) which means that
 // we don't need to defer the creation (... yet)
 bool active_create_from(
-        struct active *active, struct chunk *chunk, const word_t *data, size_t len)
+        struct active *active, struct chunk *chunk, const word *data, size_t len)
 {
     if (active->count + active->create == active_cap) return false;
 
@@ -325,7 +325,7 @@ void active_step(
 
 bool active_io(
         struct active *active, struct chunk *chunk,
-        enum io io, id src, id dst, const word_t *args, size_t len)
+        enum io io, id src, id dst, const word *args, size_t len)
 {
     void *state = active_get(active, dst);
     if (!state) return false;

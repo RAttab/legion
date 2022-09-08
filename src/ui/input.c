@@ -91,7 +91,7 @@ bool ui_input_get_symbol(struct ui_input *input, struct symbol *ret)
     return symbol_parse(input->buf.c, input->buf.len, ret) >= 0;
 }
 
-bool ui_input_eval(struct ui_input *input, word_t *ret)
+bool ui_input_eval(struct ui_input *input, word *ret)
 {
     if (!input->buf.len) return false;
 

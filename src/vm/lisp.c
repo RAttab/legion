@@ -24,7 +24,7 @@ typedef uint64_t lisp_regs_t[4];
 struct lisp_req
 {
     struct lisp_req *next;
-    ip_t ip;
+    ip ip;
 
     uint16_t row, col, len;
 };
@@ -244,7 +244,7 @@ static void lisp_write_op(struct lisp *lisp, enum op_code op)
 
 
 static void lisp_write_at(
-        struct lisp *lisp, ip_t pos, const void *data, size_t len)
+        struct lisp *lisp, ip pos, const void *data, size_t len)
 {
     uint8_t *it = lisp->out.base + pos;
     assert(it + len < lisp->out.end);
@@ -258,16 +258,16 @@ static void lisp_write_at(
     } while (false)
 
 
-static ip_t lisp_skip(struct lisp *lisp, size_t len)
+static ip lisp_skip(struct lisp *lisp, size_t len)
 {
     lisp_ensure(lisp, len);
 
-    ip_t pos = lisp->out.it - lisp->out.base;
+    ip pos = lisp->out.it - lisp->out.base;
     lisp->out.it += len;
     return pos;
 }
 
-static ip_t lisp_ip(struct lisp *lisp)
+static ip lisp_ip(struct lisp *lisp)
 {
     return lisp->out.it - lisp->out.base;
 }
@@ -279,7 +279,7 @@ static ip_t lisp_ip(struct lisp *lisp)
 
 static void lisp_index_at(struct lisp *lisp, const struct token *token)
 {
-    ip_t ip = lisp_ip(lisp);
+    ip ip = lisp_ip(lisp);
     size_t prev = lisp->index.len - 1;
 
     struct mod_index *index = NULL;
@@ -315,16 +315,16 @@ static void lisp_index(struct lisp *lisp)
 static bool lisp_is_reg(struct lisp *lisp, const struct symbol *symbol)
 {
     uint64_t key = symbol_hash(symbol);
-    for (reg_t reg = 0; reg < 4; ++reg) {
+    for (reg reg = 0; reg < 4; ++reg) {
         if (lisp->symb.regs[reg] == key) return true;
     }
     return false;
 }
 
-static reg_t lisp_reg(struct lisp *lisp, const struct symbol *symbol)
+static reg lisp_reg(struct lisp *lisp, const struct symbol *symbol)
 {
     uint64_t key = symbol_hash(symbol);
-    for (reg_t reg = 0; reg < 4; ++reg) {
+    for (reg reg = 0; reg < 4; ++reg) {
         if (lisp->symb.regs[reg] == key) return reg;
     }
 
@@ -332,9 +332,9 @@ static reg_t lisp_reg(struct lisp *lisp, const struct symbol *symbol)
     return 0;
 }
 
-static reg_t lisp_reg_alloc(struct lisp *lisp, uint64_t key)
+static reg lisp_reg_alloc(struct lisp *lisp, uint64_t key)
 {
-    for (reg_t reg = 0; reg < 4; ++reg) {
+    for (reg reg = 0; reg < 4; ++reg) {
         if (!lisp->symb.regs[reg]) {
             lisp->symb.regs[reg] = key;
             return reg;
@@ -345,7 +345,7 @@ static reg_t lisp_reg_alloc(struct lisp *lisp, uint64_t key)
     return 0;
 }
 
-static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
+static void lisp_reg_free(struct lisp *lisp, reg reg, uint64_t key)
 {
     if (!key) return;
 
@@ -363,7 +363,7 @@ static void lisp_reg_free(struct lisp *lisp, reg_t reg, uint64_t key)
 // consts
 // -----------------------------------------------------------------------------
 
-static word_t lisp_const(struct lisp *lisp, const struct symbol *symbol)
+static word lisp_const(struct lisp *lisp, const struct symbol *symbol)
 {
     uint64_t key = symbol_hash(symbol);
     struct htable_ret ret = htable_get(&lisp->consts, key);
@@ -390,7 +390,7 @@ static void lisp_pub_symbol(struct lisp *lisp, const struct symbol *symbol)
     assert(ret.ok);
 }
 
-static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, ip_t ip)
+static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, ip ip)
 {
     if (unlikely(lisp->pub.len == lisp->pub.cap)) {
         lisp->pub.cap = lisp->pub.cap ? lisp->pub.cap * 2 : 2;
@@ -409,7 +409,7 @@ static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, ip_t ip
 // jmp
 // -----------------------------------------------------------------------------
 
-static ip_t lisp_jmp(struct lisp *lisp, const struct token *token)
+static ip lisp_jmp(struct lisp *lisp, const struct token *token)
 {
     assert(token->type == token_symbol);
 
@@ -443,7 +443,7 @@ static ip_t lisp_jmp(struct lisp *lisp, const struct token *token)
 
 static void lisp_label(struct lisp *lisp, const struct symbol *symbol)
 {
-    ip_t jmp = lisp_ip(lisp);
+    ip jmp = lisp_ip(lisp);
 
     uint64_t key = symbol_hash(symbol);
     struct htable_ret ret = htable_put(&lisp->symb.jmp, key, jmp);
@@ -601,7 +601,7 @@ struct lisp_ret lisp_eval_const(struct lisp *lisp, const char *src, size_t len)
     token_init(&lisp->in, src, len, lisp_err_token, lisp);
     lisp->err.len = 0;
 
-    word_t result = lisp_eval(lisp);
+    word result = lisp_eval(lisp);
     for (size_t i = 0; i < lisp->err.len; ++i) {
         struct mod_err *err = lisp->err.list + i;
         dbgf("eval:%u:%u: %s", err->row, err->col, err->str);

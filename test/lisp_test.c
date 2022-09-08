@@ -26,7 +26,7 @@
 // token
 // -----------------------------------------------------------------------------
 
-word_t token_word(struct tokenizer *tok, struct atoms *atoms)
+word token_word(struct tokenizer *tok, struct atoms *atoms)
 {
     struct token token = {0};
     switch (token_next(tok, &token)->type) {
@@ -60,7 +60,7 @@ struct field
 {
     enum field_type type;
     uint8_t index;
-    word_t value;
+    word value;
     char name[8];
 };
 
@@ -163,7 +163,7 @@ const struct mod *read_mod(
     assert(!token_eof(tok));
     size_t len = (tok->it - first) - 1;
 
-    mod_t id = mods_register(mods, user_admin, name);
+    mod_id id = mods_register(mods, user_admin, name);
     assert(id);
 
     const struct mod *mod = mod_compile(mod_maj(id), first, len, mods, atoms);
@@ -188,14 +188,14 @@ bool check_mod(
         struct atoms *atoms)
 {
     if (!vm || !mod) return false;
-    ip_t ret = vm_exec(vm, mod);
+    ip ret = vm_exec(vm, mod);
 
     bool ok = true;
     struct field field = {0};
     struct field flags = {0};
     while ((field = token_field(tok, atoms)).type != field_nil) {
 
-        word_t exp = field.value;
+        word exp = field.value;
         const char *str = field.name;
 
         switch (field.type)

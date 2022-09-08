@@ -188,7 +188,7 @@ void ui_str_set_id(struct ui_str *, id val);
 void ui_str_set_item(struct ui_str *, enum item val);
 void ui_str_set_coord(struct ui_str *, struct coord val);
 void ui_str_set_symbol(struct ui_str *, const struct symbol *val);
-void ui_str_set_atom(struct ui_str *, word_t word);
+void ui_str_set_atom(struct ui_str *, word word);
 
 inline size_t ui_str_len(struct ui_str *str)
 {
@@ -350,7 +350,7 @@ void ui_input_set(struct ui_input *, const char *str);
 
 bool ui_input_get_u64(struct ui_input *, uint64_t *ret);
 bool ui_input_get_symbol(struct ui_input *, struct symbol *ret);
-bool ui_input_eval(struct ui_input *, word_t *ret);
+bool ui_input_eval(struct ui_input *, word *ret);
 
 enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
 void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
@@ -399,12 +399,12 @@ void ui_code_free(struct ui_code *);
 void ui_code_focus(struct ui_code *);
 
 void ui_code_clear(struct ui_code *);
-void ui_code_set_code(struct ui_code *, const struct mod *, ip_t);
-void ui_code_set_disassembly(struct ui_code *, const struct mod *, ip_t);
+void ui_code_set_code(struct ui_code *, const struct mod *, ip);
+void ui_code_set_disassembly(struct ui_code *, const struct mod *, ip);
 void ui_code_set_text(struct ui_code *code, const char *text, size_t len);
 
-ip_t ui_code_ip(struct ui_code *);
-void ui_code_goto(struct ui_code *, ip_t);
+ip ui_code_ip(struct ui_code *);
+void ui_code_goto(struct ui_code *, ip);
 void ui_code_indent(struct ui_code *);
 
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);

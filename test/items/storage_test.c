@@ -16,7 +16,7 @@ void test_storage(void)
     struct world *world = world_new(0);
     world_populate(world);
 
-    const uid_t user = 0;
+    const user_t user = 0;
     world_populate_user(world, user);
     struct coord home = world_home(world, user);
     struct chunk *chunk = world_chunk(world, home);
@@ -33,8 +33,8 @@ void test_storage(void)
     const id_t test_id = make_id(ITEM_TEST, 1);
 
     const id_t sys_id = 0;
-    const word_t item_elem_a = ITEM_ELEM_A;
-    const word_t item_muscle = ITEM_MUSCLE;
+    const word item_elem_a = ITEM_ELEM_A;
+    const word item_muscle = ITEM_MUSCLE;
 
     // need to make one step for the items to be created.
     world_step(world);

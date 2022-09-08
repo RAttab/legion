@@ -14,13 +14,13 @@ struct mod;
 // types
 // -----------------------------------------------------------------------------
 
-typedef int64_t word_t;
-typedef uint8_t reg_t;
-typedef uint32_t mod_t; // see mod.h for the full definition
+typedef int64_t word;
+typedef uint8_t reg;
+typedef uint32_t mod_id; // see mod.h for the full definition
 
-typedef uint32_t ip_t;
-static const ip_t IP_NIL = UINT32_MAX;
-inline bool ip_validate(word_t word) { return word >= 0 && word < UINT32_MAX; }
+typedef uint32_t ip;
+static const ip IP_NIL = UINT32_MAX;
+inline bool ip_validate(word word) { return word >= 0 && word < UINT32_MAX; }
 
 enum flags
 {
@@ -51,9 +51,9 @@ struct legion_packed vm
     uint8_t io;
     legion_pad(3);
 
-    ip_t ip;
-    word_t regs[4]; // half of the cacheline
-    word_t stack[]; // 2 u64 left in cacheline
+    ip ip;
+    word regs[4]; // half of the cacheline
+    word stack[]; // 2 u64 left in cacheline
 };
 
 static_assert(sizeof(struct vm) == 6*8);
@@ -61,16 +61,16 @@ static_assert(sizeof(struct vm) == 6*8);
 // These macros are needed in enum computation so can't be functions
 #define vm_speed(speed) (1 << ((speed) + 1))
 #define vm_stack_len(stack) (2 + (8 * (stack)))
-#define vm_len(stack) (sizeof(struct vm) + vm_stack_len(stack) * sizeof(word_t))
+#define vm_len(stack) (sizeof(struct vm) + vm_stack_len(stack) * sizeof(word))
 
 struct vm *vm_alloc(uint8_t stack, uint8_t speed);
 void vm_free(struct vm *);
 
 void vm_init(struct vm *, uint8_t stack, uint8_t speed);
 
-static const mod_t VM_FAULT = -1;
-static const mod_t VM_RESET = -2;
-mod_t vm_exec(struct vm *, const struct mod *);
+static const mod_id VM_FAULT = -1;
+static const mod_id VM_RESET = -2;
+mod_id vm_exec(struct vm *, const struct mod *);
 
 void vm_reset(struct vm *);
 void vm_suspend(struct vm *);
@@ -80,22 +80,22 @@ void vm_io_fault(struct vm *);
 inline bool vm_io(struct vm *vm) { return vm->flags & FLAG_IO; }
 
 enum { vm_io_cap = 8 };
-typedef word_t vm_io_buf_t[vm_io_cap];
+typedef word vm_io_buf_t[vm_io_cap];
 
-void vm_push(struct vm *, word_t);
+void vm_push(struct vm *, word);
 
-size_t vm_io_read(struct vm *, word_t *dst);
+size_t vm_io_read(struct vm *, word *dst);
 inline bool vm_io_check(struct vm *vm, size_t len, size_t exp)
 {
     if (unlikely(len < exp)) { vm_io_fault(vm); return false; }
     return true;
 }
 
-inline word_t vm_pack(uint32_t msb, uint32_t lsb)
+inline word vm_pack(uint32_t msb, uint32_t lsb)
 {
     return (((uint64_t) msb) << 32) | lsb;
 }
-inline void vm_unpack(word_t in, uint32_t *msb, uint32_t *lsb)
+inline void vm_unpack(word in, uint32_t *msb, uint32_t *lsb)
 {
     *msb = ((uint64_t) in) >> 32;
     *lsb = (uint32_t) in;

@@ -67,7 +67,7 @@ struct mod *mod_load(struct save *save)
     if (!save_read_magic(save, save_magic_mod)) return NULL;
     struct mod *mod = NULL;
 
-    mod_t id = save_read_type(save, typeof(id));
+    mod_id id = save_read_type(save, typeof(id));
 
     uint32_t code_len = save_read_type(save, typeof(code_len));
     size_t code_bytes = code_len * sizeof(*mod->code);
@@ -142,7 +142,7 @@ void mod_save(const struct mod *mod, struct save *save)
     save_write_magic(save, save_magic_mod);
 }
 
-struct mod *mod_nil(mod_t id)
+struct mod *mod_nil(mod_id id)
 {
     struct mod *mod = alloc_cache(sizeof(*mod));
     void *end = mod+1;
@@ -158,7 +158,7 @@ struct mod *mod_nil(mod_t id)
     return mod;
 }
 
-ip_t mod_pub(const struct mod *mod, uint64_t key)
+ip mod_pub(const struct mod *mod, uint64_t key)
 {
     for (size_t i = 0; i < mod->pub_len; ++i) {
         if (mod->pub[i].key == key) return mod->pub[i].ip;
@@ -167,7 +167,7 @@ ip_t mod_pub(const struct mod *mod, uint64_t key)
     return MOD_PUB_UNKNOWN;
 }
 
-struct mod_index mod_index(const struct mod *mod, ip_t ip)
+struct mod_index mod_index(const struct mod *mod, ip ip)
 {
     assert(ip < mod->len);
 
@@ -178,7 +178,7 @@ struct mod_index mod_index(const struct mod *mod, ip_t ip)
     return mod->index[mod->index_len-1];
 }
 
-ip_t mod_byte(const struct mod *mod, size_t row, size_t col)
+ip mod_byte(const struct mod *mod, size_t row, size_t col)
 {
     const struct mod_index *it = mod->index;
     const struct mod_index *end = it + mod->index_len;
@@ -213,14 +213,14 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 
     void dump_lit(void)
     {
-        size_t n = snprintf(dst, len, "%016lx\n", *((word_t *) in));
-        dst += n; len -= n; in += sizeof(word_t);
+        size_t n = snprintf(dst, len, "%016lx\n", *((word *) in));
+        dst += n; len -= n; in += sizeof(word);
     }
 
     void dump_reg(void)
     {
-        size_t n = snprintf(dst, len, "$%u\n", *((reg_t *) in));
-        dst += n; len -= n; in += sizeof(reg_t);
+        size_t n = snprintf(dst, len, "$%u\n", *((reg *) in));
+        dst += n; len -= n; in += sizeof(reg);
     }
 
     void dump_len(void)
@@ -231,14 +231,14 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 
     void dump_off(void)
     {
-        size_t n = snprintf(dst, len, "@%x\n", *((ip_t *) in));
-        dst += n; len -= n; in += sizeof(ip_t);
+        size_t n = snprintf(dst, len, "@%x\n", *((ip *) in));
+        dst += n; len -= n; in += sizeof(ip);
     }
 
     void dump_mod(void)
     {
-        size_t n = snprintf(dst, len, "@%lx\n", *((word_t *) in));
-        dst += n; len -= n; in += sizeof(word_t);
+        size_t n = snprintf(dst, len, "@%lx\n", *((word *) in));
+        dst += n; len -= n; in += sizeof(word);
     }
 
     while (in < end) {
@@ -387,7 +387,7 @@ struct mods *mods_load(struct save *save)
 }
 
 
-mod_t mods_register(struct mods *mods, user_t owner, const struct symbol *name)
+mod_id mods_register(struct mods *mods, user_t owner, const struct symbol *name)
 {
     if (mods_find(mods, name)) return 0;
 
@@ -396,7 +396,7 @@ mod_t mods_register(struct mods *mods, user_t owner, const struct symbol *name)
     entry->str = *name;
     entry->owner = owner;
 
-    mod_t mod = make_mod(entry->maj, ++entry->ver);
+    mod_id mod = make_mod(entry->maj, ++entry->ver);
     entry->mod = mod_nil(mod);
 
     struct htable_ret ret = {0};
@@ -432,7 +432,7 @@ user_t mods_owner(struct mods *mods, mod_maj_t maj)
     return ((struct mod_entry *) ret.value)->owner;
 }
 
-mod_t mods_set(struct mods *mods, mod_maj_t maj, const struct mod *mod)
+mod_id mods_set(struct mods *mods, mod_maj_t maj, const struct mod *mod)
 {
     assert(maj);
     assert(!mod->errs_len);
@@ -461,7 +461,7 @@ const struct mod *mods_latest(struct mods *mods, mod_maj_t maj)
     return ret.ok ? ((struct mod_entry *) ret.value)->mod : NULL;
 }
 
-const struct mod *mods_get(struct mods *mods, mod_t id)
+const struct mod *mods_get(struct mods *mods, mod_id id)
 {
     if (!id) return NULL;
     if (!mod_ver(id)) return mods_latest(mods, mod_maj(id));

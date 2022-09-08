@@ -62,7 +62,7 @@ void check(void)
         const struct mod *mod = mods_latest(mods, mods_find(mods, &name));
         assert(mod);
 
-        word_t arg = mod->id;
+        word arg = mod->id;
         struct chunk *chunk = world_chunk(world, home);
         bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN, 1), &arg, 1);
         assert(ok);
@@ -125,8 +125,8 @@ void check(void)
         for (const struct htable_bucket *it = htable_next(&state->names, NULL);
              it; it = htable_next(&state->names, it))
         {
-            word_t name = world_star_name(world, coord_from_u64(it->key));
-            assert(name && name == (word_t) it->value);
+            word name = world_star_name(world, coord_from_u64(it->key));
+            assert(name && name == (word) it->value);
         }
 
         {

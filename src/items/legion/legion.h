@@ -24,7 +24,7 @@ struct legion_packed im_legion
 
     legion_pad(2);
 
-    mod_t mod;
+    mod_id mod;
 };
 
 static_assert(sizeof(struct im_legion) == 8);

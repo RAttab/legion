@@ -111,10 +111,10 @@ static void im_printer_step(void *state, struct chunk *chunk)
 
 static void im_printer_io_state(
         struct im_printer *printer, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, printer->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_TAPE: { value = tape_packed_id(printer->tape); break; }
@@ -127,7 +127,7 @@ static void im_printer_io_state(
 
 static void im_printer_io_tape(
         struct im_printer *printer, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, printer->id, IO_TAPE, len, 1)) return;
 
@@ -149,7 +149,7 @@ static void im_printer_io_tape(
 static void im_printer_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_printer *printer = state;
 
@@ -165,7 +165,7 @@ static void im_printer_io(
     }
 }
 
-static const word_t im_printer_io_list[] =
+static const word im_printer_io_list[] =
 {
     IO_PING,
     IO_STATE,

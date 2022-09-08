@@ -48,12 +48,12 @@ const enum item *im_legion_cargo(enum item type)
 }
 
 static void im_legion_make(
-        void *state, struct chunk *chunk, id id, const word_t *data, size_t len)
+        void *state, struct chunk *chunk, id id, const word *data, size_t len)
 {
     (void) state;
 
-    word_t src = len >= 1 ? data[0] : 0;
-    word_t mod = len >= 2 ? data[1] : 0;
+    word src = len >= 1 ? data[0] : 0;
+    word mod = len >= 2 ? data[1] : 0;
 
     for (const enum item *it = im_legion_cargo(id_item(id)); *it; ++it) {
 
@@ -90,10 +90,10 @@ static void im_legion_make(
 
 static void im_legion_io_state(
         struct im_legion *legion, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, legion->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_MOD: { value = legion->mod; break; }
@@ -110,11 +110,11 @@ static void im_legion_io_reset(struct im_legion *legion, struct chunk *chunk)
 }
 
 static void im_legion_io_mod(
-        struct im_legion *legion, struct chunk *chunk, const word_t *args, size_t len)
+        struct im_legion *legion, struct chunk *chunk, const word *args, size_t len)
 {
     if (!im_check_args(chunk, legion->id, IO_MOD, len, 1)) return;
 
-    mod_t mod = args[0];
+    mod_id mod = args[0];
     if (!mod_validate(args[0]))
         return chunk_log(chunk, legion->id, IO_MOD, IOE_A0_INVALID);
 
@@ -123,7 +123,7 @@ static void im_legion_io_mod(
 
 static void im_legion_io_launch(
         struct im_legion *legion, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, legion->id, IO_LAUNCH, len, 1)) return;
 
@@ -131,7 +131,7 @@ static void im_legion_io_launch(
     if (!coord_validate(args[0]))
         return chunk_log(chunk, legion->id, IO_MOD, IOE_A0_INVALID);
 
-    const word_t data[] = {
+    const word data[] = {
         coord_to_u64(chunk_star(chunk)->coord),
         legion->mod,
     };
@@ -144,7 +144,7 @@ static void im_legion_io_launch(
 static void im_legion_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_legion *legion = state;
 
@@ -162,7 +162,7 @@ static void im_legion_io(
     }
 }
 
-static const word_t im_legion_io_list[] =
+static const word im_legion_io_list[] =
 {
     IO_PING,
     IO_STATE,

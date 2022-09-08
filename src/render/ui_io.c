@@ -145,7 +145,7 @@ struct ui_io
     struct coord star;
 
     size_t list_len;
-    const word_t *list;
+    const word *list;
 
     bool loading;
 
@@ -300,13 +300,13 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     assert(chunk);
 
     size_t len = cmd->args;
-    word_t args[cmd->args];
+    word args[cmd->args];
     memset(args, 0, sizeof(args));
 
     switch (cmd->id)
     {
     case IO_SEND: {
-        word_t val = 0;
+        word val = 0;
         if (!ui_input_eval(&cmd->arg[0].val, &val)) return;
         len = legion_min(val, im_packet_max);
         len = legion_max(val, 0);
@@ -319,7 +319,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     }
 
     default: {
-        word_t val = 0;
+        word val = 0;
         for (size_t i = 0; i < cmd->args; ++i) {
             if (!ui_input_eval(&cmd->arg[i].val, &val)) return;
             args[i] = val;

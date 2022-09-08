@@ -59,13 +59,13 @@ struct tech *world_tech(struct world *, user_t);
 struct chunk *world_chunk(struct world *, struct coord);
 struct chunk *world_chunk_alloc(struct world *, struct coord, user_t);
 const struct sector *world_sector(struct world *, struct coord);
-word_t world_star_name(struct world *, struct coord);
+word world_star_name(struct world *, struct coord);
 bool world_user_access(struct world *, uset_t, struct coord);
 
 enum { world_log_cap = 64 };
 struct log *world_log(struct world *, user_t);
 void world_log_push(
-        struct world *, user_t, struct coord, id, word_t key, word_t value);
+        struct world *, user_t, struct coord, id, word key, word value);
 
 
 // -----------------------------------------------------------------------------
@@ -111,10 +111,10 @@ void world_lanes_launch(
         struct world *,
         user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
-        const word_t *data, size_t len);
+        const word *data, size_t len);
 void world_lanes_arrive(
         struct world *,
         user_t owner, enum item type,
         struct coord src, struct coord dst,
-        const word_t *data, size_t len);
+        const word *data, size_t len);
 

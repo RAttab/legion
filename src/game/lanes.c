@@ -20,14 +20,14 @@ legion_packed struct lane_data
     bool forward;
     uint8_t len;
     legion_pad(4);
-    word_t data[];
+    word data[];
 };
 
 static_assert(sizeof(struct lane_data) == 8);
 
 static size_t lane_data_len(size_t len)
 {
-    return sizeof(struct lane_data) + len * sizeof(word_t);
+    return sizeof(struct lane_data) + len * sizeof(word);
 }
 
 
@@ -363,7 +363,7 @@ void lanes_launch(
         struct lanes *lanes,
         user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
-        const word_t *data, size_t len)
+        const word *data, size_t len)
 {
     uint64_t key = lanes_key(src, dst);
     struct htable_ret ret = htable_get(&lanes->lanes, key);

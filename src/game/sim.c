@@ -352,14 +352,14 @@ static struct symbol sim_log_coord(struct coord coord)
     return str;
 }
 
-static struct symbol sim_log_mod(struct sim *sim, mod_t mod)
+static struct symbol sim_log_mod(struct sim *sim, mod_id mod)
 {
     struct symbol str = {0};
     mods_name(world_mods(sim->world), mod_maj(mod), &str);
     return str;
 }
 
-static struct symbol sim_log_atom(struct sim *sim, word_t atom)
+static struct symbol sim_log_atom(struct sim *sim, word atom)
 {
     struct symbol str = {0};
     atoms_str(world_atoms(sim->world), atom, &str);
@@ -557,7 +557,7 @@ static void sim_cmd_mod(
 static void sim_cmd_mod_register(
         struct sim *sim, struct sim_pipe *pipe, const struct cmd *cmd)
 {
-    mod_t id = mods_register(
+    mod_id id = mods_register(
             world_mods(sim->world),
             pipe->auth.user.id,
             &cmd->data.mod_register);
@@ -610,7 +610,7 @@ static void sim_cmd_publish(
                 mod->errs_len);
     }
 
-    mod_t mod_id = mods_set(mods, mod_maj(mod->id), mod);
+    mod_id mod_id = mods_set(mods, mod_maj(mod->id), mod);
     if (!mod_id) {
         return sim_log(pipe, st_error, "failed to publish mod '%s'",
                 sim_log_mod(sim, mod_id).c);

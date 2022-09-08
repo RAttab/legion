@@ -166,10 +166,10 @@ static void im_collider_step(void *state, struct chunk *chunk)
 
 static void im_collider_io_state(
         struct im_collider *collider, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, collider->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0])
     {
@@ -192,7 +192,7 @@ static void im_collider_io_state(
 
 static void im_collider_io_grow(
         struct im_collider *collider, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, collider->id, IO_TAPE, len, 1)) return;
 
@@ -206,7 +206,7 @@ static void im_collider_io_grow(
 
 static void im_collider_io_tape(
         struct im_collider *collider, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, collider->id, IO_TAPE, len, 1)) return;
 
@@ -229,7 +229,7 @@ static void im_collider_io_tape(
 static void im_collider_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_collider *collider = state;
 
@@ -246,7 +246,7 @@ static void im_collider_io(
     }
 }
 
-static const word_t im_collider_io_list[] =
+static const word im_collider_io_list[] =
 {
     IO_PING,
     IO_STATE,

@@ -29,11 +29,11 @@ typedef void (*im_config_t) (struct im_config *);
 
 typedef void (*im_init_t) (void *state, struct chunk *, id id);
 typedef void (*im_make_t) (
-        void *state, struct chunk *, id id, const word_t *data, size_t len);
+        void *state, struct chunk *, id id, const word *data, size_t len);
 typedef void (*im_load_t) (void *state, struct chunk *);
 typedef void (*im_step_t) (void *state, struct chunk *);
 typedef void (*im_io_t) (
-        void *state, struct chunk *, enum io, id src, const word_t *args, size_t len);
+        void *state, struct chunk *, enum io, id src, const word *args, size_t len);
 typedef bool (*im_flow_t) (const void *state, struct flow *);
 
 typedef void *(*im_ui_alloc_t)  (struct font *);
@@ -83,7 +83,7 @@ struct im_config
     } ui;
 
     size_t io_list_len;
-    const word_t *io_list;
+    const word *io_list;
 };
 
 const struct im_config *im_config(enum item);

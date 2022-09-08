@@ -11,7 +11,7 @@ void test_port(void)
     struct world *world = world_new(0);
     world_populate(world);
 
-    const uid_t user = 0;
+    const user_t user = 0;
     const struct sector *sector = world_sector(world, coord_center());
 
     struct coord src = sector->stars[0].coord;
@@ -36,12 +36,12 @@ void test_port(void)
     chunk_create(dst_chunk, ITEM_WORKER);
 
     const id_t sys_id = 0;
-    const word_t item_elem_a = ITEM_ELEM_A;
+    const word item_elem_a = ITEM_ELEM_A;
 
     // need to make one step for the items to be created.
     world_step(world);
 
-    const word_t pill_data = im_port_pack(ITEM_ELEM_A, 2);
+    const word pill_data = im_port_pack(ITEM_ELEM_A, 2);
     chunk_lanes_arrive(src_chunk, ITEM_PILL, dst, &pill_data, 1);
     chunk_lanes_arrive(dst_chunk, ITEM_PILL, src, &pill_data, 1);
 
@@ -49,10 +49,10 @@ void test_port(void)
     chunk_io(dst_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
 
     enum { load_ticks = 6, elem_count = 2 };
-    const word_t dst_data = coord_to_u64(dst);
-    const word_t src_data = coord_to_u64(src);
-    const word_t item_a_data[] = { item_elem_a, elem_count };
-    const word_t item_nil_data = ITEM_NIL;
+    const word dst_data = coord_to_u64(dst);
+    const word src_data = coord_to_u64(src);
+    const word item_a_data[] = { item_elem_a, elem_count };
+    const word item_nil_data = ITEM_NIL;
 
 
     for (size_t it = 0; it < 10; ++it) {

@@ -29,7 +29,7 @@ struct chunk
     struct world *world;
     struct star star;
     user_t owner;
-    word_t name;
+    word name;
 
     world_ts_t updated;
 
@@ -96,7 +96,7 @@ struct chunk *chunk_alloc_empty(void)
 }
 
 struct chunk *chunk_alloc(
-        struct world *world, const struct star *star, user_t owner, word_t name)
+        struct world *world, const struct star *star, user_t owner, word name)
 {
     assert(world);
 
@@ -443,11 +443,11 @@ world_ts_t chunk_updated(const struct chunk *chunk)
     return chunk->updated;
 }
 
-word_t chunk_name(struct chunk *chunk)
+word chunk_name(struct chunk *chunk)
 {
     return chunk->name;
 }
-void chunk_rename(struct chunk *chunk, word_t new)
+void chunk_rename(struct chunk *chunk, word new)
 {
     chunk->name = new;
     chunk->updated = world_time(chunk->world);
@@ -520,7 +520,7 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
     case ITEM_BATTERY: { chunk->energy.battery++; return true; }
 
     case ITEM_PILL: {
-        word_t cargo = 0;
+        word cargo = 0;
         chunk_lanes_arrive(chunk, item, coord_nil(), &cargo, 1);
         return true;
     }
@@ -536,7 +536,7 @@ bool chunk_create(struct chunk *chunk, enum item item)
 }
 
 bool chunk_create_from(
-        struct chunk *chunk, enum item item, const word_t *data, size_t len)
+        struct chunk *chunk, enum item item, const word *data, size_t len)
 {
 
     if (chunk_create_logistics(chunk, item)) { assert(!len); return true; }
@@ -561,7 +561,7 @@ void chunk_step(struct chunk *chunk)
 
 bool chunk_io(
         struct chunk *chunk,
-        enum io io, id src, id dst, const word_t *args, size_t len)
+        enum io io, id src, id dst, const word *args, size_t len)
 {
     struct active *active = active_index(chunk, id_item(dst));
     if (!active) return false;
@@ -574,7 +574,7 @@ bool chunk_io(
 // log
 // -----------------------------------------------------------------------------
 
-void chunk_log(struct chunk *chunk, id id, word_t key, word_t value)
+void chunk_log(struct chunk *chunk, id id, word key, word value)
 {
     assert(chunk->world);
 
@@ -673,7 +673,7 @@ void chunk_lanes_unlisten(
 }
 
 static void chunk_lanes_receive(
-        struct chunk *chunk, struct coord src, const word_t *data, size_t len)
+        struct chunk *chunk, struct coord src, const word *data, size_t len)
 {
     assert(len >= 1);
 
@@ -693,7 +693,7 @@ static void chunk_lanes_receive(
 void chunk_lanes_arrive(
         struct chunk *chunk,
         enum item item, struct coord src,
-        const word_t *data, size_t len)
+        const word *data, size_t len)
 {
     switch (item)
     {
@@ -705,7 +705,7 @@ void chunk_lanes_arrive(
     }
 
     case ITEM_PILL: {
-        word_t cargo = len == 1 ? data[0] : 0;
+        word cargo = len == 1 ? data[0] : 0;
         chunk->pills = ring64_push(chunk->pills, cargo);
         break;
     }
@@ -719,7 +719,7 @@ void chunk_lanes_arrive(
     }
 }
 
-bool chunk_lanes_dock(struct chunk *chunk, word_t *data)
+bool chunk_lanes_dock(struct chunk *chunk, word *data)
 {
     if (ring64_empty(chunk->pills)) return false;
     *data = ring64_pop(chunk->pills);
@@ -730,7 +730,7 @@ void chunk_lanes_launch(
         struct chunk *chunk,
         enum item item, size_t speed,
         struct coord dst,
-        const word_t *data, size_t len)
+        const word *data, size_t len)
 {
     assert(chunk->world);
 

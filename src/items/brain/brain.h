@@ -24,9 +24,9 @@ struct legion_packed im_brain
 
     bool fault;
     bool debug;
-    ip_t breakpoint;
+    ip breakpoint;
 
-    mod_t mod_id;
+    mod_id mod_id;
     legion_pad(12);
     const struct mod *mod;
 

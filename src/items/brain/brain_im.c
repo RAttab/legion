@@ -8,7 +8,7 @@
 #include "game/world.h"
 #include "vm/op.h"
 
-static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_t id);
+static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id);
 
 
 // -----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ static void im_brain_init(void *state, struct chunk *chunk, id id)
 }
 
 static void im_brain_make(
-        void *state, struct chunk *chunk, id id, const word_t *data, size_t len)
+        void *state, struct chunk *chunk, id id, const word *data, size_t len)
 {
     struct im_brain *brain = state;
     im_brain_init(brain, chunk, id);
@@ -51,7 +51,7 @@ static void im_brain_load(void *state, struct chunk *chunk)
     assert(brain->mod);
 }
 
-static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_t id)
+static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id)
 {
     brain->mod_id = id;
     brain->mod = id ? mods_get(world_mods(chunk_world(chunk)), id) : NULL;
@@ -79,7 +79,7 @@ static void im_brain_reset(struct im_brain *brain)
 }
 
 static void im_brain_recv(
-        struct im_brain *brain, const word_t *args, size_t len)
+        struct im_brain *brain, const word *args, size_t len)
 {
     len = legion_min(len, (size_t) im_packet_max);
 
@@ -90,7 +90,7 @@ static void im_brain_recv(
 
 static void im_brain_name(
         struct im_brain *brain, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (len) chunk_rename(chunk, args[0]);
     else vm_push(&brain->vm, chunk_name(chunk));
@@ -98,7 +98,7 @@ static void im_brain_name(
 
 static void im_brain_log(
         struct im_brain *brain, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_LOG, len, 2)) return;
     chunk_log(chunk, brain->id, args[0], args[1]);
@@ -117,7 +117,7 @@ static bool im_brain_step_recv(struct im_brain *brain)
 }
 
 static void im_brain_step_io(
-        struct im_brain *brain, struct chunk *chunk, const word_t *io, size_t len)
+        struct im_brain *brain, struct chunk *chunk, const word *io, size_t len)
 {
     uint32_t atom = 0, dst = 0;
     vm_unpack(io[0], &atom, &dst);
@@ -152,7 +152,7 @@ static void im_brain_vm_step(struct im_brain *brain, struct chunk *chunk)
 {
     if (!brain->mod || brain->fault || vm_fault(&brain->vm)) return;
 
-    mod_t mod = vm_exec(&brain->vm, brain->mod);
+    mod_id mod = vm_exec(&brain->vm, brain->mod);
     if (brain->vm.ip == brain->breakpoint) brain->debug = true;
 
     if (mod == VM_FAULT)
@@ -183,10 +183,10 @@ static void im_brain_step(void *state, struct chunk *chunk)
 
 static void im_brain_io_state(
         struct im_brain *brain, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_MOD: { value = brain->mod_id; break; }
@@ -199,11 +199,11 @@ static void im_brain_io_state(
 
 static void im_brain_io_mod(
         struct im_brain *brain, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_MOD, len, 1)) return;
 
-    mod_t id = args[0];
+    mod_id id = args[0];
     if (!mod_validate(args[0]))
         return chunk_log(chunk, brain->id, IO_MOD, IOE_A0_INVALID);
 
@@ -215,25 +215,25 @@ static void im_brain_io_mod(
 }
 
 static void im_brain_io_return(
-        struct im_brain *brain, struct chunk *chunk, const word_t *args, size_t len)
+        struct im_brain *brain, struct chunk *chunk, const word *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_RETURN, len, 1)) return;
     vm_push(&brain->vm, args[0]);
 }
 
 static void im_brain_io_send(
-        struct im_brain *brain, const word_t *args, size_t len)
+        struct im_brain *brain, const word *args, size_t len)
 {
     brain->msg.len = legion_min(len, (size_t) im_packet_max);
     memcpy(brain->msg.data, args, brain->msg.len * sizeof(*args));
 }
 
 static void im_brain_io_dbg_break(
-        struct im_brain *brain, struct chunk *chunk, const word_t *args, size_t len)
+        struct im_brain *brain, struct chunk *chunk, const word *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_DBG_BREAK, len, 1)) return;
 
-    ip_t ip = args[0];
+    ip ip = args[0];
     if (!ip_validate(args[0]))
         return chunk_log(chunk, brain->id, IO_DBG_BREAK, IOE_A0_INVALID);
 
@@ -254,7 +254,7 @@ static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)
 static void im_brain_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_brain *brain = state;
 
@@ -284,7 +284,7 @@ static void im_brain_io(
     }
 }
 
-static const word_t im_brain_io_list[] =
+static const word im_brain_io_list[] =
 {
     IO_RETURN,
 

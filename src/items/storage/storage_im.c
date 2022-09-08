@@ -55,10 +55,10 @@ static void im_storage_step(void *state, struct chunk *chunk)
 
 static void im_storage_io_state(
         struct im_storage *storage, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, storage->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_ITEM: { value = storage->item; break; }
@@ -79,7 +79,7 @@ static void im_storage_io_reset(struct im_storage *storage, struct chunk *chunk)
 
 static void im_storage_io_item(
         struct im_storage *storage, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, storage->id, IO_ITEM, len, 1)) return;
 
@@ -97,7 +97,7 @@ static void im_storage_io_item(
 static void im_storage_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_storage *storage = state;
 
@@ -114,7 +114,7 @@ static void im_storage_io(
     }
 }
 
-static const word_t im_storage_io_list[] =
+static const word im_storage_io_list[] =
 {
     IO_PING,
     IO_STATE,

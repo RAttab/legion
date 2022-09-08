@@ -13,7 +13,7 @@ struct ui_nomad
 {
     struct
     {
-        word_t memory[im_nomad_memory_len];
+        word memory[im_nomad_memory_len];
         struct im_nomad_cargo cargo[im_nomad_cargo_len];
     } state;
 

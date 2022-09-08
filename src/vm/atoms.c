@@ -17,7 +17,7 @@
 
 struct legion_packed atom_data
 {
-    word_t word;
+    word word;
     struct symbol symbol;
 };
 
@@ -25,7 +25,7 @@ static_assert(sizeof(struct atom_data) == 40);
 
 struct atoms
 {
-    word_t id;
+    word id;
     struct atom_data *base, *it, *end;
 
     struct htable istr;
@@ -187,7 +187,7 @@ bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
 // -----------------------------------------------------------------------------
 
 static uint64_t atoms_insert(
-        struct atoms *atoms, const struct symbol *symbol, word_t id)
+        struct atoms *atoms, const struct symbol *symbol, word id)
 {
     if (unlikely(atoms->it == atoms->end)) {
         size_t old = atoms->end - atoms->base;
@@ -204,7 +204,7 @@ static uint64_t atoms_insert(
     return index;
 }
 
-bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word_t id)
+bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word id)
 {
     uint64_t hash = symbol_hash(symbol);
     if (htable_get(&atoms->iword, id).ok) return false;
@@ -221,7 +221,7 @@ bool atoms_set(struct atoms *atoms, const struct symbol *symbol, word_t id)
     return true;
 }
 
-word_t atoms_get(struct atoms *atoms, const struct symbol *symbol)
+word atoms_get(struct atoms *atoms, const struct symbol *symbol)
 {
     uint64_t hash = symbol_hash(symbol);
     struct htable_ret ret = htable_get(&atoms->istr, hash);
@@ -231,7 +231,7 @@ word_t atoms_get(struct atoms *atoms, const struct symbol *symbol)
     return data->word;
 }
 
-word_t atoms_make(struct atoms *atoms, const struct symbol *symbol)
+word atoms_make(struct atoms *atoms, const struct symbol *symbol)
 {
     uint64_t hash = symbol_hash(symbol);
     struct htable_ret ret = htable_get(&atoms->istr, hash);
@@ -241,12 +241,12 @@ word_t atoms_make(struct atoms *atoms, const struct symbol *symbol)
         return data->word;
     }
 
-    word_t id = atoms->id++;
+    word id = atoms->id++;
     assert(atoms_set(atoms, symbol, id));
     return id;
 }
 
-bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)
+bool atoms_str(struct atoms *atoms, word id, struct symbol *dst)
 {
     if (!id) return false;
 
@@ -257,7 +257,7 @@ bool atoms_str(struct atoms *atoms, word_t id, struct symbol *dst)
     return true;
 }
 
-word_t atoms_parse(struct atoms *atoms, const char *it, size_t len)
+word atoms_parse(struct atoms *atoms, const char *it, size_t len)
 {
     const char *end = it + len;
     it += str_skip_spaces(it, end - it);

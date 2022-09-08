@@ -31,12 +31,12 @@ struct legion_packed im_port
 static_assert(sizeof(struct im_port) == 16);
 
 
-inline word_t im_port_pack(enum item item, uint8_t count)
+inline word im_port_pack(enum item item, uint8_t count)
 {
     return (((uint64_t) count) << 8) | item;
 }
 
-inline void im_port_unpack(word_t word, enum item *item, uint8_t *count)
+inline void im_port_unpack(word word, enum item *item, uint8_t *count)
 {
     *item = word & 0xFF;
     *count = word >> 8;

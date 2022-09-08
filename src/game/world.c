@@ -278,7 +278,7 @@ struct chunk *world_chunk_alloc(
     const struct star *star = sector_star_at(sector, coord);
     assert(star);
 
-    word_t name = gen_name_star(coord, world->seed, world->atoms);
+    word name = gen_name_star(coord, world->seed, world->atoms);
     chunk = chunk_alloc(world, star, user, name);
 
     uint64_t key = coord_to_u64(coord);
@@ -313,7 +313,7 @@ const struct sector *world_sector(struct world *world, struct coord sector)
     return value;
 }
 
-word_t world_star_name(struct world *world, struct coord coord)
+word world_star_name(struct world *world, struct coord coord)
 {
     struct chunk *chunk = world_chunk(world, coord);
     if (chunk) return chunk_name(chunk);
@@ -338,8 +338,8 @@ void world_log_push(
         user_t owner,
         struct coord star,
         id id,
-        word_t key,
-        word_t value)
+        word key,
+        word value)
 {
     log_push(world_user(world, owner)->log, world->time, star, id, key, value);
 }
@@ -438,7 +438,7 @@ void world_lanes_launch(
         struct world *world,
         user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
-        const word_t *data, size_t len)
+        const word *data, size_t len)
 {
     lanes_launch(&world->lanes, owner, type, speed, src, dst, data, len);
 }
@@ -447,7 +447,7 @@ void world_lanes_arrive(
         struct world *world,
         user_t owner, enum item type,
         struct coord src, struct coord dst,
-        const word_t *data, size_t len)
+        const word *data, size_t len)
 {
     struct chunk *chunk = world_chunk_alloc(world, dst, owner);
     assert(chunk);

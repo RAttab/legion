@@ -12,7 +12,7 @@
 // scanner
 // -----------------------------------------------------------------------------
 
-static const word_t im_scanner_empty = -1;
+static const word im_scanner_empty = -1;
 static const uint64_t im_scanner_div = 1000;
 
 
@@ -68,10 +68,10 @@ static void im_scanner_step(void *state, struct chunk *chunk)
 
 static void im_scanner_io_state(
         struct im_scanner *scanner, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, scanner->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0])
     {
@@ -84,7 +84,7 @@ static void im_scanner_io_state(
 
 static void im_scanner_io_scan(
         struct im_scanner *scanner, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, scanner->id, IO_SCAN, len, 1)) return;
 
@@ -116,7 +116,7 @@ static void im_scanner_io_value(
 static void im_scanner_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_scanner *scanner = state;
 
@@ -133,7 +133,7 @@ static void im_scanner_io(
     }
 }
 
-static const word_t im_scanner_io_list[] =
+static const word im_scanner_io_list[] =
 {
     IO_PING,
     IO_STATE,

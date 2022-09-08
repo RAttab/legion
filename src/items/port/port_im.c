@@ -33,7 +33,7 @@ static void im_port_step(void *state, struct chunk *chunk)
     if (coord_is_nil(port->target)) return;
 
     if (!port->has.item) {
-        word_t data = 0;
+        word data = 0;
         if (!chunk_lanes_dock(chunk, &data)) return;
 
         im_port_unpack(data, &port->has.item, &port->has.count);
@@ -57,7 +57,7 @@ static void im_port_step(void *state, struct chunk *chunk)
     }
 
     if (!coord_is_nil(port->target)) {
-        const word_t data = im_port_pack(port->has.item, port->has.count);
+        const word data = im_port_pack(port->has.item, port->has.count);
         chunk_lanes_launch(chunk, ITEM_PILL, im_port_speed, port->target, &data, 1);
 
         port->has.item = 0;
@@ -73,10 +73,10 @@ static void im_port_step(void *state, struct chunk *chunk)
 
 static void im_port_io_state(
         struct im_port *port, struct chunk *chunk, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, port->id, IO_STATE, len, 1)) return;
-    word_t value = 0;
+    word value = 0;
 
     switch (args[0]) {
     case IO_TARGET: { value = coord_to_u64(port->target); break; }
@@ -102,7 +102,7 @@ static void im_port_io_reset(struct im_port *port, struct chunk *chunk)
 
 static void im_port_io_item(
         struct im_port *port, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, port->id, IO_ITEM, len, 1)) return;
 
@@ -127,7 +127,7 @@ static void im_port_io_item(
 
 static void im_port_io_target(
         struct im_port *port, struct chunk *chunk,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     if (!im_check_args(chunk, port->id, IO_TARGET, len, 1)) return;
 
@@ -141,7 +141,7 @@ static void im_port_io_target(
 static void im_port_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word_t *args, size_t len)
+        const word *args, size_t len)
 {
     struct im_port *port = state;
 
@@ -159,7 +159,7 @@ static void im_port_io(
     }
 }
 
-static const word_t im_port_io_list[] =
+static const word im_port_io_list[] =
 {
     IO_PING,
     IO_STATE,

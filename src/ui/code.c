@@ -53,13 +53,13 @@ void ui_code_clear(struct ui_code *code)
     text_clear(&code->text);
 }
 
-ip_t ui_code_ip(struct ui_code *code)
+ip ui_code_ip(struct ui_code *code)
 {
     if (code->disassembly) return code->carret.line->user;
     return mod_byte(code->mod, code->carret.row, code->carret.col);
 }
 
-void ui_code_goto(struct ui_code *code, ip_t ip)
+void ui_code_goto(struct ui_code *code, ip ip)
 {
     if (code->disassembly) {
         code->carret.row = code->carret.col = 0;
@@ -99,7 +99,7 @@ void ui_code_goto(struct ui_code *code, ip_t ip)
     ui_code_view_update(code);
 }
 
-static void ui_code_set(struct ui_code *code, ip_t ip)
+static void ui_code_set(struct ui_code *code, ip ip)
 {
     assert(code->mod);
     assert(code->text.first);
@@ -127,7 +127,7 @@ static void ui_code_set(struct ui_code *code, ip_t ip)
     }
 }
 
-void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)
+void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip ip)
 {
     code->mod = mod;
     code->disassembly = false;
@@ -137,7 +137,7 @@ void ui_code_set_code(struct ui_code *code, const struct mod *mod, ip_t ip)
     ui_code_set(code, ip);
 }
 
-void ui_code_set_disassembly(struct ui_code *code, const struct mod *mod, ip_t ip)
+void ui_code_set_disassembly(struct ui_code *code, const struct mod *mod, ip ip)
 {
     code->mod = mod;
     code->disassembly = true;

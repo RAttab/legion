@@ -42,6 +42,6 @@ void lanes_launch(
         struct lanes *,
         user_t owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
-        const word_t *data, size_t len);
+        const word *data, size_t len);
 
 void lanes_step(struct lanes *);

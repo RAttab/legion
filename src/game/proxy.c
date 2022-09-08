@@ -483,7 +483,7 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
     return NULL;
 }
 
-void proxy_io(struct proxy *proxy, enum io io, id dst, const word_t *args, uint8_t len)
+void proxy_io(struct proxy *proxy, enum io io, id dst, const word *args, uint8_t len)
 {
     struct cmd cmd = {
         .type = CMD_IO,
@@ -505,7 +505,7 @@ const struct mod *proxy_mod(struct proxy *proxy)
     return mod;
 }
 
-void proxy_mod_select(struct proxy *proxy, mod_t id)
+void proxy_mod_select(struct proxy *proxy, mod_id id)
 {
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD,
@@ -529,7 +529,7 @@ void proxy_mod_publish(struct proxy *proxy, mod_maj_t maj)
             });
 }
 
-mod_t proxy_mod_latest(struct proxy *proxy, mod_maj_t maj)
+mod_id proxy_mod_latest(struct proxy *proxy, mod_maj_t maj)
 {
     struct mods_list *mods = proxy->state->mods;
 
@@ -620,10 +620,10 @@ bool proxy_active_sector(struct proxy *proxy, struct coord coord)
 }
 
 
-word_t proxy_star_name(struct proxy *proxy, struct coord coord)
+word proxy_star_name(struct proxy *proxy, struct coord coord)
 {
     struct htable_ret ret = htable_get(&proxy->state->names, coord_to_u64(coord));
-    if (ret.ok) return (word_t) ret.value;
+    if (ret.ok) return (word) ret.value;
 
     return gen_name_star(coord, proxy->state->seed, proxy->state->atoms);
 }

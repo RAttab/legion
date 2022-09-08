@@ -28,7 +28,7 @@ struct legion_packed im_scanner
     legion_pad(4);
 
     struct world_scan_it it;
-    word_t result;
+    word result;
 };
 
 static_assert(sizeof(struct im_scanner) == 32);

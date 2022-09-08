@@ -31,7 +31,7 @@ void test_txrx(void)
     id_t id_test = make_id(ITEM_TEST, 1);
 
     const struct im_test *test = chunk_get(chunk_dst, id_test);
-    const word_t packet[im_packet_max] = {
+    const word packet[im_packet_max] = {
         0x1111111111111111,
         0x2222222222222222,
         0x3333333333333333
@@ -49,7 +49,7 @@ void test_txrx(void)
     }
 
     { // configure - tx
-        word_t target = coord_to_u64(dst);
+        word target = coord_to_u64(dst);
         chunk_io(chunk_src, IO_TARGET, 0, id_tx, &target, 1);
 
         chunk_io(chunk_src, IO_TRANSMIT, 0, id_tx, packet, array_len(packet));
@@ -60,7 +60,7 @@ void test_txrx(void)
 
 
     { // configure - rx
-        word_t target = coord_to_u64(src);
+        word target = coord_to_u64(src);
         chunk_io(chunk_dst, IO_TARGET, 0, id_rx, &target, 1);
     }
 

@@ -17,10 +17,10 @@
 
 struct ui_mod
 {
-    mod_t id;
+    mod_id id;
     const struct mod *mod;
     bool disassembly;
-    ip_t ip;
+    ip ip;
 
     struct ui_panel panel;
     struct ui_button compile, publish;
@@ -85,7 +85,7 @@ static void ui_mod_mode_swap(struct ui_mod *ui)
 {
     ui->disassembly = !ui->disassembly;
 
-    ip_t ip = ui_code_ip(&ui->code);
+    ip ip = ui_code_ip(&ui->code);
 
     if (ui->disassembly) {
         ui_str_setv(&ui->mode.str, "code", 4);
@@ -129,7 +129,7 @@ static void ui_mod_update(struct ui_mod *ui)
     assert(ok);
 }
 
-static void ui_mod_select(struct ui_mod *ui, mod_t id, ip_t ip)
+static void ui_mod_select(struct ui_mod *ui, mod_id id, ip ip)
 {
     if (ui->mod && id == ui->mod->id) {
         ui_code_goto(&ui->code, ip);
@@ -207,8 +207,8 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     }
 
     case EV_MOD_SELECT: {
-        mod_t id = (uintptr_t) ev->user.data1;
-        ip_t ip = (uintptr_t) ev->user.data2;
+        mod_id id = (uintptr_t) ev->user.data1;
+        ip ip = (uintptr_t) ev->user.data2;
         ui_mod_select(ui, id, ip);
         return false;
     }
