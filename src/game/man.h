@@ -17,20 +17,20 @@ struct lisp;
 
 enum { man_path_max = 64, man_toc_max = 16 };
 
-typedef uint16_t line_t;
-typedef uint16_t page_t;
-typedef uint16_t section_t;
+typedef uint16_t line;
+typedef uint16_t page;
+typedef uint16_t section;
 
 
 // -----------------------------------------------------------------------------
 // link
 // -----------------------------------------------------------------------------
 
-struct link { page_t page; section_t section; };
+struct link { page page; section section; };
 
 inline bool link_is_nil(struct link link) { return link.page == 0; }
 
-inline struct link make_link(page_t page, section_t section)
+inline struct link make_link(page page, section section)
 {
     return (struct link) { .page = page, .section = section };
 }
@@ -80,17 +80,17 @@ struct markup
 
 struct man;
 
-struct man *man_page(page_t page, uint8_t cols, struct lisp *lisp);
+struct man *man_page(page page, uint8_t cols, struct lisp *lisp);
 void man_free(struct man *);
 
-line_t man_lines(struct man *);
-line_t man_section(struct man *, section_t);
+line man_lines(struct man *);
+line man_section(struct man *, section);
 
-const struct markup *man_line(struct man *, line_t);
+const struct markup *man_line(struct man *, line);
 const struct markup *man_next(struct man *, const struct markup *);
 
 struct link man_link(const char *path, size_t len);
-struct link man_click(struct man *, line_t, uint8_t col);
+struct link man_click(struct man *, line, uint8_t col);
 
 void man_dbg(struct man *);
 

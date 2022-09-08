@@ -62,7 +62,7 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
 
         uint8_t col = (cursor.x - doc->w.pos.x) / doc->font.w;
-        line_t line = (cursor.y - doc->w.pos.y) / doc->font.h;
+        line line = (cursor.y - doc->w.pos.y) / doc->font.h;
         line += doc->scroll.first;
 
         struct link link = man_click(doc->man, line, col);
@@ -109,11 +109,11 @@ void ui_doc_render(
     doc->w = doc->scroll.w;
 
     struct pos pos = inner.base.pos;
-    line_t line = doc->scroll.first;
-    const line_t end = line + doc->scroll.visible;
-    const struct markup *it = man_line(doc->man, line);
+    line line_it = doc->scroll.first;
+    const line line_end = line_it + doc->scroll.visible;
+    const struct markup *it = man_line(doc->man, line_it);
 
-    while (it && line < end) {
+    while (it && line_it < line_end) {
         switch (it->type)
         {
 
@@ -122,7 +122,7 @@ void ui_doc_render(
         case markup_eol: {
             pos.x = inner.base.pos.x;
             pos.y += doc->font.h;
-            line++;
+            line_it++;
             break;
         }
 

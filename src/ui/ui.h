@@ -423,7 +423,7 @@ struct ui_doc
     struct { uint8_t pt, h, w; } font;
     size_t cols;
 
-    page_t page;
+    page page;
     struct man *man;
 };
 
