@@ -27,36 +27,36 @@ enum
 // energy
 // -----------------------------------------------------------------------------
 
-typedef uint64_t energy_t;
+typedef uint64_t energy;
 
 struct energy
 {
     uint16_t solar, kwheel, battery;
 
-    energy_t current;
-    energy_t produced, consumed, need;
+    energy current;
+    energy produced, consumed, need;
 };
 
 
-inline energy_t energy_battery(const struct energy *en)
+inline energy energy_battery(const struct energy *en)
 {
     return en->battery * energy_battery_mul;
 }
 
-inline energy_t energy_prod_solar(
+inline energy energy_prod_solar(
         const struct energy *en, const struct star *star)
 {
     return (star->energy * en->solar) / energy_solar_div;
 }
 
-inline energy_t energy_prod_kwheel(
+inline energy energy_prod_kwheel(
         const struct energy *en, const struct star *star)
 {
     const uint16_t elem_k = star_scan(star, ITEM_ELEM_K);
     return (elem_k * en->kwheel) / energy_kwheel_div;
 }
 
-inline energy_t energy_production(
+inline energy energy_production(
         const struct energy *en, const struct star *star)
 {
     return
@@ -65,7 +65,7 @@ inline energy_t energy_production(
 }
 
 
-inline bool energy_consume(struct energy *en, energy_t value)
+inline bool energy_consume(struct energy *en, energy value)
 {
     en->need += value;
     if (value > en->current) return false;
@@ -75,7 +75,7 @@ inline bool energy_consume(struct energy *en, energy_t value)
     return true;
 }
 
-inline void energy_produce(struct energy *en, energy_t value)
+inline void energy_produce(struct energy *en, energy value)
 {
     en->current += value;
     en->produced += value;

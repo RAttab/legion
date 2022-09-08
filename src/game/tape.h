@@ -40,7 +40,7 @@ struct tape_ret
 enum item tape_id(const struct tape *);
 size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
-energy_t tape_energy(const struct tape *);
+energy tape_energy(const struct tape *);
 work tape_work(const struct tape *);
 struct tape_ret tape_at(const struct tape *, tape_it index);
 
