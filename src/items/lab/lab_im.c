@@ -148,7 +148,7 @@ static void im_lab_io_tape_at(
         goto fail;
     }
 
-    tape_it_t index = args[1];
+    tape_it index = args[1];
     if (!tape_it_validate(args[1])) {
         chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A1_INVALID);
         goto fail;

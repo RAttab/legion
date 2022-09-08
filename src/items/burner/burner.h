@@ -34,7 +34,7 @@ struct legion_packed im_burner
 
     bool waiting;
     loops_t loops;
-    struct { work_t left, cap; } work;
+    struct { work left, cap; } work;
 
     legion_pad(3);
 };

@@ -19,9 +19,9 @@ struct atoms;
 
 struct tape;
 
-typedef uint8_t work_t;
+typedef uint8_t work;
 
-typedef uint8_t tape_it_t;
+typedef uint8_t tape_it;
 inline bool tape_it_validate(word word) { return word >= 0 && word <= UINT8_MAX; }
 
 enum tape_state
@@ -41,49 +41,49 @@ enum item tape_id(const struct tape *);
 size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
 energy_t tape_energy(const struct tape *);
-work_t tape_work(const struct tape *);
-struct tape_ret tape_at(const struct tape *, tape_it_t index);
+work tape_work(const struct tape *);
+struct tape_ret tape_at(const struct tape *, tape_it index);
 
 
 // -----------------------------------------------------------------------------
 // packed
 // -----------------------------------------------------------------------------
 
-typedef uint64_t tape_packed_t;
+typedef uint64_t tape_packed;
 
-inline tape_packed_t tape_pack(enum item id, tape_it_t it, const struct tape *ptr)
+inline tape_packed tape_pack(enum item id, tape_it it, const struct tape *ptr)
 {
     assert(!(((uintptr_t) ptr) >> 48));
     return (((uint64_t) id) << 56) | (((uint64_t) it) << 48) | ((uintptr_t) ptr);
 }
 
-inline const struct tape *tape_packed_ptr(tape_packed_t packed)
+inline const struct tape *tape_packed_ptr(tape_packed packed)
 {
     return (void *) (((1UL << 48) - 1) & packed);
 }
 
-inline tape_packed_t tape_packed_ptr_update(tape_packed_t packed, const struct tape *ptr)
+inline tape_packed tape_packed_ptr_update(tape_packed packed, const struct tape *ptr)
 {
     assert(!(((uintptr_t) ptr) >> 48));
     return ((uintptr_t) ptr) | (packed & (~((1UL << 48) - 1)));
 }
 
-inline enum item tape_packed_id(tape_packed_t packed)
+inline enum item tape_packed_id(tape_packed packed)
 {
     return packed >> 56;
 }
 
-inline tape_it_t tape_packed_it(tape_packed_t packed)
+inline tape_it tape_packed_it(tape_packed packed)
 {
     return (packed >> 48) & 0xFF;
 }
 
-inline tape_packed_t tape_packed_it_inc(tape_packed_t packed)
+inline tape_packed tape_packed_it_inc(tape_packed packed)
 {
     return packed + (1UL << 48);
 }
 
-inline tape_packed_t tape_packed_it_zero(tape_packed_t packed)
+inline tape_packed tape_packed_it_zero(tape_packed packed)
 {
     return packed & (~(0xFFUL << 48));
 }

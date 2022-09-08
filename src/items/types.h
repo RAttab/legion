@@ -43,7 +43,7 @@ struct legion_packed flow
     legion_pad(1);
 
     enum item in, out;
-    tape_it_t tape_it, tape_len;
+    tape_it tape_it, tape_len;
 };
 
 static_assert(sizeof(struct flow) == 16);

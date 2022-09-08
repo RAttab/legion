@@ -24,7 +24,7 @@ struct legion_packed im_extract
     loops_t loops;
     bool waiting;
 
-    tape_packed_t tape;
+    tape_packed tape;
 };
 
 static_assert(sizeof(struct im_extract) == 12);

@@ -46,13 +46,13 @@ struct legion_packed im_collider
     bool waiting;
     loops_t loops;
 
-    struct { uint8_t left, cap; } work;
+    struct { work left, cap; } work;
     struct { enum item item; uint8_t it, len; } out;
 
     legion_pad(4);
 
     struct rng rng;
-    tape_packed_t tape;
+    tape_packed tape;
 };
 
 static_assert(sizeof(struct im_collider) == 32);

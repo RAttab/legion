@@ -13,7 +13,7 @@
 
 struct ui_extract
 {
-    tape_packed_t tape_state;
+    tape_packed tape_state;
 
     struct font *font;
     struct ui_label loops, loops_val;

@@ -47,7 +47,7 @@ void ui_tape_free(struct ui_tape *ui)
     ui_label_free(&ui->out);
 }
 
-void ui_tape_update(struct ui_tape *ui, tape_packed_t state)
+void ui_tape_update(struct ui_tape *ui, tape_packed state)
 {
     const struct tape *tape = tapes_get(tape_packed_id(state));
 
@@ -60,7 +60,7 @@ void ui_tape_update(struct ui_tape *ui, tape_packed_t state)
     ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
 }
 
-bool ui_tape_event(struct ui_tape *ui, tape_packed_t state, const SDL_Event *ev)
+bool ui_tape_event(struct ui_tape *ui, tape_packed state, const SDL_Event *ev)
 {
     (void) state;
     enum ui_ret ret = ui_nil;
@@ -71,7 +71,7 @@ bool ui_tape_event(struct ui_tape *ui, tape_packed_t state, const SDL_Event *ev)
 }
 
 void ui_tape_render(
-        struct ui_tape *ui, tape_packed_t state,
+        struct ui_tape *ui, tape_packed state,
         struct ui_layout *layout, SDL_Renderer *renderer)
 {
     ui_label_render(&ui->tape, layout, renderer);

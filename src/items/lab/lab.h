@@ -30,7 +30,7 @@ struct legion_packed im_lab
 
     enum item item;
     enum im_lab_state state;
-    struct { uint8_t left, cap; } work;
+    struct { work left, cap; } work;
 
     legion_pad(2);
 

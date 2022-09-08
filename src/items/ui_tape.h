@@ -27,7 +27,7 @@ struct ui_tape
 
 void ui_tape_init(struct ui_tape *, struct font *);
 void ui_tape_free(struct ui_tape *);
-void ui_tape_update(struct ui_tape *, tape_packed_t);
-bool ui_tape_event(struct ui_tape *, tape_packed_t, const SDL_Event *);
+void ui_tape_update(struct ui_tape *, tape_packed);
+bool ui_tape_event(struct ui_tape *, tape_packed, const SDL_Event *);
 void ui_tape_render(
-        struct ui_tape *, tape_packed_t, struct ui_layout *, SDL_Renderer *);
+        struct ui_tape *, tape_packed, struct ui_layout *, SDL_Renderer *);

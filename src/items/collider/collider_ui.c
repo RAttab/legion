@@ -16,7 +16,7 @@ struct ui_collider
     struct
     {
         enum im_collider_op op;
-        tape_packed_t tape;
+        tape_packed tape;
     } state;
 
     struct font *font;

@@ -23,7 +23,7 @@ struct legion_packed im_scanner
 {
     id id;
 
-    struct { uint8_t left; uint8_t cap; } work;
+    struct { work left, cap; } work;
 
     legion_pad(4);
 

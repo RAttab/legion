@@ -23,7 +23,7 @@ struct legion_packed im_prober
 {
     id id;
 
-    struct { uint8_t left; uint8_t cap; } work;
+    struct { work left, cap; } work;
     enum item item;
 
     legion_pad(3);

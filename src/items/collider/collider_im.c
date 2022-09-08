@@ -285,7 +285,7 @@ static bool im_collider_flow(const void *state, struct flow *flow)
         enum item target = tape_packed_id(collider->tape);
         const struct tape *tape = tapes_get(target);
 
-        tape_it_t it = tape_packed_it(collider->tape);
+        tape_it it = tape_packed_it(collider->tape);
         struct tape_ret ret = tape_at(tape, it);
         assert(ret.state == tape_input);
 

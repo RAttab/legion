@@ -25,7 +25,7 @@ struct legion_packed im_printer
     loops_t loops;
     bool waiting;
 
-    tape_packed_t tape;
+    tape_packed tape;
 };
 
 static_assert(sizeof(struct im_printer) == 12);
