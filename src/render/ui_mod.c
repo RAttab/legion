@@ -104,7 +104,7 @@ static void ui_mod_update(struct ui_mod *ui)
 {
     const struct mod *mod = proxy_mod(render.proxy);
     if (!mod) return;
-    if (mod_maj(mod->id) != mod_maj(ui->id)) {
+    if (mod_major(mod->id) != mod_major(ui->id)) {
         mod_free(mod);
         return;
     }
@@ -112,7 +112,7 @@ static void ui_mod_update(struct ui_mod *ui)
     mod_free(legion_xchg(&ui->mod, mod));
     ui->id = mod->id;
 
-    ui->publish.disabled = mod->errs_len || mod_ver(mod->id);
+    ui->publish.disabled = mod->errs_len || mod_version(mod->id);
     if (!mod->errs_len) ui->mode.disabled = false;
     else {
         ui->mode.disabled = true;
@@ -124,8 +124,8 @@ static void ui_mod_update(struct ui_mod *ui)
     else ui_code_set_disassembly(&ui->code, mod, ui->ip);
 
     struct symbol name = {0};
-    bool ok = proxy_mod_name(render.proxy, mod_maj(ui->id), &name);
-    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_ver(ui->id));
+    bool ok = proxy_mod_name(render.proxy, mod_major(ui->id), &name);
+    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_version(ui->id));
     assert(ok);
 }
 
@@ -136,7 +136,8 @@ static void ui_mod_select(struct ui_mod *ui, mod_id id, ip ip)
         return;
     }
 
-    ui->id = mod_ver(id) ? id : proxy_mod_latest(render.proxy, mod_maj(id));
+    ui->id = mod_version(id) ?
+        id : proxy_mod_latest(render.proxy, mod_major(id));
     ui->ip = ip;
 
     proxy_mod_select(render.proxy, ui->id);
@@ -148,7 +149,7 @@ static void ui_mod_select(struct ui_mod *ui, mod_id id, ip ip)
 static void ui_mod_import(struct ui_mod *ui)
 {
     struct symbol name = {0};
-    bool ok = proxy_mod_name(render.proxy, mod_maj(ui->id), &name);
+    bool ok = proxy_mod_name(render.proxy, mod_major(ui->id), &name);
     assert(ok);
 
     char path[PATH_MAX] = {0};
@@ -169,7 +170,7 @@ static void ui_mod_import(struct ui_mod *ui)
 static void ui_mod_export(struct ui_mod *ui)
 {
     struct symbol name = {0};
-    bool ok = proxy_mod_name(render.proxy, mod_maj(ui->id), &name);
+    bool ok = proxy_mod_name(render.proxy, mod_major(ui->id), &name);
     assert(ok);
 
     char path[PATH_MAX] = {0};
@@ -247,13 +248,13 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         char *buffer = calloc(len, sizeof(*buffer));
         text_to_str(&ui->code.text, buffer, len);
 
-        proxy_mod_compile(render.proxy, mod_maj(ui->id), buffer, len);
+        proxy_mod_compile(render.proxy, mod_major(ui->id), buffer, len);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
         assert(ui->mod->errs_len == 0);
-        proxy_mod_publish(render.proxy, mod_maj(ui->id));
+        proxy_mod_publish(render.proxy, mod_major(ui->id));
         ui->publish.disabled = true;
         return true;
     }

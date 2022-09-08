@@ -22,7 +22,7 @@ static struct htable lisp_fn_eval = {0};
 // When eval is used outside of the sim thread, eval will have access to
 // struct mods_list instead of struct mods. Bit of a pain but oh well.
 
-static mod_id lisp_eval_mods_latest(struct lisp *lisp, mod_maj_t maj)
+static mod_id lisp_eval_mods_latest(struct lisp *lisp, mod_maj maj)
 {
     if (lisp->mods) {
         const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
@@ -40,7 +40,7 @@ static mod_id lisp_eval_mods_latest(struct lisp *lisp, mod_maj_t maj)
     return 0;
 }
 
-static mod_maj_t lisp_eval_mods_find(
+static mod_maj lisp_eval_mods_find(
         struct lisp *lisp, const struct symbol *name)
 {
     if (lisp->mods) return mods_find(lisp->mods, name);
@@ -155,7 +155,7 @@ static word lisp_eval_mod(struct lisp *lisp)
     if (lisp_peek_close(lisp)) {
         mod_id mod = lisp_eval_mods_latest(lisp, lisp->mod_maj);
         assert(mod);
-        return make_mod(lisp->mod_maj, mod_ver(mod) + 1);
+        return make_mod(lisp->mod_maj, mod_version(mod) + 1);
     }
 
     struct token *token = lisp_expect(lisp, token_symbol);
@@ -164,7 +164,7 @@ static word lisp_eval_mod(struct lisp *lisp)
         return 0;
     }
 
-    mod_maj_t mod_maj = lisp_eval_mods_find(lisp, &token->value.s);
+    mod_maj mod_maj = lisp_eval_mods_find(lisp, &token->value.s);
     if (!mod_maj) {
         lisp_err(lisp, "unknown mod: %s", token->value.s.c);
         lisp_eval_goto_close(lisp);

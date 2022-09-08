@@ -355,7 +355,7 @@ static struct symbol sim_log_coord(struct coord coord)
 static struct symbol sim_log_mod(struct sim *sim, mod_id mod)
 {
     struct symbol str = {0};
-    mods_name(world_mods(sim->world), mod_maj(mod), &str);
+    mods_name(world_mods(sim->world), mod_major(mod), &str);
     return str;
 }
 
@@ -547,8 +547,8 @@ static void sim_cmd_mod(
     const struct mod *mod = mods_get(world_mods(sim->world), cmd->data.mod);
     if (!mod) {
         return sim_log(pipe, st_error, "unknown mod id '%u.%u'",
-                mod_maj(cmd->data.mod),
-                mod_ver(cmd->data.mod));
+                mod_major(cmd->data.mod),
+                mod_version(cmd->data.mod));
     }
 
     sim_publish_mod(pipe, mod);
@@ -569,7 +569,8 @@ static void sim_cmd_mod_register(
 
     sim_log(pipe, st_error, "mod '%s' registered with id '%u.%u'",
             cmd->data.mod_register.c,
-            mod_maj(id), mod_ver(id));
+            mod_major(id),
+            mod_version(id));
 }
 
 static void sim_cmd_mod_compile(
@@ -600,9 +601,9 @@ static void sim_cmd_publish(
     struct mods *mods = world_mods(sim->world);
     const struct mod *mod = pipe->compile;
 
-    if (!mod || mod_maj(mod->id) != cmd->data.mod_publish.maj) {
+    if (!mod || mod_major(mod->id) != cmd->data.mod_publish.maj) {
         return sim_log(pipe, st_error, "unable to publish compiled mod: %x != %x",
-                mod ? mod_maj(mod->id) : 0, cmd->data.mod_publish.maj);
+                mod ? mod_major(mod->id) : 0, cmd->data.mod_publish.maj);
     }
 
     if (mod->errs_len) {
@@ -610,7 +611,7 @@ static void sim_cmd_publish(
                 mod->errs_len);
     }
 
-    mod_id mod_id = mods_set(mods, mod_maj(mod->id), mod);
+    mod_id mod_id = mods_set(mods, mod_major(mod->id), mod);
     if (!mod_id) {
         return sim_log(pipe, st_error, "failed to publish mod '%s'",
                 sim_log_mod(sim, mod_id).c);
@@ -620,7 +621,9 @@ static void sim_cmd_publish(
 
     pipe->compile = NULL;
     sim_log(pipe, st_info, "mod '%s' published with id '%u.%u'",
-            sim_log_mod(sim, mod_id).c, mod_maj(mod_id), mod_ver(mod_id));
+            sim_log_mod(sim, mod_id).c,
+            mod_major(mod_id),
+            mod_version(mod_id));
 }
 
 static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)

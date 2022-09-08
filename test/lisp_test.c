@@ -166,9 +166,9 @@ const struct mod *read_mod(
     mod_id id = mods_register(mods, user_admin, name);
     assert(id);
 
-    const struct mod *mod = mod_compile(mod_maj(id), first, len, mods, atoms);
+    const struct mod *mod = mod_compile(mod_major(id), first, len, mods, atoms);
     if (mod && !mod->errs_len) {
-        mods_set(mods, mod_maj(id), mod);
+        mods_set(mods, mod_major(id), mod);
         return mod;
     }
 

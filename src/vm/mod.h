@@ -20,17 +20,17 @@ struct save;
 struct text;
 struct atoms;
 
-typedef uint16_t mod_maj_t;
-typedef uint16_t mod_ver_t;
+typedef uint16_t mod_maj;
+typedef uint16_t mod_ver;
 
-inline mod_id make_mod(mod_maj_t maj, mod_ver_t ver)
+inline mod_id make_mod(mod_maj maj, mod_ver ver)
 {
     assert(!(maj >> 15));
     return maj << 16 | ver;
 }
 
-inline mod_maj_t mod_maj(mod_id mod) { return mod >> 16; }
-inline mod_ver_t mod_ver(mod_id mod) { return ((1 << 16) - 1) & mod; }
+inline mod_maj mod_major(mod_id mod) { return mod >> 16; }
+inline mod_ver mod_version(mod_id mod) { return ((1 << 16) - 1) & mod; }
 inline bool mod_validate(word word) { return word > 0 && word <= UINT32_MAX; }
 
 
@@ -115,7 +115,7 @@ inline size_t mod_len(const struct mod *mod)
 
 void mod_compiler_init(void);
 struct mod *mod_compile(
-        mod_maj_t, const char *src, size_t len, struct mods *, struct atoms *);
+        mod_maj, const char *src, size_t len, struct mods *, struct atoms *);
 struct text mod_disasm(const struct mod *);
 
 size_t mod_dump(const struct mod *, char *dst, size_t len);
@@ -139,21 +139,21 @@ struct mods *mods_load(struct save *);
 void mods_save(const struct mods *, struct save *);
 
 mod_id mods_register(struct mods *, user_t, const struct symbol *name);
-bool mods_name(struct mods *, mod_maj_t, struct symbol *dst);
-user_t mods_owner(struct mods *, mod_maj_t);
+bool mods_name(struct mods *, mod_maj, struct symbol *dst);
+user_t mods_owner(struct mods *, mod_maj);
 
-mod_id mods_set(struct mods *, mod_maj_t, const struct mod *);
+mod_id mods_set(struct mods *, mod_maj, const struct mod *);
 const struct mod *mods_get(struct mods *, mod_id);
-const struct mod *mods_latest(struct mods *, mod_maj_t);
+const struct mod *mods_latest(struct mods *, mod_maj);
 
-mod_maj_t mods_find(struct mods *, const struct symbol *name);
+mod_maj mods_find(struct mods *, const struct symbol *name);
 
 const struct mod *mods_parse(struct mods *, const char *it, size_t len);
 
 struct mods_item
 {
-    mod_maj_t maj;
-    mod_ver_t ver;
+    mod_maj maj;
+    mod_ver ver;
     struct symbol str;
 };
 

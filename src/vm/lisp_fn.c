@@ -166,7 +166,7 @@ static word lisp_parse_call(struct lisp *lisp)
         token = lisp_expect(lisp, token_symbol);
         if (!token) { lisp_goto_close(lisp); return -1; }
 
-        mod_maj_t mod_maj = mods_find(lisp->mods, &token->value.s);
+        mod_maj mod_maj = mods_find(lisp->mods, &token->value.s);
         if (!mod_maj) {
             lisp_err(lisp, "unknown mod: %s", token->value.s.c);
             lisp_goto_close(lisp);
@@ -783,7 +783,7 @@ static void lisp_fn_mod(struct lisp *lisp)
     if (token->type == token_close) {
         const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
         assert(mod);
-        mod_id id = make_mod(lisp->mod_maj, mod_ver(mod->id) + 1);
+        mod_id id = make_mod(lisp->mod_maj, mod_version(mod->id) + 1);
 
         lisp_write_op(lisp, OP_PUSH);
         lisp_write_value(lisp, (word) id);
@@ -797,7 +797,7 @@ static void lisp_fn_mod(struct lisp *lisp)
         return;
     }
 
-    mod_maj_t mod_maj = mods_find(lisp->mods, &token->value.s);
+    mod_maj mod_maj = mods_find(lisp->mods, &token->value.s);
     if (!mod_maj) {
         lisp_err(lisp, "unknown mod: %s", token->value.s.c);
         lisp_goto_close(lisp);

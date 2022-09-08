@@ -179,8 +179,8 @@ struct cmd
         struct coord chunk;
         mod_id mod;
         struct symbol mod_register;
-        struct { mod_maj_t maj; } mod_publish;
-        struct { mod_maj_t maj; const char *code; uint32_t len; } mod_compile;
+        struct { mod_maj maj; } mod_publish;
+        struct { mod_maj maj; const char *code; uint32_t len; } mod_compile;
         struct { enum io io; id dst; uint8_t len; word args[4]; } io;
     } data;
 };

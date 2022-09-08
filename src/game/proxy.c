@@ -521,7 +521,7 @@ void proxy_mod_register(struct proxy *proxy, struct symbol name)
             });
 }
 
-void proxy_mod_publish(struct proxy *proxy, mod_maj_t maj)
+void proxy_mod_publish(struct proxy *proxy, mod_maj maj)
 {
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_PUBLISH,
@@ -529,7 +529,7 @@ void proxy_mod_publish(struct proxy *proxy, mod_maj_t maj)
             });
 }
 
-mod_id proxy_mod_latest(struct proxy *proxy, mod_maj_t maj)
+mod_id proxy_mod_latest(struct proxy *proxy, mod_maj maj)
 {
     struct mods_list *mods = proxy->state->mods;
 
@@ -541,7 +541,7 @@ mod_id proxy_mod_latest(struct proxy *proxy, mod_maj_t maj)
     return 0;
 }
 
-bool proxy_mod_name(struct proxy *proxy, mod_maj_t maj, struct symbol *dst)
+bool proxy_mod_name(struct proxy *proxy, mod_maj maj, struct symbol *dst)
 {
     struct mods_list *mods = proxy->state->mods;
 
@@ -556,7 +556,7 @@ bool proxy_mod_name(struct proxy *proxy, mod_maj_t maj, struct symbol *dst)
     return false;
 }
 
-void proxy_mod_compile(struct proxy *proxy, mod_maj_t maj, const char *code, size_t len)
+void proxy_mod_compile(struct proxy *proxy, mod_maj maj, const char *code, size_t len)
 {
     proxy_cmd(proxy, &(struct cmd) {
                 .type = CMD_MOD_COMPILE,

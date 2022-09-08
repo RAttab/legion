@@ -29,7 +29,7 @@ struct lisp_req
 
 struct lisp
 {
-    mod_maj_t mod_maj;
+    mod_maj mod_maj;
     struct mods *mods;
     struct mods_list *mods_list;
     struct atoms *atoms;
@@ -525,7 +525,7 @@ void mod_compiler_init(void)
 }
 
 struct mod *mod_compile(
-        mod_maj_t mod_maj,
+        mod_maj mod_maj,
         const char *src, size_t len,
         struct mods *mods, struct atoms *atoms)
 {

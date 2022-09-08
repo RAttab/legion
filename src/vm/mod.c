@@ -285,15 +285,15 @@ size_t mod_hexdump(const struct mod *mod, char *dst, size_t len)
 
 struct mods
 {
-    mod_maj_t maj;
+    mod_maj maj;
     struct htable by_maj;
     struct htable by_mod;
 };
 
 struct mod_entry
 {
-    mod_maj_t maj;
-    mod_ver_t ver;
+    mod_maj maj;
+    mod_ver ver;
     user_t owner;
 
     struct symbol str;
@@ -410,7 +410,7 @@ mod_id mods_register(struct mods *mods, user_t owner, const struct symbol *name)
     return mod;
 }
 
-bool mods_name(struct mods *mods, mod_maj_t maj, struct symbol *dst)
+bool mods_name(struct mods *mods, mod_maj maj, struct symbol *dst)
 {
     if (!maj) return false;
 
@@ -422,7 +422,7 @@ bool mods_name(struct mods *mods, mod_maj_t maj, struct symbol *dst)
     return true;
 }
 
-user_t mods_owner(struct mods *mods, mod_maj_t maj)
+user_t mods_owner(struct mods *mods, mod_maj maj)
 {
     if (!maj) return -1;
 
@@ -432,7 +432,7 @@ user_t mods_owner(struct mods *mods, mod_maj_t maj)
     return ((struct mod_entry *) ret.value)->owner;
 }
 
-mod_id mods_set(struct mods *mods, mod_maj_t maj, const struct mod *mod)
+mod_id mods_set(struct mods *mods, mod_maj maj, const struct mod *mod)
 {
     assert(maj);
     assert(!mod->errs_len);
@@ -453,7 +453,7 @@ mod_id mods_set(struct mods *mods, mod_maj_t maj, const struct mod *mod)
     return mod->id;
 }
 
-const struct mod *mods_latest(struct mods *mods, mod_maj_t maj)
+const struct mod *mods_latest(struct mods *mods, mod_maj maj)
 {
     if (!maj) return NULL;
 
@@ -464,13 +464,13 @@ const struct mod *mods_latest(struct mods *mods, mod_maj_t maj)
 const struct mod *mods_get(struct mods *mods, mod_id id)
 {
     if (!id) return NULL;
-    if (!mod_ver(id)) return mods_latest(mods, mod_maj(id));
+    if (!mod_version(id)) return mods_latest(mods, mod_major(id));
 
     struct htable_ret ret = htable_get(&mods->by_mod, id);
     return ret.ok ? (struct mod *) ret.value : NULL;
 }
 
-mod_maj_t mods_find(struct mods *mods, const struct symbol *name)
+mod_maj mods_find(struct mods *mods, const struct symbol *name)
 {
     const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
     for (; it; it = htable_next(&mods->by_maj, it)) {
@@ -492,12 +492,12 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     if (ret == -1) return NULL;
     it += ret;
 
-    mod_maj_t mod_maj = mods_find(mods, &symbol);
-    if (!mod_maj) return NULL;
+    mod_maj maj = mods_find(mods, &symbol);
+    if (!maj) return NULL;
 
     it += str_skip_spaces(it, end - it);
 
-    mod_ver_t mod_ver = 0;
+    mod_ver ver = 0;
     if (*it != ')') {
         const char *start = it;
         while (it < end && str_is_number(*it)) it++;
@@ -506,10 +506,10 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
         (void) str_atou(start, it - start, &value);
         if (value > UINT16_MAX) return false;
 
-        mod_ver = value;
+        ver = value;
     }
 
-    return mods_get(mods, make_mod(mod_maj, mod_ver));
+    return mods_get(mods, make_mod(maj, ver));
 }
 
 struct mods_list *mods_list(struct mods *mods, uset_t filter)
@@ -609,7 +609,7 @@ static struct symbol mods_file_symbol(const char *path)
 static void mods_file_register(struct mods *mods, const char *path)
 {
     struct symbol name = mods_file_symbol(path);
-    mod_maj_t maj = mods_register(mods, user_admin, &name);
+    mod_maj maj = mods_register(mods, user_admin, &name);
     assert(maj);
 }
 
@@ -617,7 +617,7 @@ static void mods_file_compile(
         struct mods *mods, struct atoms *atoms, const char *path)
 {
     struct symbol name = mods_file_symbol(path);
-    mod_maj_t maj = mods_find(mods, &name);
+    mod_maj maj = mods_find(mods, &name);
     assert(maj);
 
     struct mod *mod = NULL;

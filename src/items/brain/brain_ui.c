@@ -175,13 +175,13 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id id)
     }
     else {
         struct symbol mod = {0};
-        proxy_mod_name(render.proxy, mod_maj(state->mod_id), &mod);
+        proxy_mod_name(render.proxy, mod_major(state->mod_id), &mod);
 
         ui->mod_val.fg = rgba_white();
         ui_str_set_symbol(&ui->mod_val.str, &mod);
 
         ui->mod_ver_val.fg = rgba_white();
-        ui_str_set_hex(&ui->mod_ver_val.str, mod_ver(state->mod_id));
+        ui_str_set_hex(&ui->mod_ver_val.str, mod_version(state->mod_id));
     }
 
     if (state->fault) {

@@ -135,7 +135,7 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, id id)
     if (!nomad->mod) ui_str_setc(&ui->mod_val.str, "nil");
     else {
         struct symbol mod = {0};
-        proxy_mod_name(render.proxy, mod_maj(nomad->mod), &mod);
+        proxy_mod_name(render.proxy, mod_major(nomad->mod), &mod);
         ui_str_set_symbol(&ui->mod_val.str, &mod);
     }
 

@@ -89,12 +89,12 @@ void proxy_io(struct proxy *, enum io, id dst, const word *args, uint8_t len);
 const struct mod *proxy_mod(struct proxy *);
 void proxy_mod_select(struct proxy *, mod_id);
 void proxy_mod_register(struct proxy *, struct symbol name);
-void proxy_mod_publish(struct proxy *, mod_maj_t);
-mod_id proxy_mod_latest(struct proxy *, mod_maj_t);
-bool proxy_mod_name(struct proxy *, mod_maj_t, struct symbol *dst);
+void proxy_mod_publish(struct proxy *, mod_maj);
+mod_id proxy_mod_latest(struct proxy *, mod_maj);
+bool proxy_mod_name(struct proxy *, mod_maj, struct symbol *dst);
 
 // transfer ownership of code to proxy.
-void proxy_mod_compile(struct proxy *, mod_maj_t, const char *code, size_t len);
+void proxy_mod_compile(struct proxy *, mod_maj, const char *code, size_t len);
 
 
 // -----------------------------------------------------------------------------
