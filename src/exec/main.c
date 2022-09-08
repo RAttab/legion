@@ -92,7 +92,7 @@ int main(int argc, char *const argv[])
         const char *node;
         const char *service;
         const char *type;
-        seed_t seed;
+        seed seed;
         token auth;
         struct symbol name;
     } args = {

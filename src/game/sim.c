@@ -46,7 +46,7 @@ struct sim
     struct users users;
     enum speed speed;
 
-    world_ts_t autosave;
+    world_ts autosave;
 
     bool server;
     uint64_t stream;
@@ -56,7 +56,7 @@ struct sim
     char config[PATH_MAX + 1];
 };
 
-struct sim *sim_new(seed_t seed, const char *save)
+struct sim *sim_new(seed seed, const char *save)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
     sim->world = world_new(seed);

@@ -176,7 +176,7 @@ bool server_run(
         const char *service,
         const char *save,
         const char *config,
-        seed_t seed)
+        seed seed)
 {
     server.sim = sim_new(seed, save);
     if (file_exists(save)) sim_load(server.sim);

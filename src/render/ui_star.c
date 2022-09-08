@@ -286,7 +286,7 @@ static void ui_star_update(struct ui_star *ui)
         ui->star = *star;
 
         {
-            seed_t seed = proxy_seed(render.proxy);
+            seed seed = proxy_seed(render.proxy);
             struct atoms *atoms = proxy_atoms(render.proxy);
 
             struct symbol sym = {0};

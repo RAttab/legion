@@ -45,8 +45,8 @@
 
 void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
 {
-    world_ts_delta_t wait = lanes_travel(speed, src, dst);
-    for (world_ts_delta_t i = 0; i < wait; ++i) world_step(world);
+    world_ts_delta wait = lanes_travel(speed, src, dst);
+    for (world_ts_delta i = 0; i < wait; ++i) world_step(world);
 }
 
 

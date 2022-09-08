@@ -29,9 +29,9 @@ struct htable_bucket;
 // types
 // -----------------------------------------------------------------------------
 
-typedef uint64_t seed_t;
-typedef uint32_t world_ts_t;
-typedef int64_t world_ts_delta_t;
+typedef uint64_t seed;
+typedef uint32_t world_ts;
+typedef int64_t world_ts_delta;
 
 
 // -----------------------------------------------------------------------------
@@ -40,7 +40,7 @@ typedef int64_t world_ts_delta_t;
 
 struct world;
 
-struct world *world_new(seed_t seed);
+struct world *world_new(seed seed);
 void world_free(struct world *);
 
 void world_save(struct world *, struct save *);
@@ -50,8 +50,8 @@ void world_step(struct world *);
 void world_populate(struct world *);
 void world_populate_user(struct world *, user);
 
-seed_t world_seed(struct world *);
-world_ts_t world_time(struct world *);
+seed world_seed(struct world *);
+world_ts world_time(struct world *);
 struct mods *world_mods(struct world *);
 struct atoms *world_atoms(struct world *);
 struct coord world_home(struct world *, user);

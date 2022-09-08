@@ -31,7 +31,7 @@ struct chunk
     user owner;
     word name;
 
-    world_ts_t updated;
+    world_ts updated;
 
     struct log *log;
 
@@ -438,7 +438,7 @@ struct tech *chunk_tech(const struct chunk *chunk)
     return world_tech(chunk_world(chunk), chunk->owner);
 }
 
-world_ts_t chunk_updated(const struct chunk *chunk)
+world_ts chunk_updated(const struct chunk *chunk)
 {
     return chunk->updated;
 }

@@ -112,7 +112,7 @@ bool status_load(struct status *, struct save *);
 struct chunk_ack
 {
     struct coord coord;
-    world_ts_t time;
+    world_ts time;
 
     struct htable provided;
     struct ring_ack requested;
@@ -126,7 +126,7 @@ struct chunk_ack
 struct ack
 {
     uint64_t stream;
-    world_ts_t time;
+    world_ts time;
     uint32_t atoms;
     struct chunk_ack chunk;
 };
@@ -197,8 +197,8 @@ struct state
 {
     uint64_t stream;
 
-    seed_t seed;
-    world_ts_t time;
+    seed seed;
+    world_ts time;
     enum speed speed;
     struct coord home;
 

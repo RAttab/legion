@@ -37,7 +37,7 @@ static size_t lane_data_len(size_t len)
 
 legion_packed struct lane_queue
 {
-    world_ts_t ts;
+    world_ts ts;
     heap_index_t data;
 };
 
@@ -114,7 +114,7 @@ static void lane_grow(struct lane *lane)
     lane->queue = reallocarray(lane->queue, lane->cap, sizeof(*lane->queue));
 }
 
-static void lane_push(struct lane *lane, world_ts_t ts, heap_index_t data)
+static void lane_push(struct lane *lane, world_ts ts, heap_index_t data)
 {
     lane_grow(lane);
 
@@ -132,9 +132,9 @@ static void lane_push(struct lane *lane, world_ts_t ts, heap_index_t data)
     }
 }
 
-static world_ts_t lane_peek(struct lane *lane)
+static world_ts lane_peek(struct lane *lane)
 {
-    return lane->len ? lane->queue[0].ts : (world_ts_t) -1;
+    return lane->len ? lane->queue[0].ts : (world_ts) -1;
 }
 
 static heap_index_t lane_pop(struct lane *lane)
@@ -281,7 +281,7 @@ bool lanes_load(struct lanes *lanes, struct world *world, struct save *save)
     return false;
 }
 
-world_ts_delta_t lanes_travel(size_t speed, struct coord src, struct coord dst)
+world_ts_delta lanes_travel(size_t speed, struct coord src, struct coord dst)
 {
     return coord_dist(src, dst) / speed;
 }
@@ -391,7 +391,7 @@ void lanes_launch(
         memcpy(data_ptr->data, data, len * sizeof(*data));
     }
 
-    world_ts_delta_t travel = lanes_travel(speed, src, dst);
+    world_ts_delta travel = lanes_travel(speed, src, dst);
     assert(travel > 0);
 
     lane_push(lane, world_time(lanes->world) + travel, data_index);
@@ -399,7 +399,7 @@ void lanes_launch(
 
 void lanes_step(struct lanes *lanes)
 {
-    world_ts_t now = world_time(lanes->world);
+    world_ts now = world_time(lanes->world);
 
     const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it)) {

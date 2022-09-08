@@ -25,13 +25,13 @@
 void wait_travel(
         struct world *world, size_t speed, struct coord src, struct coord dst)
 {
-    world_ts_delta_t wait = lanes_travel(speed, src, dst);
-    for (world_ts_delta_t i = 0; i < wait; ++i) world_step(world);
+    world_ts_delta wait = lanes_travel(speed, src, dst);
+    for (world_ts_delta i = 0; i < wait; ++i) world_step(world);
 }
 
-void step_for(struct world *world, world_ts_t ticks)
+void step_for(struct world *world, world_ts ticks)
 {
-    for (world_ts_t ts = 0; ts < ticks; ++ts) world_step(world);
+    for (world_ts ts = 0; ts < ticks; ++ts) world_step(world);
 }
 
 size_t storage_count(struct chunk *chunk, id_t storage_id, id_t test_id)

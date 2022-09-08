@@ -43,7 +43,7 @@ user chunk_owner(struct chunk *);
 struct world *chunk_world(const struct chunk *);
 const struct star *chunk_star(const struct chunk *);
 struct tech *chunk_tech(const struct chunk *);
-world_ts_t chunk_updated(const struct chunk *);
+world_ts chunk_updated(const struct chunk *);
 
 word chunk_name(struct chunk *);
 void chunk_rename(struct chunk *, word);

@@ -56,7 +56,7 @@ struct sector
     struct star stars[];
 };
 
-struct sector *sector_gen(struct coord, seed_t);
+struct sector *sector_gen(struct coord, seed);
 struct sector *sector_new(size_t stars);
 void sector_free(struct sector *);
 

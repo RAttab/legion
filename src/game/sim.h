@@ -30,7 +30,7 @@ enum
     sim_out_len = 2000 * s_page_len,
 };
 
-struct sim *sim_new(seed_t seed, const char *save);
+struct sim *sim_new(seed seed, const char *save);
 void sim_free(struct sim *);
 
 void sim_server(struct sim *, const char *config);

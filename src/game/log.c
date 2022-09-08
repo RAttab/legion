@@ -43,7 +43,7 @@ static void log_reset(struct log *log)
 
 void log_push(
         struct log *log,
-        world_ts_t time,
+        world_ts time,
         struct coord star,
         id id,
         word key,
@@ -104,7 +104,7 @@ struct log *log_load(struct save *save)
 // recursion on load but right now that means doing a bunch of scanning and
 // checks to figure out where the bottom is which is an annoying amount of code
 // to write.
-void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
+void log_save_delta(const struct log *log, struct save *save, world_ts ack)
 {
     save_write_magic(save, save_magic_log);
 
@@ -118,16 +118,16 @@ void log_save_delta(const struct log *log, struct save *save, world_ts_t ack)
         save_write_value(save, it->key);
         save_write_value(save, it->value);
     }
-    save_write_value(save, (world_ts_t) 0);
+    save_write_value(save, (world_ts) 0);
 
     save_write_magic(save, save_magic_log);
 }
 
 // We need to push the items in reverse order that we read them so we use
 // recursion to invert the order that items are pushed.
-static bool log_load_delta_item(struct log *log, struct save *save, world_ts_t ack)
+static bool log_load_delta_item(struct log *log, struct save *save, world_ts ack)
 {
-    world_ts_t time = save_read_type(save, typeof(time));
+    world_ts time = save_read_type(save, typeof(time));
     if (!time) return true;
 
     struct coord star = coord_from_u64(save_read_type(save, uint64_t));
@@ -141,7 +141,7 @@ static bool log_load_delta_item(struct log *log, struct save *save, world_ts_t a
     return true;
 }
 
-bool log_load_delta(struct log *log, struct save *save, world_ts_t ack)
+bool log_load_delta(struct log *log, struct save *save, world_ts ack)
 {
     if (!save_read_magic(save, save_magic_log)) return false;
     if (!ack) log_reset(log);

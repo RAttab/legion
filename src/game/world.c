@@ -32,8 +32,8 @@ struct world_user
 
 struct world
 {
-    seed_t seed;
-    world_ts_t time;
+    seed seed;
+    world_ts time;
 
     struct mods *mods;
     struct atoms *atoms;
@@ -73,7 +73,7 @@ static struct world_user *world_user_next(
 // world
 // -----------------------------------------------------------------------------
 
-struct world *world_new(seed_t seed)
+struct world *world_new(seed seed)
 {
     struct world *world = calloc(1, sizeof(*world));
 
@@ -234,12 +234,12 @@ void world_step(struct world *world)
     }
 }
 
-seed_t world_seed(struct world *world)
+seed world_seed(struct world *world)
 {
     return world->seed;
 }
 
-world_ts_t world_time(struct world *world)
+world_ts world_time(struct world *world)
 {
     return world->time;
 }
