@@ -218,7 +218,7 @@ static void topbar_render_coord(
     it += str_utoa(proxy_time(render.proxy), it, topbar_ticks_len);
     *it = ' '; it++; assert(it < end);
 
-    scale_t scale = 0;
+    scale scale = 0;
     struct coord coord = {0};
     if (map_active(render.ui.map)) {
         scale = map_scale(render.ui.map);

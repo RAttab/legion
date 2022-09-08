@@ -17,7 +17,7 @@
 struct map
 {
     struct coord pos;
-    scale_t scale;
+    scale scale;
 
     SDL_Texture* tex;
     SDL_Rect tex_star;
@@ -87,7 +87,7 @@ bool map_active(struct map *map)
     return map->active;
 }
 
-scale_t map_scale(struct map *map)
+scale map_scale(struct map *map)
 {
     return map->scale;
 }

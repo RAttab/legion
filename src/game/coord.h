@@ -203,22 +203,22 @@ inline struct coord rect_next_area(struct rect rect, struct coord it)
 // scale
 // -----------------------------------------------------------------------------
 
-typedef int64_t scale_t;
+typedef int64_t scale;
 enum { scale_base = 1 << 8 };
 
-inline scale_t scale_init() { return scale_base; }
+inline scale scale_init() { return scale_base; }
 
-scale_t scale_inc(scale_t scale, int dir);
+scale scale_inc(scale scale, int dir);
 
-inline int64_t scale_mult(scale_t scale, int64_t value)
+inline int64_t scale_mult(scale scale, int64_t value)
 {
     return (value * scale) / scale_base;
 }
 
-inline int64_t scale_div(scale_t scale, int64_t value)
+inline int64_t scale_div(scale scale, int64_t value)
 {
     return (value * scale_base) / scale;
 }
 
 enum { scale_str_len = 1+2+1+2 };
-size_t scale_str(scale_t, char *str, size_t len);
+size_t scale_str(scale, char *str, size_t len);

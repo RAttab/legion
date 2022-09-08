@@ -23,7 +23,7 @@ void map_render(struct map *, SDL_Renderer *);
 bool map_event(struct map *, SDL_Event *);
 
 bool map_active(struct map *);
-scale_t map_scale(struct map *);
+scale map_scale(struct map *);
 struct coord map_coord(struct map *);
 
 
@@ -38,7 +38,7 @@ void factory_render(struct factory *, SDL_Renderer *);
 bool factory_event(struct factory *, SDL_Event *);
 
 bool factory_active(struct factory *);
-scale_t factory_scale(struct factory *);
+scale factory_scale(struct factory *);
 struct coord factory_coord(struct factory *);
 
 
