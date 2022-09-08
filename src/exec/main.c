@@ -93,7 +93,7 @@ int main(int argc, char *const argv[])
         const char *service;
         const char *type;
         seed_t seed;
-        token_t auth;
+        token auth;
         struct symbol name;
     } args = {
         .save = "./legion.save",
@@ -162,7 +162,7 @@ int main(int argc, char *const argv[])
     case cmd_graph:  { ok = graph_run(); break; }
     case cmd_items:  { ok = stats_run(); break; }
     case cmd_local:  { ok = local_run(args.save, args.seed); break; }
-    case cmd_token:  { ok = true; fprintf(stdout, "%lx\n", token()); break; }
+    case cmd_token:  { ok = true; fprintf(stdout, "%lx\n", make_token()); break; }
     case cmd_client: {
         ok = client_run(args.node, args.service, args.config);
         break;

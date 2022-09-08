@@ -59,7 +59,7 @@ void test_basics(void)
     struct world *world = world_new(0);
     const struct sector *sector = world_sector(world, coord_center());
 
-    const user_t user = 13;
+    const user user = 13;
     const size_t speed = 100;
     const enum item item = ITEM_PILL;
     const struct coord src = sector->stars[0].coord;

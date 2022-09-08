@@ -16,9 +16,9 @@
 
 #include <sys/random.h>
 
-token_t token(void)
+token make_token(void)
 {
-    token_t token = 0;
+    token token = 0;
     ssize_t ret = getrandom(&token, sizeof(token), 0);
     if (ret == -1) fail_errno("unable to generate token");
     assert(ret == sizeof(token));
@@ -78,11 +78,11 @@ void user_read(struct user *user, struct reader *in)
 // Half-assed solution to use our user ids as the key to htable while user id 0
 // is a valid id. So instead of the usual +/- 1 shenanigans we | the key with
 // this mask.
-static uint64_t users_id_mask = 0x1UL << (sizeof(user_t) * 8);
+static uint64_t users_id_mask = 0x1UL << (sizeof(user) * 8);
 
 void users_init(struct users *users)
 {
-    *users = (struct users) { .server = token() };
+    *users = (struct users) { .server = make_token() };
 
     struct symbol name = make_symbol("admin");
     struct user *admin = users_create(users, &name);
@@ -118,7 +118,7 @@ struct user *users_create(struct users *users, const struct symbol *name)
     struct htable_ret ret = htable_get(&users->names, symbol_hash(name));
     if (ret.ok) return NULL;
 
-    user_t id = 0;
+    user id = 0;
     while (id < 64 && uset_test(users->avail, id)) id++;
     if (id == 64) return NULL;
 
@@ -127,8 +127,8 @@ struct user *users_create(struct users *users, const struct symbol *name)
         .id = id,
         .name = *name,
         .access = user_to_uset(id),
-        .public = token(),
-        .private = token(),
+        .public = make_token(),
+        .private = make_token(),
     };
 
     users_insert(users, user);
@@ -141,30 +141,30 @@ const struct user *users_name(struct users *users, const struct symbol *name)
     return ret.ok ? (void *) ret.value : NULL;
 }
 
-static struct user *users_id_mut(struct users *users, user_t id)
+static struct user *users_id_mut(struct users *users, user id)
 {
     struct htable_ret ret = htable_get(&users->ids, id | users_id_mask);
     return ret.ok ? (void *) ret.value : NULL;
 }
 
-const struct user *users_id(struct users *users, user_t id)
+const struct user *users_id(struct users *users, user id)
 {
     return users_id_mut(users, id);
 }
 
 
-bool users_auth_server(struct users *users, token_t token)
+bool users_auth_server(struct users *users, token token)
 {
     return token == users->server;
 }
 
-const struct user *users_auth_user(struct users *users, user_t id, token_t token)
+const struct user *users_auth_user(struct users *users, user id, token token)
 {
     const struct user *user = users_id(users, id);
     return user && user->private == token ? user : NULL;
 }
 
-bool users_grant(struct users *users, user_t id, token_t token)
+bool users_grant(struct users *users, user id, token token)
 {
     struct user *user = users_id_mut(users, id);
     if (!user) return false;

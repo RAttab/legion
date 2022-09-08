@@ -18,7 +18,7 @@ struct save;
 // uid
 // -----------------------------------------------------------------------------
 
-typedef uint8_t user_t;
+typedef uint8_t user;
 enum { user_max = 64 };
 enum { user_admin = 0 };
 
@@ -27,30 +27,30 @@ enum { user_admin = 0 };
 // token
 // -----------------------------------------------------------------------------
 
-typedef uint64_t token_t;
+typedef uint64_t token;
 
-token_t token(void);
+token make_token(void);
 
 
 // -----------------------------------------------------------------------------
 // uset
 // -----------------------------------------------------------------------------
 
-typedef uint64_t uset_t;
+typedef uint64_t uset;
 
-inline uset_t user_to_uset(user_t id)
+inline uset user_to_uset(user id)
 {
     assert(id < 64);
     return 1ULL << id;
 }
 
-inline bool uset_test(uset_t list, user_t id)
+inline bool uset_test(uset list, user id)
 {
     return list & user_to_uset(id);
 }
 
-inline uset_t uset_nil(void) { return 0UL; }
-inline uset_t uset_all(void) { return -1UL; }
+inline uset uset_nil(void) { return 0UL; }
+inline uset uset_all(void) { return -1UL; }
 
 // -----------------------------------------------------------------------------
 // user
@@ -58,10 +58,10 @@ inline uset_t uset_all(void) { return -1UL; }
 
 struct user
 {
-    user_t id;
+    user id;
     struct symbol name;
-    uset_t access;
-    token_t public, private;
+    uset access;
+    token public, private;
 };
 
 void user_save(const struct user *, struct save *);
@@ -77,8 +77,8 @@ void user_read(struct user *, struct reader *);
 
 struct users
 {
-    token_t server;
-    uset_t avail;
+    token server;
+    uset avail;
     struct htable ids;
     struct htable names;
     struct htable grant;
@@ -89,11 +89,11 @@ void users_free(struct users *);
 
 struct user *users_create(struct users *, const struct symbol *);
 const struct user *users_name(struct users *, const struct symbol *);
-const struct user *users_id(struct users *, user_t);
+const struct user *users_id(struct users *, user);
 
-bool users_auth_server(struct users *, token_t);
-const struct user *users_auth_user(struct users *, user_t, token_t);
-bool users_grant(struct users *, user_t, token_t);
+bool users_auth_server(struct users *, token);
+const struct user *users_auth_user(struct users *, user, token);
+bool users_grant(struct users *, user, token);
 
 void users_write(const struct users *, struct writer *);
 void users_read(struct users *, struct reader *);

@@ -15,7 +15,7 @@
 
 legion_packed struct lane_data
 {
-    user_t owner;
+    user owner;
     enum item item;
     bool forward;
     uint8_t len;
@@ -296,7 +296,7 @@ void lanes_list_save(
         struct lanes *lanes,
         struct save *save,
         struct world *world,
-        uset_t filter)
+        uset filter)
 {
     save_write_magic(save, save_magic_lanes);
 
@@ -361,7 +361,7 @@ bool lanes_list_load_into(struct htable *lanes, struct save *save)
 
 void lanes_launch(
         struct lanes *lanes,
-        user_t owner, enum item type, size_t speed,
+        user owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word *data, size_t len)
 {

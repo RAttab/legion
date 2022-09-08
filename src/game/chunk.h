@@ -30,7 +30,7 @@ struct energy;
 struct chunk;
 
 struct chunk *chunk_alloc_empty(void);
-struct chunk *chunk_alloc(struct world *, const struct star *, user_t, word name);
+struct chunk *chunk_alloc(struct world *, const struct star *, user, word name);
 void chunk_free(struct chunk *);
 
 void chunk_save(struct chunk *, struct save *);
@@ -39,7 +39,7 @@ struct chunk *chunk_load(struct world *, struct save *);
 void chunk_save_delta(struct chunk *, struct save *, const struct ack *);
 bool chunk_load_delta(struct chunk *, struct save *, struct ack *);
 
-user_t chunk_owner(struct chunk *);
+user chunk_owner(struct chunk *);
 struct world *chunk_world(const struct chunk *);
 const struct star *chunk_star(const struct chunk *);
 struct tech *chunk_tech(const struct chunk *);

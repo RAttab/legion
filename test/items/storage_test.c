@@ -16,7 +16,7 @@ void test_storage(void)
     struct world *world = world_new(0);
     world_populate(world);
 
-    const user_t user = 0;
+    const user user = 0;
     world_populate_user(world, user);
     struct coord home = world_home(world, user);
     struct chunk *chunk = world_chunk(world, home);

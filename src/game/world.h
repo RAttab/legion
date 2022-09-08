@@ -48,24 +48,24 @@ struct world *world_load(struct save *);
 
 void world_step(struct world *);
 void world_populate(struct world *);
-void world_populate_user(struct world *, user_t);
+void world_populate_user(struct world *, user);
 
 seed_t world_seed(struct world *);
 world_ts_t world_time(struct world *);
 struct mods *world_mods(struct world *);
 struct atoms *world_atoms(struct world *);
-struct coord world_home(struct world *, user_t);
-struct tech *world_tech(struct world *, user_t);
+struct coord world_home(struct world *, user);
+struct tech *world_tech(struct world *, user);
 struct chunk *world_chunk(struct world *, struct coord);
-struct chunk *world_chunk_alloc(struct world *, struct coord, user_t);
+struct chunk *world_chunk_alloc(struct world *, struct coord, user);
 const struct sector *world_sector(struct world *, struct coord);
 word world_star_name(struct world *, struct coord);
-bool world_user_access(struct world *, uset_t, struct coord);
+bool world_user_access(struct world *, uset, struct coord);
 
 enum { world_log_cap = 64 };
-struct log *world_log(struct world *, user_t);
+struct log *world_log(struct world *, user);
 void world_log_push(
-        struct world *, user_t, struct coord, id, word key, word value);
+        struct world *, user, struct coord, id, word key, word value);
 
 
 // -----------------------------------------------------------------------------
@@ -91,12 +91,12 @@ ssize_t world_scan(struct world *, struct coord, enum item);
 
 struct world_chunk_it
 {
-    uset_t filter;
+    uset filter;
     const struct htable_bucket *it;
 };
 
 struct vec64 *world_chunk_list(struct world *);
-struct world_chunk_it world_chunk_it(struct world *, uset_t);
+struct world_chunk_it world_chunk_it(struct world *, uset);
 struct chunk *world_chunk_next(struct world *, struct world_chunk_it *);
 
 
@@ -105,16 +105,16 @@ struct chunk *world_chunk_next(struct world *, struct world_chunk_it *);
 // -----------------------------------------------------------------------------
 
 const struct hset *world_lanes_list(struct world *, struct coord key);
-void world_lanes_list_save(struct world *, struct save *, uset_t);
+void world_lanes_list_save(struct world *, struct save *, uset);
 
 void world_lanes_launch(
         struct world *,
-        user_t owner, enum item type, size_t speed,
+        user owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const word *data, size_t len);
 void world_lanes_arrive(
         struct world *,
-        user_t owner, enum item type,
+        user owner, enum item type,
         struct coord src, struct coord dst,
         const word *data, size_t len);
 

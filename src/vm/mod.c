@@ -294,7 +294,7 @@ struct mod_entry
 {
     mod_maj maj;
     mod_ver ver;
-    user_t owner;
+    user owner;
 
     struct symbol str;
     const struct mod *mod;
@@ -387,7 +387,7 @@ struct mods *mods_load(struct save *save)
 }
 
 
-mod_id mods_register(struct mods *mods, user_t owner, const struct symbol *name)
+mod_id mods_register(struct mods *mods, user owner, const struct symbol *name)
 {
     if (mods_find(mods, name)) return 0;
 
@@ -422,7 +422,7 @@ bool mods_name(struct mods *mods, mod_maj maj, struct symbol *dst)
     return true;
 }
 
-user_t mods_owner(struct mods *mods, mod_maj maj)
+user mods_owner(struct mods *mods, mod_maj maj)
 {
     if (!maj) return -1;
 
@@ -512,7 +512,7 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     return mods_get(mods, make_mod(maj, ver));
 }
 
-struct mods_list *mods_list(struct mods *mods, uset_t filter)
+struct mods_list *mods_list(struct mods *mods, uset filter)
 {
     struct mods_list *ret = calloc(1,
             sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
@@ -549,7 +549,7 @@ struct mods_list *mods_list_reserve(size_t len)
     return list;
 }
 
-void mods_list_save(struct mods *mods, struct save *save, uset_t filter)
+void mods_list_save(struct mods *mods, struct save *save, uset filter)
 {
     struct mods_list *list = mods_list(mods, filter);
     save_write_magic(save, save_magic_mods);
