@@ -36,14 +36,14 @@ void ui_doc_free(struct ui_doc *doc)
 
 void ui_doc_open(struct ui_doc *doc, struct link link, struct lisp *lisp)
 {
-    struct man *man = man_page(link.page, doc->cols, lisp);
+    struct man *man = man_open(link.page, doc->cols, lisp);
     if (!man) { render_log(st_error, "unknown man link"); return; }
 
     if (doc->man) man_free(doc->man);
     doc->man = man;
 
     ui_scroll_update(&doc->scroll, man_lines(doc->man));
-    doc->scroll.first = man_section(doc->man, link.section);
+    doc->scroll.first = man_section_line(doc->man, link.section);
 }
 
 enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
@@ -62,7 +62,7 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
 
         uint8_t col = (cursor.x - doc->w.pos.x) / doc->font.w;
-        line line = (cursor.y - doc->w.pos.y) / doc->font.h;
+        man_line line = (cursor.y - doc->w.pos.y) / doc->font.h;
         line += doc->scroll.first;
 
         struct link link = man_click(doc->man, line, col);
@@ -109,11 +109,11 @@ void ui_doc_render(
     doc->w = doc->scroll.w;
 
     struct pos pos = inner.base.pos;
-    line line_it = doc->scroll.first;
-    const line line_end = line_it + doc->scroll.visible;
-    const struct markup *it = man_line(doc->man, line_it);
+    man_line line = doc->scroll.first;
+    const man_line end = line + doc->scroll.visible;
+    const struct markup *it = man_line_markup(doc->man, line);
 
-    while (it && line_it < line_end) {
+    while (it && line < end) {
         switch (it->type)
         {
 
@@ -122,7 +122,7 @@ void ui_doc_render(
         case markup_eol: {
             pos.x = inner.base.pos.x;
             pos.y += doc->font.h;
-            line_it++;
+            line++;
             break;
         }
 
@@ -195,6 +195,6 @@ void ui_doc_render(
         default: { assert(false); }
         }
 
-        it = man_next(doc->man, it);
+        it = man_next_markup(doc->man, it);
     }
 }

@@ -148,24 +148,24 @@ void man_free(struct man *man)
     free(man);
 }
 
-line man_lines(struct man *man)
+man_line man_lines(struct man *man)
 {
     return man->lines->len;
 }
 
-line man_section(struct man *man, section section)
+man_line man_section_line(struct man *man, man_section section)
 {
     assert(section < man->sections->len);
     return man->sections->vals[section];
 }
 
-const struct markup *man_line(struct man *man, line line)
+const struct markup *man_line_markup(struct man *man, man_line line)
 {
     line = legion_min(line, man->lines->len - 1);
     return man->text.list + man->lines->vals[line];
 }
 
-const struct markup *man_next(struct man *man, const struct markup *it)
+const struct markup *man_next_markup(struct man *man, const struct markup *it)
 {
     const struct markup *start = man->text.list;
     const struct markup *end = start + man->text.len;
@@ -224,10 +224,10 @@ static struct markup *man_newline(struct man *man)
     return markup;
 }
 
-struct link man_click(struct man *man, line line, uint8_t col)
+struct link man_click(struct man *man, man_line line, uint8_t col)
 {
-    for (const struct markup *it = man_line(man, line);
-         it; it = man_next(man, it))
+    for (const struct markup *it = man_line_markup(man, line);
+         it; it = man_next_markup(man, it))
     {
         if (it->type == markup_eol) return link_nil();
         if (it->type == markup_link && col < it->len) return it->link;
@@ -240,11 +240,11 @@ struct link man_click(struct man *man, line line, uint8_t col)
 void man_dbg(struct man *man)
 {
     dbgf("sections(%u):", man->sections->len);
-    for (section section = 0; section < man->sections->len; ++section)
+    for (man_section section = 0; section < man->sections->len; ++section)
         dbgf("  %u -> %zu", section, man->sections->vals[section]);
 
     dbgf("lines(%u):", man->lines->len);
-    for (line line = 0; line < man->lines->len; ++line)
+    for (man_line line = 0; line < man->lines->len; ++line)
         dbgf("  %u -> %zu", line, man->lines->vals[line]);
 
     dbgf("markup(%zu):", man->text.len);
@@ -335,7 +335,7 @@ static void toc_sort(struct toc *toc)
 
 struct man_page
 {
-    page page;
+    man_page page;
     struct mfile file;
     char path[PATH_MAX+1];
 };
@@ -362,7 +362,7 @@ struct link man_path(const char *path, size_t len)
     return ret.ok ? link_from_u64(ret.value) : link_nil();
 }
 
-struct man *man_page(page page, uint8_t cols, struct lisp *lisp)
+struct man *man_open(man_page page, uint8_t cols, struct lisp *lisp)
 {
     if (!page) return NULL;
     assert(cols);

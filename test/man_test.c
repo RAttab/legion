@@ -15,7 +15,7 @@ void check_toc(const struct toc *toc, struct lisp *lisp)
 {
     struct link link = toc->link;
     if (link.page && !link.section)
-        man_free(man_page(link.page, 90, lisp));
+        man_free(man_open(link.page, 90, lisp));
 
     for (size_t i = 0; i < toc->len; ++i)
         check_toc(toc->nodes + i, lisp);

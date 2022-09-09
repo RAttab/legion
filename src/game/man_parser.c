@@ -65,7 +65,7 @@ struct man_parser
 
     bool list;
     uint8_t indent;
-    line line;
+    man_line line;
     struct { uint8_t curr, cap; } cols;
 
     const char *it, *end;

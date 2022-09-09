@@ -19,7 +19,7 @@ static bool man_page_index(const struct man_page *page, struct toc *toc)
         .end = page->file.ptr + page->file.len
     };
 
-    section sections = 0;
+    man_section sections = 0;
     struct man_path path = {0};
     uint8_t path_title = 0, path_section = 0;
 
