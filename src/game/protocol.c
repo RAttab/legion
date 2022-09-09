@@ -131,7 +131,7 @@ static struct ack *ack_load(struct save *save)
         enum item item = save_read_type(save, typeof(item));
         if (!item) break;
 
-        hash hash = save_read_type(save, typeof(hash));
+        hash_val hash = save_read_type(save, typeof(hash));
         cack->active[item - ITEM_ACTIVE_FIRST] = hash;
     }
 

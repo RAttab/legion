@@ -326,7 +326,7 @@ static void chunk_save_delta_active(
         struct chunk *chunk, struct save *save, const struct chunk_ack *ack)
 {
     for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it)) {
-        hash hash = active_hash(it, hash_init());
+        hash_val hash = active_hash(it, hash_init());
         if (ack->active[it->type - ITEM_ACTIVE_FIRST] == hash) continue;
 
         save_write_value(save, it->type);
@@ -341,7 +341,7 @@ static bool chunk_load_delta_active(
 {
     enum item type = 0;
     while ((type = save_read_type(save, typeof(type)))) {
-        hash hash = save_read_type(save, typeof(hash));
+        hash_val hash = save_read_type(save, typeof(hash));
 
         struct active *active = active_index(chunk, type);
         assert(active && !active->skip);

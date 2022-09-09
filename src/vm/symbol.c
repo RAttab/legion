@@ -11,7 +11,7 @@
 // symbol
 // -----------------------------------------------------------------------------
 
-extern inline uint64_t symbol_hash(const struct symbol *);
+extern inline hash_val symbol_hash(const struct symbol *);
 extern inline int symbol_cmp(const struct symbol *lhs, const struct symbol *rhs);
 extern inline bool symbol_eq(const struct symbol *lhs, const struct symbol *rhs);
 

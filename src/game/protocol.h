@@ -119,7 +119,7 @@ struct chunk_ack
     struct ring_ack storage;
 
     struct ring_ack pills;
-    hash active[ITEMS_ACTIVE_LEN];
+    hash_val active[ITEMS_ACTIVE_LEN];
 };
 
 

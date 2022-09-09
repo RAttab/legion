@@ -19,7 +19,7 @@ struct link link_home(void)
     return man_link(home, sizeof(home) - 1); // gotta ignore the zero char
 }
 
-static hash link_hash(const char *path, size_t len)
+static hash_val link_hash(const char *path, size_t len)
 {
     return hash_str(path, legion_min(len, (size_t) man_path_max));
 }
@@ -357,7 +357,7 @@ static struct
 
 struct link man_path(const char *path, size_t len)
 {
-    hash key = link_hash(path, len);
+    hash_val key = link_hash(path, len);
     struct htable_ret ret = htable_get(&mans.index, key);
     return ret.ok ? link_from_u64(ret.value) : link_nil();
 }
@@ -382,14 +382,14 @@ const struct toc *man_toc(void)
 
 struct link man_link(const char *path, size_t len)
 {
-    hash key = link_hash(path, len);
+    hash_val key = link_hash(path, len);
     struct htable_ret ret = htable_get(&mans.index, key);
     return ret.ok ? link_from_u64(ret.value) : link_nil();
 }
 
 static void man_index_path(const char *path, size_t len, struct link link)
 {
-    hash key = link_hash(path, len);
+    hash_val key = link_hash(path, len);
     struct htable_ret ret = htable_put(&mans.index, key, link_to_u64(link));
     assert(ret.ok);
 }

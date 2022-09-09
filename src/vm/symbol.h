@@ -29,7 +29,7 @@ static_assert(sizeof(struct symbol) == 32);
 struct symbol make_symbol(const char *str);
 struct symbol make_symbol_len(const char *str, size_t len);
 
-inline hash symbol_hash(const struct symbol *symbol)
+inline hash_val symbol_hash(const struct symbol *symbol)
 {
     return hash_bytes(hash_init(), symbol->c, symbol->len);
 }
