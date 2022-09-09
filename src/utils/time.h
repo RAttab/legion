@@ -14,28 +14,28 @@
 // time
 // -----------------------------------------------------------------------------
 
-typedef uint64_t ts_nano;
+typedef uint64_t time_sys;
 
-static const ts_nano ts_nsec = 1;
-static const ts_nano ts_usec = 1000 * ts_nsec;
-static const ts_nano ts_msec = 1000 * ts_usec;
-static const ts_nano ts_sec  = 1000 * ts_msec;
+static const time_sys ts_nsec = 1;
+static const time_sys ts_usec = 1000 * ts_nsec;
+static const time_sys ts_msec = 1000 * ts_usec;
+static const time_sys ts_sec  = 1000 * ts_msec;
 
 // get around compiler warnings about static variables in inlined headers.
-#define ts_sec_s ((ts_nano) 1000*1000*1000)
+#define ts_sec_s ((time_sys) 1000*1000*1000)
 
-inline ts_nano ts_now(void)
+inline time_sys ts_now(void)
 {
     struct timespec ts = {0};
     (void) clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * ts_sec_s + ts.tv_nsec;
 }
 
-inline ts_nano ts_sleep_until(ts_nano until)
+inline time_sys ts_sleep_until(time_sys until)
 {
-    ts_nano now = ts_now();
+    time_sys now = ts_now();
     if (unlikely(now >= until)) return now;
-    ts_nano delta = until - now;
+    time_sys delta = until - now;
 
     struct timespec ts = { .tv_sec = 0, .tv_nsec = delta };
     if (unlikely(delta > ts_sec_s)) {
