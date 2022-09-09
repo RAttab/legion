@@ -38,7 +38,7 @@ static size_t lane_data_len(size_t len)
 legion_packed struct lane_queue
 {
     world_ts ts;
-    heap_index_t data;
+    heap_ix data;
 };
 
 static_assert(sizeof(struct lane_queue) == 8);
@@ -114,7 +114,7 @@ static void lane_grow(struct lane *lane)
     lane->queue = reallocarray(lane->queue, lane->cap, sizeof(*lane->queue));
 }
 
-static void lane_push(struct lane *lane, world_ts ts, heap_index_t data)
+static void lane_push(struct lane *lane, world_ts ts, heap_ix data)
 {
     lane_grow(lane);
 
@@ -137,11 +137,11 @@ static world_ts lane_peek(struct lane *lane)
     return lane->len ? lane->queue[0].ts : (world_ts) -1;
 }
 
-static heap_index_t lane_pop(struct lane *lane)
+static heap_ix lane_pop(struct lane *lane)
 {
     assert(lane->len);
 
-    heap_index_t ret = lane->queue[0].data;
+    heap_ix ret = lane->queue[0].data;
     lane->queue[0] = lane->queue[--lane->len];
 
     size_t index = 0;
@@ -379,7 +379,7 @@ void lanes_launch(
         lanes_index_put(lanes, dst, src);
     }
 
-    heap_index_t data_index = heap_new(&lanes->data, lane_data_len(len));
+    heap_ix data_index = heap_new(&lanes->data, lane_data_len(len));
     {
         struct lane_data *data_ptr = heap_ptr(&lanes->data, data_index);
         *data_ptr = (struct lane_data) {
@@ -406,7 +406,7 @@ void lanes_step(struct lanes *lanes)
         struct lane *lane = (void *) it->value;
 
         while (lane_peek(lane) <= now) {
-            heap_index_t data_index = lane_pop(lane);
+            heap_ix data_index = lane_pop(lane);
             struct lane_data *data = heap_ptr(&lanes->data, data_index);
 
             struct coord src = data->forward ? lane->src : lane->dst;

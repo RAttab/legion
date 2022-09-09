@@ -68,7 +68,7 @@ static_assert(sizeof(struct active) == s_cache_line);
 void active_init(struct active *, enum item type);
 void active_free(struct active *);
 
-hash_t active_hash(const struct active *, hash_t hash);
+hash active_hash(const struct active *, hash hash);
 bool active_load(struct active *, struct save *, struct chunk *);
 void active_save(const struct active *, struct save *save);
 

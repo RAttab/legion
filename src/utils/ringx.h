@@ -26,8 +26,8 @@
 
 struct ringx_name
 {
-    ring_it_t head, tail;
-    ring_it_t cap; legion_pad(4);
+    ring_it head, tail;
+    ring_it cap; legion_pad(4);
     ringx_type vals[];
 };
 
@@ -147,8 +147,8 @@ struct ringx_name *ringx_fn(load) (struct save *save)
 {
     if (!save_read_magic(save, ringx_magic)) return NULL;
 
-    ring_it_t head = save_read_type(save, typeof(head));
-    ring_it_t tail = save_read_type(save, typeof(tail));
+    ring_it head = save_read_type(save, typeof(head));
+    ring_it tail = save_read_type(save, typeof(tail));
 
     size_t len = ring_delta(tail, head);
     struct ringx_name *ring = ringx_fn(reserve)(len);
@@ -189,7 +189,7 @@ void ringx_fn(save_delta) (
         (ring_delta(ack->head, ring->head) > ring_cap) ||
         (ring_delta(ack->tail, ring->tail) > ring_cap);
 
-    ring_it_t start = all ? ring->tail : ack->head;
+    ring_it start = all ? ring->tail : ack->head;
     size_t len = ring_delta(start, ring->head);
     assert(len <= ring_cap);
 
@@ -207,17 +207,17 @@ bool ringx_fn(load_delta) (
 {
     if (!save_read_magic(save, ringx_magic)) return false;
 
-    ring_it_t head_ack = save_read_type(save, typeof(head_ack));
-    ring_it_t tail_ack = save_read_type(save, typeof(tail_ack));
-    ring_it_t head = save_read_type(save, typeof(head));
-    ring_it_t tail = save_read_type(save, typeof(tail));
+    ring_it head_ack = save_read_type(save, typeof(head_ack));
+    ring_it tail_ack = save_read_type(save, typeof(tail_ack));
+    ring_it head = save_read_type(save, typeof(head));
+    ring_it tail = save_read_type(save, typeof(tail));
 
     bool all =
         (ring_delta(tail, head_ack) > ring_cap) ||
         (ring_delta(head_ack, head) > ring_cap) ||
         (ring_delta(tail_ack, tail) > ring_cap);
 
-    ring_it_t start = all ? tail : head_ack;
+    ring_it start = all ? tail : head_ack;
     size_t len = ring_delta(start, head);
     assert(len < ring_cap);
 

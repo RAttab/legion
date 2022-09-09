@@ -23,7 +23,7 @@
 // type
 // -----------------------------------------------------------------------------
 
-typedef uint64_t hash_t;
+typedef uint64_t hash;
 
 
 // -----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ typedef uint64_t hash_t;
 
 // Reproduction of PCG-RXS-M-XS taken from pcg-c. All credits goes to the
 // original author (see header).
-inline hash_t hash_u64(uint64_t value)
+inline hash hash_u64(uint64_t value)
 {
     // ref: pcg-c/include/pcg_variants.h
     //   math: pcg_oneseq_64_step_r
@@ -52,9 +52,9 @@ inline hash_t hash_u64(uint64_t value)
 // -----------------------------------------------------------------------------
 // FNV-1a hash implementation: http://isthe.com/chongo/tech/comp/fnv/
 
-inline hash_t hash_init(void) { return 0xCBF29CE484222325ULL; }
+inline hash hash_init(void) { return 0xCBF29CE484222325ULL; }
 
-inline hash_t hash_bytes(hash_t hash, const void *raw, size_t len)
+inline hash hash_bytes(hash hash, const void *raw, size_t len)
 {
     const uint8_t *bytes = raw;
     for (size_t i = 0; i < len; ++i)
@@ -63,14 +63,14 @@ inline hash_t hash_bytes(hash_t hash, const void *raw, size_t len)
 }
 
 
-inline hash_t hash_str(const char *str, size_t len)
+inline hash hash_str(const char *str, size_t len)
 {
     return hash_bytes(hash_init(), str, len);
 }
 
-#define hash_value(hash, value)                         \
+#define hash_value(h, v)                                \
     ({                                                  \
-        hash_t __hash = (hash);                         \
-        typeof(value) __value = (value);                \
-        hash_bytes(__hash, &__value, sizeof(__value));   \
+        hash __hash = (h);                              \
+        typeof(v) __value = (v);                        \
+        hash_bytes(__hash, &__value, sizeof(__value));  \
     })

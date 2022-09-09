@@ -12,10 +12,10 @@
 // Important that ring_cap be much smaller then ring_it_t so that we can
 // properly set an ordering between ring_it_t values by comparing their deltas
 // against ring_cap. Important for computing save/load deltas.
-typedef uint32_t ring_it_t;
+typedef uint32_t ring_it;
 enum { ring_cap = UINT16_MAX };
 
-inline size_t ring_delta(ring_it_t first, ring_it_t last)
+inline size_t ring_delta(ring_it first, ring_it last)
 {
     if (first == last) return 0;
     if (first < last) return last - first;
@@ -27,7 +27,7 @@ inline size_t ring_delta(ring_it_t first, ring_it_t last)
 // ack
 // -----------------------------------------------------------------------------
 
-struct ring_ack { ring_it_t head, tail; };
+struct ring_ack { ring_it head, tail; };
 
 inline uint64_t ring_ack_to_u64(struct ring_ack ack)
 {

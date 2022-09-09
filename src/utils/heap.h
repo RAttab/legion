@@ -14,11 +14,11 @@ struct save;
 // heap
 // -----------------------------------------------------------------------------
 
-typedef uint32_t heap_index_t;
+typedef uint32_t heap_ix;
 
 struct heap
 {
-    heap_index_t free[8];
+    heap_ix free[8];
     uint32_t len, cap;
     void *data;
 };
@@ -26,11 +26,11 @@ struct heap
 void heap_init(struct heap *);
 void heap_free(struct heap *);
 
-void *heap_ptr(struct heap *, heap_index_t);
-heap_index_t heap_index(struct heap *, const void *ptr);
+void *heap_ptr(struct heap *, heap_ix);
+heap_ix heap_index(struct heap *, const void *ptr);
 
-heap_index_t heap_new(struct heap *, size_t size);
-void heap_del(struct heap *, heap_index_t, size_t size);
+heap_ix heap_new(struct heap *, size_t size);
+void heap_del(struct heap *, heap_ix, size_t size);
 
 void heap_save(struct heap *, struct save *);
 bool heap_load(struct heap *, struct save *);

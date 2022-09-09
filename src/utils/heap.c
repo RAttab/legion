@@ -29,13 +29,13 @@ void heap_free(struct heap *heap)
     munmap(heap->data, heap->cap);
 }
 
-void *heap_ptr(struct heap *heap, heap_index_t index)
+void *heap_ptr(struct heap *heap, heap_ix index)
 {
     assert(index < heap->len);
     return heap->data + index;
 }
 
-heap_index_t heap_index(struct heap *heap, const void *ptr)
+heap_ix heap_index(struct heap *heap, const void *ptr)
 {
     assert(ptr >= heap->data && ptr < heap->data + heap->len);
     return ptr - heap->data;
@@ -86,21 +86,21 @@ static void heap_grow(struct heap *heap, size_t class)
     heap->free[class] = heap_index(heap, it);
     while (it < end) {
         void *next = it + size;
-        *((heap_index_t *) it) = (next + size) <= end ?
+        *((heap_ix *) it) = (next + size) <= end ?
             heap_index(heap, next) : heap_nil;
         it = next;
     }
 }
 
-heap_index_t heap_new(struct heap *heap, size_t size)
+heap_ix heap_new(struct heap *heap, size_t size)
 {
     const size_t class = heap_class(heap, size);
 
     heap_grow(heap, class);
-    heap_index_t index = heap->free[class];
+    heap_ix index = heap->free[class];
 
     void *ptr = heap_ptr(heap, index);
-    heap->free[class] = *((heap_index_t *) ptr);
+    heap->free[class] = *((heap_ix *) ptr);
     memset(ptr, 0, size);
 
     assert(index < heap->len);
@@ -108,14 +108,14 @@ heap_index_t heap_new(struct heap *heap, size_t size)
     return index;
 }
 
-void heap_del(struct heap *heap, heap_index_t index, size_t size)
+void heap_del(struct heap *heap, heap_ix index, size_t size)
 {
     assert(index % 8 == 0);
     assert(index < heap->len);
     const size_t class = heap_class(heap, size);
 
     void *ptr = heap_ptr(heap, index);
-    *((heap_index_t *) ptr) = heap->free[class];
+    *((heap_ix *) ptr) = heap->free[class];
     heap->free[class] = index;
 }
 

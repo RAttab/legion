@@ -98,24 +98,24 @@ static bool active_recycle(struct active *active, size_t *index)
     return false;
 }
 
-hash_t active_hash(const struct active *active, hash_t hash)
+hash active_hash(const struct active *active, hash h)
 {
-    if (active->skip) return hash;
+    if (active->skip) return h;
 
-    hash = hash_value(hash, active->type);
-    hash = hash_value(hash, active->size);
-    hash = hash_value(hash, active->count);
-    hash = hash_value(hash, active->create);
-    hash = hash_bytes(hash, active->arena, active->len * active->size);
-    hash = hash_bytes(hash, active->ports, active->len * sizeof(*active->ports));
+    h = hash_value(h, active->type);
+    h = hash_value(h, active->size);
+    h = hash_value(h, active->count);
+    h = hash_value(h, active->create);
+    h = hash_bytes(h, active->arena, active->len * active->size);
+    h = hash_bytes(h, active->ports, active->len * sizeof(*active->ports));
 
-    if (likely(active->cap <= 64)) hash = hash_value(hash, active->free);
+    if (likely(active->cap <= 64)) h = hash_value(h, active->free);
     else {
         struct vec64 *vec = (void *) active->free;
-        hash = hash_bytes(hash, vec->vals, vec->len * sizeof(vec->vals[0]));
+        h = hash_bytes(h, vec->vals, vec->len * sizeof(vec->vals[0]));
     }
 
-    return hash;
+    return h;
 }
 
 void active_save(const struct active *active, struct save *save)

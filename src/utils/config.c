@@ -93,14 +93,14 @@ struct symbol reader_symbol(struct reader *reader)
         token.value.s : (struct symbol) {0};
 }
 
-hash_t reader_symbol_hash(struct reader *reader)
+hash reader_symbol_hash(struct reader *reader)
 {
     struct token token = {0};
     if (!token_expect(&reader->tok, &token, token_symbol)) return 0;
     return symbol_hash(&token.value.s);
 }
 
-void reader_expect(struct reader *reader, hash_t hash)
+void reader_expect(struct reader *reader, hash hash)
 {
     struct symbol key = reader_symbol(reader);
     if (likely(hash == symbol_hash(&key))) return;

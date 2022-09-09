@@ -35,7 +35,7 @@ word reader_atom(struct reader *, struct atoms *);
 struct symbol reader_symbol(struct reader *);
 uint64_t reader_symbol_hash(struct reader *);
 
-void reader_expect(struct reader *reader, hash_t);
+void reader_expect(struct reader *reader, hash);
 #define reader_symbol_str(_reader, _str) \
     do { reader_expect((_reader), symbol_hash_c(_str)); } while (false)
 

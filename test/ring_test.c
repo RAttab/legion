@@ -132,7 +132,7 @@ void check_save(size_t init, size_t churn)
 {
     struct save *save = save_mem_new();
 
-    ring_it_t val = 1;
+    ring_it val = 1;
     struct ring32 *base = ring32_reserve(init);
     while (val < init) base = ring32_push(base, val++);
 
@@ -160,7 +160,7 @@ void check_save_delta(size_t init, size_t churn)
 {
     struct save *save = save_mem_new();
 
-    ring_it_t val = 1;
+    ring_it val = 1;
     struct ring32 *base = ring32_reserve(init);
     while (val < init) base = ring32_push(base, val++);
 

@@ -35,8 +35,8 @@ bool hset_test(const struct hset *, uint64_t key);
 struct hset *hset_put(struct hset *, uint64_t key);
 bool hset_del(struct hset *, uint64_t key);
 
-typedef const uint64_t *hset_it_t;
-hset_it_t hset_next(const struct hset *, hset_it_t);
+typedef const uint64_t *hset_it;
+hset_it hset_next(const struct hset *, hset_it);
 
 bool hset_eq(const struct hset *, const struct hset *);
 struct hset *hset_diff(const struct hset *, const struct hset *);

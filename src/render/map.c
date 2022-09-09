@@ -306,7 +306,7 @@ static void map_render_lanes(
     SDL_Point src = map_project_sdl(map, star);
     rgba_render(rgba_gray_a(0xAA, 0xAA), renderer);
 
-    for (hset_it_t it = hset_next(lanes, NULL); it; it = hset_next(lanes, it)) {
+    for (hset_it it = hset_next(lanes, NULL); it; it = hset_next(lanes, it)) {
         SDL_Point dst = map_project_sdl(map, coord_from_u64(*it));
         sdl_err(SDL_RenderDrawLine(renderer, src.x, src.y, dst.x, dst.y));
     }

@@ -170,7 +170,7 @@ bool hset_eq(const struct hset *lhs, const struct hset *rhs)
     if (!lhs || !rhs) return !lhs && !rhs;
     if (lhs->len != rhs->len) return false;
 
-    for (hset_it_t it = hset_next(lhs, NULL); it; it = hset_next(lhs, it))
+    for (hset_it it = hset_next(lhs, NULL); it; it = hset_next(lhs, it))
         if (!hset_test(rhs, *it)) return false;
 
     return true;
@@ -179,7 +179,7 @@ bool hset_eq(const struct hset *lhs, const struct hset *rhs)
 struct hset *hset_ret(const struct hset *lhs, const struct hset *rhs)
 {
     struct hset *ret = NULL;
-    for (hset_it_t it = hset_next(lhs, NULL); it; it = hset_next(lhs, it)) {
+    for (hset_it it = hset_next(lhs, NULL); it; it = hset_next(lhs, it)) {
         if (!hset_test(rhs, *it)) ret = hset_put(ret, *it);
     }
     return ret;
@@ -188,7 +188,7 @@ struct hset *hset_ret(const struct hset *lhs, const struct hset *rhs)
 struct hset *hset_union(const struct hset *lhs, const struct hset *rhs)
 {
     struct hset *ret = hset_clone(lhs);
-    for (hset_it_t it = hset_next(rhs, NULL); it; it = hset_next(rhs, it))
+    for (hset_it it = hset_next(rhs, NULL); it; it = hset_next(rhs, it))
         ret = hset_put(ret, *it);
     return ret;
 
@@ -197,7 +197,7 @@ struct hset *hset_union(const struct hset *lhs, const struct hset *rhs)
 struct hset *hset_intersect(const struct hset *lhs, const struct hset *rhs)
 {
     struct hset *ret = NULL;
-    for (hset_it_t it = hset_next(lhs, NULL); it; it = hset_next(lhs, it)) {
+    for (hset_it it = hset_next(lhs, NULL); it; it = hset_next(lhs, it)) {
         if (hset_test(rhs, *it)) ret = hset_put(ret, *it);
     }
     return ret;
@@ -214,7 +214,7 @@ size_t hset_str(const struct hset *hs, char *str, size_t len)
     const char *end = str + len;
 
     str += snprintf(str, end - str, "{ ");
-    for (hset_it_t it = hset_next(hs, NULL); it; it = hset_next(hs, it))
+    for (hset_it it = hset_next(hs, NULL); it; it = hset_next(hs, it))
         str += snprintf(str, end - str, "%lx ", *it);
     str += snprintf(str, end - str, "}");
 
