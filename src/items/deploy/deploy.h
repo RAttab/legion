@@ -19,7 +19,7 @@ struct im_config;
 
 struct legion_packed im_deploy
 {
-    id id;
+    im_id id;
 
     enum item item;
     loops loops;

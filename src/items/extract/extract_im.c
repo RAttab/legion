@@ -14,7 +14,7 @@
 // extract
 // -----------------------------------------------------------------------------
 
-static void im_extract_init(void *state, struct chunk *chunk, id id)
+static void im_extract_init(void *state, struct chunk *chunk, im_id id)
 {
     struct im_extract *extract = state;
     (void) chunk;
@@ -117,7 +117,8 @@ static void im_extract_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_extract_io_state(
-        struct im_extract *extract, struct chunk *chunk, id src,
+        struct im_extract *extract, struct chunk *chunk,
+        im_id src,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, extract->id, IO_STATE, len, 1)) return;
@@ -145,7 +146,7 @@ static void im_extract_io_tape(
     if (!im_check_known(chunk, extract->id, IO_TAPE, item)) return;
 
     const struct tape *tape = tapes_get(item);
-    if (!tape || tape_host(tape) != id_item(extract->id))
+    if (!tape || tape_host(tape) != im_id_item(extract->id))
         return chunk_log(chunk, extract->id, IO_TAPE, IOE_A0_INVALID);
 
     im_extract_reset(extract, chunk);
@@ -155,7 +156,7 @@ static void im_extract_io_tape(
 
 static void im_extract_io(
         void *state, struct chunk *chunk,
-        enum io io, id src,
+        enum io io, im_id src,
         const vm_word *args, size_t len)
 {
     struct im_extract *extract = state;

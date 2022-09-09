@@ -49,12 +49,12 @@ vm_word chunk_name(struct chunk *);
 void chunk_rename(struct chunk *, vm_word);
 bool chunk_harvest(struct chunk *, enum item item);
 
-id chunk_last(struct chunk *, enum item);
+im_id chunk_last(struct chunk *, enum item);
 struct vec64 *chunk_list(struct chunk *);
 struct vec64 *chunk_list_filter(struct chunk *, im_list filter);
-const void *chunk_get(struct chunk *, id);
-bool chunk_copy(struct chunk *, id, void *dst, size_t len);
-bool chunk_delete(struct chunk *, id id);
+const void *chunk_get(struct chunk *, im_id);
+bool chunk_copy(struct chunk *, im_id, void *dst, size_t len);
+bool chunk_delete(struct chunk *, im_id id);
 bool chunk_create(struct chunk *, enum item);
 bool chunk_create_from(struct chunk *, enum item, const vm_word *data, size_t len);
 
@@ -62,11 +62,11 @@ bool chunk_create_from(struct chunk *, enum item, const vm_word *data, size_t le
 void chunk_step(struct chunk *);
 bool chunk_io(
         struct chunk *,
-        enum io io, id src, id dst,
+        enum io io, im_id src, im_id dst,
         const vm_word *args, size_t len);
 
 
-void chunk_log(struct chunk *, id, vm_word key, vm_word value);
+void chunk_log(struct chunk *, im_id, vm_word key, vm_word value);
 const struct log *chunk_logs(struct chunk *);
 
 
@@ -77,8 +77,8 @@ ssize_t chunk_scan(struct chunk *, enum item);
 
 
 bool chunk_lanes_dock(struct chunk *, vm_word *data);
-void chunk_lanes_listen(struct chunk *, id, struct coord src, uint8_t chan);
-void chunk_lanes_unlisten(struct chunk *, id, struct coord src, uint8_t chan);
+void chunk_lanes_listen(struct chunk *, im_id, struct coord src, uint8_t chan);
+void chunk_lanes_unlisten(struct chunk *, im_id, struct coord src, uint8_t chan);
 void chunk_lanes_arrive(
         struct chunk *,
         enum item, struct coord src,
@@ -90,11 +90,11 @@ void chunk_lanes_launch(
         const vm_word *data, size_t len);
 
 
-void chunk_ports_reset(struct chunk *, id);
-bool chunk_ports_produce(struct chunk *, id, enum item);
-bool chunk_ports_consumed(struct chunk *, id);
-enum item chunk_ports_consume(struct chunk *, id);
-void chunk_ports_request(struct chunk *, id, enum item);
+void chunk_ports_reset(struct chunk *, im_id);
+bool chunk_ports_produce(struct chunk *, im_id, enum item);
+bool chunk_ports_consumed(struct chunk *, im_id);
+enum item chunk_ports_consume(struct chunk *, im_id);
+void chunk_ports_request(struct chunk *, im_id, enum item);
 
 
 struct workers
@@ -104,7 +104,7 @@ struct workers
 };
 
 struct workers chunk_workers(struct chunk *);
-inline void chunk_workers_ops(uint64_t val, id *src, id *dst)
+inline void chunk_workers_ops(uint64_t val, im_id *src, im_id *dst)
 {
     *src = val >> 32;
     *dst = val & ((1ULL << 32) - 1);

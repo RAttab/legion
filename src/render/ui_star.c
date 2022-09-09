@@ -111,8 +111,10 @@ struct ui_star *ui_star_new(void)
         .factory = ui_button_new(font, ui_str_c("factory")),
         .logistic = ui_button_new(font, ui_str_c("logistic")),
 
-        .control_list = ui_tree_new(make_dim(ui_layout_inf, ui_layout_inf), font, id_str_len),
-        .factory_list = ui_tree_new(make_dim(ui_layout_inf, ui_layout_inf), font, id_str_len),
+        .control_list = ui_tree_new(
+                make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
+        .factory_list = ui_tree_new(
+                make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
 
         .pills = ui_label_new(font, ui_str_c("pills: ")),
         .pills_val = ui_label_new(font, ui_str_v(10)),
@@ -261,12 +263,12 @@ static void ui_star_update_list(
     struct vec64 *ids = chunk_list_filter(chunk, filter);
 
     for (size_t i = 0; i < ids->len; ++i) {
-        id id = ids->vals[i];
+        im_id id = ids->vals[i];
 
-        if (item != id_item(id)) {
-            item = id_item(id);
+        if (item != im_id_item(id)) {
+            item = im_id_item(id);
             parent = ui_tree_index(tree);
-            ui_str_set_item(ui_tree_add(tree, ui_node_nil, make_id(item, 0)), item);
+            ui_str_set_item(ui_tree_add(tree, ui_node_nil, make_im_id(item, 0)), item);
         }
 
         ui_str_set_id(ui_tree_add(tree, parent, id), id);
@@ -412,7 +414,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
             ui_star_update(ui);
         }
 
-        id selected = (uintptr_t) ev->user.data1;
+        im_id selected = (uintptr_t) ev->user.data1;
         ui_tree_select(&ui->control_list, selected);
         ui_tree_select(&ui->factory_list, selected);
 
@@ -480,15 +482,15 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     }
 
     if (ui->control.disabled && (ret = ui_tree_event(&ui->control_list, ev))) {
-        id id = ui->control_list.selected;
-        if (ret == ui_action && id_bot(id))
+        im_id id = ui->control_list.selected;
+        if (ret == ui_action && im_id_seq(id))
             render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
         return true;
     }
 
     if (ui->factory.disabled && (ret = ui_tree_event(&ui->factory_list, ev))) {
-        id id = ui->factory_list.selected;
-        if (ret == ui_action && id_bot(id))
+        im_id id = ui->factory_list.selected;
+        if (ret == ui_action && im_id_seq(id))
             render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
         return true;
     }

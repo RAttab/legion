@@ -240,7 +240,7 @@ static vm_word lisp_eval_id(struct lisp *lisp)
     if (seq < 0 || seq >= (1U << 24))
         lisp_err(lisp, "invalid id sequence number: %lx", seq);
 
-    return make_id(type, seq);
+    return make_im_id(type, seq);
 }
 
 

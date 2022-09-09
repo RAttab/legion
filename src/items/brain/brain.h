@@ -20,7 +20,7 @@ struct im_config;
 
 struct legion_packed im_brain
 {
-    id id;
+    im_id id;
 
     bool fault;
     bool debug;

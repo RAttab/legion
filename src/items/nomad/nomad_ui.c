@@ -99,7 +99,7 @@ static void ui_nomad_free(void *_ui)
     free(ui);
 }
 
-static void ui_nomad_update(void *_ui, struct chunk *chunk, id id)
+static void ui_nomad_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_nomad *ui = _ui;
 

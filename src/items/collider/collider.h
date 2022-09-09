@@ -37,7 +37,7 @@ enum legion_packed im_collider_op
 
 struct legion_packed im_collider
 {
-    id id;
+    im_id id;
 
     uint8_t size;
     uint8_t rate;

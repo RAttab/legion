@@ -17,7 +17,7 @@ static struct font *ui_item_font(void) { return font_mono6; }
 
 struct ui_item
 {
-    id id;
+    im_id id;
     struct coord star;
     bool loading;
 
@@ -44,7 +44,7 @@ struct ui_item *ui_item_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_c("item")),
         .io = ui_button_new(font, ui_str_c("<< io")),
         .id_lbl = ui_label_new(font, ui_str_c("id: ")),
-        .id_val = ui_link_new(font, ui_str_v(id_str_len)),
+        .id_val = ui_link_new(font, ui_str_v(im_id_str_len)),
     };
 
     ui_panel_hide(&ui->panel);
@@ -78,9 +78,9 @@ int16_t ui_item_width(struct ui_item *ui)
     return ui->panel.w.dim.w;
 }
 
-static void *ui_item_state(struct ui_item *ui, id id)
+static void *ui_item_state(struct ui_item *ui, im_id id)
 {
-    void *state =  ui->states[id_item(id) - ITEM_ACTIVE_FIRST];
+    void *state =  ui->states[im_id_item(id) - ITEM_ACTIVE_FIRST];
     assert(state);
     return state;
 }
@@ -95,7 +95,7 @@ static void ui_item_update(struct ui_item *ui)
     if ((ui->loading = !chunk)) return;
 
     void *state = ui_item_state(ui, ui->id);
-    const struct im_config *config = im_config_assert(id_item(ui->id));
+    const struct im_config *config = im_config_assert(im_id_item(ui->id));
 
     config->ui.update(state, chunk, ui->id);
 }
@@ -177,7 +177,7 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     }
 
     void *state = ui_item_state(ui, ui->id);
-    const struct im_config *config = im_config_assert(id_item(ui->id));
+    const struct im_config *config = im_config_assert(im_id_item(ui->id));
     if (config->ui.event && config->ui.event(state, ev)) return true;
 
     return ui_panel_event_consume(&ui->panel, ev);
@@ -203,6 +203,6 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     ui_layout_sep_y(&layout, font->glyph_h);
 
     void *state = ui_item_state(ui, ui->id);
-    const struct im_config *config = im_config_assert(id_item(ui->id));
+    const struct im_config *config = im_config_assert(im_id_item(ui->id));
     config->ui.render(state, &layout, renderer);
 }

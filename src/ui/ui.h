@@ -184,7 +184,7 @@ void ui_str_setf(struct ui_str *, const char *fmt, ...) legion_printf(2, 3);
 void ui_str_set_u64(struct ui_str *, uint64_t val);
 void ui_str_set_hex(struct ui_str *, uint64_t val);
 void ui_str_set_scaled(struct ui_str *, uint64_t val);
-void ui_str_set_id(struct ui_str *, id val);
+void ui_str_set_id(struct ui_str *, im_id val);
 void ui_str_set_item(struct ui_str *, enum item val);
 void ui_str_set_coord(struct ui_str *, struct coord val);
 void ui_str_set_symbol(struct ui_str *, const struct symbol *val);

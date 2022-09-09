@@ -20,7 +20,7 @@ struct im_config;
 
 struct legion_packed im_printer
 {
-    id id;
+    im_id id;
 
     loops loops;
     bool waiting;

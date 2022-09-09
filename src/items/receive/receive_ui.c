@@ -69,7 +69,7 @@ static void ui_receive_free(void *_ui)
     free(ui);
 }
 
-static void ui_receive_update(void *_ui, struct chunk *chunk, id id)
+static void ui_receive_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_receive *ui = _ui;
 

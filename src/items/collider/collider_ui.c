@@ -117,7 +117,7 @@ static void ui_collider_free(void *_ui)
     free(ui);
 }
 
-static void ui_collider_update(void *_ui, struct chunk *chunk, id id)
+static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_collider *ui = _ui;
 

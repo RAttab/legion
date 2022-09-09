@@ -31,7 +31,7 @@ inline loops loops_io(vm_word loops)
 
 struct legion_packed flow
 {
-    id id;
+    im_id id;
     uint16_t row, col;
 
     legion_pad(2);
@@ -57,7 +57,7 @@ enum { im_channels_max = 4 };
 
 struct legion_packed im_channels
 {
-    id c[im_channels_max];
+    im_id c[im_channels_max];
 };
 static_assert(sizeof(struct im_channels) == 8);
 

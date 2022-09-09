@@ -37,7 +37,7 @@ void check_file(const char *path)
 
         vm_word arg = mod->id;
         struct chunk *chunk = world_chunk(old, coord);
-        bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN, 1), &arg, 1);
+        bool ok = chunk_io(chunk, IO_MOD, 0, make_im_id(ITEM_BRAIN, 1), &arg, 1);
         assert(ok);
     }
 

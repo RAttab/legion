@@ -14,7 +14,7 @@
 // port
 // -----------------------------------------------------------------------------
 
-static void im_port_init(void *state, struct chunk *chunk, id id)
+static void im_port_init(void *state, struct chunk *chunk, im_id id)
 {
     (void) chunk;
 
@@ -72,7 +72,7 @@ static void im_port_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_port_io_state(
-        struct im_port *port, struct chunk *chunk, id src,
+        struct im_port *port, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, port->id, IO_STATE, len, 1)) return;
@@ -140,7 +140,7 @@ static void im_port_io_target(
 
 static void im_port_io(
         void *state, struct chunk *chunk,
-        enum io io, id src,
+        enum io io, im_id src,
         const vm_word *args, size_t len)
 {
     struct im_port *port = state;

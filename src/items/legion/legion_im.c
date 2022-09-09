@@ -12,7 +12,7 @@
 // legion
 // -----------------------------------------------------------------------------
 
-static void im_legion_init(void *state, struct chunk *chunk, id id)
+static void im_legion_init(void *state, struct chunk *chunk, im_id id)
 {
     struct im_legion *legion = state;
     (void) chunk;
@@ -48,14 +48,16 @@ const enum item *im_legion_cargo(enum item type)
 }
 
 static void im_legion_make(
-        void *state, struct chunk *chunk, id id, const vm_word *data, size_t len)
+        void *state, struct chunk *chunk,
+        im_id id,
+        const vm_word *data, size_t len)
 {
     (void) state;
 
     vm_word src = len >= 1 ? data[0] : 0;
     vm_word mod = len >= 2 ? data[1] : 0;
 
-    for (const enum item *it = im_legion_cargo(id_item(id)); *it; ++it) {
+    for (const enum item *it = im_legion_cargo(im_id_item(id)); *it; ++it) {
 
         switch (*it)
         {
@@ -89,7 +91,8 @@ static void im_legion_make(
 // -----------------------------------------------------------------------------
 
 static void im_legion_io_state(
-        struct im_legion *legion, struct chunk *chunk, id src,
+        struct im_legion *legion, struct chunk *chunk,
+        im_id src,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, legion->id, IO_STATE, len, 1)) return;
@@ -138,13 +141,17 @@ static void im_legion_io_launch(
     };
 
     chunk_lanes_launch(
-            chunk, id_item(legion->id), im_legion_speed, dst, data, array_len(data));
+            chunk,
+            im_id_item(legion->id),
+            im_legion_speed,
+            dst,
+            data, array_len(data));
     chunk_delete(chunk, legion->id);
 }
 
 static void im_legion_io(
         void *state, struct chunk *chunk,
-        enum io io, id src,
+        enum io io, im_id src,
         const vm_word *args, size_t len)
 {
     struct im_legion *legion = state;

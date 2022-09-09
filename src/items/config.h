@@ -27,18 +27,18 @@ struct ui_layout;
 
 typedef void (*im_config_fn) (struct im_config *);
 
-typedef void (*im_init_fn) (void *state, struct chunk *, id id);
+typedef void (*im_init_fn) (void *state, struct chunk *, im_id id);
 typedef void (*im_make_fn) (
-        void *state, struct chunk *, id id, const vm_word *data, size_t len);
+        void *state, struct chunk *, im_id id, const vm_word *data, size_t len);
 typedef void (*im_load_fn) (void *state, struct chunk *);
 typedef void (*im_step_fn) (void *state, struct chunk *);
 typedef void (*im_io_fn) (
-        void *state, struct chunk *, enum io, id src, const vm_word *args, size_t len);
+        void *state, struct chunk *, enum io, im_id src, const vm_word *args, size_t len);
 typedef bool (*im_flow_fn) (const void *state, struct flow *);
 
 typedef void *(*im_ui_alloc_fn)  (struct font *);
 typedef void  (*im_ui_free_fn)   (void *state);
-typedef void  (*im_ui_update_fn) (void *state, struct chunk *, id);
+typedef void  (*im_ui_update_fn) (void *state, struct chunk *, im_id);
 typedef bool  (*im_ui_event_fn)  (void *state, const SDL_Event *);
 typedef void  (*im_ui_render_fn) (void *state, struct ui_layout *, SDL_Renderer *);
 

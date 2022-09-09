@@ -22,20 +22,20 @@ void test_port(void)
 
     chunk_create(src_chunk, ITEM_PORT);
     chunk_create(dst_chunk, ITEM_PORT);
-    const id port_id = make_id(ITEM_PORT, 1);
+    const im_id port_id = make_im_id(ITEM_PORT, 1);
 
     chunk_create(src_chunk, ITEM_STORAGE);
     chunk_create(dst_chunk, ITEM_STORAGE);
-    const id storage_id = make_id(ITEM_STORAGE, 1);
+    const im_id storage_id = make_im_id(ITEM_STORAGE, 1);
 
     chunk_create(src_chunk, ITEM_TEST);
     chunk_create(dst_chunk, ITEM_TEST);
-    const id test_id = make_id(ITEM_TEST, 1);
+    const im_id test_id = make_im_id(ITEM_TEST, 1);
 
     chunk_create(src_chunk, ITEM_WORKER);
     chunk_create(dst_chunk, ITEM_WORKER);
 
-    const id sys_id = 0;
+    const im_id sys_id = 0;
     const vm_word item_elem_a = ITEM_ELEM_A;
 
     // need to make one step for the items to be created.

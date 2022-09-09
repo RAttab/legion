@@ -70,7 +70,7 @@ struct factory *factory_new(void)
         .scale = scale_init(),
         .pos = (struct flow_pos) {0},
 
-        .ui_id = ui_label_new(font, ui_str_v(id_str_len)),
+        .ui_id = ui_label_new(font, ui_str_v(im_id_str_len)),
         .ui_target = ui_label_new(font, ui_str_v(item_str_len)),
         .ui_loops = ui_label_new(font, ui_str_c("x")),
         .ui_loops_val = ui_label_new(font, ui_str_v(3)),
@@ -79,7 +79,7 @@ struct factory *factory_new(void)
         .ui_tape_num = ui_label_new(font, ui_str_v(3)),
         .ui_tape_of = ui_label_new(font, ui_str_c("/")),
 
-        .inner = make_dim(id_str_len * font->glyph_w, 3 * font->glyph_h),
+        .inner = make_dim(im_id_str_len * font->glyph_w, 3 * font->glyph_h),
         .margin = make_dim(5, 5),
         .pad = make_dim(20, 20),
     };
@@ -282,7 +282,7 @@ static bool factory_flow_intersect(struct flow_rect a, struct flow_rect b)
 // -----------------------------------------------------------------------------
 
 static bool factory_make_flow(
-        struct factory *factory, uint16_t index, struct chunk *chunk, id id)
+        struct factory *factory, uint16_t index, struct chunk *chunk, im_id id)
 {
     struct flow *flow = &factory->flows->vals[index];
     flow->tape_len = 0;
@@ -290,7 +290,7 @@ static bool factory_make_flow(
     const void *state = chunk_get(chunk, id);
     assert(state);
 
-    const struct im_config *config = im_config_assert(id_item(id));
+    const struct im_config *config = im_config_assert(im_id_item(id));
     assert(config->im.flow);
 
     if (!config->im.flow(state, flow)) return false;
@@ -509,7 +509,7 @@ static void factory_render_flow(
         ui_label_render(&factory->ui_tape_out, &layout, renderer);
     }
 
-    if (id_item(flow->id) == ITEM_PORT && flow->out && flow->tape_len) {
+    if (im_id_item(flow->id) == ITEM_PORT && flow->out && flow->tape_len) {
         ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_len);
         ui_label_render(&factory->ui_tape_num, &layout, renderer);
     }
@@ -531,7 +531,7 @@ static void factory_render_op(
 {
     struct htable_ret ret = {0};
 
-    id src_id = 0, dst_id = 0;
+    im_id src_id = 0, dst_id = 0;
     chunk_workers_ops(op, &src_id, &dst_id);
 
     ret = htable_get(&factory->index, src_id);

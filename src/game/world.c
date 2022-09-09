@@ -337,7 +337,7 @@ void world_log_push(
         struct world *world,
         user owner,
         struct coord star,
-        id id,
+        im_id id,
         vm_word key,
         vm_word value)
 {

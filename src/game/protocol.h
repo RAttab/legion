@@ -181,7 +181,7 @@ struct cmd
         struct symbol mod_register;
         struct { mod_maj maj; } mod_publish;
         struct { mod_maj maj; const char *code; uint32_t len; } mod_compile;
-        struct { enum io io; id dst; uint8_t len; vm_word args[4]; } io;
+        struct { enum io io; im_id dst; uint8_t len; vm_word args[4]; } io;
     } data;
 };
 

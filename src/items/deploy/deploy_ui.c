@@ -49,7 +49,7 @@ static void ui_deploy_free(void *_ui)
     free(ui);
 }
 
-static void ui_deploy_update(void *_ui, struct chunk *chunk, id id)
+static void ui_deploy_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_deploy *ui = _ui;
 

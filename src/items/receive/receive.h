@@ -19,7 +19,7 @@ struct im_config;
 
 struct legion_packed im_receive
 {
-    id id;
+    im_id id;
 
     uint8_t channel;
     uint8_t head, tail;

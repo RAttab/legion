@@ -65,7 +65,7 @@ bool world_user_access(struct world *, uset, struct coord);
 enum { world_log_cap = 64 };
 struct log *world_log(struct world *, user);
 void world_log_push(
-        struct world *, user, struct coord, id, vm_word key, vm_word value);
+        struct world *, user, struct coord, im_id, vm_word key, vm_word value);
 
 
 // -----------------------------------------------------------------------------

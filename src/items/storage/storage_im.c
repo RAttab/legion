@@ -13,7 +13,7 @@
 // storage
 // -----------------------------------------------------------------------------
 
-static void im_storage_init(void *state, struct chunk *chunk, id id)
+static void im_storage_init(void *state, struct chunk *chunk, im_id id)
 {
     struct im_storage *storage = state;
     (void) chunk;
@@ -54,7 +54,8 @@ static void im_storage_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_storage_io_state(
-        struct im_storage *storage, struct chunk *chunk, id src,
+        struct im_storage *storage, struct chunk *chunk,
+        im_id src,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, storage->id, IO_STATE, len, 1)) return;
@@ -96,7 +97,7 @@ static void im_storage_io_item(
 
 static void im_storage_io(
         void *state, struct chunk *chunk,
-        enum io io, id src,
+        enum io io, im_id src,
         const vm_word *args, size_t len)
 {
     struct im_storage *storage = state;

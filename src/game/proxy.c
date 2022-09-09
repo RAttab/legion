@@ -485,7 +485,7 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
 
 void proxy_io(
         struct proxy *proxy,
-        enum io io, id dst,
+        enum io io, im_id dst,
         const vm_word *args, uint8_t len)
 {
     struct cmd cmd = {

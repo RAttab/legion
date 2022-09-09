@@ -141,7 +141,7 @@ enum
 
 struct ui_io
 {
-    id id;
+    im_id id;
     struct coord star;
 
     size_t list_len;
@@ -170,7 +170,7 @@ struct ui_io *ui_io_new(void)
     *ui = (struct ui_io) {
         .panel = ui_panel_title(pos, dim, ui_str_c("io")),
         .target = ui_label_new(font, ui_str_c("target: ")),
-        .target_val = ui_label_new(font, ui_str_v(id_str_len)),
+        .target_val = ui_label_new(font, ui_str_v(im_id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
             [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:  ", "loops: "),
@@ -222,7 +222,7 @@ static void ui_io_update(struct ui_io *ui)
 {
     ui_str_set_id(&ui->target_val.str, ui->id);
 
-    const struct im_config *config = im_config_assert(id_item(ui->id));
+    const struct im_config *config = im_config_assert(im_id_item(ui->id));
     ui->list = config->io_list;
     ui->list_len = config->io_list_len;
 

@@ -51,7 +51,7 @@ static void ui_storage_free(void *_ui)
     free(ui);
 }
 
-static void ui_storage_update(void *_ui, struct chunk *chunk, id id)
+static void ui_storage_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_storage *ui = _ui;
 

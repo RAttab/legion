@@ -18,11 +18,11 @@ void test_ports_1on1(void)
     struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
-    id src = make_id(ITEM_EXTRACT, 1);
-    id dst = make_id(ITEM_PRINTER, 1);
+    im_id src = make_im_id(ITEM_EXTRACT, 1);
+    im_id dst = make_im_id(ITEM_PRINTER, 1);
 
-    chunk_create(chunk, id_item(src));
-    chunk_create(chunk, id_item(dst));
+    chunk_create(chunk, im_id_item(src));
+    chunk_create(chunk, im_id_item(dst));
     chunk_create(chunk, ITEM_WORKER);
     chunk_step(chunk);
 
@@ -49,13 +49,13 @@ void test_ports_2on1(void)
     struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
-    id src0 = make_id(ITEM_EXTRACT, 1);
-    id src1 = make_id(ITEM_EXTRACT, 2);
-    id dst = make_id(ITEM_PRINTER, 1);
+    im_id src0 = make_im_id(ITEM_EXTRACT, 1);
+    im_id src1 = make_im_id(ITEM_EXTRACT, 2);
+    im_id dst = make_im_id(ITEM_PRINTER, 1);
 
-    chunk_create(chunk, id_item(src0));
-    chunk_create(chunk, id_item(src1));
-    chunk_create(chunk, id_item(dst));
+    chunk_create(chunk, im_id_item(src0));
+    chunk_create(chunk, im_id_item(src1));
+    chunk_create(chunk, im_id_item(dst));
     chunk_create(chunk, ITEM_WORKER);
     chunk_step(chunk);
 
@@ -83,13 +83,13 @@ void test_ports_1on2(void)
     struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
-    id src = make_id(ITEM_EXTRACT, 1);
-    id dst0 = make_id(ITEM_PRINTER, 1);
-    id dst1 = make_id(ITEM_PRINTER, 2);
+    im_id src = make_im_id(ITEM_EXTRACT, 1);
+    im_id dst0 = make_im_id(ITEM_PRINTER, 1);
+    im_id dst1 = make_im_id(ITEM_PRINTER, 2);
 
-    chunk_create(chunk, id_item(src));
-    chunk_create(chunk, id_item(dst0));
-    chunk_create(chunk, id_item(dst1));
+    chunk_create(chunk, im_id_item(src));
+    chunk_create(chunk, im_id_item(dst0));
+    chunk_create(chunk, im_id_item(dst1));
     chunk_create(chunk, ITEM_WORKER);
     chunk_step(chunk);
 
@@ -120,11 +120,11 @@ void test_ports_reset(void)
     struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
 
     enum item item = ITEM_ELEM_A;
-    id src = make_id(ITEM_EXTRACT, 1);
-    id dst = make_id(ITEM_PRINTER, 1);
+    im_id src = make_im_id(ITEM_EXTRACT, 1);
+    im_id dst = make_im_id(ITEM_PRINTER, 1);
 
-    chunk_create(chunk, id_item(src));
-    chunk_create(chunk, id_item(dst));
+    chunk_create(chunk, im_id_item(src));
+    chunk_create(chunk, im_id_item(dst));
     chunk_create(chunk, ITEM_WORKER);
     chunk_step(chunk);
 

@@ -23,7 +23,7 @@ struct im_config;
 
 struct legion_packed im_test
 {
-    id src;
+    im_id src;
     enum io io;
     uint8_t len;
     legion_pad(3);
@@ -34,6 +34,6 @@ static_assert(sizeof(struct im_test) == 64);
 
 
 bool im_test_check(const struct im_test *,
-        enum io io, id src, const vm_word *args, size_t len);
+        enum io io, im_id src, const vm_word *args, size_t len);
 
 void im_test_config(struct im_config *);

@@ -26,9 +26,9 @@ void test_txrx(void)
     chunk_create(chunk_dst, ITEM_TEST);
     world_step(world);
 
-    id id_tx = make_id(ITEM_TRANSMIT, 1);
-    id id_rx = make_id(ITEM_RECEIVE, 1);
-    id id_test = make_id(ITEM_TEST, 1);
+    im_id id_tx = make_im_id(ITEM_TRANSMIT, 1);
+    im_id id_rx = make_im_id(ITEM_RECEIVE, 1);
+    im_id id_test = make_im_id(ITEM_TEST, 1);
 
     const struct im_test *test = chunk_get(chunk_dst, id_test);
     const vm_word packet[im_packet_max] = {

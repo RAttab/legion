@@ -64,14 +64,14 @@ void check(void)
 
         vm_word arg = mod->id;
         struct chunk *chunk = world_chunk(world, home);
-        bool ok = chunk_io(chunk, IO_MOD, 0, make_id(ITEM_BRAIN, 1), &arg, 1);
+        bool ok = chunk_io(chunk, IO_MOD, 0, make_im_id(ITEM_BRAIN, 1), &arg, 1);
         assert(ok);
     }
 
     struct ack *ack = ack_new();
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
-        world_log_push(world, user, make_coord(1, 1), make_id(1, 1), IO_PING, IOE_INVALID_STATE);
-        world_log_push(world, user, make_coord(2, 2), make_id(2, 2), IO_NAME, IOE_MISSING_ARG);
+        world_log_push(world, user, make_coord(1, 1), make_im_id(1, 1), IO_PING, IOE_INVALID_STATE);
+        world_log_push(world, user, make_coord(2, 2), make_im_id(2, 2), IO_NAME, IOE_MISSING_ARG);
 
         save_mem_reset(save);
         state_save(save, &(struct state_ctx) {

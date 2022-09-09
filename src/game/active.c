@@ -39,9 +39,9 @@ void active_free(struct active *active)
     active->cap = 0;
 }
 
-bool active_delete(struct active *active, id id)
+bool active_delete(struct active *active, im_id id)
 {
-    size_t index = id_bot(id)-1;
+    size_t index = im_id_seq(id)-1;
     if (index >= active->len) return false;
 
     if (likely(active->cap <= 64)){
@@ -180,12 +180,12 @@ size_t active_count(struct active *active)
 }
 
 
-id active_last(struct active *active)
+im_id active_last(struct active *active)
 {
     for (size_t i = 0; i < active->len; ++i) {
         size_t ix = active->len - i - 1;
         if (!active_deleted(active, ix))
-            return make_id(active->type, ix);
+            return make_im_id(active->type, ix);
     }
 
     return 0;
@@ -195,27 +195,27 @@ void active_list(struct active *active, struct vec64 *ids)
 {
     for (size_t i = 0; i < active->len; ++i) {
         if (active_deleted(active, i)) continue;
-        vec64_append(ids, make_id(active->type, i+1));
+        vec64_append(ids, make_im_id(active->type, i+1));
     }
 }
 
-void *active_get(struct active *active, id id)
+void *active_get(struct active *active, im_id id)
 {
-    size_t index = id_bot(id)-1;
+    size_t index = im_id_seq(id)-1;
     if (index >= active->len || active_deleted(active, index)) return NULL;
 
     return active->arena + (index * active->size);
 }
 
-struct ports *active_ports(struct active *active, id id)
+struct ports *active_ports(struct active *active, im_id id)
 {
-    size_t index = id_bot(id)-1;
+    size_t index = im_id_seq(id)-1;
     if (index >= active->len || active_deleted(active, index)) return NULL;
 
     return &active->ports[index];
 }
 
-bool active_copy(struct active *active, id id, void *dst, size_t len)
+bool active_copy(struct active *active, im_id id, void *dst, size_t len)
 {
     assert(len >= active->size);
 
@@ -286,7 +286,7 @@ bool active_create_from(
         active->len++;
     }
 
-    id id = make_id(active->type, index+1);
+    im_id id = make_im_id(active->type, index+1);
     void *item = active->arena + (index * active->size);
 
     config->im.make(item, chunk, id, data, len);
@@ -313,7 +313,7 @@ void active_step(
             active->len++;
         }
 
-        id id = make_id(active->type, index+1);
+        im_id id = make_im_id(active->type, index+1);
         void *item = active->arena + (index * active->size);
         const struct im_config *config = im_config_assert(active->type);
 
@@ -325,7 +325,7 @@ void active_step(
 
 bool active_io(
         struct active *active, struct chunk *chunk,
-        enum io io, id src, id dst, const vm_word *args, size_t len)
+        enum io io, im_id src, im_id dst, const vm_word *args, size_t len)
 {
     void *state = active_get(active, dst);
     if (!state) return false;

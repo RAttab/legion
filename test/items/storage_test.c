@@ -21,18 +21,18 @@ void test_storage(void)
     struct coord home = world_home(world, user);
     struct chunk *chunk = world_chunk(world, home);
 
-    const id extract_id = make_id(ITEM_EXTRACT, 1);
-    const id printer_id = make_id(ITEM_PRINTER, 1);
+    const im_id extract_id = make_im_id(ITEM_EXTRACT, 1);
+    const im_id printer_id = make_im_id(ITEM_PRINTER, 1);
 
     chunk_create(chunk, ITEM_STORAGE);
-    const id storage_id = make_id(ITEM_STORAGE, 1);
+    const im_id storage_id = make_im_id(ITEM_STORAGE, 1);
     chunk_create(chunk, ITEM_STORAGE);
-    const id storage_muscle_id = make_id(ITEM_STORAGE, 2);
+    const im_id storage_muscle_id = make_im_id(ITEM_STORAGE, 2);
 
     chunk_create(chunk, ITEM_TEST);
-    const id test_id = make_id(ITEM_TEST, 1);
+    const im_id test_id = make_im_id(ITEM_TEST, 1);
 
-    const id sys_id = 0;
+    const im_id sys_id = 0;
     const vm_word item_elem_a = ITEM_ELEM_A;
     const vm_word item_muscle = ITEM_MUSCLE;
 

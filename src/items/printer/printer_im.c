@@ -13,7 +13,7 @@
 // printer
 // -----------------------------------------------------------------------------
 
-static void im_printer_init(void *state, struct chunk *chunk, id id)
+static void im_printer_init(void *state, struct chunk *chunk, im_id id)
 {
     struct im_printer *printer = state;
     (void) chunk;
@@ -110,7 +110,8 @@ static void im_printer_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_printer_io_state(
-        struct im_printer *printer, struct chunk *chunk, id src,
+        struct im_printer *printer, struct chunk *chunk,
+        im_id src,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, printer->id, IO_STATE, len, 1)) return;
@@ -138,7 +139,7 @@ static void im_printer_io_tape(
     if (!im_check_known(chunk, printer->id, IO_TAPE, item)) return;
 
     const struct tape *tape = tapes_get(item);
-    if (!tape || tape_host(tape) != id_item(printer->id))
+    if (!tape || tape_host(tape) != im_id_item(printer->id))
         return chunk_log(chunk, printer->id, IO_TAPE, IOE_A0_INVALID);
 
     im_printer_reset(printer, chunk);
@@ -148,7 +149,7 @@ static void im_printer_io_tape(
 
 static void im_printer_io(
         void *state, struct chunk *chunk,
-        enum io io, id src,
+        enum io io, im_id src,
         const vm_word *args, size_t len)
 {
     struct im_printer *printer = state;

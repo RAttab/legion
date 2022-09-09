@@ -19,7 +19,7 @@ uint8_t im_collider_rate(uint8_t size)
     return k * (log(size + 1) / log(2));
 }
 
-static void im_collider_init(void *state, struct chunk *chunk, id id)
+static void im_collider_init(void *state, struct chunk *chunk, im_id id)
 {
     struct im_collider *collider = state;
     (void) chunk;
@@ -165,7 +165,7 @@ static void im_collider_step(void *state, struct chunk *chunk)
 // -----------------------------------------------------------------------------
 
 static void im_collider_io_state(
-        struct im_collider *collider, struct chunk *chunk, id src,
+        struct im_collider *collider, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, collider->id, IO_STATE, len, 1)) return;
@@ -217,7 +217,7 @@ static void im_collider_io_tape(
     if (!im_check_known(chunk, collider->id, IO_TAPE, item)) return;
 
     const struct tape *tape = tapes_get(item);
-    if (!tape || tape_host(tape) != id_item(collider->id))
+    if (!tape || tape_host(tape) != im_id_item(collider->id))
         return chunk_log(chunk, collider->id, IO_TAPE, IOE_A0_INVALID);
 
     im_collider_reset(collider, chunk);
@@ -228,7 +228,7 @@ static void im_collider_io_tape(
 
 static void im_collider_io(
         void *state, struct chunk *chunk,
-        enum io io, id src,
+        enum io io, im_id src,
         const vm_word *args, size_t len)
 {
     struct im_collider *collider = state;

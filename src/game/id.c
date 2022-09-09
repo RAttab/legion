@@ -11,15 +11,15 @@
 // id
 // -----------------------------------------------------------------------------
 
-inline size_t id_str(id id, char *base, size_t len)
+inline size_t im_id_str(im_id id, char *base, size_t len)
 {
-    assert(len >= id_str_len);
+    assert(len >= im_id_str_len);
     char *it = base;
     const char *end = base + len;
 
-    it += str_utox(id_bot(id), it, 2);
+    it += str_utox(im_id_seq(id), it, 2);
     *it = '.'; it++;
-    it += item_str(id_item(id), it, end - it);
+    it += item_str(im_id_item(id), it, end - it);
     *it = 0;
 
     return it - base;
