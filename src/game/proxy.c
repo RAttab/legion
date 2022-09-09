@@ -483,7 +483,10 @@ struct chunk *proxy_chunk(struct proxy *proxy, struct coord coord)
     return NULL;
 }
 
-void proxy_io(struct proxy *proxy, enum io io, id dst, const word *args, uint8_t len)
+void proxy_io(
+        struct proxy *proxy,
+        enum io io, id dst,
+        const vm_word *args, uint8_t len)
 {
     struct cmd cmd = {
         .type = CMD_IO,
@@ -620,10 +623,10 @@ bool proxy_active_sector(struct proxy *proxy, struct coord coord)
 }
 
 
-word proxy_star_name(struct proxy *proxy, struct coord coord)
+vm_word proxy_star_name(struct proxy *proxy, struct coord coord)
 {
     struct htable_ret ret = htable_get(&proxy->state->names, coord_to_u64(coord));
-    if (ret.ok) return (word) ret.value;
+    if (ret.ok) return (vm_word) ret.value;
 
     return gen_name_star(coord, proxy->state->seed, proxy->state->atoms);
 }

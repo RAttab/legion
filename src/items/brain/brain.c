@@ -13,7 +13,7 @@
 // -----------------------------------------------------------------------------
 
 #define im_brain_len(stack) \
-    (sizeof(struct im_brain) + sizeof(word) * vm_stack_len(stack))
+    (sizeof(struct im_brain) + sizeof(vm_word) * vm_stack_len(stack))
 
 enum
 {

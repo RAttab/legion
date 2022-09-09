@@ -216,7 +216,7 @@ const struct im_config *im_config(enum item item)
 
 struct io_config
 {
-    word word;
+    vm_word word;
     const char *atom;
 };
 
@@ -318,7 +318,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
 // populate
 // -----------------------------------------------------------------------------
 
-static void populate_atom(struct atoms *atoms, const char *str, word value)
+static void populate_atom(struct atoms *atoms, const char *str, vm_word value)
 {
     if (!atoms) return;
 

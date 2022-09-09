@@ -46,8 +46,8 @@ void log_push(
         world_ts time,
         struct coord star,
         id id,
-        word key,
-        word value)
+        vm_word key,
+        vm_word value)
 {
     log->items[log->it % log->cap] = (struct logi) {
         .time = time,
@@ -132,8 +132,8 @@ static bool log_load_delta_item(struct log *log, struct save *save, world_ts ack
 
     struct coord star = coord_from_u64(save_read_type(save, uint64_t));
     id id = save_read_type(save, typeof(id));
-    word key = save_read_type(save, typeof(key));
-    word value = save_read_type(save, typeof(value));
+    vm_word key = save_read_type(save, typeof(key));
+    vm_word value = save_read_type(save, typeof(value));
 
     if (!log_load_delta_item(log, save, ack)) return false;
 

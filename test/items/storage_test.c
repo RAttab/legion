@@ -21,20 +21,20 @@ void test_storage(void)
     struct coord home = world_home(world, user);
     struct chunk *chunk = world_chunk(world, home);
 
-    const id_t extract_id = make_id(ITEM_EXTRACT, 1);
-    const id_t printer_id = make_id(ITEM_PRINTER, 1);
+    const id extract_id = make_id(ITEM_EXTRACT, 1);
+    const id printer_id = make_id(ITEM_PRINTER, 1);
 
     chunk_create(chunk, ITEM_STORAGE);
-    const id_t storage_id = make_id(ITEM_STORAGE, 1);
+    const id storage_id = make_id(ITEM_STORAGE, 1);
     chunk_create(chunk, ITEM_STORAGE);
-    const id_t storage_muscle_id = make_id(ITEM_STORAGE, 2);
+    const id storage_muscle_id = make_id(ITEM_STORAGE, 2);
 
     chunk_create(chunk, ITEM_TEST);
-    const id_t test_id = make_id(ITEM_TEST, 1);
+    const id test_id = make_id(ITEM_TEST, 1);
 
-    const id_t sys_id = 0;
-    const word item_elem_a = ITEM_ELEM_A;
-    const word item_muscle = ITEM_MUSCLE;
+    const id sys_id = 0;
+    const vm_word item_elem_a = ITEM_ELEM_A;
+    const vm_word item_muscle = ITEM_MUSCLE;
 
     // need to make one step for the items to be created.
     world_step(world);

@@ -134,7 +134,7 @@ struct symbol gen_name_sector(struct coord coord, seed seed)
     return gen_name_symbol(gen.prefix.list + bits.prefix, &suffix->name);
 }
 
-word gen_name_star(struct coord coord, seed seed, struct atoms *atoms)
+vm_word gen_name_star(struct coord coord, seed seed, struct atoms *atoms)
 {
     struct gen_bits bits = {0};
 
@@ -309,7 +309,7 @@ static enum roll_type gen_populate_roll_type(struct reader *in)
 
 static enum item gen_populate_roll_item(struct reader *in, struct atoms *atoms)
 {
-    word item = reader_atom(in, atoms);
+    vm_word item = reader_atom(in, atoms);
     if (item == ITEM_ENERGY) return item;
     if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST) return item;
 
@@ -319,7 +319,7 @@ static enum item gen_populate_roll_item(struct reader *in, struct atoms *atoms)
 
 static uint16_t gen_populate_roll_count(struct reader *in)
 {
-    word count = reader_word(in);
+    vm_word count = reader_word(in);
     if (count >= 0 && count <= UINT16_MAX) return count;
 
     reader_err(in, "invalid count: %lx", count);
@@ -381,7 +381,7 @@ static void gen_populate_stars(struct atoms *atoms)
 
         it->name = reader_symbol(in);
 
-        word hue = reader_field(in, "hue", word);
+        vm_word hue = reader_field(in, "hue", word);
         assert(hue >= 0 && hue < 360);
         it->hue = hue;
 

@@ -21,7 +21,7 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
     struct token *token = lisp_next(lisp);
 
 
-    word val = 0;
+    vm_word val = 0;
     switch (token->type)
     {
 
@@ -61,7 +61,7 @@ static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
 {
     struct token *token = lisp_next(lisp);
 
-    reg val = 0;
+    vm_reg val = 0;
     switch (token->type) {
     case token_reg: { val = token->value.w; break; }
     case token_symbol: { val = lisp_reg(lisp, &token->value.s); break; }
@@ -103,7 +103,7 @@ static void lisp_asm_off(struct lisp *lisp, enum op_code op)
 {
     lisp_write_value(lisp, op);
 
-    ip val = 0;
+    vm_ip val = 0;
     struct token *token = lisp_next(lisp);
 
     switch (token->type) {
@@ -127,7 +127,7 @@ static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 {
     lisp_write_value(lisp, op);
 
-    word mod = lisp_parse_call(lisp);
+    vm_word mod = lisp_parse_call(lisp);
     if (mod == -1) { lisp_goto_close(lisp); return; }
 
     if (mod) lisp_write_value(lisp, mod);

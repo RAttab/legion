@@ -12,7 +12,7 @@
 // index
 // -----------------------------------------------------------------------------
 
-typedef word (*lisp_eval_fn) (struct lisp *);
+typedef vm_word (*lisp_eval_fn) (struct lisp *);
 
 static struct htable lisp_fn_eval = {0};
 
@@ -62,7 +62,7 @@ static mod_maj lisp_eval_mods_find(
 // eval
 // -----------------------------------------------------------------------------
 
-static word lisp_eval(struct lisp *lisp)
+static vm_word lisp_eval(struct lisp *lisp)
 {
     struct token *token = lisp_next(lisp);
     switch (token->type)
@@ -90,7 +90,7 @@ static word lisp_eval(struct lisp *lisp)
             return 0;
         }
 
-        word value = ((lisp_eval_fn) ret.value)(lisp);
+        vm_word value = ((lisp_eval_fn) ret.value)(lisp);
         lisp_assert_close(lisp, lisp_next(lisp));
         return value;
     }
@@ -99,7 +99,7 @@ static word lisp_eval(struct lisp *lisp)
     case token_symbol: { return lisp_const(lisp, &token->value.s); }
 
     case token_atom: {
-        word value = atoms_get(lisp->atoms, &token->value.s);
+        vm_word value = atoms_get(lisp->atoms, &token->value.s);
         if (!value) lisp_err(lisp, "unregistered atom '%s'", token->value.s.c);
         return value;
     }
@@ -126,30 +126,30 @@ static void lisp_eval_goto_close(struct lisp *lisp)
 // fn
 // -----------------------------------------------------------------------------
 
-static word lisp_eval_if(struct lisp *lisp)
+static vm_word lisp_eval_if(struct lisp *lisp)
 {
-    word pred = lisp_eval(lisp);
-    word branch_true = lisp_eval(lisp);
-    word branch_false = lisp_peek_close(lisp) ? 0 : lisp_eval(lisp);
+    vm_word pred = lisp_eval(lisp);
+    vm_word branch_true = lisp_eval(lisp);
+    vm_word branch_false = lisp_peek_close(lisp) ? 0 : lisp_eval(lisp);
     return pred ? branch_true : branch_false;
 }
 
-static word lisp_eval_when(struct lisp *lisp)
+static vm_word lisp_eval_when(struct lisp *lisp)
 {
-    word pred = lisp_eval(lisp);
-    word value = lisp_eval(lisp);
+    vm_word pred = lisp_eval(lisp);
+    vm_word value = lisp_eval(lisp);
     return pred ? value : 0;
 }
 
-static word lisp_eval_unless(struct lisp *lisp)
+static vm_word lisp_eval_unless(struct lisp *lisp)
 {
-    word pred = lisp_eval(lisp);
-    word value = lisp_eval(lisp);
+    vm_word pred = lisp_eval(lisp);
+    vm_word value = lisp_eval(lisp);
     return pred ? 0 : value;
 }
 
 // Keep in sync with lisp_fn_mod
-static word lisp_eval_mod(struct lisp *lisp)
+static vm_word lisp_eval_mod(struct lisp *lisp)
 {
     // self-referential mod
     if (lisp_peek_close(lisp)) {
@@ -185,7 +185,7 @@ static word lisp_eval_mod(struct lisp *lisp)
 
 // Need to ensure that the op is done on u64 to avoid shifting into the sign
 // bit.
-static word lisp_eval_bsl(struct lisp *lisp)
+static vm_word lisp_eval_bsl(struct lisp *lisp)
 {
     uint64_t value = lisp_eval(lisp);
     while (!lisp_peek_close(lisp))
@@ -195,7 +195,7 @@ static word lisp_eval_bsl(struct lisp *lisp)
 
 // Need to ensure that the op is done on u64 to avoid issues with sign
 // extension.
-static word lisp_eval_bsr(struct lisp *lisp)
+static vm_word lisp_eval_bsr(struct lisp *lisp)
 {
     uint64_t value = lisp_eval(lisp);
     while (!lisp_peek_close(lisp))
@@ -203,40 +203,40 @@ static word lisp_eval_bsr(struct lisp *lisp)
     return value;
 }
 
-static word lisp_eval_sub(struct lisp *lisp)
+static vm_word lisp_eval_sub(struct lisp *lisp)
 {
-    word value = lisp_eval(lisp);
+    vm_word value = lisp_eval(lisp);
     if (lisp_peek_close(lisp)) return -value;
 
     while (!lisp_peek_close(lisp)) value -= lisp_eval(lisp);
     return value;
 }
 
-static word lisp_eval_cmp(struct lisp *lisp)
+static vm_word lisp_eval_cmp(struct lisp *lisp)
 {
     return lisp_eval(lisp) - lisp_eval(lisp);
 }
 
-static word lisp_eval_pack(struct lisp *lisp)
+static vm_word lisp_eval_pack(struct lisp *lisp)
 {
-    word x = lisp_eval(lisp);
+    vm_word x = lisp_eval(lisp);
     if (x < 0 || x > UINT32_MAX)
         lisp_err(lisp, "argument would be truncated: %lx", x);
 
-    word y = lisp_eval(lisp);
+    vm_word y = lisp_eval(lisp);
     if (y < 0 || y > UINT32_MAX)
         lisp_err(lisp, "argument would be truncated: %lx", y);
 
     return vm_pack(y, x);
 }
 
-static word lisp_eval_id(struct lisp *lisp)
+static vm_word lisp_eval_id(struct lisp *lisp)
 {
-    word type = lisp_eval(lisp);
+    vm_word type = lisp_eval(lisp);
     if (type < 0 || type > ITEM_MAX)
         lisp_err(lisp, "invalid item type: %lx", type);
 
-    word seq = lisp_eval(lisp);
+    vm_word seq = lisp_eval(lisp);
     if (seq < 0 || seq >= (1U << 24))
         lisp_err(lisp, "invalid id sequence number: %lx", seq);
 
@@ -249,24 +249,24 @@ static word lisp_eval_id(struct lisp *lisp)
 // -----------------------------------------------------------------------------
 
 #define define_eval_ops_1(fn, op)                       \
-    static word lisp_eval_ ## fn(struct lisp *lisp)   \
+    static vm_word lisp_eval_ ## fn(struct lisp *lisp)   \
     {                                                   \
         return op lisp_eval(lisp);                      \
     }
 
 #define define_eval_ops_2(fn, op)                       \
-    static word lisp_eval_ ## fn(struct lisp *lisp)   \
+    static vm_word lisp_eval_ ## fn(struct lisp *lisp)   \
     {                                                   \
         return lisp_eval(lisp) op lisp_eval(lisp);      \
     }
 
 // Gotta be careful about short-circuit boolean ops.
 #define define_eval_ops_n(fn, op)                       \
-    static word lisp_eval_ ## fn(struct lisp *lisp)   \
+    static vm_word lisp_eval_ ## fn(struct lisp *lisp)   \
     {                                                   \
-        word value = lisp_eval(lisp);                 \
+        vm_word value = lisp_eval(lisp);                 \
         while (!lisp_peek_close(lisp)) {                \
-            word arg = lisp_eval(lisp);               \
+            vm_word arg = lisp_eval(lisp);               \
             value = value op arg;                       \
         }                                               \
         return value;                                   \

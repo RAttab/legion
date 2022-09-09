@@ -47,7 +47,7 @@ static void *ui_brain_alloc(struct font *font)
 {
     enum { u8_len = 2, u16_len = 4, u32_len = 8, u64_len = 16 };
 
-    size_t stack_len = vm_stack_len(im_brain_stack_max) * sizeof(word);
+    size_t stack_len = vm_stack_len(im_brain_stack_max) * sizeof(vm_word);
     struct ui_brain *ui = calloc(1, sizeof(*ui) + stack_len);
 
     *ui = (struct ui_brain) {
@@ -161,7 +161,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, id id)
     const struct im_brain *state = &ui->state;
 
     bool old_debug = state ? state->debug : false;
-    ip old_ip = state ? state->vm.ip : 0;
+    vm_ip old_ip = state ? state->vm.ip : 0;
 
     bool ok = chunk_copy(chunk, id, &ui->state, ui->state_len);
     assert(ok);

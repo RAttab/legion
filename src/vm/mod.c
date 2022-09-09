@@ -158,7 +158,7 @@ struct mod *mod_nil(mod_id id)
     return mod;
 }
 
-ip mod_pub(const struct mod *mod, uint64_t key)
+vm_ip mod_pub(const struct mod *mod, uint64_t key)
 {
     for (size_t i = 0; i < mod->pub_len; ++i) {
         if (mod->pub[i].key == key) return mod->pub[i].ip;
@@ -167,7 +167,7 @@ ip mod_pub(const struct mod *mod, uint64_t key)
     return MOD_PUB_UNKNOWN;
 }
 
-struct mod_index mod_index(const struct mod *mod, ip ip)
+struct mod_index mod_index(const struct mod *mod, vm_ip ip)
 {
     assert(ip < mod->len);
 
@@ -178,7 +178,7 @@ struct mod_index mod_index(const struct mod *mod, ip ip)
     return mod->index[mod->index_len-1];
 }
 
-ip mod_byte(const struct mod *mod, size_t row, size_t col)
+vm_ip mod_byte(const struct mod *mod, size_t row, size_t col)
 {
     const struct mod_index *it = mod->index;
     const struct mod_index *end = it + mod->index_len;
@@ -213,14 +213,14 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 
     void dump_lit(void)
     {
-        size_t n = snprintf(dst, len, "%016lx\n", *((word *) in));
-        dst += n; len -= n; in += sizeof(word);
+        size_t n = snprintf(dst, len, "%016lx\n", *((vm_word *) in));
+        dst += n; len -= n; in += sizeof(vm_word);
     }
 
     void dump_reg(void)
     {
-        size_t n = snprintf(dst, len, "$%u\n", *((reg *) in));
-        dst += n; len -= n; in += sizeof(reg);
+        size_t n = snprintf(dst, len, "$%u\n", *((vm_reg *) in));
+        dst += n; len -= n; in += sizeof(vm_reg);
     }
 
     void dump_len(void)
@@ -231,14 +231,14 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
 
     void dump_off(void)
     {
-        size_t n = snprintf(dst, len, "@%x\n", *((ip *) in));
-        dst += n; len -= n; in += sizeof(ip);
+        size_t n = snprintf(dst, len, "@%x\n", *((vm_ip *) in));
+        dst += n; len -= n; in += sizeof(vm_ip);
     }
 
     void dump_mod(void)
     {
-        size_t n = snprintf(dst, len, "@%lx\n", *((word *) in));
-        dst += n; len -= n; in += sizeof(word);
+        size_t n = snprintf(dst, len, "@%lx\n", *((vm_word *) in));
+        dst += n; len -= n; in += sizeof(vm_word);
     }
 
     while (in < end) {

@@ -61,10 +61,10 @@ static void im_receive_reset(struct im_receive *receive, struct chunk *chunk)
 
 static void im_receive_io_state(
         struct im_receive *receive, struct chunk *chunk, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, receive->id, IO_STATE, len, 1)) return;
-    word value = 0;
+    vm_word value = 0;
 
     switch (args[0]) {
     case IO_TARGET: { value = coord_to_u64(receive->target); break; }
@@ -78,7 +78,7 @@ static void im_receive_io_state(
 
 static void im_receive_io_channel(
         struct im_receive *receive, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, receive->id, IO_CHANNEL, len, 1)) return;
 
@@ -93,7 +93,7 @@ static void im_receive_io_channel(
 
 static void im_receive_io_target(
         struct im_receive *receive, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, receive->id, IO_TARGET, len, 1)) return;
 
@@ -110,7 +110,7 @@ static void im_receive_io_receive(
         struct im_receive *receive, struct chunk *chunk, id src)
 {
     size_t len = 0;
-    word data[im_packet_max] = {0};
+    vm_word data[im_packet_max] = {0};
 
     if (receive->tail < receive->head) {
         const size_t tail = receive->tail % im_receive_cap(receive);
@@ -127,7 +127,7 @@ static void im_receive_io_receive(
 
 static void im_receive_io_recv(
         struct im_receive *receive, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, receive->id, IO_RECV, len, 1)) return;
 
@@ -154,7 +154,7 @@ static void im_receive_io_recv(
 static void im_receive_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     struct im_receive *receive = state;
 
@@ -174,7 +174,7 @@ static void im_receive_io(
     }
 }
 
-static const word im_receive_io_list[] =
+static const vm_word im_receive_io_list[] =
 {
     IO_PING,
     IO_STATE,

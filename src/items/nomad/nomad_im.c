@@ -119,24 +119,24 @@ enum
 
 static_assert(
         sizeof(struct im_nomad_cargo) * im_nomad_data_cargo ==
-        sizeof(word));
+        sizeof(vm_word));
 
-static word im_nomad_encode_cargo(struct im_nomad *nomad, size_t ix)
+static vm_word im_nomad_encode_cargo(struct im_nomad *nomad, size_t ix)
 {
-    word word = 0;
+    vm_word word = 0;
     assert(ix * im_nomad_data_cargo < array_len(nomad->cargo));
     memcpy(&word, nomad->cargo + (ix * im_nomad_data_cargo), sizeof(word));
     return word;
 }
 
-static void im_nomad_decode_cargo(struct im_nomad *nomad, size_t ix, word word)
+static void im_nomad_decode_cargo(struct im_nomad *nomad, size_t ix, vm_word word)
 {
     assert(ix * im_nomad_data_cargo < array_len(nomad->cargo));
     memcpy(nomad->cargo + (ix * im_nomad_data_cargo), &word, sizeof(word));
 }
 
 static void im_nomad_make(
-        void *state, struct chunk *chunk, id id, const word *data, size_t len)
+        void *state, struct chunk *chunk, id id, const vm_word *data, size_t len)
 {
     assert(len == im_nomad_data_len);
 
@@ -152,7 +152,7 @@ static void im_nomad_make(
         im_nomad_decode_cargo(nomad, 2, data[6]);
     }
 
-    word mod = nomad->mod;
+    vm_word mod = nomad->mod;
 
     for (size_t i = 0; i < im_nomad_cargo_len; ++i) {
         struct im_nomad_cargo *cargo = nomad->cargo + i;
@@ -257,10 +257,10 @@ static void im_nomad_step(void *state, struct chunk *chunk)
 
 static void im_nomad_io_state(
         struct im_nomad *nomad, struct chunk *chunk, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_STATE, len, 1)) return;
-    word value = 0;
+    vm_word value = 0;
 
     switch (args[0]) {
     case IO_MOD: { value = nomad->mod; break; }
@@ -292,7 +292,7 @@ static void im_nomad_io_state(
 
 static void im_nomad_io_id(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_ID, len, 1)) return;
 
@@ -319,7 +319,7 @@ static void im_nomad_io_id(
 
 static void im_nomad_io_pack(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_PACK, len, 1)) return;
 
@@ -345,7 +345,7 @@ static void im_nomad_io_pack(
 
 static void im_nomad_io_load(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_LOAD, len, 1)) return;
 
@@ -370,7 +370,7 @@ static void im_nomad_io_load(
 
 static void im_nomad_io_unload(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_UNLOAD, len, 1)) return;
 
@@ -392,7 +392,7 @@ static void im_nomad_io_unload(
 
 static void im_nomad_io_mod(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_MOD, len, 1)) return;
 
@@ -406,7 +406,7 @@ static void im_nomad_io_mod(
 static void im_nomad_io_get(
         struct im_nomad *nomad, struct chunk *chunk,
         id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_GET, len, 1)) goto fail;
 
@@ -416,13 +416,13 @@ static void im_nomad_io_get(
         goto fail;
     }
 
-    word value = nomad->memory[index];
+    vm_word value = nomad->memory[index];
     chunk_io(chunk, IO_RETURN, nomad->id, src, &value, 1);
     return;
 
   fail:
     {
-        word fail = 0;
+        vm_word fail = 0;
         chunk_io(chunk, IO_RETURN, nomad->id, src, &fail, 1);
     }
     return;
@@ -430,7 +430,7 @@ static void im_nomad_io_get(
 
 static void im_nomad_io_set(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_SET, len, 2)) return;
 
@@ -444,7 +444,7 @@ static void im_nomad_io_set(
 
 static void im_nomad_io_launch(
         struct im_nomad *nomad, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, nomad->id, IO_LAUNCH, len, 1)) return;
 
@@ -477,7 +477,7 @@ static void im_nomad_io_launch(
         im_nomad_cargo_inc(cargo, item);
     }
 
-    const word data[im_nomad_data_len] = {
+    const vm_word data[im_nomad_data_len] = {
         nomad->mod,
         nomad->memory[0],
         nomad->memory[1],
@@ -496,7 +496,7 @@ static void im_nomad_io_launch(
 static void im_nomad_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     struct im_nomad *nomad = state;
 
@@ -521,7 +521,7 @@ static void im_nomad_io(
     }
 }
 
-static const word im_nomad_io_list[] =
+static const vm_word im_nomad_io_list[] =
 {
     IO_PING,
     IO_STATE,

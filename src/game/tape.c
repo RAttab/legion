@@ -237,7 +237,7 @@ static struct tape *tapes_vec_output(
 
 static enum item tapes_expect_item(struct reader *in, struct atoms *atoms)
 {
-    word item = reader_atom(in, atoms);
+    vm_word item = reader_atom(in, atoms);
     if (item > 0 && item < ITEM_MAX) return item;
 
     reader_err(in, "invalid item atom: %lx", item);

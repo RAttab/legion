@@ -30,7 +30,7 @@ static void im_memory_init(void *state, struct chunk *chunk, id id)
 }
 
 static void im_memory_make(
-        void *state, struct chunk *chunk, id id, const word *data, size_t len)
+        void *state, struct chunk *chunk, id id, const vm_word *data, size_t len)
 {
     struct im_memory *memory = state;
     im_memory_init(memory, chunk, id);
@@ -49,10 +49,10 @@ static void im_memory_make(
 
 static void im_memory_io_state(
         struct im_memory *memory, struct chunk *chunk, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_STATE, len, 1)) return;
-    word value = 0;
+    vm_word value = 0;
 
     switch (args[0]) {
     default: { chunk_log(chunk, memory->id, IO_STATE, IOE_A0_INVALID); break; }
@@ -64,7 +64,7 @@ static void im_memory_io_state(
 static void im_memory_io_get(
         struct im_memory *memory, struct chunk *chunk,
         id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_GET, len, 1)) goto fail;
 
@@ -74,13 +74,13 @@ static void im_memory_io_get(
         goto fail;
     }
 
-    word value = memory->data[index];
+    vm_word value = memory->data[index];
     chunk_io(chunk, IO_RETURN, memory->id, src, &value, 1);
     return;
 
   fail:
     {
-        word fail = 0;
+        vm_word fail = 0;
         chunk_io(chunk, IO_RETURN, memory->id, src, &fail, 1);
     }
     return;
@@ -88,7 +88,7 @@ static void im_memory_io_get(
 
 static void im_memory_io_set(
         struct im_memory *memory, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_SET, len, 2)) return;
 
@@ -102,7 +102,7 @@ static void im_memory_io_set(
 static void im_memory_io_cas(
         struct im_memory *memory, struct chunk *chunk,
         id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, memory->id, IO_CAS, len, 3)) goto fail;
 
@@ -112,9 +112,9 @@ static void im_memory_io_cas(
         goto fail;
     }
 
-    word exp = args[1];
-    word val = args[2];
-    word old = memory->data[index];
+    vm_word exp = args[1];
+    vm_word val = args[2];
+    vm_word old = memory->data[index];
     if (old == exp) memory->data[index] = val;
 
     chunk_io(chunk, IO_RETURN, memory->id, src, &old, 1);
@@ -122,7 +122,7 @@ static void im_memory_io_cas(
 
   fail:
     {
-        word fail = 0;
+        vm_word fail = 0;
         chunk_io(chunk, IO_RETURN, memory->id, src, &fail, 1);
     }
     return;
@@ -131,7 +131,7 @@ static void im_memory_io_cas(
 static void im_memory_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     struct im_memory *memory = state;
 
@@ -148,7 +148,7 @@ static void im_memory_io(
     }
 }
 
-static const word im_memory_io_list[] =
+static const vm_word im_memory_io_list[] =
 {
     IO_PING,
     IO_STATE,

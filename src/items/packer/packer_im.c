@@ -63,10 +63,10 @@ static void im_packer_step(void *state, struct chunk *chunk)
 
 static void im_packer_io_state(
         struct im_packer *packer, struct chunk *chunk, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, packer->id, IO_STATE, len, 1)) return;
-    word value = 0;
+    vm_word value = 0;
 
     switch (args[0]) {
     case IO_ITEM: { value = packer->item; break; }
@@ -80,7 +80,7 @@ static void im_packer_io_state(
 
 static void im_packer_io_id(
         struct im_packer *packer, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, packer->id, IO_ID, len, 1)) return;
 
@@ -106,7 +106,7 @@ static void im_packer_io_id(
 
 static void im_packer_io_item(
         struct im_packer *packer, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, packer->id, IO_ITEM, len, 1)) return;
 
@@ -128,7 +128,7 @@ static void im_packer_io_item(
 static void im_packer_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     struct im_packer *packer = state;
 
@@ -145,7 +145,7 @@ static void im_packer_io(
     }
 }
 
-static const word im_packer_io_list[] =
+static const vm_word im_packer_io_list[] =
 {
     IO_PING,
     IO_STATE,

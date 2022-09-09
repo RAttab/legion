@@ -29,7 +29,7 @@ struct legion_packed im_prober
     legion_pad(3);
 
     struct coord coord;
-    word result;
+    vm_word result;
 
 };
 

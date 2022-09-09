@@ -31,7 +31,7 @@ inline mod_id make_mod(mod_maj maj, mod_ver ver)
 
 inline mod_maj mod_major(mod_id mod) { return mod >> 16; }
 inline mod_ver mod_version(mod_id mod) { return ((1 << 16) - 1) & mod; }
-inline bool mod_validate(word word) { return word > 0 && word <= UINT32_MAX; }
+inline bool mod_validate(vm_word word) { return word > 0 && word <= UINT32_MAX; }
 
 
 // -----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ static_assert(sizeof(struct mod_err) == s_cache_line);
 struct legion_packed mod_index
 {
     uint32_t row, col, len;
-    ip ip;
+    vm_ip ip;
 };
 
 static_assert(sizeof(struct mod_index) == 16);
@@ -63,7 +63,7 @@ static_assert(sizeof(struct mod_index) == 16);
 struct legion_packed mod_pub
 {
     uint64_t key;
-    ip ip;
+    vm_ip ip;
     legion_pad(4);
 };
 
@@ -121,11 +121,11 @@ struct text mod_disasm(const struct mod *);
 size_t mod_dump(const struct mod *, char *dst, size_t len);
 size_t mod_hexdump(const struct mod *, char *dst, size_t len);
 
-static const ip MOD_PUB_UNKNOWN = -1;
-ip mod_pub(const struct mod *, uint64_t key);
+static const vm_ip MOD_PUB_UNKNOWN = -1;
+vm_ip mod_pub(const struct mod *, uint64_t key);
 
-struct mod_index mod_index(const struct mod *, ip ip);
-ip mod_byte(const struct mod *, size_t row, size_t col);
+struct mod_index mod_index(const struct mod *, vm_ip ip);
+vm_ip mod_byte(const struct mod *, size_t row, size_t col);
 
 
 // -----------------------------------------------------------------------------
@@ -181,7 +181,7 @@ struct lisp;
 struct lisp_ret
 {
     bool ok;
-    word value;
+    vm_word value;
 };
 
 struct lisp *lisp_new(struct mods_list *, struct atoms *);

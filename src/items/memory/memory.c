@@ -33,7 +33,7 @@ void im_memory_config(struct im_config *config)
     config->size = sizeof(struct im_memory);
 
     switch(config->type) {
-    case ITEM_MEMORY: { config->size += im_memory_len_base * sizeof(word); break; }
+    case ITEM_MEMORY: { config->size += im_memory_len_base * sizeof(vm_word); break; }
     default: { assert(false); }
     }
 

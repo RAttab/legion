@@ -24,7 +24,7 @@ struct ui_memory
 
 static void *ui_memory_alloc(struct font *font)
 {
-    size_t data_len = im_memory_len_max * sizeof(word);
+    size_t data_len = im_memory_len_max * sizeof(vm_word);
     struct ui_memory *ui = calloc(1, sizeof(*ui) + data_len);
 
     *ui = (struct ui_memory) {

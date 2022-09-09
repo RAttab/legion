@@ -21,7 +21,7 @@ struct legion_packed im_memory
     id id;
     uint8_t len;
     legion_pad(5);
-    word data[];
+    vm_word data[];
 };
 
 static_assert(sizeof(struct im_memory) == 8);

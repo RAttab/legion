@@ -27,7 +27,9 @@ static void lisp_disasm_outc(struct disasm *disasm, const char *str)
 }
 
 static void lisp_disasm_out(
-        struct disasm *disasm, ip ip, const char *op, size_t arg_len, const char *arg)
+        struct disasm *disasm,
+        vm_ip ip, const char *op,
+        size_t arg_len, const char *arg)
 {
     disasm->line->user = ip;
 
@@ -50,23 +52,23 @@ static void lisp_disasm_out(
         ok;                                                     \
     })
 
-static ip lisp_disasm_ip(struct disasm *disasm)
+static vm_ip lisp_disasm_ip(struct disasm *disasm)
 {
     return (disasm->in.it - disasm->in.base) - 1;
 }
 
 static bool lisp_disasm_nil(struct disasm *disasm, const char *op)
 {
-    ip ip = lisp_disasm_ip(disasm);
+    vm_ip ip = lisp_disasm_ip(disasm);
     lisp_disasm_out(disasm, ip, op, 0, NULL);
     return true;
 }
 
 static bool lisp_disasm_lit(struct disasm *disasm, const char *op)
 {
-    ip ip = lisp_disasm_ip(disasm);
+    vm_ip ip = lisp_disasm_ip(disasm);
 
-    word val = 0;
+    vm_word val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[2+16+1] = {0}; buf[0] = '0'; buf[1] ='x';
@@ -78,7 +80,7 @@ static bool lisp_disasm_lit(struct disasm *disasm, const char *op)
 
 static bool lisp_disasm_len(struct disasm *disasm, const char *op)
 {
-    ip ip = lisp_disasm_ip(disasm);
+    vm_ip ip = lisp_disasm_ip(disasm);
 
     uint8_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
@@ -92,7 +94,7 @@ static bool lisp_disasm_len(struct disasm *disasm, const char *op)
 
 static bool lisp_disasm_reg(struct disasm *disasm, const char *op)
 {
-    ip ip = lisp_disasm_ip(disasm);
+    vm_ip ip = lisp_disasm_ip(disasm);
 
     uint8_t val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
@@ -106,9 +108,9 @@ static bool lisp_disasm_reg(struct disasm *disasm, const char *op)
 
 static bool lisp_disasm_off(struct disasm *disasm, const char *op)
 {
-    ip start = lisp_disasm_ip(disasm);
+    vm_ip start = lisp_disasm_ip(disasm);
 
-    ip val = 0;
+    vm_ip val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[2+8+1] = {0}; buf[0] = '0'; buf[1] = 'x';
@@ -120,9 +122,9 @@ static bool lisp_disasm_off(struct disasm *disasm, const char *op)
 
 static bool lisp_disasm_mod(struct disasm *disasm, const char *op)
 {
-    ip ip = lisp_disasm_ip(disasm);
+    vm_ip ip = lisp_disasm_ip(disasm);
 
-    word val = 0;
+    vm_word val = 0;
     if (!lisp_disasm_read_into(disasm, &val)) return false;
 
     char buf[2+16+1] = {0}; buf[0] = '0'; buf[1] = 'x';

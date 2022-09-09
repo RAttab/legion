@@ -190,7 +190,7 @@ static_assert(ITEM_SYNTH_LAST   <= ITEM_PASSIVE_FIRST);
 static_assert(ITEM_PASSIVE_LAST <= ITEM_ACTIVE_FIRST);
 static_assert(ITEM_ACTIVE_LAST  <= ITEM_LOGISTICS_FIRST);
 
-inline bool item_validate(word word) { return word > 0 && word < ITEM_MAX; }
+inline bool item_validate(vm_word word) { return word > 0 && word < ITEM_MAX; }
 
 
 // -----------------------------------------------------------------------------

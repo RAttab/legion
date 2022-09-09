@@ -59,16 +59,16 @@ uint64_t reader_u64(struct reader *reader)
     return reader_word(reader);
 }
 
-word reader_word(struct reader *reader)
+vm_word reader_word(struct reader *reader)
 {
     struct token token = {0};
     if (!token_expect(&reader->tok, &token, token_number)) return 0;
     return token.value.w;
 }
 
-word reader_atom(struct reader *reader, struct atoms *atoms)
+vm_word reader_atom(struct reader *reader, struct atoms *atoms)
 {
-    word ret = 0;
+    vm_word ret = 0;
     struct token token = {0};
 
     switch (token_next(&reader->tok, &token)->type)
@@ -243,7 +243,7 @@ void writer_u64(struct writer *writer, uint64_t val)
     writer_write(writer, str, sizeof(str));
 }
 
-void writer_word(struct writer *writer, word val)
+void writer_word(struct writer *writer, vm_word val)
 {
     char str[21] = {0};
     size_t len = str_utoa(val, str, sizeof(str));
@@ -266,7 +266,7 @@ void writer_atom(struct writer *writer, const struct symbol *val)
     writer_write(writer, val->c, val->len);
 }
 
-void writer_atom_fetch(struct writer *writer, struct atoms *atoms, word val)
+void writer_atom_fetch(struct writer *writer, struct atoms *atoms, vm_word val)
 {
     struct symbol symbol = {0};
     if (!atoms_str(atoms, val, &symbol))

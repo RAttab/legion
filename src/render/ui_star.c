@@ -290,7 +290,7 @@ static void ui_star_update(struct ui_star *ui)
             struct atoms *atoms = proxy_atoms(render.proxy);
 
             struct symbol sym = {0};
-            word name = gen_name_star(ui->id, seed, atoms);
+            vm_word name = gen_name_star(ui->id, seed, atoms);
             bool ok = atoms_str(atoms, name, &sym);
             ui_str_set_symbol(&ui->name_val.str, &sym);
             assert(ok);
@@ -321,7 +321,7 @@ static void ui_star_update(struct ui_star *ui)
 
     {
         struct symbol sym = {0};
-        word name = chunk_name(chunk);
+        vm_word name = chunk_name(chunk);
         if (atoms_str(proxy_atoms(render.proxy), name, &sym))
             ui_str_set_symbol(&ui->name_val.str, &sym);
         else ui_str_set_hex(&ui->name_val.str, name);

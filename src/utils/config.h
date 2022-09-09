@@ -29,8 +29,8 @@ bool reader_peek_eof(struct reader *);
 void reader_open(struct reader *);
 void reader_close(struct reader *);
 uint64_t reader_u64(struct reader *);
-word reader_word(struct reader *);
-word reader_atom(struct reader *, struct atoms *);
+vm_word reader_word(struct reader *);
+vm_word reader_atom(struct reader *, struct atoms *);
 
 struct symbol reader_symbol(struct reader *);
 uint64_t reader_symbol_hash(struct reader *);
@@ -90,8 +90,8 @@ void writer_open(struct writer *);
 void writer_open_nl(struct writer *);
 void writer_close(struct writer *);
 void writer_u64(struct writer *, uint64_t);
-void writer_word(struct writer *, word);
-void writer_atom_fetch(struct writer *, struct atoms *, word);
+void writer_word(struct writer *, vm_word);
+void writer_atom_fetch(struct writer *, struct atoms *, vm_word);
 void writer_atom(struct writer *, const struct symbol *);
 void writer_symbol(struct writer *, const struct symbol *);
 

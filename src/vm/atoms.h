@@ -27,10 +27,10 @@ struct atoms *atoms_load(struct save *);
 void atoms_save_delta(struct atoms *, struct save *, const struct ack *);
 bool atoms_load_delta(struct atoms *, struct save *, struct ack *);
 
-bool atoms_set(struct atoms *, const struct symbol *, word id);
-word atoms_get(struct atoms *, const struct symbol *);
-word atoms_make(struct atoms *, const struct symbol *);
-bool atoms_str(struct atoms *, word id, struct symbol *dst);
-word atoms_parse(struct atoms *, const char *str, size_t len);
+bool atoms_set(struct atoms *, const struct symbol *, vm_word id);
+vm_word atoms_get(struct atoms *, const struct symbol *);
+vm_word atoms_make(struct atoms *, const struct symbol *);
+bool atoms_str(struct atoms *, vm_word id, struct symbol *dst);
+vm_word atoms_parse(struct atoms *, const char *str, size_t len);
 
 struct vec64 *atoms_list(struct atoms *);

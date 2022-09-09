@@ -20,7 +20,7 @@ inline id make_id(enum item type, id id) { return type << id_shift | id; }
 inline enum item id_item(id id) { return id >> id_shift; }
 inline uint32_t id_bot(id id) { return id & ((1 << id_shift) - 1); }
 
-inline bool id_validate(word word)
+inline bool id_validate(vm_word word)
 {
     return
         word > 0 &&

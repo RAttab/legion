@@ -36,7 +36,7 @@ void step_for(struct world *world, world_ts ticks)
 
 size_t storage_count(struct chunk *chunk, id_t storage_id, id_t test_id)
 {
-    const word io_loop = IO_LOOP;
+    const vm_word io_loop = IO_LOOP;
     const struct im_test *test = chunk_get(chunk, test_id);
 
     chunk_io(chunk, IO_STATE, test_id, storage_id, &io_loop, 1);

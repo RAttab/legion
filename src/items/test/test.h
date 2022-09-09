@@ -27,13 +27,13 @@ struct legion_packed im_test
     enum io io;
     uint8_t len;
     legion_pad(3);
-    word args[7];
+    vm_word args[7];
 };
 
 static_assert(sizeof(struct im_test) == 64);
 
 
 bool im_test_check(const struct im_test *,
-        enum io io, id src, const word *args, size_t len);
+        enum io io, id src, const vm_word *args, size_t len);
 
 void im_test_config(struct im_config *);

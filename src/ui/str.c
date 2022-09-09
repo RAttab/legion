@@ -141,7 +141,7 @@ void ui_str_set_symbol(struct ui_str *str, const struct symbol *val)
     memcpy((char *) str->str, val->c, str->len);
 }
 
-void ui_str_set_atom(struct ui_str *str, word word)
+void ui_str_set_atom(struct ui_str *str, vm_word word)
 {
     struct symbol sym = {0};
     if (atoms_str(proxy_atoms(render.proxy), word, &sym))

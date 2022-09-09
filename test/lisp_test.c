@@ -26,7 +26,7 @@
 // token
 // -----------------------------------------------------------------------------
 
-word token_word(struct tokenizer *tok, struct atoms *atoms)
+vm_word token_word(struct tokenizer *tok, struct atoms *atoms)
 {
     struct token token = {0};
     switch (token_next(tok, &token)->type) {
@@ -60,7 +60,7 @@ struct field
 {
     enum field_type type;
     uint8_t index;
-    word value;
+    vm_word value;
     char name[8];
 };
 
@@ -188,14 +188,14 @@ bool check_mod(
         struct atoms *atoms)
 {
     if (!vm || !mod) return false;
-    ip ret = vm_exec(vm, mod);
+    vm_ip ret = vm_exec(vm, mod);
 
     bool ok = true;
     struct field field = {0};
     struct field flags = {0};
     while ((field = token_field(tok, atoms)).type != field_nil) {
 
-        word exp = field.value;
+        vm_word exp = field.value;
         const char *str = field.name;
 
         switch (field.type)

@@ -75,7 +75,7 @@ inline int coord_cmp(struct coord lhs, struct coord rhs)
     assert(false);
 }
 
-inline bool coord_validate(word word) { return word != 0; }
+inline bool coord_validate(vm_word word) { return word != 0; }
 
 inline struct coord coord_area(struct coord coord)
 {

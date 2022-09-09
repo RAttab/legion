@@ -118,10 +118,10 @@ static void im_extract_step(void *state, struct chunk *chunk)
 
 static void im_extract_io_state(
         struct im_extract *extract, struct chunk *chunk, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, extract->id, IO_STATE, len, 1)) return;
-    word value = 0;
+    vm_word value = 0;
 
     switch (args[0]) {
     case IO_TAPE: { value = tape_packed_id(extract->tape); break; }
@@ -134,7 +134,7 @@ static void im_extract_io_state(
 
 static void im_extract_io_tape(
         struct im_extract *extract, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, extract->id, IO_TAPE, len, 1)) return;
 
@@ -156,7 +156,7 @@ static void im_extract_io_tape(
 static void im_extract_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     struct im_extract *extract = state;
 
@@ -172,7 +172,7 @@ static void im_extract_io(
     }
 }
 
-static const word im_extract_io_list[] =
+static const vm_word im_extract_io_list[] =
 {
     IO_PING,
     IO_STATE,

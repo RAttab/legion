@@ -372,7 +372,7 @@ static bool state_load_chunks(struct state *state, struct save *save)
     while (true) {
         uint64_t coord = save_read_type(save, typeof(coord));
         if (!coord) break;
-        word name = save_read_type(save, typeof(name));
+        vm_word name = save_read_type(save, typeof(name));
 
         struct htable_ret ret = htable_put(&state->names, coord, name);
         if (ret.ok) state->chunks = vec64_append(state->chunks, coord);

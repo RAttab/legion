@@ -61,7 +61,7 @@ struct legion_packed im_nomad
     legion_pad(4);
 
     struct im_nomad_cargo cargo[im_nomad_cargo_len];
-    word memory[im_nomad_memory_len];
+    vm_word memory[im_nomad_memory_len];
 };
 
 static_assert(sizeof(struct im_nomad) == 64);

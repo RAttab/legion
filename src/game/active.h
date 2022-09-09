@@ -81,9 +81,9 @@ struct ports *active_ports(struct active *active, id id);
 
 bool active_copy(struct active *, id id, void *dst, size_t len);
 bool active_create(struct active *);
-bool active_create_from(struct active *, struct chunk *, const word *data, size_t len);
+bool active_create_from(struct active *, struct chunk *, const vm_word *data, size_t len);
 bool active_delete(struct active *, id id);
 
 void active_step(struct active *, struct chunk *);
 bool active_io(struct active *, struct chunk *,
-        enum io io, id src, id dst, const word *args, size_t len);
+        enum io io, id src, id dst, const vm_word *args, size_t len);

@@ -79,7 +79,7 @@ void proxy_save(struct proxy *);
 void proxy_load(struct proxy *);
 void proxy_set_speed(struct proxy *, enum speed);
 struct chunk *proxy_chunk(struct proxy *, struct coord);
-void proxy_io(struct proxy *, enum io, id dst, const word *args, uint8_t len);
+void proxy_io(struct proxy *, enum io, id dst, const vm_word *args, uint8_t len);
 
 
 // -----------------------------------------------------------------------------
@@ -115,6 +115,6 @@ bool proxy_active_star(struct proxy *, struct coord);
 bool proxy_active_sector(struct proxy *, struct coord);
 struct sector *proxy_sector(struct proxy *, struct coord);
 
-word proxy_star_name(struct proxy *, struct coord);
+vm_word proxy_star_name(struct proxy *, struct coord);
 const struct star *proxy_star_in(struct proxy *, struct rect);
 const struct star *proxy_star_at(struct proxy *, struct coord);

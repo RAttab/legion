@@ -37,10 +37,10 @@ static void im_transmit_reset(struct im_transmit *transmit, struct chunk *chunk)
 
 static void im_transmit_io_state(
         struct im_transmit *transmit, struct chunk *chunk, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, transmit->id, IO_STATE, len, 1)) return;
-    word value = 0;
+    vm_word value = 0;
 
     switch (args[0]) {
     case IO_TARGET: { value = coord_to_u64(transmit->target); break; }
@@ -53,7 +53,7 @@ static void im_transmit_io_state(
 
 static void im_transmit_io_channel(
         struct im_transmit *transmit, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, transmit->id, IO_CHANNEL, len, 1)) return;
 
@@ -66,7 +66,7 @@ static void im_transmit_io_channel(
 
 static void im_transmit_io_target(
         struct im_transmit *transmit, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, transmit->id, IO_TARGET, len, 1)) return;
 
@@ -79,7 +79,7 @@ static void im_transmit_io_target(
 
 static void im_transmit_io_transmit(
         struct im_transmit *transmit, struct chunk *chunk,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, transmit->id, IO_TRANSMIT, len, 1)) return;
 
@@ -89,7 +89,7 @@ static void im_transmit_io_transmit(
     const size_t packet_len = legion_min(len, (size_t) im_packet_max);
     const size_t packet_speed = im_transmit_speed;
 
-    word packet[1 + packet_len];
+    vm_word packet[1 + packet_len];
     packet[0] = im_packet_pack(transmit->channel, packet_len);
     memcpy(packet+1, args, packet_len * sizeof(packet[0]));
 
@@ -100,7 +100,7 @@ static void im_transmit_io_transmit(
 static void im_transmit_io(
         void *state, struct chunk *chunk,
         enum io io, id src,
-        const word *args, size_t len)
+        const vm_word *args, size_t len)
 {
     struct im_transmit *transmit = state;
 
@@ -118,7 +118,7 @@ static void im_transmit_io(
     }
 }
 
-static const word im_transmit_io_list[] =
+static const vm_word im_transmit_io_list[] =
 {
     IO_PING,
     IO_STATE,

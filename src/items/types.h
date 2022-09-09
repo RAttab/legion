@@ -17,7 +17,7 @@
 
 typedef uint8_t loops;
 enum { loops_inf = UINT8_MAX };
-inline loops loops_io(word loops)
+inline loops loops_io(vm_word loops)
 {
     return loops > 0 && loops < loops_inf ? loops : loops_inf;
 }
@@ -96,19 +96,19 @@ struct legion_packed im_packet
 {
     uint8_t chan, len;
     legion_pad(6);
-    word data[im_packet_max];
+    vm_word data[im_packet_max];
 };
 
 static_assert(sizeof(struct im_packet) == 32);
 
-inline word im_packet_pack(uint8_t chan, uint8_t len)
+inline vm_word im_packet_pack(uint8_t chan, uint8_t len)
 {
     assert(chan < im_channels_max);
     assert(len <= im_packet_max);
     return vm_pack(chan, len);
 }
 
-inline void im_packet_unpack(word word, uint8_t *chan, uint8_t *len)
+inline void im_packet_unpack(vm_word word, uint8_t *chan, uint8_t *len)
 {
     uint32_t chan32 = 0, len32 = 0;
     vm_unpack(word, &chan32, &len32);
