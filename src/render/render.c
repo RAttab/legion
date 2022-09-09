@@ -268,9 +268,9 @@ static bool render_step(void)
 void render_loop(void)
 {
     enum { fps_cap = 60 };
-    ts_t sleep = ts_sec / fps_cap;
+    ts_nano sleep = ts_sec / fps_cap;
 
-    ts_t ts = ts_now();
+    ts_nano ts = ts_now();
     while (render_step()) {
         ts = ts_sleep_until(ts + sleep);
 

@@ -163,7 +163,7 @@ bool client_run(const char *node, const char *service, const char *config)
             });
     if (ret == -1) failf_errno("unable to add sigint fd '%d' to epoll", sigint);
 
-    struct { ts_t ts; size_t inc; } reconn = { .ts = 0, .inc = 1 };
+    struct { ts_nano ts; size_t inc; } reconn = { .ts = 0, .inc = 1 };
 
     bool exit = false;
     bool connected = false;
@@ -203,7 +203,7 @@ bool client_run(const char *node, const char *service, const char *config)
         }
 
         if (!server) {
-            ts_t now = ts_now();
+            ts_nano now = ts_now();
             if (now < reconn.ts) continue;
             reconn.inc = legion_min(reconn.inc * 2, (size_t) 20);
             reconn.ts = (reconn.inc * ts_sec) + now;

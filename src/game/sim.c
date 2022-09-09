@@ -40,7 +40,7 @@ struct sim
 {
     pthread_t thread;
     atomic_bool join, reload;
-    ts_t next;
+    ts_nano next;
 
     struct world *world;
     struct users users;
@@ -824,7 +824,7 @@ void sim_step(struct sim *sim)
 
 void sim_loop(struct sim *sim)
 {
-    ts_t now = sim->next = ts_now();
+    ts_nano now = sim->next = ts_now();
     while (!atomic_load_explicit(&sim->join, memory_order_relaxed)) {
 
         // Should eventually get more complicated as we might need to close some
@@ -832,7 +832,7 @@ void sim_loop(struct sim *sim)
         if (atomic_exchange_explicit(&sim->reload, false, memory_order_relaxed))
             sim_config_read(sim);
 
-        ts_t sleep = 0;
+        ts_nano sleep = 0;
         switch (sim->speed) {
         case speed_pause:
         case speed_slow:    { sleep = ts_sec / sim_freq_slow; break; }
