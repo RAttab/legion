@@ -86,7 +86,7 @@ void check(void)
         save_mem_reset(save);
         assert(state_load(state, save, ack));
 
-        assert(state->seed == world_seed(world));
+        assert(state->seed == world_gen_seed(world));
         assert(state->time == world_time(world));
         assert(coord_eq(state->home, home));
 

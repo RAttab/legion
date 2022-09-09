@@ -84,12 +84,12 @@ static struct
 } gen;
 
 
-static uint64_t gen_mix(struct coord coord, seed seed)
+static uint64_t gen_mix(struct coord coord, world_seed seed)
 {
     return coord_to_u64(coord) ^ seed;
 }
 
-static struct rng gen_rng(struct coord coord, seed seed)
+static struct rng gen_rng(struct coord coord, world_seed seed)
 {
     return rng_make(gen_mix(coord, seed));
 }
@@ -100,7 +100,7 @@ static struct rng gen_rng(struct coord coord, seed seed)
 
 struct gen_bits { size_t prefix, suffix; };
 
-struct gen_bits gen_name_bits(struct coord coord, seed seed, size_t suffixes)
+struct gen_bits gen_name_bits(struct coord coord, world_seed seed, size_t suffixes)
 {
     uint64_t bits = hash_u64(gen_mix(coord, seed));
     return (struct gen_bits) {
@@ -124,7 +124,7 @@ static struct symbol gen_name_symbol(
 
 }
 
-struct symbol gen_name_sector(struct coord coord, seed seed)
+struct symbol gen_name_sector(struct coord coord, world_seed seed)
 {
     struct gen_bits bits = {0};
 
@@ -134,7 +134,7 @@ struct symbol gen_name_sector(struct coord coord, seed seed)
     return gen_name_symbol(gen.prefix.list + bits.prefix, &suffix->name);
 }
 
-vm_word gen_name_star(struct coord coord, seed seed, struct atoms *atoms)
+vm_word gen_name_star(struct coord coord, world_seed seed, struct atoms *atoms)
 {
     struct gen_bits bits = {0};
 
@@ -205,7 +205,7 @@ static bool gen_roll(const struct roll *roll, struct star *star, struct rng *rng
     }
 }
 
-void gen_star(struct star *star, struct coord coord, seed seed)
+void gen_star(struct star *star, struct coord coord, world_seed seed)
 {
     struct rng rng = gen_rng(coord, seed);
     star->coord = coord;
@@ -255,7 +255,7 @@ struct vec64 *gen_sector_stars(struct rng *rng, struct coord base, size_t stars)
     return list;
 }
 
-struct sector *gen_sector(struct coord coord, seed seed)
+struct sector *gen_sector(struct coord coord, world_seed seed)
 {
     coord = coord_sector(coord);
     struct rng rng = gen_rng(coord, seed);

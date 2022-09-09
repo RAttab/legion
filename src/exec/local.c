@@ -13,7 +13,7 @@
 // local
 // -----------------------------------------------------------------------------
 
-bool local_run(const char *file, seed seed)
+bool local_run(const char *file, world_seed seed)
 {
     struct sim *sim = sim_new(seed, file);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);

@@ -27,7 +27,7 @@ struct proxy
     struct save_ring *in, *out;
     const struct mod *mod;
     struct state *state;
-    seed seed;
+    world_seed seed;
 
     struct htable sectors;
     struct hset *active_stars;
@@ -341,7 +341,7 @@ enum proxy_ret proxy_update(struct proxy *proxy)
 // state
 // -----------------------------------------------------------------------------
 
-seed proxy_seed(struct proxy *proxy)
+world_seed proxy_seed(struct proxy *proxy)
 {
     return proxy->state->seed;
 }

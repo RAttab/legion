@@ -197,7 +197,7 @@ struct state
 {
     uint64_t stream;
 
-    seed seed;
+    world_seed seed;
     world_ts time;
     enum speed speed;
     struct coord home;

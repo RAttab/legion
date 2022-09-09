@@ -401,7 +401,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
 {
     save_write_magic(save, save_magic_state_world);
     save_write_value(save, ctx->stream);
-    save_write_value(save, world_seed(ctx->world));
+    save_write_value(save, world_gen_seed(ctx->world));
     save_write_value(save, world_time(ctx->world));
     save_write_value(save, ctx->speed);
     save_write_value(save, coord_to_u64(world_home(ctx->world, ctx->user)));

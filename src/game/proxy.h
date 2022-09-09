@@ -56,7 +56,7 @@ struct save_ring *proxy_pipe_out(struct proxy_pipe *);
 // state
 // -----------------------------------------------------------------------------
 
-seed proxy_seed(struct proxy *);
+world_seed proxy_seed(struct proxy *);
 world_ts proxy_time(struct proxy *);
 enum speed proxy_speed(struct proxy *);
 struct coord proxy_home(struct proxy *);

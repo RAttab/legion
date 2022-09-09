@@ -56,7 +56,7 @@ struct sim
     char config[PATH_MAX + 1];
 };
 
-struct sim *sim_new(seed seed, const char *save)
+struct sim *sim_new(world_seed seed, const char *save)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
     sim->world = world_new(seed);
