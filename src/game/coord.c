@@ -49,7 +49,7 @@ size_t coord_str(struct coord coord, char *str, size_t len)
 // scale
 // -----------------------------------------------------------------------------
 
-inline scale scale_inc(scale scale, int dir)
+inline coord_scale scale_inc(coord_scale scale, int dir)
 {
     if (scale == scale_base && dir < 0) return scale;
     if (scale < (1 << 4)) return scale + dir;
@@ -59,7 +59,7 @@ inline scale scale_inc(scale scale, int dir)
 }
 
 
-size_t scale_str(scale scale, char *str, size_t len)
+size_t scale_str(coord_scale scale, char *str, size_t len)
 {
     assert(len >= scale_str_len);
 

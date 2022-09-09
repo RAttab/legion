@@ -42,7 +42,7 @@ struct factory
     struct htable index;
     struct workers workers;
 
-    scale scale;
+    coord_scale scale;
     struct flow_pos pos;
     struct dim inner, margin, pad, total, in, out;
 
@@ -144,7 +144,7 @@ bool factory_active(struct factory *factory)
     return factory->active;
 }
 
-scale factory_scale(struct factory *factory)
+coord_scale factory_scale(struct factory *factory)
 {
     return factory->scale;
 }
