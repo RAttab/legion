@@ -17,10 +17,10 @@ inline size_t im_id_str(im_id id, char *base, size_t len)
     char *it = base;
     const char *end = base + len;
 
-    it += str_utox(im_id_seq(id), it, 2);
-    *it = '.'; it++;
     it += item_str(im_id_item(id), it, end - it);
-    *it = 0;
+    *it = '.'; it++;
+    it += str_utox(im_id_seq(id), it, 2);
 
+    if (it != end) *it = 0;
     return it - base;
 }

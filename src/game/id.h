@@ -28,5 +28,5 @@ inline bool id_validate(vm_word word)
         item_validate(im_id_item(word));
 }
 
-enum { im_id_str_len = item_str_len + 1 + 3 };
+enum { im_id_str_len = item_str_len + 1 + 2 };
 size_t im_id_str(im_id id, char *dst, size_t len);
