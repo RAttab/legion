@@ -62,7 +62,7 @@ static void ui_printer_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_printer *state = chunk_get(chunk, id);
     assert(state);
 
-    if (state->loops != loops_inf)
+    if (state->loops != im_loops_inf)
         ui_str_set_u64(&ui->loops_val.str, state->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 

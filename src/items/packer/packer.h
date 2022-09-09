@@ -22,7 +22,7 @@ struct legion_packed im_packer
     im_id id;
 
     enum item item;
-    loops loops;
+    im_loops loops;
     bool waiting;
 
     legion_pad(1);

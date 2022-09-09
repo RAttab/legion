@@ -65,7 +65,7 @@ static void ui_deploy_update(void *_ui, struct chunk *chunk, im_id id)
         ui_str_setc(&ui->state_val.str, "idle");
     }
 
-    if (deploy->loops != loops_inf)
+    if (deploy->loops != im_loops_inf)
         ui_str_set_u64(&ui->loops_val.str, deploy->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 }

@@ -51,7 +51,7 @@ struct legion_packed im_nomad
 
     enum im_nomad_op op;
     enum item item;
-    loops loops;
+    im_loops loops;
     bool waiting;
 
     legion_pad(2);

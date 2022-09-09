@@ -15,11 +15,11 @@
 // loops
 // -----------------------------------------------------------------------------
 
-typedef uint8_t loops;
-enum { loops_inf = UINT8_MAX };
-inline loops loops_io(vm_word loops)
+typedef uint8_t im_loops;
+enum { im_loops_inf = UINT8_MAX };
+inline im_loops im_loops_io(vm_word loops)
 {
-    return loops > 0 && loops < loops_inf ? loops : loops_inf;
+    return loops > 0 && loops < im_loops_inf ? loops : im_loops_inf;
 }
 
 
@@ -36,7 +36,7 @@ struct legion_packed flow
 
     legion_pad(2);
 
-    loops loops;
+    im_loops loops;
     enum item target;
     uint8_t rank;
 

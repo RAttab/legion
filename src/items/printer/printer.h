@@ -22,7 +22,7 @@ struct legion_packed im_printer
 {
     im_id id;
 
-    loops loops;
+    im_loops loops;
     bool waiting;
 
     tape_packed tape;

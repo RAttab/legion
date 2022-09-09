@@ -52,7 +52,7 @@ static void im_packer_step(void *state, struct chunk *chunk)
 
     if (!chunk_ports_consumed(chunk, packer->id)) return;
     packer->waiting = false;
-    if (packer->loops != loops_inf) --packer->loops;
+    if (packer->loops != im_loops_inf) --packer->loops;
     if (!packer->loops) im_packer_reset(packer, chunk);
 }
 
@@ -122,7 +122,7 @@ static void im_packer_io_item(
 
     im_packer_reset(packer, chunk);
     packer->item = item;
-    packer->loops = loops_io(len > 1 ? args[1] : loops_inf);
+    packer->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 }
 
 static void im_packer_io(

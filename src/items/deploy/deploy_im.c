@@ -54,7 +54,7 @@ static void im_deploy_step(void *state, struct chunk *chunk)
         chunk_log(chunk, deploy->id, IO_STEP, IOE_OUT_OF_SPACE);
 
     deploy->waiting = false;
-    if (deploy->loops != loops_inf) --deploy->loops;
+    if (deploy->loops != im_loops_inf) --deploy->loops;
     if (!deploy->loops) im_deploy_reset(deploy, chunk);
 }
 
@@ -98,7 +98,7 @@ static void im_deploy_io_item(
 
     im_deploy_reset(deploy, chunk);
     deploy->item = item;
-    deploy->loops = loops_io(len > 1 ? args[1] : loops_inf);
+    deploy->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 }
 
 static void im_deploy_io(

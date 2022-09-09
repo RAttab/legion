@@ -44,9 +44,9 @@ struct legion_packed im_collider
 
     enum im_collider_op op;
     bool waiting;
-    loops loops;
+    im_loops loops;
 
-    struct { work left, cap; } work;
+    struct { im_work left, cap; } work;
     struct { enum item item; uint8_t it, len; } out;
 
     legion_pad(4);

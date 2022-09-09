@@ -128,7 +128,7 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, im_id id)
         ui_str_setc(&ui->waiting_val.str, "idle");
     }
 
-    if (nomad->loops != loops_inf)
+    if (nomad->loops != im_loops_inf)
         ui_str_set_u64(&ui->loops_val.str, nomad->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 

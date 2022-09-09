@@ -86,7 +86,7 @@ static void im_nomad_port_setup(
         struct chunk *chunk,
         enum im_nomad_op op,
         enum item item,
-        loops loops)
+        im_loops loops)
 {
     chunk_ports_reset(chunk, nomad->id);
     nomad->op = op;
@@ -339,7 +339,7 @@ static void im_nomad_io_pack(
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
     if (!cargo) return chunk_log(chunk, nomad->id, IO_PACK, IOE_OUT_OF_SPACE);
 
-    loops loops = loops_io(len > 1 ? args[1] : loops_inf);
+    im_loops loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
     if (!loops) return chunk_log(chunk, nomad->id, IO_PACK, IOE_OUT_OF_SPACE);
 
@@ -364,7 +364,7 @@ static void im_nomad_io_load(
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
     if (!cargo) return chunk_log(chunk, nomad->id, IO_LOAD, IOE_OUT_OF_SPACE);
 
-    loops loops = loops_io(len > 1 ? args[1] : loops_inf);
+    im_loops loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
     if (!loops) return chunk_log(chunk, nomad->id, IO_LOAD, IOE_OUT_OF_SPACE);
 

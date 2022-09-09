@@ -139,7 +139,7 @@ static void im_collider_step_out(
     collider->op = im_collider_in;
     collider->tape = tape_packed_it_zero(collider->tape);
 
-    if (collider->loops != loops_inf) collider->loops--;
+    if (collider->loops != im_loops_inf) collider->loops--;
     if (collider->loops) return;
 
     im_collider_reset(collider, chunk);
@@ -223,7 +223,7 @@ static void im_collider_io_tape(
     im_collider_reset(collider, chunk);
     collider->op = im_collider_in;
     collider->tape = tape_pack(item, 0, tape);
-    collider->loops = loops_io(len > 1 ? args[1] : loops_inf);
+    collider->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 }
 
 static void im_collider_io(

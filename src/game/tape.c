@@ -19,8 +19,8 @@ struct tape
 {
     enum item id;
     enum item host;
-    energy energy;
-    work work;
+    im_energy energy;
+    im_work work;
     uint8_t inputs, outputs;
     enum item tape[];
 };
@@ -28,8 +28,8 @@ struct tape
 
 enum item tape_id(const struct tape *tape) { return tape->id; }
 enum item tape_host(const struct tape *tape) { return tape->host; }
-energy tape_energy(const struct tape *tape) { return tape->energy; }
-work tape_work(const struct tape *tape) { return tape->work; }
+im_energy tape_energy(const struct tape *tape) { return tape->energy; }
+im_work tape_work(const struct tape *tape) { return tape->work; }
 size_t tape_len(const struct tape *tape) { return tape->inputs + tape->outputs; }
 
 struct tape_ret tape_at(const struct tape *tape, tape_it it)
@@ -216,8 +216,8 @@ static struct tape *tapes_vec_output(
         struct tapes_vec *vec,
         enum item id,
         enum item host,
-        energy energy,
-        work work)
+        im_energy energy,
+        im_work work)
 {
     size_t len = vec->it * sizeof(vec->tape[0]);
     struct tape *tape = calloc(1, sizeof(*tape) + len);
@@ -247,8 +247,8 @@ static enum item tapes_expect_item(struct reader *in, struct atoms *atoms)
 static void tapes_load_tape(
         enum item host, struct reader *in, struct atoms *atoms)
 {
-    work work = 0;
-    energy energy = 0;
+    im_work work = 0;
+    im_energy energy = 0;
     enum item id = tapes_expect_item(in, atoms);
 
     enum tapes_type type = tapes_nil;

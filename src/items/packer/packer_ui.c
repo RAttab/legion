@@ -65,7 +65,7 @@ static void ui_packer_update(void *_ui, struct chunk *chunk, im_id id)
         ui_str_setc(&ui->state_val.str, "idle");
     }
 
-    if (packer->loops != loops_inf)
+    if (packer->loops != im_loops_inf)
         ui_str_set_u64(&ui->loops_val.str, packer->loops);
     else ui_str_setc(&ui->loops_val.str, "inf");
 }

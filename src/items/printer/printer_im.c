@@ -49,7 +49,7 @@ static void im_printer_reset(struct im_printer *printer, struct chunk *chunk)
 
 static void im_printer_step_eof(struct im_printer *printer, struct chunk *chunk)
 {
-    if (printer->loops != loops_inf) printer->loops--;
+    if (printer->loops != im_loops_inf) printer->loops--;
 
     if (!printer->loops) im_printer_reset(printer, chunk);
     else printer->tape = tape_packed_it_zero(printer->tape);
@@ -144,7 +144,7 @@ static void im_printer_io_tape(
 
     im_printer_reset(printer, chunk);
     printer->tape = tape_pack(item, 0, tape);
-    printer->loops = loops_io(len > 1 ? args[1] : loops_inf);
+    printer->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 }
 
 static void im_printer_io(

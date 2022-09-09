@@ -93,7 +93,7 @@ static void ui_burner_update(void *_ui, struct chunk *chunk, im_id id)
         ui_str_set_item(&ui->item_val.str, burner->item);
         ui_str_set_u64(&ui->output_val.str, burner->output);
 
-        if (burner->loops != loops_inf)
+        if (burner->loops != im_loops_inf)
             ui_str_set_u64(&ui->loops_val.str, burner->loops);
         else ui_str_setc(&ui->loops_val.str, "inf");
     }

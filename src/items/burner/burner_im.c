@@ -58,7 +58,7 @@ static void im_burner_step_work(struct im_burner *burner, struct chunk *chunk)
     if (burner->work.left) return;
 
     burner->op = im_burner_in;
-    if (burner->loops != loops_inf) burner->loops--;
+    if (burner->loops != im_loops_inf) burner->loops--;
     if (!burner->loops) im_burner_reset(burner, chunk);
 }
 
@@ -113,7 +113,7 @@ static void im_burner_io_item(
     im_burner_reset(burner, chunk);
     burner->op = im_burner_in;
     burner->item = item;
-    burner->loops = loops_io(len > 1 ? args[1] : loops_inf);
+    burner->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 
     size_t sum = 1;
     if (item_is_elem(item)) burner->output = item;

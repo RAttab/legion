@@ -50,7 +50,7 @@ static void im_extract_reset(struct im_extract *extract, struct chunk *chunk)
 
 static void im_extract_step_eof(struct im_extract *extract, struct chunk *chunk)
 {
-    if (extract->loops != loops_inf) extract->loops--;
+    if (extract->loops != im_loops_inf) extract->loops--;
 
     if (!extract->loops) im_extract_reset(extract, chunk);
     else extract->tape = tape_packed_it_zero(extract->tape);
@@ -151,7 +151,7 @@ static void im_extract_io_tape(
 
     im_extract_reset(extract, chunk);
     extract->tape = tape_pack(item, 0, tape);
-    extract->loops = loops_io(len > 1 ? args[1] : loops_inf);
+    extract->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 }
 
 static void im_extract_io(

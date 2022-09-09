@@ -493,7 +493,7 @@ static void factory_render_flow(
 
     ui_str_set_item(&factory->ui_target.str, flow->target);
     ui_label_render(&factory->ui_target, &layout, renderer);
-    if (flow->loops != loops_inf) {
+    if (flow->loops != im_loops_inf) {
         ui_label_render(&factory->ui_loops, &layout, renderer);
         ui_str_set_u64(&factory->ui_loops_val.str, flow->loops);
         ui_label_render(&factory->ui_loops_val, &layout, renderer);
