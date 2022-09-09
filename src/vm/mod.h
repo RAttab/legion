@@ -138,9 +138,9 @@ void mods_free(struct mods *);
 struct mods *mods_load(struct save *);
 void mods_save(const struct mods *, struct save *);
 
-mod_id mods_register(struct mods *, user, const struct symbol *name);
+mod_id mods_register(struct mods *, user_id, const struct symbol *name);
 bool mods_name(struct mods *, mod_maj, struct symbol *dst);
-user mods_owner(struct mods *, mod_maj);
+user_id mods_owner(struct mods *, mod_maj);
 
 mod_id mods_set(struct mods *, mod_maj, const struct mod *);
 const struct mod *mods_get(struct mods *, mod_id);
@@ -163,10 +163,10 @@ struct mods_list
     struct mods_item items[];
 };
 
-struct mods_list *mods_list(struct mods *, uset);
+struct mods_list *mods_list(struct mods *, user_set);
 struct mods_list *mods_list_reserve(size_t len);
 
-void mods_list_save(struct mods *, struct save *, uset);
+void mods_list_save(struct mods *, struct save *, user_set);
 bool mods_list_load_into(struct mods_list **, struct save *);
 
 void mods_populate(struct mods *, struct atoms *);

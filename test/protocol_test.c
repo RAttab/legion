@@ -43,7 +43,7 @@ void check(void)
     enum { attempts = 5, steps = 100 };
 
     sys_populate_tests();
-    const user user = user_admin;
+    const user_id user = user_admin;
     struct world *world = world_new(0);
     world_populate(world);
     struct coord home = world_home(world, user);
@@ -76,7 +76,7 @@ void check(void)
         save_mem_reset(save);
         state_save(save, &(struct state_ctx) {
                     .world = world,
-                    .access = user_to_uset(user),
+                    .access = user_to_set(user),
                     .user = user,
                     .speed = speed_fast,
                     .chunk = home,
@@ -98,7 +98,7 @@ void check(void)
             vec64_free(st_atoms);
         }
 
-        struct mods_list *wd_mods = mods_list(world_mods(world), user_to_uset(user));
+        struct mods_list *wd_mods = mods_list(world_mods(world), user_to_set(user));
         struct mods_list *st_mods = state->mods;
         assert(wd_mods->len == st_mods->len);
         for (size_t i = 0; i < wd_mods->len; ++i) {

@@ -35,12 +35,12 @@ void lanes_save(struct lanes *, struct save *);
 world_ts_delta lanes_travel(size_t speed, struct coord src, struct coord dst);
 
 const struct hset *lanes_list(struct lanes *, struct coord key);
-void lanes_list_save(struct lanes *, struct save *, struct world *, uset);
+void lanes_list_save(struct lanes *, struct save *, struct world *, user_set);
 bool lanes_list_load_into(struct htable *, struct save *);
 
 void lanes_launch(
         struct lanes *,
-        user owner, enum item type, size_t speed,
+        user_id owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const vm_word *data, size_t len);
 

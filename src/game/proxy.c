@@ -37,7 +37,7 @@ struct proxy
     atomic_uintptr_t pipe;
 
     struct {
-        token server;
+        user_token server;
         struct user user;
     } auth;
 

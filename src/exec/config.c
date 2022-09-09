@@ -30,14 +30,14 @@ static void config_server(const char *path)
     {
         writer_open_nl(out);
         writer_symbol_str(out, "users");
-        writer_field(out, "server", u64, make_token());
+        writer_field(out, "server", u64, make_user_token());
 
         struct user user = {
             .id = 0,
             .name = make_symbol("admin"),
-            .access = ((uset) -1ULL),
-            .public = make_token(),
-            .private = make_token(),
+            .access = ((user_set) -1ULL),
+            .public = make_user_token(),
+            .private = make_user_token(),
 
         };
 
@@ -55,7 +55,7 @@ static void config_server(const char *path)
 static void config_client(
         const char *path,
         const struct symbol *name,
-        token auth)
+        user_token auth)
 {
     struct config config = {0};
     struct writer *out = config_write(&config, path);
@@ -76,7 +76,7 @@ bool config_run(
         const char *type,
         const char *path,
         const struct symbol *name,
-        token auth)
+        user_token auth)
 {
     if (strcmp(type, "server") == 0) { config_server(path); return true; }
     if (strcmp(type, "client") == 0) { config_client(path, name, auth); return true; }

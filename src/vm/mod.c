@@ -294,7 +294,7 @@ struct mod_entry
 {
     mod_maj maj;
     mod_ver ver;
-    user owner;
+    user_id owner;
 
     struct symbol str;
     const struct mod *mod;
@@ -387,7 +387,8 @@ struct mods *mods_load(struct save *save)
 }
 
 
-mod_id mods_register(struct mods *mods, user owner, const struct symbol *name)
+mod_id mods_register(
+        struct mods *mods, user_id owner, const struct symbol *name)
 {
     if (mods_find(mods, name)) return 0;
 
@@ -422,7 +423,7 @@ bool mods_name(struct mods *mods, mod_maj maj, struct symbol *dst)
     return true;
 }
 
-user mods_owner(struct mods *mods, mod_maj maj)
+user_id mods_owner(struct mods *mods, mod_maj maj)
 {
     if (!maj) return -1;
 
@@ -512,7 +513,7 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
     return mods_get(mods, make_mod(maj, ver));
 }
 
-struct mods_list *mods_list(struct mods *mods, uset filter)
+struct mods_list *mods_list(struct mods *mods, user_set filter)
 {
     struct mods_list *ret = calloc(1,
             sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
@@ -521,7 +522,7 @@ struct mods_list *mods_list(struct mods *mods, uset filter)
     const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
     for (; it; it = htable_next(&mods->by_maj, it)) {
         struct mod_entry *entry = (void *) it->value;
-        if (!uset_test(filter, entry->owner)) continue;
+        if (!user_set_test(filter, entry->owner)) continue;
 
         struct mods_item *item = ret->items + ret->len;
         item->maj = entry->maj;
@@ -549,7 +550,7 @@ struct mods_list *mods_list_reserve(size_t len)
     return list;
 }
 
-void mods_list_save(struct mods *mods, struct save *save, uset filter)
+void mods_list_save(struct mods *mods, struct save *save, user_set filter)
 {
     struct mods_list *list = mods_list(mods, filter);
     save_write_magic(save, save_magic_mods);

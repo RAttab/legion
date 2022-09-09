@@ -171,8 +171,8 @@ struct cmd
 
     union
     {
-        struct { token server; struct symbol name; } user;
-        struct { token server; user id; token private; } auth;
+        struct { user_token server; struct symbol name; } user;
+        struct { user_token server; user_id id; user_token private; } auth;
 
         struct ack *ack;
         enum speed speed;
@@ -225,8 +225,8 @@ void state_free(struct state *);
 struct state_ctx
 {
     uint64_t stream;
-    uset access;
-    user user;
+    user_set access;
+    user_set user;
 
     struct world *world;
     enum speed speed;

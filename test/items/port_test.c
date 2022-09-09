@@ -11,7 +11,7 @@ void test_port(void)
     struct world *world = world_new(0);
     world_populate(world);
 
-    const user user = 0;
+    const user_id user = 0;
     const struct sector *sector = world_sector(world, coord_center());
 
     struct coord src = sector->stars[0].coord;

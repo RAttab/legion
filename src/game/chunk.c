@@ -28,7 +28,7 @@ struct chunk
 {
     struct world *world;
     struct star star;
-    user owner;
+    user_id owner;
     vm_word name;
 
     world_ts updated;
@@ -96,7 +96,7 @@ struct chunk *chunk_alloc_empty(void)
 }
 
 struct chunk *chunk_alloc(
-        struct world *world, const struct star *star, user owner, vm_word name)
+        struct world *world, const struct star *star, user_id owner, vm_word name)
 {
     assert(world);
 
@@ -417,7 +417,7 @@ bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
 // ops
 // -----------------------------------------------------------------------------
 
-user chunk_owner(struct chunk *chunk)
+user_id chunk_owner(struct chunk *chunk)
 {
     return chunk->owner;
 }

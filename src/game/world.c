@@ -24,7 +24,7 @@
 struct world_user
 {
     bool active;
-    user id;
+    user_id id;
     struct coord home;
     struct tech tech;
     struct log *log;
@@ -49,7 +49,7 @@ struct world
 // user
 // -----------------------------------------------------------------------------
 
-static struct world_user *world_user(struct world *world, user id)
+static struct world_user *world_user(struct world *world, user_id id)
 {
     assert(id < array_len(world->users));
     struct world_user *user = world->users + id;
@@ -128,7 +128,7 @@ static void world_save_users(struct world *world, struct save *save)
         log_save(it->log, save);
     }
 
-    save_write_value(save, (user) 0xFF);
+    save_write_value(save, (user_id) 0xFF);
 }
 
 static bool world_load_users(struct world *world, struct save *save)
@@ -142,7 +142,7 @@ static bool world_load_users(struct world *world, struct save *save)
     memset(world->users, 0, sizeof(world->users));
 
     while (true) {
-        user id = save_read_type(save, typeof(id));
+        user_id id = save_read_type(save, typeof(id));
         if (id == 0xFF) break;
         assert(id < array_len(world->users));
 
@@ -244,12 +244,12 @@ world_ts world_time(struct world *world)
     return world->time;
 }
 
-struct coord world_home(struct world *world, user user)
+struct coord world_home(struct world *world, user_id user)
 {
     return world_user(world, user)->home;
 }
 
-struct tech *world_tech(struct world *world, user user)
+struct tech *world_tech(struct world *world, user_id user)
 {
     return &world_user(world, user)->tech;
 }
@@ -265,7 +265,7 @@ struct mods *world_mods(struct world *world)
 }
 
 struct chunk *world_chunk_alloc(
-        struct world *world, struct coord coord, user user)
+        struct world *world, struct coord coord, user_id user)
 {
     if (unlikely(coord_is_nil(coord))) return NULL;
 
@@ -321,21 +321,21 @@ vm_word world_star_name(struct world *world, struct coord coord)
     return gen_name_star(coord, world->seed, world->atoms);
 }
 
-bool world_user_access(struct world *world, uset access, struct coord coord)
+bool world_user_access(struct world *world, user_set access, struct coord coord)
 {
     struct chunk *chunk = world_chunk(world, coord);
-    return !chunk ? false : uset_test(access, chunk_owner(chunk));
+    return !chunk ? false : user_set_test(access, chunk_owner(chunk));
 }
 
 
-struct log *world_log(struct world *world, user id)
+struct log *world_log(struct world *world, user_id id)
 {
     return world_user(world, id)->log;
 }
 
 void world_log_push(
         struct world *world,
-        user owner,
+        user_id owner,
         struct coord star,
         im_id id,
         vm_word key,
@@ -404,7 +404,7 @@ struct vec64 *world_chunk_list(struct world *world)
     return vec;
 }
 
-struct world_chunk_it world_chunk_it(struct world *world, uset filter)
+struct world_chunk_it world_chunk_it(struct world *world, user_set filter)
 {
     (void) world;
     return (struct world_chunk_it) { .filter = filter, .it = NULL };
@@ -414,7 +414,7 @@ struct chunk *world_chunk_next(struct world *world, struct world_chunk_it *it)
 {
     while ((it->it = htable_next(&world->chunks, it->it))) {
         struct chunk *chunk = (void *) it->it->value;
-        if (uset_test(it->filter, chunk_owner(chunk))) return chunk;
+        if (user_set_test(it->filter, chunk_owner(chunk))) return chunk;
     }
     return NULL;
 }
@@ -429,14 +429,14 @@ const struct hset *world_lanes_list(struct world *world, struct coord key)
     return lanes_list(&world->lanes, key);
 }
 
-void world_lanes_list_save(struct world *world, struct save *save, uset filter)
+void world_lanes_list_save(struct world *world, struct save *save, user_set filter)
 {
     lanes_list_save(&world->lanes, save, world, filter);
 }
 
 void world_lanes_launch(
         struct world *world,
-        user owner, enum item type, size_t speed,
+        user_id owner, enum item type, size_t speed,
         struct coord src, struct coord dst,
         const vm_word *data, size_t len)
 {
@@ -445,7 +445,7 @@ void world_lanes_launch(
 
 void world_lanes_arrive(
         struct world *world,
-        user owner, enum item type,
+        user_id owner, enum item type,
         struct coord src, struct coord dst,
         const vm_word *data, size_t len)
 {
@@ -477,7 +477,7 @@ static struct coord world_populate_home(struct sector *sector)
     return coord_nil();
 }
 
-void world_populate_user(struct world *world, user id)
+void world_populate_user(struct world *world, user_id id)
 {
     assert(id < array_len(world->users));
 
@@ -489,7 +489,7 @@ void world_populate_user(struct world *world, user id)
     user->log = log_new(world_log_cap);
     tech_populate(&user->tech);
 
-    struct rng rng = rng_make(make_token());
+    struct rng rng = rng_make(make_user_token());
     struct sector *sector = NULL;
 
     while (true) {
