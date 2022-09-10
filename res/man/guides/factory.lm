@@ -107,7 +107,7 @@ clunky at first, it's design is motivated by the automation layer
 which is discussed in {/guides/mods}.
 
 You can access the IO interface for our first extractor by clicking
-{_000001.extract} in the active items list which will open the item
+{_extract.01} in the active items list which will open the item
 state interface. In this interface you can view the current state of
 the item which should be blank due to it being idle. Next, click on
 the {_IO} view button at the top of the state interface to open the IO
@@ -153,7 +153,7 @@ view. Since we don't have any consumers for the extracted item, the
 state of our extractor will not change any further.
 
 For the rest of this guide we'll also need to have access to element
-B. To do so, repeat the process but with extractor {_000002.extract}
+B. To do so, repeat the process but with extractor {_extract.02}
 and the key {_&item-elem-b}. Once completed, you show see two boxes in
 the factory view representing both our extractors and both elements A
 and B ready to be consumed.
@@ -170,10 +170,10 @@ section will be very similar to the process in the previous section.
 The tape for {_&item-extract}, our end goal, requires as input the
 items {_&item-muscle} and {_&item-nodule} each of which can be created
 by programming printers with their respective tapes. We can start by
-navigating to the IO interface of {_000001.printer} and executing the
+navigating to the IO interface of {_printer.01} and executing the
 {_io-tape} command with the tape id {_&item-muscle}. Repeat the
-process with {_000002.printer} and the tape id {_&item-nodule} and
-finally with {_000001.assembly} with the tape id {_&item-extract}.
+process with {_printer.02} and the tape id {_&item-nodule} and
+finally with {_assembly.01} with the tape id {_&item-extract}.
 
 You'll notice that as you execute each of these IO commands, the
 factory view will not only display new boxes for each of the newly
@@ -201,17 +201,17 @@ instead use the {_io-item} command to directly indicate which item we
 wish to activate.
 
 Once again, you can begin by navigating to the IO interface of the
-{_000001.deploy} item where you'll notice that the input fields
+{_deploy.01} item where you'll notice that the input fields
 {_io-item} are the same as {_io-tape}. We'll use the key
 {_&item-extract} for the id field and, to avoid creating an infinite
 number of extractor, we will use a loop value of {_2}.
 
 Once the IO command is executed, you will notice that the pending
 extractor will immediately be consumed by the deployer and will now be
-available in the active item list as {_00003.extract}. Additionally,
+available in the active item list as {_extract.03}. Additionally,
 you'll notice that the factory will automatically begin building the
 next extractor which will also, eventually, be deployed as item
-{_000004.extract}. Once the final extractor is completed and our loop
+{_extract.04}. Once the final extractor is completed and our loop
 limit is reached, the deployer's state will automatically be reset and
 the factory will eventually settle back into an idle state.
 

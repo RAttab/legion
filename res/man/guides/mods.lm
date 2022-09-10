@@ -250,7 +250,7 @@ is the sequential identifier of the item of that type. As an example:
 
 {`(id &item-extract 1)}
 
-Will reference the extractor {_000001.extract} within the active item
+Will reference the extractor {_extract.01} within the active item
 list.
 
 {>arguments} A list of zero or more arguments to be provided to the IO
@@ -278,7 +278,7 @@ be used to test whether a target item exists:
 }
 
 In this example, {_&io-ping} takes no arguments and will be sent to
-the extractor {_000001.extract} within our factory. The return value
+the extractor {_extract.01} within our factory. The return value
 is then tested against the atom {_&io-ok} to see if the call has
 succeeded. The result of the test is given to the {_assert} function
 which will raise an error and halt execution if the result of our test
