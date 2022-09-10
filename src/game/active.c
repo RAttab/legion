@@ -33,6 +33,9 @@ void active_free(struct active *active)
     if (active->cap > 64)
         vec64_free((void *) active->free);
 
+    active->arena = 0;
+    active->ports = 0;
+    active->free = 0;
     active->count = 0;
     active->free = 0;
     active->len = 0;

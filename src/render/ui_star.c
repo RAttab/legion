@@ -189,10 +189,13 @@ void ui_star_free(struct ui_star *ui) {
 
     ui_label_free(&ui->name);
     ui_label_free(&ui->name_val);
+
     ui_label_free(&ui->coord);
     ui_link_free(&ui->coord_val);
+
     ui_label_free(&ui->energy);
     ui_label_free(&ui->energy_val);
+
     ui_label_free(&ui->elem);
     ui_label_free(&ui->elem_val);
 
@@ -202,6 +205,9 @@ void ui_star_free(struct ui_star *ui) {
 
     ui_tree_free(&ui->control_list);
     ui_tree_free(&ui->factory_list);
+
+    ui_label_free(&ui->pills);
+    ui_label_free(&ui->pills_val);
 
     ui_label_free(&ui->workers.workers);
     ui_label_free(&ui->workers.workers_val);

@@ -208,16 +208,4 @@
       !item-engram
       !item-engram
       !item-engram)
-  (out !item-receive))
-
- (!item-collider
-  (energy 100)
-  (in !item-brain
-      !item-nodule
-      !item-accelerator
-      !item-accelerator
-      !item-nodule
-      !item-accelerator
-      !item-accelerator
-      !item-nodule)
-  (out !item-collider)))
+  (out !item-receive)))

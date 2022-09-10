@@ -341,6 +341,7 @@ void state_free(struct state *state)
     {
         hset_free((void *) it->value);
     }
+    htable_reset(&state->lanes);
 
     free(state);
 }

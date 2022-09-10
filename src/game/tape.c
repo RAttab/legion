@@ -284,6 +284,9 @@ static void tapes_load_tape(
         reader_close(in);
     }
 
+    if (tapes.index[id]) failf("duplicate tape: id=%x, host=%x", id, host);
+
+    assert(!tapes.index[id]);
     tapes.index[id] = tapes_vec_output(&vec, id, host, energy, work);
 }
 

@@ -92,6 +92,12 @@ void users_init(struct users *users)
 
 void users_free(struct users *users)
 {
+    for (const struct htable_bucket *it = htable_next(&users->ids, NULL);
+         it; it = htable_next(&users->ids, it))
+    {
+        free((struct user *) it->value);
+    }
+
     htable_reset(&users->ids);
     htable_reset(&users->names);
     htable_reset(&users->grant);

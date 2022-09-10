@@ -197,16 +197,16 @@ static struct line *line_replace_tabs(struct text *text, struct line *line)
     char *end = it + line->len;
     while (it < end && *it == '\t') it++;
 
-    size_t len = it - line->c;
-    size_t spaces = len * 8;
-    if (!len) return line;
+    size_t tabs = it - line->c;
+    size_t spaces = tabs * 8;
+    if (!tabs) return line;
 
-    line = line_realloc(text, line, line->len + spaces - len);
-    memmove(line->c + spaces, line->c + len, line->len);
+    line = line_realloc(text, line, line->len + spaces - tabs);
+    memmove(line->c + spaces, line->c + tabs, line->len - tabs);
     memset(line->c, ' ', spaces);
 
-    line->len += spaces - len;
-    text->bytes += spaces - len;
+    line->len += spaces - tabs;
+    text->bytes += spaces - tabs;
     return line;
 }
 

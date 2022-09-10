@@ -100,14 +100,6 @@ static void markup_str(struct markup *markup, const char *str, size_t len)
     markup->len += len;
 }
 
-static void markup_continue(struct markup *dst, const struct markup *src)
-{
-    *dst = (struct markup) {
-        .type = src->type,
-        .link = src->link,
-    };
-}
-
 
 // -----------------------------------------------------------------------------
 // man

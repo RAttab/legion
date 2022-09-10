@@ -82,12 +82,15 @@ static void man_render_append(
     }
 
     if (parser->cols.curr + spaces + len > parser->cols.cap) {
-        // \todo line justitication should happen here.
+        enum markup_type type = markup->type;
+        struct link link = markup->link;
 
         (void) man_render_newline(parser);
-        struct markup *new = man_markup(parser->man, markup_nil);
-        markup_continue(new, markup);
-        markup = new;
+
+        markup = man_markup(parser->man, markup_nil);
+        markup->type = type;
+        markup->link = link;
+
         spaces = parser->indent;
     }
 

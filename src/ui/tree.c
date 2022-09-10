@@ -111,14 +111,14 @@ struct ui_str *ui_tree_add(
     struct ui_node *node = tree->nodes + tree->len;
     tree->len++;
 
-    *node = (struct ui_node) {
-        .leaf = true,
-        .open = hset_test(tree->open, user),
-        .depth = 0,
-        .str = ui_str_clone(&tree->str),
-        .user = user,
-        .parent = parent,
-    };
+    node->leaf = true;
+    node->open = hset_test(tree->open, user);
+    node->depth = 0;
+    node->user = user;
+    node->parent = parent;
+
+    if (!node->str.cap)
+        node->str = ui_str_clone(&tree->str);
 
     if (parent != ui_node_nil) {
         struct ui_node *parent_node = tree->nodes + parent;

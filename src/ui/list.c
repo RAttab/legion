@@ -72,10 +72,10 @@ struct ui_str *ui_list_add(struct ui_list *list, uint64_t user)
     struct ui_entry *entry = list->entries + list->len;
     list->len++;
 
-    *entry = (struct ui_entry) {
-        .str = ui_str_clone(&list->str),
-        .user = user,
-    };
+    entry->user = user;
+
+    if (!entry->str.cap)
+        entry->str = ui_str_clone(&list->str);
 
     return &entry->str;
 }

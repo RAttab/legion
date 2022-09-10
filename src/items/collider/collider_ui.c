@@ -89,6 +89,10 @@ static void ui_collider_free(void *_ui)
     ui_label_free(&ui->size);
     ui_label_free(&ui->size_val);
 
+    ui_label_free(&ui->rate);
+    ui_label_free(&ui->rate_val);
+    ui_label_free(&ui->rate_pct);
+
     ui_label_free(&ui->op);
     ui_label_free(&ui->op_val);
 
