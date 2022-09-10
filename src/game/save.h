@@ -8,6 +8,7 @@
 #include "common.h"
 
 struct htable;
+struct vec32;
 struct vec64;
 struct symbol;
 
@@ -17,13 +18,14 @@ struct symbol;
 
 enum legion_packed save_magic
 {
-    save_magic_vec64  = 0x01,
-    save_magic_ring16 = 0x02,
-    save_magic_ring32 = 0x03,
-    save_magic_ring64 = 0x04,
-    save_magic_htable = 0x05,
-    save_magic_symbol = 0x06,
-    save_magic_heap   = 0x07,
+    save_magic_vec32  = 0x01,
+    save_magic_vec64  = 0x02,
+    save_magic_ring16 = 0x03,
+    save_magic_ring32 = 0x04,
+    save_magic_ring64 = 0x05,
+    save_magic_htable = 0x06,
+    save_magic_symbol = 0x07,
+    save_magic_heap   = 0x08,
 
     save_magic_sim      = 0x10,
     save_magic_world    = 0x11,
@@ -151,6 +153,9 @@ bool save_read_magic(struct save *, enum save_magic exp);
 
 void save_write_htable(struct save *, const struct htable *);
 bool save_read_htable(struct save *, struct htable *);
+
+void save_write_vec32(struct save *, const struct vec32 *);
+bool save_read_vec32(struct save *, struct vec32 **);
 
 void save_write_vec64(struct save *, const struct vec64 *);
 bool save_read_vec64(struct save *, struct vec64 **);

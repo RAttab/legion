@@ -21,10 +21,6 @@
 #define vecx_name vec_flow
 #include "utils/vecx.h"
 
-#define vecx_type uint16_t
-#define vecx_name vec16
-#include "utils/vecx.h"
-
 
 // -----------------------------------------------------------------------------
 // factory
@@ -79,7 +75,9 @@ struct factory *factory_new(void)
         .ui_tape_num = ui_label_new(font, ui_str_v(3)),
         .ui_tape_of = ui_label_new(font, ui_str_c("/")),
 
-        .inner = make_dim(im_id_str_len * font->glyph_w, 3 * font->glyph_h),
+        .inner = make_dim(
+                (item_str_len + 3 + 1 + 3) * font->glyph_w,
+                3 * font->glyph_h),
         .margin = make_dim(5, 5),
         .pad = make_dim(20, 20),
     };
@@ -130,7 +128,7 @@ void factory_free(struct factory *factory)
         vec16_free((struct vec16 *) factory->grid->vals[i]);
     vec64_free(factory->grid);
 
-    vec64_free(factory->workers.ops);
+    vec32_free(factory->workers.ops);
     vec_flow_free(factory->flows);
     htable_reset(&factory->index);
 
@@ -328,20 +326,20 @@ static void factory_update(struct factory *factory)
         return;
     }
 
-    struct vec64 *ids = chunk_list_filter(chunk, im_list_factory);
+    struct vec16 *ids = chunk_list_filter(chunk, im_list_factory);
     factory->flows = vec_flow_grow(factory->flows, ids->len);
     factory->flows->len = 0;
 
     htable_reset(&factory->index);
-    htable_reserve(&factory->index, vec64_len(ids));
+    htable_reserve(&factory->index, vec16_len(ids));
 
-    for (size_t i = 0; i < vec64_len(ids); ++i) {
+    for (size_t i = 0; i < vec16_len(ids); ++i) {
         if (factory_make_flow(factory, factory->flows->len, chunk, ids->vals[i]))
             factory->flows->len++;
     }
 
     factory->workers = chunk_workers(chunk);
-    factory->workers.ops = vec64_copy(factory->workers.ops);
+    factory->workers.ops = vec32_copy(factory->workers.ops);
 
     free(ids);
 }
@@ -466,7 +464,10 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
 // -----------------------------------------------------------------------------
 
 static void factory_render_flow(
-        struct factory *factory, struct flow *flow, bool select, SDL_Renderer *renderer)
+        struct factory *factory,
+        struct flow *flow,
+        bool select,
+        SDL_Renderer *renderer)
 {
     sdl_err(SDL_SetRenderTarget(renderer, factory->tex));
     sdl_err(SDL_SetTextureBlendMode(factory->tex, SDL_BLENDMODE_BLEND));
@@ -527,7 +528,7 @@ static void factory_render_flow(
 }
 
 static void factory_render_op(
-        struct factory *factory, uint64_t op, SDL_Renderer *renderer)
+        struct factory *factory, uint32_t op, SDL_Renderer *renderer)
 {
     struct htable_ret ret = {0};
 
@@ -583,8 +584,8 @@ void factory_render(struct factory *factory, SDL_Renderer *renderer)
         }
     }
 
-    for (size_t i = 0; i < vec64_len(factory->workers.ops); ++i) {
-        uint64_t op = factory->workers.ops->vals[i];
+    for (size_t i = 0; i < vec32_len(factory->workers.ops); ++i) {
+        uint32_t op = factory->workers.ops->vals[i];
         factory_render_op(factory, op, renderer);
     }
 }

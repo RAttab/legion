@@ -75,7 +75,7 @@ void active_save(const struct active *, struct save *save);
 size_t active_count(struct active *);
 
 im_id active_last(struct active *);
-void active_list(struct active *, struct vec64 *ids);
+void active_list(struct active *, struct vec16 *ids);
 void *active_get(struct active *, im_id id);
 struct ports *active_ports(struct active *active, im_id id);
 

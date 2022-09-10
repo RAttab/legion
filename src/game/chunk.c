@@ -86,7 +86,7 @@ struct chunk *chunk_alloc_empty(void)
         .requested = ring16_reserve(16),
         .storage = ring16_reserve(1),
         .pills = ring64_reserve(2),
-        .workers.ops = vec64_reserve(1),
+        .workers.ops = vec32_reserve(1),
     };
 
     for (size_t i = 0; i < array_len(chunk->active); ++i)
@@ -122,7 +122,7 @@ void chunk_free(struct chunk *chunk)
     htable_reset(&chunk->provided);
 
     ring64_free(chunk->pills);
-    vec64_free(chunk->workers.ops);
+    vec32_free(chunk->workers.ops);
     htable_reset(&chunk->listen);
 
     for (struct active *it = active_next(chunk, NULL);
@@ -228,7 +228,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     ring64_save(chunk->pills, save);
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
-    save_write_vec64(save, chunk->workers.ops);
+    save_write_vec32(save, chunk->workers.ops);
 
     log_save(chunk->log, save);
     chunk_save_listen(chunk, save);
@@ -255,7 +255,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
     if (!(chunk->pills = ring64_load(save))) goto fail;
     if (!energy_load(&chunk->energy, save)) goto fail;
     save_read_into(save, &chunk->workers.count);
-    if (!save_read_vec64(save, &chunk->workers.ops)) goto fail;
+    if (!save_read_vec32(save, &chunk->workers.ops)) goto fail;
 
     if (!(chunk->log = log_load(save))) goto fail;
     if (!chunk_load_listen(chunk, save)) goto fail;
@@ -374,7 +374,7 @@ void chunk_save_delta(
     ring64_save_delta(chunk->pills, save, &cack->pills);
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
-    save_write_vec64(save, chunk->workers.ops);
+    save_write_vec32(save, chunk->workers.ops);
 
     log_save_delta(chunk->log, save, cack->time);
     chunk_save_listen(chunk, save);
@@ -400,7 +400,7 @@ bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
     if (!ring64_load_delta(&chunk->pills, save, &ack->chunk.pills)) return false;
     if (!energy_load(&chunk->energy, save)) return false;
     save_read_into(save, &chunk->workers.count);
-    if (!save_read_vec64(save, &chunk->workers.ops)) return false;
+    if (!save_read_vec32(save, &chunk->workers.ops)) return false;
 
     if (!log_load_delta(chunk->log, save, ack->chunk.time)) return false;
     if (!chunk_load_listen(chunk, save)) return false;
@@ -473,26 +473,26 @@ im_id chunk_last(struct chunk *chunk, enum item item)
     return active_last(active_index_assert(chunk, item));
 }
 
-struct vec64* chunk_list(struct chunk *chunk)
+struct vec16* chunk_list(struct chunk *chunk)
 {
     size_t sum = 0;
     for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
         sum += active_count(it);
 
-    struct vec64 *ids = vec64_reserve(sum);
+    struct vec16 *ids = vec16_reserve(sum);
     for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it))
         active_list(it, ids);
 
     return ids;
 }
 
-struct vec64* chunk_list_filter(struct chunk *chunk, im_list filter)
+struct vec16* chunk_list_filter(struct chunk *chunk, im_list filter)
 {
     size_t sum = 0;
     for (im_list it = filter; *it; it++)
         sum += active_count(active_index_assert(chunk, *it));
 
-    struct vec64 *ids = vec64_reserve(sum);
+    struct vec16 *ids = vec16_reserve(sum);
     for (im_list it = filter; *it; it++)
         active_list(active_index_assert(chunk, *it), ids);
 
@@ -885,7 +885,7 @@ static bool chunk_ports_step_queue(
     in->in_state = ports_received;
 
     chunk->workers.ops =
-        vec64_append(chunk->workers.ops, ((uint64_t) src << 32) | dst);
+        vec32_append(chunk->workers.ops, ((uint32_t) src << 16) | dst);
 
     return true;
 

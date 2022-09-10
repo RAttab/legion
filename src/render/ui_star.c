@@ -266,7 +266,7 @@ static void ui_star_update_list(
 
     enum item item = ITEM_NIL;
     ui_node parent = ui_node_nil;
-    struct vec64 *ids = chunk_list_filter(chunk, filter);
+    struct vec16 *ids = chunk_list_filter(chunk, filter);
 
     for (size_t i = 0; i < ids->len; ++i) {
         im_id id = ids->vals[i];
@@ -280,7 +280,7 @@ static void ui_star_update_list(
         ui_str_set_id(ui_tree_add(tree, parent, id), id);
     }
 
-    vec64_free(ids);
+    vec16_free(ids);
 }
 
 static void ui_star_update(struct ui_star *ui)

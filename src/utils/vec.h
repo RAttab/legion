@@ -5,19 +5,22 @@
 
 #pragma once
 
+
 // -----------------------------------------------------------------------------
-// vec64
+// vec
 // -----------------------------------------------------------------------------
+
+#define vecx_type uint16_t
+#define vecx_name vec16
+#define vecx_cmp
+#include "utils/vecx.h"
+
+#define vecx_type uint32_t
+#define vecx_name vec32
+#define vecx_cmp
+#include "utils/vecx.h"
 
 #define vecx_type uint64_t
 #define vecx_name vec64
-#define vecx_sort
+#define vecx_cmp
 #include "utils/vecx.h"
-
-inline bool vec64_eq(const struct vec64 *lhs, const struct vec64 *rhs)
-{
-    if (lhs->len != rhs->len) return false;
-    for (size_t i = 0; i < lhs->len; ++i)
-        if (lhs->vals[i] != rhs->vals[i]) return false;
-    return true;
-}

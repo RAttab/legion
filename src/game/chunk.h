@@ -51,8 +51,8 @@ void chunk_rename(struct chunk *, vm_word);
 bool chunk_harvest(struct chunk *, enum item item);
 
 im_id chunk_last(struct chunk *, enum item);
-struct vec64 *chunk_list(struct chunk *);
-struct vec64 *chunk_list_filter(struct chunk *, im_list filter);
+struct vec16 *chunk_list(struct chunk *);
+struct vec16 *chunk_list_filter(struct chunk *, im_list filter);
 const void *chunk_get(struct chunk *, im_id);
 bool chunk_copy(struct chunk *, im_id, void *dst, size_t len);
 bool chunk_delete(struct chunk *, im_id id);
@@ -101,12 +101,12 @@ void chunk_ports_request(struct chunk *, im_id, enum item);
 struct workers
 {
     uint16_t count, queue, idle, fail, clean;
-    struct vec64 *ops;
+    struct vec32 *ops;
 };
 
 struct workers chunk_workers(struct chunk *);
-inline void chunk_workers_ops(uint64_t val, im_id *src, im_id *dst)
+inline void chunk_workers_ops(uint32_t val, im_id *src, im_id *dst)
 {
-    *src = val >> 32;
-    *dst = val & ((1ULL << 32) - 1);
+    *src = val >> 16;
+    *dst = val & ((1ULL << 16) - 1);
 }

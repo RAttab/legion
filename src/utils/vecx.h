@@ -75,7 +75,17 @@ struct vecx_name *vecx_fn(copy) (struct vecx_name *old)
     return new;
 }
 
-#ifdef vecx_sort
+#ifdef vecx_cmp
+
+inline legion_always_inline
+bool vecx_fn(eq) (struct vecx_name *lhs, struct vecx_name *rhs)
+{
+    if (lhs->len != rhs->len) return false;
+    for (size_t i = 0; i < lhs->len; ++i)
+        if (lhs->vals[i] != rhs->vals[i]) return false;
+    return true;
+}
+
 inline legion_always_inline
 void vecx_fn(sort) (struct vecx_name *vec)
 {
@@ -95,12 +105,13 @@ void vecx_fn(sort_fn) (
 {
     qsort(vec->vals, vec->len, sizeof(vec->vals[0]), fn);
 }
+
 #endif
 
 #undef vecx_fn_concat
 #undef vecx_fn_eval
 #undef vecx_fn
 
-#undef vecx_sort
+#undef vecx_cmp
 #undef vecx_type
 #undef vecx_name

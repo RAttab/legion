@@ -194,11 +194,11 @@ im_id active_last(struct active *active)
     return 0;
 }
 
-void active_list(struct active *active, struct vec64 *ids)
+void active_list(struct active *active, struct vec16 *ids)
 {
     for (size_t i = 0; i < active->len; ++i) {
         if (active_deleted(active, i)) continue;
-        vec64_append(ids, make_im_id(active->type, i+1));
+        vec16_append(ids, make_im_id(active->type, i+1));
     }
 }
 

@@ -157,11 +157,11 @@ void check(void)
             assert(coord_eq(state->chunk.coord, home));
             assert(coord_eq(chunk_star(st_chunk)->coord, home));
 
-            struct vec64 *wd_items = chunk_list(wd_chunk);
-            struct vec64 *st_items = chunk_list(st_chunk);
-            assert(vec64_eq(wd_items, st_items));
-            vec64_free(wd_items);
-            vec64_free(st_items);
+            struct vec16 *wd_items = chunk_list(wd_chunk);
+            struct vec16 *st_items = chunk_list(st_chunk);
+            assert(vec16_eq(wd_items, st_items));
+            vec16_free(wd_items);
+            vec16_free(st_items);
         }
 
         for (size_t step = 0; step < steps; ++step) world_step(world);

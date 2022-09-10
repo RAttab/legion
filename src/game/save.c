@@ -163,6 +163,44 @@ bool save_read_htable(struct save *save, struct htable *ht)
 }
 
 
+void save_write_vec32(struct save *save, const struct vec32 *vec)
+{
+    save_write_magic(save, save_magic_vec32);
+
+    if (!vec) {
+        save_write_value(save, (typeof(vec->len)) 0);
+        save_write_value(save, (typeof(vec->cap)) 0);
+    }
+    else {
+        save_write_value(save, vec->len);
+        save_write_value(save, vec->cap);
+        save_write(save, vec->vals, vec->len * sizeof(vec->vals[0]));
+    }
+
+    save_write_magic(save, save_magic_vec32);
+}
+
+bool save_read_vec32(struct save *save, struct vec32 **ret)
+{
+    if (!save_read_magic(save, save_magic_vec32)) return false;
+
+    struct vec32 *vec = *ret;
+    typeof(vec->len) len = save_read_type(save, typeof(len));
+    typeof(vec->cap) cap = save_read_type(save, typeof(cap));
+
+    if (cap) vec = vec32_grow(vec, cap);
+    else if (vec && !cap) { vec32_free(vec); vec = NULL; }
+
+    if (vec) {
+        vec->len = len;
+        save_read(save, vec->vals, len * sizeof(vec->vals[0]));
+    }
+
+    *ret = vec;
+    return save_read_magic(save, save_magic_vec32);
+}
+
+
 void save_write_vec64(struct save *save, const struct vec64 *vec)
 {
     save_write_magic(save, save_magic_vec64);
