@@ -147,12 +147,6 @@ static void ui_close(void)
 
 static void ui_event(SDL_Event *event)
 {
-    if (event->type == SDL_KEYDOWN) {
-        if (event->key.keysym.sym == SDLK_q)
-            if (event->key.keysym.mod & KMOD_CTRL)
-                render_push_quit();
-    }
-
     if (ui_topbar_event(render.ui.topbar, event)) return;
     if (ui_status_event(render.ui.status, event)) return;
     if (ui_tapes_event(render.ui.tapes, event)) return;

@@ -127,9 +127,43 @@ bool ui_topbar_event_user(struct ui_topbar *ui, SDL_Event *ev)
     }
 }
 
+bool ui_topbar_event_shortcuts(struct ui_topbar *ui, SDL_Event *ev)
+{
+    (void) ui;
+    if (!(ev->key.keysym.mod & KMOD_CTRL)) return false;
+
+    switch (ev->key.keysym.sym)
+    {
+
+    case SDLK_s: { proxy_save(render.proxy); return true; }
+    case SDLK_o: { proxy_load(render.proxy); return true; }
+
+    case SDLK_1: { proxy_set_speed(render.proxy, speed_slow); return true; }
+    case SDLK_2: { proxy_set_speed(render.proxy, speed_fast); return true; }
+    case SDLK_3: { proxy_set_speed(render.proxy, speed_faster); return true; }
+    case SDLK_4: { proxy_set_speed(render.proxy, speed_fastest); return true; }
+    case SDLK_SPACE: {
+        if (proxy_speed(render.proxy) == speed_pause)
+            proxy_set_speed(render.proxy, speed_slow);
+        else proxy_set_speed(render.proxy, speed_pause);
+        return true;
+    }
+
+    case SDLK_m: { render_push_event(EV_MODS_TOGGLE, 0, 0); return true; }
+    case SDLK_a: { render_push_event(EV_STARS_TOGGLE, 0, 0); return true; }
+    case SDLK_t: { render_push_event(EV_TAPES_TOGGLE, 0, 0); return true; }
+    case SDLK_l: { render_push_event(EV_LOG_TOGGLE, 0, 0); return true; }
+    case SDLK_h: { render_push_event(EV_MAN_TOGGLE, 0, 0); return true; }
+    case SDLK_q: { render_push_quit(); return true; }
+
+    default: { return false; }
+    }
+}
+
 bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 {
     if (ev->type == render.event) return ui_topbar_event_user(ui, ev);
+    if (ev->type == SDL_KEYDOWN) return ui_topbar_event_shortcuts(ui, ev);
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
