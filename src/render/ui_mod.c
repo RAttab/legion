@@ -91,12 +91,16 @@ static void ui_mod_mode_swap(struct ui_mod *ui)
         ui_str_setv(&ui->mode.str, "code", 4);
         ui_code_set_disassembly(&ui->code, ui->mod, ip);
         ui->reset.disabled = true;
+        ui->compile.disabled = true;
+        ui->publish.disabled = true;
     }
 
     else {
         ui_str_setv(&ui->mode.str, "asm", 3);
         ui_code_set_code(&ui->code, ui->mod, ip);
         ui->reset.disabled = false;
+        ui->compile.disabled = false;
+        ui->publish.disabled = ui->mod->errs_len || mod_version(ui->mod->id);
     }
 }
 
@@ -112,7 +116,6 @@ static void ui_mod_update(struct ui_mod *ui)
     mod_free(legion_xchg(&ui->mod, mod));
     ui->id = mod->id;
 
-    ui->publish.disabled = mod->errs_len || mod_version(mod->id);
     if (!mod->errs_len) ui->mode.disabled = false;
     else {
         ui->mode.disabled = true;
@@ -120,8 +123,18 @@ static void ui_mod_update(struct ui_mod *ui)
         ui_str_setv(&ui->mode.str, "code", 4);
     }
 
-    if (!ui->disassembly) ui_code_set_code(&ui->code, mod, ui->ip);
-    else ui_code_set_disassembly(&ui->code, mod, ui->ip);
+    if (!ui->disassembly) {
+        ui_code_set_code(&ui->code, mod, ui->ip);
+        ui->reset.disabled = false;
+        ui->compile.disabled = false;
+        ui->publish.disabled = mod->errs_len || mod_version(mod->id);
+    }
+    else {
+        ui_code_set_disassembly(&ui->code, mod, ui->ip);
+        ui->reset.disabled = true;
+        ui->compile.disabled = true;
+        ui->publish.disabled = true;
+    }
 
     struct symbol name = {0};
     bool ok = proxy_mod_name(render.proxy, mod_major(ui->id), &name);
