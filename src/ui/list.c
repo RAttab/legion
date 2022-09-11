@@ -98,7 +98,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
 
         size_t row = (point.y - rect.y) / list->font->glyph_h;
         row += ui_scroll_first(&list->scroll);
-        if (row > list->len) return ui_nil;
+        if (row >= list->len) return ui_nil;
 
         list->hover = list->entries[row].user;
         return ui_nil;
@@ -110,7 +110,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
 
         size_t row = (point.y - rect.y) / list->font->glyph_h;
         row += ui_scroll_first(&list->scroll);
-        if (row > list->len) return ui_consume;
+        if (row >= list->len) return ui_consume;
 
         list->selected = list->entries[row].user;
         return ui_action;

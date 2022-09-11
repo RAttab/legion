@@ -249,6 +249,8 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
         text_to_str(&ui->code.text, buffer, len);
 
         proxy_mod_compile(render.proxy, mod_major(ui->id), buffer, len);
+
+        free(buffer);
         return true;
     }
 

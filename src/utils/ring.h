@@ -29,6 +29,11 @@ inline size_t ring_delta(ring_it first, ring_it last)
 
 struct ring_ack { ring_it head, tail; };
 
+inline void ring_ack_reset(struct ring_ack *ack)
+{
+    *ack = (struct ring_ack) {0};
+}
+
 inline uint64_t ring_ack_to_u64(struct ring_ack ack)
 {
     return (((uint64_t) ack.tail) << 32) | ack.head;

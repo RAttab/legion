@@ -54,8 +54,17 @@ void ack_free(struct ack *ack)
 
 void ack_reset(struct ack *ack)
 {
+    ack->stream = 0;
+    ack->time = 0;
+    ack->atoms = 0;
+
+    ack->chunk.coord = coord_nil();
+    ack->chunk.time = 0;
     htable_clear(&ack->chunk.provided);
-    memset(ack, 0, sizeof(*ack));
+    ring_ack_reset(&ack->chunk.requested);
+    ring_ack_reset(&ack->chunk.storage);
+    ring_ack_reset(&ack->chunk.pills);
+    memset(ack->chunk.active, 0, sizeof(ack->chunk.active));
 }
 
 void ack_reset_chunk(struct ack *ack)

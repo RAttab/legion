@@ -338,6 +338,8 @@ static void factory_update(struct factory *factory)
             factory->flows->len++;
     }
 
+    if (factory->workers.ops) vec32_free(factory->workers.ops);
+
     factory->workers = chunk_workers(chunk);
     factory->workers.ops = vec32_copy(factory->workers.ops);
 

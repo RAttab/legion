@@ -63,6 +63,7 @@ void proxy_free(struct proxy *proxy)
     struct proxy_pipe *pipe = proxy_pipe(proxy);
     if (pipe) proxy_pipe_free(proxy, pipe);
 
+    mod_free(proxy->mod);
     state_free(proxy->state);
     hset_free(proxy->active_sectors);
     hset_free(proxy->active_stars);
@@ -503,9 +504,7 @@ void proxy_io(
 
 const struct mod *proxy_mod(struct proxy *proxy)
 {
-    const struct mod *mod = proxy->mod;
-    proxy->mod = NULL;
-    return mod;
+    return legion_xchg(&proxy->mod, (const struct mod *) NULL);
 }
 
 void proxy_mod_select(struct proxy *proxy, mod_id id)
