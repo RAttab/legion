@@ -179,6 +179,7 @@ enum legion_packed item
 
     ITEM_DATA   = ITEM_SYS_FIRST + 0x00,
     ITEM_ENERGY = ITEM_SYS_FIRST + 0x01,
+    ITEM_DUMMY  = ITEM_SYS_FIRST + 0x08,
 
     ITEM_SYS_LAST,
     ITEM_MAX = ITEM_SYS_LAST,

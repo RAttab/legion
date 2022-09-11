@@ -156,6 +156,7 @@ static struct im_config im_configs[ITEM_MAX] =
     // Sys
     im_init(ITEM_DATA,   "data",   bits_s, work_s),
     im_init(ITEM_ENERGY, "energy", bits_s, work_s),
+    im_init(ITEM_DUMMY,  "dummy",  bits_s, work_s),
 };
 
 #undef im_init
