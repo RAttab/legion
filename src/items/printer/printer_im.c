@@ -72,6 +72,13 @@ static void im_printer_step_input(
     printer->waiting = false;
 }
 
+static void im_printer_step_work(
+        struct im_printer *printer, struct chunk *chunk, const struct tape *tape)
+{
+    if (energy_consume(chunk_energy(chunk), tape_energy(tape)))
+        printer->tape = tape_packed_it_inc(printer->tape);
+}
+
 static void im_printer_step_output(
         struct im_printer *printer, struct chunk *chunk, enum item item)
 {
@@ -93,12 +100,12 @@ static void im_printer_step(void *state, struct chunk *chunk)
 
     const struct tape *tape = tape_packed_ptr(printer->tape);
     if (!tape) return;
-    if (!energy_consume(chunk_energy(chunk), tape_energy(tape))) return;
 
     struct tape_ret ret = tape_at(tape, tape_packed_it(printer->tape));
     switch (ret.state) {
     case tape_eof: { im_printer_step_eof(printer, chunk); return; }
     case tape_input: { im_printer_step_input(printer, chunk, ret.item); return; }
+    case tape_work: { im_printer_step_work(printer, chunk, tape); return; }
     case tape_output: { im_printer_step_output(printer, chunk, ret.item); return; }
     default: { assert(false); }
     }
@@ -186,23 +193,19 @@ static bool im_printer_flow(const void *state, struct flow *flow)
     if (!printer->tape) return false;
 
     enum item target = tape_packed_id(printer->tape);
+    const struct tape *tape = tapes_get(target);
+    struct tape_ret ret = tape_at(tape, tape_packed_it(printer->tape));
+
     *flow = (struct flow) {
         .id = printer->id,
         .loops = printer->loops,
         .target = target,
+        .state = ret.state,
+        .item = ret.state ? ret.item : ITEM_NIL,
+        .tape_it = tape_packed_it(printer->tape),
+        .tape_len = tape_len(tape),
         .rank = tapes_info(target)->rank,
     };
 
-    const struct tape *tape = tapes_get(target);
-    struct tape_ret ret = tape_at(tape, tape_packed_it(printer->tape));
-
-    switch (ret.state) {
-    case tape_input: { flow->in = ret.item; break; }
-    case tape_output: { flow->out = ret.item; break; }
-    default: { break; }
-    }
-
-    flow->tape_it = tape_packed_it(printer->tape);
-    flow->tape_len = tape_len(tape);
     return true;
 }

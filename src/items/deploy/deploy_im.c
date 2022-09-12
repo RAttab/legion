@@ -143,7 +143,8 @@ static bool im_deploy_flow(const void *state, struct flow *flow)
         .id = deploy->id,
         .loops = deploy->loops,
         .target = deploy->item,
-        .in = deploy->item,
+        .state = tape_input,
+        .item = deploy->item,
         .rank = tapes_info(deploy->item)->rank + 1,
     };
     return true;

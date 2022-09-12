@@ -5,10 +5,12 @@
 (!item-condenser
 
  (!item-elem-g
+  (work 4)
   (energy 1)
   (out !item-elem-g))
 
  (!item-elem-h
+  (work 8)
   (energy 1)
   (in !item-elem-d)
   (out !item-elem-h)))
@@ -21,6 +23,7 @@
 (!item-printer
 
  (!item-magnet
+  (work 8)
   (in !item-elem-d
       !item-elem-d
       !item-elem-b
@@ -30,6 +33,7 @@
   (out !item-magnet))
 
  (!item-ferrofluid
+  (work 8)
   (in !item-elem-d
       !item-elem-c
       !item-elem-d
@@ -38,6 +42,7 @@
   (out !item-ferrofluid))
 
  (!item-semiconductor
+  (work 10)
   (in !item-elem-d
       !item-elem-d
       !item-elem-a
@@ -49,6 +54,7 @@
   (out !item-semiconductor))
 
  (!item-conductor
+  (work 10)
   (in !item-elem-g
       !item-elem-g
       !item-elem-g
@@ -60,6 +66,7 @@
   (out !item-conductor))
 
  (!item-galvanic
+  (work 10)
   (in !item-elem-g
       !item-elem-h
       !item-elem-h
@@ -78,6 +85,7 @@
 (!item-assembly
 
  (!item-photovoltaic
+  (work 8)
   (in !item-semiconductor
       !item-semiconductor
       !item-nerve
@@ -89,6 +97,7 @@
   (out !item-photovoltaic))
 
  (!item-field
+  (work 8)
   (in !item-magnet
       !item-magnet
       !item-magnet
@@ -100,6 +109,7 @@
   (out !item-field))
 
  (!item-antenna
+  (work 12)
   (in !item-bone
       !item-bone
       !item-nerve
@@ -121,6 +131,7 @@
 (!item-assembly
 
  (!item-solar
+  (work 6)
   (in !item-photovoltaic
       !item-nerve
       !item-nodule
@@ -129,6 +140,7 @@
   (out !item-solar))
 
  (!item-storage
+  (work 8)
   (in !item-bone
       !item-bone
       !item-vein
@@ -139,6 +151,7 @@
   (out !item-storage))
 
  (!item-port
+  (work 24)
   (in !item-field
       !item-field
       !item-field
@@ -153,6 +166,7 @@
   (out !item-port))
 
  (!item-pill
+  (work 8)
   (in !item-vein
       !item-ferrofluid
       !item-vein
@@ -164,6 +178,7 @@
   (out !item-pill))
 
  (!item-condenser
+  (work 10)
   (in !item-lung
       !item-lung
       !item-nodule
@@ -173,6 +188,7 @@
   (out !item-condenser))
 
  (!item-battery
+  (work 4)
   (energy 1)
   (in !item-bone
       !item-nerve
@@ -183,12 +199,8 @@
       !item-bone)
   (out !item-battery))
 
- ;; (!item-auto-deploy
- ;;  (energy 1)
- ;;  (in )
- ;;  (out !item-auto-deploy))
-
  (!item-transmit
+  (work 16)
   (energy 20)
   (in !item-eye
       !item-eye
@@ -200,6 +212,7 @@
   (out !item-transmit))
 
  (!item-receive
+  (work 16)
   (energy 20)
   (in !item-antenna
       !item-antenna

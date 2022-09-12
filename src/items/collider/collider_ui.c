@@ -16,6 +16,7 @@ struct ui_collider
     struct
     {
         enum im_collider_op op;
+        enum tape_state state;
         tape_packed tape;
     } state;
 
@@ -29,10 +30,8 @@ struct ui_collider
     struct ui_label item, item_val;
     struct ui_label loops, loops_val;
     struct ui_label waiting, waiting_val;
-    struct ui_tape tape;
 
-    struct ui_label energy, energy_val;
-    struct ui_label work, work_left, work_sep, work_cap;
+    struct ui_tape tape;
     struct ui_label out, out_left, out_sep, out_cap;
 };
 
@@ -44,7 +43,7 @@ static void *ui_collider_alloc(struct font *font)
         .font = font,
 
         .size = ui_label_new(font, ui_str_c("size: ")),
-        .size_val = ui_label_new(font, ui_str_v(3)),
+        .size_val = ui_label_new(font, ui_str_v(2)),
 
         .rate = ui_label_new(font, ui_str_c("rate: ")),
         .rate_val = ui_label_new(font, ui_str_v(2)),
@@ -61,14 +60,6 @@ static void *ui_collider_alloc(struct font *font)
 
         .waiting = ui_label_new(font, ui_str_c("state: ")),
         .waiting_val = ui_label_new(font, ui_str_v(8)),
-
-        .energy = ui_label_new(font, ui_str_c("energy: ")),
-        .energy_val = ui_label_new(font, ui_str_v(8)),
-
-        .work = ui_label_new(font, ui_str_c("work: ")),
-        .work_left = ui_label_new(font, ui_str_v(3)),
-        .work_sep = ui_label_new(font, ui_str_c(" / ")),
-        .work_cap = ui_label_new(font, ui_str_v(3)),
 
         .out = ui_label_new(font, ui_str_c("outputs: ")),
         .out_left = ui_label_new(font, ui_str_v(3)),
@@ -105,14 +96,6 @@ static void ui_collider_free(void *_ui)
     ui_label_free(&ui->waiting);
     ui_label_free(&ui->waiting_val);
 
-    ui_label_free(&ui->energy);
-    ui_label_free(&ui->energy_val);
-
-    ui_label_free(&ui->work);
-    ui_label_free(&ui->work_left);
-    ui_label_free(&ui->work_sep);
-    ui_label_free(&ui->work_cap);
-
     ui_label_free(&ui->out);
     ui_label_free(&ui->out_left);
     ui_label_free(&ui->out_sep);
@@ -129,7 +112,9 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
     assert(state);
 
     ui_str_set_u64(&ui->size_val.str, state->size);
-    ui_str_set_u64(&ui->rate_val.str, im_collider_rate(state->size));
+
+    unsigned pct = (100 * im_collider_rate(state->size)) / im_collider_size_max;
+    ui_str_set_u64(&ui->rate_val.str, pct);
 
     ui->state.op = state->op;
     ui->state.tape = 0;
@@ -148,34 +133,38 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
         break;
     }
 
-    case im_collider_in: {
-        ui_str_setc(&ui->op_val.str, "input");
-        ui_tape_update(&ui->tape, state->tape);
-        ui->state.tape = state->tape;
-        break;
-    }
-
-    case im_collider_work: {
-        ui_str_setc(&ui->op_val.str, "working");
+    case im_collider_tape: {
+        ui_str_setc(&ui->op_val.str, "tape");
 
         const struct tape *tape = tape_packed_ptr(state->tape);
-        ui_str_set_u64(&ui->energy_val.str, tape_energy(tape));
+        struct tape_ret ret = tape_at(tape, tape_packed_it(state->tape));
+        ui->state.state = ret.state;
 
-        ui_str_set_u64(&ui->work_left.str, state->work.left);
-        ui_str_set_u64(&ui->work_cap.str, state->work.cap);
-        break;
-    }
+        switch (ret.state)
+        {
+        case tape_input:
+        case tape_work: {
+            ui_tape_update(&ui->tape, state->tape);
+            ui->state.tape = state->tape;
+            break;
+        }
 
-    case im_collider_out: {
-        ui_str_setc(&ui->op_val.str, "output");
-        ui_str_set_item(&ui->item_val.str, state->out.item);
-        ui_str_set_u64(&ui->out_left.str, state->out.it + 1);
-        ui_str_set_u64(&ui->out_cap.str, state->out.len);
+        case tape_output: {
+            ui_str_setc(&ui->op_val.str, "output");
+            ui_str_set_item(&ui->item_val.str, state->out.item);
+            ui_str_set_u64(&ui->out_left.str, state->out.it + 1);
+            ui_str_set_u64(&ui->out_cap.str, state->out.len);
+            break;
+        }
+
+        case tape_eof:
+        default: { assert(false); }
+        }
+
         break;
     }
 
     default: { assert(false); }
-
     }
 
     if (state->loops != im_loops_inf)
@@ -189,7 +178,7 @@ static bool ui_collider_event(void *_ui, const SDL_Event *ev)
 {
     struct ui_collider *ui = _ui;
 
-    if (ui->state.op == im_collider_in)
+    if (ui->state.op == im_collider_tape && ui->state.state != tape_output)
         return ui_tape_event(&ui->tape, ui->state.tape, ev);
     return false;
 }
@@ -230,46 +219,47 @@ static void ui_collider_render(
         ui_label_render(&ui->waiting_val, layout, renderer);
         ui_layout_next_row(layout);
 
+        ui->item_val.fg = rgba_green();
         ui_label_render(&ui->item, layout, renderer);
         ui_label_render(&ui->item_val, layout, renderer);
         ui_layout_next_row(layout);
         break;
     }
 
-    case im_collider_in: {
-        ui_label_render(&ui->waiting, layout, renderer);
-        ui_label_render(&ui->waiting_val, layout, renderer);
-        ui_layout_next_row(layout);
+    case im_collider_tape: {
 
-        ui_layout_sep_y(layout, ui->font->glyph_h);
+        switch (ui->state.state)
+        {
 
-        ui_tape_render(&ui->tape, ui->state.tape, layout, renderer);
-        break;
-    }
+        case tape_input:
+        case tape_work: {
+            ui_label_render(&ui->waiting, layout, renderer);
+            ui_label_render(&ui->waiting_val, layout, renderer);
+            ui_layout_next_row(layout);
 
-    case im_collider_work: {
-        ui_label_render(&ui->work, layout, renderer);
-        ui_label_render(&ui->work_left, layout, renderer);
-        ui_label_render(&ui->work_sep, layout, renderer);
-        ui_label_render(&ui->work_cap, layout, renderer);
-        ui_layout_next_row(layout);
+            ui_layout_sep_y(layout, ui->font->glyph_h);
 
-        ui_label_render(&ui->energy, layout, renderer);
-        ui_label_render(&ui->energy_val, layout, renderer);
-        ui_layout_next_row(layout);
-        break;
-    }
+            ui_tape_render(&ui->tape, ui->state.tape, layout, renderer);
+            break;
+        }
 
-    case im_collider_out: {
-        ui_label_render(&ui->out, layout, renderer);
-        ui_label_render(&ui->out_left, layout, renderer);
-        ui_label_render(&ui->out_sep, layout, renderer);
-        ui_label_render(&ui->out_cap, layout, renderer);
-        ui_layout_next_row(layout);
+        case tape_output: {
+            ui_label_render(&ui->out, layout, renderer);
+            ui_label_render(&ui->out_left, layout, renderer);
+            ui_label_render(&ui->out_sep, layout, renderer);
+            ui_label_render(&ui->out_cap, layout, renderer);
+            ui_layout_next_row(layout);
 
-        ui_label_render(&ui->item, layout, renderer);
-        ui_label_render(&ui->item_val, layout, renderer);
-        ui_layout_next_row(layout);
+            ui->item_val.fg = rgba_blue();
+            ui_label_render(&ui->item, layout, renderer);
+            ui_label_render(&ui->item_val, layout, renderer);
+            ui_layout_next_row(layout);
+            break;
+        }
+
+        default: { assert(false); }
+        }
+
         break;
     }
 

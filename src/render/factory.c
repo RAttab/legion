@@ -47,7 +47,8 @@ struct factory
 
     struct ui_label ui_id;
     struct ui_label ui_target, ui_loops, ui_loops_val;
-    struct ui_label ui_tape_in, ui_tape_out, ui_tape_num, ui_tape_of;
+    struct ui_label ui_tape_in, ui_tape_work, ui_tape_out;
+    struct ui_label ui_tape_num, ui_tape_of;
 
     bool active;
     bool panning, panned;
@@ -71,6 +72,7 @@ struct factory *factory_new(void)
         .ui_loops = ui_label_new(font, ui_str_c("x")),
         .ui_loops_val = ui_label_new(font, ui_str_v(3)),
         .ui_tape_in = ui_label_new(font, ui_str_v(item_str_len)),
+        .ui_tape_work = ui_label_new(font, ui_str_c("work            ")),
         .ui_tape_out = ui_label_new(font, ui_str_v(item_str_len)),
         .ui_tape_num = ui_label_new(font, ui_str_v(3)),
         .ui_tape_of = ui_label_new(font, ui_str_c("/")),
@@ -83,6 +85,7 @@ struct factory *factory_new(void)
     };
 
     factory->ui_tape_in.fg = rgba_green();
+    factory->ui_tape_work.fg = rgba_yellow();
     factory->ui_tape_out.fg = rgba_blue();
 
     factory->total = make_dim(
@@ -120,6 +123,7 @@ void factory_free(struct factory *factory)
     ui_label_free(&factory->ui_loops);
     ui_label_free(&factory->ui_loops_val);
     ui_label_free(&factory->ui_tape_in);
+    ui_label_free(&factory->ui_tape_work);
     ui_label_free(&factory->ui_tape_out);
     ui_label_free(&factory->ui_tape_num);
     ui_label_free(&factory->ui_tape_of);
@@ -503,20 +507,34 @@ static void factory_render_flow(
     }
     ui_layout_next_row(&layout);
 
-    if (flow->in) {
-        ui_str_set_item(&factory->ui_tape_in.str, flow->in);
+    switch (flow->state)
+    {
+    case tape_input: {
+        ui_str_set_item(&factory->ui_tape_in.str, flow->item);
         ui_label_render(&factory->ui_tape_in, &layout, renderer);
+        break;
     }
-    else if (flow->out) {
-        ui_str_set_item(&factory->ui_tape_out.str, flow->out);
+    case tape_work: {
+        ui_label_render(&factory->ui_tape_work, &layout, renderer);
+        break;
+    }
+    case tape_output: {
+        ui_str_set_item(&factory->ui_tape_out.str, flow->item);
         ui_label_render(&factory->ui_tape_out, &layout, renderer);
+        break;
+    }
+    case tape_eof: { break; }
+    default: { assert(false); }
     }
 
-    if (im_id_item(flow->id) == ITEM_PORT && flow->out && flow->tape_len) {
+    if (im_id_item(flow->id) == ITEM_PORT &&
+            flow->state == tape_output &&
+            flow->tape_len)
+    {
         ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_len);
         ui_label_render(&factory->ui_tape_num, &layout, renderer);
     }
-    else if ((flow->in || flow->out) && flow->tape_len) {
+    else if (flow->state != tape_eof && flow->tape_len) {
         ui_str_set_u64(&factory->ui_tape_num.str, flow->tape_it+1);
         ui_label_render(&factory->ui_tape_num, &layout, renderer);
 

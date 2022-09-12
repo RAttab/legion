@@ -74,9 +74,10 @@ static void im_collider_step_grow(
 }
 
 static void im_collider_step_in(
-        struct im_collider *collider, struct chunk *chunk)
+        struct im_collider *collider,
+        struct chunk *chunk,
+        const struct tape *tape)
 {
-    const struct tape *tape = tape_packed_ptr(collider->tape);
     struct tape_ret ret = tape_at(tape, tape_packed_it(collider->tape));
     assert(ret.state == tape_input);
 
@@ -92,29 +93,22 @@ static void im_collider_step_in(
 
     collider->waiting = false;
     collider->tape = tape_packed_it_inc(collider->tape);
-    if (tape_at(tape, tape_packed_it(collider->tape)).state == tape_input) return;
-
-    collider->op = im_collider_work;
-    collider->work.left = collider->work.cap = tape_work(tape);
 }
 
 static void im_collider_step_work(
-        struct im_collider *collider, struct chunk *chunk)
+        struct im_collider *collider,
+        struct chunk *chunk,
+        const struct tape *tape)
 {
-    if (collider->work.left) {
-        const struct tape *tape = tape_packed_ptr(collider->tape);
-        if (!energy_consume(chunk_energy(chunk), tape_energy(tape))) return;
+    if (!energy_consume(chunk_energy(chunk), tape_energy(tape))) return;
 
-        collider->work.left--;
-        if (collider->work.left) return;
+    collider->tape = tape_packed_it_inc(collider->tape);
+
+    if (tape_at(tape, tape_packed_it(collider->tape)).state == tape_output) {
+        collider->out.item = 0;
+        collider->out.it = 0;
+        collider->out.len = tape_len(tape) / 2;
     }
-
-    const struct tape *tape = tape_packed_ptr(collider->tape);
-
-    collider->op = im_collider_out;
-    collider->out.item = 0;
-    collider->out.it = 0;
-    collider->out.len = tape_len(tape) / 2;
 }
 
 static void im_collider_step_out(
@@ -136,7 +130,6 @@ static void im_collider_step_out(
     collider->out.it++;
     if (collider->out.it < collider->out.len) return;
 
-    collider->op = im_collider_in;
     collider->tape = tape_packed_it_zero(collider->tape);
 
     if (collider->loops != im_loops_inf) collider->loops--;
@@ -149,12 +142,27 @@ static void im_collider_step(void *state, struct chunk *chunk)
 {
     struct im_collider *collider = state;
 
-    switch (collider->op) {
+    switch (collider->op)
+    {
     case im_collider_nil: { return; }
     case im_collider_grow: { im_collider_step_grow(collider, chunk); return; }
-    case im_collider_in: { im_collider_step_in(collider, chunk); return; }
-    case im_collider_work: { im_collider_step_work(collider, chunk); return; }
-    case im_collider_out: { im_collider_step_out(collider, chunk); return; }
+
+    case im_collider_tape: {
+        const struct tape *tape = tape_packed_ptr(collider->tape);
+        struct tape_ret ret = tape_at(tape, tape_packed_it(collider->tape));
+
+        switch (ret.state)
+        {
+        case tape_input: { im_collider_step_in(collider, chunk, tape); return; }
+        case tape_work: { im_collider_step_work(collider, chunk, tape); return; }
+        case tape_output: { im_collider_step_out(collider, chunk); return; }
+        case tape_eof:
+        default: { assert(false); }
+        }
+
+        return;
+    }
+
     default: { assert(false); }
     }
 }
@@ -180,7 +188,7 @@ static void im_collider_io_state(
     case IO_LOOP: { value = collider->loops; break; }
 
     case IO_WORK: {
-        value = collider->tape ? tape_work(tape_packed_ptr(collider->tape)) : 0;
+        value = collider->tape ? tape_work_cap(tape_packed_ptr(collider->tape)) : 0;
         break;
     }
 
@@ -221,7 +229,7 @@ static void im_collider_io_tape(
         return chunk_log(chunk, collider->id, IO_TAPE, IOE_A0_INVALID);
 
     im_collider_reset(collider, chunk);
-    collider->op = im_collider_in;
+    collider->op = im_collider_tape;
     collider->tape = tape_pack(item, 0, tape);
     collider->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
 }
@@ -264,58 +272,52 @@ static const vm_word im_collider_io_list[] =
 static bool im_collider_flow(const void *state, struct flow *flow)
 {
     const struct im_collider *collider = state;
+    if (!collider->op) return false;
 
-    switch (collider->op)
-    {
-    case im_collider_nil:
-    case im_collider_work: { return false; }
-
-    case im_collider_grow: {
+    if (collider->op == im_collider_grow) {
         *flow = (struct flow) {
             .id = collider->id,
             .loops = collider->loops,
             .target = ITEM_COLLIDER,
+            .state = tape_input,
+            .item = im_collider_grow_item,
             .rank = tapes_info(im_collider_grow_item)->rank,
-            .in = im_collider_grow_item,
         };
         return true;
     }
 
-    case im_collider_in: {
-        enum item target = tape_packed_id(collider->tape);
-        const struct tape *tape = tapes_get(target);
+    enum item target = tape_packed_id(collider->tape);
+    const struct tape *tape = tapes_get(target);
 
-        tape_it it = tape_packed_it(collider->tape);
-        struct tape_ret ret = tape_at(tape, it);
-        assert(ret.state == tape_input);
+    tape_it it = tape_packed_it(collider->tape);
+    struct tape_ret ret = tape_at(tape, it);
 
-        *flow = (struct flow) {
-            .id = collider->id,
-            .loops = collider->loops,
-            .target = target,
-            .rank = tapes_info(ret.item)->rank,
-            .in = ret.item,
-            .tape_it = it,
-            .tape_len = tape_len(tape),
-        };
+    *flow = (struct flow) {
+        .id = collider->id,
+        .loops = collider->loops,
+        .target = target,
+        .rank = tapes_info(ret.item)->rank,
+    };
+
+    switch (ret.state)
+    {
+
+    case tape_input:
+    case tape_work: {
+        flow->state = ret.state;
+        flow->item = ret.item;
+        flow->tape_it = it;
+        flow->tape_len = tape_len(tape);
         return true;
     }
 
-    case im_collider_out: {
-        if (!collider->out.item) return false;
-        enum item out = tape_packed_id(collider->tape);
-        *flow = (struct flow) {
-            .id = collider->id,
-            .loops = collider->loops,
-            .target = out,
-            .rank = tapes_info(out)->rank,
-            .out = collider->out.item,
-            .tape_it = collider->out.it,
-            .tape_len = collider->out.len,
-        };
+    case tape_output: {
+        flow->state = tape_output;
+        flow->item = collider->out.item;
+        flow->tape_it = collider->out.it;
+        flow->tape_len = collider->out.len;
         return true;
     }
-
     default: { assert(false); }
     }
 }

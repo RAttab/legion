@@ -36,7 +36,7 @@ struct ui_tapes
 
     struct ui_label tape;
     struct ui_scroll scroll;
-    struct ui_label index, known, in, out;
+    struct ui_label index, known, in, work, out;
 };
 
 static struct font *ui_tapes_font(void) { return font_mono6; }
@@ -76,6 +76,7 @@ struct ui_tapes *ui_tapes_new(void)
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
         .index = ui_label_new(font, ui_str_v(2)),
         .in = ui_label_new(font, ui_str_v(item_str_len)),
+        .work = ui_label_new(font, ui_str_c("work")),
         .out = ui_label_new(font, ui_str_v(item_str_len)),
         .known = ui_label_new(font, ui_str_c("*")),
     };
@@ -84,6 +85,7 @@ struct ui_tapes *ui_tapes_new(void)
     ui->index.fg = rgba_gray(0x88);
     ui->index.bg = rgba_gray_a(0x44, 0x88);
     ui->in.fg = rgba_green();
+    ui->work.fg = rgba_yellow();
     ui->out.fg = rgba_blue();
     return ui;
 }
@@ -108,6 +110,7 @@ void ui_tapes_free(struct ui_tapes *ui) {
     ui_scroll_free(&ui->scroll);
     ui_label_free(&ui->index);
     ui_label_free(&ui->in);
+    ui_label_free(&ui->work);
     ui_label_free(&ui->out);
 
     free(ui);
@@ -279,7 +282,7 @@ void ui_tapes_render_tape(
 
         struct tape_ret ret = tape_at(tape, i);
 
-        if (!tech_learned(tech, ret.item))
+        if (tape_state_item(ret.state) && !tech_learned(tech, ret.item))
             ui_label_render(&ui->known, &inner, renderer);
         else ui_layout_sep_x(&inner, font->glyph_w);
 
@@ -287,12 +290,14 @@ void ui_tapes_render_tape(
         switch (ret.state)
         {
         case tape_input: { label = &ui->in; break; }
+        case tape_work: { label = &ui->work; break; }
         case tape_output: { label = &ui->out; break; }
         case tape_eof:
         default: { assert(false); }
         }
 
-        ui_str_set_item(&label->str, ret.item);
+        if (tape_state_item(ret.state))
+            ui_str_set_item(&label->str, ret.item);
         ui_label_render(label, &inner, renderer);
 
         ui_layout_next_row(&inner);

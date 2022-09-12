@@ -169,7 +169,8 @@ static bool im_packer_flow(const void *state, struct flow *flow)
         .id = packer->id,
         .loops = packer->loops,
         .target = packer->item,
-        .out = packer->item,
+        .state = tape_output,
+        .item = packer->item,
         .rank = tapes_info(packer->item)->rank + 1,
     };
     return true;

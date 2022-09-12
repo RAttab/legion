@@ -29,9 +29,7 @@ enum legion_packed im_collider_op
 {
     im_collider_nil = 0,
     im_collider_grow,
-    im_collider_in,
-    im_collider_work,
-    im_collider_out,
+    im_collider_tape,
 };
 
 
@@ -46,10 +44,9 @@ struct legion_packed im_collider
     bool waiting;
     im_loops loops;
 
-    struct { im_work left, cap; } work;
     struct { enum item item; uint8_t it, len; } out;
 
-    legion_pad(4);
+    legion_pad(6);
 
     struct rng rng;
     tape_packed tape;

@@ -43,12 +43,12 @@ void test_storage(void)
 
     for (size_t it = 0; it < 10; ++it) {
         chunk_io(chunk, IO_TAPE, sys_id, extract_id, &item_elem_a, 1);
-        step_for(world, 6);
+        step_for(world, 8);
         assert(storage_count(chunk, storage_id, test_id) == 1);
         chunk_io(chunk, IO_RESET, sys_id, extract_id, NULL, 0);
 
         chunk_io(chunk, IO_TAPE, sys_id, printer_id, &item_muscle, 1);
-        step_for(world, 6);
+        step_for(world, 8);
         assert(storage_count(chunk, storage_id, test_id) == 0);
         chunk_io(chunk, IO_RESET, sys_id, printer_id, NULL, 0);
     }

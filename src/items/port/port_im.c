@@ -187,16 +187,17 @@ static bool im_port_flow(const void *state, struct flow *flow)
         .id = port->id,
         .loops = port->want.count,
         .target = port->want.item,
+        .item = port->has.item,
         .rank = info ? info->rank : 1,
     };
 
     if (port->want.item == port->has.item) {
-        flow->in = port->has.item;
+        flow->state = tape_input;
         flow->tape_it = port->has.count;
         flow->tape_len = port->want.count;
     }
     else {
-        flow->out = port->has.item;
+        flow->state = tape_output;
         flow->tape_len = port->has.count;
     }
 

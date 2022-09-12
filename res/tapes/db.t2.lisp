@@ -5,10 +5,12 @@
 (!item-extract
 
  (!item-elem-e
+  (work 8)
   (energy 1)
   (out !item-elem-e))
 
  (!item-elem-f
+  (work 12)
   (energy 10)
   (out !item-elem-f)))
 
@@ -16,10 +18,12 @@
 (!item-condenser
 
  (!item-elem-i
+  (work 16)
   (energy 10)
   (out !item-elem-i))
 
  (!item-elem-j
+  (work 20)
   (energy 100)
   (in !item-elem-m)
   (out !item-elem-j)))
@@ -35,8 +39,8 @@
 (!item-collider
 
  (!item-elem-m
+  (work 16)
   (energy 10)
-  (work 100)
   (in !item-elem-a
       !item-elem-a
       !item-elem-a
@@ -52,8 +56,8 @@
        !item-elem-o))
 
  (!item-elem-n
+  (work 24)
   (energy 100)
-  (work 200)
   (in !item-elem-b
       !item-elem-b
       !item-elem-b
@@ -78,7 +82,7 @@
        !item-elem-o))
 
  (!item-elem-l
-  (work 1000)
+  (work 32)
   (energy 1000)
   (in !item-elem-h
       !item-elem-h
@@ -120,6 +124,7 @@
 (!item-printer
  
  (!item-biosteel
+  (work 16)
   (in !item-elem-b
       !item-elem-b
       !item-elem-h
@@ -136,6 +141,7 @@
        !item-elem-o))
 
  (!item-neurosteel
+  (work 16)
   (in !item-elem-d
       !item-elem-d
       !item-elem-h
@@ -159,6 +165,7 @@
 (!item-assembly
 
  (!item-accelerator
+  (work 16)
   (in !item-conductor
       !item-conductor
       !item-nerve
@@ -170,6 +177,7 @@
   (out !item-accelerator))
 
  (!item-heat-exchange
+  (work 16)
   (in !item-biosteel
       !item-conductor
       !item-conductor
@@ -178,6 +186,7 @@
   (out !item-heat-exchange))
 
  (!item-furnace
+  (work 20)
   (in !item-biosteel
       !item-heat-exchange
       !item-heat-exchange
@@ -190,6 +199,7 @@
        !item-elem-o))
 
  (!item-freezer
+  (work 20)
   (in !item-heat-exchange
       !item-heat-exchange
       !item-neurosteel
@@ -200,6 +210,7 @@
   (out !item-freezer))
 
  (!item-m-reactor
+  (work 32)
   (in !item-biosteel
       !item-heat-exchange
       !item-neurosteel
@@ -218,6 +229,7 @@
        !item-elem-o))
 
  (!item-m-condenser
+  (work 32)
   (in !item-biosteel
       !item-field
       !item-elem-m
@@ -234,6 +246,7 @@
        !item-elem-o))
 
  (!item-m-release
+  (work 32)
   (in !item-biosteel
       !item-ferrofluid
       !item-ferrofluid
@@ -248,6 +261,7 @@
        !item-elem-o))
 
  (!item-m-lung
+  (work 40)
   (in !item-biosteel
       !item-m-reactor
       !item-neurosteel
@@ -267,6 +281,7 @@
 (!item-assembly
 
  (!item-collider
+  (work 16)
   (energy 100)
   (in !item-brain
       !item-nodule
@@ -280,6 +295,7 @@
   (out !item-collider))
 
  (!item-burner
+  (work 20)
   (in !item-biosteel
       !item-furnace
       !item-furnace
@@ -293,6 +309,7 @@
   (out !item-burner))
 
  (!item-packer
+  (work 20)
   (in !item-biosteel
       !item-neurosteel
       !item-freezer
@@ -307,6 +324,7 @@
   (out !item-packer))
 
  (!item-nomad
+  (work 42)
   (in !item-biosteel
       !item-pill
       !item-brain

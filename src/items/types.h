@@ -40,10 +40,11 @@ struct legion_packed flow
     enum item target;
     uint8_t rank;
 
-    legion_pad(1);
-
-    enum item in, out;
+    enum item item;
+    enum tape_state state;
     tape_it tape_it, tape_len;
+
+    legion_pad(1);
 };
 
 static_assert(sizeof(struct flow) == 16);

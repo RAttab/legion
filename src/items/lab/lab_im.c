@@ -295,11 +295,14 @@ static bool im_lab_flow(const void *state, struct flow *flow)
 {
     const struct im_lab *lab = state;
     if (!lab->item) return false;
+
+    enum item item = lab->state == im_lab_waiting ? lab->item : ITEM_NIL;
     *flow = (struct flow) {
         .id = lab->id,
         .loops = im_loops_inf,
         .target = lab->item,
-        .in = lab->state == im_lab_waiting ? lab->item : 0,
+        .state = item ? tape_input : tape_eof,
+        .item = item,
         .rank = tapes_info(lab->item)->rank + 1,
     };
 

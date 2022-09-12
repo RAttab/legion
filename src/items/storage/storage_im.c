@@ -141,12 +141,10 @@ static bool im_storage_flow(const void *state, struct flow *flow)
         .id = storage->id,
         .loops = storage->count,
         .target = storage->item,
+        .state = storage->count ? tape_output : tape_input,
+        .item = storage->item,
         .rank = info->rank,
     };
-
-    if (!storage->count)
-        flow->in = storage->item;
-    else flow->out = storage->item;
 
     return true;
 }

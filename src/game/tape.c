@@ -19,9 +19,9 @@ struct tape
 {
     enum item id;
     enum item host;
-    im_energy energy;
     im_work work;
-    uint8_t inputs, outputs;
+    tape_it inputs, outputs;
+    im_energy energy;
     enum item tape[];
 };
 
@@ -29,23 +29,43 @@ struct tape
 enum item tape_id(const struct tape *tape) { return tape->id; }
 enum item tape_host(const struct tape *tape) { return tape->host; }
 im_energy tape_energy(const struct tape *tape) { return tape->energy; }
-im_work tape_work(const struct tape *tape) { return tape->work; }
-size_t tape_len(const struct tape *tape) { return tape->inputs + tape->outputs; }
+im_work tape_work_cap(const struct tape *tape) { return tape->work; }
+
+size_t tape_len(const struct tape *tape)
+{
+    return tape->inputs + tape->work + tape->outputs;
+}
 
 struct tape_ret tape_at(const struct tape *tape, tape_it it)
 {
-    struct tape_ret ret = { .state = tape_eof };
-
-    if (it < tape->inputs) {
-        ret.state = tape_input;
-        ret.item = tape->tape[it];
-    }
-    else if (it < tape->inputs + tape->outputs) {
-        ret.state = tape_output;
-        ret.item = tape->tape[it];
+    tape_it bound = tape->inputs;
+    if (it < bound) {
+        return (struct tape_ret) {
+            .state = tape_input,
+            .item = tape->tape[it],
+        };
     }
 
-    return ret;
+    bound += tape->work;
+    if (it < bound) {
+        return (struct tape_ret) {
+            .state = tape_work,
+            .item = ITEM_NIL,
+        };
+    }
+
+    bound += tape->outputs;
+    if (it < bound) {
+        return (struct tape_ret) {
+            .state = tape_output,
+            .item = tape->tape[it - tape->work],
+        };
+    }
+
+    return (struct tape_ret) {
+        .state = tape_eof,
+        .item = ITEM_NIL,
+    };
 }
 
 

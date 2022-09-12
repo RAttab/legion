@@ -174,7 +174,8 @@ static bool im_burner_flow(const void *state, struct flow *flow)
         .id = burner->id,
         .loops = burner->loops,
         .target = burner->item,
-        .in = burner->item,
+        .state = tape_input,
+        .item = burner->item,
         .rank = tapes_info(rank_item)->rank + 1,
     };
     return true;

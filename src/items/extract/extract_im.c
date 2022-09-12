@@ -73,6 +73,13 @@ static void im_extract_step_input(
     extract->tape = tape_packed_it_inc(extract->tape);
 }
 
+static void im_extract_step_work(
+        struct im_extract *extract, struct chunk *chunk, const struct tape *tape)
+{
+    if (energy_consume(chunk_energy(chunk), tape_energy(tape)))
+        extract->tape = tape_packed_it_inc(extract->tape);
+}
+
 static void im_extract_step_output(
         struct im_extract *extract, struct chunk *chunk, enum item item)
 {
@@ -106,6 +113,7 @@ static void im_extract_step(void *state, struct chunk *chunk)
     switch (ret.state) {
     case tape_eof: { im_extract_step_eof(extract, chunk); return; }
     case tape_input: { im_extract_step_input(extract, chunk, ret.item); return; }
+    case tape_work: { im_extract_step_work(extract, chunk, tape); return; }
     case tape_output: { im_extract_step_output(extract, chunk, ret.item); return; }
     default: { assert(false); }
     }
@@ -193,23 +201,19 @@ static bool im_extract_flow(const void *state, struct flow *flow)
     if (!extract->tape) return false;
 
     enum item target = tape_packed_id(extract->tape);
+    const struct tape *tape = tapes_get(target);
+    struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
+
     *flow = (struct flow) {
         .id = extract->id,
         .loops = extract->loops,
         .target = target,
+        .state = ret.state,
+        .item = ret.state ? ret.item : ITEM_NIL,
+        .tape_it = tape_packed_it(extract->tape),
+        .tape_len = tape_len(tape),
         .rank = tapes_info(target)->rank,
     };
 
-    const struct tape *tape = tapes_get(target);
-    struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
-
-    switch (ret.state) {
-    case tape_input: { flow->in = ret.item; break; }
-    case tape_output: { flow->out = ret.item; break; }
-    default: { break; }
-    }
-
-    flow->tape_it = tape_packed_it(extract->tape);
-    flow->tape_len = tape_len(tape);
     return true;
 }

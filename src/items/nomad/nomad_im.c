@@ -560,14 +560,15 @@ static bool im_nomad_flow(const void *state, struct flow *flow)
         .id = nomad->id,
         .loops = nomad->loops,
         .target = nomad->item,
+        .item = nomad->item,
         .rank = tapes_info(nomad->item)->rank + 1,
     };
 
     switch (nomad->op)
     {
     case im_nomad_pack:
-    case im_nomad_load: { flow->in = nomad->item; break; }
-    case im_nomad_unload:{ flow->out = nomad->item; break; }
+    case im_nomad_load: { flow->state = tape_input; break; }
+    case im_nomad_unload:{ flow->state = tape_output; break; }
     case im_nomad_nil:
     default: { assert(false); }
     }

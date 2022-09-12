@@ -3,10 +3,10 @@
 ;; -----------------------------------------------------------------------------
 
 (!item-extract
- (!item-elem-a (out !item-elem-a))
- (!item-elem-b (out !item-elem-b))
- (!item-elem-c (out !item-elem-c))
- (!item-elem-d (out !item-elem-d)))
+ (!item-elem-a (work 1) (out !item-elem-a))
+ (!item-elem-b (work 2) (out !item-elem-b))
+ (!item-elem-c (work 2) (out !item-elem-c))
+ (!item-elem-d (work 4) (out !item-elem-d)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -16,12 +16,14 @@
 (!item-printer
 
  (!item-muscle
+  (work 2)
   (in !item-elem-a
       !item-elem-a
       !item-elem-a)
   (out !item-muscle))
 
  (!item-nodule
+  (work 2)
   (in !item-elem-a
       !item-elem-b
       !item-elem-b
@@ -29,12 +31,14 @@
   (out !item-nodule))
 
  (!item-vein
+  (work 2)
   (in !item-elem-a
       !item-elem-c
       !item-elem-a)
   (out !item-vein))
 
  (!item-bone
+  (work 2)
   (in !item-elem-b
       !item-elem-b
       !item-elem-b
@@ -43,6 +47,7 @@
   (out !item-bone))
 
  (!item-tendon
+  (work 4)
   (in !item-elem-b
       !item-elem-a
       !item-elem-a
@@ -51,6 +56,7 @@
   (out !item-tendon))
 
  (!item-lens
+  (work 2)
   (in !item-elem-b
       !item-elem-c
       !item-elem-c
@@ -58,12 +64,14 @@
   (out !item-lens))
 
  (!item-nerve
+  (work 2)
   (in !item-elem-c
       !item-elem-c
       !item-elem-c)
   (out !item-nerve))
 
  (!item-neuron
+  (work 4)
   (in !item-elem-c
       !item-elem-a
       !item-elem-c
@@ -72,6 +80,7 @@
   (out !item-neuron))
 
  (!item-retina
+  (work 4)
   (in !item-elem-c
       !item-elem-b
       !item-elem-b
@@ -86,6 +95,7 @@
 (!item-assembly
 
  (!item-limb
+  (work 2)
   (in !item-bone
       !item-bone
       !item-tendon
@@ -95,6 +105,7 @@
   (out !item-limb))
 
  (!item-spinal
+  (work 2)
   (in !item-nerve
       !item-vein
       !item-nerve
@@ -103,6 +114,7 @@
   (out !item-spinal))
 
  (!item-stem
+  (work 2)
   (in !item-neuron
       !item-neuron
       !item-vein
@@ -111,6 +123,7 @@
   (out !item-stem))
 
  (!item-lung
+  (work 3)
   (in !item-stem
       !item-nerve
       !item-muscle
@@ -120,6 +133,7 @@
   (out !item-lung))
 
  (!item-engram
+  (work 4)
   (in !item-nerve
       !item-neuron
       !item-neuron
@@ -130,6 +144,7 @@
   (out !item-engram))
 
  (!item-cortex
+  (work 8)
   (in !item-stem
       !item-vein
       !item-neuron
@@ -143,6 +158,7 @@
   (out !item-cortex))
 
  (!item-eye
+  (work 2)
   (in !item-retina
       !item-lens
       !item-lens
@@ -158,12 +174,14 @@
 (!item-assembly
 
  (!item-deploy
+  (work 4)
   (in !item-spinal
       !item-nodule
       !item-spinal)
   (out !item-deploy))
 
  (!item-extract
+  (work 4)
   (in !item-muscle
       !item-muscle
       !item-nodule
@@ -172,6 +190,7 @@
   (out !item-extract))
 
  (!item-printer
+  (work 4)
   (in !item-vein
       !item-vein
       !item-nodule
@@ -180,6 +199,7 @@
   (out !item-printer))
 
  (!item-assembly
+  (work 4)
   (in !item-limb
       !item-limb
       !item-vein
@@ -190,6 +210,7 @@
   (out !item-assembly))
 
  (!item-worker
+  (work 6)
   (in !item-lung
       !item-lung
       !item-stem
@@ -200,6 +221,7 @@
   (out !item-worker))
 
  (!item-memory
+  (work 8)
   (in !item-engram
       !item-engram
       !item-engram
@@ -210,6 +232,7 @@
   (out !item-memory))
 
  (!item-brain
+  (work 10)
   (in !item-memory
       !item-cortex
       !item-cortex
@@ -220,6 +243,7 @@
   (out !item-brain))
 
  (!item-prober
+  (work 4)
   (in !item-lung
       !item-nodule
       !item-eye
@@ -228,6 +252,7 @@
   (out !item-prober))
 
  (!item-scanner
+  (work 6)
   (in !item-lung
       !item-engram
       !item-nodule
@@ -239,6 +264,7 @@
   (out !item-scanner))
 
  (!item-legion
+  (work 24)
   (in !item-lung
       !item-lung
       !item-lung
@@ -262,6 +288,7 @@
   (out !item-legion))
 
  (!item-lab
+  (work 16)
   (in !item-limb
       !item-limb
       !item-vein
