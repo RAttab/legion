@@ -494,23 +494,23 @@
 (vm/io
  (vm (S 2))
  (mod
-  (asm (PUSH &io-nil)
+  (asm (PUSH !io-nil)
        (PUSH 1)
        (IO 2)
        (YIELD)))
  (check (flags 0x1) (io 2)
-	(sp 2) (s 0 &io-nil) (s 1 1)))
+	(sp 2) (s 0 !io-nil) (s 1 1)))
 
 (vm/ios
  (vm (S 3))
  (mod
-  (asm (PUSH &io-nil)
+  (asm (PUSH !io-nil)
        (PUSH 1)
        (PUSH 2)
        (IOS)
        (YIELD)))
  (check (flags 0x1) (io 2)
-	(sp 2) (s 0 &io-nil) (s 1 1)))
+	(sp 2) (s 0 !io-nil) (s 1 1)))
 
 
 ;; ==========================================================

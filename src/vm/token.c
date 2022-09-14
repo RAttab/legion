@@ -118,8 +118,8 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     switch (*tok->it) {
     case '(': { token->type = token_open; break; }
     case ')': { token->type = token_close; break; }
-    case '&': { token->type = token_atom; break; }
-    case '!': { token->type = token_atom_make; break; }
+    case '!': { token->type = token_atom; break; }
+    case '?': { token->type = token_atom_make; break; }
     case '$': { token->type = token_reg; break; }
     case '0'...'9': { token->type = token_number; break; }
 

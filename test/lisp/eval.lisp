@@ -252,6 +252,6 @@
 
 (eval/id
  (mod
-  (defconst X (id &item-data 0xAA))
+  (defconst X (id !item-data 0xAA))
   (assert (= X 0xF0AA)))
  (check))

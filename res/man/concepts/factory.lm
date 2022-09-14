@@ -27,19 +27,19 @@ and this is where we give them a proper name}
 
 {>Extract} Intake step of the factory where elements are extracted
 from the environment and are made available to the rest of the
-factory. As an example {_&item_extract} can be used to extract
-{_&item_elem_a} and make it available to the transformation step of
+factory. As an example {_!item_extract} can be used to extract
+{_!item_elem_a} and make it available to the transformation step of
 the factory.
 
 {>Transform} This step takes elements and items as input and
 transforms them into something else. Typically this will generate new
 items that will be made available to the rest of the factory. As an
-example {_&item_printer} can take a number of {_&item_elem_a} to
-generate an {_&item_muscle}.
+example {_!item_printer} can take a number of {_!item_elem_a} to
+generate an {_!item_muscle}.
 
 {>Deploy} Outake step of the factory where completed item can be
-activated. As an example {_&item_deploy} can take as an input an
-{_&item_extract} which will then be activated and made available for
+activated. As an example {_!item_deploy} can take as an input an
+{_!item_extract} which will then be activated and made available for
 programming.
 
 {<}
@@ -53,9 +53,9 @@ programming.
   sequential number. Here's a few example of distinct item ids:
 
 {`
-(id &item_extract 1)
-(id &item_extract 2)
-(id &item_printer 1)
+(id !item_extract 1)
+(id !item_extract 2)
+(id !item_printer 1)
 }
 
 - The id for newly created items are predictable.
@@ -85,11 +85,11 @@ it's still a bit awkward.}
 
 {>Id} The handle by which the recipe can be refered to which also
 represents the item being created by this recipe. Typically this value
-will be used when issuing {_&io_tape} IO operations.
+will be used when issuing {_!io_tape} IO operations.
 
 {>Host} The type of active items that can run this recipe. As an
-example the tape for {_&item_elem_a} can only be executed by
-{_&item_extract} which is the host.
+example the tape for {_!item_elem_a} can only be executed by
+{_!item_extract} which is the host.
 
 {>Energy} The energy cost that must be supplied by the energy
 logistics layer for the recipe to complete
@@ -147,7 +147,7 @@ blah
   on item designated by {_target}. {_arguments} will modify the
   behaviour of the command.
 
-{`(io &io_item (id &item_extract 1) &item_elem_a)}
+{`(io !io_item (id !item_extract 1) !item_elem_a)}
 
 - In this example, we're issuing the command to an extractor to
   extract the element A from its environment.

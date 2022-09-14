@@ -125,8 +125,8 @@ the command we'll use to begin our extraction process.
 Tapes are simple programs used to automate active items within the
 factory. They're composed of a linear sequence of input and output
 items and are keyed by their target output item. As an example, tape
-{_&item-elem-a} contains only a single output step for item
-{_&item-elem-a}. This tape can be executed by extractors to extract
+{_!item-elem-a} contains only a single output step for item
+{_!item-elem-a}. This tape can be executed by extractors to extract
 element A from the star and make it available to the factory. A full
 list of tapes can be explored at your convenience by clicking on
 {_tape} topbar button.
@@ -135,7 +135,7 @@ To program our extractor to extract element A, we'll execute the
 {_io-tape} command which requires the following input fields:
 
 {>id} Key of the tape to execute. Since we want to extract element A,
-enter the id {_&item-elem-a} in the input field.
+enter the id {_!item-elem-a} in the input field.
 
 {>loop} Number of iterations of the tape we want to execute. Enter the
 value {_0} in the input field to indicate that the tape will run until
@@ -154,7 +154,7 @@ state of our extractor will not change any further.
 
 For the rest of this guide we'll also need to have access to element
 B. To do so, repeat the process but with extractor {_extract.02}
-and the key {_&item-elem-b}. Once completed, you show see two boxes in
+and the key {_!item-elem-b}. Once completed, you show see two boxes in
 the factory view representing both our extractors and both elements A
 and B ready to be consumed.
 
@@ -167,13 +167,13 @@ extractor using an assembler. Printers and assemblers are also
 programmed using the {_io-tape} command and so the process in this
 section will be very similar to the process in the previous section.
 
-The tape for {_&item-extract}, our end goal, requires as input the
-items {_&item-muscle} and {_&item-nodule} each of which can be created
+The tape for {_!item-extract}, our end goal, requires as input the
+items {_!item-muscle} and {_!item-nodule} each of which can be created
 by programming printers with their respective tapes. We can start by
 navigating to the IO interface of {_printer.01} and executing the
-{_io-tape} command with the tape id {_&item-muscle}. Repeat the
-process with {_printer.02} and the tape id {_&item-nodule} and
-finally with {_assembly.01} with the tape id {_&item-extract}.
+{_io-tape} command with the tape id {_!item-muscle}. Repeat the
+process with {_printer.02} and the tape id {_!item-nodule} and
+finally with {_assembly.01} with the tape id {_!item-extract}.
 
 You'll notice that as you execute each of these IO commands, the
 factory view will not only display new boxes for each of the newly
@@ -189,7 +189,7 @@ requires the creation of additional workers.
 {?Deploy}
 
 If the previous steps completed without issues, the assembler should
-have an {_&item-extract} completed and ready to be consumed. This is a
+have an {_!item-extract} completed and ready to be consumed. This is a
 problem as the item is still considered to be passive and is treated
 like any other intermediary item within the factory. To make the
 transition from passive to active item, we'll need to deploy it using
@@ -203,7 +203,7 @@ wish to activate.
 Once again, you can begin by navigating to the IO interface of the
 {_deploy.01} item where you'll notice that the input fields
 {_io-item} are the same as {_io-tape}. We'll use the key
-{_&item-extract} for the id field and, to avoid creating an infinite
+{_!item-extract} for the id field and, to avoid creating an infinite
 number of extractor, we will use a loop value of {_2}.
 
 Once the IO command is executed, you will notice that the pending

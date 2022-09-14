@@ -13,15 +13,15 @@
 
 (defconst cycle-delay 1000)
 
-(defconst port-elem-id (id &item-port 1))
-(assert (= (io &io-ping port-elem-id) &io-ok))
+(defconst port-elem-id (id !item-port 1))
+(assert (= (io !io-ping port-elem-id) !io-ok))
 
-(defconst port-child-id (id &item-port 2))
-(assert (= (io &io-ping port-child-id) &io-ok))
+(defconst port-child-id (id !item-port 2))
+(assert (= (io !io-ping port-child-id) !io-ok))
 
 
 (unless (call (os is-home))
-  (io &io-target port-elem-id (call (os home))))
+  (io !io-target port-elem-id (call (os home))))
 
 (let ((next 0))
   (while 1
@@ -35,21 +35,21 @@
 ;; utils
 ;; -----------------------------------------------------------------------------
 
-(defun now () (ior &io-tick (self)))
+(defun now () (ior !io-tick (self)))
 
 (defun cycle-elem ()
-  (io &io-item port-elem-id
+  (io !io-item port-elem-id
       (case (rem (now) 6)
-	((0 &item-elem-a)
-	 (1 &item-elem-b)
-	 (2 &item-elem-c)
-	 (3 &item-elem-d)
-	 (4 &item-elem-g)
-	 (5 &item-elem-h)))))
+	((0 !item-elem-a)
+	 (1 !item-elem-b)
+	 (2 !item-elem-c)
+	 (3 !item-elem-d)
+	 (4 !item-elem-g)
+	 (5 !item-elem-h)))))
 
 
 (defun cycle-child ()
   (let ((n (call (os child-count))))
     (when n
-      (io &io-target port-child-id
+      (io !io-target port-child-id
 	  (call (os child) (rem (now) n))))))
