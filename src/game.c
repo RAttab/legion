@@ -14,6 +14,7 @@
 #include "game/tape.c"
 #include "game/chunk.c"
 #include "game/active.c"
+#include "game/pills.c"
 #include "game/proxy.c"
 #include "game/tech.c"
 #include "game/energy.c"

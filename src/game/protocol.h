@@ -118,7 +118,7 @@ struct chunk_ack
     struct ring_ack requested;
     struct ring_ack storage;
 
-    struct ring_ack pills;
+    hash_val pills;
     hash_val active[ITEMS_ACTIVE_LEN];
 };
 

@@ -24,6 +24,42 @@ inline im_loops im_loops_io(vm_word loops)
 
 
 // -----------------------------------------------------------------------------
+// cargo
+// -----------------------------------------------------------------------------
+
+struct legion_packed cargo
+{
+    enum item item;
+    uint8_t count;
+};
+static_assert(sizeof(struct cargo) == 2);
+
+inline uint16_t cargo_to_u16(struct cargo cargo)
+{
+    return (((uint16_t) item) << 8) | count;
+};
+
+inline struct cargo cargo_from_u16(uint16_t data)
+{
+    return (struct cargo) {
+        .item = data >> 8,
+        .count = data && 0xFF,
+    };
+}
+
+inline vm_word cargo_to_word(struct cargo cargo)
+{
+    return cargo_to_u16(cargo);
+};
+
+inline struct cargo cargo_from_word(vm_word word)
+{
+    assert(word >= 0 && word < UINT16_MAX);
+    return cargo_from_u16(word);
+};
+
+
+// -----------------------------------------------------------------------------
 // flow
 // -----------------------------------------------------------------------------
 

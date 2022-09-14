@@ -45,6 +45,7 @@ enum legion_packed save_magic
     save_magic_chunk   = 0x29,
     save_magic_active  = 0x2A,
     save_magic_energy  = 0x2B,
+    save_magic_pills   = 0x2C,
 
     save_magic_state_world   = 0x30,
     save_magic_state_chunk   = 0x33,
