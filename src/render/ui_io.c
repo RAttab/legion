@@ -134,6 +134,9 @@ enum
     ui_io_scan,
     ui_io_launch,
     ui_io_target,
+    ui_io_grow,
+    ui_io_input,
+    ui_io_activate,
     ui_io_value,
 
     ui_io_max,
@@ -191,6 +194,9 @@ struct ui_io *ui_io_new(void)
             [ui_io_scan] = ui_io_cmd1(font, IO_SCAN, "coord: "),
             [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
             [ui_io_target] = ui_io_cmd1(font, IO_TARGET, "dest:  "),
+            [ui_io_grow] = ui_io_cmd0(font, IO_GROW),
+            [ui_io_input] = ui_io_cmd2(font, IO_INPUT, "item:  ", "coord: "),
+            [ui_io_activate] = ui_io_cmd0(font, IO_ACTIVATE),
             [ui_io_value] = ui_io_cmd0(font, IO_VALUE),
         },
     };

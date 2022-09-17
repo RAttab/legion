@@ -124,7 +124,7 @@ inline void bits_clear(struct bits *bits)
 inline void bits_copy(struct bits *dst, const struct bits *src)
 {
     bits_grow(dst, src->len);
-    memcpy(bits_array(dst), bits_array_c(src), u64_ceil_div(src->len, 8));
+    memcpy(bits_array(dst), bits_array_c(src), u64_ceil_div(src->len, 64) * 8);
 }
 
 inline bool bits_test(const struct bits *bits, size_t index)
@@ -163,7 +163,8 @@ inline void bits_minus(struct bits *lhs, const struct bits *rhs)
 
 inline size_t bits_next(const struct bits *bits, size_t start)
 {
-    assert(start < bits->len);
+    assert(start <= bits->len);
+    if (start == bits->len) return bits->len;
 
     uint64_t mask = ~((1ULL << (start % 64)) - 1);
     const uint64_t *it = bits_array_c(bits) + (start / 64);

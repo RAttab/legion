@@ -29,13 +29,16 @@ static void im_port_init(void *state, struct chunk *chunk, im_id id)
 
 static void im_port_step_dock(struct im_port *port, struct chunk *chunk)
 {
-    struct pills_ret ret = chunk_lanes_dock(
+    struct pills_ret ret = chunk_pills_dock(
             chunk, port->input.coord, port->input.item);
     if (!ret.ok) return;
 
     port->state = im_port_docked;
     port->origin = ret.coord;
     port->has = ret.cargo;
+
+    if (!port->has.count)
+        port->has.item = port->want.item;
 }
 
 static void im_port_step_unload(struct im_port *port, struct chunk *chunk)
@@ -70,7 +73,7 @@ static void im_port_step_load(struct im_port *port, struct chunk *chunk)
 static void im_port_step_launch(struct im_port *port, struct chunk *chunk)
 {
     const vm_word data = cargo_to_word(port->has);
-    struct coord dst = coord_is_nil(port->target) ? port->src, port->target;
+    struct coord dst = coord_is_nil(port->target) ? port->origin : port->target;
 
     chunk_lanes_launch(chunk, ITEM_PILL, im_port_speed, dst, &data, 1);
 
@@ -88,8 +91,8 @@ static void im_port_step(void *state, struct chunk *chunk)
     case im_port_idle: { return; }
 
     case im_port_docking: { im_port_step_dock(port, chunk); return; }
-    case im_port_loading: { im_port_step_loading(port, chunk); return; }
-    case im_port_unloading: { im_port_step_unloading(port, chunk); return; }
+    case im_port_loading: { im_port_step_load(port, chunk); return; }
+    case im_port_unloading: { im_port_step_unload(port, chunk); return; }
 
     case im_port_docked: {
 
@@ -99,7 +102,7 @@ static void im_port_step(void *state, struct chunk *chunk)
         else if (port->has.count < port->want.count)
             im_port_step_load(port, chunk);
 
-        else im_port_port_launch(port, chunk);
+        else im_port_step_launch(port, chunk);
 
         return;
     }
@@ -136,7 +139,8 @@ static void im_port_io_reset(struct im_port *port, struct chunk *chunk)
 {
     if (port->state >= im_port_docked) {
         chunk_ports_reset(chunk, port->id);
-        chunk_pills_undock(chunk, port->origin, port->has);
+        if (!chunk_pills_undock(chunk, port->origin, port->has))
+            chunk_log(chunk, port->id, IO_RESET, IOE_OUT_OF_SPACE);
     }
 
     legion_zero_from(port, has);
@@ -184,7 +188,7 @@ static void im_port_io_input(
 
     // nil -> input all
     enum item item = args[0];
-    if (args[0] < 0 || args[0] > ITEMS_MAX)
+    if (args[0] < 0 || args[0] > ITEM_MAX)
         return chunk_log(chunk, port->id, IO_INPUT, IOE_A0_INVALID);
 
     struct coord coord = coord_nil();
@@ -194,10 +198,10 @@ static void im_port_io_input(
     port->input.coord = coord;
 }
 
-static void im_port_io_activate(struct im_port *port, struct chunk *chunk)
+static void im_port_io_activate(struct im_port *port)
 {
-    if (port->state == im_port_idle)
-        port->state = im_port_docking;
+    if (port->state != im_port_idle) return;
+    port->state = im_port_docking;
 }
 
 
@@ -217,7 +221,7 @@ static void im_port_io(
     case IO_ITEM: { im_port_io_item(port, chunk, args, len); return; }
     case IO_TARGET: {im_port_io_target(port, chunk, args, len); return; }
     case IO_INPUT: {im_port_io_input(port, chunk, args, len); return; }
-    case IO_ACTIVATE: {im_port_io_activate(port, chunk); return; }
+    case IO_ACTIVATE: {im_port_io_activate(port); return; }
 
     default: { return; }
     }

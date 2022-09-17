@@ -70,7 +70,8 @@ enum legion_packed io
     IO_LAUNCH   = IO_MIN + 0x85,
     IO_TARGET   = IO_MIN + 0x86,
     IO_GROW     = IO_MIN + 0x87,
-    IO_ACTIVATE = IO_MIN + 0x88,
+    IO_INPUT    = IO_MIN + 0x88,
+    IO_ACTIVATE = IO_MIN + 0x89,
 
     // State
     IO_HAS_ITEM = IO_MIN + 0xF0,

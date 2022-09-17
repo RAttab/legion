@@ -225,7 +225,7 @@ void chunk_save(struct chunk *chunk, struct save *save)
     ring16_save(chunk->requested, save);
     ring16_save(chunk->storage, save);
 
-    pills_save(chunk->pills, save);
+    pills_save(&chunk->pills, save);
     energy_save(&chunk->energy, save);
     save_write_value(save, chunk->workers.count);
     save_write_vec32(save, chunk->workers.ops);
@@ -357,7 +357,6 @@ static void chunk_save_delta_pills(
         struct chunk *chunk, struct save *save, const struct chunk_ack *ack)
 {
     hash_val hash = pills_hash(&chunk->pills, hash_init());
-
     if (hash == ack->pills) {
         save_write_value(save, ((typeof(hash)) 0));
         return;
@@ -371,10 +370,11 @@ static bool chunk_load_delta_pills(
         struct chunk *chunk, struct save *save, struct chunk_ack *ack)
 {
     hash_val hash = save_read_type(save, typeof(hash));
-    if (!hash) return;
+    if (!hash) return true;
 
-    pills_load(&chunk->pills, save);
+    if (!pills_load(&chunk->pills, save)) return false;
     ack->pills = hash;
+    return true;
 }
 
 void chunk_save_delta(
@@ -728,8 +728,9 @@ void chunk_lanes_arrive(
     }
 
     case ITEM_PILL: {
-        assert(len == 1);
-        if (!pills_arrive(&chunk->pills, src, cargo_from_word(data[0])))
+        struct cargo cargo = {0};
+        if (len >= 1) cargo =cargo_from_word(data[0]);
+        if (!pills_arrive(&chunk->pills, src, cargo))
             chunk_log(chunk, make_im_id(item, 0), IO_ARRIVE, IOE_OUT_OF_SPACE);
         break;
     }
@@ -749,10 +750,10 @@ struct pills_ret chunk_pills_dock(
     return pills_dock(&chunk->pills, coord, item);
 }
 
-struct pills_ret chunk_pills_undock(
+bool chunk_pills_undock(
         struct chunk *chunk, struct coord origin, struct cargo cargo)
 {
-    pills_arrive(&chunk->pills, porigin, cargo);
+    return pills_arrive(&chunk->pills, origin, cargo);
 }
 
 void chunk_lanes_launch(

@@ -34,16 +34,21 @@ struct legion_packed cargo
 };
 static_assert(sizeof(struct cargo) == 2);
 
+inline struct cargo make_cargo(enum item item, uint8_t count)
+{
+    return (struct cargo) { .item = item, .count = count };
+}
+
 inline uint16_t cargo_to_u16(struct cargo cargo)
 {
-    return (((uint16_t) item) << 8) | count;
+    return (((uint16_t) cargo.item) << 8) | cargo.count;
 };
 
 inline struct cargo cargo_from_u16(uint16_t data)
 {
     return (struct cargo) {
         .item = data >> 8,
-        .count = data && 0xFF,
+        .count = data & 0xFF,
     };
 }
 

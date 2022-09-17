@@ -9,6 +9,7 @@
 #include "game/id.h"
 #include "game/save.h"
 #include "game/world.h"
+#include "game/pills.h"
 #include "items/io.h"
 #include "items/item.h"
 #include "vm/vm.h"
@@ -78,7 +79,7 @@ ssize_t chunk_scan(struct chunk *, enum item);
 
 
 struct pills_ret chunk_pills_dock(struct chunk *, struct coord, enum item);
-void chunk_pills_undock(struct chunk *, struct coord, struct cargo);
+bool chunk_pills_undock(struct chunk *, struct coord, struct cargo);
 
 void chunk_lanes_listen(struct chunk *, im_id, struct coord src, uint8_t chan);
 void chunk_lanes_unlisten(struct chunk *, im_id, struct coord src, uint8_t chan);

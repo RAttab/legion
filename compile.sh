@@ -11,7 +11,7 @@ CC=${CC:-gcc}
 if [ ! -z "${VERBOSE}" ]; then set -o xtrace; fi
 
 declare -a SRC
-SRC=(items ui render game vm utils)
+SRC=(common items ui render game vm utils)
 
 declare -a TEST
 : ${TEST:="ring text lisp chunk lanes tech save protocol items proxy man"}

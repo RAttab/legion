@@ -41,14 +41,15 @@ void test_port(void)
     // need to make one step for the items to be created.
     world_step(world);
 
-    const vm_word pill_data = im_port_pack(ITEM_ELEM_A, 2);
+    enum { load_ticks = 20, elem_count = 2 };
+
+    const vm_word pill_data = cargo_to_word(make_cargo(ITEM_ELEM_A, elem_count));
     chunk_lanes_arrive(src_chunk, ITEM_PILL, dst, &pill_data, 1);
     chunk_lanes_arrive(dst_chunk, ITEM_PILL, src, &pill_data, 1);
 
     chunk_io(src_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
     chunk_io(dst_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
 
-    enum { load_ticks = 6, elem_count = 2 };
     const vm_word dst_data = coord_to_u64(dst);
     const vm_word src_data = coord_to_u64(src);
     const vm_word item_a_data[] = { item_elem_a, elem_count };
@@ -60,6 +61,8 @@ void test_port(void)
         chunk_io(dst_chunk, IO_ITEM, sys_id, port_id, &item_nil_data, 1);
         chunk_io(src_chunk, IO_TARGET, sys_id, port_id, &dst_data, 1);
         chunk_io(dst_chunk, IO_TARGET, sys_id, port_id, &src_data, 1);
+        chunk_io(src_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
+        chunk_io(dst_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
 
         step_for(world, load_ticks);
 
@@ -74,6 +77,8 @@ void test_port(void)
         chunk_io(dst_chunk, IO_ITEM, sys_id, port_id, item_a_data, array_len(item_a_data));
         chunk_io(src_chunk, IO_TARGET, sys_id, port_id, &dst_data, 1);
         chunk_io(dst_chunk, IO_TARGET, sys_id, port_id, &src_data, 1);
+        chunk_io(src_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
+        chunk_io(dst_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
 
         step_for(world, load_ticks);
 

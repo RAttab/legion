@@ -289,6 +289,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_LAUNCH),
     io_init(IO_TARGET),
     io_init(IO_GROW),
+    io_init(IO_INPUT),
     io_init(IO_ACTIVATE),
 
     // State

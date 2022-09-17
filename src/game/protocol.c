@@ -63,7 +63,8 @@ void ack_reset(struct ack *ack)
     htable_clear(&ack->chunk.provided);
     ring_ack_reset(&ack->chunk.requested);
     ring_ack_reset(&ack->chunk.storage);
-    ring_ack_reset(&ack->chunk.pills);
+    
+    ack->chunk.pills = 0;
     memset(ack->chunk.active, 0, sizeof(ack->chunk.active));
 }
 
@@ -95,7 +96,7 @@ static void ack_save(const struct ack *ack, struct save *save)
 
     save_write_value(save, ring_ack_to_u64(cack->requested));
     save_write_value(save, ring_ack_to_u64(cack->storage));
-    save_write_value(save, ring_ack_to_u64(cack->pills));
+    save_write_value(save, cack->pills);
 
     for (size_t i = 0; i < array_len(cack->active); ++i) {
         if (!cack->active[i]) continue;
@@ -133,7 +134,7 @@ static struct ack *ack_load(struct save *save)
 
     cack->requested = ring_ack_from_u64(save_read_type(save, uint64_t));
     cack->storage = ring_ack_from_u64(save_read_type(save, uint64_t));
-    cack->pills = ring_ack_from_u64(save_read_type(save, uint64_t));
+    cack->pills = save_read_type(save, typeof(cack->pills));
 
     memset(cack->active, 0, sizeof(cack->active));
     while (true) {
