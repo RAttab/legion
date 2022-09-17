@@ -18,29 +18,31 @@ struct im_config;
 
 enum { im_port_speed = 100 };
 
+enum legion_packed im_port_state
+{
+    im_port_idle = 0,
+    im_port_docking,
+    im_port_docked,
+    im_port_loading,
+    im_port_unloading,
+};
+
 struct legion_packed im_port
 {
     im_id id;
 
-    legion_pad(2);
+    struct cargo has, want;
 
-    struct legion_packed { enum item item; uint8_t count; } has, want;
-    struct coord target;
+    enum im_port_state state;
+
+    struct legion_packed {
+        enum item item;
+        struct coord coord;
+    } input;
+
+    struct coord origin, target;
 };
 
-static_assert(sizeof(struct im_port) == 16);
-
-
-inline vm_word im_port_pack(enum item item, uint8_t count)
-{
-    return (((uint64_t) count) << 8) | item;
-}
-
-inline void im_port_unpack(vm_word word, enum item *item, uint8_t *count)
-{
-    *item = word & 0xFF;
-    *count = word >> 8;
-}
-
+static_assert(sizeof(struct im_port) == 32);
 
 void im_port_config(struct im_config *);

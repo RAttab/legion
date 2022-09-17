@@ -77,7 +77,9 @@ struct energy *chunk_energy(struct chunk *);
 ssize_t chunk_scan(struct chunk *, enum item);
 
 
-struct pills_ret chunk_lanes_dock(struct chunk *, struct coord, enum item);
+struct pills_ret chunk_pills_dock(struct chunk *, struct coord, enum item);
+void chunk_pills_undock(struct chunk *, struct coord, struct cargo);
+
 void chunk_lanes_listen(struct chunk *, im_id, struct coord src, uint8_t chan);
 void chunk_lanes_unlisten(struct chunk *, im_id, struct coord src, uint8_t chan);
 void chunk_lanes_arrive(

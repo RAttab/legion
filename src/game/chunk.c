@@ -743,10 +743,16 @@ void chunk_lanes_arrive(
     }
 }
 
-struct pills_ret chunk_lanes_dock(
+struct pills_ret chunk_pills_dock(
         struct chunk *chunk, struct coord coord, enum item item)
 {
     return pills_dock(&chunk->pills, coord, item);
+}
+
+struct pills_ret chunk_pills_undock(
+        struct chunk *chunk, struct coord origin, struct cargo cargo)
+{
+    pills_arrive(&chunk->pills, porigin, cargo);
 }
 
 void chunk_lanes_launch(

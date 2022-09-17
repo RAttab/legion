@@ -131,7 +131,8 @@ void ui_str_set_item(struct ui_str *str, enum item val)
 void ui_str_set_coord(struct ui_str *str, struct coord val)
 {
     assert(str->cap);
-    str->len = coord_str(val, (char *) str->str, str->cap);
+    if (coord_is_nil(val)) ui_str_setc(str, "nil");
+    else str->len = coord_str(val, (char *) str->str, str->cap);
 }
 
 void ui_str_set_symbol(struct ui_str *str, const struct symbol *val)
