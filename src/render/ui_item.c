@@ -33,7 +33,7 @@ struct ui_item *ui_item_new(void)
 {
     struct font *font = ui_item_font();
 
-    size_t width = 38 * ui_item_font()->glyph_w;
+    size_t width = 42 * ui_item_font()->glyph_w;
     struct pos pos = make_pos(
             render.rect.w - width - ui_star_width(render.ui.star),
             ui_topbar_height());
@@ -93,6 +93,11 @@ static void ui_item_update(struct ui_item *ui)
 
     struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
     if ((ui->loading = !chunk)) return;
+
+    if (!chunk_get(chunk, ui->id)) {
+        render_push_event(EV_ITEM_CLEAR, 0, 0);
+        return;
+    }
 
     void *state = ui_item_state(ui, ui->id);
     const struct im_config *config = im_config_assert(im_id_item(ui->id));

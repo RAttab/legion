@@ -35,7 +35,7 @@ struct ui_port
         struct ui_label origin, origin_val;
     } has;
 
-    struct ui_label item, item_sep;
+    struct ui_label item, count;
 };
 
 static void *ui_port_alloc(struct font *font)
@@ -52,7 +52,7 @@ static void *ui_port_alloc(struct font *font)
             .head = ui_label_new(font, ui_str_c("input:")),
             .item = ui_label_new(font, ui_str_v(item_str_len)),
             .coord = ui_label_new(font, ui_str_c("  coord:  ")),
-            .coord_val = ui_label_new(font, ui_str_v(coord_str_len)),
+            .coord_val = ui_label_new(font, ui_str_v(symbol_cap)),
         },
 
         .want = {
@@ -60,7 +60,7 @@ static void *ui_port_alloc(struct font *font)
             .item = ui_label_new(font, ui_str_v(item_str_len)),
             .count = ui_label_new(font, ui_str_v(3)),
             .target = ui_label_new(font, ui_str_c("  target: ")),
-            .target_val = ui_label_new(font, ui_str_v(coord_str_len)),
+            .target_val = ui_label_new(font, ui_str_v(symbol_cap)),
         },
 
         .has = {
@@ -68,13 +68,14 @@ static void *ui_port_alloc(struct font *font)
             .item = ui_label_new(font, ui_str_v(item_str_len)),
             .count = ui_label_new(font, ui_str_v(3)),
             .origin = ui_label_new(font, ui_str_c("  origin: ")),
-            .origin_val = ui_label_new(font, ui_str_v(coord_str_len)),
+            .origin_val = ui_label_new(font, ui_str_v(symbol_cap)),
         },
 
         .item = ui_label_new(font, ui_str_c("  item:   ")),
-        .item_sep = ui_label_new(font, ui_str_c(" x")),
+        .count = ui_label_new(font, ui_str_c("  count:  ")),
     };
 
+    ui->input.item.fg = rgba_yellow();
     return ui;
 }
 
@@ -103,7 +104,7 @@ static void ui_port_free(void *_ui)
     ui_label_free(&ui->has.origin_val);
 
     ui_label_free(&ui->item);
-    ui_label_free(&ui->item_sep);
+    ui_label_free(&ui->count);
 
     free(ui);
 }
@@ -115,29 +116,42 @@ static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_port *port = chunk_get(chunk, id);
     assert(port);
 
+    ui->input.item.fg = rgba_white();
+    ui->want.item.fg = rgba_white();
+    ui->has.item.fg = rgba_white();
+
     const char *status = "nil";
     switch (port->state) {
-    case im_port_idle:      { status = "disabled"; break; }
-    case im_port_docking:   { status = "docking"; break; }
-    case im_port_docked:    { status = "docked"; break; }
-    case im_port_loading:   { status = "loading"; break; }
-    case im_port_unloading: { status = "unloading"; break; }
+    case im_port_idle:    { status = "disabled"; break; }
+    case im_port_docking: { status = "docking"; break; }
+    case im_port_docked:  { status = "docked"; break; }
+    case im_port_loading: {
+        ui->want.item.fg = rgba_green();
+        status = "loading";
+        break;
+    }
+    case im_port_unloading: {
+        ui->has.item.fg = rgba_blue();
+        status = "unloading";
+        break;
+    }
     default: { assert(false); }
     }
     ui_str_setc(&ui->status_val.str, status);
 
     ui_str_set_item(&ui->input.item.str, port->input.item);
-    ui_str_set_coord(&ui->input.coord_val.str, port->input.coord);
+    if (port->input.item) ui->input.item.fg = rgba_yellow();
+    ui_str_set_coord_name(&ui->input.coord_val.str, port->input.coord);
 
     ui_str_set_item(&ui->want.item.str, port->want.item);
     ui_str_set_u64(&ui->want.count.str, port->want.count);
     if (coord_is_nil(port->target))
         ui_str_setc(&ui->want.target_val.str, "origin");
-    else ui_str_set_coord(&ui->want.target_val.str, port->target);
+    else ui_str_set_coord_name(&ui->want.target_val.str, port->target);
 
     ui_str_set_item(&ui->has.item.str, port->has.item);
     ui_str_set_u64(&ui->has.count.str, port->has.count);
-    ui_str_set_coord(&ui->has.origin_val.str, port->origin);
+    ui_str_set_coord_name(&ui->has.origin_val.str, port->origin);
 }
 
 static void ui_port_render(
@@ -172,7 +186,9 @@ static void ui_port_render(
 
         ui_label_render(&ui->item, layout, renderer);
         ui_label_render(&ui->want.item, layout, renderer);
-        ui_label_render(&ui->item_sep, layout, renderer);
+        ui_layout_next_row(layout);
+
+        ui_label_render(&ui->count, layout, renderer);
         ui_label_render(&ui->want.count, layout, renderer);
         ui_layout_next_row(layout);
 
@@ -189,7 +205,9 @@ static void ui_port_render(
 
         ui_label_render(&ui->item, layout, renderer);
         ui_label_render(&ui->has.item, layout, renderer);
-        ui_label_render(&ui->item_sep, layout, renderer);
+        ui_layout_next_row(layout);
+
+        ui_label_render(&ui->count, layout, renderer);
         ui_label_render(&ui->has.count, layout, renderer);
         ui_layout_next_row(layout);
 

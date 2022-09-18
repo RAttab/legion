@@ -4,6 +4,7 @@
 */
 
 #include "ui/ui.h"
+#include "game/gen.h"
 
 
 // -----------------------------------------------------------------------------
@@ -40,7 +41,7 @@ static void *ui_scanner_alloc(struct font *font)
         .work_cap = ui_label_new(font, ui_str_v(3)),
 
         .sector = ui_label_new(font, ui_str_c("sector:   ")),
-        .sector_coord = ui_link_new(font, ui_str_v(coord_str_len)),
+        .sector_coord = ui_link_new(font, ui_str_v(symbol_cap)),
 
         .result = ui_label_new(font, ui_str_c("result:   ")),
         .result_val = ui_link_new(font, ui_str_v(16)),
@@ -90,7 +91,10 @@ static void ui_scanner_update(void *_ui, struct chunk *chunk, im_id id)
             ui_str_setc(&ui->status_val.str, "waiting");
         else ui_str_setc(&ui->status_val.str, "scanning");
 
-        ui_str_set_coord(&ui->sector_coord.str, state->it.coord);
+        struct symbol name =
+            gen_name_sector(state->it.coord, proxy_seed(render.proxy));
+        ui_str_set_symbol(&ui->sector_coord.str, &name);
+
         ui_str_set_u64(&ui->work_cap.str, state->work.cap);
     }
 

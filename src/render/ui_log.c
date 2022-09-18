@@ -104,8 +104,7 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
     ui_str_set_u64(&ui->time.str, it->time);
 
     ui->state.star = it->star;
-    vm_word name = proxy_star_name(render.proxy, it->star);
-    ui_str_set_atom(&ui->star.str, name);
+    ui_str_set_coord_name(&ui->star.str, it->star);
 
     ui->state.id = it->id;
     ui_str_set_id(&ui->id.str, it->id);

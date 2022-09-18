@@ -30,7 +30,7 @@ static void *ui_receive_alloc(struct font *font)
         .font = font,
 
         .target = ui_label_new(font, ui_str_c("target: ")),
-        .target_val = ui_label_new(font, ui_str_v(coord_str_len)),
+        .target_val = ui_label_new(font, ui_str_v(symbol_cap)),
         .channel = ui_label_new(font, ui_str_c("channel: ")),
         .channel_val = ui_label_new(font, ui_str_v(1)),
 
@@ -76,7 +76,7 @@ static void ui_receive_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_receive *receive = chunk_get(chunk, id);
     assert(receive);
 
-    ui_str_set_coord(&ui->target_val.str, receive->target);
+    ui_str_set_coord_name(&ui->target_val.str, receive->target);
     ui_str_set_u64(&ui->channel_val.str, receive->channel);
 
     ui->cap = im_receive_cap(receive);

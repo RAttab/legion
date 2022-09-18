@@ -41,7 +41,7 @@ static void *ui_prober_alloc(struct font *font)
 
         .target = ui_label_new(font, ui_str_c("target:   ")),
         .target_item = ui_label_new(font, ui_str_v(item_str_len)),
-        .target_coord = ui_link_new(font, ui_str_v(coord_str_len)),
+        .target_coord = ui_link_new(font, ui_str_v(symbol_cap)),
 
         .result = ui_label_new(font, ui_str_c("result:   ")),
         .result_val = ui_link_new(font, ui_str_v(16)),
@@ -95,7 +95,7 @@ static void ui_prober_update(void *_ui, struct chunk *chunk, im_id id)
         else ui_str_setc(&ui->status_val.str, "probing");
 
         ui_str_set_item(&ui->target_item.str, state->item);
-        ui_str_set_coord(&ui->target_coord.str, state->coord);
+        ui_str_set_coord_name(&ui->target_coord.str, state->coord);
         ui_str_set_u64(&ui->work_cap.str, state->work.cap);
     }
 
