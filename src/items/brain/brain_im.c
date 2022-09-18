@@ -131,7 +131,7 @@ static void im_brain_step_io(
 
     if (!dst) dst = brain->id;
     if (atom < (uint32_t) IO_MIN || atom >= (uint32_t) IO_MAX) {
-        dbgf("brain.step.io: io=%lx, atom=%x, dst=%x", io[0], atom, dst);
+        chunk_log(chunk, brain->id, IO_STEP, IOE_VM_FAULT);
         vm_io_fault(&brain->vm);
         return;
     }
