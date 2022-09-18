@@ -104,14 +104,12 @@
 ;; roam
 ;; -----------------------------------------------------------------------------
 
-(defun roam-unpack (coord packed)
-  (let ((port (unpack packed))
-	(elem (head)))
-    (io !io-item port elem 100)
-    (io !io-target port coord)))
+(defun roam-unpack (coord elem)
+  (io !io-log (self) ?os-nomad-unpack coord))
 
-(defun roam-pack (coord port)
-  (io !io-reset port)
+(defun roam-pack (coord)
+  (io !io-log (self) ?os-nomad-pack coord)
+
   (let ((src (ior !io-get packet-id packet-src)))
     (io !io-send (id !item-transmit src) ?os-roam-next)
     (io !io-target (id !item-transmit src) coord)

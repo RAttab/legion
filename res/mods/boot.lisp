@@ -22,6 +22,8 @@
 (defconst energy-target 100)
 (defconst specs-solar-div 1000)
 
+(defconst port-item-count 255)
+
 ;; Sanity checks
 (defconst prober-id (id !item-prober 1))
 (assert (= (io !io-ping prober-id) !io-ok))
@@ -177,6 +179,7 @@
 
 ;; Pill logistics
 ;; Requires the spanning tree to figure out where home is.
+(defconst elem-count 11)
 (progn
   (deploy-tape !item-printer !item-magnet printer-count)
   (deploy-tape !item-printer !item-ferrofluid printer-count)
@@ -188,25 +191,26 @@
   (deploy-tape !item-assembly !item-field assembly-count)
 
   (wait-tech !item-port)
-  (deploy-item !item-port 2)
+  (deploy-item !item-port elem-count)
 
   (when (call (os is-home))
-    (deploy-item !item-storage (* 11 storage-count))
-    (for (i 0) (< i 11) (+ i 1)
+    (deploy-item !item-storage (* elem-count storage-count))
+    (for (i 0) (< i elem-count) (+ i 1)
+	 (io !io-input (id !item-port (+ i 1)) (+ !item-elem-a i))
 	 (set-item (+ (* i storage-count) 1)
 		   storage-count
 		   !item-storage
 		   (+ !item-elem-a i))))
 
-  (deploy-item !item-brain 1)
-  (let ((brain-id (id !item-brain (count !item-brain))))
-    (assert (= (io !io-mod brain-id (mod port 2)) !io-ok)))
-
-  ;; We build it after to give (mod port) a chance to boot up and set
-  ;; up the ports.
   (wait-tech !item-pill)
-  (deploy-item !item-pill 10))
+  (unless (call (os is-home))
+    (for (i 0) (< i elem-count) (+ i 1)
+	 (io !io-item (id !item-port (+ i 1)) (+ !item-elem-a i) port-item-count)
+	 (io !io-target (id !item-port i) (call (os home))))
+    (deploy-item !item-pill (* elem-count 2)))
 
+  (for (id 1) (<= id elem-count) (+ id 1)
+       (io !io-activate (id !item-port id))))
 
 
 ;; Collider
@@ -262,7 +266,6 @@
 ;; Must match values in nomad mod
 (defconst nomad-ix-home 0)
 (defconst nomad-ix-elem 1)
-(defconst nomad-ix-port 2)
 (defconst nomad-ix-nomad 0)
 (defconst nomad-ix-prober 1)
 (defconst nomad-ix-scanner 2)
@@ -298,9 +301,7 @@
   (io !io-set (id !item-nomad 4) nomad-ix-elem !item-elem-j)
 
   (for (it 1) (<= it 4) (+ it 1)
-       (deploy-item !item-port 1)
        (io !io-set (id !item-nomad it) nomad-ix-home (ior !io-coord (self)))
-       (io !io-set (id !item-nomad it) nomad-ix-port (id !item-port (count !item-port)))
 
        (deploy-item !item-memory 1)
        (let ((state-id (id !item-memory (count !item-memory))))

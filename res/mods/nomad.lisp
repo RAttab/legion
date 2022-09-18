@@ -1,12 +1,12 @@
 ;; Manages the booting and roaming operations of a nomad
 
-(defconst pill-batch 100)
 (defconst extract-count 4)
+(defconst pill-count 4)
+(defconst pill-elem-count 100)
 
 
 (defconst ix-home 0)
 (defconst ix-elem 1)
-(defconst ix-port 2)
 
 (defconst ix-nomad 0)
 (defconst ix-prober 1)
@@ -15,7 +15,7 @@
 
 ;; The boot mod places sends a message to the brain before loading the
 ;; mod. Using this message we can easily tell whether we're booting in
-;; the homeworld or whether we're roadming.
+;; the homeworld or whether we're roaming.
 (if (ior !io-recv (self))
     (boot (head))
     (roam))
@@ -31,7 +31,7 @@
     (load-item nomad-id !item-worker 4)
     (load-item nomad-id !item-solar 20)
     (load-item nomad-id !item-port 1)
-    (load-item nomad-id !item-pill 4)
+    (load-item nomad-id !item-pill pill-count)
     (load-item nomad-id !item-transmit 1)
     (load-item nomad-id !item-receive 1)
     (if (>= (ior !io-get nomad-id ix-elem) !item-elem-i)
@@ -50,6 +50,7 @@
 ;; -----------------------------------------------------------------------------
 
 (defun roam ()
+  (io !io-log (self) ?nomad-arrive (ior !io-get (id !item-nomad 1) ix-home))
 
   ;; Setup
   (let ((elem (ior !io-get (id !item-nomad 1) ix-elem)))
@@ -61,12 +62,11 @@
       (io !io-target (id !item-transmit 1) home)
       (io !io-target (id !item-receive 1) home)
       (io !io-send (id !item-transmit 1)
-	  ?os-roam-unpack
-	  (ior !io-coord (self))
-	  (pack elem (ior !io-get (id !item-nomad 1) ix-port)))
+	  ?os-roam-unpack (ior !io-coord (self)) elem)
 
       (io !io-target (id !item-port 1) home)
-      (io !io-item (id !item-port 1) elem pill-batch)))
+      (io !io-item (id !item-port 1) elem pill-elem-count)
+      (io !io-activate (id !item-port 1))))
 
   ;; Extract + Scan
   (progn
@@ -80,11 +80,12 @@
       (while (> (ior !io-probe (id !item-prober 1) elem) 0)))
 
     (io !io-send (id !item-transmit 1)
-	?os-roam-pack
-	(ior !io-get (id !item-memory 1) ix-target)
-	(ior !io-get (id !item-nomad 1) ix-port))
+	?os-roam-pack (ior !io-get (id !item-memory 1) ix-target))
     (while (not (ior !io-receive (id !item-receive 1))))
-    (assert (= (head) ?os-roam-next)))
+    (assert (= (head) ?os-roam-next))
+
+    ;; Wait for all the pills to have returned before moving on.
+    (while (< (ior !io-probe (id !item-prober 1) !item-pill) pill-count)))
 
   ;; Pack
   (progn
@@ -113,6 +114,7 @@
 (defun launch (state-id)
   (let ((nomad-id (ior !io-get state-id ix-nomad))
 	(target (ior !io-get state-id ix-target)))
+    (io !io-log (self) ?nomad-launch target)
     (pack nomad-id (ior !io-get state-id ix-prober))
     (pack nomad-id (ior !io-get state-id ix-scanner))
     (pack nomad-id state-id)
