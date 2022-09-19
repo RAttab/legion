@@ -23,3 +23,4 @@
 #include "game/protocol.c"
 #include "game/save.c"
 #include "game/man.c"
+#include "game/specs.c"
