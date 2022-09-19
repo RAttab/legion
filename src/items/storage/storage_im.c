@@ -139,7 +139,7 @@ static bool im_storage_flow(const void *state, struct flow *flow)
 
     *flow = (struct flow) {
         .id = storage->id,
-        .loops = storage->count,
+        .loops = legion_min(storage->count, im_loops_inf),
         .target = storage->item,
         .state = storage->count ? tape_output : tape_input,
         .item = storage->item,

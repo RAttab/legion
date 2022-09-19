@@ -62,7 +62,7 @@ static void ui_storage_update(void *_ui, struct chunk *chunk, im_id id)
         ui_str_set_item(&ui->item_val.str, state->item);
     else ui_str_setc(&ui->item_val.str, "nil");
 
-    ui_str_set_hex(&ui->count_val.str, state->count);
+    ui_str_set_u64(&ui->count_val.str, state->count);
 
     ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
 }

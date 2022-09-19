@@ -7,7 +7,7 @@
 ;; (mod launch 2) module and research to get to antenna is done via
 ;; the (mod lab 2) module.
 
-(defconst max-depth 1)
+(defconst max-depth 2)
 
 (defconst extract-count 2)
 (defconst condenser-count 2)
@@ -16,8 +16,6 @@
 (defconst worker-count 20)
 (defconst lab-count 4)
 (defconst active-count 1)
-(defconst storage-count 4)
-(defconst o-storage-count 16)
 
 (defconst energy-target 100)
 (defconst specs-solar-div 1000)
@@ -194,13 +192,10 @@
   (deploy-item !item-port elem-count)
 
   (when (call (os is-home))
-    (deploy-item !item-storage (* elem-count storage-count))
+    (deploy-item !item-storage elem-count)
     (for (i 0) (< i elem-count) (+ i 1)
 	 (io !io-input (id !item-port (+ i 1)) (+ !item-elem-a i))
-	 (set-item (+ (* i storage-count) 1)
-		   storage-count
-		   !item-storage
-		   (+ !item-elem-a i))))
+	 (io !io-item (id !item-storage (+ i 1)) (+ !item-elem-a i))))
 
   (wait-tech !item-pill)
   (unless (call (os is-home))
@@ -232,17 +227,11 @@
   (io !io-tape collider-id !item-elem-m)
 
   ;; Until we have a burner we need to store the garbage o elements
-  (deploy-item !item-storage o-storage-count)
-  (set-item (- (count !item-storage) (- o-storage-count 1))
-	    o-storage-count
-	    !item-storage
-	    !item-elem-o)
+  (deploy-item !item-storage 1)
+  (io !io-item (id !item-storage (count !item-storage)) !item-elem-o)
 
-  (deploy-item !item-storage storage-count)
-  (set-item (- (count !item-storage) (- storage-count 1))
-	    storage-count
-	    !item-storage
-	    !item-elem-m)
+  (deploy-item !item-storage 1)
+  (io !io-item (id !item-storage (count !item-storage)) !item-elem-m)
 
   ;; Burner
   (wait-tech !item-galvanic)
