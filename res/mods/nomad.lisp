@@ -85,6 +85,7 @@
     (assert (= (head) ?os-roam-next))
 
     ;; Wait for all the pills to have returned before moving on.
+    (io !io-reset (id !item-port 1)) ;; undock any pending pills
     (while (< (ior !io-probe (id !item-prober 1) !item-pill) pill-count)))
 
   ;; Pack
