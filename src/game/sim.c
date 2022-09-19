@@ -294,7 +294,7 @@ static void sim_logv_overflow(enum status_type type, const char *fmt, va_list ar
     default: { assert(false); }
     }
 
-    errf("log overflow: <%s> %s\n", prefix, msg);
+    errf("log overflow: <%s> %s", prefix, msg);
 }
 
 static void sim_logv(
