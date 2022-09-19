@@ -247,8 +247,7 @@ static const vm_word im_port_io_list[] =
 static bool im_port_flow(const void *state, struct flow *flow)
 {
     const struct im_port *port = state;
-    if (coord_is_nil(port->target)) return false;
-    if (!port->want.item && !port->has.item) return false;
+    if (port->state == im_port_idle) return false;
 
     const struct tape_info *info = tapes_info(port->has.item);
 

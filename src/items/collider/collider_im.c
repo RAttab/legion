@@ -296,7 +296,7 @@ static bool im_collider_flow(const void *state, struct flow *flow)
         .id = collider->id,
         .loops = collider->loops,
         .target = target,
-        .rank = tapes_info(ret.item)->rank,
+        .rank = tapes_info(target)->rank,
     };
 
     switch (ret.state)
