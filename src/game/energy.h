@@ -31,7 +31,7 @@ typedef uint64_t im_energy;
 
 struct energy
 {
-    uint16_t solar, kwheel, battery;
+    uint8_t solar, kwheel, battery;
 
     im_energy current;
     im_energy produced, consumed, need;

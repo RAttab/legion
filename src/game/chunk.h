@@ -28,6 +28,8 @@ struct energy;
 // chunk
 // -----------------------------------------------------------------------------
 
+enum { chunk_item_cap = UINT8_MAX };
+
 struct chunk;
 
 struct chunk *chunk_alloc_empty(void);
@@ -103,7 +105,7 @@ void chunk_ports_request(struct chunk *, im_id, enum item);
 
 struct workers
 {
-    uint16_t count, queue, idle, fail, clean;
+    uint8_t count, queue, idle, fail, clean;
     struct vec32 *ops;
 };
 

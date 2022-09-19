@@ -536,11 +536,12 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
 {
     if (likely(!item_is_logistics(item))) return false;
 
+    uint8_t *count = NULL;
     switch (item) {
-    case ITEM_WORKER:  { chunk->workers.count++; return true; }
-    case ITEM_SOLAR:   { chunk->energy.solar++; return true; }
-    case ITEM_KWHEEL:  { chunk->energy.kwheel++; return true; }
-    case ITEM_BATTERY: { chunk->energy.battery++; return true; }
+    case ITEM_WORKER:  { count = &chunk->workers.count; break; }
+    case ITEM_SOLAR:   { count = &chunk->energy.solar; break; }
+    case ITEM_KWHEEL:  { count = &chunk->energy.kwheel; break; }
+    case ITEM_BATTERY: { count = &chunk->energy.battery; break; }
 
     case ITEM_PILL: {
         vm_word cargo = 0;
@@ -550,6 +551,10 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
 
     default: { assert(false); }
     }
+
+    if (*count == chunk_item_cap) return false;
+    (*count)++;
+    return true;
 }
 
 bool chunk_create(struct chunk *chunk, enum item item)

@@ -41,8 +41,6 @@ static_assert(sizeof(struct ports) == 4);
 // active
 // -----------------------------------------------------------------------------
 
-enum { active_cap = 256 };
-
 legion_packed struct active
 {
     bool skip;

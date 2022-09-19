@@ -266,7 +266,7 @@ static void active_grow(struct active *active)
 // we prefer to defer to creation process.
 bool active_create(struct active *active)
 {
-    if (active->count + active->create == active_cap) return false;
+    if (active->count + active->create == chunk_item_cap) return false;
 
     active->create++;
     return true;
@@ -277,7 +277,7 @@ bool active_create(struct active *active)
 bool active_create_from(
         struct active *active, struct chunk *chunk, const vm_word *data, size_t len)
 {
-    if (active->count + active->create == active_cap) return false;
+    if (active->count + active->create == chunk_item_cap) return false;
 
     const struct im_config *config = im_config_assert(active->type);
     assert(config->im.make);

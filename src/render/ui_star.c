@@ -117,19 +117,19 @@ struct ui_star *ui_star_new(void)
                 make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
 
         .pills = ui_label_new(font, ui_str_c("pills: ")),
-        .pills_val = ui_label_new(font, ui_str_v(10)),
+        .pills_val = ui_label_new(font, ui_str_v(4)),
 
         .workers = (struct ui_star_workers) {
             .workers = ui_label_new(font, ui_str_c("workers: ")),
-            .workers_val = ui_label_new(font, ui_str_v(10)),
+            .workers_val = ui_label_new(font, ui_str_v(3)),
             .queue = ui_label_new(font, ui_str_c("- queue: ")),
-            .queue_val = ui_label_new(font, ui_str_v(10)),
+            .queue_val = ui_label_new(font, ui_str_v(3)),
             .idle = ui_label_new(font, ui_str_c("- idle:  ")),
-            .idle_val = ui_label_new(font, ui_str_v(10)),
+            .idle_val = ui_label_new(font, ui_str_v(3)),
             .fail = ui_label_new(font, ui_str_c("- fail:  ")),
-            .fail_val = ui_label_new(font, ui_str_v(10)),
+            .fail_val = ui_label_new(font, ui_str_v(3)),
             .clean = ui_label_new(font, ui_str_c("- clean: ")),
-            .clean_val = ui_label_new(font, ui_str_v(10)),
+            .clean_val = ui_label_new(font, ui_str_v(3)),
         },
 
         .need = ui_label_new(font, ui_str_c("- need:     ")),
@@ -142,8 +142,8 @@ struct ui_star *ui_star_new(void)
         .stored_val = ui_label_new(font, ui_str_v(str_scaled_len)),
 
         .solar = (struct ui_star_energy) {
-            .name = ui_label_new(font, ui_str_c("solar:        ")),
-            .count = ui_label_new(font, ui_str_v(10)),
+            .name = ui_label_new(font, ui_str_c("solar:         ")),
+            .count = ui_label_new(font, ui_str_v(3)),
             .prod = ui_label_new(font, ui_str_c("- production: ")),
             .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
             .total = ui_label_new(font, ui_str_c("- total:      ")),
@@ -151,8 +151,8 @@ struct ui_star *ui_star_new(void)
         },
 
         .kwheel = (struct ui_star_energy) {
-            .name = ui_label_new(font, ui_str_c("k-wheel:      ")),
-            .count = ui_label_new(font, ui_str_v(10)),
+            .name = ui_label_new(font, ui_str_c("k-wheel:       ")),
+            .count = ui_label_new(font, ui_str_v(3)),
             .prod = ui_label_new(font, ui_str_c("- production: ")),
             .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
             .total = ui_label_new(font, ui_str_c("- total:      ")),
@@ -160,8 +160,8 @@ struct ui_star *ui_star_new(void)
         },
 
         .store = (struct ui_star_energy) {
-            .name = ui_label_new(font, ui_str_c("store:      ")),
-            .count = ui_label_new(font, ui_str_v(10)),
+            .name = ui_label_new(font, ui_str_c("store:         ")),
+            .count = ui_label_new(font, ui_str_v(3)),
             .prod = ui_label_new(font, ui_str_c("- capacity: ")),
             .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
             .total = ui_label_new(font, ui_str_c("- total:    ")),
