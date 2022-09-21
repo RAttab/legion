@@ -255,3 +255,15 @@
   (defconst X (id !item-data 0xAA))
   (assert (= X 0xF0AA)))
  (check))
+
+(eval/specs-var
+ (mod
+  (defconst X (specs !spec-test-var))
+  (assert (= X 0x123)))
+ (check))
+
+(eval/specs-fn
+ (mod
+  (defconst X (specs !spec-test-fn 3 2))
+  (assert (= X 1)))
+ (check))

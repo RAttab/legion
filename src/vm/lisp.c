@@ -4,6 +4,7 @@
 */
 
 #include "common.h"
+#include "items/io.h"
 #include "vm/mod.h"
 #include "vm/token.h"
 #include "vm/atoms.h"
@@ -173,6 +174,11 @@ static void lisp_goto_close(struct lisp *lisp)
 static struct token *lisp_next(struct lisp *lisp)
 {
     return token_next(&lisp->in, &lisp->token);
+}
+
+static struct token *lisp_peek(struct lisp *lisp, struct token *token)
+{
+    return token_peek(&lisp->in, token);
 }
 
 static struct token *lisp_assert_token(

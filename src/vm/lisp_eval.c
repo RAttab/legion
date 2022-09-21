@@ -6,6 +6,7 @@
 // included in lisp.c
 
 #include "game/id.h"
+#include "game/specs.h"
 #include "items/item.h"
 
 // -----------------------------------------------------------------------------
@@ -243,30 +244,51 @@ static vm_word lisp_eval_id(struct lisp *lisp)
     return make_im_id(type, seq);
 }
 
+static vm_word lisp_eval_specs(struct lisp *lisp)
+{
+    vm_word spec = lisp_eval(lisp);
+    if (!spec_validate(spec))
+        lisp_err(lisp, "invalid spec id: %lx", spec);
+
+    struct token token = {0};
+    vm_word args[specs_max_args] = {0};
+    size_t len = 0;
+
+    for (; lisp_peek(lisp, &token)->type != token_close; ++len) {
+        vm_word arg = lisp_eval(lisp);
+        if (len < specs_max_args) args[len] = arg;
+        else lisp_err(lisp, "too many arguments for specs");
+    }
+
+    struct specs_ret ret = specs_args(spec_from_word(spec), args, len);
+    if (!ret.ok) lisp_err(lisp, "invalid specs expression");
+    return ret.word;
+}
+
 
 // -----------------------------------------------------------------------------
 // ops
 // -----------------------------------------------------------------------------
 
 #define define_eval_ops_1(fn, op)                       \
-    static vm_word lisp_eval_ ## fn(struct lisp *lisp)   \
+    static vm_word lisp_eval_ ## fn(struct lisp *lisp)  \
     {                                                   \
         return op lisp_eval(lisp);                      \
     }
 
 #define define_eval_ops_2(fn, op)                       \
-    static vm_word lisp_eval_ ## fn(struct lisp *lisp)   \
+    static vm_word lisp_eval_ ## fn(struct lisp *lisp)  \
     {                                                   \
         return lisp_eval(lisp) op lisp_eval(lisp);      \
     }
 
 // Gotta be careful about short-circuit boolean ops.
 #define define_eval_ops_n(fn, op)                       \
-    static vm_word lisp_eval_ ## fn(struct lisp *lisp)   \
+    static vm_word lisp_eval_ ## fn(struct lisp *lisp)  \
     {                                                   \
-        vm_word value = lisp_eval(lisp);                 \
+        vm_word value = lisp_eval(lisp);                \
         while (!lisp_peek_close(lisp)) {                \
-            vm_word arg = lisp_eval(lisp);               \
+            vm_word arg = lisp_eval(lisp);              \
             value = value op arg;                       \
         }                                               \
         return value;                                   \
@@ -357,6 +379,7 @@ static void lisp_eval_register(void)
 
     register_fn(pack);
     register_fn(id);
+    register_fn(specs);
 
 #undef register_fn_str
 #undef register_fn

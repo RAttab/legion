@@ -94,3 +94,19 @@
 (misc/mod-other
  (mod (assert (= 2 (band (mod misc/mod-self) 0xFFFF))))
  (check))
+
+(misc/specs-var
+ (mod (specs !spec-test-var))
+  (check (flags 0x1) (io 2)
+	 (sp 2)
+	 (s 0 0x0000011f00000000)
+	 (s 1 0x0000000000001ff0)))
+
+(misc/specs-fn
+ (mod (specs !spec-test-fn 3 2))
+  (check (flags 0x1) (io 4)
+	 (sp 4)
+	 (s 0 0x0000011f00000000)
+	 (s 1 0x0000000000001ff1)
+	 (s 2 0x0000000000000003)
+	 (s 3 0x0000000000000002)))

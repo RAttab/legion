@@ -11,6 +11,7 @@
 #include "game/tech.h"
 #include "game/tape.h"
 #include "game/save.h"
+#include "game/specs.h"
 #include "game/sector.h"
 #include "items/config.h"
 #include "items/legion/legion.h"
@@ -519,6 +520,7 @@ void world_populate_user(struct world *world, user_id id)
 void world_populate(struct world *world)
 {
     im_populate_atoms(world->atoms);
+    specs_populate_atoms(world->atoms);
     mods_populate(world->mods, world->atoms);
     world_populate_user(world, user_admin);
 }

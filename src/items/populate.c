@@ -263,6 +263,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_DBG_DETACH),
     io_init(IO_DBG_BREAK),
     io_init(IO_DBG_STEP),
+    io_init(IO_SPECS),
 
     // Lab
     io_init(IO_TAPE_AT),
@@ -308,6 +309,7 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     ioe_init(IOE_STARVED),
     ioe_init(IOE_OUT_OF_RANGE),
     ioe_init(IOE_OUT_OF_SPACE),
+    ioe_init(IOE_INVALID_SPEC),
     ioe_init(IOE_A0_INVALID),
     ioe_init(IOE_A0_UNKNOWN),
     ioe_init(IOE_A1_INVALID),

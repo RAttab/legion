@@ -6,6 +6,7 @@
 #include "items/io.h"
 #include "game/chunk.h"
 #include "game/world.h"
+#include "game/specs.h"
 #include "vm/op.h"
 
 static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id);
@@ -111,6 +112,26 @@ static void im_brain_log(
     chunk_log(chunk, brain->id, args[0], args[1]);
 }
 
+static bool im_brain_specs(
+        struct im_brain *brain, struct chunk *chunk,
+        const vm_word *args, size_t len)
+{
+    if (!im_check_args(chunk, brain->id, IO_SPECS, len, 1))
+        return false;
+
+    enum spec spec = spec_from_word(args[0]);
+    if (!spec_validate(args[0])) {
+        chunk_log(chunk, brain->id, IO_SPECS, IOE_A0_INVALID);
+        return false;
+    }
+
+    struct specs_ret ret = specs_args(spec, args + 1, len - 1);
+    if (!ret.ok) return false;
+
+    vm_push(&brain->vm, ret.word);
+    return true;
+}
+
 
 // -----------------------------------------------------------------------------
 // step
@@ -146,6 +167,7 @@ static void im_brain_step_io(
     case IO_TICK: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
     case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
     case IO_NAME: { im_brain_name(brain, chunk, io + 1, len - 1); break; }
+    case IO_SPECS: { ok = im_brain_specs(brain, chunk, io + 1, len - 1); break; }
 
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }
     }

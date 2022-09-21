@@ -45,6 +45,7 @@ enum legion_packed io
     IO_DBG_DETACH = IO_MIN + 0x1B,
     IO_DBG_BREAK  = IO_MIN + 0x1C,
     IO_DBG_STEP   = IO_MIN + 0x1D,
+    IO_SPECS      = IO_MIN + 0x1F,
 
     // Lab
     IO_TAPE_AT    = IO_MIN + 0x20,
@@ -104,6 +105,7 @@ enum legion_packed ioe
     IOE_STARVED       = IOE_MIN + 0x03,
     IOE_OUT_OF_RANGE  = IOE_MIN + 0x04,
     IOE_OUT_OF_SPACE  = IOE_MIN + 0x05,
+    IOE_INVALID_SPEC  = IOE_MIN + 0x06,
 
     IOE_A0_INVALID = IOE_MIN + 0x10,
     IOE_A0_UNKNOWN = IOE_MIN + 0x11,

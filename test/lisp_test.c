@@ -9,6 +9,7 @@
 #include "vm/token.h"
 #include "vm/atoms.h"
 #include "game/sys.h"
+#include "game/specs.h"
 #include "items/item.h"
 #include "items/config.h"
 #include "utils/fs.h"
@@ -250,6 +251,7 @@ bool check_file(const char *path)
     struct mods *mods = mods_new();
     struct atoms *atoms = atoms_new();
     im_populate_atoms(atoms);
+    specs_populate_atoms(atoms);
 
     struct tokenizer tok = {0};
     struct mfile file = mfile_open(path);

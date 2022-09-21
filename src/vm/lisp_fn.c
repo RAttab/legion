@@ -903,6 +903,46 @@ static void lisp_fn_assert(struct lisp *lisp)
     lisp_expect_close(lisp);
 }
 
+static void lisp_fn_specs(struct lisp *lisp)
+{
+    struct token index = lisp->token;
+
+    lisp_index_at(lisp, &index);
+
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (vm_word) 0); // dst -> (self)
+
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (vm_word) IO_SPECS); // ops
+
+    lisp_write_op(lisp, OP_PACK);
+
+    size_t len = 2;
+    if (!lisp_stmt(lisp)) { lisp_err(lisp, "missing spec id");  return; }
+    while (lisp_stmt(lisp)) len++;
+
+    static_assert(specs_max_args + 2 <= vm_io_cap);
+    if (len > specs_max_args + 2)
+        lisp_err(lisp, "too many io arguments: %zu > %u", len, specs_max_args);
+
+    lisp_index_at(lisp, &index);
+
+    lisp_write_op(lisp, OP_IO);
+    lisp_write_value(lisp, (uint8_t) len);
+
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (vm_word) IO_OK);
+
+    lisp_write_op(lisp, OP_EQ);
+
+    lisp_write_op(lisp, OP_JNZ);
+    vm_ip jmp_false = lisp_skip(lisp, sizeof(jmp_false));
+
+    lisp_write_op(lisp, OP_FAULT);
+
+    lisp_write_value_at(lisp, jmp_false, lisp_ip(lisp));
+}
+
 
 // -----------------------------------------------------------------------------
 // ops
@@ -1078,6 +1118,7 @@ static void lisp_fn_register(void)
     register_fn(tsc);
     register_fn(fault);
     register_fn(assert);
+    register_fn(specs);
 
     register_fn(pack);
     register_fn(unpack);
