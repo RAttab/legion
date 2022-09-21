@@ -43,18 +43,31 @@ inline im_energy energy_battery(const struct energy *en)
     return en->battery * energy_battery_mul;
 }
 
+
+inline im_energy energy_solar_output(im_energy star, size_t solar)
+{
+    return (star * solar) / energy_solar_div;
+}
+
 inline im_energy energy_prod_solar(
         const struct energy *en, const struct star *star)
 {
-    return (star->energy * en->solar) / energy_solar_div;
+    return energy_solar_output(star->energy, en->solar);
+}
+
+
+inline im_energy energy_kwheel_output(uint8_t elem_k, size_t kwheel)
+{
+    return (elem_k * kwheel) / energy_kwheel_div;
 }
 
 inline im_energy energy_prod_kwheel(
         const struct energy *en, const struct star *star)
 {
     const uint16_t elem_k = star_scan(star, ITEM_ELEM_K);
-    return (elem_k * en->kwheel) / energy_kwheel_div;
+    return energy_kwheel_output(elem_k, en->kwheel);
 }
+
 
 inline im_energy energy_production(
         const struct energy *en, const struct star *star)

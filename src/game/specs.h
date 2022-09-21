@@ -37,11 +37,17 @@ enum spec
     SPEC_STORAGE_CAP         = make_spec(ITEM_STORAGE, 0x0),
     SPEC_PORT_LAUNCH_SPEED   = make_spec(ITEM_PORT, 0x0),
 
+    SPEC_SOLAR_ENERGY  = make_spec(ITEM_SOLAR, 0x0),
+    SPEC_KWHEEL_ENERGY = make_spec(ITEM_KWHEEL, 0x0),
+
     SPEC_TEST_VAR          = make_spec(0xFF, 0x0),
     SPEC_TEST_FN           = make_spec(0xFF, 0x1),
 
     SPEC_MAX,
 };
+
+inline enum item spec_item(enum spec spec) { return spec >> 4; }
+inline uint8_t spec_type(enum spec spec) { return spec & 0xF; }
 
 inline bool spec_validate(vm_word word)
 {

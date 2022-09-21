@@ -16,10 +16,7 @@
 (defconst worker-count 20)
 (defconst lab-count 4)
 (defconst active-count 1)
-
 (defconst energy-target 100)
-(defconst specs-solar-div 1000)
-
 (defconst port-item-count 255)
 
 ;; Sanity checks
@@ -120,7 +117,10 @@
 
   (wait-tech !item-solar)
   (deploy-tape !item-assembly !item-solar assembly-count)
-  (deploy-item !item-solar (+ (/ energy-target (/ (count !item-energy) specs-solar-div)) 1)))
+  (deploy-item !item-solar
+	       (+ (/ energy-target
+		     (specs !spec-solar-energy (count !item-energy)))
+		  1)))
 
 
 ;; Elem - Condenser

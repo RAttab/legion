@@ -4,6 +4,7 @@
 */
 
 #include "game/specs.h"
+#include "game/energy.h"
 #include "vm/symbol.h"
 
 #include "items/storage/storage.h"
@@ -59,10 +60,10 @@ struct specs_ret specs_args(enum spec spec, const vm_word *args, size_t len)
 
 
 // -----------------------------------------------------------------------------
-// specs fn
+// spec fn
 // -----------------------------------------------------------------------------
 
-static struct specs_ret specs_stars_travel_time(const vm_word *args, size_t len)
+static struct specs_ret spec_stars_travel_time(const vm_word *args, size_t len)
 {
     if (len < 3)
         return (struct specs_ret) { .ok = false };
@@ -85,7 +86,45 @@ static struct specs_ret specs_stars_travel_time(const vm_word *args, size_t len)
     };
 }
 
-static struct specs_ret specs_test_fn(const vm_word *args, size_t len)
+static struct specs_ret spec_solar_energy(const vm_word *args, size_t len)
+{
+    if (len < 1)
+        return (struct specs_ret) { .ok = false };
+
+    vm_word star = args[0];
+    if (star < 0 || star > star_elem_cap)
+        return (struct specs_ret) { .ok = false };
+
+    vm_word solar = len >= 2 ? args[1] : 1;
+    if (solar < 0 || solar > chunk_item_cap)
+        return (struct specs_ret) { .ok = false };
+
+    return (struct specs_ret) {
+        .ok = true,
+        .word = energy_solar_output(star, solar),
+    };
+}
+
+static struct specs_ret spec_kwheel_energy(const vm_word *args, size_t len)
+{
+    if (len < 1)
+        return (struct specs_ret) { .ok = false };
+
+    vm_word elem_k = args[0];
+    if (elem_k < 0 || elem_k > star_elem_cap)
+        return (struct specs_ret) { .ok = false };
+
+    vm_word kwheel = len >= 2 ? args[1] : 1;
+    if (kwheel < 0 || kwheel > chunk_item_cap)
+        return (struct specs_ret) { .ok = false };
+
+    return (struct specs_ret) {
+        .ok = true,
+        .word = energy_kwheel_output(elem_k, kwheel),
+    };
+}
+
+static struct specs_ret spec_test_fn(const vm_word *args, size_t len)
 {
     if (len != 2)
         return (struct specs_ret) { .ok = false };
@@ -139,14 +178,17 @@ void specs_populate(void)
 #define register_fn(spec, value) specs_register_fn(spec, #spec, value)
 
     register_var(SPEC_STAR_ITEM_CAP, chunk_item_cap);
-    register_fn(SPEC_STARS_TRAVEL_TIME, specs_stars_travel_time);
+    register_fn(SPEC_STARS_TRAVEL_TIME, spec_stars_travel_time);
 
     register_var(SPEC_LEGION_TRAVEL_SPEED, im_legion_speed);
     register_var(SPEC_STORAGE_CAP, im_storage_max);
     register_var(SPEC_PORT_LAUNCH_SPEED, im_port_speed);
 
+    register_fn(SPEC_SOLAR_ENERGY, spec_solar_energy),
+    register_fn(SPEC_KWHEEL_ENERGY, spec_kwheel_energy),
+
     register_var(SPEC_TEST_VAR, 0x123);
-    register_fn(SPEC_TEST_FN, specs_test_fn);
+    register_fn(SPEC_TEST_FN, spec_test_fn);
 
 #undef register_var
 #undef register_fn
