@@ -1,6 +1,6 @@
 ;; Scans a sector for stars that don't contain any `!item_brain` and
 ;; launches any available `!item_legion` to that star programmed with
-;; `(mod boot 2)`.
+;; `(mod boot.2)`.
 
 
 (defconst scan-star-ongoing -1)
@@ -26,9 +26,9 @@
        (let ((legion-id (legion)))
 	 (assert (= (io !io-ping legion-id) !io-ok))
 
-	 (io !io-mod legion-id (mod boot 2))
+	 (io !io-mod legion-id (mod boot.2))
 	 (io !io-launch legion-id star)
-	 (call (os net-child) star))))))
+	 (os.net-child star))))))
 
 
 (defconst min-energy 2000)

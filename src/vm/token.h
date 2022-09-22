@@ -24,6 +24,7 @@ enum token_type
     token_symbol,
     token_number,
     token_reg,
+    token_sep,
 };
 
 const char *token_type_str(enum token_type type);

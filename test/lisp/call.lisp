@@ -66,5 +66,6 @@
 
 (call/mod-basic
  (mod
-  (assert (= (call (call/mod fn) 1) 1)))
+  (assert (= (call/mod.fn 1) 1))
+  (assert (= (call/mod.2.fn 1) 1)))
  (check))

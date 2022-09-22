@@ -441,7 +441,6 @@ static vm_ip lisp_jmp(struct lisp *lisp, const struct token *token)
         ret = htable_xchg(&lisp->symb.req, key, (uintptr_t) new);
     assert(ret.ok);
 
-    lisp_pub_symbol(lisp, symbol);
     return 0;
 }
 
@@ -496,6 +495,158 @@ static void lisp_label_unknown(struct lisp *lisp)
             req = next;
         }
     }
+}
+
+
+// -----------------------------------------------------------------------------
+// parse
+// -----------------------------------------------------------------------------
+
+static mod_maj lisp_mods_find(
+        struct lisp *lisp, const struct symbol *name)
+{
+    if (lisp->mods) return mods_find(lisp->mods, name);
+
+    assert(lisp->mods_list);
+
+    uint64_t hash = symbol_hash(name);
+    struct mods_item *it = lisp->mods_list->items;
+    const struct mods_item *end = it + lisp->mods_list->len;
+    for (; it < end; ++it) {
+        if (symbol_hash(&it->str) == hash) return it->maj;
+    }
+
+    return 0;
+}
+
+static mod_id lisp_mods_latest(struct lisp *lisp, mod_maj maj)
+{
+    if (lisp->mods) {
+        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
+        return mod ? mod->id : 0;
+    }
+
+    assert(lisp->mods_list);
+
+    struct mods_item *it = lisp->mods_list->items;
+    const struct mods_item *end = it + lisp->mods_list->len;
+    for (; it < end; ++it) {
+        if (it->maj == maj) return make_mod(maj, it->ver);
+    }
+
+    return 0;
+}
+
+// Supported syntax: mod[.ver]
+static mod_id lisp_parse_mod(struct lisp *lisp)
+{
+    if (!lisp_expect(lisp, token_symbol)) return 0;
+    struct token first = lisp->token;
+
+    struct token peek = {0};
+    struct token *second = NULL;
+    if (lisp_peek(lisp, &peek)->type == token_sep) {
+        assert(lisp_expect(lisp, token_sep));
+
+        second = lisp_expect(lisp, token_number);
+        if (!second) return 0;
+        if (second->value.w > UINT16_MAX) {
+            lisp_err(lisp, "invalid mod version: %ld", second->value.w);
+            return 0;
+        }
+    }
+
+    mod_maj mod_maj = lisp_mods_find(lisp, &first.value.s);
+    if (!mod_maj) {
+        lisp_err(lisp, "unknown mod: %s", first.value.s.c);
+        return 0;
+    }
+
+    // We don't check if the version exists because we allow the reference
+    // to mods that will be created. It's the only way to break circular
+    // dependencies at the moment.
+    return second ?
+        make_mod(mod_maj, second->value.w) :
+        lisp_mods_latest(lisp, mod_maj);
+}
+
+
+struct lisp_fun_ret { bool ok; bool local; vm_word jmp; };
+
+// Supported syntax: [mod.[ver.]]fun
+static struct lisp_fun_ret lisp_parse_fun(struct lisp *lisp, struct token *token)
+{
+    struct token first = *token;
+    assert(first.type == token_symbol);
+
+    struct token peek = {0};
+    if (lisp_peek(lisp, &peek)->type != token_sep)
+        return (struct lisp_fun_ret) { .ok = true, .local = true };
+    assert(lisp_expect(lisp, token_sep));
+
+    struct token second = *lisp_next(lisp);
+    if (second.type != token_symbol && second.type != token_number) {
+        lisp_err(lisp, "unexpected token type: %s", token_type_str(second.type));
+        return (struct lisp_fun_ret) { .ok = false };
+    }
+
+
+    struct token *third = NULL;
+    if (lisp_peek(lisp, &peek)->type == token_sep) {
+        if (second.type != token_number) {
+            lisp_err(lisp, "unexpected token type: %s", token_type_str(second.type));
+            return (struct lisp_fun_ret) { .ok = false };
+        }
+
+        if (second.value.w > UINT16_MAX) {
+            lisp_err(lisp, "invalid mod version: %ld", second.value.w);
+            return (struct lisp_fun_ret) { .ok = false };
+        }
+
+        assert(lisp_expect(lisp, token_sep));
+
+        third = lisp_expect(lisp, token_symbol);
+        if (!third) return (struct lisp_fun_ret) { .ok = false };
+    }
+
+
+    const struct mod *mod = NULL;
+    {
+        mod_maj mod_maj = mods_find(lisp->mods, &first.value.s);
+        if (!mod_maj) {
+            lisp_err(lisp, "unknown mod: %s", first.value.s.c);
+            return (struct lisp_fun_ret) { .ok = false };
+        }
+
+        if (third)
+            mod = mods_get(lisp->mods, make_mod(mod_maj, second.value.w));
+        else mod = mods_latest(lisp->mods, mod_maj);
+
+        // Unlike lisp_parse_mod, we do check that the mod version exists here
+        // because jump IP are tied to specific mod versions.
+        if (!mod) {
+            if (third)
+                lisp_err(lisp, "unknown mod: %s.%ld", first.value.s.c, second.value.w);
+            else lisp_err(lisp, "unknown mod: %s", first.value.s.c);
+            return (struct lisp_fun_ret) { .ok = false };
+        }
+    }
+
+
+    struct token *fun = third ? third : &second;
+
+    vm_ip ip = mod_pub(mod, symbol_hash(&fun->value.s));
+    if (ip == MOD_PUB_UNKNOWN) {
+        lisp_err(lisp, "unknown fun '%s' in mod '%s.%u'",
+                fun->value.s.c, first.value.s.c, mod_version(mod->id));
+        return (struct lisp_fun_ret) { .ok = false };
+    }
+
+
+    return (struct lisp_fun_ret) {
+        .ok = true,
+        .jmp = vm_pack(mod->id, ip),
+    };
 }
 
 

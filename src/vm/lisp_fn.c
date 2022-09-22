@@ -10,8 +10,7 @@
 // declarations
 // -----------------------------------------------------------------------------
 
-static void lisp_call(struct lisp *lisp);
-static void lisp_call_mod(struct lisp *lisp, vm_word mod);
+static void lisp_call(struct lisp *lisp, struct token *sym);
 
 
 // -----------------------------------------------------------------------------
@@ -51,7 +50,7 @@ static bool lisp_stmt(struct lisp *lisp)
 
         if ((ret = htable_get(&lisp->symb.fn, key)).ok)
             ((lisp_fn) ret.value)(lisp);
-        else lisp_call(lisp);
+        else lisp_call(lisp, token);
 
         return true;
     }
@@ -135,83 +134,20 @@ static void lisp_stmts(struct lisp *lisp)
 
 
 // -----------------------------------------------------------------------------
-// defun/call
+// mods & fun
 // -----------------------------------------------------------------------------
 
-// Parses the static module syntax (used by call) as opposed to lisp_fn_mod
-// which parses the dynamic module syntax (used by load). The version is omited
-// for now as it makes the syntax more complicated and it's not clear whether
-// it's needed or not.
-//
-// syntax:
-//
-//   local: symbol
-//          label
-//
-//   mod:   (symbol [symbol])
-//           mod     pub
-//
-static vm_word lisp_parse_call(struct lisp *lisp)
+
+static void lisp_call(struct lisp *lisp, struct token *token)
 {
-    struct token *token = lisp_next(lisp);
-
-    if (likely(token->type == token_symbol) || token->type == token_number)
-        return 0;
-
-    if (!lisp_assert_token(lisp, token, token_open))
-        return -1;
-
-    const struct mod *mod = NULL;
-    {
-        token = lisp_expect(lisp, token_symbol);
-        if (!token) { lisp_goto_close(lisp); return -1; }
-
-        mod_maj mod_maj = mods_find(lisp->mods, &token->value.s);
-        if (!mod_maj) {
-            lisp_err(lisp, "unknown mod: %s", token->value.s.c);
-            lisp_goto_close(lisp);
-            return -1;
-        }
-
-        mod = mods_latest(lisp->mods, mod_maj);
-        if (!mod) {
-            lisp_err(lisp, "unknown mod: %s (%x)", token->value.s.c, mod_maj);
-            lisp_goto_close(lisp);
-            return -1;
-        }
-    }
-
-    token = lisp_next(lisp);
-
-    vm_ip ip = 0;
-    if (token->type == token_symbol) {
-        ip = mod_pub(mod, symbol_hash(&token->value.s));
-        if (ip == MOD_PUB_UNKNOWN) {
-            lisp_err(lisp, "unknown public symbol in mod: %s in %x",
-                    token->value.s.c, mod->id);
-            lisp_goto_close(lisp);
-            return -1;
-        }
-
-        token = lisp_next(lisp);
-    }
-
-    if (!lisp_assert_token(lisp, token, token_close)) {
-        lisp_goto_close(lisp);
-        return -1;
-    }
-
-    return vm_pack(mod->id, ip);
-}
-
-static void lisp_call_mod(struct lisp *lisp, vm_word mod)
-{
-    struct token token = lisp->token;
+    struct token sym = *token;
+    struct lisp_fun_ret fun = lisp_parse_fun(lisp, &sym);
+    if (!fun.ok) { lisp_goto_close(lisp); return; }
 
     vm_reg args = 0;
     while (lisp_stmt(lisp)) ++args;
     if (args > 4) lisp_err(lisp, "too many arguments: %u > 4", (unsigned) args);
-    lisp_index_at(lisp, &token);
+    lisp_index_at(lisp, &sym);
 
     vm_reg regs = 0;
     for (; regs < 4 && lisp->symb.regs[regs]; regs++);
@@ -236,11 +172,10 @@ static void lisp_call_mod(struct lisp *lisp, vm_word mod)
     }
 
     lisp_write_op(lisp, OP_CALL);
-
-    if (mod) lisp_write_value(lisp, mod);
+    if (!fun.local) lisp_write_value(lisp, fun.jmp);
     else {
         // little-endian flips the byte ordering... fuck me...
-        lisp_write_value(lisp, lisp_jmp(lisp, &token));
+        lisp_write_value(lisp, lisp_jmp(lisp, &sym));
         lisp_write_value(lisp, (mod_id) 0);
     }
 
@@ -249,19 +184,6 @@ static void lisp_call_mod(struct lisp *lisp, vm_word mod)
         lisp_write_op(lisp, OP_POPR);
         lisp_write_value(lisp, (vm_reg) (regs - i - 1));
     }
-}
-
-static void lisp_call(struct lisp *lisp)
-{
-    lisp_call_mod(lisp, 0);
-}
-
-static void lisp_fn_call(struct lisp *lisp)
-{
-    vm_word target = lisp_parse_call(lisp);
-    if (target == -1) { lisp_goto_close(lisp); return; }
-
-    lisp_call_mod(lisp, target);
 }
 
 static void lisp_fn_defun(struct lisp *lisp)
@@ -319,6 +241,28 @@ static void lisp_fn_load(struct lisp *lisp)
 
     lisp_index_at(lisp, &index);
     lisp_write_op(lisp, OP_LOAD);
+    lisp_expect_close(lisp);
+}
+
+// Keep in sync with lisp_eval_mod
+static void lisp_fn_mod(struct lisp *lisp)
+{
+    mod_id id = 0;
+    struct token peek = {0};
+
+    if (lisp_peek(lisp, &peek)->type != token_close)
+        id = lisp_parse_mod(lisp);
+
+    else { // self-reference
+        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
+        id = make_mod(lisp->mod_maj, mod_version(mod->id) + 1);
+    }
+
+    if (!id) { lisp_goto_close(lisp); return; }
+
+    lisp_write_op(lisp, OP_PUSH);
+    lisp_write_value(lisp, (vm_word) id);
+
     lisp_expect_close(lisp);
 }
 
@@ -774,53 +718,6 @@ static void lisp_fn_self(struct lisp *lisp)
     lisp_expect_close(lisp);
 }
 
-// Keep in sync with lisp_eval_mod
-static void lisp_fn_mod(struct lisp *lisp)
-{
-    struct token *token = lisp_next(lisp);
-
-    // self-referencial mod
-    if (token->type == token_close) {
-        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
-        assert(mod);
-        mod_id id = make_mod(lisp->mod_maj, mod_version(mod->id) + 1);
-
-        lisp_write_op(lisp, OP_PUSH);
-        lisp_write_value(lisp, (vm_word) id);
-
-        lisp_assert_close(lisp, token);
-        return;
-    }
-
-    if (!lisp_assert_token(lisp, token, token_symbol)) {
-        lisp_goto_close(lisp);
-        return;
-    }
-
-    mod_maj mod_maj = mods_find(lisp->mods, &token->value.s);
-    if (!mod_maj) {
-        lisp_err(lisp, "unknown mod: %s", token->value.s.c);
-        lisp_goto_close(lisp);
-        return;
-    }
-
-    mod_id id = 0;
-    if ((token = lisp_next(lisp))->type == token_number) {
-        id = make_mod(mod_maj, token->value.w);
-        token = lisp_next(lisp);
-    }
-    else {
-        const struct mod *mod = mods_latest(lisp->mods, mod_maj);
-        assert(mod);
-        id = mod->id;
-    }
-
-    lisp_write_op(lisp, OP_PUSH);
-    lisp_write_value(lisp, (vm_word) id);
-
-    lisp_assert_close(lisp, token);
-}
-
 static void lisp_fn_io(struct lisp *lisp)
 {
     struct token token = lisp->token;
@@ -1065,8 +962,8 @@ static void lisp_fn_register(void)
     } while (false)
 
     register_fn(defun);
-    register_fn(call);
     register_fn(load);
+    register_fn(mod);
 
     register_fn(head);
     register_fn(asm);
@@ -1083,7 +980,6 @@ static void lisp_fn_register(void)
     register_fn(set);
     register_fn(id);
     register_fn(self);
-    register_fn(mod);
     register_fn(io);
     register_fn(ior);
 

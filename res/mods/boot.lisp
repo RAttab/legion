@@ -4,8 +4,8 @@
 ;;
 ;; To accomplish this we must setup a basic factory infrastructure
 ;; that can create legions and antennas. Legion are propagated via the
-;; (mod launch 2) module and research to get to antenna is done via
-;; the (mod lab 2) module.
+;; (mod launch.2) module and research to get to antenna is done via
+;; the (mod lab.2) module.
 
 (defconst max-depth 2)
 
@@ -29,7 +29,7 @@
 ;; Home
 (progn
   (when (> (count !item-brain) 1) (reset))
-  (when (call (os is-home)) (io !io-name (self) ?Bob-The-Homeworld))
+  (when (os.is-home) (io !io-name (self) ?Bob-The-Homeworld))
   (io !io-log (self) ?booting (ior !io-coord (self))))
 
 
@@ -104,7 +104,7 @@
 
   (let ((id-brain (id !item-brain (count !item-brain))))
     (assert (= (io !io-send id-brain ?lab-count lab-count) !io-ok))
-    (assert (= (io !io-mod id-brain (mod lab 2)) !io-ok))))
+    (assert (= (io !io-mod id-brain (mod lab.2)) !io-ok))))
 
 
 ;; Energy - Solar
@@ -142,12 +142,12 @@
   (deploy-item !item-receive 1)
 
   ;; This brain is used as the execution thread for os.
-  (deploy-item !item-memory (call (os memory-need)))
-  (call (os boot) brain-os-id brain-exec-id))
+  (deploy-item !item-memory (os.memory-need))
+  (os.boot brain-os-id brain-exec-id))
 
 
 ;; Legions
-(when (<= (call (os depth)) max-depth)
+(when (<= (os.depth) max-depth)
 
   (wait-tech !item-scanner)
   (deploy-item !item-scanner 1)
@@ -157,7 +157,7 @@
   (assert (= (count !item-scanner) 1))
   (assert (= (count !item-prober) 2))
   (let ((brain-id (id !item-brain (count !item-brain))))
-    (io !io-mod brain-id (mod launch 2)) !io-ok)
+    (io !io-mod brain-id (mod launch.2)) !io-ok)
 
   (deploy-tape !item-assembly !item-worker active-count)
   (deploy-tape !item-assembly !item-extract active-count)
@@ -168,7 +168,7 @@
   (deploy-tape !item-assembly !item-prober active-count)
   (deploy-tape !item-assembly !item-scanner active-count)
 
-  (let ((n (call (os child-cap))))
+  (let ((n (os.child-cap)))
     (deploy-item !item-transmit n)
     (deploy-item !item-receive n)
     (deploy-item !item-legion n)))
@@ -191,17 +191,17 @@
   (wait-tech !item-port)
   (deploy-item !item-port elem-count)
 
-  (when (call (os is-home))
+  (when (os.is-home)
     (deploy-item !item-storage elem-count)
     (for (i 0) (< i elem-count) (+ i 1)
 	 (io !io-input (id !item-port (+ i 1)) (+ !item-elem-a i))
 	 (io !io-item (id !item-storage (+ i 1)) (+ !item-elem-a i))))
 
   (wait-tech !item-pill)
-  (unless (call (os is-home))
+  (unless (os.is-home)
     (for (i 0) (< i elem-count) (+ i 1)
 	 (io !io-item (id !item-port (+ i 1)) (+ !item-elem-a i) port-item-count)
-	 (io !io-target (id !item-port i) (call (os home))))
+	 (io !io-target (id !item-port i) (os.home)))
     (deploy-item !item-pill (* elem-count 2)))
 
   (for (id 1) (<= id elem-count) (+ id 1)
@@ -302,7 +302,7 @@
 
 	 (deploy-item !item-brain 1)
 	 (io !io-send (id !item-brain (count !item-brain)) state-id)
-	 (io !io-mod (id !item-brain (count !item-brain)) (mod nomad 2)))))
+	 (io !io-mod (id !item-brain (count !item-brain)) (mod nomad.2)))))
 
 (io !io-log (self) ?done (ior !io-coord (self)))
 

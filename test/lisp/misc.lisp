@@ -92,7 +92,11 @@
  (check))
 
 (misc/mod-other
- (mod (assert (= 2 (band (mod misc/mod-self) 0xFFFF))))
+ (mod (assert (= 1 (band (mod misc/mod-self) 0xFFFF))))
+ (check))
+
+(misc/mod-version
+ (mod (assert (= 1 (band (mod misc/mod-self.1) 0xFFFF))))
  (check))
 
 (misc/specs-var

@@ -17,47 +17,6 @@ typedef vm_word (*lisp_eval_fn) (struct lisp *);
 
 static struct htable lisp_fn_eval = {0};
 
-// -----------------------------------------------------------------------------
-// mods
-// -----------------------------------------------------------------------------
-// When eval is used outside of the sim thread, eval will have access to
-// struct mods_list instead of struct mods. Bit of a pain but oh well.
-
-static mod_id lisp_eval_mods_latest(struct lisp *lisp, mod_maj maj)
-{
-    if (lisp->mods) {
-        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
-        return mod ? mod->id : 0;
-    }
-
-    assert(lisp->mods_list);
-
-    struct mods_item *it = lisp->mods_list->items;
-    const struct mods_item *end = it + lisp->mods_list->len;
-    for (; it < end; ++it) {
-        if (it->maj == maj) return make_mod(maj, it->ver);
-    }
-
-    return 0;
-}
-
-static mod_maj lisp_eval_mods_find(
-        struct lisp *lisp, const struct symbol *name)
-{
-    if (lisp->mods) return mods_find(lisp->mods, name);
-
-    assert(lisp->mods_list);
-
-    uint64_t hash = symbol_hash(name);
-    struct mods_item *it = lisp->mods_list->items;
-    const struct mods_item *end = it + lisp->mods_list->len;
-    for (; it < end; ++it) {
-        if (symbol_hash(&it->str) == hash) return it->maj;
-    }
-
-    return 0;
-}
-
 
 // -----------------------------------------------------------------------------
 // eval
@@ -152,35 +111,18 @@ static vm_word lisp_eval_unless(struct lisp *lisp)
 // Keep in sync with lisp_fn_mod
 static vm_word lisp_eval_mod(struct lisp *lisp)
 {
-    // self-referential mod
-    if (lisp_peek_close(lisp)) {
-        mod_id mod = lisp_eval_mods_latest(lisp, lisp->mod_maj);
-        assert(mod);
-        return make_mod(lisp->mod_maj, mod_version(mod) + 1);
-    }
-
-    struct token *token = lisp_expect(lisp, token_symbol);
-    if (!token) {
-        lisp_eval_goto_close(lisp);
-        return 0;
-    }
-
-    mod_maj mod_maj = lisp_eval_mods_find(lisp, &token->value.s);
-    if (!mod_maj) {
-        lisp_err(lisp, "unknown mod: %s", token->value.s.c);
-        lisp_eval_goto_close(lisp);
-        return 0;
-    }
-
     mod_id id = 0;
-    if (lisp_peek_close(lisp))
-        id = lisp_eval_mods_latest(lisp, mod_maj);
-    else if ((token = lisp_expect(lisp, token_number))) {
-        id = make_mod(mod_maj, token->value.w);
-    }
-    else { lisp_eval_goto_close(lisp); return 0; }
+    struct token peek = {0};
 
-    assert(id);
+    if (lisp_peek(lisp, &peek)->type != token_close)
+        id = lisp_parse_mod(lisp);
+
+    else { // self-reference
+        const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
+        id = make_mod(lisp->mod_maj, mod_version(mod->id) + 1);
+    }
+
+    if (!id) { lisp_eval_goto_close(lisp); return 0; }
     return id;
 }
 

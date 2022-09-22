@@ -119,7 +119,7 @@
     (pack nomad-id (ior !io-get state-id ix-prober))
     (pack nomad-id (ior !io-get state-id ix-scanner))
     (pack nomad-id state-id)
-    (io !io-mod nomad-id (mod nomad 2))
+    (io !io-mod nomad-id (mod nomad.2))
     (io !io-launch nomad-id target (ior !io-id (self))))
   (fault))
 

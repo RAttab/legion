@@ -22,6 +22,7 @@ const char *token_type_str(enum token_type type)
     case token_symbol: { return "symbol"; }
     case token_number: { return "number"; }
     case token_reg: { return "register"; }
+    case token_sep: { return "separator"; }
     default: { assert(false); }
     }
 }
@@ -121,6 +122,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     case '!': { token->type = token_atom; break; }
     case '?': { token->type = token_atom_make; break; }
     case '$': { token->type = token_reg; break; }
+    case '.': { token->type = token_sep; break; }
     case '0'...'9': { token->type = token_number; break; }
 
     // We have an ambiguity between '-1' and '(- 1 1)' and there's no good way
@@ -148,7 +150,8 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     {
 
     case token_open:
-    case token_close: { token->len = 1; token_inc(tok); break; }
+    case token_close:
+    case token_sep: { token->len = 1; token_inc(tok); break; }
 
     case token_atom:
     case token_atom_make:

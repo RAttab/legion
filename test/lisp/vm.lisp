@@ -413,11 +413,12 @@
        (YIELD)))
  (check (ret 0) (sp 1) (s 0 0x9)))
 
+(vm/mod (mod (defun fn () 0)))
 (vm/call-mod
  (vm (S 1))
  (mod
-  (asm (CALL 0x100000002)))
- (check (ret 1) (sp 1)))
+  (asm (CALL vm/mod.fn)))
+ (check (ret 0x230002) (sp 1)))
 
 (vm/ret
  (vm (S 1))
