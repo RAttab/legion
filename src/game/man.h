@@ -26,7 +26,7 @@ typedef uint16_t man_section;
 // link
 // -----------------------------------------------------------------------------
 
-struct link { man_page page; man_section section; };
+struct legion_packed link { man_page page; man_section section; };
 
 inline bool link_is_nil(struct link link) { return link.page == 0; }
 
@@ -65,12 +65,13 @@ enum legion_packed markup_type
     markup_link,
 };
 
-struct markup
+struct legion_packed markup
 {
-    enum markup_type type;
     struct link link;
-    uint16_t len, cap;
-    char *text;
+    enum markup_type type;
+    uint8_t len;
+    legion_pad(2);
+    const char *text;
 };
 
 

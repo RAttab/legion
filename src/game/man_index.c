@@ -14,9 +14,12 @@ static bool man_page_index(const struct man_page *page, struct toc *toc)
 {
     struct man_parser parser = {
         .ok = true,
-        .page = page,
-        .it = page->file.ptr,
-        .end = page->file.ptr + page->file.len
+        .in = {
+            .page = page,
+            .it = page->file.ptr,
+            .end = page->file.ptr + page->file.len,
+            .line = 0, .col = 0,
+        },
     };
 
     man_section sections = 0;
@@ -39,7 +42,7 @@ static bool man_page_index(const struct man_page *page, struct toc *toc)
             struct man_token str = man_parser_until_close(&parser);
             if (str.type != man_token_line) continue;
 
-            if (!man_path_append(&path, str.it, str.end - str.it)) {
+            if (!man_path_append(&path, str.it, str.len)) {
                 man_err(&parser, "invalid title header");
                 continue;
             }
@@ -58,7 +61,7 @@ static bool man_page_index(const struct man_page *page, struct toc *toc)
             struct man_token str = man_parser_until_close(&parser);
 
             path.len = path_title;
-            if (!man_path_append(&path, str.it, str.end - str.it)) {
+            if (!man_path_append(&path, str.it, str.len)) {
                 man_err(&parser, "invalid section header");
                 continue;
             }
@@ -77,7 +80,7 @@ static bool man_page_index(const struct man_page *page, struct toc *toc)
             struct man_token str = man_parser_until_close(&parser);
 
             path.len = path_section;
-            if (!man_path_append(&path, str.it, str.end - str.it)) {
+            if (!man_path_append(&path, str.it, str.len)) {
                 man_err(&parser, "invalid topic header");
                 continue;
             }

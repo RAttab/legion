@@ -165,7 +165,7 @@ void ui_doc_render(
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = pos.x,
                                 .y = pos.y,
-                                .w = doc->w.dim.w,
+                                .w = inner.base.dim.w - (pos.x - inner.base.pos.x),
                                 .h = font->glyph_h,
                             }));
 

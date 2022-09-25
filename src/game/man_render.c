@@ -26,93 +26,86 @@ enum
 
 static struct markup *man_render_newline(struct man_parser *parser)
 {
-    parser->cols.curr = 0;
-    return man_newline(parser->man);
+    parser->out.col.it = 0;
+    return man_newline(parser->out.man);
 }
 
 static void man_render_repeat(
         struct man_parser *parser, struct markup *markup, char c, size_t len)
 {
-    parser->cols.curr += len;
-    markup_repeat(markup, c, len);
+    const char *start = man_text_repeat(parser->out.man, c, len);
+    assert(start == markup->text + markup->len);
+
+    markup->len += len;
+    parser->out.col.it += len;
 }
 
 static void man_render_str(
         struct man_parser *parser, struct markup *markup,
         const char *str, size_t len)
 {
-    parser->cols.curr += len;
-    markup_str(markup, str, len);
+    const char *start = man_text_str(parser->out.man, str, len);
+    assert(start == markup->text + markup->len);
+
+    markup->len += len;
+    parser->out.col.it += len;
 }
 
 static bool man_render_is_line_start(struct man_parser *parser)
 {
-    return man_current(parser->man)->type == markup_eol;
+    return man_current(parser->out.man)->type == markup_eol;
 }
 
 static void man_render_append(
         struct man_parser *parser,
         const struct man_token *token)
 {
-    size_t len = token->end - token->it;
-    struct markup *markup = man_current(parser->man);
-
-    // \todo this is really bad but can't really think of a better solution at
-    // the moment.
     size_t spaces = 1;
-    if (!markup->len) {
-        struct markup *prev = man_previous(parser->man);
+    {
+        switch (man_text_previous(parser->out.man)) {
+        case '\n': { spaces = parser->out.indent; break; }
+        case '(': case '[': { spaces = 0; break; }
+        }
 
-        if (prev->type == markup_eol)
-            spaces = parser->indent;
-
-        else {
-            if (prev->len) {
-                switch (prev->text[prev->len - 1]) {
-                case '(': case '[': { spaces = 0; break; }
-                default: { break; }
-                }
-            }
-
-            switch (*token->it) {
-            case ')': case ']': case ',': case '.': { spaces = 0; break; }
-            default: { break; }
-            }
+        switch (*token->it) {
+        case ',': case '.':
+        case ')': case ']': { spaces = 0; break; }
         }
     }
 
-    if (parser->cols.curr + spaces + len > parser->cols.cap) {
+    struct markup *markup = man_current(parser->out.man);
+
+    if (parser->out.col.it + spaces + token->len > parser->out.col.cap) {
         enum markup_type type = markup->type;
         struct link link = markup->link;
 
         (void) man_render_newline(parser);
 
-        markup = man_markup(parser->man, markup_nil);
-        markup->type = type;
+        markup = man_markup(parser->out.man, type);
         markup->link = link;
 
-        spaces = parser->indent;
+        spaces = parser->out.indent;
     }
 
     if (!markup->type) markup->type = markup_text;
-    man_render_repeat(parser, markup, ' ', spaces);
-    man_render_str(parser, markup, token->it, len);
+    if (spaces) man_render_repeat(parser, markup, ' ', spaces);
+    man_render_str(parser, markup, token->it, token->len);
 }
 
 static void man_render_word(
         struct man_parser *parser,
         const struct man_token *token)
 {
-    (void) man_markup(parser->man, markup_text);
+    (void) man_markup(parser->out.man, markup_text);
     man_render_append(parser, token);
 }
 
 static void man_render_paragraph(struct man_parser *parser)
 {
-    if (man_current(parser->man)->type != markup_eol)
+    if (man_current(parser->out.man)->type != markup_eol)
         (void) man_render_newline(parser);
 
-    if (man_previous(parser->man)->type != markup_eol)
+    if (man_previous(parser->out.man)->type != markup_eol)
         (void) man_render_newline(parser);
 }
 
@@ -128,30 +121,29 @@ static void man_render_comment(struct man_parser *parser)
 static void man_render_title(struct man_parser *parser)
 {
     struct man_token token = man_parser_until_close(parser);
-    const size_t len = token.end - token.it;
 
-    char title[len];
-    memcpy(title, token.it, len);
-    for (size_t i = 0; i < len; ++i) title[i] = toupper(title[i]);
+    char title[token.len];
+    memcpy(title, token.it, token.len);
+    for (size_t i = 0; i < token.len; ++i) title[i] = toupper(title[i]);
 
-    struct markup *markup = man_markup(parser->man, markup_text);
-    if (parser->man->text.len > 1)
+    struct markup *markup = man_markup(parser->out.man, markup_text);
+    if (parser->out.man->markup.len > 1)
         man_err(parser, "title markup must be at the top");
 
-    man_render_str(parser, markup, title, len);
+    man_render_str(parser, markup, title, token.len);
 
-    size_t center = ((parser->cols.cap / 2) - (sizeof(man_title) / 2));
-    assert(len + 1 < center);
+    size_t center = ((parser->out.col.cap / 2) - (sizeof(man_title) / 2));
+    assert(token.len + 1 < center);
     man_render_repeat(parser, markup, ' ', center - markup->len);
     man_render_str(parser, markup, man_title, sizeof(man_title));
 
-    size_t end = parser->cols.cap - len;
+    size_t end = parser->out.col.cap - token.len;
     assert(center + sizeof(man_title) + 1 < end);
     man_render_repeat(parser, markup, ' ', end - markup->len);
-    man_render_str(parser, markup, title, len);
+    man_render_str(parser, markup, title, token.len);
 
     (void) man_render_newline(parser);
-    parser->indent = man_indent_section_abs;
+    parser->out.indent = man_indent_section_abs;
 }
 
 static void man_render_section(struct man_parser *parser)
@@ -159,14 +151,14 @@ static void man_render_section(struct man_parser *parser)
     struct man_token token = man_parser_until_close(parser);
     if (!man_render_is_line_start(parser))
         man_err(parser, "section must be at the start of a new line");
-    man_mark_section(parser->man);
+    man_mark_section(parser->out.man);
 
-    struct markup *markup = man_markup(parser->man, markup_bold);
-    man_render_str(parser, markup, token.it, token.end - token.it);
+    struct markup *markup = man_markup(parser->out.man, markup_bold);
+    man_render_str(parser, markup, token.it, token.len);
 
     (void) man_render_newline(parser);
-    parser->indent = man_indent_section_abs;
-    parser->list = false;
+    parser->out.indent = man_indent_section_abs;
+    parser->out.list = false;
 
     while (man_parser_peek(parser).type == man_token_paragraph)
         man_parser_next(parser);
@@ -177,15 +169,15 @@ static void man_render_topic(struct man_parser *parser)
     struct man_token token = man_parser_until_close(parser);
     if (!man_render_is_line_start(parser))
         man_err(parser, "topic must be at the start of a new line");
-    man_mark_section(parser->man);
+    man_mark_section(parser->out.man);
 
-    struct markup *markup = man_markup(parser->man, markup_bold);
+    struct markup *markup = man_markup(parser->out.man, markup_bold);
     man_render_repeat(parser, markup, ' ', man_indent_topic_header_abs);
-    man_render_str(parser, markup, token.it, token.end - token.it);
+    man_render_str(parser, markup, token.it, token.len);
 
     (void) man_render_newline(parser);
-    parser->indent = man_indent_topic_body_abs;
-    parser->list = false;
+    parser->out.indent = man_indent_topic_body_abs;
+    parser->out.list = false;
 
     while (man_parser_peek(parser).type == man_token_paragraph)
         man_parser_next(parser);
@@ -195,47 +187,49 @@ static void man_render_link(struct man_parser *parser)
 {
     struct man_token token = man_parser_until_close(parser);
 
+    // Links starts with / which is currently in the previous markup token which
+    // is annoying so we cheat a little and expand our current token to include
+    // the /.
     token.it--;
+    token.len++;
     assert(*token.it == man_markup_link);
-    size_t len = token.end - token.it;
 
-    struct link link = man_link(token.it, len);
+    struct link link = man_link(token.it, token.len);
     if (link_is_nil(link)) {
-        man_err(parser, "unknown link '%.*s'", (unsigned) len, token.it);
+        man_err(parser, "unknown link '%.*s'", token.len, token.it);
         return;
     }
 
-    struct markup *markup = man_markup(parser->man, markup_link);
+    struct markup *markup = man_markup(parser->out.man, markup_link);
     markup->link = link;
     man_render_append(parser, &token);
 
-    (void) man_markup(parser->man, markup_nil);
+    (void) man_markup(parser->out.man, markup_nil);
 }
 
 static void man_render_list(struct man_parser *parser)
 {
-    if (parser->list) parser->indent -= man_indent_list_rel;
-    parser->list = true;
-
-    struct man_token token = man_parser_until_close(parser);
-    size_t len = token.end - token.it;
+    if (parser->out.list) parser->out.indent -= man_indent_list_rel;
+    parser->out.list = true;
 
     if (!man_render_is_line_start(parser))
         man_err(parser, "list must be at the start of a new line");
 
-    struct markup *markup = man_markup(parser->man, markup_bold);
-    man_render_repeat(parser, markup, ' ', parser->indent);
-    man_render_str(parser, markup, token.it, len);
+    struct man_token token = man_parser_until_close(parser);
+
+    struct markup *markup = man_markup(parser->out.man, markup_bold);
+    man_render_repeat(parser, markup, ' ', parser->out.indent);
+    man_render_str(parser, markup, token.it, token.len);
 
     size_t col = markup->len;
-    markup = man_markup(parser->man, markup_nil);
-    parser->indent += man_indent_list_rel;
+    markup = man_markup(parser->out.man, markup_nil);
+    parser->out.indent += man_indent_list_rel;
 
     // The +1 in the if is to account for the space needed between the list
     // header and the text and the -1 in man_render_repeat is to account for the
     // space that is automatically added by man_render_append.
-    if (col + 1 <= parser->indent)
-        man_render_repeat(parser, markup, ' ', parser->indent - col - 1);
+    if (col + 1 <= parser->out.indent)
+        man_render_repeat(parser, markup, ' ', parser->out.indent - col - 1);
     else (void) man_render_newline(parser);
 }
 
@@ -243,16 +237,16 @@ static void man_render_list_end(struct man_parser *parser)
 {
     (void) man_parser_until_close(parser);
 
-    if (!parser->list) { man_err(parser, "unmatched list end");  return; }
-    parser->indent -= man_indent_list_rel;
-    parser->list = false;
+    if (!parser->out.list) { man_err(parser, "unmatched list end");  return; }
+    parser->out.indent -= man_indent_list_rel;
+    parser->out.list = false;
 }
 
 static void man_render_style(struct man_parser *parser, enum man_markup_type style)
 {
     switch (style) {
-    case man_markup_bold: { man_markup(parser->man, markup_bold); break; }
-    case man_markup_underline: { man_markup(parser->man, markup_underline); break; }
+    case man_markup_bold: { man_markup(parser->out.man, markup_bold); break; }
+    case man_markup_underline: { man_markup(parser->out.man, markup_underline); break; }
     default: { assert(false); }
     }
 
@@ -262,7 +256,7 @@ static void man_render_style(struct man_parser *parser, enum man_markup_type sty
         man_render_append(parser, &token);
     }
 
-    (void) man_markup(parser->man, markup_nil);
+    (void) man_markup(parser->out.man, markup_nil);
 }
 
 static void man_render_code(struct man_parser *parser)
@@ -271,22 +265,24 @@ static void man_render_code(struct man_parser *parser)
         man_err(parser, "code must be at the start of a new line");
 
     bool prologue = true;
-    const size_t indent = parser->indent + man_indent_code_rel;
+    const size_t indent = parser->out.indent + man_indent_code_rel;
 
     struct man_token token = {0};
     while ((token = man_parser_line(parser)).type == man_token_line) {
-        size_t len = token.end - token.it;
-        if (len + indent > parser->cols.cap) {
-            man_err(parser, "code line too long: %zu + %zu > %u",
-                    indent, len, parser->cols.cap);
+        if (token.len + indent > parser->out.col.cap) {
+            man_err(parser, "code line too long: %zu + %u > %u",
+                    indent, token.len, parser->out.col.cap);
         }
 
-        if (!len && prologue) continue;
+        if (!token.len && prologue) continue;
         else prologue = false;
 
-        struct markup *markup = man_markup(parser->man, markup_code);
+        struct markup *markup = man_markup(parser->out.man, markup_text);
         man_render_repeat(parser, markup, ' ', indent);
-        man_render_str(parser, markup, token.it, len);
+
+        markup = man_markup(parser->out.man, markup_code);
+        man_render_str(parser, markup, token.it, token.len);
+
         (void) man_render_newline(parser);
     }
 }
@@ -295,13 +291,9 @@ static void man_render_eval(struct man_parser *parser, struct lisp *lisp)
 {
     struct man_token token = man_parser_until_close(parser);
 
-    const char *start = token.it - 1;
-    assert(*start == man_markup_eval);
-    size_t len = token.end - start;
-
-    struct lisp_ret ret = lisp_eval_const(lisp, start, len);
+    struct lisp_ret ret = lisp_eval_const(lisp, token.it, token.len);
     if (!ret.ok) {
-        man_err(parser, "invalid lisp '%.*s'", (unsigned) len, start);
+        man_err(parser, "invalid lisp '%.*s'", token.len, token.it);
         return;
     }
 
@@ -309,9 +301,9 @@ static void man_render_eval(struct man_parser *parser, struct lisp *lisp)
     str_utox(ret.value, str, sizeof(str));
     token = make_man_token(man_token_word, str, str + sizeof(str));
 
-    (void) man_markup(parser->man, markup_code);
+    (void) man_markup(parser->out.man, markup_code);
     man_render_append(parser, &token);
-    (void) man_markup(parser->man, markup_nil);
+    (void) man_markup(parser->out.man, markup_nil);
 }
 
 static struct man *man_page_render(
@@ -319,11 +311,21 @@ static struct man *man_page_render(
 {
     struct man_parser parser = {
         .ok = true,
-        .man = man_new(),
-        .page = page,
-        .cols = { .cap = cols },
-        .it = page->file.ptr,
-        .end = page->file.ptr + page->file.len
+
+        .in = {
+            .page = page,
+            .it = page->file.ptr,
+            .end = page->file.ptr + page->file.len,
+            .line = 0,
+            .col = 0,
+        },
+
+        .out = {
+            .man = man_new(page->file.len * 2),
+            .col = { .it = 0, .cap = cols },
+            .indent = 0,
+            .list = false,
+        },
     };
 
     struct man_token token = {0};
@@ -366,6 +368,6 @@ static struct man *man_page_render(
         }
     }
 
-    if (!parser.ok) { man_free(parser.man); return NULL; }
-    return parser.man;
+    if (!parser.ok) { man_free(parser.out.man); return NULL; }
+    return parser.out.man;
 }

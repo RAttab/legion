@@ -29,7 +29,7 @@ enum man_markup_type
     man_markup_bold      = '*',
 
     man_markup_code      = '`',
-    man_markup_eval      = '(',
+    man_markup_eval      = '$',
 };
 
 static enum man_markup_type man_markup_type(char c)
@@ -60,15 +60,21 @@ struct man_parser
 {
     bool ok;
 
-    struct man *man;
-    const struct man_page *page;
+    struct
+    {
+        const struct man_page *page;
+        const char *it, *end;
+        man_line line;
+        uint8_t col;
+    } in;
 
-    bool list;
-    uint8_t indent;
-    man_line line;
-    struct { uint8_t curr, cap; } cols;
-
-    const char *it, *end;
+    struct
+    {
+        struct man *man;
+        struct { uint8_t it, cap; } col;
+        uint8_t indent;
+        bool list;
+    } out;
 };
 
 legion_printf(2, 3)
@@ -79,9 +85,10 @@ static void man_err(struct man_parser *parser, const char *fmt, ...)
     char str[1024] = {0};
     char *it = str, *end = it + sizeof(str);
 
-    it += snprintf(it, end - it, "%s:%u: ",
-            parser->page->path,
-            parser->line + 1);
+    it += snprintf(it, end - it, "%s:%u:%u: ",
+            parser->in.page->path,
+            parser->in.line + 1,
+            parser->in.col);
 
     va_list args;
     va_start(args, fmt);
@@ -101,7 +108,7 @@ static void man_err(struct man_parser *parser, const char *fmt, ...)
 // token
 // -----------------------------------------------------------------------------
 
-enum man_token_type
+enum legion_packed man_token_type
 {
     man_token_nil = 0,
     man_token_eof,
@@ -127,16 +134,20 @@ const char *man_token_type_str(enum man_token_type type)
     }
 }
 
-struct man_token
+struct legion_packed man_token
 {
     enum man_token_type type;
-    const char *it, *end;
+    legion_pad(3);
+    uint32_t len;
+    const char *it;
 };
+
+static_assert(sizeof(struct man_token) == 16);
 
 static struct man_token make_man_token(
         enum man_token_type type, const char *it, const char *end)
 {
-    return (struct man_token) { .type = type, .it = it, .end = end };
+    return (struct man_token) { .type = type, .it = it, .len = end - it };
 }
 
 static struct man_token make_man_token_eof(void)
@@ -147,7 +158,7 @@ static struct man_token make_man_token_eof(void)
 static enum man_markup_type man_token_markup_type(const struct man_token *token)
 {
     assert(token->type == man_token_markup);
-    assert(token->end - token->it == 2);
+    assert(token->len == 2);
     return man_markup_type(*(token->it + 1));
 }
 
@@ -159,7 +170,7 @@ static bool man_token_assert(
     if (likely(token->type == exp)) return true;
 
     man_err(parser, "unexpected token '%d != %d': %.*s",
-            token->type, exp, (unsigned) (token->end - token->it), token->it);
+            token->type, exp, token->len, token->it);
     return false;
 }
 
@@ -170,60 +181,63 @@ static bool man_token_assert(
 
 static void man_parser_inc(struct man_parser *parser)
 {
-    assert(parser->it < parser->end);
+    assert(parser->in.it < parser->in.end);
 
-    if (*parser->it == '\n') parser->line++;
-    parser->it++;
+    if (likely(*parser->in.it != '\n')) parser->in.col++;
+    else { parser->in.line++; parser->in.col = 0; }
+
+    parser->in.it++;
 }
 
 static struct man_token man_parser_next(struct man_parser *parser)
 {
     size_t eols = 0;
-    const char *start = parser->it;
-    for (; parser->it < parser->end; man_parser_inc(parser)) {
-        if (!str_is_space(*parser->it)) break;
-        if (*parser->it == '\n') eols++;
+    const char *start = parser->in.it;
+    for (; parser->in.it < parser->in.end; man_parser_inc(parser)) {
+        if (!str_is_space(*parser->in.it)) break;
+        if (*parser->in.it == '\n') eols++;
     }
 
-    if (unlikely(parser->it == parser->end))
+    if (unlikely(parser->in.it == parser->in.end))
         return make_man_token_eof();
 
     if (unlikely(eols > 1))
-        return make_man_token(man_token_paragraph, start, parser->it);
+        return make_man_token(man_token_paragraph, start, parser->in.it);
 
-    start = parser->it;
+    start = parser->in.it;
     assert(!str_is_space(*start));
 
-    switch (*parser->it)
+    switch (*parser->in.it)
     {
 
     case '{': {
-        parser->it += 2;
-        if (parser->it > parser->end) {
+        if (parser->in.it + 2 > parser->in.end) {
             man_err(parser, "unexpected eof");
             return make_man_token_eof();
         }
+        man_parser_inc(parser);
 
-        char c = *(parser->it - 1);
+        char c = *parser->in.it;
         if (!man_markup_type(c)) {
             man_err(parser, "invalid markup '%c'", c);
             return make_man_token_eof();
         }
+        man_parser_inc(parser);
 
-        return make_man_token(man_token_markup, start, parser->it);
+        return make_man_token(man_token_markup, start, parser->in.it);
     }
 
     case '}': {
         man_parser_inc(parser);
-        return make_man_token(man_token_close, start, parser->it);
+        return make_man_token(man_token_close, start, parser->in.it);
     }
 
     default: {
-        for (; parser->it < parser->end; ++parser->it) {
-            if (str_is_space(*parser->it)) break;
-            if (*parser->it == '{' || *parser->it == '}') break;
+        for (; parser->in.it < parser->in.end; man_parser_inc(parser)) {
+            if (str_is_space(*parser->in.it)) break;
+            if (*parser->in.it == '{' || *parser->in.it == '}') break;
         }
-        return make_man_token(man_token_word, start, parser->it);
+        return make_man_token(man_token_word, start, parser->in.it);
     }
 
     }
@@ -237,47 +251,46 @@ static struct man_token man_parser_peek(struct man_parser *parser)
 
 static struct man_token man_parser_until_close(struct man_parser *parser)
 {
-    const char *start = parser->it;
-    for (; parser->it < parser->end; man_parser_inc(parser)) {
-        if (*parser->it == '}') break;
-        if (*parser->it == '\n') {
+    const char *start = parser->in.it;
+    for (; parser->in.it < parser->in.end; man_parser_inc(parser)) {
+        if (*parser->in.it == '}') break;
+        if (*parser->in.it == '\n') {
             man_err(parser, "unexpected eol");
-            return make_man_token(man_token_line, start, parser->it);
+            return make_man_token(man_token_line, start, parser->in.it);
         }
     }
 
-    if (parser->it == parser->end) {
+    if (parser->in.it == parser->in.end) {
         man_err(parser, "unexpected eof");
         return make_man_token_eof();
     }
 
-    assert(*parser->it == '}');
+    assert(*parser->in.it == '}');
     man_parser_inc(parser);
-    return make_man_token(man_token_line, start, parser->it - 1);
+    return make_man_token(man_token_line, start, parser->in.it - 1);
 }
 
 static struct man_token man_parser_line(struct man_parser *parser)
 {
-    const char *start = parser->it;
+    const char *start = parser->in.it;
 
-    if (unlikely(start == parser->end)) {
+    if (unlikely(start == parser->in.end)) {
         man_err(parser, "unexpected eof");
         return make_man_token_eof();
     }
 
-    if (*parser->it == '}') {
-        parser->cols.curr++;
-        parser->it++;
-        return make_man_token(man_token_close, start, parser->it);
+    if (*parser->in.it == '}') {
+        man_parser_inc(parser);
+        return make_man_token(man_token_close, start, parser->in.it - 1);
     }
 
-    for (; parser->it < parser->end; man_parser_inc(parser)) {
-        if (*parser->it == '}') break;
-        if (*parser->it == '\n') {
-            parser->it++;
-            return make_man_token(man_token_line, start, parser->it - 1);
+    for (; parser->in.it < parser->in.end; man_parser_inc(parser)) {
+        if (*parser->in.it == '}') break;
+        if (*parser->in.it == '\n') {
+            man_parser_inc(parser);
+            return make_man_token(man_token_line, start, parser->in.it - 1);
         }
     }
 
-    return make_man_token(man_token_line, start, parser->it);
+    return make_man_token(man_token_line, start, parser->in.it);
 }

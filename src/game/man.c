@@ -68,74 +68,63 @@ static bool man_path_append(struct man_path *path, const char *str, size_t len)
 
 
 // -----------------------------------------------------------------------------
-// markup
-// -----------------------------------------------------------------------------
-
-static void markup_free(struct markup *markup)
-{
-    free(markup->text);
-}
-
-static void markup_grow(struct markup *markup, size_t len)
-{
-    if (likely(markup->len + len <= markup->cap)) return;
-
-    if (!markup->cap) markup->cap = 8;
-    while (markup->cap < markup->len + len) markup->cap *= 2;
-
-    markup->text = realloc(markup->text, markup->cap);
-}
-
-static void markup_repeat(struct markup *markup, char c, size_t len)
-{
-    markup_grow(markup, len);
-    memset(markup->text + markup->len, c, len);
-    markup->len += len;
-}
-
-static void markup_str(struct markup *markup, const char *str, size_t len)
-{
-    markup_grow(markup, len);
-    memcpy(markup->text + markup->len, str, len);
-    markup->len += len;
-}
-
-
-// -----------------------------------------------------------------------------
 // man
 // -----------------------------------------------------------------------------
 
 struct man
 {
-    struct vec64 *lines; // line -> text.list[size_t];
-    struct vec64 *sections; // section -> line
-    struct { size_t len, cap; struct markup *list; } text;
+    struct vec32 *lines; // line -> text.list[size_t];
+    struct vec16 *sections; // section -> line
+    struct { size_t len, cap; char *data; } text;
+    struct { size_t len, cap; struct markup *list; } markup;
 };
 
-static struct man *man_new(void)
+enum { man_markup_inc = 64 };
+
+static const char *man_text_current(struct man *);
+static const char *man_text_put(struct man *, char);
+
+static struct man *man_new(size_t text_cap)
 {
+    text_cap = legion_max(text_cap, page_len);
+
     struct man *man = calloc(1, sizeof(*man));
+    *man = (struct man) {
+        .lines = vec32_append(NULL, 0),
+        .sections = vec16_append(NULL, 0),
 
-    man->text.cap = 8;
-    man->text.list = calloc(man->text.cap, sizeof(*man->text.list));
+        .text = {
+            .len = 0,
+            .cap = text_cap,
+            .data = calloc(text_cap, sizeof(*man->text.data)),
+        },
 
-    man->text.len = 1;
-    assert(man->text.list[0].type == markup_nil);
+        .markup = {
+            .len = 0,
+            .cap = man_markup_inc,
+            .list = calloc(man_markup_inc, sizeof(*man->markup.list)),
+        },
+    };
 
-    man->lines = vec64_append(man->lines, 0);
-    man->sections = vec64_append(man->sections, 0);
+    man_text_put(man, '\n');
+
+    man->markup.len = 1;
+    man->markup.list[0] = (struct markup) {
+        .type = markup_nil,
+        .text = man_text_current(man),
+        .len = 0,
+    };
 
     return man;
 }
 
 void man_free(struct man *man)
 {
-    vec64_free(man->lines);
-    vec64_free(man->sections);
+    vec32_free(man->lines);
+    vec16_free(man->sections);
 
-    for (size_t i = 0; i < man->text.len; ++i)
-        markup_free(man->text.list + i);
-    free(man->text.list);
+    free(man->text.data);
+    free(man->markup.list);
 
     free(man);
 }
@@ -154,27 +143,75 @@ man_line man_section_line(struct man *man, man_section section)
 const struct markup *man_line_markup(struct man *man, man_line line)
 {
     line = legion_min(line, man->lines->len - 1);
-    return man->text.list + man->lines->vals[line];
+
+    size_t index = man->lines->vals[line];
+    assert(index < man->markup.len);
+
+    return man->markup.list + index;
 }
 
 const struct markup *man_next_markup(struct man *man, const struct markup *it)
 {
-    const struct markup *start = man->text.list;
-    const struct markup *end = start + man->text.len;
+    const struct markup *start = man->markup.list;
+    const struct markup *end = start + man->markup.len;
     assert(it >= start && it < end);
     return it + 1 == end ? NULL : it + 1;
 }
 
+
+static const char *man_text_current(struct man *man)
+{
+    return man->text.data + man->text.len;
+}
+
+static char man_text_previous(struct man *man)
+{
+    return man->text.data[man->text.len - 1];
+}
+
+static const char *man_text_put(struct man *man, char c)
+{
+    assert(man->text.len + 1 < man->text.cap);
+    char *start = man->text.data + man->text.len;
+
+    *start = c;
+    man->text.len++;
+
+    return start;
+}
+
+static const char *man_text_repeat(struct man *man, char c, size_t len)
+{
+    assert(man->text.len + len < man->text.cap);
+    char *start = man->text.data + man->text.len;
+
+    memset(start, c, len);
+    man->text.len += len;
+
+    return start;
+}
+
+static const char *man_text_str(struct man *man, const char *text, size_t len)
+{
+    assert(man->text.len + len < man->text.cap);
+    char *start = man->text.data + man->text.len;
+
+    memcpy(start, text, len);
+    man->text.len += len;
+
+    return start;
+}
+
+
 static struct markup *man_current(struct man *man)
 {
-    assert(man->text.len);
-    return man->text.list + (man->text.len - 1);
+    return man->markup.list + (man->markup.len - 1);
 }
 
 static struct markup *man_previous(struct man *man)
 {
-    assert(man->text.len > 1);
-    return man->text.list + (man->text.len - 2);
+    assert(man->markup.len > 1);
+    return man->markup.list + (man->markup.len - 2);
 }
 
 static struct markup *man_markup(struct man *man, enum markup_type type)
@@ -186,33 +223,40 @@ static struct markup *man_markup(struct man *man, enum markup_type type)
         return markup;
     }
 
-    if (unlikely(man->text.len == man->text.cap)) {
-        size_t cap = man->text.cap ? man->text.cap * 2 : 8;
-        man->text.list = realloc_zero(
-                man->text.list, man->text.cap, cap, sizeof(man->text.list[0]));
-        man->text.cap = cap;
+    if (unlikely(man->markup.len == man->markup.cap)) {
+        size_t old = man->markup.cap;
+        man->markup.cap += man_markup_inc;
+        man->markup.list = realloc_zero(
+                man->markup.list, old, man->markup.cap, sizeof(*man->markup.list));
     }
-    man->text.len++;
 
+    man->markup.len++;
     markup = man_current(man);
-    markup->type = type;
-    assert(!markup->cap && !markup->len && !markup->text);
+    *markup = (struct markup) {
+        .type = type,
+        .text = man_text_current(man),
+    };
     return markup;
 }
 
 static void man_mark_section(struct man *man)
 {
-    man->sections = vec64_append(man->sections, man->lines->len - 1);
+    man->sections = vec16_append(man->sections, man->lines->len - 1);
 }
 
 static struct markup *man_newline(struct man *man)
 {
-    // Required in the case where we have two consecutives eol to create a
-    // paragraph.
+    // We need to force create an empty markup because this function is used to
+    // create paragraphs which requires two consecutives eol which would
+    // otherwise be dedupped by man_markup.
     struct markup *markup = man_markup(man, markup_nil);
-    markup->type = markup_eol;
+    *markup = (struct markup) {
+        .type = markup_eol,
+        .text = man_text_put(man, '\n'),
+        .len = 1,
+    };
 
-    man->lines = vec64_append(man->lines, man->text.len);
+    man->lines = vec32_append(man->lines, man->markup.len);
     return markup;
 }
 
@@ -233,15 +277,15 @@ void man_dbg(struct man *man)
 {
     dbgf("sections(%u):", man->sections->len);
     for (man_section section = 0; section < man->sections->len; ++section)
-        dbgf("  %u -> %zu", section, man->sections->vals[section]);
+        dbgf("  %u -> %u", section, man->sections->vals[section]);
 
     dbgf("lines(%u):", man->lines->len);
     for (man_line line = 0; line < man->lines->len; ++line)
-        dbgf("  %u -> %zu", line, man->lines->vals[line]);
+        dbgf("  %u -> %u", line, man->lines->vals[line]);
 
-    dbgf("markup(%zu):", man->text.len);
-    for (size_t i = 0; i < man->text.len; ++i) {
-        const struct markup *it = man->text.list + i;
+    dbgf("markup(%zu):", man->markup.len);
+    for (size_t i = 0; i < man->markup.len; ++i) {
+        const struct markup *it = man->markup.list + i;
 
         char type = 0;
         switch (it->type)
