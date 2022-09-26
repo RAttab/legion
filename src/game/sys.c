@@ -29,7 +29,6 @@ static void sys_populate_impl(void)
 {
     im_populate();
     mod_compiler_init();
-    man_populate();
     specs_populate();
 
     {
@@ -38,6 +37,7 @@ static void sys_populate_impl(void)
 
         gen_populate(atoms);
         tapes_populate(atoms);
+        man_populate(atoms);
 
         atoms_free(atoms);
     }

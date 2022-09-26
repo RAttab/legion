@@ -377,7 +377,7 @@ struct man_page
 };
 
 static struct man *man_page_render(const struct man_page *, uint8_t cols, struct lisp *);
-static bool man_page_index(const struct man_page *, struct toc *);
+static bool man_page_index(const struct man_page *, struct toc *, struct atoms *);
 
 
 // -----------------------------------------------------------------------------
@@ -430,7 +430,7 @@ static void man_index_path(const char *path, size_t len, struct link link)
     assert(ret.ok);
 }
 
-static bool man_populate_it(const char *base)
+static bool man_populate_it(const char *base, struct atoms *atoms)
 {
     bool ok = true;
     struct dir_it *it = dir_it(base);
@@ -439,7 +439,7 @@ static bool man_populate_it(const char *base)
         const char *path = dir_it_path(it);
 
         if (path_is_dir(path))
-            ok = man_populate_it(path) && ok;
+            ok = man_populate_it(path, atoms) && ok;
 
         else if (path_is_file(path)) {
             if (mans.pages.len == mans.pages.cap) {
@@ -459,7 +459,7 @@ static bool man_populate_it(const char *base)
             page->file = mfile_open(path);
             strncpy(page->path, path, sizeof(page->path) - 1);
 
-            ok = man_page_index(page, &mans.toc) && ok;
+            ok = man_page_index(page, &mans.toc, atoms) && ok;
         }
     }
 
@@ -467,7 +467,7 @@ static bool man_populate_it(const char *base)
     return ok;
 }
 
-void man_populate(void)
+void man_populate(struct atoms *atoms)
 {
     // Pre-create key nodes in the toc to enforce logical ordering
     struct toc *root = &mans.toc;
@@ -491,7 +491,7 @@ void man_populate(void)
 
     char path[PATH_MAX] = {0};
     sys_path_res("man", path, sizeof(path));
-    if (!man_populate_it(path))
+    if (!man_populate_it(path, atoms))
         fail("unable to index man pages");
 
     // Sort the toc nodes to enfore sane ordering on the reference pages.

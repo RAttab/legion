@@ -357,6 +357,7 @@ static struct man *man_page_render(
 
             case man_markup_code: { man_render_code(&parser); break; }
             case man_markup_eval: { man_render_eval(&parser, lisp); break; }
+            case man_markup_item: { man_parser_until_close(&parser); break; }
 
             default: { man_err(&parser, "unknown markup"); break; }
             }

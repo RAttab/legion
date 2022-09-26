@@ -30,6 +30,7 @@ enum man_markup_type
 
     man_markup_code      = '`',
     man_markup_eval      = '$',
+    man_markup_item      = '#',
 };
 
 static enum man_markup_type man_markup_type(char c)
@@ -51,6 +52,8 @@ static enum man_markup_type man_markup_type(char c)
 
     case man_markup_code:      { return man_markup_code; }
     case man_markup_eval:      { return man_markup_eval; }
+    case man_markup_item:      { return man_markup_item; }
+
     default:                   { return man_markup_nil; }
     }
 }

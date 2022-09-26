@@ -10,7 +10,8 @@
 // man_page_index
 // -----------------------------------------------------------------------------
 
-static bool man_page_index(const struct man_page *page, struct toc *toc)
+static bool man_page_index(
+        const struct man_page *page, struct toc *toc, struct atoms *atoms)
 {
     struct man_parser parser = {
         .ok = true,
@@ -88,6 +89,24 @@ static bool man_page_index(const struct man_page *page, struct toc *toc)
             struct link link = make_link(page->page, ++sections);
             man_index_path(path.str, path.len, link);
             toc_path(toc, path)->link = link;
+            break;
+        }
+
+        case man_markup_item: {
+            if (!path_title) man_err(&parser, "item must be after title header");
+            if (path_section) man_err(&parser, "item must be before any section header");
+
+            struct man_token str = man_parser_until_close(&parser);
+            struct symbol sym = make_symbol_len(str.it, str.len);
+            vm_word word = atoms_get(atoms, &sym);
+
+            if (word <= ITEM_NIL || word >= ITEM_MAX) {
+                man_err(&parser, "invalid item atom: %.*s -> %lx",
+                        str.len, str.it, word);
+                continue;
+            }
+
+            toc_path(toc, path)->item = word;
             break;
         }
 

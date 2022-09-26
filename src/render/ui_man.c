@@ -21,6 +21,7 @@ struct ui_man
     struct ui_doc doc;
 
     struct link page;
+    struct tape_set known;
 };
 
 
@@ -29,6 +30,9 @@ static void ui_man_toc(
 {
     for (size_t i = 0; i < toc->len; ++i) {
         const struct toc *child = toc->nodes + i;
+
+        if (child->item && !tech_known(proxy_tech(render.proxy), child->item))
+            continue;
 
         uint64_t user = link_to_u64(child->link);
         if (!user) failf("missing man page for '%s'", child->name);
@@ -70,6 +74,17 @@ void ui_man_free(struct ui_man *ui)
     ui_doc_free(&ui->doc);
 }
 
+static void ui_man_update(struct ui_man *ui)
+{
+    const struct tech *tech = proxy_tech(render.proxy);
+    if (tape_set_eq(&tech->known, &ui->known)) return;
+    ui->known = tech->known;
+
+    ui_tree_reset(&ui->toc);
+    ui_man_toc(ui, man_toc(), ui_node_nil);
+}
+
+
 static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
@@ -77,6 +92,12 @@ static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
 
     case EV_STATE_LOAD: {
         ui_panel_hide(&ui->panel);
+        return false;
+    }
+
+    case EV_STATE_UPDATE: {
+        if (ui_panel_is_visible(&ui->panel))
+            ui_man_update(ui);
         return false;
     }
 

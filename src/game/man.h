@@ -7,8 +7,10 @@
 
 #include "common.h"
 #include "vm/symbol.h"
+#include "items/item.h"
 
 struct lisp;
+struct atoms;
 
 
 // -----------------------------------------------------------------------------
@@ -99,9 +101,11 @@ struct toc
     struct link link;
     char name[man_toc_max];
 
+    enum item item;
+
     uint8_t len, cap;
     struct toc *nodes;
 };
 const struct toc *man_toc(void); // The Mind Taker! BWWWWWEEEEOOOO!
 
-void man_populate(void);
+void man_populate(struct atoms *);
