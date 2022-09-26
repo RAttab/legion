@@ -372,12 +372,13 @@ static void toc_sort(struct toc *toc)
 struct man_page
 {
     man_page page;
+    enum item item;
     struct mfile file;
     char path[PATH_MAX+1];
 };
 
 static struct man *man_page_render(const struct man_page *, uint8_t cols, struct lisp *);
-static bool man_page_index(const struct man_page *, struct toc *, struct atoms *);
+static bool man_page_index(struct man_page *, struct toc *, struct atoms *);
 
 
 // -----------------------------------------------------------------------------
@@ -421,6 +422,21 @@ struct link man_link(const char *path, size_t len)
     hash_val key = link_hash(path, len);
     struct htable_ret ret = htable_get(&mans.index, key);
     return ret.ok ? link_from_u64(ret.value) : link_nil();
+}
+
+struct link man_sys_locked(void)
+{
+    static const char path[] = "/sys/locked";
+    return man_link(path, sizeof(path) - 1);
+}
+
+enum item man_item(man_page page)
+{
+    size_t index = page - 1;
+    assert(index < mans.pages.len);
+
+    struct man_page *man = mans.pages.list + index;
+    return man->item;
 }
 
 static void man_index_path(const char *path, size_t len, struct link link)

@@ -94,6 +94,9 @@ const struct markup *man_next_markup(struct man *, const struct markup *);
 struct link man_link(const char *path, size_t len);
 struct link man_click(struct man *, man_line, uint8_t col);
 
+enum item man_item(man_page page);
+struct link man_sys_locked(void);
+
 void man_dbg(struct man *);
 
 struct toc

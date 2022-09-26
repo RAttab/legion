@@ -11,7 +11,7 @@
 // -----------------------------------------------------------------------------
 
 static bool man_page_index(
-        const struct man_page *page, struct toc *toc, struct atoms *atoms)
+        struct man_page *page, struct toc *toc, struct atoms *atoms)
 {
     struct man_parser parser = {
         .ok = true,
@@ -107,6 +107,7 @@ static bool man_page_index(
             }
 
             toc_path(toc, path)->item = word;
+            page->item = word;
             break;
         }
 

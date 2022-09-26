@@ -110,9 +110,16 @@ static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
 
     case EV_MAN_GOTO: {
         uint64_t user = (uintptr_t) ev->user.data1;
-        ui_tree_select(&ui->toc, user);
-
         struct link link = link_from_u64(user);
+        enum item item = man_item(link.page);
+
+        if (!item || tech_known(proxy_tech(render.proxy), item))
+            ui_tree_select(&ui->toc, user);
+        else {
+            ui_tree_clear(&ui->toc);
+            link = man_sys_locked();
+        }
+
         ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
         return false;
     }

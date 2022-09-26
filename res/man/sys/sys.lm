@@ -1,0 +1,15 @@
+{@SYS}
+{#item-dummy}
+
+This chapter contains hidden pages that can only be accessed via
+links. This specific page should never be rendered or made visible to
+the user and is only here for documentation purposes. We use
+item-dummy to hide this page as this item only exists for things that
+should not be visible to the user.
+
+Quick summary of the pages in this chapter:
+
+{/sys/locked} Page shown when trying to access links to pages that are
+associated with items that have yet to be researched. It's easier to
+lock the page then to litter pages with conditional expressions to not
+show links for things that are unknown.
