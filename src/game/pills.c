@@ -32,7 +32,7 @@ static void pills_grow(struct pills *pills, size_t len)
 
     size_t old = pills->cap;
     if (!pills->cap) pills->cap = 4;
-    else if (2U * len > pills_cap) pills->cap = pills_cap;
+    if (2U * len > pills_cap) pills->cap = pills_cap;
     else while (pills->cap < len) pills->cap *= 2;
 
     pills->coord = realloc_zero(pills->coord, old, pills->cap, sizeof(*pills->coord));
