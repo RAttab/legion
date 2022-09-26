@@ -53,12 +53,12 @@ legion_packed struct active
 
     void *arena;
     struct ports *ports;
-    uint64_t free;
+    struct bits free;
 
     im_step_fn step;
     im_io_fn io;
 
-    legion_pad(8 * 2);
+    legion_pad(8);
 };
 
 static_assert(sizeof(struct active) == s_cache_line);

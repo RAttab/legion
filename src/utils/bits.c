@@ -61,12 +61,12 @@ void bits_save(const struct bits *bits, struct save *save)
     save_write_magic(save, save_magic_bits);
 }
 
-hash_val bits_hash(struct bits *bits, hash_val hash)
+hash_val bits_hash(const struct bits *bits, hash_val hash)
 {
     hash = hash_value(hash, bits->len);
 
-    uint64_t *end = bits_array(bits) + u64_ceil_div(bits->len, 64);
-    for (uint64_t *it = bits_array(bits); it < end; ++it)
+    const uint64_t *end = bits_array_c(bits) + u64_ceil_div(bits->len, 64);
+    for (const uint64_t *it = bits_array_c(bits); it < end; ++it)
         hash = hash_value(hash, *it);
 
     return hash;

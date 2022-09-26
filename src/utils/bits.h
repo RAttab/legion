@@ -69,11 +69,13 @@ inline uint32_t u32_saturate_add(uint64_t val, uint64_t add)
 // bits
 // -----------------------------------------------------------------------------
 
-struct bits
+struct legion_packed bits
 {
     size_t len;
     uint64_t bits;
 };
+
+static_assert(sizeof(struct bits) == 16);
 
 
 inline bool bits_inline(const struct bits *bits)
@@ -100,13 +102,13 @@ inline void bits_init(struct bits *bits)
 
 inline void bits_free(struct bits *bits)
 {
-    if (!bits_inline(bits)) free(bits);
+    if (!bits_inline(bits)) free(bits_array(bits));
 }
 
 void bits_grow(struct bits *, size_t);
 bool bits_load(struct bits *, struct save *);
 void bits_save(const struct bits *, struct save *);
-hash_val bits_hash(struct bits *, hash_val);
+hash_val bits_hash(const struct bits *, hash_val);
 
 
 inline void bits_reset(struct bits *bits)

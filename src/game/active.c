@@ -24,20 +24,20 @@ void active_init(struct active *active, enum item type)
         .step = config->im.step,
         .io = config->im.io,
     };
+
+    bits_init(&active->free);
 }
 
 void active_free(struct active *active)
 {
     free(active->arena);
     free(active->ports);
-    if (active->cap > 64)
-        vec64_free((void *) active->free);
+    bits_free(&active->free);
 
+    bits_init(&active->free);
     active->arena = 0;
     active->ports = 0;
-    active->free = 0;
     active->count = 0;
-    active->free = 0;
     active->len = 0;
     active->cap = 0;
 }
@@ -46,59 +46,27 @@ bool active_delete(struct active *active, im_id id)
 {
     size_t index = im_id_seq(id)-1;
     if (index >= active->len) return false;
+    if (bits_test(&active->free, index)) return false;
 
-    if (likely(active->cap <= 64)){
-        const uint64_t mask = 1ULL << index;
-
-        if (active->free & mask) return false;
-        active->free |= mask;
-    }
-    else {
-        struct vec64 *vec = (void *) active->free;
-        const uint64_t mask = 1ULL << (index % 64);
-        const size_t ix = index / 64;
-
-        if (vec->vals[ix] & mask) return false;
-        vec->vals[ix] |= mask;
-    }
-
+    bits_set(&active->free, index);
     active->count--;
+
     if (!active->count && !active->create)
         active_free(active);
 
     return true;
 }
 
-inline bool active_deleted(struct active *active, size_t index)
-{
-    if (likely(!active->free)) return false;
-    if (likely(active->cap <= 64)) return (active->free & (1ULL << index)) != 0;
-
-    struct vec64 *vec = (void *) active->free;
-    return (vec->vals[index / 64] & (1ULL << (index % 64))) != 0;
-}
-
 static bool active_recycle(struct active *active, size_t *index)
 {
-    if (likely(!active->free)) return false;
+    if (likely(!active->free.len)) return false;
 
-    if (likely(active->cap <= 64)) {
-        *index = u64_ctz(active->free);
-        active->free &= ~(1ULL << *index);
-        return true;
-    }
+    size_t ix = bits_next(&active->free, 0);
+    if (ix == active->free.len) return false;
 
-    struct vec64 *vec = (void *) active->free;
-    for (size_t i = 0; i < vec->len; ++i) {
-        if (!vec->vals[i]) continue;
-
-        *index = u64_ctz(vec->vals[i]);
-        vec->vals[i] &= ~(1ULL << *index);
-        *index += (i * 64);
-        return true;
-    }
-
-    return false;
+    bits_unset(&active->free, ix);
+    *index = ix;
+    return true;
 }
 
 hash_val active_hash(const struct active *active, hash_val hash)
@@ -111,12 +79,7 @@ hash_val active_hash(const struct active *active, hash_val hash)
     hash = hash_value(hash, active->create);
     hash = hash_bytes(hash, active->arena, active->len * active->size);
     hash = hash_bytes(hash, active->ports, active->len * sizeof(*active->ports));
-
-    if (likely(active->cap <= 64)) hash = hash_value(hash, active->free);
-    else {
-        struct vec64 *vec = (void *) active->free;
-        hash = hash_bytes(hash, vec->vals, vec->len * sizeof(vec->vals[0]));
-    }
+    hash = bits_hash(&active->free, hash);
 
     return hash;
 }
@@ -134,9 +97,7 @@ void active_save(const struct active *active, struct save *save)
 
     save_write(save, active->arena, active->len * active->size);
     save_write(save, active->ports, active->len * sizeof(*active->ports));
-
-    if (active->cap < 64) save_write_value(save, active->free);
-    else save_write_vec64(save, (const void *) active->free);
+    bits_save(&active->free, save);
 
     save_write_magic(save, save_magic_active);
 }
@@ -162,14 +123,12 @@ bool active_load(struct active *active, struct save *save, struct chunk *chunk)
     memset(active->ports + active->len, 0,
             (active->cap - active->len) * sizeof(*active->ports));
 
-    if (active->cap < 64) save_read_into(save, &active->free);
-    else if (!save_read_vec64(save, (struct vec64 **) &active->free))
-        return false;
+    if (!bits_load(&active->free, save)) return false;
 
     const struct im_config *config = im_config_assert(active->type);
     if (config->im.load) {
         for (size_t i = 0; i < active->len; ++i) {
-            if (active_deleted(active, i)) continue;
+            if (bits_test(&active->free, i)) continue;
             if (chunk) config->im.load(active->arena + (i * active->size), chunk);
         }
     }
@@ -187,7 +146,7 @@ im_id active_last(struct active *active)
 {
     for (size_t i = 0; i < active->len; ++i) {
         size_t ix = active->len - i - 1;
-        if (!active_deleted(active, ix))
+        if (!bits_test(&active->free, ix))
             return make_im_id(active->type, ix);
     }
 
@@ -197,7 +156,7 @@ im_id active_last(struct active *active)
 void active_list(struct active *active, struct vec16 *ids)
 {
     for (size_t i = 0; i < active->len; ++i) {
-        if (active_deleted(active, i)) continue;
+        if (bits_test(&active->free, i)) continue;
         vec16_append(ids, make_im_id(active->type, i+1));
     }
 }
@@ -205,7 +164,7 @@ void active_list(struct active *active, struct vec16 *ids)
 void *active_get(struct active *active, im_id id)
 {
     size_t index = im_id_seq(id)-1;
-    if (index >= active->len || active_deleted(active, index)) return NULL;
+    if (index >= active->len || bits_test(&active->free, index)) return NULL;
 
     return active->arena + (index * active->size);
 }
@@ -213,7 +172,7 @@ void *active_get(struct active *active, im_id id)
 struct ports *active_ports(struct active *active, im_id id)
 {
     size_t index = im_id_seq(id)-1;
-    if (index >= active->len || active_deleted(active, index)) return NULL;
+    if (index >= active->len || bits_test(&active->free, index)) return NULL;
 
     return &active->ports[index];
 }
@@ -235,12 +194,12 @@ bool active_copy(struct active *active, im_id id, void *dst, size_t len)
 static void active_grow(struct active *active)
 {
     if (likely(active->len < active->cap)) return;
-    size_t old = active->cap;
 
     if (!active->len) {
         active->cap = 1;
         active->arena = calloc(active->cap, active->size);
         active->ports = calloc(active->cap, sizeof(active->ports[0]));
+        bits_grow(&active->free, active->cap);
         return;
     }
 
@@ -252,13 +211,7 @@ static void active_grow(struct active *active)
     memset(active->arena + (active->len * active->size), 0, added * active->size);
     memset(active->ports + active->len, 0, added * sizeof(active->ports[0]));
 
-    if (old > 64)
-        active->free = (uintptr_t) vec64_grow((void *) active->free, active->cap / 64);
-    else if (old == 64) {
-        struct vec64 *vec = vec64_reserve(2);
-        vec->vals[0] = active->free;
-        active->free = (uintptr_t) vec;
-    }
+    bits_grow(&active->free, active->cap);
 }
 
 // Given that an item can replicate itself through this function (assembler
@@ -275,9 +228,11 @@ bool active_create(struct active *active)
 // This creation function is not used for replication (...yet) which means that
 // we don't need to defer the creation (... yet)
 bool active_create_from(
-        struct active *active, struct chunk *chunk, const vm_word *data, size_t len)
+        struct active *active, struct chunk *chunk,
+        const vm_word *data, size_t len)
 {
-    if (active->count + active->create == chunk_item_cap) return false;
+    if (unlikely(active->count + active->create == chunk_item_cap))
+        return false;
 
     const struct im_config *config = im_config_assert(active->type);
     assert(config->im.make);
@@ -294,7 +249,6 @@ bool active_create_from(
 
     config->im.make(item, chunk, id, data, len);
     active->count++;
-
     return true;
 }
 
@@ -303,7 +257,7 @@ void active_step(
 {
     if (active->step) {
         for (size_t i = 0; i < active->len; ++i) {
-            if (active_deleted(active, i)) continue;
+            if (bits_test(&active->free, i)) continue;
             active->step(active->arena + (i * active->size), chunk);
         }
     }
