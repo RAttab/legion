@@ -1,6 +1,6 @@
 {@GUIDES/FACTORY}
 
-{!SYNOPSIS}
+{=SYNOPSIS}
 
 This chapter aims to introduce Legion's factory capabilities by
 setting up a simple supply chain to create extractors. While the
@@ -10,7 +10,7 @@ foundation for troubleshooting. The automation functionalities will be
 introduced in the next chapter {/guides/mods}.
 
 
-{!STAR}
+{=STAR}
 
 All factories feed on the resources provided and available around
 stars and, as a result, all factory-related controls are located
@@ -23,7 +23,7 @@ Clicking on the star will open up the star interface which can roughly
 be broken down into three sections: views, resources and items.
 
 
-{?View}
+{-View}
 
 The available views for a star can be accessed via the buttons at the
 top of the star interface. For this guide, we'll be using the
@@ -37,7 +37,7 @@ If you need to return to the star map, either click on the {_map} view
 button or click on the {_home} topbar button.
 
 
-{?Resources}
+{-Resources}
 
 Skipping over the star name and it's coordinate, the next information
 displayed on the star interface relates to the resources available:
@@ -59,7 +59,7 @@ finite. Expansion to nearby star is the only means by which you can
 avoid being stranded.
 
 
-{?Items}
+{-Items}
 
 The final section in the star interface is the list of active items
 that make up your factory which are broken up into three categories:
@@ -82,7 +82,7 @@ of this guide.
 {<}
 
 
-{!FACTORY}
+{=FACTORY}
 
 Before we start setting up our first factory, make sure that you have
 your home star selected, have switched to the factory view and have
@@ -93,7 +93,7 @@ The most basic flow for a Legion factory can be summarized into three
 phases: extract, transform and deploy.
 
 
-{?Extract}
+{-Extract}
 
 The extraction phase involves the gathering of raw resources from the
 star. For this guide, we will use extractors to extract the elements A
@@ -159,7 +159,7 @@ the factory view representing both our extractors and both elements A
 and B ready to be consumed.
 
 
-{?Transform}
+{-Transform}
 
 The next phase involves transforming our raw elements into
 intermediary items using printers which will then be assembled into an
@@ -186,7 +186,7 @@ logistics layer. Increasing the overall throughput of the factory
 requires the creation of additional workers.
 
 
-{?Deploy}
+{-Deploy}
 
 If the previous steps completed without issues, the assembler should
 have an {_!item-extract} completed and ready to be consumed. This is a
@@ -216,7 +216,7 @@ limit is reached, the deployer's state will automatically be reset and
 the factory will eventually settle back into an idle state.
 
 
-{!NEXT}
+{=NEXT}
 
 We now have a factory that can be used to produce any number of
 extractors. To deepen your understanding of the concepts in this
@@ -230,4 +230,4 @@ proceed to work through the automation guide in the {/guides/mods}
 chapter.
 
 
-{!RELATED}
+{=RELATED}

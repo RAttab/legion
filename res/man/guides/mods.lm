@@ -1,6 +1,6 @@
 {@GUIDES/MODS}
 
-{!SYNOPSIS}
+{=SYNOPSIS}
 
 This chapter aims to automate and extend the factory created in
 {/guides/factory} using mods. Mods are programs created in Legion's
@@ -15,7 +15,7 @@ introduced within {/guides/factory} as these concepts acts as the
 foundation for this guide.
 
 
-{!EDITOR}
+{=EDITOR}
 
 Within Legion, mods are managed independently of stars and have their
 own interface which can be accessed by clicking on the {_mods} topbar
@@ -89,7 +89,7 @@ without errors.
 {<}
 
 
-{!LISP}
+{=LISP}
 
 The LISP language is designed to have a simple and easy to pick up
 syntax. While its simplicity may seem restrictive at first, the
@@ -101,7 +101,7 @@ The language itself has only four major syntax components: comments,
 numbers, atoms and functions.
 
 
-{?Comments}
+{-Comments}
 
 Comments are used to provides notes and other useful human readable
 information within a mod. Their content is entirely ignored by the
@@ -123,7 +123,7 @@ of comments:
 }
 
 
-{?Numbers}
+{-Numbers}
 
 Numbers are the only data-types within the Legion processor which
 implies that everything you do within LISP will involve manipulating
@@ -149,7 +149,7 @@ a LISP mod:
 }
 
 
-{?Atoms}
+{-Atoms}
 
 Atoms are symbolic names that the LISP compiler will consistently
 associate with the same number across mods. They're used to make code
@@ -181,7 +181,7 @@ Here are a few example of atom usage:
 }
 
 
-{?Functions}
+{-Functions}
 
 Functions are the bread and butter of the LISP language and use the
 same consistent syntax to represent all operations that can be done
@@ -224,7 +224,7 @@ we'll explore the {_io} function in the next section as it's key to
 being able to manipulate active items within our factory.
 
 
-{!IO}
+{=IO}
 
 While we do have a basic understanding of the LISP language, we're
 still missing a method to interact with active items that make up our
@@ -290,7 +290,7 @@ commands that return multiple values reference the guide
 {/guides/io-return}.
 
 
-{!FACTORY}
+{=FACTORY}
 
 Now that we've covered all the core concepts required, we can finally
 start encapsulating our factory from the previous chapter into a
@@ -363,7 +363,7 @@ of the one provided in this man page and then redo the compile-loop
 and execute the IO command again.
 
 
-{!NEXT}
+{=NEXT}
 
 To internalize the concepts introduced in this guide, follow in the
 steps of the previous chapter and extend your mod to also construct
@@ -382,4 +382,4 @@ find interesting.
 Remember, you are not alone.
 
 
-{!RELATED}
+{=RELATED}

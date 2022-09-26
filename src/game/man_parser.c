@@ -18,8 +18,8 @@ enum man_markup_type
     man_markup_comment   = '%',
 
     man_markup_title     = '@',
-    man_markup_section   = '!',
-    man_markup_topic     = '?',
+    man_markup_section   = '=',
+    man_markup_topic     = '-',
 
     man_markup_link      = '/',
     man_markup_list      = '>',
@@ -30,7 +30,7 @@ enum man_markup_type
 
     man_markup_code      = '`',
     man_markup_eval      = '$',
-    man_markup_item      = '#',
+    man_markup_item      = '!',
 };
 
 static enum man_markup_type man_markup_type(char c)

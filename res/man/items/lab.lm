@@ -1,7 +1,7 @@
 {@ITEMS/LAB}
-{#item-lab}
+{!item-lab}
 
-{!SYNOPSIS}
+{=SYNOPSIS}
 
-{!MEEP}
+{=MEEP}
 {/items/nomad}

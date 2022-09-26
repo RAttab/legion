@@ -2,10 +2,10 @@
 {%TODO: The word item is coming up too much. Need a synonym for active
 item}
 
-{!SYNOPSIS}
+{=SYNOPSIS}
 At its heart, Legion is a supply chain network.
 
-{!ITEMS}
+{=ITEMS}
 Supply chain is broken up into 3 categories:
 
 {>Factory} Heart of the supply chain. Manipulates items and is
@@ -22,7 +22,7 @@ operator will interact with the most.
 and this is where we give them a proper name}
 
 
-{!FACTORY}
+{=FACTORY}
 - The factory can be broken down into 3 major components
 
 {>Extract} Intake step of the factory where elements are extracted
@@ -45,7 +45,7 @@ programming.
 {<}
 
 
-{?Identifiers}
+{-Identifiers}
 - Each active component of the factory is given an ID that is to refer
   to it.
 
@@ -61,7 +61,7 @@ programming.
 - The id for newly created items are predictable.
 
 
-{?Port}
+{-Port}
 - Ports is the standard interface used by the components of the
   factory to interact with each other.
 
@@ -79,7 +79,7 @@ programming.
 really awkward. I think import/export will probably work better but
 it's still a bit awkward.}
 
-{?Tapes}
+{-Tapes}
 - Tapes are used throughout the factory to represent the recipe used
   to create items. They are composed of the following:
 
@@ -108,19 +108,19 @@ then exported from the active item.
   for the factory. As an example, {%TODO: provide example}
   
 
-{!LOGISTICS}
+{=LOGISTICS}
 blah
 
 
-{?Workers}
+{-Workers}
 blah
 
 
-{?Energy}
+{-Energy}
 blah
 
 
-{!CONTROL}
+{=CONTROL}
 - Legion will replicate itself and expand alot. Micro-managing would
   be time-consuming and impractical. Automation is key to survival.
 
@@ -134,7 +134,7 @@ blah
 - The range of control
 
 
-{?IO}
+{-IO}
 - Each item is controled with IO instructions. A subset of these IO
   instructions are available in the interface.
 
@@ -157,7 +157,7 @@ blah
 
 
 
-{!NEXT}
+{=NEXT}
 
 
-{!RELATED}
+{=RELATED}
