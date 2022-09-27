@@ -28,6 +28,8 @@ typedef uint16_t man_section;
 // link
 // -----------------------------------------------------------------------------
 
+enum { link_ui_tape = 0xFFFF };
+
 struct legion_packed link { man_page page; man_section section; };
 
 inline bool link_is_nil(struct link link) { return link.page == 0; }
@@ -92,6 +94,7 @@ const struct markup *man_line_markup(struct man *, man_line);
 const struct markup *man_next_markup(struct man *, const struct markup *);
 
 struct link man_link(const char *path, size_t len);
+struct link man_link_ui(const char *path, size_t len);
 struct link man_click(struct man *, man_line, uint8_t col);
 
 enum item man_item(man_page page);

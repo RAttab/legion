@@ -207,6 +207,53 @@ static void man_render_link(struct man_parser *parser)
     (void) man_markup(parser->out.man, markup_nil);
 }
 
+static void man_render_link_ui(struct man_parser *parser)
+{
+    struct man_token token = man_parser_until_close(parser);
+
+    const char *it = token.it;
+    const char *end = token.it + token.len;
+    for (; it < end && *it != '\\'; it++);
+
+    man_page page = 0;
+    if (!strncmp(token.it, "tape", it - token.it)) page = link_ui_tape;
+    else {
+        man_err(parser, "unknown ui link prefix: %.*s",
+                (unsigned) (token.it - it), token.it);
+        return;
+    }
+
+    const char *start = it + 1;
+    if (end - start > symbol_cap) {
+        man_err(parser, "ui link suffix too long to be an atom: %.*s",
+                (unsigned) (end - start), start);
+        return;
+    }
+
+    const size_t len = 1 + (end - start);
+    char lisp[1 + symbol_cap] = { [0] = '!' };
+    memcpy(lisp + 1, start, end - start);
+
+    struct lisp_ret ret = lisp_eval_const(parser->out.lisp, lisp, len);
+    if (!ret.ok || ret.value > UINT16_MAX) {
+        man_err(parser, "invalid link suffix '%s' -> %lx", lisp, ret.value);
+        return;
+    }
+
+    // Links starts with \ which is currently in the previous markup token which
+    // is annoying so we cheat a little and expand our current token to include
+    // the \.
+    token.it--;
+    token.len++;
+    assert(*token.it == man_markup_link_ui);
+
+    struct markup *markup = man_markup(parser->out.man, markup_link);
+    markup->link = make_link(page, ret.value);
+    man_render_append(parser, &token);
+
+    (void) man_markup(parser->out.man, markup_nil);
+}
+
 static void man_render_list(struct man_parser *parser)
 {
     if (parser->out.list) parser->out.indent -= man_indent_list_rel;
@@ -287,11 +334,11 @@ static void man_render_code(struct man_parser *parser)
     }
 }
 
-static void man_render_eval(struct man_parser *parser, struct lisp *lisp)
+static void man_render_eval(struct man_parser *parser)
 {
     struct man_token token = man_parser_until_close(parser);
 
-    struct lisp_ret ret = lisp_eval_const(lisp, token.it, token.len);
+    struct lisp_ret ret = lisp_eval_const(parser->out.lisp, token.it, token.len);
     if (!ret.ok) {
         man_err(parser, "invalid lisp '%.*s'", token.len, token.it);
         return;
@@ -301,7 +348,7 @@ static void man_render_eval(struct man_parser *parser, struct lisp *lisp)
     str_utox(ret.value, str, sizeof(str));
     token = make_man_token(man_token_word, str, str + sizeof(str));
 
-    (void) man_markup(parser->out.man, markup_code);
+    (void) man_markup(parser->out.man, markup_underline);
     man_render_append(parser, &token);
     (void) man_markup(parser->out.man, markup_nil);
 }
@@ -322,6 +369,7 @@ static struct man *man_page_render(
 
         .out = {
             .man = man_new(page->file.len * 2),
+            .lisp = lisp,
             .col = { .it = 0, .cap = cols },
             .indent = 0,
             .list = false,
@@ -344,19 +392,21 @@ static struct man *man_page_render(
             {
             case man_markup_comment: { man_render_comment(&parser); break; }
 
-            case man_markup_title: { man_render_title(&parser); break; }
+            case man_markup_title:   { man_render_title(&parser); break; }
             case man_markup_section: { man_render_section(&parser); break; }
-            case man_markup_topic: { man_render_topic(&parser); break; }
+            case man_markup_topic:   { man_render_topic(&parser); break; }
 
-            case man_markup_link: { man_render_link(&parser); break; }
-            case man_markup_list : { man_render_list(&parser); break; }
+            case man_markup_link:      { man_render_link(&parser); break; }
+            case man_markup_link_ui:   { man_render_link_ui(&parser); break; }
+
+            case man_markup_list :    { man_render_list(&parser); break; }
             case man_markup_list_end: { man_render_list_end(&parser); break; }
 
             case man_markup_bold:
             case man_markup_underline: { man_render_style(&parser, type); break; }
 
             case man_markup_code: { man_render_code(&parser); break; }
-            case man_markup_eval: { man_render_eval(&parser, lisp); break; }
+            case man_markup_eval: { man_render_eval(&parser); break; }
             case man_markup_item: { man_parser_until_close(&parser); break; }
 
             default: { man_err(&parser, "unknown markup"); break; }

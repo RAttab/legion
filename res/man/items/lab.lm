@@ -3,5 +3,16 @@
 
 {=SYNOPSIS}
 
-{=MEEP}
+{=SPECS}
+
+{>id} {$!item-lab}
+
+{>atom} {_!item-lab}
+
+{<}
+
+{=RELATED}
+
+{\tape\item-lab}
+
 {/items/nomad}

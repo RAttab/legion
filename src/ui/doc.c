@@ -68,7 +68,10 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         struct link link = man_click(doc->man, line, col);
         if (link_is_nil(link)) return ui_nil;
 
-        render_push_event(EV_MAN_GOTO, link_to_u64(link), 0);
+        if (link.page == link_ui_tape)
+            render_push_event(EV_TAPE_SELECT, link.section, 0);
+        else render_push_event(EV_MAN_GOTO, link_to_u64(link), 0);
+
         return ui_consume;
     }
 

@@ -22,6 +22,7 @@ enum man_markup_type
     man_markup_topic     = '-',
 
     man_markup_link      = '/',
+    man_markup_link_ui   = '\\',
     man_markup_list      = '>',
     man_markup_list_end  = '<',
 
@@ -44,6 +45,7 @@ static enum man_markup_type man_markup_type(char c)
     case man_markup_topic:     { return man_markup_topic; }
 
     case man_markup_link:      { return man_markup_link; }
+    case man_markup_link_ui:   { return man_markup_link_ui; }
     case man_markup_list:      { return man_markup_list; }
     case man_markup_list_end:  { return man_markup_list_end; }
 
@@ -74,6 +76,7 @@ struct man_parser
     struct
     {
         struct man *man;
+        struct lisp *lisp;
         struct { uint8_t it, cap; } col;
         uint8_t indent;
         bool list;

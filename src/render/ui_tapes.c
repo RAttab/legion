@@ -152,7 +152,7 @@ static void ui_tapes_update_cat(
     }
 }
 
-static void ui_tapes_update(struct ui_tapes *ui)
+static void ui_tapes_update(struct ui_tapes *ui, enum item select)
 {
     struct font *font = ui_tapes_font();
 
@@ -162,6 +162,8 @@ static void ui_tapes_update(struct ui_tapes *ui)
     ui_tapes_update_cat(ui, "Passive", ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
     ui_tapes_update_cat(ui, "Active", ITEM_ACTIVE_FIRST, ITEM_ACTIVE_LAST);
     ui_tapes_update_cat(ui, "Logistics", ITEM_LOGISTICS_FIRST, ITEM_LOGISTICS_LAST);
+
+    if (select) ui_tree_select(&ui->tree, select);
 
     if (!ui_tapes_selected(ui)) {
         ui_panel_resize(&ui->panel, make_dim(
@@ -201,7 +203,7 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
 
     case EV_STATE_UPDATE: {
         if (!ui_panel_is_visible(&ui->panel)) return false;
-        ui_tapes_update(ui);
+        ui_tapes_update(ui, 0);
         return false;
     }
 
@@ -209,7 +211,7 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
         if (ui_panel_is_visible(&ui->panel))
             ui_panel_hide(&ui->panel);
         else {
-            ui_tapes_update(ui);
+            ui_tapes_update(ui, 0);
             ui_panel_show(&ui->panel);
         }
         return false;
@@ -217,8 +219,8 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
 
     case EV_TAPE_SELECT: {
         enum item item = ((uintptr_t) ev->user.data1);
-        ui_tree_select(&ui->tree, item);
-        ui_tapes_update(ui);
+        ui_tapes_update(ui, item);
+        ui_panel_show(&ui->panel);
         return false;
     }
 
@@ -243,7 +245,7 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_tree_event(&ui->tree, ev))) {
-        if (ret == ui_action) ui_tapes_update(ui);
+        if (ret == ui_action) ui_tapes_update(ui, 0);
         return true;
     }
 
