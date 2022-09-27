@@ -14,7 +14,7 @@ static const char man_title[] = "Legion's Programmer Manual";
 
 enum man_markup_type
 {
-    man_markup_nil = 0,
+    man_markup_nil       = 0,
     man_markup_comment   = '%',
 
     man_markup_title     = '@',
@@ -23,8 +23,11 @@ enum man_markup_type
 
     man_markup_link      = '/',
     man_markup_link_ui   = '\\',
+
     man_markup_list      = '>',
     man_markup_list_end  = '<',
+
+    man_markup_newline   = 'n',
 
     man_markup_underline = '_',
     man_markup_bold      = '*',
@@ -46,8 +49,11 @@ static enum man_markup_type man_markup_type(char c)
 
     case man_markup_link:      { return man_markup_link; }
     case man_markup_link_ui:   { return man_markup_link_ui; }
+
     case man_markup_list:      { return man_markup_list; }
     case man_markup_list_end:  { return man_markup_list_end; }
+
+    case man_markup_newline:   { return man_markup_newline; }
 
     case man_markup_underline: { return man_markup_underline; }
     case man_markup_bold:      { return man_markup_bold; }

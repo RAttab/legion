@@ -5,14 +5,12 @@
 
 {=SPECS}
 
-{>id} {$!item-lab}
-
 {>atom} {_!item-lab}
+
+{>id} {$!item-lab}
 
 {<}
 
 {=RELATED}
-
-{\tape\item-lab}
-
-{/items/nomad}
+{n}{\tape\item-lab}
+{n}{/items/nomad}

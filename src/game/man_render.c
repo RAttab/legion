@@ -280,6 +280,12 @@ static void man_render_list(struct man_parser *parser)
     else (void) man_render_newline(parser);
 }
 
+static void man_render_new_line(struct man_parser *parser)
+{
+    (void) man_parser_until_close(parser);
+    (void) man_render_newline(parser);
+}
+
 static void man_render_list_end(struct man_parser *parser)
 {
     (void) man_parser_until_close(parser);
@@ -401,6 +407,8 @@ static struct man *man_page_render(
 
             case man_markup_list :    { man_render_list(&parser); break; }
             case man_markup_list_end: { man_render_list_end(&parser); break; }
+
+            case man_markup_newline: { man_render_new_line(&parser); break; }
 
             case man_markup_bold:
             case man_markup_underline: { man_render_style(&parser, type); break; }
