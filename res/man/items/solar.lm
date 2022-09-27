@@ -1,0 +1,15 @@
+{@ITEMS/solar}
+{!item-solar}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-solar}
+
+{>id} {$!item-solar}
+
+{<}
+
+{=RELATED}
+{n}{\tape\item-solar}

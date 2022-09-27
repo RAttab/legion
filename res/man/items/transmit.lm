@@ -1,0 +1,23 @@
+{@ITEMS/transmit}
+{!item-transmit}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-transmit}
+
+{>id} {$!item-transmit}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-channel}
+{-io-target}
+{-io-transmit}
+
+{=RELATED}
+{n}{\tape\item-transmit}

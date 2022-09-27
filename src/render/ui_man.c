@@ -121,6 +121,7 @@ static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
         }
 
         ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
+        ui_panel_show(&ui->panel);
         return false;
     }
 

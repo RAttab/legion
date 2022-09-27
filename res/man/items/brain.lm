@@ -1,0 +1,33 @@
+{@ITEMS/BRAIN}
+{!item-brain}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-brain}
+
+{>id} {$!item-brain}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-mod}
+{-io-id}
+{-io-log}
+{-io-tick}
+{-io-coord}
+{-io-name}
+{-io-specs}
+{-io-send}
+{-io-recv}
+{-io-dbg-attach}
+{-io-dbg-detach}
+{-io-dbg-break}
+{-io-dbg-step}
+
+{=RELATED}
+{n}{\tape\item-brain}

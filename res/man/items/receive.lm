@@ -1,0 +1,23 @@
+{@ITEMS/receive}
+{!item-receive}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-receive}
+
+{>id} {$!item-receive}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-channel}
+{-io-target}
+{-io-receive}
+
+{=RELATED}
+{n}{\tape\item-receive}

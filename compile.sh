@@ -51,6 +51,7 @@ ar rcs liblegion.a $OBJ
 
 $ECHO "exec compilation..."
 $TIME $CC -o "legion" "${PREFIX}/src/exec.c" $LIBS $CFLAGS
+rm -r "./res"
 cp -r "${PREFIX}/res" .
 
 ./legion --graph | dot -Tsvg > tapes.svg

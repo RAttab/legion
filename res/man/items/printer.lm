@@ -1,0 +1,21 @@
+{@ITEMS/printer}
+{!item-printer}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-printer}
+
+{>id} {$!item-printer}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-tape}
+
+{=RELATED}
+{n}{\tape\item-printer}

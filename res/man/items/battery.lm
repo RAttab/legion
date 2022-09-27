@@ -1,0 +1,15 @@
+{@ITEMS/battery}
+{!item-battery}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-battery}
+
+{>id} {$!item-battery}
+
+{<}
+
+{=RELATED}
+{n}{\tape\item-battery}

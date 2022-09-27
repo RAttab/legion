@@ -1,0 +1,21 @@
+{@ITEMS/burner}
+{!item-burner}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-burner}
+
+{>id} {$!item-burner}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-item}
+
+{=RELATED}
+{n}{\tape\item-burner}

@@ -14,9 +14,9 @@
 // button
 // -----------------------------------------------------------------------------
 
-struct ui_button ui_button_new(struct font *font, struct ui_str str)
+struct ui_button ui_button_new_pad(
+        struct font *font, struct ui_str str, struct dim pad)
 {
-    struct dim pad = make_dim(6, 2);
     return (struct ui_button) {
         .w = ui_widget_new(
                 font->glyph_w * ui_str_len(&str) + pad.w*2,
@@ -27,6 +27,11 @@ struct ui_button ui_button_new(struct font *font, struct ui_str str)
         .pad = pad,
         .state = ui_button_idle,
     };
+}
+
+struct ui_button ui_button_new(struct font *font, struct ui_str str)
+{
+    return ui_button_new_pad(font, str, make_dim(6, 2));
 }
 
 void ui_button_free(struct ui_button *button)

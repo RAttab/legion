@@ -1,0 +1,21 @@
+{@ITEMS/assembly}
+{!item-assembly}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-assembly}
+
+{>id} {$!item-assembly}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-tape}
+
+{=RELATED}
+{n}{\tape\item-assembly}

@@ -1,0 +1,22 @@
+{@ITEMS/legion}
+{!item-legion}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-legion}
+
+{>id} {$!item-legion}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-mod}
+{-io-launch}
+
+{=RELATED}
+{n}{\tape\item-legion}

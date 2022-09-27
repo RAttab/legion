@@ -1,0 +1,23 @@
+{@ITEMS/memory}
+{!item-memory}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-memory}
+
+{>id} {$!item-memory}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-get}
+{-io-set}
+{-io-cas}
+
+{=RELATED}
+{n}{\tape\item-memory}

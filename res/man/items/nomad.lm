@@ -1,6 +1,28 @@
-{@ITEMS/NOMAD}
+{@ITEMS/nomad}
 {!item-nomad}
 
 {=SYNOPSIS}
 
-{=MEEP}
+{=SPECS}
+
+{>atom} {_!item-nomad}
+
+{>id} {$!item-nomad}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-mod}
+{-io-get}
+{-io-set}
+{-io-id}
+{-io-pack}
+{-io-load}
+{-io-unload}
+{-io-launch}
+
+{=RELATED}
+{n}{\tape\item-nomad}

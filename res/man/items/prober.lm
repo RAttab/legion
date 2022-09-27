@@ -1,0 +1,22 @@
+{@ITEMS/prober}
+{!item-prober}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-prober}
+
+{>id} {$!item-prober}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-probe}
+{-io-value}
+
+{=RELATED}
+{n}{\tape\item-prober}

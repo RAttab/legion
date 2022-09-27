@@ -328,8 +328,10 @@ static const vm_word im_brain_io_list[] =
 
     IO_ID,
     IO_LOG,
+    IO_TICK,
     IO_COORD,
     IO_NAME,
+    IO_SPECS,
 
     IO_SEND,
     IO_RECV,

@@ -258,10 +258,10 @@ static const vm_word im_collider_io_list[] =
 {
     IO_PING,
     IO_STATE,
+    IO_RESET,
 
     IO_GROW,
     IO_TAPE,
-    IO_RESET,
 };
 
 

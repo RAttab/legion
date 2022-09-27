@@ -23,6 +23,7 @@ struct ui_item
 
     struct ui_panel panel;
     struct ui_button io;
+    struct ui_button help;
     struct ui_label id_lbl;
     struct ui_link id_val;
 
@@ -43,6 +44,7 @@ struct ui_item *ui_item_new(void)
     *ui = (struct ui_item) {
         .panel = ui_panel_title(pos, dim, ui_str_c("item")),
         .io = ui_button_new(font, ui_str_c("<< io")),
+        .help = ui_button_new(font, ui_str_c("?")),
         .id_lbl = ui_label_new(font, ui_str_c("id: ")),
         .id_val = ui_link_new(font, ui_str_v(im_id_str_len)),
     };
@@ -62,6 +64,7 @@ void ui_item_free(struct ui_item *ui)
 {
     ui_panel_free(&ui->panel);
     ui_button_free(&ui->io);
+    ui_button_free(&ui->help);
     ui_label_free(&ui->id_lbl);
     ui_link_free(&ui->id_val);
 
@@ -158,6 +161,21 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     }
 }
 
+void ui_item_event_help(struct ui_item *ui)
+{
+    char path[man_path_max] = {0};
+    size_t len = snprintf(path, sizeof(path),
+            "/items/%s", item_str_c(im_id_item(ui->id)));
+
+    struct link link = man_link(path, len);
+    if (link_is_nil(link)) {
+        render_log(st_error, "unable to open link to '%s'", path);
+        return;
+    }
+
+    render_push_event(EV_MAN_GOTO, link_to_u64(link), 0);
+}
+
 bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 {
     if (ev->type == render.event && ui_item_event_user(ui, ev)) return true;
@@ -173,6 +191,11 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->io, ev))) {
         render_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->help, ev))) {
+        ui_item_event_help(ui);
         return true;
     }
 
@@ -195,6 +218,10 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     if (ui->loading) return;
 
     struct font *font = ui_item_font();
+
+    ui_layout_dir(&layout, ui_layout_left);
+    ui_button_render(&ui->help, &layout, renderer);
+    ui_layout_dir(&layout, ui_layout_right);
 
     ui_button_render(&ui->io, &layout, renderer);
     ui_layout_next_row(&layout);

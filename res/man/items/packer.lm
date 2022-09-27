@@ -1,0 +1,22 @@
+{@ITEMS/packer}
+{!item-packer}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-packer}
+
+{>id} {$!item-packer}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-id}
+{-io-item}
+
+{=RELATED}
+{n}{\tape\item-packer}

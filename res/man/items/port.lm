@@ -1,0 +1,24 @@
+{@ITEMS/port}
+{!item-port}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-port}
+
+{>id} {$!item-port}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-item}
+{-io-target}
+{-io-input}
+{-io-activate}
+
+{=RELATED}
+{n}{\tape\item-port}

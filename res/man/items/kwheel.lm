@@ -1,0 +1,15 @@
+{@ITEMS/kwheel}
+{!item-kwheel}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-kwheel}
+
+{>id} {$!item-kwheel}
+
+{<}
+
+{=RELATED}
+{n}{\tape\item-kwheel}

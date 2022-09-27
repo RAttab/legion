@@ -35,6 +35,7 @@ struct ui_io_cmd
     bool active;
 
     struct ui_label name;
+    struct ui_button help;
     size_t args;
     struct ui_io_arg arg[4];
     struct ui_button exec;
@@ -47,6 +48,7 @@ static struct ui_io_cmd ui_io_cmd(
         .id = id,
         .active = false,
         .name = ui_label_new(font, ui_str_v(symbol_cap)),
+        .help = ui_button_new_pad(font, ui_str_c("?"), make_dim(6, 0)),
         .exec = ui_button_new(font, ui_str_c("exec >>")),
         .args = args,
     };
@@ -214,6 +216,7 @@ void ui_io_free(struct ui_io *ui)
     for (size_t i = 0; i < ui_io_max; ++i) {
         struct ui_io_cmd *cmd = &ui->io[i];
         ui_label_free(&cmd->name);
+        ui_button_free(&cmd->help);
         ui_button_free(&cmd->exec);
         for (size_t j = 0; j < cmd->args; ++j) {
             ui_label_free(&cmd->arg[j].name);
@@ -300,6 +303,27 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     }
 }
 
+static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
+{
+    struct symbol io = {0};
+    bool ok = atoms_str(proxy_atoms(render.proxy), cmd->id, &io);
+    assert(ok);
+
+    char path[man_path_max] = {0};
+    size_t len = snprintf(path, sizeof(path),
+            "/items/%s/io/%.*s",
+            item_str_c(im_id_item(ui->id)),
+            (unsigned) io.len, io.c);
+
+    struct link link = man_link(path, len);
+    if (link_is_nil(link)) {
+        render_log(st_error, "unable to open link to '%s'", path);
+        return;
+    }
+
+    render_push_event(EV_MAN_GOTO, link_to_u64(link), 0);
+}
+
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
     struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
@@ -362,6 +386,11 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
             return true;
         }
 
+        if ((ret = ui_button_event(&cmd->help, ev))) {
+            ui_io_help(ui, cmd);
+            return true;
+        }
+
         if ((ret = ui_button_event(&cmd->exec, ev))) {
             ui_io_exec(ui, cmd);
             return true;
@@ -387,6 +416,10 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
     for (size_t i = 0; i < ui_io_max; ++i) {
         struct ui_io_cmd *cmd = &ui->io[i];
         if (!cmd->active) continue;
+
+        ui_layout_dir(&layout, ui_layout_left);
+        ui_button_render(&cmd->help, &layout, renderer);
+        ui_layout_dir(&layout, ui_layout_right);
 
         ui_label_render(&cmd->name, &layout, renderer);
         ui_layout_next_row(&layout);

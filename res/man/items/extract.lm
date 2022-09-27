@@ -1,0 +1,21 @@
+{@ITEMS/extract}
+{!item-extract}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-extract}
+
+{>id} {$!item-extract}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-tape}
+
+{=RELATED}
+{n}{\tape\item-extract}

@@ -1,0 +1,22 @@
+{@ITEMS/scanner}
+{!item-scanner}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-scanner}
+
+{>id} {$!item-scanner}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-scan}
+{-io-value}
+
+{=RELATED}
+{n}{\tape\item-scanner}

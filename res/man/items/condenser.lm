@@ -1,0 +1,21 @@
+{@ITEMS/condenser}
+{!item-condenser}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-condenser}
+
+{>id} {$!item-condenser}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-tape}
+
+{=RELATED}
+{n}{\tape\item-condenser}

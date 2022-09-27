@@ -1,0 +1,21 @@
+{@ITEMS/storage}
+{!item-storage}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-storage}
+
+{>id} {$!item-storage}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-item}
+
+{=RELATED}
+{n}{\tape\item-storage}

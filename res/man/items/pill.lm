@@ -1,0 +1,15 @@
+{@ITEMS/pill}
+{!item-pill}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-pill}
+
+{>id} {$!item-pill}
+
+{<}
+
+{=RELATED}
+{n}{\tape\item-pill}

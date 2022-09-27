@@ -64,6 +64,11 @@ static void im_memory_io_state(
     chunk_io(chunk, IO_RETURN, memory->id, src, &value, 1);
 }
 
+static void im_memory_io_reset(struct im_memory *memory)
+{
+    memset(memory->data, 0, memory->len * sizeof(memory->data[0]));
+}
+
 static void im_memory_io_get(
         struct im_memory *memory, struct chunk *chunk,
         im_id src,
@@ -142,6 +147,7 @@ static void im_memory_io(
     {
     case IO_PING: { chunk_io(chunk, IO_PONG, memory->id, src, NULL, 0); return; }
     case IO_STATE: { im_memory_io_state(memory, chunk, src, args, len); return; }
+    case IO_RESET: { im_memory_io_reset(memory); return; }
 
     case IO_GET: { im_memory_io_get(memory, chunk, src, args, len); return; }
     case IO_SET: { im_memory_io_set(memory, chunk, args, len); return; }

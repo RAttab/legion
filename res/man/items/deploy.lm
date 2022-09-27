@@ -1,0 +1,21 @@
+{@ITEMS/deploy}
+{!item-deploy}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-deploy}
+
+{>id} {$!item-deploy}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-item}
+
+{=RELATED}
+{n}{\tape\item-deploy}

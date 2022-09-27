@@ -1,0 +1,22 @@
+{@ITEMS/collider}
+{!item-collider}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-collider}
+
+{>id} {$!item-collider}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-grow}
+{-io-tape}
+
+{=RELATED}
+{n}{\tape\item-collider}

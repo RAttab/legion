@@ -291,6 +291,7 @@ struct ui_button
 };
 
 struct ui_button ui_button_new(struct font *, struct ui_str);
+struct ui_button ui_button_new_pad(struct font *, struct ui_str, struct dim pad);
 void ui_button_free(struct ui_button *);
 enum ui_ret ui_button_event(struct ui_button *, const SDL_Event *);
 void ui_button_render(struct ui_button *, struct ui_layout *, SDL_Renderer *);

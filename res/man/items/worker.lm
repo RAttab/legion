@@ -1,0 +1,15 @@
+{@ITEMS/worker}
+{!item-worker}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-worker}
+
+{>id} {$!item-worker}
+
+{<}
+
+{=RELATED}
+{n}{\tape\item-worker}

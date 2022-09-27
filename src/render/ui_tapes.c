@@ -25,6 +25,7 @@ struct ui_tapes
     struct ui_tree tree;
 
     struct ui_label name;
+    struct ui_button help;
 
     struct ui_label lab;
     struct im_lab_bits lab_val;
@@ -62,6 +63,7 @@ struct ui_tapes *ui_tapes_new(void)
         .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), font, symbol_cap),
 
         .name = ui_label_new(font, ui_str_v(item_str_len)),
+        .help = ui_button_new_pad(font, ui_str_c("?"), make_dim(6, 0)),
 
         .lab = ui_label_new(font, ui_str_c("lab:  ")),
         .lab_val = im_lab_bits_new(font),
@@ -97,6 +99,7 @@ void ui_tapes_free(struct ui_tapes *ui) {
     ui_tree_free(&ui->tree);
 
     ui_label_free(&ui->name);
+    ui_button_free(&ui->help);
 
     ui_label_free(&ui->lab);
 
@@ -237,6 +240,30 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     }
 }
 
+static void ui_tapes_event_help(struct ui_tapes *ui)
+{
+    enum item item = ui->tree.selected;
+
+    char path[man_path_max] = {0};
+    size_t len = snprintf(path, sizeof(path),
+            "/items/%s", item_str_c(item));
+
+    struct link link = man_link(path, len);
+    if (link_is_nil(link)) {
+        render_log(st_error, "unable to open link to '%s'", path);
+        return;
+    }
+
+    render_push_event(EV_MAN_GOTO, link_to_u64(link), 0);
+}
+
+static bool ui_tapes_show_help(struct ui_tapes *ui)
+{
+    return
+        item_is_active(ui->tree.selected) ||
+        item_is_logistics(ui->tree.selected);
+}
+
 bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
 {
     if (ev->type == render.event && ui_tapes_event_user(ui, ev)) return true;
@@ -250,11 +277,20 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
     }
 
     if (ui_tapes_selected(ui)) {
-        if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
-        if ((ret = ui_link_event(&ui->host_val, ev))) {
-            enum item host = tape_host(tapes_get(ui->tree.selected));
-            render_push_event(EV_TAPE_SELECT, host, 0);
+        if ((ret = ui_button_event(&ui->help, ev))) {
+            ui_tapes_event_help(ui);
             return true;
+        }
+
+        if ((ret = ui_scroll_event(&ui->scroll, ev)))
+            return true;
+
+        if (ui_tapes_show_help(ui)) {
+            if ((ret = ui_link_event(&ui->host_val, ev))) {
+                enum item host = tape_host(tapes_get(ui->tree.selected));
+                render_push_event(EV_TAPE_SELECT, host, 0);
+                return true;
+            }
         }
     }
 
@@ -318,6 +354,12 @@ void ui_tapes_render(struct ui_tapes *ui, SDL_Renderer *renderer)
     struct font *font = ui_tapes_font();
     ui_layout_sep_x(&layout, font->glyph_w);
     struct ui_layout inner = ui_layout_inner(&layout);
+
+    if (ui_tapes_show_help(ui)) {
+        ui_layout_dir(&layout, ui_layout_left);
+        ui_button_render(&ui->help, &layout, renderer);
+        ui_layout_dir(&layout, ui_layout_right);
+    }
 
     ui_label_render(&ui->name, &inner, renderer);
     ui_layout_next_row(&inner);
