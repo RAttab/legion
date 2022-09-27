@@ -11,13 +11,20 @@
 // layout
 // -----------------------------------------------------------------------------
 
+void ui_layout_resize(struct ui_layout *ui, struct pos pos, struct dim dim)
+{
+    ui->base.pos = pos;
+    ui->base.dim = dim;
+    ui->row.pos = pos;
+    ui->row.dim = (struct dim) { .w = dim.w, .h = 0 };
+}
+
 struct ui_layout ui_layout_new(struct pos pos, struct dim dim)
 {
-    return (struct ui_layout) {
-        .base = { .pos = pos, .dim = dim },
-        .row = { .pos = pos, .dim = { .w = dim.w, .h = 0 } },
-        .dir = ui_layout_right,
-    };
+    struct ui_layout layout = { 0 };
+    ui_layout_resize(&layout, pos, dim);
+    layout.dir = ui_layout_right;
+    return layout;
 }
 
 void ui_layout_add(struct ui_layout *layout, struct ui_widget *widget)

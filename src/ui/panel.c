@@ -57,9 +57,9 @@ void ui_panel_free(struct ui_panel *panel)
 void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 {
     panel->w.dim = dim;
-    panel->layout.base.dim = make_dim(
-            dim.w - (ui_panel_margin.w * 2),
-            dim.h - (ui_panel_margin.h * 2));
+    ui_layout_resize(&panel->layout, panel->layout.base.pos, make_dim(
+                    dim.w - (ui_panel_margin.w * 2),
+                    dim.h - (ui_panel_margin.h * 2)));
 }
 
 void ui_panel_show(struct ui_panel *panel)
