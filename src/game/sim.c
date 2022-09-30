@@ -567,7 +567,7 @@ static void sim_cmd_mod_register(
                 cmd->data.mod_register.c);
     }
 
-    sim_log(pipe, st_error, "mod '%s' registered with id '%u.%u'",
+    sim_log(pipe, st_info, "mod '%s' registered with id '%u.%u'",
             cmd->data.mod_register.c,
             mod_major(id),
             mod_version(id));
