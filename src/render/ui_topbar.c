@@ -53,7 +53,7 @@ struct ui_topbar *ui_topbar_new(void)
         .mods = ui_button_new(font, ui_str_c("mods")),
         .log = ui_button_new(font, ui_str_c("log")),
 
-        .coord = ui_label_new(font, ui_str_v(topbar_coord_len)),
+        .coord = ui_label_new(ui_str_v(topbar_coord_len)),
 
         .man = ui_button_new(font, ui_str_c("?")),
         .close = ui_button_new(font, ui_str_c("x")),

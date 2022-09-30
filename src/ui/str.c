@@ -98,6 +98,11 @@ void ui_str_setf(struct ui_str *str, const char *fmt, ...)
     va_end(args);
 }
 
+void ui_str_set_nil(struct ui_str *str)
+{
+    ui_str_setc(str, "nil");
+}
+
 void ui_str_set_u64(struct ui_str *str, uint64_t val)
 {
     assert(str->cap);

@@ -18,16 +18,18 @@ struct ui_deploy
 
 static void *ui_deploy_alloc(struct font *font)
 {
+    (void) font;
+
     struct ui_deploy *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_deploy) {
-        .item = ui_label_new(font, ui_str_c("item:  ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .item = ui_label_new(ui_str_c("item:  ")),
+        .item_val = ui_label_new(ui_str_v(item_str_len)),
 
-        .loops = ui_label_new(font, ui_str_c("loops: ")),
-        .loops_val = ui_label_new(font, ui_str_v(4)),
+        .loops = ui_label_new(ui_str_c("loops: ")),
+        .loops_val = ui_loops_new(),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .state = ui_label_new(ui_str_c("state: ")),
+        .state_val = ui_waiting_new(),
     };
 
     return ui;
@@ -56,18 +58,16 @@ static void ui_deploy_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_deploy *deploy = chunk_get(chunk, id);
     assert(deploy);
 
-    if (deploy->item) {
-        ui_str_set_item(&ui->item_val.str, deploy->item);
-        ui_str_setc(&ui->state_val.str, deploy->waiting ? "waiting" : "working");
+    if (!deploy->item) {
+        ui_set_nil(&ui->item_val);
+        ui_waiting_idle(&ui->state_val);
     }
     else {
-        ui_str_setc(&ui->item_val.str, "nil");
-        ui_str_setc(&ui->state_val.str, "idle");
+        ui_str_set_item(ui_set(&ui->item_val), deploy->item);
+        ui_waiting_set(&ui->state_val, deploy->waiting);
     }
 
-    if (deploy->loops != im_loops_inf)
-        ui_str_set_u64(&ui->loops_val.str, deploy->loops);
-    else ui_str_setc(&ui->loops_val.str, "inf");
+    ui_loops_set(&ui->loops_val, deploy->loops);
 }
 
 static void ui_deploy_render(

@@ -37,7 +37,7 @@ struct ui_status *ui_status_new(void)
     struct ui_status *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_status) {
         .panel = ui_panel_menu(pos, dim),
-        .status = ui_label_new(font, ui_str_v(ui_status_cap)),
+        .status = ui_label_new(ui_str_v(ui_status_cap)),
     };
 
     return ui;
@@ -64,9 +64,9 @@ void ui_status_set(
 
     switch (type)
     {
-    case st_info: { ui->status.fg = rgba_white(); break; }
-    case st_warn: { ui->status.fg = rgba_yellow(); break; }
-    case st_error: { ui->status.fg = rgba_red(); break; }
+    case st_info: { ui->status.s.fg = ui_st.rgba.info; break; }
+    case st_warn: { ui->status.s.fg = ui_st.rgba.warn; break; }
+    case st_error: { ui->status.s.fg = ui_st.rgba.error; break; }
     default: { assert(false); }
     }
 
@@ -91,9 +91,9 @@ void ui_status_render(struct ui_status *ui, SDL_Renderer *renderer)
 
     if (delta > ui_status_duration) {
         delta -= ui_status_duration;
-        ui->status.fg.a = 0xFF - ((0xFF * delta) / ui_status_fade);
+        ui->status.s.fg.a = 0xFF - ((0xFF * delta) / ui_status_fade);
     }
-    else ui->status.fg.a = 0xFF;
+    else ui->status.s.fg.a = 0xFF;
 
     ui_label_render(&ui->status, &layout, renderer);
 }

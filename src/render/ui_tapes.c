@@ -62,33 +62,28 @@ struct ui_tapes *ui_tapes_new(void)
 
         .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), font, symbol_cap),
 
-        .name = ui_label_new(font, ui_str_v(item_str_len)),
+        .name = ui_label_new(ui_str_v(item_str_len)),
         .help = ui_button_new_pad(font, ui_str_c("?"), make_dim(6, 0)),
 
-        .lab = ui_label_new(font, ui_str_c("lab:  ")),
+        .lab = ui_label_new(ui_str_c("lab:  ")),
         .lab_val = im_lab_bits_new(font),
 
-        .energy = ui_label_new(font, ui_str_c("energy: ")),
-        .energy_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .energy = ui_label_new(ui_str_c("energy: ")),
+        .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .host = ui_label_new(font, ui_str_c("host: ")),
+        .host = ui_label_new(ui_str_c("host: ")),
         .host_val = ui_link_new(font, ui_str_v(item_str_len)),
 
-        .tape = ui_label_new(font, ui_str_c("tape: ")),
+        .tape = ui_label_new(ui_str_c("tape: ")),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .index = ui_label_new(font, ui_str_v(2)),
-        .in = ui_label_new(font, ui_str_v(item_str_len)),
-        .work = ui_label_new(font, ui_str_c("work")),
-        .out = ui_label_new(font, ui_str_v(item_str_len)),
-        .known = ui_label_new(font, ui_str_c("*")),
+        .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
+        .in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
+        .work = ui_label_new_s(&ui_st.label.work, ui_str_c("work")),
+        .out = ui_label_new_s(&ui_st.label.out, ui_str_v(item_str_len)),
+        .known = ui_label_new(ui_str_c("*")),
     };
 
     ui_panel_hide(&ui->panel);
-    ui->index.fg = rgba_gray(0x88);
-    ui->index.bg = rgba_gray_a(0x44, 0x88);
-    ui->in.fg = rgba_green();
-    ui->work.fg = rgba_yellow();
-    ui->out.fg = rgba_blue();
     return ui;
 }
 

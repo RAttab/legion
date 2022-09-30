@@ -45,7 +45,7 @@ struct ui_item *ui_item_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_c("item")),
         .io = ui_button_new(font, ui_str_c("<< io")),
         .help = ui_button_new(font, ui_str_c("?")),
-        .id_lbl = ui_label_new(font, ui_str_c("id: ")),
+        .id_lbl = ui_label_new(ui_str_c("id: ")),
         .id_val = ui_link_new(font, ui_str_v(im_id_str_len)),
     };
 

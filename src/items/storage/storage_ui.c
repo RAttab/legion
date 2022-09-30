@@ -19,17 +19,18 @@ struct ui_storage
 
 static void *ui_storage_alloc(struct font *font)
 {
+    (void) font;
     struct ui_storage *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_storage) {
-        .item = ui_label_new(font, ui_str_c("item:  ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .item = ui_label_new(ui_str_c("item:  ")),
+        .item_val = ui_label_new(ui_str_v(item_str_len)),
 
-        .count = ui_label_new(font, ui_str_c("count:  ")),
-        .count_val = ui_label_new(font, ui_str_v(4)),
+        .count = ui_label_new(ui_str_c("count:  ")),
+        .count_val = ui_label_new(ui_str_v(4)),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .state = ui_label_new(ui_str_c("state: ")),
+        .state_val = ui_waiting_new(),
     };
 
     return ui;
@@ -55,16 +56,19 @@ static void ui_storage_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_storage *ui = _ui;
 
-    const struct im_storage *state = chunk_get(chunk, id);
-    assert(state);
+    const struct im_storage *storage = chunk_get(chunk, id);
+    assert(storage);
 
-    if (state->item)
-        ui_str_set_item(&ui->item_val.str, state->item);
-    else ui_str_setc(&ui->item_val.str, "nil");
+    if (!storage->item) {
+        ui_set_nil(&ui->item_val);
+        ui_waiting_idle(&ui->state_val);
+        ui_set_nil(&ui->count_val);
+        return;
+    }
 
-    ui_str_set_u64(&ui->count_val.str, state->count);
-
-    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
+    ui_str_set_item(ui_set(&ui->item_val), storage->item);
+    ui_str_set_u64(&ui->count_val.str, storage->count);
+    ui_waiting_set(&ui->state_val, storage->waiting);
 }
 
 static void ui_storage_render(

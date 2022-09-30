@@ -30,18 +30,15 @@ static void *ui_memory_alloc(struct font *font)
     *ui = (struct ui_memory) {
         .font = font,
 
-        .size = ui_label_new(font, ui_str_c("size: ")),
-        .size_val = ui_label_new(font, ui_str_v(2)),
+        .size = ui_label_new(ui_str_c("size: ")),
+        .size_val = ui_label_new(ui_str_v(2)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .data_index = ui_label_new(font, ui_str_v(2)),
-        .data_val = ui_label_new(font, ui_str_v(16)),
+        .data_index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
+        .data_val = ui_label_new(ui_str_v(16)),
 
         .state_len = sizeof(ui->state) + data_len,
     };
-
-    ui->data_index.fg = rgba_gray(0x88);
-    ui->data_index.bg = rgba_gray_a(0x44, 0x88);
 
     return ui;
 }

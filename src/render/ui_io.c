@@ -24,7 +24,7 @@ struct ui_io_arg
 static struct ui_io_arg ui_io_arg(struct font *font, const char *arg)
 {
     return (struct ui_io_arg) {
-        .name = ui_label_new(font, ui_str_c(arg)),
+        .name = ui_label_new(ui_str_c(arg)),
         .val = ui_input_new(font, 20),
     };
 }
@@ -47,7 +47,7 @@ static struct ui_io_cmd ui_io_cmd(
     struct ui_io_cmd cmd = {
         .id = id,
         .active = false,
-        .name = ui_label_new(font, ui_str_v(symbol_cap)),
+        .name = ui_label_new_s(&ui_st.label.title, ui_str_v(symbol_cap)),
         .help = ui_button_new_pad(font, ui_str_c("?"), make_dim(6, 0)),
         .exec = ui_button_new(font, ui_str_c("exec >>")),
         .args = args,
@@ -59,7 +59,6 @@ static struct ui_io_cmd ui_io_cmd(
 
     ui_str_set_symbol(&cmd.name.str, &str);
     cmd.name.w.dim.w = ui_layout_inf;
-    cmd.name.bg = rgba_gray_a(0x44, 0x44);
 
     return cmd;
 }
@@ -174,8 +173,8 @@ struct ui_io *ui_io_new(void)
     struct ui_io *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_io) {
         .panel = ui_panel_title(pos, dim, ui_str_c("io")),
-        .target = ui_label_new(font, ui_str_c("target: ")),
-        .target_val = ui_label_new(font, ui_str_v(im_id_str_len)),
+        .target = ui_label_new(ui_str_c("target: ")),
+        .target_val = ui_label_new(ui_str_v(im_id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
             [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:  ", "loops: "),

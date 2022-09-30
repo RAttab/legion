@@ -29,22 +29,19 @@ static void *ui_receive_alloc(struct font *font)
     *ui = (struct ui_receive) {
         .font = font,
 
-        .target = ui_label_new(font, ui_str_c("target: ")),
-        .target_val = ui_label_new(font, ui_str_v(symbol_cap)),
-        .channel = ui_label_new(font, ui_str_c("channel: ")),
-        .channel_val = ui_label_new(font, ui_str_v(1)),
+        .target = ui_label_new(ui_str_c("target: ")),
+        .target_val = ui_label_new(ui_str_v(symbol_cap)),
+        .channel = ui_label_new(ui_str_c("channel: ")),
+        .channel_val = ui_label_new(ui_str_v(1)),
 
-        .buffer = ui_label_new(font, ui_str_c("buffer: ")),
-        .buffer_sep = ui_label_new(font, ui_str_c(" of ")),
-        .buffer_len = ui_label_new(font, ui_str_v(1)),
-        .buffer_cap = ui_label_new(font, ui_str_v(1)),
+        .buffer = ui_label_new(ui_str_c("buffer: ")),
+        .buffer_sep = ui_label_new(ui_str_c(" of ")),
+        .buffer_len = ui_label_new(ui_str_v(1)),
+        .buffer_cap = ui_label_new(ui_str_v(1)),
 
-        .packet = ui_label_new(font, ui_str_v(1)),
-        .packet_data = ui_label_new(font, ui_str_v(16)),
+        .packet = ui_label_new_s(&ui_st.label.index, ui_str_v(1)),
+        .packet_data = ui_label_new(ui_str_v(16)),
     };
-
-    ui->packet.fg = rgba_gray(0x88);
-    ui->packet.bg = rgba_gray_a(0x44, 0x88);
 
     return ui;
 }
@@ -76,7 +73,9 @@ static void ui_receive_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_receive *receive = chunk_get(chunk, id);
     assert(receive);
 
-    ui_str_set_coord_name(&ui->target_val.str, receive->target);
+    if (coord_is_nil(receive->target)) ui_set_nil(&ui->target_val);
+    else ui_str_set_coord_name(ui_set(&ui->target_val), receive->target);
+
     ui_str_set_u64(&ui->channel_val.str, receive->channel);
 
     ui->cap = im_receive_cap(receive);

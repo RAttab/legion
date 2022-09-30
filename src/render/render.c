@@ -108,6 +108,7 @@ static void cursor_update(void)
 
 static void ui_init(void)
 {
+    ui_style_default();
     ui_clipboard_init(&render.ui.board);
 
     render.ui.map = map_new();

@@ -29,11 +29,11 @@ static void *ui_extract_alloc(struct font *font)
     *ui = (struct ui_extract) {
         .font = font,
 
-        .loops = ui_label_new(font, ui_str_c("loops: ")),
-        .loops_val = ui_label_new(font, ui_str_v(4)),
+        .loops = ui_label_new(ui_str_c("loops: ")),
+        .loops_val = ui_loops_new(),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .state = ui_label_new(ui_str_c("state: ")),
+        .state_val = ui_waiting_new(),
     };
 
     ui_tape_init(&ui->tape, font);
@@ -62,11 +62,11 @@ static void ui_extract_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_extract *state = chunk_get(chunk, id);
     assert(state);
 
-    if (state->loops != im_loops_inf)
-        ui_str_set_u64(&ui->loops_val.str, state->loops);
-    else ui_str_setc(&ui->loops_val.str, "inf");
+    ui_loops_set(&ui->loops_val, state->loops);
 
-    ui_str_setc(&ui->state_val.str, state->waiting ? "waiting" : "working");
+    if (!state->tape)
+        ui_waiting_idle(&ui->state_val);
+    else ui_waiting_set(&ui->state_val, state->waiting);
 
     ui->tape_state = state->tape;
     ui_tape_update(&ui->tape, state->tape);

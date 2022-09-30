@@ -53,54 +53,51 @@ static void *ui_brain_alloc(struct font *font)
     *ui = (struct ui_brain) {
         .font = font,
 
-        .mod = ui_label_new(font, ui_str_c("mod: ")),
+        .mod = ui_label_new(ui_str_c("mod: ")),
         .mod_val = ui_link_new(font, ui_str_v(symbol_cap)),
-        .mod_ver = ui_label_new(font, ui_str_c("ver: ")),
-        .mod_ver_val = ui_label_new(font, ui_str_v(u16_len)),
-        .mod_fault = ui_label_new(font, ui_str_c("fault: ")),
-        .mod_fault_val = ui_label_new(font, ui_str_v(8)),
+        .mod_ver = ui_label_new(ui_str_c("ver: ")),
+        .mod_ver_val = ui_label_new(ui_str_v(u16_len)),
+        .mod_fault = ui_label_new(ui_str_c("fault: ")),
+        .mod_fault_val = ui_label_new_s(&ui_st.label.error, ui_str_v(8)),
 
-        .debug = ui_label_new(font, ui_str_c("debug: ")),
-        .debug_val = ui_label_new(font, ui_str_v(8)),
-        .breakpoint = ui_label_new(font, ui_str_c("break: ")),
+        .debug = ui_label_new(ui_str_c("debug: ")),
+        .debug_val = ui_label_new_s(&ui_st.label.active, ui_str_v(8)),
+        .breakpoint = ui_label_new(ui_str_c("break: ")),
         .breakpoint_val = ui_link_new(font, ui_str_v(8)),
 
-        .msg = ui_label_new(font, ui_str_c("msg: ")),
-        .msg_len = ui_label_new(font, ui_str_v(3)),
-        .msg_index = ui_label_new(font, ui_str_v(u8_len)),
-        .msg_val = ui_label_new(font, ui_str_v(u64_len)),
+        .msg = ui_label_new(ui_str_c("msg: ")),
+        .msg_len = ui_label_new(ui_str_v(3)),
+        .msg_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
+        .msg_val = ui_label_new(ui_str_v(u64_len)),
 
-        .spec = ui_label_new(font, ui_str_c("stack: ")),
-        .spec_stack = ui_label_new(font, ui_str_v(u8_len)),
-        .spec_speed = ui_label_new(font, ui_str_v(u8_len)),
-        .spec_sep = ui_label_new(font, ui_str_c("  speed: ")),
+        .spec = ui_label_new(ui_str_c("stack: ")),
+        .spec_stack = ui_label_new(ui_str_v(u8_len)),
+        .spec_speed = ui_label_new(ui_str_v(u8_len)),
+        .spec_sep = ui_label_new(ui_str_c("  speed: ")),
 
-        .io = ui_label_new(font, ui_str_c("io:   ")),
-        .io_val = ui_label_new(font, ui_str_v(u8_len)),
+        .io = ui_label_new(ui_str_c("io:   ")),
+        .io_val = ui_label_new(ui_str_v(u8_len)),
 
-        .tsc = ui_label_new(font, ui_str_c("tsc:  ")),
-        .tsc_val = ui_label_new(font, ui_str_v(u32_len)),
+        .tsc = ui_label_new(ui_str_c("tsc:  ")),
+        .tsc_val = ui_label_new(ui_str_v(u32_len)),
 
-        .ip = ui_label_new(font, ui_str_c("ip:   ")),
+        .ip = ui_label_new(ui_str_c("ip:   ")),
         .ip_val = ui_link_new(font, ui_str_v(u32_len)),
 
-        .flags = ui_label_new(font, ui_str_c("flag: ")),
-        .flags_val = ui_label_new(font, ui_str_c("XX ")),
+        .flags = ui_label_new(ui_str_c("flag: ")),
+        .flags_val = ui_label_new(ui_str_c("XX ")),
 
-        .regs = ui_label_new(font, ui_str_c("registers: ")),
-        .regs_index = ui_label_new(font, ui_str_v(u8_len)),
-        .regs_val = ui_label_new(font, ui_str_v(u64_len)),
+        .regs = ui_label_new(ui_str_c("registers: ")),
+        .regs_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
+        .regs_val = ui_label_new(ui_str_v(u64_len)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .stack = ui_label_new(font, ui_str_c("stack: ")),
-        .stack_index = ui_label_new(font, ui_str_v(u8_len)),
-        .stack_val = ui_label_new(font, ui_str_v(u64_len)),
+        .stack = ui_label_new(ui_str_c("stack: ")),
+        .stack_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
+        .stack_val = ui_label_new(ui_str_v(u64_len)),
 
         .state_len = sizeof(ui->state) + stack_len,
     };
-
-    ui->msg_index.fg = ui->regs_index.fg = ui->stack_index.fg = rgba_gray(0x88);
-    ui->msg_index.bg = ui->regs_index.bg = ui->stack_index.bg = rgba_gray_a(0x44, 0x88);
 
     return ui;
 }
@@ -167,49 +164,39 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     assert(ok);
 
     if (!state->mod_id) {
-        ui->mod_val.fg = rgba_gray(0x33);
+        ui->mod_val.fg = ui_st.rgba.disabled;
         ui_str_setc(&ui->mod_val.str, "nil");
 
-        ui->mod_ver_val.fg = rgba_gray(0x33);
-        ui_str_setc(&ui->mod_ver_val.str, "nil");
+        ui_set_nil(&ui->mod_ver_val);
     }
     else {
         struct symbol mod = {0};
         proxy_mod_name(render.proxy, mod_major(state->mod_id), &mod);
 
-        ui->mod_val.fg = rgba_white();
+        ui->mod_val.fg = ui_st.label.base.fg;
         ui_str_set_symbol(&ui->mod_val.str, &mod);
 
-        ui->mod_ver_val.fg = rgba_white();
-        ui_str_set_hex(&ui->mod_ver_val.str, mod_version(state->mod_id));
+        ui_str_set_hex(ui_set(&ui->mod_ver_val), mod_version(state->mod_id));
     }
 
-    if (state->fault) {
-        ui_str_setc(&ui->mod_fault_val.str, "true");
-        ui->mod_fault_val.fg = rgba_red();
-    }
-    else {
-        ui_str_setc(&ui->mod_fault_val.str, "nil");
-        ui->mod_fault_val.fg = rgba_gray(0x33);
-    }
+    if (state->fault) ui_str_setc(ui_set(&ui->mod_fault_val), "true");
+    else ui_set_nil(&ui->mod_fault_val);
 
     if (state->debug) {
-        ui_str_setc(&ui->debug_val.str, "attached");
-        ui->debug_val.fg = rgba_green();
-
+        ui_str_setc(ui_set(&ui->debug_val), "attached");
         if (state->mod_id && (!old_debug || old_ip != state->vm.ip))
             render_push_event(EV_MOD_SELECT, state->mod_id, state->vm.ip);
     }
     else {
         ui_str_setc(&ui->debug_val.str, "detached");
-        ui->debug_val.fg = rgba_gray(0x88);
+        ui->debug_val.disabled = true;
     }
 
     if (state->breakpoint == IP_NIL) ui_str_setc(&ui->breakpoint_val.str, "nil");
     else ui_str_set_hex(&ui->breakpoint_val.str, state->breakpoint);
 
-    if (!state->msg.len) ui_str_setc(&ui->msg_len.str, "nil");
-    else ui_str_set_u64(&ui->msg_len.str, state->msg.len);
+    if (!state->msg.len) ui_set_nil(&ui->msg_len);
+    else ui_str_set_u64(ui_set(&ui->msg_len), state->msg.len);
 
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
     ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
@@ -315,26 +302,26 @@ static void ui_brain_render(
     { // flags
         ui_label_render(&ui->flags, layout, renderer);
 
-        for (size_t i = 0; i < 8; ++i) {
+        for (size_t i = 1; i < 8; ++i) {
             enum flags flag = 1 << i;
             const char *str = NULL;
             struct rgba color = {0};
 
             switch (flag) {
-            case FLAG_IO:          { str = "IO "; color = rgba_blue(); break; }
-            case FLAG_SUSPENDED:   { str = "SU "; color = rgba_blue(); break; }
-            case FLAG_FAULT_USER:  { str = "FU "; color = rgba_red(); break; }
-            case FLAG_FAULT_REG:   { str = "FR "; color = rgba_red(); break; }
-            case FLAG_FAULT_STACK: { str = "FS "; color = rgba_red(); break; }
-            case FLAG_FAULT_CODE:  { str = "FC "; color = rgba_red(); break; }
-            case FLAG_FAULT_MATH:  { str = "FM "; color = rgba_red(); break; }
-            case FLAG_FAULT_IO:    { str = "FI "; color = rgba_red(); break; }
+            case FLAG_SUSPENDED:   { str = "SU "; color = ui_st.rgba.warn; break; }
+            case FLAG_FAULT_USER:  { str = "FU "; color = ui_st.rgba.error; break; }
+            case FLAG_FAULT_REG:   { str = "FR "; color = ui_st.rgba.error; break; }
+            case FLAG_FAULT_STACK: { str = "FS "; color = ui_st.rgba.error; break; }
+            case FLAG_FAULT_CODE:  { str = "FC "; color = ui_st.rgba.error; break; }
+            case FLAG_FAULT_MATH:  { str = "FM "; color = ui_st.rgba.error; break; }
+            case FLAG_FAULT_IO:    { str = "FI "; color = ui_st.rgba.error; break; }
+            case FLAG_IO: // can never show up.
             default:               { str = "   "; break; }
             }
 
-            if (!(state->vm.flags & flag)) color = rgba_gray(0x33);
+            if (!(state->vm.flags & flag)) color = ui_st.rgba.disabled;
 
-            ui->flags_val.fg = color;
+            ui->flags_val.s.fg = color;
             ui_str_setc(&ui->flags_val.str, str);
             ui_label_render(&ui->flags_val, layout, renderer);
         }

@@ -40,7 +40,7 @@ struct ui_panel ui_panel_title(struct pos pos, struct dim dim, struct ui_str str
     struct ui_panel panel = ui_panel_new(pos, dim);
 
     struct font *font = font_mono6;
-    panel.title = ui_label_new(font, str);
+    panel.title = ui_label_new(str);
     panel.close = ui_button_new(font, ui_str_c("X"));
 
     return panel;
@@ -163,7 +163,8 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
     struct ui_layout layout = panel->layout;
 
     if (!panel->menu) {
-        panel->title.fg = panel->state == ui_panel_focused ? rgba_white() : rgba_gray(0xAA);
+        panel->title.s.fg = panel->state == ui_panel_focused ?
+            ui_st.label.base.fg : rgba_gray(0xAA);
         ui_label_render(&panel->title, &layout, renderer);
 
         ui_layout_dir(&layout, ui_layout_left);

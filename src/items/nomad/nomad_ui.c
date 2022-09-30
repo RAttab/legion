@@ -20,9 +20,10 @@ struct ui_nomad
     struct font *font;
 
     struct ui_label op, op_val;
+    struct ui_values op_values;
     struct ui_label item, item_val;
     struct ui_label loops, loops_val;
-    struct ui_label waiting, waiting_val;
+    struct ui_label waiting, waiting_val, waiting_values;
 
     struct ui_label mod, mod_val;
 
@@ -32,39 +33,40 @@ struct ui_nomad
 
 static void *ui_nomad_alloc(struct font *font)
 {
+    const struct ui_value ops[] = {
+        { im_nomad_pack, "pack", ui_st.rgba.in },
+        { im_nomad_load, "load", ui_st.rgba.in },
+        { im_nomad_unload, "unload", ui_st.rgba.out },
+    };
+
     struct ui_nomad *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_nomad) {
         .font = font,
 
-        .op = ui_label_new(font, ui_str_c("op:    ")),
-        .op_val = ui_label_new(font, ui_str_v(8)),
+        .op = ui_label_new(ui_str_c("op:    ")),
+        .op_val = ui_label_new(ui_str_v(8)),
+        .op_values = ui_values_new(ops, array_len(ops)),
 
-        .item = ui_label_new(font, ui_str_c("item:  ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .item = ui_label_new(ui_str_c("item:  ")),
+        .item_val = ui_label_new(ui_str_v(item_str_len)),
 
-        .loops = ui_label_new(font, ui_str_c("loops: ")),
-        .loops_val = ui_label_new(font, ui_str_v(4)),
+        .loops = ui_label_new(ui_str_c("loops: ")),
+        .loops_val = ui_loops_new(),
 
-        .waiting = ui_label_new(font, ui_str_c("state: ")),
-        .waiting_val = ui_label_new(font, ui_str_v(8)),
+        .waiting = ui_label_new(ui_str_c("state: ")),
+        .waiting_val = ui_waiting_new(),
 
-        .mod = ui_label_new(font, ui_str_c("mod: ")),
-        .mod_val = ui_label_new(font, ui_str_v(symbol_cap)),
+        .mod = ui_label_new(ui_str_c("mod: ")),
+        .mod_val = ui_label_new(ui_str_v(symbol_cap)),
 
-        .memory = ui_label_new(font, ui_str_c("memory: ")),
-        .memory_index = ui_label_new(font, ui_str_v(2)),
-        .memory_val = ui_label_new(font, ui_str_v(16)),
+        .memory = ui_label_new(ui_str_c("memory: ")),
+        .memory_index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
+        .memory_val = ui_label_new(ui_str_v(16)),
 
-        .cargo = ui_label_new(font, ui_str_c("cargo: ")),
-        .cargo_count = ui_label_new(font, ui_str_v(3)),
-        .cargo_item = ui_label_new(font, ui_str_v(item_str_len)),
+        .cargo = ui_label_new(ui_str_c("cargo: ")),
+        .cargo_count = ui_label_new_s(&ui_st.label.index, ui_str_v(3)),
+        .cargo_item = ui_label_new(ui_str_v(item_str_len)),
     };
-
-    ui->memory_index.fg = rgba_gray(0x88);
-    ui->memory_index.bg = rgba_gray_a(0x44, 0x88);
-
-    ui->cargo_count.fg = rgba_gray(0x88);
-    ui->cargo_count.bg = rgba_gray_a(0x44, 0x88);
 
     return ui;
 }
@@ -75,6 +77,7 @@ static void ui_nomad_free(void *_ui)
 
     ui_label_free(&ui->op);
     ui_label_free(&ui->op_val);
+    ui_values_free(&ui->op_values);
 
     ui_label_free(&ui->item);
     ui_label_free(&ui->item_val);
@@ -84,6 +87,7 @@ static void ui_nomad_free(void *_ui)
 
     ui_label_free(&ui->waiting);
     ui_label_free(&ui->waiting_val);
+    ui_label_free(&ui->waiting_values);
 
     ui_label_free(&ui->mod);
     ui_label_free(&ui->mod_val);
@@ -106,37 +110,32 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_nomad *nomad = chunk_get(chunk, id);
     assert(nomad);
 
+    ui_values_set(&ui->op_values, &ui->op_val, nomad->op);
+
     switch (nomad->op) {
-    case im_nomad_nil: { ui_str_setc(&ui->op_val.str, "nil"); break; }
-    case im_nomad_pack: { ui_str_setc(&ui->op_val.str, "pack"); break; }
-    case im_nomad_load: { ui_str_setc(&ui->op_val.str, "load"); break; }
-    case im_nomad_unload: { ui_str_setc(&ui->op_val.str, "unload"); break; }
+    case im_nomad_nil: { break; }
+    case im_nomad_pack: { break; }
+    case im_nomad_load: { ui->item_val.s.fg = ui_st.rgba.in; break; }
+    case im_nomad_unload: { ui->item_val.s.fg = ui_st.rgba.out; break; }
     default: { assert(false); }
     }
 
-    ui->item_val.fg = rgba_white();
-
     if (nomad->item) {
-        ui_str_set_item(&ui->item_val.str, nomad->item);
-        ui_str_setc(&ui->waiting_val.str, nomad->waiting ? "waiting" : "working");
-
-        if (nomad->op == im_nomad_load) ui->item_val.fg = rgba_green();
-        if (nomad->op == im_nomad_unload) ui->item_val.fg = rgba_blue();
+        ui_str_set_item(ui_set(&ui->item_val), nomad->item);
+        ui_waiting_set(&ui->waiting_val, nomad->waiting);
     }
     else {
-        ui_str_setc(&ui->item_val.str, "nil");
-        ui_str_setc(&ui->waiting_val.str, "idle");
+        ui_set_nil(&ui->item_val);
+        ui_waiting_idle(&ui->waiting_val);
     }
 
-    if (nomad->loops != im_loops_inf)
-        ui_str_set_u64(&ui->loops_val.str, nomad->loops);
-    else ui_str_setc(&ui->loops_val.str, "inf");
+    ui_loops_set(&ui->loops_val, nomad->loops);
 
-    if (!nomad->mod) ui_str_setc(&ui->mod_val.str, "nil");
+    if (!nomad->mod) ui_set_nil(&ui->mod_val);
     else {
         struct symbol mod = {0};
         proxy_mod_name(render.proxy, mod_major(nomad->mod), &mod);
-        ui_str_set_symbol(&ui->mod_val.str, &mod);
+        ui_str_set_symbol(ui_set(&ui->mod_val), &mod);
     }
 
     memcpy(ui->state.memory, nomad->memory, sizeof(nomad->memory));

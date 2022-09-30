@@ -16,6 +16,7 @@ struct ui_port
     struct font *font;
 
     struct ui_label status, status_val;
+    struct ui_values status_values;
 
     struct {
         struct ui_label head;
@@ -40,42 +41,48 @@ struct ui_port
 
 static void *ui_port_alloc(struct font *font)
 {
-    struct ui_port *ui = calloc(1, sizeof(*ui));
+    const struct ui_value status[] = {
+        { im_port_idle, "disabled", ui_st.rgba.disabled },
+        { im_port_docking, "docking", ui_st.rgba.work },
+        { im_port_docked, "docked", ui_st.rgba.fg },
+        { im_port_unloading, "unloading", ui_st.rgba.out },
+    };
 
+    struct ui_port *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_port) {
         .font = font,
 
-        .status = ui_label_new(font, ui_str_c("status: ")),
-        .status_val = ui_label_new(font, ui_str_v(10)),
+        .status = ui_label_new(ui_str_c("status: ")),
+        .status_val = ui_label_new(ui_str_v(10)),
+        .status_values = ui_values_new(status, array_len(status)),
 
         .input = {
-            .head = ui_label_new(font, ui_str_c("input:")),
-            .item = ui_label_new(font, ui_str_v(item_str_len)),
-            .coord = ui_label_new(font, ui_str_c("  coord:  ")),
-            .coord_val = ui_label_new(font, ui_str_v(symbol_cap)),
+            .head = ui_label_new(ui_str_c("input:")),
+            .item = ui_label_new_s(&ui_st.label.work, ui_str_v(item_str_len)),
+            .coord = ui_label_new(ui_str_c("  coord:  ")),
+            .coord_val = ui_label_new(ui_str_v(symbol_cap)),
         },
 
         .want = {
-            .head = ui_label_new(font, ui_str_c("want:")),
-            .item = ui_label_new(font, ui_str_v(item_str_len)),
-            .count = ui_label_new(font, ui_str_v(3)),
-            .target = ui_label_new(font, ui_str_c("  target: ")),
-            .target_val = ui_label_new(font, ui_str_v(symbol_cap)),
+            .head = ui_label_new(ui_str_c("want:")),
+            .item = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
+            .count = ui_label_new(ui_str_v(3)),
+            .target = ui_label_new(ui_str_c("  target: ")),
+            .target_val = ui_label_new(ui_str_v(symbol_cap)),
         },
 
         .has = {
-            .head = ui_label_new(font, ui_str_c("has:")),
-            .item = ui_label_new(font, ui_str_v(item_str_len)),
-            .count = ui_label_new(font, ui_str_v(3)),
-            .origin = ui_label_new(font, ui_str_c("  origin: ")),
-            .origin_val = ui_label_new(font, ui_str_v(symbol_cap)),
+            .head = ui_label_new(ui_str_c("has:")),
+            .item = ui_label_new_s(&ui_st.label.out, ui_str_v(item_str_len)),
+            .count = ui_label_new(ui_str_v(3)),
+            .origin = ui_label_new(ui_str_c("  origin: ")),
+            .origin_val = ui_label_new(ui_str_v(symbol_cap)),
         },
 
-        .item = ui_label_new(font, ui_str_c("  item:   ")),
-        .count = ui_label_new(font, ui_str_c("  count:  ")),
+        .item = ui_label_new(ui_str_c("  item:   ")),
+        .count = ui_label_new(ui_str_c("  count:  ")),
     };
 
-    ui->input.item.fg = rgba_yellow();
     return ui;
 }
 
@@ -85,6 +92,7 @@ static void ui_port_free(void *_ui)
 
     ui_label_free(&ui->status);
     ui_label_free(&ui->status_val);
+    ui_values_free(&ui->status_values);
 
     ui_label_free(&ui->input.head);
     ui_label_free(&ui->input.item);
@@ -116,41 +124,36 @@ static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_port *port = chunk_get(chunk, id);
     assert(port);
 
-    ui->input.item.fg = rgba_white();
-    ui->want.item.fg = rgba_white();
-    ui->has.item.fg = rgba_white();
+    ui_values_set(&ui->status_values, &ui->status_val, port->state);
 
-    const char *status = "nil";
-    switch (port->state) {
-    case im_port_idle:    { status = "disabled"; break; }
-    case im_port_docking: { status = "docking"; break; }
-    case im_port_docked:  { status = "docked"; break; }
-    case im_port_loading: {
-        ui->want.item.fg = rgba_green();
-        status = "loading";
-        break;
-    }
-    case im_port_unloading: {
-        ui->has.item.fg = rgba_blue();
-        status = "unloading";
-        break;
-    }
-    default: { assert(false); }
-    }
-    ui_str_setc(&ui->status_val.str, status);
+    if (!port->input.item) ui_set_nil(&ui->input.item);
+    else ui_str_set_item(ui_set(&ui->input.item), port->input.item);
 
-    ui_str_set_item(&ui->input.item.str, port->input.item);
-    if (port->input.item) ui->input.item.fg = rgba_yellow();
-    ui_str_set_coord_name(&ui->input.coord_val.str, port->input.coord);
+    if (coord_is_nil(port->input.coord)) ui_set_nil(&ui->input.coord_val);
+    else ui_str_set_coord_name(ui_set(&ui->input.coord_val), port->input.coord);
 
-    ui_str_set_item(&ui->want.item.str, port->want.item);
-    ui_str_set_u64(&ui->want.count.str, port->want.count);
+    if (!port->want.item) {
+        ui_set_nil(&ui->want.item);
+        ui_set_nil(&ui->want.count);
+    }
+    else {
+        ui_str_set_item(ui_set(&ui->want.item), port->want.item);
+        ui_str_set_u64(ui_set(&ui->want.count), port->want.count);
+    }
+
     if (coord_is_nil(port->target))
         ui_str_setc(&ui->want.target_val.str, "origin");
     else ui_str_set_coord_name(&ui->want.target_val.str, port->target);
 
-    ui_str_set_item(&ui->has.item.str, port->has.item);
-    ui_str_set_u64(&ui->has.count.str, port->has.count);
+    if (!port->has.item) {
+        ui_set_nil(&ui->has.item);
+        ui_set_nil(&ui->has.count);
+    }
+    else {
+        ui_str_set_item(ui_set(&ui->has.item), port->has.item);
+        ui_str_set_u64(ui_set(&ui->has.count), port->has.count);
+    }
+
     ui_str_set_coord_name(&ui->has.origin_val.str, port->origin);
 }
 

@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "items/item.h"
+#include "items/types.h"
 #include "game/id.h"
 #include "game/coord.h"
 #include "game/man.h"
@@ -129,6 +130,7 @@ struct ui_layout ui_layout_inner(struct ui_layout *);
 void ui_layout_next_row(struct ui_layout *);
 void ui_layout_sep_x(struct ui_layout *, int16_t px);
 void ui_layout_sep_y(struct ui_layout *, int16_t px);
+void ui_layout_sep_row(struct ui_layout *);
 void ui_layout_mid(struct ui_layout *, int width);
 void ui_layout_dir(struct ui_layout *, enum ui_layout_dir);
 
@@ -182,6 +184,7 @@ void ui_str_setc(struct ui_str *, const char *str);
 void ui_str_setv(struct ui_str *, const char *str, size_t len);
 void ui_str_setvf(struct ui_str *, const char *fmt, va_list);
 void ui_str_setf(struct ui_str *, const char *fmt, ...) legion_printf(2, 3);
+void ui_str_set_nil(struct ui_str *);
 void ui_str_set_u64(struct ui_str *, uint64_t val);
 void ui_str_set_hex(struct ui_str *, uint64_t val);
 void ui_str_set_scaled(struct ui_str *, uint64_t val);
@@ -199,21 +202,80 @@ inline size_t ui_str_len(struct ui_str *str)
 
 
 // -----------------------------------------------------------------------------
+// macros
+// -----------------------------------------------------------------------------
+
+#define ui_set(elem)                            \
+    ({                                          \
+        typeof(elem) elem_ = (elem);            \
+        elem_->disabled = false;                \
+        &elem_->str;                            \
+    })
+
+#define ui_set_nil(elem)                        \
+    do {                                        \
+        typeof(elem) elem_ = (elem);            \
+        elem_->disabled = true;                 \
+        ui_str_set_nil(&elem_->str);            \
+    } while (false)                             \
+
+
+// -----------------------------------------------------------------------------
 // label
 // -----------------------------------------------------------------------------
+
+struct ui_label_style
+{
+    struct font *font;
+    struct rgba fg, bg, disabled;
+};
 
 struct ui_label
 {
     struct ui_widget w;
+    struct ui_label_style s;
     struct ui_str str;
-
-    struct font *font;
-    struct rgba fg, bg;
+    bool disabled;
 };
 
-struct ui_label ui_label_new(struct font *, struct ui_str);
+struct ui_label ui_label_new(struct ui_str);
+struct ui_label ui_label_new_s(const struct ui_label_style *, struct ui_str);
 void ui_label_free(struct ui_label *);
 void ui_label_render(struct ui_label *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// label_values
+// -----------------------------------------------------------------------------
+
+struct ui_value
+{
+    uint64_t user;
+    const char *str;
+    struct rgba fg;
+};
+
+struct ui_values
+{
+    size_t len;
+    struct ui_value *list;
+};
+
+struct ui_values ui_values_new(const struct ui_value *, size_t len);
+void ui_values_free(struct ui_values *);
+void ui_values_set(struct ui_values *, struct ui_label *, uint64_t user);
+
+
+// -----------------------------------------------------------------------------
+// specialized labels
+// -----------------------------------------------------------------------------
+
+struct ui_label ui_waiting_new(void);
+void ui_waiting_idle(struct ui_label *);
+void ui_waiting_set(struct ui_label *, bool waiting);
+
+struct ui_label ui_loops_new(void);
+void ui_loops_set(struct ui_label *, im_loops);
 
 
 // -----------------------------------------------------------------------------
@@ -561,3 +623,31 @@ bool ui_panel_is_visible(struct ui_panel *);
 enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
 enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);
 struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+extern struct ui_style
+{
+    struct font *font;
+
+    struct {
+        struct rgba fg, bg;
+        struct rgba in, out, work;
+        struct rgba error, warn, info;
+        struct rgba waiting, working;
+        struct rgba active, disabled;
+    } rgba;
+
+    struct {
+        struct ui_label_style base;
+        struct ui_label_style title, index;
+        struct ui_label_style in, out, work;
+        struct ui_label_style active, waiting, error;
+    } label;
+
+} ui_st;
+
+void ui_style_default(void);

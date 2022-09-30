@@ -67,15 +67,15 @@ struct factory *factory_new(void)
         .scale = scale_init(),
         .pos = (struct flow_pos) {0},
 
-        .ui_id = ui_label_new(font, ui_str_v(im_id_str_len)),
-        .ui_target = ui_label_new(font, ui_str_v(item_str_len)),
-        .ui_loops = ui_label_new(font, ui_str_c("x")),
-        .ui_loops_val = ui_label_new(font, ui_str_v(3)),
-        .ui_tape_in = ui_label_new(font, ui_str_v(item_str_len)),
-        .ui_tape_work = ui_label_new(font, ui_str_c("work            ")),
-        .ui_tape_out = ui_label_new(font, ui_str_v(item_str_len)),
-        .ui_tape_num = ui_label_new(font, ui_str_v(3)),
-        .ui_tape_of = ui_label_new(font, ui_str_c("/")),
+        .ui_id = ui_label_new(ui_str_v(im_id_str_len)),
+        .ui_target = ui_label_new(ui_str_v(item_str_len)),
+        .ui_loops = ui_label_new(ui_str_c("x")),
+        .ui_loops_val = ui_label_new(ui_str_v(3)),
+        .ui_tape_in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
+        .ui_tape_work = ui_label_new_s(&ui_st.label.work, ui_str_c("work            ")),
+        .ui_tape_out = ui_label_new_s(&ui_st.label.out, ui_str_v(item_str_len)),
+        .ui_tape_num = ui_label_new(ui_str_v(3)),
+        .ui_tape_of = ui_label_new(ui_str_c("/")),
 
         .inner = make_dim(
                 (item_str_len + 3 + 1 + 3) * font->glyph_w,
@@ -83,10 +83,6 @@ struct factory *factory_new(void)
         .margin = make_dim(5, 5),
         .pad = make_dim(20, 20),
     };
-
-    factory->ui_tape_in.fg = rgba_green();
-    factory->ui_tape_work.fg = rgba_yellow();
-    factory->ui_tape_out.fg = rgba_blue();
 
     factory->total = make_dim(
             factory->inner.w + 2*factory->margin.w + 2*factory->pad.w,

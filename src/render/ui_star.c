@@ -95,17 +95,17 @@ struct ui_star *ui_star_new(void)
         .goto_factory = ui_button_new(font, ui_str_c("<< factory")),
         .goto_log = ui_button_new(font, ui_str_c("<< log")),
 
-        .name = ui_label_new(font, ui_str_c("name:  ")),
-        .name_val = ui_label_new(font, ui_str_v(symbol_cap)),
+        .name = ui_label_new(ui_str_c("name:  ")),
+        .name_val = ui_label_new(ui_str_v(symbol_cap)),
 
-        .coord = ui_label_new(font, ui_str_c("coord: ")),
+        .coord = ui_label_new(ui_str_c("coord: ")),
         .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
 
-        .energy = ui_label_new(font, ui_str_c("energy: ")),
-        .energy_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .energy = ui_label_new(ui_str_c("energy: ")),
+        .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .elem = ui_label_new(font, ui_str_c(ui_star_elems[0])),
-        .elem_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .elem = ui_label_new(ui_str_c(ui_star_elems[0])),
+        .elem_val = ui_label_new(ui_str_v(str_scaled_len)),
 
         .control = ui_button_new(font, ui_str_c("control")),
         .factory = ui_button_new(font, ui_str_c("factory")),
@@ -116,56 +116,56 @@ struct ui_star *ui_star_new(void)
         .factory_list = ui_tree_new(
                 make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
 
-        .pills = ui_label_new(font, ui_str_c("pills: ")),
-        .pills_val = ui_label_new(font, ui_str_v(4)),
+        .pills = ui_label_new(ui_str_c("pills: ")),
+        .pills_val = ui_label_new(ui_str_v(4)),
 
         .workers = (struct ui_star_workers) {
-            .workers = ui_label_new(font, ui_str_c("workers: ")),
-            .workers_val = ui_label_new(font, ui_str_v(3)),
-            .queue = ui_label_new(font, ui_str_c("- queue: ")),
-            .queue_val = ui_label_new(font, ui_str_v(3)),
-            .idle = ui_label_new(font, ui_str_c("- idle:  ")),
-            .idle_val = ui_label_new(font, ui_str_v(3)),
-            .fail = ui_label_new(font, ui_str_c("- fail:  ")),
-            .fail_val = ui_label_new(font, ui_str_v(3)),
-            .clean = ui_label_new(font, ui_str_c("- clean: ")),
-            .clean_val = ui_label_new(font, ui_str_v(3)),
+            .workers = ui_label_new(ui_str_c("workers: ")),
+            .workers_val = ui_label_new(ui_str_v(3)),
+            .queue = ui_label_new(ui_str_c("- queue: ")),
+            .queue_val = ui_label_new(ui_str_v(3)),
+            .idle = ui_label_new(ui_str_c("- idle:  ")),
+            .idle_val = ui_label_new(ui_str_v(3)),
+            .fail = ui_label_new(ui_str_c("- fail:  ")),
+            .fail_val = ui_label_new(ui_str_v(3)),
+            .clean = ui_label_new(ui_str_c("- clean: ")),
+            .clean_val = ui_label_new(ui_str_v(3)),
         },
 
-        .need = ui_label_new(font, ui_str_c("- need:     ")),
-        .need_val = ui_label_new(font, ui_str_v(str_scaled_len)),
-        .consumed = ui_label_new(font, ui_str_c("- consumed: ")),
-        .consumed_val = ui_label_new(font, ui_str_v(str_scaled_len)),
-        .produced = ui_label_new(font, ui_str_c("- produced: ")),
-        .produced_val = ui_label_new(font, ui_str_v(str_scaled_len)),
-        .stored = ui_label_new(font, ui_str_c("- stored:   ")),
-        .stored_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .need = ui_label_new(ui_str_c("- need:     ")),
+        .need_val = ui_label_new(ui_str_v(str_scaled_len)),
+        .consumed = ui_label_new(ui_str_c("- consumed: ")),
+        .consumed_val = ui_label_new(ui_str_v(str_scaled_len)),
+        .produced = ui_label_new(ui_str_c("- produced: ")),
+        .produced_val = ui_label_new(ui_str_v(str_scaled_len)),
+        .stored = ui_label_new(ui_str_c("- stored:   ")),
+        .stored_val = ui_label_new(ui_str_v(str_scaled_len)),
 
         .solar = (struct ui_star_energy) {
-            .name = ui_label_new(font, ui_str_c("solar:         ")),
-            .count = ui_label_new(font, ui_str_v(3)),
-            .prod = ui_label_new(font, ui_str_c("- production: ")),
-            .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
-            .total = ui_label_new(font, ui_str_c("- total:      ")),
-            .total_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+            .name = ui_label_new(ui_str_c("solar:         ")),
+            .count = ui_label_new(ui_str_v(3)),
+            .prod = ui_label_new(ui_str_c("- production: ")),
+            .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
+            .total = ui_label_new(ui_str_c("- total:      ")),
+            .total_val = ui_label_new(ui_str_v(str_scaled_len)),
         },
 
         .kwheel = (struct ui_star_energy) {
-            .name = ui_label_new(font, ui_str_c("k-wheel:       ")),
-            .count = ui_label_new(font, ui_str_v(3)),
-            .prod = ui_label_new(font, ui_str_c("- production: ")),
-            .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
-            .total = ui_label_new(font, ui_str_c("- total:      ")),
-            .total_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+            .name = ui_label_new(ui_str_c("k-wheel:       ")),
+            .count = ui_label_new(ui_str_v(3)),
+            .prod = ui_label_new(ui_str_c("- production: ")),
+            .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
+            .total = ui_label_new(ui_str_c("- total:      ")),
+            .total_val = ui_label_new(ui_str_v(str_scaled_len)),
         },
 
         .store = (struct ui_star_energy) {
-            .name = ui_label_new(font, ui_str_c("store:         ")),
-            .count = ui_label_new(font, ui_str_v(3)),
-            .prod = ui_label_new(font, ui_str_c("- capacity: ")),
-            .prod_val = ui_label_new(font, ui_str_v(str_scaled_len)),
-            .total = ui_label_new(font, ui_str_c("- total:    ")),
-            .total_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+            .name = ui_label_new(ui_str_c("store:         ")),
+            .count = ui_label_new(ui_str_v(3)),
+            .prod = ui_label_new(ui_str_c("- capacity: ")),
+            .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
+            .total = ui_label_new(ui_str_c("- total:    ")),
+            .total_val = ui_label_new(ui_str_v(str_scaled_len)),
         },
     };
 
@@ -530,7 +530,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     {
         uint32_t energy = ui->star.energy;
         ui_str_set_scaled(&ui->energy_val.str, energy);
-        ui->energy_val.fg = rgba_gray(0x11 * u64_log2(energy));
+        ui->energy_val.s.fg = rgba_gray(0x11 * u64_log2(energy));
 
         ui_label_render(&ui->energy, &layout, renderer);
         ui_label_render(&ui->energy_val, &layout, renderer);
@@ -545,7 +545,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
             uint16_t value = ui->star.elems[i];
             ui_str_set_scaled(&ui->elem_val.str, value);
-            ui->elem_val.fg = rgba_gray(0x11 * u64_log2(value));
+            ui->elem_val.s.fg = rgba_gray(0x11 * u64_log2(value));
             ui_label_render(&ui->elem_val, &layout, renderer);
 
             size_t col = i % 5;

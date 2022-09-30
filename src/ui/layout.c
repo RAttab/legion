@@ -78,6 +78,11 @@ void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
     layout->row.pos.y += px;
 }
 
+void ui_layout_sep_row(struct ui_layout *layout)
+{
+    ui_layout_sep_y(layout, ui_st.font->glyph_h);
+}
+
 void ui_layout_mid(struct ui_layout *layout, int width)
 {
     int x = layout->base.pos.x + (layout->base.dim.w/2 - width/2);

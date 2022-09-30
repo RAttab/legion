@@ -17,3 +17,4 @@
 #include "ui/list.c"
 #include "ui/tree.c"
 #include "ui/panel.c"
+#include "ui/style.c"

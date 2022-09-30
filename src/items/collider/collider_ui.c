@@ -42,29 +42,29 @@ static void *ui_collider_alloc(struct font *font)
     *ui = (struct ui_collider) {
         .font = font,
 
-        .size = ui_label_new(font, ui_str_c("size: ")),
-        .size_val = ui_label_new(font, ui_str_v(2)),
+        .size = ui_label_new(ui_str_c("size: ")),
+        .size_val = ui_label_new(ui_str_v(2)),
 
-        .rate = ui_label_new(font, ui_str_c("rate: ")),
-        .rate_val = ui_label_new(font, ui_str_v(2)),
-        .rate_pct = ui_label_new(font, ui_str_c("%")),
+        .rate = ui_label_new(ui_str_c("rate: ")),
+        .rate_val = ui_label_new(ui_str_v(2)),
+        .rate_pct = ui_label_new(ui_str_c("%")),
 
-        .op = ui_label_new(font, ui_str_c("op: ")),
-        .op_val = ui_label_new(font, ui_str_v(8)),
+        .op = ui_label_new(ui_str_c("op: ")),
+        .op_val = ui_label_new(ui_str_v(8)),
 
-        .item = ui_label_new(font, ui_str_c("item: ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .item = ui_label_new(ui_str_c("item: ")),
+        .item_val = ui_label_new(ui_str_v(item_str_len)),
 
-        .loops = ui_label_new(font, ui_str_c("loops: ")),
-        .loops_val = ui_label_new(font, ui_str_v(4)),
+        .loops = ui_label_new(ui_str_c("loops: ")),
+        .loops_val = ui_loops_new(),
 
-        .waiting = ui_label_new(font, ui_str_c("state: ")),
-        .waiting_val = ui_label_new(font, ui_str_v(8)),
+        .waiting = ui_label_new(ui_str_c("state: ")),
+        .waiting_val = ui_waiting_new(),
 
-        .out = ui_label_new(font, ui_str_c("outputs: ")),
-        .out_left = ui_label_new(font, ui_str_v(3)),
-        .out_sep = ui_label_new(font, ui_str_c(" / ")),
-        .out_cap = ui_label_new(font, ui_str_v(3)),
+        .out = ui_label_new(ui_str_c("outputs: ")),
+        .out_left = ui_label_new(ui_str_v(3)),
+        .out_sep = ui_label_new(ui_str_c(" / ")),
+        .out_cap = ui_label_new(ui_str_v(3)),
     };
 
     ui_tape_init(&ui->tape, font);
@@ -108,52 +108,60 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
 {
     struct ui_collider *ui = _ui;
 
-    const struct im_collider *state = chunk_get(chunk, id);
-    assert(state);
+    const struct im_collider *collider = chunk_get(chunk, id);
+    assert(collider);
 
-    ui_str_set_u64(&ui->size_val.str, state->size);
+    ui_str_set_u64(&ui->size_val.str, collider->size);
 
-    unsigned pct = (100 * im_collider_rate(state->size)) / im_collider_size_max;
+    unsigned pct = (100 * im_collider_rate(collider->size)) / im_collider_size_max;
     ui_str_set_u64(&ui->rate_val.str, pct);
 
-    ui->state.op = state->op;
+    ui->state.op = collider->op;
     ui->state.tape = 0;
 
-    switch (state->op)
+    switch (collider->op)
     {
 
     case im_collider_nil: {
-        ui_str_setc(&ui->op_val.str, "nil");
+        ui_set_nil(&ui->op_val);
         break;
     }
 
     case im_collider_grow: {
-        ui_str_setc(&ui->op_val.str, "grow");
+        ui->op_val.s.fg = ui_st.rgba.in;
+        ui_str_setc(ui_set(&ui->op_val), "grow");
+
+        ui->item_val.s.fg = ui_st.rgba.in;
         ui_str_set_item(&ui->item_val.str, im_collider_grow_item);
         break;
     }
 
     case im_collider_tape: {
-        ui_str_setc(&ui->op_val.str, "tape");
+        ui->op_val.s.fg = ui_st.rgba.work;
+        ui_str_setc(ui_set(&ui->op_val), "tape");
 
-        const struct tape *tape = tape_packed_ptr(state->tape);
-        struct tape_ret ret = tape_at(tape, tape_packed_it(state->tape));
+        const struct tape *tape = tape_packed_ptr(collider->tape);
+        struct tape_ret ret = tape_at(tape, tape_packed_it(collider->tape));
         ui->state.state = ret.state;
 
         switch (ret.state)
         {
         case tape_input:
         case tape_work: {
-            ui_tape_update(&ui->tape, state->tape);
-            ui->state.tape = state->tape;
+            ui_tape_update(&ui->tape, collider->tape);
+            ui->state.tape = collider->tape;
             break;
         }
 
         case tape_output: {
-            ui_str_setc(&ui->op_val.str, "output");
-            ui_str_set_item(&ui->item_val.str, state->out.item);
-            ui_str_set_u64(&ui->out_left.str, state->out.it + 1);
-            ui_str_set_u64(&ui->out_cap.str, state->out.len);
+            ui->op_val.s.fg = ui_st.rgba.out;
+            ui_str_setc(ui_set(&ui->op_val), "output");
+
+            ui->item_val.s.fg = ui_st.rgba.out;
+            ui_str_set_item(&ui->item_val.str, collider->out.item);
+
+            ui_str_set_u64(&ui->out_left.str, collider->out.it + 1);
+            ui_str_set_u64(&ui->out_cap.str, collider->out.len);
             break;
         }
 
@@ -167,11 +175,8 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
     default: { assert(false); }
     }
 
-    if (state->loops != im_loops_inf)
-        ui_str_set_u64(&ui->loops_val.str, state->loops);
-    else ui_str_setc(&ui->loops_val.str, "inf");
-
-    ui_str_setc(&ui->waiting_val.str, state->waiting ? "waiting" : "working");
+    ui_loops_set(&ui->loops_val, collider->loops);
+    ui_waiting_set(&ui->waiting_val, collider->waiting);
 }
 
 static bool ui_collider_event(void *_ui, const SDL_Event *ev)
@@ -219,7 +224,7 @@ static void ui_collider_render(
         ui_label_render(&ui->waiting_val, layout, renderer);
         ui_layout_next_row(layout);
 
-        ui->item_val.fg = rgba_green();
+        ui->item_val.s.fg = ui_st.rgba.in;
         ui_label_render(&ui->item, layout, renderer);
         ui_label_render(&ui->item_val, layout, renderer);
         ui_layout_next_row(layout);
@@ -250,7 +255,7 @@ static void ui_collider_render(
             ui_label_render(&ui->out_cap, layout, renderer);
             ui_layout_next_row(layout);
 
-            ui->item_val.fg = rgba_blue();
+            ui->item_val.s.fg = ui_st.rgba.out;
             ui_label_render(&ui->item, layout, renderer);
             ui_label_render(&ui->item_val, layout, renderer);
             ui_layout_next_row(layout);

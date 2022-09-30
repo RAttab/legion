@@ -37,18 +37,18 @@ static void *ui_lab_alloc(struct font *font)
         .bits = im_lab_bits_new(font),
         .font = font,
 
-        .item = ui_label_new(font, ui_str_c("item:     ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .item = ui_label_new(ui_str_c("item:     ")),
+        .item_val = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
 
-        .state = ui_label_new(font, ui_str_c("state:    ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .state = ui_label_new(ui_str_c("state:    ")),
+        .state_val = ui_waiting_new(),
 
-        .work = ui_label_new(font, ui_str_c("progress: ")),
-        .work_sep = ui_label_new(font, ui_str_c(" of ")),
-        .work_left = ui_label_new(font, ui_str_v(3)),
-        .work_cap = ui_label_new(font, ui_str_v(3)),
+        .work = ui_label_new(ui_str_c("progress: ")),
+        .work_sep = ui_label_new(ui_str_c(" of ")),
+        .work_left = ui_label_new(ui_str_v(3)),
+        .work_cap = ui_loops_new(),
 
-        .total = ui_label_new(font, ui_str_c("total:    ")),
+        .total = ui_label_new(ui_str_c("total:    ")),
     };
     return ui;
 }
@@ -92,33 +92,20 @@ static void ui_lab_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_lab *state = chunk_get(chunk, id);
     assert(state);
 
-    ui_str_set_item(&ui->item_val.str, state->item);
     im_lab_bits_update(&ui->bits, proxy_tech(render.proxy), state->item);
 
-    switch (state->state)
-    {
-    case im_lab_idle: {
-        ui_str_setc(&ui->state_val.str, "idle");
-        ui->state_val.fg = rgba_gray(0x88);
-        break;
-    }
-    case im_lab_waiting: {
-        ui_str_setc(&ui->state_val.str, "waiting");
-        ui->state_val.fg = rgba_blue();
-        break;
-    }
-    case im_lab_working: {
-        ui_str_setc(&ui->state_val.str, "working");
-        ui->state_val.fg = rgba_green();
-        break;
-    }
+    if (!state->item) ui_set_nil(&ui->item_val);
+    else ui_str_set_item(ui_set(&ui->item_val), state->item);
+
+    switch (state->state) {
+    case im_lab_idle: { ui_waiting_idle(&ui->state_val); break; }
+    case im_lab_waiting: { ui_waiting_set(&ui->state_val, true); break; }
+    case im_lab_working: { ui_waiting_set(&ui->state_val, false); break; }
     default: { assert(false); }
     }
 
     ui_str_set_u64(&ui->work_left.str, state->work.left);
-    if (state->state != im_lab_idle)
-        ui_str_set_u64(&ui->work_cap.str, state->work.cap);
-    else ui_str_setc(&ui->work_cap.str, "inf");
+    ui_loops_set(&ui->work_cap, state->work.cap);
 }
 
 

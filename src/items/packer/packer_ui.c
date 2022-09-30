@@ -18,16 +18,18 @@ struct ui_packer
 
 static void *ui_packer_alloc(struct font *font)
 {
+    (void) font;
     struct ui_packer *ui = calloc(1, sizeof(*ui));
+
     *ui = (struct ui_packer) {
-        .item = ui_label_new(font, ui_str_c("item:  ")),
-        .item_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .item = ui_label_new(ui_str_c("item:  ")),
+        .item_val = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
 
-        .loops = ui_label_new(font, ui_str_c("loops: ")),
-        .loops_val = ui_label_new(font, ui_str_v(4)),
+        .loops = ui_label_new(ui_str_c("loops: ")),
+        .loops_val = ui_loops_new(),
 
-        .state = ui_label_new(font, ui_str_c("state: ")),
-        .state_val = ui_label_new(font, ui_str_v(8)),
+        .state = ui_label_new(ui_str_c("state: ")),
+        .state_val = ui_waiting_new(),
     };
 
     return ui;
@@ -56,18 +58,16 @@ static void ui_packer_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_packer *packer = chunk_get(chunk, id);
     assert(packer);
 
-    if (packer->item) {
-        ui_str_set_item(&ui->item_val.str, packer->item);
-        ui_str_setc(&ui->state_val.str, packer->waiting ? "waiting" : "working");
+    if (!packer->item) {
+        ui_set_nil(&ui->item_val);
+        ui_waiting_idle(&ui->state_val);
     }
     else {
-        ui_str_setc(&ui->item_val.str, "nil");
-        ui_str_setc(&ui->state_val.str, "idle");
+        ui_str_set_item(ui_set(&ui->item_val), packer->item);
+        ui_waiting_set(&ui->state_val, packer->waiting);
     }
 
-    if (packer->loops != im_loops_inf)
-        ui_str_set_u64(&ui->loops_val.str, packer->loops);
-    else ui_str_setc(&ui->loops_val.str, "inf");
+    ui_loops_set(&ui->loops_val, packer->loops);
 }
 
 static void ui_packer_render(

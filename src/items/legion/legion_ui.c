@@ -27,16 +27,13 @@ static void *ui_legion_alloc(struct font *font)
     *ui = (struct ui_legion) {
         .font = font,
 
-        .mod = ui_label_new(font, ui_str_c("mod: ")),
-        .mod_val = ui_label_new(font, ui_str_v(symbol_cap)),
+        .mod = ui_label_new(ui_str_c("mod: ")),
+        .mod_val = ui_label_new(ui_str_v(symbol_cap)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .index = ui_label_new(font, ui_str_v(2)),
-        .cargo = ui_label_new(font, ui_str_v(item_str_len)),
+        .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
+        .cargo = ui_label_new(ui_str_v(item_str_len)),
     };
-
-    ui->index.fg = rgba_gray(0x88);
-    ui->index.bg = rgba_gray_a(0x44, 0x88);
 
     return ui;
 }
@@ -64,11 +61,11 @@ static void ui_legion_update(void *_ui, struct chunk *chunk, im_id id)
 
     ui->type = im_id_item(state->id);
 
-    if (!state->mod) ui_str_setc(&ui->mod_val.str, "nil");
+    if (!state->mod) ui_set_nil(&ui->mod_val);
     else {
         struct symbol mod = {0};
         proxy_mod_name(render.proxy, mod_major(state->mod), &mod);
-        ui_str_set_symbol(&ui->mod_val.str, &mod);
+        ui_str_set_symbol(ui_set(&ui->mod_val), &mod);
     }
 
     size_t count = 0;

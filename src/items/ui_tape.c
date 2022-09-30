@@ -15,24 +15,18 @@ void ui_tape_init(struct ui_tape *ui, struct font *font)
     *ui = (struct ui_tape) {
         .font = font,
 
-        .tape = ui_label_new(font, ui_str_c("tape:   ")),
-        .tape_val = ui_label_new(font, ui_str_v(item_str_len)),
+        .tape = ui_label_new(ui_str_c("tape:   ")),
+        .tape_val = ui_label_new(ui_str_v(item_str_len)),
 
-        .energy = ui_label_new(font, ui_str_c("energy: ")),
-        .energy_val = ui_label_new(font, ui_str_v(str_scaled_len)),
+        .energy = ui_label_new(ui_str_c("energy: ")),
+        .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
-        .index = ui_label_new(font, ui_str_v(2)),
-        .in = ui_label_new(font, ui_str_v(item_str_len)),
-        .work = ui_label_new(font, ui_str_c("work")),
-        .out = ui_label_new(font, ui_str_v(item_str_len)),
+        .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
+        .in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
+        .work = ui_label_new_s(&ui_st.label.work, ui_str_c("work")),
+        .out = ui_label_new_s(&ui_st.label.out, ui_str_v(item_str_len)),
     };
-
-    ui->index.fg = rgba_gray(0x88);
-    ui->index.bg = rgba_gray_a(0x44, 0x88);
-    ui->in.fg = rgba_green();
-    ui->work.fg = rgba_yellow();
-    ui->out.fg = rgba_blue();
 }
 
 void ui_tape_free(struct ui_tape *ui)
@@ -54,11 +48,11 @@ void ui_tape_update(struct ui_tape *ui, tape_packed state)
 {
     const struct tape *tape = tapes_get(tape_packed_id(state));
 
-    if (!tape) ui_str_setc(&ui->tape_val.str, "nil");
-    else ui_str_set_item(&ui->tape_val.str, tape_id(tape));
+    if (!tape) ui_set_nil(&ui->tape_val);
+    else ui_str_set_item(ui_set(&ui->tape_val), tape_id(tape));
 
-    if (!tape) ui_str_setc(&ui->energy_val.str, "nil");
-    else ui_str_set_scaled(&ui->energy_val.str, tape_energy(tape));
+    if (!tape) ui_set_nil(&ui->energy_val);
+    else ui_str_set_scaled(ui_set(&ui->energy_val), tape_energy(tape));
 
     ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
 }
@@ -112,7 +106,7 @@ void ui_tape_render(
         if (tape_state_item(ret.state))
             ui_str_set_item(&label->str, ret.item);
 
-        label->bg = i == tape_packed_it(state) ? rgba_gray(0x44) : rgba_nil();
+        label->s.bg = i == tape_packed_it(state) ? rgba_gray(0x44) : rgba_nil();
         ui_label_render(label, &inner, renderer);
 
         ui_layout_next_row(&inner);
