@@ -289,18 +289,24 @@ enum ui_link_state
     ui_link_pressed,
 };
 
+struct ui_link_style
+{
+    struct font *font;
+    struct { struct rgba fg, bg; } idle, hover, pressed, disabled;
+};
+
 struct ui_link
 {
     struct ui_widget w;
+    struct ui_link_style s;
     struct ui_str str;
 
-    struct font *font;
-    struct rgba fg;
-
     enum ui_link_state state;
+    bool disabled;
 };
 
-struct ui_link ui_link_new(struct font *, struct ui_str);
+struct ui_link ui_link_new(struct ui_str);
+struct ui_link ui_link_new_s(const struct ui_link_style *, struct ui_str);
 void ui_link_free(struct ui_link *);
 enum ui_ret ui_link_event(struct ui_link *, const SDL_Event *);
 void ui_link_render(struct ui_link *, struct ui_layout *, SDL_Renderer *);
@@ -647,6 +653,8 @@ extern struct ui_style
         struct ui_label_style in, out, work;
         struct ui_label_style active, waiting, error;
     } label;
+
+    struct ui_link_style link;
 
 } ui_st;
 

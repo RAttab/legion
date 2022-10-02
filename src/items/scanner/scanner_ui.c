@@ -17,7 +17,7 @@ struct ui_scanner
     struct ui_label status, status_val;
     struct ui_label work, work_sep, work_left, work_cap;
     struct ui_label sector;
-    struct ui_link sector_coord;
+    struct ui_link sector_val;
     struct ui_label result, result_val;
 
     struct { struct coord coord; } state;
@@ -40,7 +40,7 @@ static void *ui_scanner_alloc(struct font *font)
         .work_cap = ui_label_new(ui_str_v(3)),
 
         .sector = ui_label_new(ui_str_c("sector:   ")),
-        .sector_coord = ui_link_new(font, ui_str_v(symbol_cap)),
+        .sector_val = ui_link_new(ui_str_v(symbol_cap)),
 
         .result = ui_label_new(ui_str_c("result:   ")),
         .result_val = ui_label_new(ui_str_v(16)),
@@ -63,7 +63,7 @@ static void ui_scanner_free(void *_ui)
     ui_label_free(&ui->work_cap);
 
     ui_label_free(&ui->sector);
-    ui_link_free(&ui->sector_coord);
+    ui_link_free(&ui->sector_val);
 
     ui_label_free(&ui->result);
     ui_label_free(&ui->result_val);
@@ -83,7 +83,7 @@ static void ui_scanner_update(void *_ui, struct chunk *chunk, im_id id)
 
     if (coord_is_nil(scanner->it.coord)) {
         ui_waiting_idle(&ui->status_val);
-        ui_str_setc(&ui->sector_coord.str, "nil");
+        ui_set_nil(&ui->sector_val);
         ui_set_nil(&ui->work_cap);
         ui_set_nil(&ui->result_val);
         return;
@@ -100,9 +100,8 @@ static void ui_scanner_update(void *_ui, struct chunk *chunk, im_id id)
         ui_set_nil(&ui->result_val);
     }
 
-    struct symbol name =
-        gen_name_sector(scanner->it.coord, proxy_seed(render.proxy));
-    ui_str_set_symbol(&ui->sector_coord.str, &name);
+    struct symbol name = gen_name_sector(scanner->it.coord, proxy_seed(render.proxy));
+    ui_str_set_symbol(ui_set(&ui->sector_val), &name);
 
     ui_str_set_u64(&ui->work_left.str, scanner->work.left);
     ui_str_set_u64(ui_set(&ui->work_cap), scanner->work.cap);
@@ -114,7 +113,7 @@ static bool ui_scanner_event(void *_ui, const SDL_Event *ev)
     struct ui_scanner *ui = _ui;
     enum ui_ret ret = ui_nil;
 
-    if ((ret = ui_link_event(&ui->sector_coord, ev))) {
+    if ((ret = ui_link_event(&ui->sector_val, ev))) {
         ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(ui->state.coord));
         return ret == ui_consume;
     }
@@ -141,7 +140,7 @@ static void ui_scanner_render(
     ui_layout_next_row(layout);
 
     ui_label_render(&ui->sector, layout, renderer);
-    ui_link_render(&ui->sector_coord, layout, renderer);
+    ui_link_render(&ui->sector_val, layout, renderer);
     ui_layout_next_row(layout);
 
     ui_label_render(&ui->result, layout, renderer);

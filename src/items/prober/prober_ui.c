@@ -36,7 +36,7 @@ static void *ui_prober_alloc(struct font *font)
     struct ui_prober *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_prober) {
         .coord = ui_label_new(ui_str_c("coord:    ")),
-        .coord_val = ui_link_new(font, ui_str_v(symbol_cap)),
+        .coord_val = ui_link_new(ui_str_v(symbol_cap)),
 
         .item = ui_label_new(ui_str_c("item:     ")),
         .item_val = ui_label_new(ui_str_v(item_str_len)),
@@ -93,7 +93,7 @@ static void ui_prober_update(void *_ui, struct chunk *chunk, im_id id)
     ui->state.coord = prober->coord;
 
     if (!prober->item) {
-        ui_str_setc(&ui->coord_val.str, "nil");
+        ui_set_nil(&ui->coord_val);
         ui_set_nil(&ui->item_val);
         ui_waiting_idle(&ui->status_val);
         ui_set_nil(&ui->work_cap);
@@ -102,7 +102,7 @@ static void ui_prober_update(void *_ui, struct chunk *chunk, im_id id)
     }
 
     ui_str_set_item(ui_set(&ui->item_val), prober->item);
-    ui_str_set_coord_name(&ui->coord_val.str, prober->coord);
+    ui_str_set_coord_name(ui_set(&ui->coord_val), prober->coord);
 
     if (!prober->work.left) {
         ui_waiting_set(&ui->status_val, true);

@@ -72,7 +72,7 @@ struct ui_tapes *ui_tapes_new(void)
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
         .host = ui_label_new(ui_str_c("host: ")),
-        .host_val = ui_link_new(font, ui_str_v(item_str_len)),
+        .host_val = ui_link_new(ui_str_v(item_str_len)),
 
         .tape = ui_label_new(ui_str_c("tape: ")),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),

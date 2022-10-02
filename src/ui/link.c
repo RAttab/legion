@@ -14,13 +14,17 @@
 // link
 // -----------------------------------------------------------------------------
 
-struct ui_link ui_link_new(struct font *font, struct ui_str str)
+struct ui_link ui_link_new(struct ui_str str)
 {
+    const struct ui_link_style *s = &ui_st.link;
+
     return (struct ui_link) {
-        .w = ui_widget_new(ui_str_len(&str) * font->glyph_w, font->glyph_h),
+        .w = ui_widget_new(ui_str_len(&str) * s->font->glyph_w, s->font->glyph_h),
+        .s = *s,
         .str = str,
-        .font = font,
-        .fg = rgba_white(),
+
+        .state = ui_link_idle,
+        .disabled = false,
     };
 }
 
@@ -45,7 +49,7 @@ enum ui_ret ui_link_event(struct ui_link *link, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         link->state = ui_link_pressed;
-        return ui_action;
+        return link->disabled ? ui_nil : ui_action;
     }
 
     case SDL_MOUSEBUTTONUP: {
@@ -63,16 +67,24 @@ void ui_link_render(
 {
     ui_layout_add(layout, &link->w);
 
+    struct rgba fg, bg;
+
     switch (link->state) {
-    case ui_link_idle: { rgba_render(rgba_nil(), renderer); break; }
-    case ui_link_hover: { rgba_render(rgba_gray(0x44), renderer); break; }
-    case ui_link_pressed: { rgba_render(rgba_gray(0x88), renderer); break; }
+    case ui_link_idle: { fg = link->s.idle.fg; bg = link->s.idle.bg; break; }
+    case ui_link_hover: { fg = link->s.hover.fg; bg = link->s.hover.bg; break; }
+    case ui_link_pressed: { fg = link->s.pressed.fg; bg = link->s.pressed.bg; break; }
     default: { assert(false); }
     }
 
+    if (link->disabled) {
+        fg = link->s.disabled.fg;
+        bg = link->s.disabled.bg;
+    }
+
     SDL_Rect rect = ui_widget_rect(&link->w);
+    rgba_render(bg, renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     SDL_Point point = pos_as_point(link->w.pos);
-    font_render(link->font, renderer, point, link->fg, link->str.str, link->str.len);
+    font_render(link->s.font, renderer, point, fg, link->str.str, link->str.len);
 }

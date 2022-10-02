@@ -54,7 +54,7 @@ static void *ui_brain_alloc(struct font *font)
         .font = font,
 
         .mod = ui_label_new(ui_str_c("mod: ")),
-        .mod_val = ui_link_new(font, ui_str_v(symbol_cap)),
+        .mod_val = ui_link_new(ui_str_v(symbol_cap)),
         .mod_ver = ui_label_new(ui_str_c("ver: ")),
         .mod_ver_val = ui_label_new(ui_str_v(u16_len)),
         .mod_fault = ui_label_new(ui_str_c("fault: ")),
@@ -63,7 +63,7 @@ static void *ui_brain_alloc(struct font *font)
         .debug = ui_label_new(ui_str_c("debug: ")),
         .debug_val = ui_label_new_s(&ui_st.label.active, ui_str_v(8)),
         .breakpoint = ui_label_new(ui_str_c("break: ")),
-        .breakpoint_val = ui_link_new(font, ui_str_v(8)),
+        .breakpoint_val = ui_link_new(ui_str_v(8)),
 
         .msg = ui_label_new(ui_str_c("msg: ")),
         .msg_len = ui_label_new(ui_str_v(3)),
@@ -82,7 +82,7 @@ static void *ui_brain_alloc(struct font *font)
         .tsc_val = ui_label_new(ui_str_v(u32_len)),
 
         .ip = ui_label_new(ui_str_c("ip:   ")),
-        .ip_val = ui_link_new(font, ui_str_v(u32_len)),
+        .ip_val = ui_link_new(ui_str_v(u32_len)),
 
         .flags = ui_label_new(ui_str_c("flag: ")),
         .flags_val = ui_label_new(ui_str_c("XX ")),
@@ -164,17 +164,13 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     assert(ok);
 
     if (!state->mod_id) {
-        ui->mod_val.fg = ui_st.rgba.disabled;
-        ui_str_setc(&ui->mod_val.str, "nil");
-
+        ui_set_nil(&ui->mod_val);
         ui_set_nil(&ui->mod_ver_val);
     }
     else {
         struct symbol mod = {0};
         proxy_mod_name(render.proxy, mod_major(state->mod_id), &mod);
-
-        ui->mod_val.fg = ui_st.label.base.fg;
-        ui_str_set_symbol(&ui->mod_val.str, &mod);
+        ui_str_set_symbol(ui_set(&ui->mod_val), &mod);
 
         ui_str_set_hex(ui_set(&ui->mod_ver_val), mod_version(state->mod_id));
     }
@@ -192,8 +188,8 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
         ui->debug_val.disabled = true;
     }
 
-    if (state->breakpoint == IP_NIL) ui_str_setc(&ui->breakpoint_val.str, "nil");
-    else ui_str_set_hex(&ui->breakpoint_val.str, state->breakpoint);
+    if (state->breakpoint == IP_NIL) ui_set_nil(&ui->breakpoint_val);
+    else ui_str_set_hex(ui_set(&ui->breakpoint_val), state->breakpoint);
 
     if (!state->msg.len) ui_set_nil(&ui->msg_len);
     else ui_str_set_u64(ui_set(&ui->msg_len), state->msg.len);

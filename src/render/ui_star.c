@@ -99,7 +99,7 @@ struct ui_star *ui_star_new(void)
         .name_val = ui_label_new(ui_str_v(symbol_cap)),
 
         .coord = ui_label_new(ui_str_c("coord: ")),
-        .coord_val = ui_link_new(font, ui_str_v(coord_str_len)),
+        .coord_val = ui_link_new(ui_str_v(coord_str_len)),
 
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),

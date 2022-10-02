@@ -45,12 +45,10 @@ static struct font *ui_log_font(void) { return font_mono6; }
 
 struct ui_logi ui_logi_new(void)
 {
-    struct font *font = ui_log_font();
-
     struct ui_logi ui = {
         .time = ui_label_new_s(&ui_st.label.index, ui_str_v(10)),
-        .star = ui_link_new(font, ui_str_v(symbol_cap)),
-        .id = ui_link_new(font, ui_str_v(im_id_str_len)),
+        .star = ui_link_new(ui_str_v(symbol_cap)),
+        .id = ui_link_new(ui_str_v(im_id_str_len)),
         .key = ui_label_new(ui_str_v(symbol_cap)),
         .value = ui_label_new(ui_str_v(symbol_cap)),
     };

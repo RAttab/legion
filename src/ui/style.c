@@ -66,4 +66,12 @@ void ui_style_default(void)
         fg(&s->label.waiting, s->rgba.waiting);
         fg(&s->label.error, s->rgba.error);
     }
+
+    s->link = (struct ui_link_style) {
+        .font = s->font,
+        .idle =     { .fg = ui_st.rgba.fg,       .bg = ui_st.rgba.bg },
+        .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x44) },
+        .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x88) },
+        .disabled = { .fg = ui_st.rgba.disabled, .bg = ui_st.rgba.bg },
+    };
 }
