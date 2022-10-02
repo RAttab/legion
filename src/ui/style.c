@@ -37,7 +37,7 @@ void ui_style_default(void)
         s->rgba.active = rgba_green();
         s->rgba.disabled = rgba_gray(0x88);
 
-        s->rgba.carret = rgba_gray_a(0xCC, 0x88);
+        s->rgba.carret = rgba_gray_a(0xCC, 0xCC);
 
         s->rgba.box.bg = rgba_black();
         s->rgba.box.border = rgba_gray(0x33);
@@ -118,5 +118,14 @@ void ui_style_default(void)
         .border = ui_st.rgba.box.border,
         .carret = ui_st.rgba.carret,
         .pad = make_dim(2, 2),
+    };
+
+    s->code = (struct ui_code_style) {
+        .font = s->font,
+        .line = { .fg = ui_st.label.index.fg, .bg = ui_st.label.index.bg },
+        .code = { .fg = ui_st.rgba.fg, .bg = ui_st.rgba.bg },
+        .mark = make_rgba(0x00, 0xFF, 0x00, 0x77),
+        .error = make_rgba(0xFF, 0x00, 0x00, 0x77),
+        .carret = ui_st.rgba.carret,
     };
 }

@@ -16,14 +16,17 @@ static struct line *ui_code_view_update(struct ui_code *code);
 // code
 // -----------------------------------------------------------------------------
 
-struct ui_code ui_code_new(struct dim dim, struct font *font)
+struct ui_code ui_code_new(struct dim dim)
 {
+    const struct ui_code_style *s = &ui_st.code;
+
     struct ui_code code = {
         .w = ui_widget_new(dim.w, dim.h),
-        .scroll = ui_scroll_new(dim, font->glyph_h),
+        .s = *s,
+
+        .scroll = ui_scroll_new(dim, s->font->glyph_h),
         .tooltip = ui_tooltip_new(ui_str_v(mod_err_cap), (SDL_Rect) {0}),
 
-        .font = font,
         .focused = false,
         .cols = 1,
         .disassembly = false,
@@ -280,8 +283,8 @@ static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
     SDL_Rect rect = ui_widget_rect(&code->w);
     if (!sdl_rect_contains(&rect, &cursor)) return false;
 
-    size_t rel_col = (cursor.x - code->w.pos.x) / code->font->glyph_w;
-    size_t rel_row = (cursor.y - code->w.pos.y) / code->font->glyph_h;
+    size_t rel_col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
+    size_t rel_row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
     rel_col = rel_col < (ui_code_num_len+1) ? 0 : rel_col - (ui_code_num_len+1);
     assert(rel_row < code->scroll.visible);
     assert(rel_col < code->cols);
@@ -317,7 +320,15 @@ void ui_code_render(
     struct ui_layout inner = ui_scroll_render(&code->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    struct font *font = code->font;
+    if (!rgba_is_nil(code->s.code.bg)) {
+        rgba_render(code->s.code.bg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+            .x = inner.base.pos.x, .y = inner.base.pos.y,
+            .w = inner.base.dim.w, .h = inner.base.dim.h,
+        }));
+    }
+
+    struct font *font = code->s.font;
     code->w = code->scroll.w;
     code->cols = (inner.base.dim.w / font->glyph_w) - 5;
 
@@ -346,9 +357,8 @@ void ui_code_render(
             struct ui_widget w = ui_widget_new(font->glyph_w * 4, font->glyph_h);
             ui_layout_add(&inner, &w);
 
-            rgba_render(rgba_gray_a(0x44, 0x88), renderer);
-
             SDL_Rect rect = ui_widget_rect(&w);
+            rgba_render(code->s.line.bg, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &rect));
 
             if (!col) {
@@ -356,13 +366,12 @@ void ui_code_render(
                 if (!code->disassembly) str_utoa(row, str, sizeof(str));
                 else str_utox(line->user, str, sizeof(str));
 
-                struct rgba fg = rgba_gray(0x88);
                 SDL_Point pos = pos_as_point(w.pos);
-                font_render(font, renderer, pos, fg, str, sizeof(str));
+                font_render(font, renderer, pos, code->s.line.fg, str, sizeof(str));
             }
         }
 
-        ui_layout_sep_x(&inner, code->font->glyph_w);
+        ui_layout_sep_x(&inner, code->s.font->glyph_w);
 
         // code line
         struct ui_widget w = ui_widget_new(font->glyph_w * code->cols, font->glyph_h);
@@ -380,7 +389,7 @@ void ui_code_render(
             }
 
             if (start != end) {
-                rgba_render(make_rgba(0x00, 0x77, 0x00, 0xFF), renderer);
+                rgba_render(code->s.mark, renderer);
                 sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                     .x = w.pos.x + (start * font->glyph_w),
                                     .y = w.pos.y,
@@ -392,9 +401,8 @@ void ui_code_render(
 
         // code text
         {
-            struct rgba fg = rgba_white();
             SDL_Point pos = pos_as_point(w.pos);
-            font_render(font, renderer, pos, fg, line->c + col, len);
+            font_render(font, renderer, pos, code->s.code.fg, line->c + col, len);
         }
 
         // err
@@ -408,7 +416,7 @@ void ui_code_render(
             size_t start = legion_max(err->col, col);
             size_t end = legion_min((size_t) err->col + err->len, col + len);
 
-            rgba_render(make_rgba(0xFF, 0x00, 0x00, 0x77), renderer);
+            rgba_render(code->s.error, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = w.pos.x + (start * font->glyph_w),
                                 .y = w.pos.y,
@@ -422,7 +430,7 @@ void ui_code_render(
         if (code->focused && code->carret.blink && code->carret.row == row &&
                 (code->carret.col >= col && code->carret.col <= col + len))
         {
-            rgba_render(rgba_white(), renderer);
+            rgba_render(code->s.carret, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = w.pos.x + ((code->carret.col - col) * font->glyph_w),
                                 .y = w.pos.y,
@@ -453,8 +461,8 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
     code->focused = sdl_rect_contains(&rect, &cursor);
     if (!code->focused) return ui_nil;
 
-    size_t col = (cursor.x - code->w.pos.x) / code->font->glyph_w;
-    size_t row = (cursor.y - code->w.pos.y) / code->font->glyph_h;
+    size_t col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
+    size_t row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
     col = col < (ui_code_num_len+1) ? 0 : col - (ui_code_num_len+1);
 
     ui_code_view_carret_at(code, row, col);

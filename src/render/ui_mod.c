@@ -55,7 +55,7 @@ struct ui_mod *ui_mod_new(void)
         .import = ui_button_new(ui_str_c("import")),
         .export = ui_button_new(ui_str_c("export")),
         .reset = ui_button_new(ui_str_c("reset")),
-        .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
+        .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf))
     };
 
     ui_panel_hide(&ui->panel);

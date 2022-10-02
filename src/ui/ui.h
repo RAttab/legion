@@ -456,13 +456,23 @@ void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
 // code
 // -----------------------------------------------------------------------------
 
+enum { ui_code_num_len = 4 };
+
+struct ui_code_style
+{
+    struct font *font;
+    struct { struct rgba fg, bg; } line, code;
+    struct rgba mark, error, carret;
+};
+
 struct ui_code
 {
     struct ui_widget w;
+    struct ui_code_style s;
+
     struct ui_scroll scroll;
     struct ui_tooltip tooltip;
 
-    struct font *font;
     bool focused;
     size_t cols;
 
@@ -487,9 +497,7 @@ struct ui_code
     struct { size_t row, col, len; } mark;
 };
 
-enum { ui_code_num_len = 4 };
-
-struct ui_code ui_code_new(struct dim, struct font *);
+struct ui_code ui_code_new(struct dim);
 void ui_code_free(struct ui_code *);
 
 void ui_code_focus(struct ui_code *);
@@ -698,6 +706,7 @@ extern struct ui_style
     struct ui_tooltip_style tooltip;
     struct ui_scroll_style scroll;
     struct ui_input_style input;
+    struct ui_code_style code;
 
 } ui_st;
 
