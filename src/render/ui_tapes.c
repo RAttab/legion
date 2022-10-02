@@ -63,7 +63,7 @@ struct ui_tapes *ui_tapes_new(void)
         .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), font, symbol_cap),
 
         .name = ui_label_new(ui_str_v(item_str_len)),
-        .help = ui_button_new_pad(font, ui_str_c("?"), make_dim(6, 0)),
+        .help = ui_button_new_s(&ui_st.button.line, ui_str_c("?")),
 
         .lab = ui_label_new(ui_str_c("lab:  ")),
         .lab_val = im_lab_bits_new(font),
@@ -273,15 +273,16 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
 
     if (ui_tapes_selected(ui)) {
         if ((ret = ui_button_event(&ui->help, ev))) {
+            if (ret != ui_action) return true;
             ui_tapes_event_help(ui);
             return true;
         }
 
-        if ((ret = ui_scroll_event(&ui->scroll, ev)))
-            return true;
+        if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
 
         if (ui_tapes_show_help(ui)) {
             if ((ret = ui_link_event(&ui->host_val, ev))) {
+                if (ret != ui_action) return true;
                 enum item host = tape_host(tapes_get(ui->tree.selected));
                 render_push_event(EV_TAPE_SELECT, host, 0);
                 return true;

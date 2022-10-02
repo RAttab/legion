@@ -199,11 +199,13 @@ bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if (coord_is_nil(star) && (ret = ui_link_event(&ui->star, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_STAR_SELECT, coord_to_u64(ui->state.star), 0);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->id, ev))) {
+        if (ret != ui_action) return true;
         struct coord coord = coord_is_nil(star) ? ui->state.star : star;
         render_push_event(EV_ITEM_SELECT, ui->state.id, coord_to_u64(coord));
         return true;

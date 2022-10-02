@@ -41,6 +41,10 @@ void ui_style_default(void)
         s->rgba.box.border = rgba_gray(0x33);
     }
 
+    { // pad
+        s->pad.box = make_dim(6, 2);
+    }
+
     { // label
         void fg(struct ui_label_style *label, struct rgba fg)
         {
@@ -70,11 +74,25 @@ void ui_style_default(void)
         fg(&s->label.error, s->rgba.error);
     }
 
+    { // button
+        s->button.base = (struct ui_button_style) {
+            .font = s->font,
+            .idle =     { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x22) },
+            .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x33) },
+            .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x11) },
+            .disabled = { .fg = ui_st.rgba.disabled, .bg = rgba_gray(0x22) },
+            .pad = ui_st.pad.box,
+        };
+
+        s->button.line = s->button.base;
+        s->button.line.pad.h = 0;
+    }
+
     s->link = (struct ui_link_style) {
         .font = s->font,
         .idle =     { .fg = ui_st.rgba.fg,       .bg = ui_st.rgba.bg },
-        .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x44) },
-        .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x88) },
+        .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x33) },
+        .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x11) },
         .disabled = { .fg = ui_st.rgba.disabled, .bg = ui_st.rgba.bg },
     };
 
@@ -83,6 +101,7 @@ void ui_style_default(void)
         .fg = ui_st.rgba.fg,
         .bg = ui_st.rgba.box.bg,
         .border = ui_st.rgba.box.border,
-        .pad = make_dim(6, 2),
+        .pad = ui_st.pad.box,
     };
+
 }

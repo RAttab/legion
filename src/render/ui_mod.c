@@ -48,13 +48,13 @@ struct ui_mod *ui_mod_new(void)
     struct ui_mod *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mod) {
         .panel = ui_panel_title(pos, dim, ui_str_v(6 + symbol_cap + 5)),
-        .compile = ui_button_new(font, ui_str_c("compile")),
-        .publish = ui_button_new(font, ui_str_c("publish")),
-        .mode = ui_button_new(font, ui_str_v(4)),
-        .indent = ui_button_new(font, ui_str_c("indent")),
-        .import = ui_button_new(font, ui_str_c("import")),
-        .export = ui_button_new(font, ui_str_c("export")),
-        .reset = ui_button_new(font, ui_str_c("reset")),
+        .compile = ui_button_new(ui_str_c("compile")),
+        .publish = ui_button_new(ui_str_c("publish")),
+        .mode = ui_button_new(ui_str_v(4)),
+        .indent = ui_button_new(ui_str_c("indent")),
+        .import = ui_button_new(ui_str_c("import")),
+        .export = ui_button_new(ui_str_c("export")),
+        .reset = ui_button_new(ui_str_c("reset")),
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf), font)
     };
 
@@ -251,12 +251,14 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_panel_event(&ui->panel, ev))) {
-        if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
+        if (ret == ui_action)
             render_push_event(EV_MOD_CLEAR, 0, 0);
         return ret != ui_skip;
     }
 
     if ((ret = ui_button_event(&ui->compile, ev))) {
+        if (ret != ui_action) return true;
+
         size_t len = ui->code.text.bytes;
         char *buffer = calloc(len, sizeof(*buffer));
         text_to_str(&ui->code.text, buffer, len);
@@ -268,6 +270,7 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->publish, ev))) {
+        if (ret != ui_action) return true;
         assert(ui->mod->errs_len == 0);
         proxy_mod_publish(render.proxy, mod_major(ui->id));
         ui->publish.disabled = true;
@@ -275,26 +278,31 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->mode, ev))) {
+        if (ret != ui_action) return true;
         ui_mod_mode_swap(ui);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->indent, ev))) {
+        if (ret != ui_action) return true;
         ui_code_indent(&ui->code);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->import, ev))) {
+        if (ret != ui_action) return true;
         ui_mod_import(ui);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->export, ev))) {
+        if (ret != ui_action) return true;
         ui_mod_export(ui);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
+        if (ret != ui_action) return true;
         proxy_mod_select(render.proxy, ui->id);
         return true;
     }

@@ -38,25 +38,25 @@ struct ui_topbar *ui_topbar_new(void)
     *ui = (struct ui_topbar) {
         .panel = ui_panel_menu(make_pos(0, 0), make_dim(render.rect.w, font->glyph_h + 8)),
 
-        .save = ui_button_new(font, ui_str_c("save")),
-        .load = ui_button_new(font, ui_str_c("load")),
+        .save = ui_button_new(ui_str_c("save")),
+        .load = ui_button_new(ui_str_c("load")),
 
-        .pause = ui_button_new(font, ui_str_c("||")),
-        .slow = ui_button_new(font, ui_str_c(">")),
-        .fast = ui_button_new(font, ui_str_c(">>")),
-        .faster = ui_button_new(font, ui_str_c(">>>")),
-        .fastest = ui_button_new(font, ui_str_c(">>|")),
+        .pause = ui_button_new(ui_str_c("||")),
+        .slow = ui_button_new(ui_str_c(">")),
+        .fast = ui_button_new(ui_str_c(">>")),
+        .faster = ui_button_new(ui_str_c(">>>")),
+        .fastest = ui_button_new(ui_str_c(">>|")),
 
-        .home = ui_button_new(font, ui_str_c("home")),
-        .stars = ui_button_new(font, ui_str_c("stars")),
-        .tapes = ui_button_new(font, ui_str_c("tapes")),
-        .mods = ui_button_new(font, ui_str_c("mods")),
-        .log = ui_button_new(font, ui_str_c("log")),
+        .home = ui_button_new(ui_str_c("home")),
+        .stars = ui_button_new(ui_str_c("stars")),
+        .tapes = ui_button_new(ui_str_c("tapes")),
+        .mods = ui_button_new(ui_str_c("mods")),
+        .log = ui_button_new(ui_str_c("log")),
 
         .coord = ui_label_new(ui_str_v(topbar_coord_len)),
 
-        .man = ui_button_new(font, ui_str_c("?")),
-        .close = ui_button_new(font, ui_str_c("x")),
+        .man = ui_button_new(ui_str_c("?")),
+        .close = ui_button_new(ui_str_c("x")),
     };
 
     return ui;
@@ -169,71 +169,85 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_button_event(&ui->save, ev))) {
+        if (ret != ui_action) return true;
         proxy_save(render.proxy);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->load, ev))) {
+        if (ret != ui_action) return true;
         proxy_load(render.proxy);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->pause, ev))) {
+        if (ret != ui_action) return true;
         proxy_set_speed(render.proxy, speed_pause);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->slow, ev))) {
+        if (ret != ui_action) return true;
         proxy_set_speed(render.proxy, speed_slow);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fast, ev))) {
+        if (ret != ui_action) return true;
         proxy_set_speed(render.proxy, speed_fast);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->faster, ev))) {
+        if (ret != ui_action) return true;
         proxy_set_speed(render.proxy, speed_faster);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fastest, ev))) {
+        if (ret != ui_action) return true;
         proxy_set_speed(render.proxy, speed_fastest);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_MAP_GOTO, coord_to_u64(proxy_home(render.proxy)), 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->stars, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_STARS_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->tapes, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_TAPES_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->mods, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_MODS_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->log, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_LOG_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->man, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_MAN_TOGGLE, 0, 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->close, ev))) {
+        if (ret != ui_action) return true;
         sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
         return true;
     }

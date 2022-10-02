@@ -33,7 +33,7 @@ struct ui_mods *ui_mods_new(void)
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
-        .new = ui_button_new(font, ui_str_c("+")),
+        .new = ui_button_new(ui_str_c("+")),
         .new_val = ui_input_new(font, symbol_cap),
         .mods = ui_list_new(make_dim(ui_layout_inf, ui_layout_inf), font, symbol_cap),
     };
@@ -151,18 +151,19 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
     if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_input_event(&ui->new_val, ev))) {
-        if (ret == ui_action) ui_mods_event_new(ui);
+        if (ret != ui_action) ui_mods_event_new(ui);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->new, ev))) {
+        if (ret != ui_action) return true;
         ui_mods_event_new(ui);
         return ret;
     }
 
     if ((ret = ui_list_event(&ui->mods, ev))) {
-        if (ret == ui_action)
-            render_push_event(EV_MOD_SELECT, make_mod(ui->mods.selected, 0), 0);
+        if (ret != ui_action) return true;
+        render_push_event(EV_MOD_SELECT, make_mod(ui->mods.selected, 0), 0);
         return true;
     }
 

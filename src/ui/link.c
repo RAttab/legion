@@ -49,7 +49,7 @@ enum ui_ret ui_link_event(struct ui_link *link, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         link->state = ui_link_pressed;
-        return link->disabled ? ui_nil : ui_action;
+        return link->disabled ? ui_consume : ui_action;
     }
 
     case SDL_MOUSEBUTTONUP: {
@@ -67,18 +67,19 @@ void ui_link_render(
 {
     ui_layout_add(layout, &link->w);
 
-    struct rgba fg, bg;
-
-    switch (link->state) {
-    case ui_link_idle: { fg = link->s.idle.fg; bg = link->s.idle.bg; break; }
-    case ui_link_hover: { fg = link->s.hover.fg; bg = link->s.hover.bg; break; }
-    case ui_link_pressed: { fg = link->s.pressed.fg; bg = link->s.pressed.bg; break; }
-    default: { assert(false); }
-    }
+    struct rgba fg = {0}, bg = {0};
 
     if (link->disabled) {
         fg = link->s.disabled.fg;
         bg = link->s.disabled.bg;
+    }
+    else {
+        switch (link->state) {
+        case ui_link_idle: { fg = link->s.idle.fg; bg = link->s.idle.bg; break; }
+        case ui_link_hover: { fg = link->s.hover.fg; bg = link->s.hover.bg; break; }
+        case ui_link_pressed: { fg = link->s.pressed.fg; bg = link->s.pressed.bg; break; }
+        default: { assert(false); }
+        }
     }
 
     SDL_Rect rect = ui_widget_rect(&link->w);

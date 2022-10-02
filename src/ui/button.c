@@ -14,24 +14,23 @@
 // button
 // -----------------------------------------------------------------------------
 
-struct ui_button ui_button_new_pad(
-        struct font *font, struct ui_str str, struct dim pad)
+struct ui_button ui_button_new_s(const struct ui_button_style *s, struct ui_str str)
 {
     return (struct ui_button) {
         .w = ui_widget_new(
-                font->glyph_w * ui_str_len(&str) + pad.w*2,
-                font->glyph_h + pad.h*2),
+                s->font->glyph_w * ui_str_len(&str) + s->pad.w*2,
+                s->font->glyph_h + s->pad.h*2),
+        .s = *s,
         .str = str,
-        .font = font,
+
         .disabled = false,
-        .pad = pad,
         .state = ui_button_idle,
     };
 }
 
-struct ui_button ui_button_new(struct font *font, struct ui_str str)
+struct ui_button ui_button_new(struct ui_str str)
 {
-    return ui_button_new_pad(font, str, make_dim(6, 2));
+    return ui_button_new_s(&ui_st.button.base, str);
 }
 
 void ui_button_free(struct ui_button *button)
@@ -59,7 +58,7 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
         if (!button->disabled) button->state = ui_button_pressed;
-        return ui_consume;
+        return button->disabled ? ui_consume : ui_action;
     }
 
     case SDL_MOUSEBUTTONUP: {
@@ -81,15 +80,27 @@ void ui_button_render(
     struct rgba fg = {0}, bg = {0};
 
     if (button->disabled) {
-        fg = rgba_gray(0x88);
-        bg = rgba_gray(0x22);
+        fg = button->s.disabled.fg;
+        bg = button->s.disabled.bg;
     }
     else {
-        fg = rgba_white();
-        switch (button->state) {
-        case ui_button_idle: { bg = rgba_gray(0x22); break; }
-        case ui_button_hover: { bg = rgba_gray(0x33); break; }
-        case ui_button_pressed: { bg = rgba_gray(0x11); break; }
+        switch (button->state)
+        {
+        case ui_button_idle: {
+            fg = button->s.idle.fg;
+            bg = button->s.idle.bg;
+            break;
+        }
+        case ui_button_hover: {
+            fg = button->s.hover.fg;
+            bg = button->s.hover.bg;
+            break;
+        }
+        case ui_button_pressed: {
+            fg = button->s.pressed.fg;
+            bg = button->s.pressed.bg;
+            break;
+        }
         default: { assert(false); }
         }
     }
@@ -99,8 +110,8 @@ void ui_button_render(
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     SDL_Point point = {
-        .x = button->w.pos.x + button->pad.w,
-        .y = button->w.pos.y + button->pad.h
+        .x = button->w.pos.x + button->s.pad.w,
+        .y = button->w.pos.y + button->s.pad.h
     };
-    font_render(button->font, renderer, point, fg, button->str.str, button->str.len);
+    font_render(button->s.font, renderer, point, fg, button->str.str, button->str.len);
 }

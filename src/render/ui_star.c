@@ -91,9 +91,9 @@ struct ui_star *ui_star_new(void)
     *ui = (struct ui_star) {
         .panel = ui_panel_title(pos, dim, ui_str_c("star")),
 
-        .goto_map = ui_button_new(font, ui_str_c("<< map")),
-        .goto_factory = ui_button_new(font, ui_str_c("<< factory")),
-        .goto_log = ui_button_new(font, ui_str_c("<< log")),
+        .goto_map = ui_button_new(ui_str_c("<< map")),
+        .goto_factory = ui_button_new(ui_str_c("<< factory")),
+        .goto_log = ui_button_new(ui_str_c("<< log")),
 
         .name = ui_label_new(ui_str_c("name:  ")),
         .name_val = ui_label_new(ui_str_v(symbol_cap)),
@@ -107,9 +107,9 @@ struct ui_star *ui_star_new(void)
         .elem = ui_label_new(ui_str_c(ui_star_elems[0])),
         .elem_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .control = ui_button_new(font, ui_str_c("control")),
-        .factory = ui_button_new(font, ui_str_c("factory")),
-        .logistic = ui_button_new(font, ui_str_c("logistic")),
+        .control = ui_button_new(ui_str_c("control")),
+        .factory = ui_button_new(ui_str_c("factory")),
+        .logistic = ui_button_new(ui_str_c("logistic")),
 
         .control_list = ui_tree_new(
                 make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
@@ -450,44 +450,52 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     }
 
     if ((ret = ui_button_event(&ui->goto_map, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_MAP_GOTO, coord_to_u64(ui->id), 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->goto_factory, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_FACTORY_SELECT, coord_to_u64(ui->id), 0);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->goto_log, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_LOG_SELECT, coord_to_u64(ui->id), 0);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
+        if (ret != ui_action) return true;
         ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(ui->star.coord));
         return true;
     }
 
     if ((ret = ui_button_event(&ui->control, ev))) {
+        if (ret != ui_action) return true;
         ui->control.disabled = true;
         ui->factory.disabled = ui->logistic.disabled = false;
         return true;
     }
 
     if ((ret = ui_button_event(&ui->factory, ev))) {
+        if (ret != ui_action) return true;
         ui->factory.disabled = true;
         ui->control.disabled = ui->logistic.disabled = false;
         return true;
     }
 
     if ((ret = ui_button_event(&ui->logistic, ev))) {
+        if (ret != ui_action) return true;
         ui->logistic.disabled = true;
         ui->control.disabled = ui->factory.disabled = false;
         return true;
     }
 
     if (ui->control.disabled && (ret = ui_tree_event(&ui->control_list, ev))) {
+        if (ret != ui_action) return true;
         im_id id = ui->control_list.selected;
         if (ret == ui_action && im_id_seq(id))
             render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));
@@ -495,6 +503,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     }
 
     if (ui->factory.disabled && (ret = ui_tree_event(&ui->factory_list, ev))) {
+        if (ret != ui_action) return true;
         im_id id = ui->factory_list.selected;
         if (ret == ui_action && im_id_seq(id))
             render_push_event(EV_ITEM_SELECT, id, coord_to_u64(ui->star.coord));

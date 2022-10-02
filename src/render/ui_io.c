@@ -41,15 +41,14 @@ struct ui_io_cmd
     struct ui_button exec;
 };
 
-static struct ui_io_cmd ui_io_cmd(
-        struct font *font, enum io id, size_t args)
+static struct ui_io_cmd ui_io_cmd(enum io id, size_t args)
 {
     struct ui_io_cmd cmd = {
         .id = id,
         .active = false,
         .name = ui_label_new_s(&ui_st.label.title, ui_str_v(symbol_cap)),
-        .help = ui_button_new_pad(font, ui_str_c("?"), make_dim(6, 0)),
-        .exec = ui_button_new(font, ui_str_c("exec >>")),
+        .help = ui_button_new_s(&ui_st.button.line, ui_str_c("?")),
+        .exec = ui_button_new(ui_str_c("exec >>")),
         .args = args,
     };
 
@@ -63,15 +62,15 @@ static struct ui_io_cmd ui_io_cmd(
     return cmd;
 }
 
-static struct ui_io_cmd ui_io_cmd0(struct font *font, enum io id)
+static struct ui_io_cmd ui_io_cmd0(enum io id)
 {
-    return ui_io_cmd(font, id, 0);
+    return ui_io_cmd(id, 0);
 }
 
 static struct ui_io_cmd ui_io_cmd1(
         struct font *font, enum io id, const char *arg)
 {
-    struct ui_io_cmd cmd = ui_io_cmd(font, id, 1);
+    struct ui_io_cmd cmd = ui_io_cmd(id, 1);
     cmd.arg[0] = ui_io_arg(font, arg);
     return cmd;
 }
@@ -79,7 +78,7 @@ static struct ui_io_cmd ui_io_cmd1(
 static struct ui_io_cmd ui_io_cmd2(
         struct font *font, enum io id, const char *arg0, const char *arg1)
 {
-    struct ui_io_cmd cmd = ui_io_cmd(font, id, 2);
+    struct ui_io_cmd cmd = ui_io_cmd(id, 2);
     cmd.arg[0] = ui_io_arg(font, arg0);
     cmd.arg[1] = ui_io_arg(font, arg1);
     return cmd;
@@ -89,7 +88,7 @@ static struct ui_io_cmd ui_io_cmd3(
         struct font *font, enum io id,
         const char *arg0, const char *arg1, const char *arg2)
 {
-    struct ui_io_cmd cmd = ui_io_cmd(font, id, 3);
+    struct ui_io_cmd cmd = ui_io_cmd(id, 3);
     cmd.arg[0] = ui_io_arg(font, arg0);
     cmd.arg[1] = ui_io_arg(font, arg1);
     cmd.arg[2] = ui_io_arg(font, arg2);
@@ -100,7 +99,7 @@ static struct ui_io_cmd ui_io_cmd4(
         struct font *font, enum io id,
         const char *arg0, const char *arg1, const char *arg2, const char *arg3)
 {
-    struct ui_io_cmd cmd = ui_io_cmd(font, id, 4);
+    struct ui_io_cmd cmd = ui_io_cmd(id, 4);
     cmd.arg[0] = ui_io_arg(font, arg0);
     cmd.arg[1] = ui_io_arg(font, arg1);
     cmd.arg[2] = ui_io_arg(font, arg2);
@@ -176,7 +175,7 @@ struct ui_io *ui_io_new(void)
         .target = ui_label_new(ui_str_c("target: ")),
         .target_val = ui_label_new(ui_str_v(im_id_str_len)),
         .io = {
-            [ui_io_reset] = ui_io_cmd0(font, IO_RESET),
+            [ui_io_reset] = ui_io_cmd0(IO_RESET),
             [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:  ", "loops: "),
             [ui_io_tape] = ui_io_cmd2(font, IO_TAPE, "id:    ", "loops: "),
             [ui_io_mod] = ui_io_cmd1(font, IO_MOD,   "id:    "),
@@ -184,10 +183,10 @@ struct ui_io *ui_io_new(void)
             [ui_io_name] = ui_io_cmd1(font, IO_NAME, "name:  "),
             [ui_io_send] = ui_io_cmd4(font, IO_SEND,
                     "len:   ", "[0]:   ", "[1]:   ", "[2]:   "),
-            [ui_io_dbg_attach] = ui_io_cmd0(font, IO_DBG_ATTACH),
-            [ui_io_dbg_detach] = ui_io_cmd0(font, IO_DBG_DETACH),
+            [ui_io_dbg_attach] = ui_io_cmd0(IO_DBG_ATTACH),
+            [ui_io_dbg_detach] = ui_io_cmd0(IO_DBG_DETACH),
             [ui_io_dbg_break] = ui_io_cmd1(font, IO_DBG_BREAK, "ip:    "),
-            [ui_io_dbg_step] = ui_io_cmd0(font, IO_DBG_STEP),
+            [ui_io_dbg_step] = ui_io_cmd0(IO_DBG_STEP),
 
             [ui_io_set] = ui_io_cmd2(font, IO_SET,   "index: ", "value: "),
             [ui_io_cas] = ui_io_cmd3(font, IO_CAS,   "index: ", "test:  ", "value: "),
@@ -195,10 +194,10 @@ struct ui_io *ui_io_new(void)
             [ui_io_scan] = ui_io_cmd1(font, IO_SCAN, "coord: "),
             [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
             [ui_io_target] = ui_io_cmd1(font, IO_TARGET, "dest:  "),
-            [ui_io_grow] = ui_io_cmd0(font, IO_GROW),
+            [ui_io_grow] = ui_io_cmd0(IO_GROW),
             [ui_io_input] = ui_io_cmd2(font, IO_INPUT, "item:  ", "coord: "),
-            [ui_io_activate] = ui_io_cmd0(font, IO_ACTIVATE),
-            [ui_io_value] = ui_io_cmd0(font, IO_VALUE),
+            [ui_io_activate] = ui_io_cmd0(IO_ACTIVATE),
+            [ui_io_value] = ui_io_cmd0(IO_VALUE),
         },
     };
 
@@ -386,11 +385,13 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
         }
 
         if ((ret = ui_button_event(&cmd->help, ev))) {
+            if (ret != ui_action) return true;
             ui_io_help(ui, cmd);
             return true;
         }
 
         if ((ret = ui_button_event(&cmd->exec, ev))) {
+            if (ret != ui_action) return true;
             ui_io_exec(ui, cmd);
             return true;
         }

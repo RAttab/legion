@@ -124,8 +124,9 @@ static bool ui_prober_event(void *_ui, const SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
+        if (ret != ui_action) return true;
         ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(ui->state.coord));
-        return ret == ui_consume;
+        return true;
     }
 
     return false;

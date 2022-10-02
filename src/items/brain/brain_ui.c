@@ -210,24 +210,27 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_link_event(&ui->breakpoint_val, ev))) {
+        if (ret != ui_action) return true;
         if (state->mod_id && state->breakpoint != IP_NIL)
             render_push_event(EV_MOD_SELECT, state->mod_id, state->breakpoint);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_link_event(&ui->mod_val, ev))) {
+        if (ret != ui_action) return true;
         if (state->mod_id)
             render_push_event(EV_MOD_SELECT, state->mod_id, 0);
-        return ret == ui_consume;
+        return true;
     }
 
     if ((ret = ui_link_event(&ui->ip_val, ev))) {
+        if (ret != ui_action) return true;
         if (state->mod_id)
             render_push_event(EV_MOD_SELECT, state->mod_id, state->vm.ip);
-        return ret == ui_consume;
+        return true;
     }
 
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
+    if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
 
     return false;
 }

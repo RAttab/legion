@@ -353,20 +353,25 @@ enum ui_button_state
     ui_button_pressed,
 };
 
+struct ui_button_style
+{
+    struct font *font;
+    struct { struct rgba fg, bg; } idle, hover, pressed, disabled;
+    struct dim pad;
+};
+
 struct ui_button
 {
     struct ui_widget w;
+    struct ui_button_style s;
     struct ui_str str;
-
-    struct font *font;
-    struct dim pad;
 
     bool disabled;
     enum ui_button_state state;
 };
 
-struct ui_button ui_button_new(struct font *, struct ui_str);
-struct ui_button ui_button_new_pad(struct font *, struct ui_str, struct dim pad);
+struct ui_button ui_button_new(struct ui_str);
+struct ui_button ui_button_new_s(const struct ui_button_style *, struct ui_str);
 void ui_button_free(struct ui_button *);
 enum ui_ret ui_button_event(struct ui_button *, const SDL_Event *);
 void ui_button_render(struct ui_button *, struct ui_layout *, SDL_Renderer *);
@@ -646,7 +651,8 @@ extern struct ui_style
 {
     struct font *font;
 
-    struct {
+    struct
+    {
         struct rgba fg, bg;
         struct rgba in, out, work;
         struct rgba error, warn, info;
@@ -655,12 +661,24 @@ extern struct ui_style
         struct { struct rgba bg, border; } box;
     } rgba;
 
-    struct {
+    struct
+    {
+        struct dim box;
+    } pad;
+
+    struct
+    {
         struct ui_label_style base;
         struct ui_label_style title, index;
         struct ui_label_style in, out, work;
         struct ui_label_style active, waiting, error;
     } label;
+
+    struct
+    {
+        struct ui_button_style base;
+        struct ui_button_style line;
+    } button;
 
     struct ui_link_style link;
     struct ui_tooltip_style tooltip;

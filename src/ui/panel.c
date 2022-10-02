@@ -38,11 +38,8 @@ struct ui_panel ui_panel_menu(struct pos pos, struct dim dim)
 struct ui_panel ui_panel_title(struct pos pos, struct dim dim, struct ui_str str)
 {
     struct ui_panel panel = ui_panel_new(pos, dim);
-
-    struct font *font = font_mono6;
     panel.title = ui_label_new(str);
-    panel.close = ui_button_new(font, ui_str_c("X"));
-
+    panel.close = ui_button_new(ui_str_c("X"));
     return panel;
 }
 
@@ -100,9 +97,10 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     }
     case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEMOTION: {
-        if (!panel->menu && ui_button_event(&panel->close, ev) == ui_consume) {
-            if (panel->close.state == ui_button_pressed) panel->state = ui_panel_hidden;
-            return ui_consume;
+        enum ui_ret ret = 0;
+        if (!panel->menu && (ret = ui_button_event(&panel->close, ev))) {
+            if (ret == ui_action) panel->state = ui_panel_hidden;
+            return ret;
         }
         return ui_nil;
     }

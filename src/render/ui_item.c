@@ -43,8 +43,8 @@ struct ui_item *ui_item_new(void)
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {
         .panel = ui_panel_title(pos, dim, ui_str_c("item")),
-        .io = ui_button_new(font, ui_str_c("<< io")),
-        .help = ui_button_new(font, ui_str_c("?")),
+        .io = ui_button_new(ui_str_c("<< io")),
+        .help = ui_button_new(ui_str_c("?")),
         .id_lbl = ui_label_new(ui_str_c("id: ")),
         .id_val = ui_link_new(ui_str_v(im_id_str_len)),
     };
@@ -190,16 +190,19 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
 
     if ((ret = ui_button_event(&ui->io, ev))) {
+        if (ret != ui_action) return true;
         render_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
         return true;
     }
 
     if ((ret = ui_button_event(&ui->help, ev))) {
+        if (ret != ui_action) return true;
         ui_item_event_help(ui);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->id_val, ev))) {
+        if (ret != ui_action) return true;
         ui_clipboard_copy_hex(&render.ui.board, ui->id);
         return true;
     }
