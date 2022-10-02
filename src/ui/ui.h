@@ -418,10 +418,17 @@ inline size_t ui_scroll_last(const struct ui_scroll *scroll)
 
 enum { ui_input_cap = 256 };
 
+struct ui_input_style
+{
+    struct font *font;
+    struct rgba fg, bg, border, carret;
+    struct dim pad;
+};
+
 struct ui_input
 {
     struct ui_widget w;
-    struct font *font;
+    struct ui_input_style s;
 
     bool focused;
     struct { uint8_t col, len; } view;
@@ -429,7 +436,7 @@ struct ui_input
     struct { uint8_t col; bool blink; } carret;
 };
 
-struct ui_input ui_input_new(struct font *, size_t char_width);
+struct ui_input ui_input_new(size_t len);
 void ui_input_free(struct ui_input *);
 
 void ui_input_focus(struct ui_input *);
@@ -664,6 +671,7 @@ extern struct ui_style
         struct rgba error, warn, info;
         struct rgba waiting, working;
         struct rgba active, disabled;
+        struct rgba carret;
         struct { struct rgba bg, border; } box;
     } rgba;
 
@@ -689,6 +697,7 @@ extern struct ui_style
     struct ui_link_style link;
     struct ui_tooltip_style tooltip;
     struct ui_scroll_style scroll;
+    struct ui_input_style input;
 
 } ui_st;
 

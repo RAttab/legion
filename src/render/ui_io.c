@@ -21,11 +21,11 @@ struct ui_io_arg
     struct ui_input val;
 };
 
-static struct ui_io_arg ui_io_arg(struct font *font, const char *arg)
+static struct ui_io_arg ui_io_arg(const char *arg)
 {
     return (struct ui_io_arg) {
         .name = ui_label_new(ui_str_c(arg)),
-        .val = ui_input_new(font, 20),
+        .val = ui_input_new(20),
     };
 }
 
@@ -67,43 +67,42 @@ static struct ui_io_cmd ui_io_cmd0(enum io id)
     return ui_io_cmd(id, 0);
 }
 
-static struct ui_io_cmd ui_io_cmd1(
-        struct font *font, enum io id, const char *arg)
+static struct ui_io_cmd ui_io_cmd1(enum io id, const char *arg)
 {
     struct ui_io_cmd cmd = ui_io_cmd(id, 1);
-    cmd.arg[0] = ui_io_arg(font, arg);
+    cmd.arg[0] = ui_io_arg(arg);
     return cmd;
 }
 
 static struct ui_io_cmd ui_io_cmd2(
-        struct font *font, enum io id, const char *arg0, const char *arg1)
+        enum io id, const char *arg0, const char *arg1)
 {
     struct ui_io_cmd cmd = ui_io_cmd(id, 2);
-    cmd.arg[0] = ui_io_arg(font, arg0);
-    cmd.arg[1] = ui_io_arg(font, arg1);
+    cmd.arg[0] = ui_io_arg(arg0);
+    cmd.arg[1] = ui_io_arg(arg1);
     return cmd;
 }
 
 static struct ui_io_cmd ui_io_cmd3(
-        struct font *font, enum io id,
-        const char *arg0, const char *arg1, const char *arg2)
+        enum io id, const char *arg0, const char *arg1, const char *arg2)
 {
     struct ui_io_cmd cmd = ui_io_cmd(id, 3);
-    cmd.arg[0] = ui_io_arg(font, arg0);
-    cmd.arg[1] = ui_io_arg(font, arg1);
-    cmd.arg[2] = ui_io_arg(font, arg2);
+    cmd.arg[0] = ui_io_arg(arg0);
+    cmd.arg[1] = ui_io_arg(arg1);
+    cmd.arg[2] = ui_io_arg(arg2);
     return cmd;
 }
 
 static struct ui_io_cmd ui_io_cmd4(
-        struct font *font, enum io id,
-        const char *arg0, const char *arg1, const char *arg2, const char *arg3)
+        enum io id,
+        const char *arg0, const char *arg1,
+        const char *arg2, const char *arg3)
 {
     struct ui_io_cmd cmd = ui_io_cmd(id, 4);
-    cmd.arg[0] = ui_io_arg(font, arg0);
-    cmd.arg[1] = ui_io_arg(font, arg1);
-    cmd.arg[2] = ui_io_arg(font, arg2);
-    cmd.arg[3] = ui_io_arg(font, arg3);
+    cmd.arg[0] = ui_io_arg(arg0);
+    cmd.arg[1] = ui_io_arg(arg1);
+    cmd.arg[2] = ui_io_arg(arg2);
+    cmd.arg[3] = ui_io_arg(arg3);
     return cmd;
 }
 
@@ -176,26 +175,26 @@ struct ui_io *ui_io_new(void)
         .target_val = ui_label_new(ui_str_v(im_id_str_len)),
         .io = {
             [ui_io_reset] = ui_io_cmd0(IO_RESET),
-            [ui_io_item] = ui_io_cmd2(font, IO_ITEM, "item:  ", "loops: "),
-            [ui_io_tape] = ui_io_cmd2(font, IO_TAPE, "id:    ", "loops: "),
-            [ui_io_mod] = ui_io_cmd1(font, IO_MOD,   "id:    "),
+            [ui_io_item] = ui_io_cmd2(IO_ITEM, "item:  ", "loops: "),
+            [ui_io_tape] = ui_io_cmd2(IO_TAPE, "id:    ", "loops: "),
+            [ui_io_mod] = ui_io_cmd1(IO_MOD,   "id:    "),
 
-            [ui_io_name] = ui_io_cmd1(font, IO_NAME, "name:  "),
-            [ui_io_send] = ui_io_cmd4(font, IO_SEND,
+            [ui_io_name] = ui_io_cmd1(IO_NAME, "name:  "),
+            [ui_io_send] = ui_io_cmd4(IO_SEND,
                     "len:   ", "[0]:   ", "[1]:   ", "[2]:   "),
             [ui_io_dbg_attach] = ui_io_cmd0(IO_DBG_ATTACH),
             [ui_io_dbg_detach] = ui_io_cmd0(IO_DBG_DETACH),
-            [ui_io_dbg_break] = ui_io_cmd1(font, IO_DBG_BREAK, "ip:    "),
+            [ui_io_dbg_break] = ui_io_cmd1(IO_DBG_BREAK, "ip:    "),
             [ui_io_dbg_step] = ui_io_cmd0(IO_DBG_STEP),
 
-            [ui_io_set] = ui_io_cmd2(font, IO_SET,   "index: ", "value: "),
-            [ui_io_cas] = ui_io_cmd3(font, IO_CAS,   "index: ", "test:  ", "value: "),
-            [ui_io_probe] = ui_io_cmd2(font, IO_PROBE, "item:  ", "coord: "),
-            [ui_io_scan] = ui_io_cmd1(font, IO_SCAN, "coord: "),
-            [ui_io_launch] = ui_io_cmd1(font, IO_LAUNCH, "dest:  "),
-            [ui_io_target] = ui_io_cmd1(font, IO_TARGET, "dest:  "),
+            [ui_io_set] = ui_io_cmd2(IO_SET,   "index: ", "value: "),
+            [ui_io_cas] = ui_io_cmd3(IO_CAS,   "index: ", "test:  ", "value: "),
+            [ui_io_probe] = ui_io_cmd2(IO_PROBE, "item:  ", "coord: "),
+            [ui_io_scan] = ui_io_cmd1(IO_SCAN, "coord: "),
+            [ui_io_launch] = ui_io_cmd1(IO_LAUNCH, "dest:  "),
+            [ui_io_target] = ui_io_cmd1(IO_TARGET, "dest:  "),
             [ui_io_grow] = ui_io_cmd0(IO_GROW),
-            [ui_io_input] = ui_io_cmd2(font, IO_INPUT, "item:  ", "coord: "),
+            [ui_io_input] = ui_io_cmd2(IO_INPUT, "item:  ", "coord: "),
             [ui_io_activate] = ui_io_cmd0(IO_ACTIVATE),
             [ui_io_value] = ui_io_cmd0(IO_VALUE),
         },

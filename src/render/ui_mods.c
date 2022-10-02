@@ -20,11 +20,9 @@ struct ui_mods
     struct ui_list mods;
 };
 
-static struct font *ui_mods_font(void) { return font_mono6; }
-
 struct ui_mods *ui_mods_new(void)
 {
-    struct font *font = ui_mods_font();
+    struct font *font = ui_st.font;
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (symbol_cap+5) * font->glyph_w,
@@ -34,7 +32,7 @@ struct ui_mods *ui_mods_new(void)
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
         .new = ui_button_new(ui_str_c("+")),
-        .new_val = ui_input_new(font, symbol_cap),
+        .new_val = ui_input_new(symbol_cap),
         .mods = ui_list_new(make_dim(ui_layout_inf, ui_layout_inf), font, symbol_cap),
     };
 
@@ -172,8 +170,6 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
 void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
 {
-    struct font *font = ui_mods_font();
-
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
@@ -181,7 +177,7 @@ void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
     ui_button_render(&ui->new, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     ui_list_render(&ui->mods, &layout, renderer);
 }

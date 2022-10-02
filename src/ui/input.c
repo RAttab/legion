@@ -15,22 +15,21 @@
 // input
 // -----------------------------------------------------------------------------
 
-static const struct dim ui_input_margin = { .w = 2, .h = 2 };
-
-struct ui_input ui_input_new(struct font *font, size_t width)
+struct ui_input ui_input_new(size_t len)
 {
-    assert(width < ui_input_cap);
+    assert(len < ui_input_cap);
+    const struct ui_input_style *s = &ui_st.input;
 
     struct ui_input input = {
         .w = ui_widget_new(
-                font->glyph_w * width + ui_input_margin.w * 2,
-                font->glyph_h + ui_input_margin.h * 2),
-        .font = font,
+                s->font->glyph_w * len + s->pad.w * 2,
+                s->font->glyph_h + s->pad.h * 2),
+        .s = *s,
         .focused = false,
     };
 
     input.view.col = 0;
-    input.view.len = width;
+    input.view.len = len;
 
     input.buf.c = calloc(ui_input_cap, sizeof(input.buf.c));
     input.buf.len = 0;
@@ -108,32 +107,36 @@ void ui_input_render(
         struct ui_input *input, struct ui_layout *layout, SDL_Renderer *renderer)
 {
     ui_layout_add(layout, &input->w);
+
     SDL_Rect rect = ui_widget_rect(&input->w);
 
-    rgba_render(rgba_gray(0x33), renderer);
+    rgba_render(input->s.bg, renderer);
+    sdl_err(SDL_RenderFillRect(renderer, &rect));
+
+    rgba_render(input->s.border, renderer);
     sdl_err(SDL_RenderDrawRect(renderer, &rect));
 
     SDL_Point pos = {
-        .x = rect.x + ui_input_margin.w,
-        .y = rect.y + ui_input_margin.h,
+        .x = rect.x + input->s.pad.w,
+        .y = rect.y + input->s.pad.h,
     };
 
     assert(input->view.col <= input->buf.len);
     const char *it = input->buf.c + input->view.col;
     size_t len = legion_min(input->buf.len - input->view.col, input->view.len);
-    font_render(input->font, renderer, pos, rgba_white(), it, len);
+    font_render(input->s.font, renderer, pos, input->s.fg, it, len);
 
     if (input->focused && input->carret.blink) {
         size_t col = input->carret.col - input->view.col;
-        size_t x = ui_input_margin.w + col * input->font->glyph_w;
-        size_t y = ui_input_margin.h;
+        size_t x = input->s.pad.w + col * input->s.font->glyph_w;
+        size_t y = input->s.pad.h;
 
-        rgba_render(rgba_white(), renderer);
+        rgba_render(input->s.carret, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = input->w.pos.x + x,
                             .y = input->w.pos.y + y,
-                            .w = input->font->glyph_w,
-                            .h = input->font->glyph_h,
+                            .w = input->s.font->glyph_w,
+                            .h = input->s.font->glyph_h,
                         }));
     }
 }
@@ -150,7 +153,7 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     input->focused = sdl_rect_contains(&rect, &cursor);
     if (!input->focused) return ui_nil;
 
-    size_t col = (cursor.x - input->w.pos.x) / input->font->glyph_w;
+    size_t col = (cursor.x - input->w.pos.x) / input->s.font->glyph_w;
     input->carret.col = legion_min(col, input->buf.len);
 
     render_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);

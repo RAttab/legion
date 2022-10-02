@@ -31,11 +31,13 @@ void ui_style_default(void)
         s->rgba.warn = rgba_yellow();
         s->rgba.info = rgba_white();
 
-        s->rgba.active = rgba_green();
         s->rgba.waiting = rgba_blue();
         s->rgba.working = rgba_yellow();
 
+        s->rgba.active = rgba_green();
         s->rgba.disabled = rgba_gray(0x88);
+
+        s->rgba.carret = rgba_gray_a(0xCC, 0x88);
 
         s->rgba.box.bg = rgba_black();
         s->rgba.box.border = rgba_gray(0x33);
@@ -107,5 +109,14 @@ void ui_style_default(void)
     s->scroll = (struct ui_scroll_style) {
         .fg = rgba_gray(0x88),
         .bg = ui_st.rgba.bg,
+    };
+
+    s->input = (struct ui_input_style) {
+        .font = s->font,
+        .fg = ui_st.rgba.fg,
+        .bg = ui_st.rgba.bg,
+        .border = ui_st.rgba.box.border,
+        .carret = ui_st.rgba.carret,
+        .pad = make_dim(2, 2),
     };
 }
