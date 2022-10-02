@@ -18,6 +18,7 @@ struct ui_scroll ui_scroll_new(struct dim dim, int16_t row_h)
 {
     return (struct ui_scroll) {
         .w = ui_widget_new(dim.w, dim.h),
+        .s = ui_st.scroll,
         .row_h = row_h,
         .first = 0,
         .total = 0,
@@ -112,14 +113,20 @@ struct ui_layout ui_scroll_render(
         struct ui_scroll *scroll, struct ui_layout *layout, SDL_Renderer *renderer)
 {
     ui_layout_add(layout, &scroll->w);
+
+    if (!rgba_is_nil(scroll->s.bg)) {
+        rgba_render(scroll->s.bg, renderer);
+        SDL_Rect rect = ui_widget_rect(&scroll->w);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
+    }
+
     scroll->visible = scroll->w.dim.h / scroll->row_h;
 
     struct dim dim = make_dim(scroll->w.dim.w - ui_scroll_width, scroll->w.dim.h);
     struct ui_layout inner = ui_layout_new(scroll->w.pos, dim);
     if (!scroll->first && scroll->visible >= scroll->total) return inner;
 
-    rgba_render(rgba_white(), renderer);
-
+    rgba_render(scroll->s.fg, renderer);
     SDL_Rect rect = ui_scroll_rect(scroll);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 

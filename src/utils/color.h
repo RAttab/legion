@@ -37,6 +37,10 @@ inline void rgba_render(struct rgba c, SDL_Renderer *renderer)
     sdl_err(SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND));
 };
 
+inline bool rgba_is_nil(struct rgba c)
+{
+    return !c.r && !c.g && !c.b && !c.a;
+}
 
 // -----------------------------------------------------------------------------
 // hsv

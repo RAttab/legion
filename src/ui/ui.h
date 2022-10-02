@@ -381,9 +381,15 @@ void ui_button_render(struct ui_button *, struct ui_layout *, SDL_Renderer *);
 // scroll
 // -----------------------------------------------------------------------------
 
+struct ui_scroll_style
+{
+    struct rgba fg, bg;
+};
+
 struct ui_scroll
 {
     struct ui_widget w;
+    struct ui_scroll_style s;
 
     int16_t row_h;
     size_t first, total, visible;
@@ -682,6 +688,7 @@ extern struct ui_style
 
     struct ui_link_style link;
     struct ui_tooltip_style tooltip;
+    struct ui_scroll_style scroll;
 
 } ui_st;
 

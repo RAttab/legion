@@ -104,4 +104,8 @@ void ui_style_default(void)
         .pad = ui_st.pad.box,
     };
 
+    s->scroll = (struct ui_scroll_style) {
+        .fg = rgba_gray(0x88),
+        .bg = ui_st.rgba.bg,
+    };
 }
