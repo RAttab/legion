@@ -36,6 +36,9 @@ void ui_style_default(void)
         s->rgba.working = rgba_yellow();
 
         s->rgba.disabled = rgba_gray(0x88);
+
+        s->rgba.box.bg = rgba_black();
+        s->rgba.box.border = rgba_gray(0x33);
     }
 
     { // label
@@ -73,5 +76,13 @@ void ui_style_default(void)
         .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x44) },
         .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x88) },
         .disabled = { .fg = ui_st.rgba.disabled, .bg = ui_st.rgba.bg },
+    };
+
+    s->tooltip = (struct ui_tooltip_style) {
+        .font = s->font,
+        .fg = ui_st.rgba.fg,
+        .bg = ui_st.rgba.box.bg,
+        .border = ui_st.rgba.box.border,
+        .pad = make_dim(6, 2),
     };
 }

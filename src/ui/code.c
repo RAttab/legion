@@ -21,7 +21,7 @@ struct ui_code ui_code_new(struct dim dim, struct font *font)
     struct ui_code code = {
         .w = ui_widget_new(dim.w, dim.h),
         .scroll = ui_scroll_new(dim, font->glyph_h),
-        .tooltip = ui_tooltip_new(font, ui_str_v(mod_err_cap), (SDL_Rect) {0}),
+        .tooltip = ui_tooltip_new(ui_str_v(mod_err_cap), (SDL_Rect) {0}),
 
         .font = font,
         .focused = false,
@@ -30,7 +30,6 @@ struct ui_code ui_code_new(struct dim dim, struct font *font)
     };
 
     text_init(&code.text);
-    code.tooltip.fg = make_rgba(0xFF, 0x00, 0x00, 0xFF);
     return code;
 }
 
@@ -589,7 +588,7 @@ static enum ui_ret ui_code_event_user(struct ui_code *code, const SDL_Event *ev)
 
 static enum ui_ret ui_code_event_motion(struct ui_code *code)
 {
-    code->tooltip.visible = false;
+    ui_tooltip_hide(&code->tooltip);
     if (likely(!code->mod->errs_len)) return ui_nil;
 
     size_t row = 0, col = 0;
@@ -605,7 +604,7 @@ static enum ui_ret ui_code_event_motion(struct ui_code *code)
 
         size_t len = strnlen(err->str, mod_err_cap);
         ui_str_setv(&code->tooltip.str, err->str, len);
-        code->tooltip.visible = true;
+        ui_tooltip_show(&code->tooltip);
         break;
     }
 

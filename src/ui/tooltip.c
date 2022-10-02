@@ -14,22 +14,19 @@
 // tooltip
 // -----------------------------------------------------------------------------
 
-struct ui_tooltip ui_tooltip_new(
-        struct font *font, struct ui_str str, SDL_Rect rect)
+struct ui_tooltip ui_tooltip_new(struct ui_str str, SDL_Rect rect)
 {
-    struct dim pad = make_dim(6, 2);
+    const struct ui_tooltip_style *s = &ui_st.tooltip;
+
     return (struct ui_tooltip) {
         .w = ui_widget_new(
-                font->glyph_w * ui_str_len(&str) + pad.w*2,
-                font->glyph_h + pad.h*2),
+                s->font->glyph_w * ui_str_len(&str) + s->pad.w*2,
+                s->font->glyph_h + s->pad.h*2),
+        .s = *s,
         .str = str,
 
-        .font = font,
-        .fg = rgba_white(),
-        .pad = pad,
-
         .rect = rect,
-        .visible = false,
+        .disabled = true,
     };
 }
 
@@ -37,6 +34,9 @@ void ui_tooltip_free(struct ui_tooltip *tooltip)
 {
     ui_str_free(&tooltip->str);
 }
+
+void ui_tooltip_show(struct ui_tooltip *tooltip) { tooltip->disabled = false; }
+void ui_tooltip_hide(struct ui_tooltip *tooltip) { tooltip->disabled = true; }
 
 enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
 {
@@ -47,7 +47,7 @@ enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
         tooltip->w.pos = make_pos(cursor.x + render.cursor.size, cursor.y);
 
         if (!tooltip->rect.w && !tooltip->rect.h)
-            tooltip->visible = sdl_rect_contains(&tooltip->rect, &cursor);
+            tooltip->disabled = !sdl_rect_contains(&tooltip->rect, &cursor);
 
         return ui_nil;
     }
@@ -58,19 +58,24 @@ enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
 
 void ui_tooltip_render(struct ui_tooltip *tooltip, SDL_Renderer *renderer)
 {
-    if (!tooltip->visible) return;
+    if (tooltip->disabled) return;
 
     SDL_Rect rect = ui_widget_rect(&tooltip->w);
 
-    rgba_render(rgba_black(), renderer);
+    rgba_render(tooltip->s.bg, renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    rgba_render(rgba_gray(0x33), renderer);
+    rgba_render(tooltip->s.border, renderer);
     sdl_err(SDL_RenderDrawRect(renderer, &rect));
 
     SDL_Point point = {
-        .x = tooltip->w.pos.x + tooltip->pad.w,
-        .y = tooltip->w.pos.y + tooltip->pad.h
+        .x = tooltip->w.pos.x + tooltip->s.pad.w,
+        .y = tooltip->w.pos.y + tooltip->s.pad.h
     };
-    font_render(tooltip->font, renderer, point, tooltip->fg, tooltip->str.str, tooltip->str.len);
+    font_render(
+            tooltip->s.font,
+            renderer,
+            point,
+            tooltip->s.fg,
+            tooltip->str.str, tooltip->str.len);
 }

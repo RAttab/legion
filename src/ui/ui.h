@@ -306,7 +306,6 @@ struct ui_link
 };
 
 struct ui_link ui_link_new(struct ui_str);
-struct ui_link ui_link_new_s(const struct ui_link_style *, struct ui_str);
 void ui_link_free(struct ui_link *);
 enum ui_ret ui_link_event(struct ui_link *, const SDL_Event *);
 void ui_link_render(struct ui_link *, struct ui_layout *, SDL_Renderer *);
@@ -316,21 +315,29 @@ void ui_link_render(struct ui_link *, struct ui_layout *, SDL_Renderer *);
 // tooltip
 // -----------------------------------------------------------------------------
 
+struct ui_tooltip_style
+{
+    struct font *font;
+    struct rgba fg, bg, border;
+    struct dim pad;
+};
+
 struct ui_tooltip
 {
     struct ui_widget w;
+    struct ui_tooltip_style s;
     struct ui_str str;
 
-    struct font *font;
-    struct rgba fg;
-    struct dim pad;
-
     SDL_Rect rect;
-    bool visible;
+    bool disabled;
 };
 
-struct ui_tooltip ui_tooltip_new(struct font *, struct ui_str, SDL_Rect);
+struct ui_tooltip ui_tooltip_new(struct ui_str, SDL_Rect);
 void ui_tooltip_free(struct ui_tooltip *);
+
+void ui_tooltip_show(struct ui_tooltip *);
+void ui_tooltip_hide(struct ui_tooltip *);
+
 enum ui_ret ui_tooltip_event(struct ui_tooltip *, const SDL_Event *);
 void ui_tooltip_render(struct ui_tooltip *, SDL_Renderer *);
 
@@ -645,6 +652,7 @@ extern struct ui_style
         struct rgba error, warn, info;
         struct rgba waiting, working;
         struct rgba active, disabled;
+        struct { struct rgba bg, border; } box;
     } rgba;
 
     struct {
@@ -655,6 +663,7 @@ extern struct ui_style
     } label;
 
     struct ui_link_style link;
+    struct ui_tooltip_style tooltip;
 
 } ui_st;
 
