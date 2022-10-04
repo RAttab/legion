@@ -562,12 +562,20 @@ struct ui_entry
     uint64_t user;
 };
 
+struct ui_list_style
+{
+    struct {
+        struct font *font;
+        struct rgba fg, bg;
+    } idle, hover, selected;
+};
+
 struct ui_list
 {
     struct ui_widget w;
-    struct ui_scroll scroll;
+    struct ui_list_style s;
 
-    struct font *font;
+    struct ui_scroll scroll;
     struct ui_str str;
 
     size_t len, cap;
@@ -577,7 +585,7 @@ struct ui_list
 };
 
 
-struct ui_list ui_list_new(struct dim, struct font *, size_t chars);
+struct ui_list ui_list_new(struct dim, size_t chars);
 void ui_list_free(struct ui_list *);
 
 void ui_list_clear(struct ui_list *);
@@ -693,6 +701,7 @@ extern struct ui_style
         struct rgba active, disabled;
         struct rgba carret;
         struct { struct rgba bg, border; } box;
+        struct { struct rgba hover, selected; } list;
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
     } rgba;
 
@@ -721,6 +730,7 @@ extern struct ui_style
     struct ui_input_style input;
     struct ui_code_style code;
     struct ui_doc_style doc;
+    struct ui_list_style list;
 
 } ui_st;
 

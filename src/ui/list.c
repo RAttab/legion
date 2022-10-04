@@ -8,13 +8,15 @@
 #include "render/font.h"
 
 
-struct ui_list ui_list_new(struct dim dim, struct font *font, size_t chars)
+struct ui_list ui_list_new(struct dim dim, size_t chars)
 {
+    const struct ui_list_style *s = &ui_st.list;
+
     return (struct ui_list) {
         .w = ui_widget_new(dim.w, dim.h),
-        .scroll = ui_scroll_new(dim, font->glyph_h),
+        .s = *s,
 
-        .font = font,
+        .scroll = ui_scroll_new(dim, s->idle.font->glyph_h),
         .str = ui_str_v(chars),
 
         .len = 0,
@@ -96,7 +98,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
 
-        size_t row = (point.y - rect.y) / list->font->glyph_h;
+        size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
         row += ui_scroll_first(&list->scroll);
         if (row >= list->len) return ui_nil;
 
@@ -108,7 +110,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
 
-        size_t row = (point.y - rect.y) / list->font->glyph_h;
+        size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
         row += ui_scroll_first(&list->scroll);
         if (row >= list->len) return ui_consume;
 
@@ -123,7 +125,6 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
 void ui_list_render(
         struct ui_list *list, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct font *font = list->font;
     ui_scroll_update(&list->scroll, list->len);
 
     struct ui_layout inner = ui_scroll_render(&list->scroll, layout, renderer);
@@ -137,9 +138,24 @@ void ui_list_render(
     for (size_t i = first; i < last; ++i) {
         const struct ui_entry *entry = list->entries + i;
 
-        struct rgba bg = rgba_nil();
-        if (entry->user == list->selected) bg = rgba_gray_a(0xFF, 0x11);
-        else if (entry->user == list->hover) bg = rgba_gray_a(0xFF, 0x22);
+        struct font *font = NULL;
+        struct rgba fg = {0}, bg = {0};
+
+        if (entry->user == list->hover) {
+            font = list->s.hover.font;
+            fg = list->s.hover.fg;
+            bg = list->s.hover.bg;
+        }
+        else if (entry->user == list->selected) {
+            font = list->s.selected.font;
+            fg = list->s.selected.fg;
+            bg = list->s.selected.bg;
+        }
+        else {
+            font = list->s.idle.font;
+            fg = list->s.idle.fg;
+            bg = list->s.idle.bg;
+        }
 
         rgba_render(bg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -149,7 +165,7 @@ void ui_list_render(
                         }));
 
         font_render(
-                font, renderer, pos_as_point(pos), rgba_white(),
+                font, renderer, pos_as_point(pos), fg,
                 entry->str.str, entry->str.len);
         pos.y += font->glyph_h;
     }

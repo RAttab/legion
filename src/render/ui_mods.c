@@ -33,7 +33,7 @@ struct ui_mods *ui_mods_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_v(12)),
         .new = ui_button_new(ui_str_c("+")),
         .new_val = ui_input_new(symbol_cap),
-        .mods = ui_list_new(make_dim(ui_layout_inf, ui_layout_inf), font, symbol_cap),
+        .mods = ui_list_new(make_dim(ui_layout_inf, ui_layout_inf), symbol_cap),
     };
 
     ui_panel_hide(&ui->panel);
