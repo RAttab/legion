@@ -519,19 +519,31 @@ void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
 // doc
 // -----------------------------------------------------------------------------
 
+struct ui_doc_style
+{
+    struct
+    {
+        struct font *font;
+        struct rgba fg, bg;
+    } text, bold, code, link, hover, pressed;
+
+    struct { struct rgba fg; int8_t offset; } underline;
+};
+
 struct ui_doc
 {
     struct ui_widget w;
-    struct ui_scroll scroll;
+    struct ui_doc_style s;
 
-    struct { uint8_t pt, h, w; } font;
+    struct ui_scroll scroll;
+    bool pressed;
     size_t cols;
 
     man_page page;
     struct man *man;
 };
 
-struct ui_doc ui_doc_new(struct dim, int pt);
+struct ui_doc ui_doc_new(struct dim);
 void ui_doc_free(struct ui_doc *);
 
 void ui_doc_open(struct ui_doc *, struct link, struct lisp *);
@@ -670,7 +682,7 @@ struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);
 
 extern struct ui_style
 {
-    struct font *font;
+    struct { struct font *base, *bold; } font;
 
     struct
     {
@@ -681,6 +693,7 @@ extern struct ui_style
         struct rgba active, disabled;
         struct rgba carret;
         struct { struct rgba bg, border; } box;
+        struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
     } rgba;
 
     struct
@@ -707,6 +720,7 @@ extern struct ui_style
     struct ui_scroll_style scroll;
     struct ui_input_style input;
     struct ui_code_style code;
+    struct ui_doc_style doc;
 
 } ui_st;
 

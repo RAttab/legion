@@ -183,25 +183,29 @@ void font_text_size(struct font *font, size_t len, size_t *w, size_t *h)
     if (h) *h = font->glyph_h;
 }
 
-void font_render(
+void font_render_bg(
         struct font *font, SDL_Renderer *renderer,
-        SDL_Point pos, struct rgba color,
+        SDL_Point pos, struct rgba fg, struct rgba bg,
         const char *str, size_t len)
 {
-    sdl_err(SDL_SetTextureColorMod(font->tex, color.r, color.g, color.b));
-    sdl_err(SDL_SetTextureAlphaMod(font->tex, color.a));
+    if (!rgba_is_nil(bg)) {
+        rgba_render(bg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                            .x = pos.x,
+                            .y = pos.y,
+                            .w = font->glyph_w * len,
+                            .h = font->glyph_h,
+                        }));
+    }
+
+    sdl_err(SDL_SetTextureColorMod(font->tex, fg.r, fg.g, fg.b));
+    sdl_err(SDL_SetTextureAlphaMod(font->tex, fg.a));
     sdl_err(SDL_SetTextureBlendMode(font->tex, SDL_BLENDMODE_BLEND));
 
     SDL_Rect src = { .x = 0, .y = 0, .w = font->glyph_w, .h = font->glyph_h };
     SDL_Rect dst = { .x = pos.x, .y = pos.y, .w = font->glyph_w, .h = font->glyph_h };
 
     for (size_t i = 0; i < len; ++i) {
-
-        if (str[i] == '\n') {
-            dst.x = pos.x;
-            dst.y += src.h;
-        }
-
         if (likely(str[i] >= charmap_start || str[i] < charmap_end)) {
             src.x = (str[i] - charmap_start) * src.w;
             sdl_err(SDL_RenderCopy(renderer, font->tex, &src, &dst));
@@ -209,4 +213,12 @@ void font_render(
 
         dst.x += src.w;
     }
+}
+
+void font_render(
+        struct font *font, SDL_Renderer *renderer,
+        SDL_Point pos, struct rgba fg,
+        const char *str, size_t len)
+{
+    font_render_bg(font, renderer, pos, fg, rgba_nil(), str, len);
 }

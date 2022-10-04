@@ -80,7 +80,7 @@ void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
 
 void ui_layout_sep_row(struct ui_layout *layout)
 {
-    ui_layout_sep_y(layout, ui_st.font->glyph_h);
+    ui_layout_sep_y(layout, ui_st.font.base->glyph_h);
 }
 
 void ui_layout_mid(struct ui_layout *layout, int width)

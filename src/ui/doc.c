@@ -9,19 +9,28 @@
 #include "game/man.h"
 
 
-struct ui_doc ui_doc_new(struct dim dim, int pt)
+static void ui_doc_check_font(const struct font *base, const struct font *other)
 {
-    struct font *font = make_font(font_small, font_nil);
+    assert(base->glyph_w == other->glyph_w);
+    assert(base->glyph_h == other->glyph_h);
+}
+
+struct ui_doc ui_doc_new(struct dim dim)
+{
+    const struct ui_doc_style *s = &ui_st.doc;
+
+    struct font *font = s->text.font;
+    ui_doc_check_font(font, s->bold.font);
+    ui_doc_check_font(font, s->code.font);
+    ui_doc_check_font(font, s->link.font);
+    ui_doc_check_font(font, s->hover.font);
+    ui_doc_check_font(font, s->pressed.font);
 
     struct ui_doc ui = {
         .w = ui_widget_new(dim.w, dim.h),
+        .s = *s,
         .scroll = ui_scroll_new(dim, font->glyph_h),
         .cols = (dim.w / font->glyph_w) - 2,
-        .font = {
-            .pt = pt,
-            .h = font->glyph_h,
-            .w = font->glyph_w,
-        },
     };
 
     return ui;
@@ -61,8 +70,20 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         SDL_Rect rect = ui_widget_rect(&doc->w);
         if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
 
-        uint8_t col = (cursor.x - doc->w.pos.x) / doc->font.w;
-        man_line line = (cursor.y - doc->w.pos.y) / doc->font.h;
+        doc->pressed = true;
+        return ui_consume;
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        doc->pressed = false;
+
+        SDL_Point cursor = render.cursor.point;
+        SDL_Rect rect = ui_widget_rect(&doc->w);
+        if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
+
+        struct font *font = doc->s.text.font;
+        uint8_t col = (cursor.x - doc->w.pos.x) / font->glyph_w;
+        man_line line = (cursor.y - doc->w.pos.y) / font->glyph_h;
         line += doc->scroll.first;
 
         struct link link = man_click(doc->man, line, col);
@@ -124,30 +145,42 @@ void ui_doc_render(
 
         case markup_eol: {
             pos.x = inner.base.pos.x;
-            pos.y += doc->font.h;
+            pos.y += doc->s.text.font->glyph_h;
             line++;
             break;
         }
 
         case markup_text: {
-            struct font *font = make_font(doc->font.pt, font_nil);
-            font_render(font, renderer, pos_as_point(pos), rgba_white(), it->text, it->len);
+            struct font *font = doc->s.text.font;
+            font_render_bg(
+                    font,
+                    renderer,
+                    pos_as_point(pos),
+                    doc->s.text.fg,
+                    doc->s.text.bg,
+                    it->text, it->len);
             pos.x += it->len * font->glyph_w;
             break;
         }
 
         case markup_underline: {
-            struct font *font = make_font(doc->font.pt, font_nil);
-            font_render(font, renderer, pos_as_point(pos), rgba_white(), it->text, it->len);
+            struct font *font = doc->s.text.font;
+            font_render_bg(
+                    font,
+                    renderer,
+                    pos_as_point(pos),
+                    doc->s.text.fg,
+                    doc->s.text.bg,
+                    it->text, it->len);
 
             size_t skip = 0;
             while (skip < it->len && it->text[skip] == ' ') skip++;
 
-            int line_y = pos.y + font->glyph_baseline + 2;
+            int line_y = pos.y + font->glyph_baseline + doc->s.underline.offset;
             int line_start = pos.x + (skip * font->glyph_w);
             int line_end = pos.x + (it->len * font->glyph_w);
 
-            rgba_render(rgba_white(), renderer);
+            rgba_render(doc->s.underline.fg, renderer);
             sdl_err(SDL_RenderDrawLine(renderer, line_start, line_y, line_end, line_y));
 
             pos.x += it->len * font->glyph_w;
@@ -155,16 +188,22 @@ void ui_doc_render(
         }
 
         case markup_bold: {
-            struct font *font = make_font(doc->font.pt, font_bold);
-            font_render(font, renderer, pos_as_point(pos), rgba_white(), it->text, it->len);
+            struct font *font = doc->s.bold.font;
+            font_render_bg(
+                    font,
+                    renderer,
+                    pos_as_point(pos),
+                    doc->s.bold.fg,
+                    doc->s.bold.bg,
+                    it->text, it->len);
             pos.x += it->len * font->glyph_w;
             break;
         }
 
         case markup_code: {
-            struct font *font = make_font(doc->font.pt, font_nil);
+            struct font *font = doc->s.code.font;
 
-            rgba_render(rgba_gray_a(0xFF, 0x33), renderer);
+            rgba_render(doc->s.code.bg, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                 .x = pos.x,
                                 .y = pos.y,
@@ -172,13 +211,19 @@ void ui_doc_render(
                                 .h = font->glyph_h,
                             }));
 
-            font_render(font, renderer, pos_as_point(pos), rgba_white(), it->text, it->len);
+            font_render(
+                    font,
+                    renderer,
+                    pos_as_point(pos),
+                    doc->s.code.fg,
+                    it->text, it->len);
             pos.x += it->len * font->glyph_w;
             break;
         }
 
         case markup_link: {
-            struct font *font = make_font(doc->font.pt, font_nil);
+            struct font *font = doc->s.link.font;
+            struct rgba fg = { 0 }, bg = { 0 };
 
             SDL_Rect rect = {
                 .x = pos.x,
@@ -186,11 +231,24 @@ void ui_doc_render(
                 .w = font->glyph_w * it->len,
                 .h = font->glyph_h,
             };
-            struct rgba rgba = sdl_rect_contains(&rect, &render.cursor.point) ?
-                make_rgba(0x00, 0x00, 0xCC, 0xFF) :
-                make_rgba(0x00, 0x00, 0xFF, 0xFF);
 
-            font_render(font, renderer, pos_as_point(pos), rgba, it->text, it->len);
+            if (!sdl_rect_contains(&rect, &render.cursor.point)) {
+                font = doc->s.link.font;
+                fg = doc->s.link.fg;
+                bg = doc->s.link.bg;
+            }
+            else if (!doc->pressed) {
+                font = doc->s.hover.font;
+                fg = doc->s.hover.fg;
+                bg = doc->s.hover.bg;
+            }
+            else {
+                font = doc->s.pressed.font;
+                fg = doc->s.pressed.fg;
+                bg = doc->s.pressed.bg;
+            }
+
+            font_render_bg(font, renderer, pos_as_point(pos), fg, bg, it->text, it->len);
             pos.x += it->len * font->glyph_w;
             break;
         }

@@ -45,6 +45,15 @@ void font_close(struct font *);
 
 void font_text_size(struct font *, size_t len, size_t *w, size_t *h);
 void font_render(
-        struct font *, SDL_Renderer *,
-        SDL_Point, struct rgba,
+        struct font *,
+        SDL_Renderer *,
+        SDL_Point,
+        struct rgba fg,
+        const char *str, size_t len);
+
+void font_render_bg(
+        struct font *,
+        SDL_Renderer *,
+        SDL_Point,
+        struct rgba fg, struct rgba bg,
         const char *str, size_t len);

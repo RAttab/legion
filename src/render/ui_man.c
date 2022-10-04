@@ -57,7 +57,7 @@ struct ui_man *ui_man_new(void)
     *ui = (struct ui_man) {
         .panel = ui_panel_title(pos, dim, ui_str_c("man")),
         .toc = ui_tree_new(make_dim(tree_width, ui_layout_inf), font, man_toc_max),
-        .doc = ui_doc_new(make_dim(doc_width, ui_layout_inf), font_small),
+        .doc = ui_doc_new(make_dim(doc_width, ui_layout_inf)),
         .page = link_home(),
     };
 

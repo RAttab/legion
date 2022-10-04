@@ -17,7 +17,10 @@ void ui_style_default(void)
 {
     struct ui_style *s = &ui_st;
 
-    s->font = font_mono6;
+    { // font
+        s->font.base = make_font(font_small, font_nil);
+        s->font.bold = make_font(font_small, font_bold);
+    }
 
     { // rgba
         s->rgba.fg = rgba_white();
@@ -41,6 +44,13 @@ void ui_style_default(void)
 
         s->rgba.box.bg = rgba_black();
         s->rgba.box.border = rgba_gray(0x33);
+
+        s->rgba.link.idle.fg = make_rgba(0x00, 0x00, 0xFF, 0xFF);
+        s->rgba.link.idle.bg = s->rgba.bg;
+        s->rgba.link.hover.fg = make_rgba(0x00, 0x00, 0xCC, 0xFF);
+        s->rgba.link.hover.bg = s->rgba.bg;
+        s->rgba.link.pressed.fg = make_rgba(0x00, 0x00, 0x66, 0xFF);
+        s->rgba.link.pressed.bg = s->rgba.bg;
     }
 
     { // pad
@@ -55,7 +65,7 @@ void ui_style_default(void)
         }
 
         s->label.base = (struct ui_label_style) {
-            .font = s->font,
+            .font = s->font.base,
             .fg = s->rgba.fg,
             .bg = s->rgba.bg,
             .disabled = s->rgba.disabled,
@@ -78,7 +88,7 @@ void ui_style_default(void)
 
     { // button
         s->button.base = (struct ui_button_style) {
-            .font = s->font,
+            .font = s->font.base,
             .idle =     { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x22) },
             .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x33) },
             .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x11) },
@@ -91,15 +101,17 @@ void ui_style_default(void)
     }
 
     s->link = (struct ui_link_style) {
-        .font = s->font,
-        .idle =     { .fg = ui_st.rgba.fg,       .bg = ui_st.rgba.bg },
-        .hover =    { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x33) },
-        .pressed =  { .fg = ui_st.rgba.fg,       .bg = rgba_gray(0x11) },
+        .font = s->font.base,
+#define make_from(src) { .fg = (src).fg, .bg = (src).bg }
+        .idle =     make_from(ui_st.rgba.link.idle),
+        .hover =    make_from(ui_st.rgba.link.hover),
+        .pressed =  make_from(ui_st.rgba.link.pressed),
+#undef make_from
         .disabled = { .fg = ui_st.rgba.disabled, .bg = ui_st.rgba.bg },
     };
 
     s->tooltip = (struct ui_tooltip_style) {
-        .font = s->font,
+        .font = s->font.base,
         .fg = ui_st.rgba.fg,
         .bg = ui_st.rgba.box.bg,
         .border = ui_st.rgba.box.border,
@@ -112,7 +124,7 @@ void ui_style_default(void)
     };
 
     s->input = (struct ui_input_style) {
-        .font = s->font,
+        .font = s->font.base,
         .fg = ui_st.rgba.fg,
         .bg = ui_st.rgba.bg,
         .border = ui_st.rgba.box.border,
@@ -121,11 +133,31 @@ void ui_style_default(void)
     };
 
     s->code = (struct ui_code_style) {
-        .font = s->font,
+        .font = s->font.base,
         .line = { .fg = ui_st.label.index.fg, .bg = ui_st.label.index.bg },
         .code = { .fg = ui_st.rgba.fg, .bg = ui_st.rgba.bg },
         .mark = make_rgba(0x00, 0xFF, 0x00, 0x77),
         .error = make_rgba(0xFF, 0x00, 0x00, 0x77),
         .carret = ui_st.rgba.carret,
+    };
+
+
+    s->doc = (struct ui_doc_style) {
+        .text = { .font = s->font.base, .fg = ui_st.rgba.fg, .bg = ui_st.rgba.bg },
+        .bold = { .font = s->font.bold, .fg = ui_st.rgba.fg, .bg = ui_st.rgba.bg },
+
+        .code = {
+            .font = s->font.base,
+            .fg = ui_st.rgba.fg,
+            .bg = rgba_gray_a(0x66, 0x33),
+        },
+
+#define make_from(src) { .font = s->font.base, .fg = (src).fg, .bg = (src).bg }
+        .link =    make_from(ui_st.rgba.link.idle),
+        .hover =   make_from(ui_st.rgba.link.hover),
+        .pressed = make_from(ui_st.rgba.link.pressed),
+#undef make_from
+
+        .underline = { .fg = ui_st.rgba.fg, .offset = 2 },
     };
 }

@@ -82,10 +82,6 @@ void ui_link_render(
         }
     }
 
-    SDL_Rect rect = ui_widget_rect(&link->w);
-    rgba_render(bg, renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &rect));
-
     SDL_Point point = pos_as_point(link->w.pos);
-    font_render(link->s.font, renderer, point, fg, link->str.str, link->str.len);
+    font_render_bg(link->s.font, renderer, point, fg, bg, link->str.str, link->str.len);
 }

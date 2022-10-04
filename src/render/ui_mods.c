@@ -22,7 +22,7 @@ struct ui_mods
 
 struct ui_mods *ui_mods_new(void)
 {
-    struct font *font = ui_st.font;
+    struct font *font = ui_st.font.base;
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
             (symbol_cap+5) * font->glyph_w,
