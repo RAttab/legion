@@ -111,8 +111,6 @@ static struct ui_io_cmd ui_io_cmd4(
 // io
 // -----------------------------------------------------------------------------
 
-static struct font *ui_io_font(void) { return font_mono6; }
-
 enum
 {
     ui_io_reset = 0,
@@ -160,9 +158,7 @@ struct ui_io
 
 struct ui_io *ui_io_new(void)
 {
-    struct font *font = ui_io_font();
-
-    size_t width = 38 * font->glyph_w;
+    size_t width = 38 * ui_st.font.dim.w;
     struct pos pos = make_pos(
             render.rect.w - width - ui_item_width(render.ui.item) - ui_star_width(render.ui.star),
             ui_topbar_height());
@@ -401,8 +397,6 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 
 void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
 {
-    struct font *font = ui_item_font();
-
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
     if (ui->loading) return;
@@ -410,7 +404,7 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
     ui_label_render(&ui->target, &layout, renderer);
     ui_label_render(&ui->target_val, &layout, renderer);
     ui_layout_next_row(&layout);
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     for (size_t i = 0; i < ui_io_max; ++i) {
         struct ui_io_cmd *cmd = &ui->io[i];
@@ -426,16 +420,16 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
 
         for (size_t j = 0; j < cmd->args; ++j) {
             struct ui_io_arg *arg = &cmd->arg[j];
-            ui_layout_sep_x(&layout, 2 * font->glyph_w);
+            ui_layout_sep_cols(&layout, 2);
             ui_label_render(&arg->name, &layout, renderer);
             ui_input_render(&arg->val, &layout, renderer);
             ui_layout_next_row(&layout);
         }
 
-        ui_layout_sep_x(&layout, 2 * font->glyph_w);
+        ui_layout_sep_cols(&layout, 2);
         ui_button_render(&cmd->exec, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        ui_layout_sep_y(&layout, font->glyph_h);
+        ui_layout_sep_row(&layout);
     }
 }

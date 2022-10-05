@@ -29,9 +29,7 @@ struct ui_status
 
 struct ui_status *ui_status_new(void)
 {
-    struct font *font = font_mono6;
-
-    struct dim dim = { .w = render.rect.w, .h = font->glyph_h + 8 };
+    struct dim dim = { .w = render.rect.w, .h = ui_st.font.base->glyph_h + 8 };
     struct pos pos = { .x = 0, .y = render.rect.h - dim.h };
 
     struct ui_status *ui = calloc(1, sizeof(*ui));

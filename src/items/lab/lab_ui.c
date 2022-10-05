@@ -14,28 +14,23 @@ struct ui_lab
 {
     struct im_lab_bits bits;
 
-    struct font *font;
     struct ui_label item, item_val;
     struct ui_label state, state_val;
     struct ui_label work, work_sep, work_left, work_cap;
     struct ui_label total;
 };
 
-struct im_lab_bits im_lab_bits_new(struct font *font)
+struct im_lab_bits im_lab_bits_new(void)
 {
-    return (struct im_lab_bits) {
-        .margin = make_dim(5, 5),
-        .font = font
-    };
+    return (struct im_lab_bits) { .margin = make_dim(5, 5) };
 }
 
-static void *ui_lab_alloc(struct font *font)
+static void *ui_lab_alloc(void)
 {
     struct ui_lab *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_lab) {
-        .bits = im_lab_bits_new(font),
-        .font = font,
+        .bits = im_lab_bits_new(),
 
         .item = ui_label_new(ui_str_c("item:     ")),
         .item_val = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
@@ -116,7 +111,7 @@ void im_lab_bits_render(
 {
     if (!ui->bits) return;
 
-    struct ui_widget w = ui_widget_new(ui_layout_inf, ui->font->glyph_h);
+    struct ui_widget w = ui_widget_new(ui_layout_inf, ui_st.font.dim.h);
     ui_layout_add(layout, &w);
 
     SDL_Rect rect = ui_widget_rect(&w);

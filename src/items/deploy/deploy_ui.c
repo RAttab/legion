@@ -16,10 +16,8 @@ struct ui_deploy
     struct ui_label state, state_val;
 };
 
-static void *ui_deploy_alloc(struct font *font)
+static void *ui_deploy_alloc(void)
 {
-    (void) font;
-
     struct ui_deploy *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_deploy) {
         .item = ui_label_new(ui_str_c("item:  ")),

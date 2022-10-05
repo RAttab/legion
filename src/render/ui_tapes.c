@@ -40,12 +40,10 @@ struct ui_tapes
     struct ui_label index, known, in, work, out;
 };
 
-static struct font *ui_tapes_font(void) { return font_mono6; }
-
 struct ui_tapes *ui_tapes_new(void)
 {
-    struct font *font = ui_tapes_font();
     struct pos pos = make_pos(0, ui_topbar_height());
+    const struct font *font = ui_st.font.base;
 
     int height = render.rect.h - pos.y - ui_status_height();
     int tree_w = (item_str_len + 3) * font->glyph_w;
@@ -66,7 +64,7 @@ struct ui_tapes *ui_tapes_new(void)
         .help = ui_button_new_s(&ui_st.button.line, ui_str_c("?")),
 
         .lab = ui_label_new(ui_str_c("lab:  ")),
-        .lab_val = im_lab_bits_new(font),
+        .lab_val = im_lab_bits_new(),
 
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
@@ -152,8 +150,6 @@ static void ui_tapes_update_cat(
 
 static void ui_tapes_update(struct ui_tapes *ui, enum item select)
 {
-    struct font *font = ui_tapes_font();
-
     ui_tree_reset(&ui->tree);
     ui_tapes_update_cat(ui, "Natural", ITEM_NATURAL_FIRST, ITEM_NATURAL_LAST);
     ui_tapes_update_cat(ui, "Synthesized", ITEM_SYNTH_FIRST, ITEM_SYNTH_LAST);
@@ -165,13 +161,13 @@ static void ui_tapes_update(struct ui_tapes *ui, enum item select)
 
     if (!ui_tapes_selected(ui)) {
         ui_panel_resize(&ui->panel, make_dim(
-                        ui->tree_w + font->glyph_w,
+                        ui->tree_w + ui_st.font.base->glyph_w,
                         ui->height));
         return;
     }
 
     ui_panel_resize(&ui->panel, make_dim(
-                    ui->tree_w + ui->tape_w + font->glyph_w,
+                    ui->tree_w + ui->tape_w + ui_st.font.base->glyph_w,
                     ui->height));
 
     enum item item = ui->tree.selected;
@@ -302,7 +298,7 @@ void ui_tapes_render_tape(
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    struct font *font = ui_tapes_font();
+    const struct font *font = ui_st.font.base;
     const struct tech *tech = proxy_tech(render.proxy);
     const struct tape *tape = tapes_get(ui->tree.selected);
 
@@ -347,8 +343,7 @@ void ui_tapes_render(struct ui_tapes *ui, SDL_Renderer *renderer)
 
     if (!ui_tapes_selected(ui)) return;
 
-    struct font *font = ui_tapes_font();
-    ui_layout_sep_x(&layout, font->glyph_w);
+    ui_layout_sep_col(&layout);
     struct ui_layout inner = ui_layout_inner(&layout);
 
     if (ui_tapes_show_help(ui)) {
@@ -360,7 +355,7 @@ void ui_tapes_render(struct ui_tapes *ui, SDL_Renderer *renderer)
     ui_label_render(&ui->name, &inner, renderer);
     ui_layout_next_row(&inner);
 
-    ui_layout_sep_y(&inner, font->glyph_h);
+    ui_layout_sep_row(&inner);
 
     ui_label_render(&ui->lab, &inner, renderer);
     im_lab_bits_render(&ui->lab_val, &inner, renderer);
@@ -370,13 +365,13 @@ void ui_tapes_render(struct ui_tapes *ui, SDL_Renderer *renderer)
     ui_label_render(&ui->energy_val, &inner, renderer);
     ui_layout_next_row(&inner);
 
-    ui_layout_sep_y(&inner, font->glyph_h);
+    ui_layout_sep_row(&inner);
 
     ui_label_render(&ui->host, &inner, renderer);
     ui_link_render(&ui->host_val, &inner, renderer);
     ui_layout_next_row(&inner);
 
-    ui_layout_sep_y(&inner, font->glyph_h);
+    ui_layout_sep_row(&inner);
 
     ui_label_render(&ui->tape, &inner, renderer);
     ui_layout_next_row(&inner);

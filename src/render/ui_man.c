@@ -45,11 +45,9 @@ static void ui_man_toc(
 
 struct ui_man *ui_man_new(void)
 {
-    struct font *font = make_font(font_small, font_nil);
-
-    size_t tree_width = (man_toc_max + 2*ui_man_depth + 1) * font->glyph_w;
-    size_t doc_width = (ui_man_cols + 1) * font->glyph_w;
-    size_t width = tree_width + doc_width + font->glyph_w;
+    size_t tree_width = (man_toc_max + 2*ui_man_depth + 1) * ui_st.font.dim.w;
+    size_t doc_width = (ui_man_cols + 1) * ui_st.font.dim.w;
+    size_t width = tree_width + doc_width + ui_st.font.dim.w;
     struct pos pos = make_pos(render.rect.w - width, ui_topbar_height());
     struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 

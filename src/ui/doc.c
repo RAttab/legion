@@ -19,7 +19,7 @@ struct ui_doc ui_doc_new(struct dim dim)
 {
     const struct ui_doc_style *s = &ui_st.doc;
 
-    struct font *font = s->text.font;
+    const struct font *font = s->text.font;
     ui_doc_check_font(font, s->bold.font);
     ui_doc_check_font(font, s->code.font);
     ui_doc_check_font(font, s->link.font);
@@ -81,7 +81,7 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         SDL_Rect rect = ui_widget_rect(&doc->w);
         if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
 
-        struct font *font = doc->s.text.font;
+        const struct font *font = doc->s.text.font;
         uint8_t col = (cursor.x - doc->w.pos.x) / font->glyph_w;
         man_line line = (cursor.y - doc->w.pos.y) / font->glyph_h;
         line += doc->scroll.first;
@@ -151,7 +151,7 @@ void ui_doc_render(
         }
 
         case markup_text: {
-            struct font *font = doc->s.text.font;
+            const struct font *font = doc->s.text.font;
             font_render_bg(
                     font,
                     renderer,
@@ -164,7 +164,7 @@ void ui_doc_render(
         }
 
         case markup_underline: {
-            struct font *font = doc->s.text.font;
+            const struct font *font = doc->s.text.font;
             font_render_bg(
                     font,
                     renderer,
@@ -188,7 +188,7 @@ void ui_doc_render(
         }
 
         case markup_bold: {
-            struct font *font = doc->s.bold.font;
+            const struct font *font = doc->s.bold.font;
             font_render_bg(
                     font,
                     renderer,
@@ -201,7 +201,7 @@ void ui_doc_render(
         }
 
         case markup_code: {
-            struct font *font = doc->s.code.font;
+            const struct font *font = doc->s.code.font;
 
             rgba_render(doc->s.code.bg, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -222,7 +222,7 @@ void ui_doc_render(
         }
 
         case markup_link: {
-            struct font *font = doc->s.link.font;
+            const struct font *font = doc->s.link.font;
             struct rgba fg = { 0 }, bg = { 0 };
 
             SDL_Rect rect = {

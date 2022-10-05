@@ -40,9 +40,6 @@ struct ui_log
     struct ui_logi items[world_log_cap];
 };
 
-static struct font *ui_log_font(void) { return font_mono6; }
-
-
 struct ui_logi ui_logi_new(void)
 {
     struct ui_logi ui = {
@@ -58,10 +55,9 @@ struct ui_logi ui_logi_new(void)
 
 struct ui_log *ui_log_new(void)
 {
-    struct font *font = ui_log_font();
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
-            (10 + symbol_cap * 3 + im_id_str_len + 3) * font->glyph_w,
+            (10 + symbol_cap * 3 + im_id_str_len + 3) * ui_st.font.dim.w,
             render.rect.h - pos.y - ui_status_height());
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
@@ -234,17 +230,15 @@ void ui_logi_render(
         struct ui_layout *layout,
         SDL_Renderer *renderer)
 {
-    struct font *font = ui_log_font();
-
     ui_label_render(&ui->time, layout, renderer);
-    ui_layout_sep_x(layout, font->glyph_w);
+    ui_layout_sep_col(layout);
 
     if (!coord_is_nil(ui->state.star))
         ui_link_render(&ui->star, layout, renderer);
 
     ui_link_render(&ui->id, layout, renderer);
     ui_label_render(&ui->key, layout, renderer);
-    ui_layout_sep_x(layout, font->glyph_w);
+    ui_layout_sep_col(layout);
     ui_label_render(&ui->value, layout, renderer);
 }
 

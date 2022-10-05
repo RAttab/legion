@@ -66,8 +66,6 @@ struct ui_star
 
 };
 
-static struct font *ui_star_font(void) { return font_mono6; }
-
 static const char *ui_star_elems[] = {
     "A:", "B:", "C:", "D:", "E:",
     "F:", "G:", "H:", "I:", "J:",
@@ -82,8 +80,7 @@ enum
 
 struct ui_star *ui_star_new(void)
 {
-    struct font *font = ui_star_font();
-    size_t width = 38 * font->glyph_w;
+    size_t width = 38 * ui_st.font.dim.w;
     struct pos pos = make_pos(render.rect.w - width, ui_topbar_height());
     struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
@@ -172,7 +169,7 @@ struct ui_star *ui_star_new(void)
     ui_panel_hide(&ui->panel);
     ui->control.disabled = true;
 
-    size_t goto_width = (width - font->glyph_w) / 3;
+    size_t goto_width = (width - ui_st.font.dim.w) / 3;
     ui->goto_map.w.dim.w = goto_width;
     ui->goto_factory.w.dim.w = goto_width;
     ui->goto_log.w.dim.w = goto_width;
@@ -518,14 +515,12 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
-    struct font *font = ui_star_font();
-
     ui_button_render(&ui->goto_log, &layout, renderer);
     ui_button_render(&ui->goto_map, &layout, renderer);
     ui_button_render(&ui->goto_factory, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     ui_label_render(&ui->name, &layout, renderer);
     ui_label_render(&ui->name_val, &layout, renderer);
@@ -534,7 +529,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
     ui_link_render(&ui->coord_val, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     {
         uint32_t energy = ui->star.energy;
@@ -547,7 +542,8 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
         for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {
             if (i == ITEMS_NATURAL_LEN-1)
-                ui_layout_sep_x(&layout, (ui_star_elems_col_len+1)*2 * font->glyph_w);
+                ui_layout_sep_x(&layout,
+                        (ui_star_elems_col_len+1)*2 * ui_st.font.dim.w);
 
             ui_str_setc(&ui->elem.str, ui_star_elems[i]);
             ui_label_render(&ui->elem, &layout, renderer);
@@ -558,19 +554,19 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
             ui_label_render(&ui->elem_val, &layout, renderer);
 
             size_t col = i % 5;
-            if (col < 4) ui_layout_sep_x(&layout, font->glyph_w);
+            if (col < 4) ui_layout_sep_col(&layout);
             else ui_layout_next_row(&layout);
         }
 
         ui_layout_next_row(&layout);
-        ui_layout_sep_y(&layout, font->glyph_h);
+        ui_layout_sep_row(&layout);
     }
 
     ui_button_render(&ui->control, &layout, renderer);
     ui_button_render(&ui->factory, &layout, renderer);
     ui_button_render(&ui->logistic, &layout, renderer);
     ui_layout_next_row(&layout);
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     if (ui->control.disabled)
         ui_tree_render(&ui->control_list, &layout, renderer);
@@ -583,7 +579,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_label_render(&ui->pills_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        ui_layout_sep_y(&layout, font->glyph_h);
+        ui_layout_sep_row(&layout);
 
         ui_label_render(&ui->workers.workers, &layout, renderer);
         ui_label_render(&ui->workers.workers_val, &layout, renderer);
@@ -601,7 +597,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_label_render(&ui->workers.clean_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        ui_layout_sep_y(&layout, font->glyph_h);
+        ui_layout_sep_row(&layout);
 
         ui_label_render(&ui->energy, &layout, renderer);
         ui_layout_next_row(&layout);
@@ -619,7 +615,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_layout_next_row(&layout);
 
         if (ui->solar.show) {
-            ui_layout_sep_y(&layout, font->glyph_h);
+            ui_layout_sep_row(&layout);
             ui_label_render(&ui->solar.name, &layout, renderer);
             ui_label_render(&ui->solar.count, &layout, renderer);
             ui_layout_next_row(&layout);
@@ -632,7 +628,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         }
 
         if (ui->kwheel.show) {
-            ui_layout_sep_y(&layout, font->glyph_h);
+            ui_layout_sep_row(&layout);
             ui_label_render(&ui->kwheel.name, &layout, renderer);
             ui_label_render(&ui->kwheel.count, &layout, renderer);
             ui_layout_next_row(&layout);
@@ -645,7 +641,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         }
 
         if (ui->store.show) {
-            ui_layout_sep_y(&layout, font->glyph_h);
+            ui_layout_sep_row(&layout);
             ui_label_render(&ui->store.name, &layout, renderer);
             ui_label_render(&ui->store.count, &layout, renderer);
             ui_layout_next_row(&layout);

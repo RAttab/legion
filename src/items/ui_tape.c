@@ -10,18 +10,16 @@
 // tape
 // -----------------------------------------------------------------------------
 
-void ui_tape_init(struct ui_tape *ui, struct font *font)
+void ui_tape_init(struct ui_tape *ui)
 {
     *ui = (struct ui_tape) {
-        .font = font,
-
         .tape = ui_label_new(ui_str_c("tape:   ")),
         .tape_val = ui_label_new(ui_str_v(item_str_len)),
 
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
         .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
         .work = ui_label_new_s(&ui_st.label.work, ui_str_c("work")),
@@ -89,7 +87,7 @@ void ui_tape_render(
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);
         ui_label_render(&ui->index, &inner, renderer);
-        ui_layout_sep_x(&inner, ui->font->glyph_w);
+        ui_layout_sep_col(&inner);
 
         struct ui_label *label = NULL;
         struct tape_ret ret = tape_at(tape, i);

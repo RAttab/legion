@@ -15,9 +15,8 @@ struct ui_transmit
     struct ui_label channel, channel_val;
 };
 
-static void *ui_transmit_alloc(struct font *font)
+static void *ui_transmit_alloc(void)
 {
-    (void) font;
     struct ui_transmit *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_transmit) {

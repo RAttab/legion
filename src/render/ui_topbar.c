@@ -33,10 +33,11 @@ enum
 
 struct ui_topbar *ui_topbar_new(void)
 {
-    struct font *font = font_mono6;
     struct ui_topbar *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_topbar) {
-        .panel = ui_panel_menu(make_pos(0, 0), make_dim(render.rect.w, font->glyph_h + 8)),
+        .panel = ui_panel_menu(
+                make_pos(0, 0),
+                make_dim(render.rect.w, ui_st.font.base->glyph_h + 8)),
 
         .save = ui_button_new(ui_str_c("save")),
         .load = ui_button_new(ui_str_c("load")),

@@ -13,7 +13,6 @@
 
 struct ui_scanner
 {
-    struct font *font;
     struct ui_label status, status_val;
     struct ui_label work, work_sep, work_left, work_cap;
     struct ui_label sector;
@@ -24,13 +23,11 @@ struct ui_scanner
 };
 
 
-static void *ui_scanner_alloc(struct font *font)
+static void *ui_scanner_alloc(void)
 {
     struct ui_scanner *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_scanner) {
-        .font = font,
-
         .status = ui_label_new(ui_str_c("state:    ")),
         .status_val = ui_waiting_new(),
 

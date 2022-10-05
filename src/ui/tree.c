@@ -263,7 +263,7 @@ void ui_tree_render(
     for (size_t i = first; i < last; ++i, index = ui_tree_next(tree, index)) {
         struct ui_node *node = tree->nodes + index;
 
-        struct font *font = NULL;
+        const struct font *font = NULL;
         struct rgba fg = {0}, bg = {0};
         bool selected = hset_test(tree->path, index + 1);
 

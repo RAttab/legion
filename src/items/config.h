@@ -13,7 +13,6 @@
 #include "SDL.h"
 
 struct flow;
-struct font;
 struct chunk;
 struct atoms;
 struct energy;
@@ -36,7 +35,7 @@ typedef void (*im_io_fn) (
         void *state, struct chunk *, enum io, im_id src, const vm_word *args, size_t len);
 typedef bool (*im_flow_fn) (const void *state, struct flow *);
 
-typedef void *(*im_ui_alloc_fn)  (struct font *);
+typedef void *(*im_ui_alloc_fn)  (void);
 typedef void  (*im_ui_free_fn)   (void *state);
 typedef void  (*im_ui_update_fn) (void *state, struct chunk *, im_id);
 typedef bool  (*im_ui_event_fn)  (void *state, const SDL_Event *);

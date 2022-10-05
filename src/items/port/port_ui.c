@@ -13,8 +13,6 @@
 
 struct ui_port
 {
-    struct font *font;
-
     struct ui_label status, status_val;
     struct ui_values status_values;
 
@@ -39,7 +37,7 @@ struct ui_port
     struct ui_label item, count;
 };
 
-static void *ui_port_alloc(struct font *font)
+static void *ui_port_alloc(void)
 {
     const struct ui_value status[] = {
         { im_port_idle, "disabled", ui_st.rgba.disabled },
@@ -50,8 +48,6 @@ static void *ui_port_alloc(struct font *font)
 
     struct ui_port *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_port) {
-        .font = font,
-
         .status = ui_label_new(ui_str_c("status: ")),
         .status_val = ui_label_new(ui_str_v(10)),
         .status_values = ui_values_new(status, array_len(status)),
@@ -166,7 +162,7 @@ static void ui_port_render(
     ui_label_render(&ui->status_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     { // input
         ui_label_render(&ui->input.head, layout, renderer);
@@ -181,7 +177,7 @@ static void ui_port_render(
         ui_layout_next_row(layout);
     }
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     { // want
         ui_label_render(&ui->want.head, layout, renderer);
@@ -200,7 +196,7 @@ static void ui_port_render(
         ui_layout_next_row(layout);
     }
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     { // has
         ui_label_render(&ui->has.head, layout, renderer);

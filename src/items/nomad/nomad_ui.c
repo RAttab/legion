@@ -17,8 +17,6 @@ struct ui_nomad
         struct im_nomad_cargo cargo[im_nomad_cargo_len];
     } state;
 
-    struct font *font;
-
     struct ui_label op, op_val;
     struct ui_values op_values;
     struct ui_label item, item_val;
@@ -31,7 +29,7 @@ struct ui_nomad
     struct ui_label cargo, cargo_count, cargo_item;
 };
 
-static void *ui_nomad_alloc(struct font *font)
+static void *ui_nomad_alloc(void)
 {
     const struct ui_value ops[] = {
         { im_nomad_pack, "pack", ui_st.rgba.in },
@@ -41,8 +39,6 @@ static void *ui_nomad_alloc(struct font *font)
 
     struct ui_nomad *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_nomad) {
-        .font = font,
-
         .op = ui_label_new(ui_str_c("op:    ")),
         .op_val = ui_label_new(ui_str_v(8)),
         .op_values = ui_values_new(ops, array_len(ops)),
@@ -163,13 +159,13 @@ static void ui_nomad_render(
     ui_label_render(&ui->waiting_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->mod, layout, renderer);
     ui_label_render(&ui->mod_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     {
         ui_label_render(&ui->memory, layout, renderer);
@@ -179,7 +175,7 @@ static void ui_nomad_render(
             ui_str_set_u64(&ui->memory_index.str, i);
             ui_label_render(&ui->memory_index, layout, renderer);
 
-            ui_layout_sep_x(layout, ui->font->glyph_w);
+            ui_layout_sep_col(layout);
 
             ui_str_set_hex(&ui->memory_val.str, ui->state.memory[i]);
             ui_label_render(&ui->memory_val, layout, renderer);
@@ -187,7 +183,7 @@ static void ui_nomad_render(
         }
     }
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->cargo, layout, renderer);
     ui_layout_next_row(layout);
@@ -198,7 +194,7 @@ static void ui_nomad_render(
         ui_str_set_u64(&ui->cargo_count.str, cargo->count);
         ui_label_render(&ui->cargo_count, layout, renderer);
 
-        ui_layout_sep_x(layout, ui->font->glyph_w);
+        ui_layout_sep_col(layout);
 
         ui_str_set_item(&ui->cargo_item.str, cargo->item);
         ui_label_render(&ui->cargo_item, layout, renderer);

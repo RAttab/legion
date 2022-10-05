@@ -15,20 +15,17 @@ struct ui_extract
 {
     tape_packed tape_state;
 
-    struct font *font;
     struct ui_label loops, loops_val;
     struct ui_label state, state_val;
     struct ui_tape tape;
 
 };
 
-static void *ui_extract_alloc(struct font *font)
+static void *ui_extract_alloc(void)
 {
     struct ui_extract *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_extract) {
-        .font = font,
-
         .loops = ui_label_new(ui_str_c("loops: ")),
         .loops_val = ui_loops_new(),
 
@@ -36,7 +33,7 @@ static void *ui_extract_alloc(struct font *font)
         .state_val = ui_waiting_new(),
     };
 
-    ui_tape_init(&ui->tape, font);
+    ui_tape_init(&ui->tape);
     return ui;
 }
 
@@ -91,6 +88,6 @@ static void ui_extract_render(
     ui_label_render(&ui->state_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
     ui_tape_render(&ui->tape, ui->tape_state, layout, renderer);
 }

@@ -328,7 +328,7 @@ void ui_code_render(
         }));
     }
 
-    struct font *font = code->s.font;
+    const struct font *font = code->s.font;
     code->w = code->scroll.w;
     code->cols = (inner.base.dim.w / font->glyph_w) - 5;
 

@@ -31,19 +31,17 @@
 // pre-loaded-fonts
 // -----------------------------------------------------------------------------
 
-struct font *font_mono4;
-struct font *font_mono6;
-struct font *font_mono8;
-struct font *font_mono10;
+static struct font_repo
+{
+    const struct font *styles[font_style_max];
+} fonts[font_size_max] = {0};
 
-static struct font_repo { struct font *styles[font_style_max]; } fonts[font_size_max] = {0};
-
-struct font *make_font(enum font_size size, enum font_style style)
+const struct font *make_font(enum font_size size, enum font_style style)
 {
     assert(size < font_size_max);
     assert(style < font_style_max);
 
-    struct font *font = fonts[size].styles[style];
+    const struct font *font = fonts[size].styles[style];
     assert(font);
 
     return font;
@@ -56,46 +54,7 @@ struct font *make_font(enum font_size size, enum font_style style)
 
 FT_Library ft_library;
 
-void fonts_populate(SDL_Renderer *renderer)
-{
-    ft_err(FT_Init_FreeType(&ft_library));
-
-    void load_size(size_t index, uint8_t pt)
-    {
-        char path[PATH_MAX] = {0};
-        struct font_repo *repo = fonts + index;
-
-        sys_path_res("font/IbmPlexMonoRegular.otf", path, sizeof(path));
-        repo->styles[font_nil] = font_open(renderer, path, pt);
-
-        sys_path_res("font/IbmPlexMonoBold.otf", path, sizeof(path));
-        repo->styles[font_bold] = font_open(renderer, path, pt);
-
-        sys_path_res("font/IbmPlexMonoItalic.otf", path, sizeof(path));
-        repo->styles[font_italic] = font_open(renderer, path, pt);
-
-        assert(repo->styles[font_nil]->glyph_h == repo->styles[font_bold]->glyph_h);
-        assert(repo->styles[font_nil]->glyph_w == repo->styles[font_bold]->glyph_w);
-    }
-
-    load_size(font_small, 6);
-    load_size(font_big, 8);
-
-    font_mono6 = make_font(font_small, font_nil);
-    font_mono8 = make_font(font_big, font_nil);
-}
-
-void fonts_close()
-{
-    for (uint8_t pt = 0; pt < array_len(fonts); ++pt) {
-        for (enum font_style st = 0; st < font_style_max; ++st) {
-            struct font *font = fonts[pt].styles[st];
-            if (font) font_close(font);
-        }
-    }
-}
-
-struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
+static struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
 {
     struct font *font = calloc(1, sizeof(*font));
 
@@ -171,21 +130,61 @@ struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
     return font;
 }
 
-void font_close(struct font *font)
+void font_close(const struct font *font)
 {
     SDL_DestroyTexture(font->tex);
-    free(font);
+    free((struct font *) font);
 }
 
-void font_text_size(struct font *font, size_t len, size_t *w, size_t *h)
+
+void fonts_populate(SDL_Renderer *renderer)
+{
+    ft_err(FT_Init_FreeType(&ft_library));
+
+    void load_size(size_t index, uint8_t pt)
+    {
+        char path[PATH_MAX] = {0};
+        struct font_repo *repo = fonts + index;
+
+        sys_path_res("font/IbmPlexMonoRegular.otf", path, sizeof(path));
+        repo->styles[font_nil] = font_open(renderer, path, pt);
+
+        sys_path_res("font/IbmPlexMonoBold.otf", path, sizeof(path));
+        repo->styles[font_bold] = font_open(renderer, path, pt);
+
+        sys_path_res("font/IbmPlexMonoItalic.otf", path, sizeof(path));
+        repo->styles[font_italic] = font_open(renderer, path, pt);
+
+        assert(repo->styles[font_nil]->glyph_h == repo->styles[font_bold]->glyph_h);
+        assert(repo->styles[font_nil]->glyph_w == repo->styles[font_bold]->glyph_w);
+    }
+
+    load_size(font_small, 6);
+    load_size(font_big, 8);
+}
+
+void fonts_close()
+{
+    for (uint8_t pt = 0; pt < array_len(fonts); ++pt) {
+        for (enum font_style st = 0; st < font_style_max; ++st) {
+            const struct font *font = fonts[pt].styles[st];
+            if (font) font_close(font);
+        }
+    }
+}
+
+
+void font_text_size(const struct font *font, size_t len, size_t *w, size_t *h)
 {
     if (w) *w = font->glyph_w * len;
     if (h) *h = font->glyph_h;
 }
 
 void font_render_bg(
-        struct font *font, SDL_Renderer *renderer,
-        SDL_Point pos, struct rgba fg, struct rgba bg,
+        const struct font *font,
+        SDL_Renderer *renderer,
+        SDL_Point pos,
+        struct rgba fg, struct rgba bg,
         const char *str, size_t len)
 {
     if (!rgba_is_nil(bg)) {
@@ -216,8 +215,10 @@ void font_render_bg(
 }
 
 void font_render(
-        struct font *font, SDL_Renderer *renderer,
-        SDL_Point pos, struct rgba fg,
+        const struct font *font,
+        SDL_Renderer *renderer,
+        SDL_Point pos,
+        struct rgba fg,
         const char *str, size_t len)
 {
     font_render_bg(font, renderer, pos, fg, rgba_nil(), str, len);

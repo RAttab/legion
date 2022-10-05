@@ -12,8 +12,6 @@
 
 struct ui_memory
 {
-    struct font *font;
-
     struct ui_label size, size_val;
     struct ui_scroll scroll;
     struct ui_label data_index, data_val;
@@ -22,18 +20,16 @@ struct ui_memory
     struct im_memory state;
 };
 
-static void *ui_memory_alloc(struct font *font)
+static void *ui_memory_alloc(void)
 {
     size_t data_len = im_memory_len_max * sizeof(vm_word);
     struct ui_memory *ui = calloc(1, sizeof(*ui) + data_len);
 
     *ui = (struct ui_memory) {
-        .font = font,
-
         .size = ui_label_new(ui_str_c("size: ")),
         .size_val = ui_label_new(ui_str_v(2)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
         .data_index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .data_val = ui_label_new(ui_str_v(16)),
 
@@ -89,7 +85,7 @@ static void ui_memory_render(
     ui_label_render(&ui->size_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
@@ -100,7 +96,7 @@ static void ui_memory_render(
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->data_index.str, i);
         ui_label_render(&ui->data_index, &inner, renderer);
-        ui_layout_sep_x(&inner, ui->font->glyph_w);
+        ui_layout_sep_col(&inner);
 
         ui_str_set_hex(&ui->data_val.str, state->data[i]);
         ui_label_render(&ui->data_val, &inner, renderer);

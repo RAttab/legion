@@ -54,13 +54,9 @@ struct factory
     bool panning, panned;
 };
 
-static struct font *factory_font(void) { return font_mono6; }
-
 struct factory *factory_new(void)
 {
-    struct font *font = factory_font();
     struct factory *factory = calloc(1, sizeof (*factory));
-
     *factory = (struct factory) {
         .active = false,
 
@@ -78,8 +74,8 @@ struct factory *factory_new(void)
         .ui_tape_of = ui_label_new(ui_str_c("/")),
 
         .inner = make_dim(
-                (item_str_len + 3 + 1 + 3) * font->glyph_w,
-                3 * font->glyph_h),
+                (item_str_len + 3 + 1 + 3) * ui_st.font.base->glyph_w,
+                3 * ui_st.font.base->glyph_h),
         .margin = make_dim(5, 5),
         .pad = make_dim(20, 20),
     };

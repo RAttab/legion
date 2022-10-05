@@ -20,8 +20,6 @@ struct ui_collider
         tape_packed tape;
     } state;
 
-    struct font *font;
-
     struct ui_label size, size_val;
     struct ui_label rate, rate_val, rate_pct;
 
@@ -35,13 +33,11 @@ struct ui_collider
     struct ui_label out, out_left, out_sep, out_cap;
 };
 
-static void *ui_collider_alloc(struct font *font)
+static void *ui_collider_alloc(void)
 {
     struct ui_collider *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_collider) {
-        .font = font,
-
         .size = ui_label_new(ui_str_c("size: ")),
         .size_val = ui_label_new(ui_str_v(2)),
 
@@ -67,7 +63,7 @@ static void *ui_collider_alloc(struct font *font)
         .out_cap = ui_label_new(ui_str_v(3)),
     };
 
-    ui_tape_init(&ui->tape, font);
+    ui_tape_init(&ui->tape);
     return ui;
 }
 
@@ -202,7 +198,7 @@ static void ui_collider_render(
     ui_label_render(&ui->rate_pct, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->op, layout, renderer);
     ui_label_render(&ui->op_val, layout, renderer);
@@ -212,7 +208,7 @@ static void ui_collider_render(
     ui_label_render(&ui->loops_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     switch (ui->state.op)
     {
@@ -242,7 +238,7 @@ static void ui_collider_render(
             ui_label_render(&ui->waiting_val, layout, renderer);
             ui_layout_next_row(layout);
 
-            ui_layout_sep_y(layout, ui->font->glyph_h);
+            ui_layout_sep_row(layout);
 
             ui_tape_render(&ui->tape, ui->state.tape, layout, renderer);
             break;

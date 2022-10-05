@@ -29,10 +29,8 @@ struct ui_prober
 };
 
 
-static void *ui_prober_alloc(struct font *font)
+static void *ui_prober_alloc(void)
 {
-    (void) font;
-
     struct ui_prober *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_prober) {
         .coord = ui_label_new(ui_str_c("coord:    ")),

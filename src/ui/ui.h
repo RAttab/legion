@@ -129,6 +129,8 @@ struct ui_layout ui_layout_inner(struct ui_layout *);
 
 void ui_layout_next_row(struct ui_layout *);
 void ui_layout_sep_x(struct ui_layout *, int16_t px);
+void ui_layout_sep_col(struct ui_layout *);
+void ui_layout_sep_cols(struct ui_layout *, size_t n);
 void ui_layout_sep_y(struct ui_layout *, int16_t px);
 void ui_layout_sep_row(struct ui_layout *);
 void ui_layout_mid(struct ui_layout *, int width);
@@ -226,7 +228,7 @@ inline size_t ui_str_len(struct ui_str *str)
 
 struct ui_label_style
 {
-    struct font *font;
+    const struct font *font;
     struct rgba fg, bg, disabled;
 };
 
@@ -291,7 +293,7 @@ enum ui_link_state
 
 struct ui_link_style
 {
-    struct font *font;
+    const struct font *font;
     struct { struct rgba fg, bg; } idle, hover, pressed, disabled;
 };
 
@@ -317,7 +319,7 @@ void ui_link_render(struct ui_link *, struct ui_layout *, SDL_Renderer *);
 
 struct ui_tooltip_style
 {
-    struct font *font;
+    const struct font *font;
     struct rgba fg, bg, border;
     struct dim pad;
 };
@@ -355,7 +357,7 @@ enum ui_button_state
 
 struct ui_button_style
 {
-    struct font *font;
+    const struct font *font;
     struct { struct rgba fg, bg; } idle, hover, pressed, disabled;
     struct dim pad;
 };
@@ -420,7 +422,7 @@ enum { ui_input_cap = 256 };
 
 struct ui_input_style
 {
-    struct font *font;
+    const struct font *font;
     struct rgba fg, bg, border, carret;
     struct dim pad;
 };
@@ -460,7 +462,7 @@ enum { ui_code_num_len = 4 };
 
 struct ui_code_style
 {
-    struct font *font;
+    const struct font *font;
     struct { struct rgba fg, bg; } line, code;
     struct rgba mark, error, carret;
 };
@@ -523,7 +525,7 @@ struct ui_doc_style
 {
     struct
     {
-        struct font *font;
+        const struct font *font;
         struct rgba fg, bg;
     } text, bold, code, link, hover, pressed;
 
@@ -565,7 +567,7 @@ struct ui_entry
 struct ui_list_style
 {
     struct {
-        struct font *font;
+        const struct font *font;
         struct rgba fg, bg;
     } idle, hover, selected;
 };
@@ -617,7 +619,7 @@ struct ui_node
 struct ui_tree_style
 {
     struct {
-        struct font *font;
+        const struct font *font;
         struct rgba fg, bg;
     } idle, hover, selected;
 };
@@ -671,7 +673,7 @@ struct ui_panel_style
     struct dim margin;
     struct rgba bg, border;
     struct {
-        struct font *font;
+        const struct font *font;
         struct rgba fg, bg;
     } head, focused;
 };
@@ -709,7 +711,10 @@ struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);
 
 extern struct ui_style
 {
-    struct { struct font *base, *bold; } font;
+    struct {
+        struct dim dim;
+        const struct font *base, *bold;
+    } font;
 
     struct
     {

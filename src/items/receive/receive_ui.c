@@ -11,8 +11,6 @@
 
 struct ui_receive
 {
-    struct font *font;
-
     struct ui_label target, target_val;
     struct ui_label channel, channel_val;
 
@@ -23,12 +21,10 @@ struct ui_receive
     struct im_packet packets[im_receive_buffer_max];
 };
 
-static void *ui_receive_alloc(struct font *font)
+static void *ui_receive_alloc(void)
 {
     struct ui_receive *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_receive) {
-        .font = font,
-
         .target = ui_label_new(ui_str_c("target: ")),
         .target_val = ui_label_new(ui_str_v(symbol_cap)),
         .channel = ui_label_new(ui_str_c("channel: ")),
@@ -100,7 +96,7 @@ static void ui_receive_render(
     ui_label_render(&ui->channel_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->buffer, layout, renderer);
     ui_label_render(&ui->buffer_len, layout, renderer);
@@ -114,7 +110,7 @@ static void ui_receive_render(
 
         for (size_t j = 0; j < packet->len; ++j) {
             ui_label_render(&ui->packet, layout, renderer);
-            ui_layout_sep_x(layout, ui->font->glyph_w);
+            ui_layout_sep_col(layout);
 
             ui_str_set_hex(&ui->packet_data.str, packet->data[j]);
             ui_label_render(&ui->packet_data, layout, renderer);
@@ -123,6 +119,6 @@ static void ui_receive_render(
             ui_layout_next_row(layout);
         }
 
-        ui_layout_sep_y(layout, ui->font->glyph_h);
+        ui_layout_sep_row(layout);
     }
 }

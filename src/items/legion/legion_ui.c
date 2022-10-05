@@ -14,23 +14,20 @@ struct ui_legion
 {
     enum item type;
 
-    struct font *font;
     struct ui_label mod, mod_val;
     struct ui_scroll scroll;
     struct ui_label index, cargo;
 };
 
-static void *ui_legion_alloc(struct font *font)
+static void *ui_legion_alloc(void)
 {
     struct ui_legion *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_legion) {
-        .font = font,
-
         .mod = ui_label_new(ui_str_c("mod: ")),
         .mod_val = ui_label_new(ui_str_v(symbol_cap)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
         .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .cargo = ui_label_new(ui_str_v(item_str_len)),
     };
@@ -102,7 +99,7 @@ static void ui_legion_render(
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);
         ui_label_render(&ui->index, &inner, renderer);
-        ui_layout_sep_x(&inner, ui->font->glyph_w);
+        ui_layout_sep_col(&inner);
 
         ui_str_set_item(&ui->cargo.str, list[i]);
         ui_label_render(&ui->cargo, &inner, renderer);

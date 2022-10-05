@@ -19,14 +19,11 @@ struct ui_stars
     struct ui_tree tree;
 };
 
-static struct font *ui_stars_font(void) { return font_mono6; }
-
 struct ui_stars *ui_stars_new(void)
 {
-    struct font *font = ui_stars_font();
     struct pos pos = make_pos(0, ui_topbar_height());
     struct dim dim = make_dim(
-            (symbol_cap + 4) * font->glyph_w,
+            (symbol_cap + 4) * ui_st.font.dim.w,
             render.rect.h - pos.y - ui_status_height());
 
     struct ui_stars *ui = calloc(1, sizeof(*ui));

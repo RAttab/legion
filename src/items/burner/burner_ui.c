@@ -13,7 +13,6 @@ struct ui_burner
 {
     struct { enum im_burner_op op; } state;
 
-    struct font *font;
     struct ui_label item, item_val;
     struct ui_label output, output_val;
     struct ui_label loops, loops_val;
@@ -23,7 +22,7 @@ struct ui_burner
     struct ui_label work, work_left, work_sep, work_cap;
 };
 
-static void *ui_burner_alloc(struct font *font)
+static void *ui_burner_alloc(void)
 {
     struct ui_value op[] = {
         {im_burner_in, "ingest", ui_st.rgba.in},
@@ -32,8 +31,6 @@ static void *ui_burner_alloc(struct font *font)
 
     struct ui_burner *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_burner) {
-        .font = font,
-
         .item = ui_label_new(ui_str_c("item:  ")),
         .item_val = ui_label_new(ui_str_v(item_str_len)),
 
@@ -129,7 +126,7 @@ static void ui_burner_render(
     ui_label_render(&ui->output_val, layout, renderer);
     ui_layout_next_row(layout);
 
-    ui_layout_sep_y(layout, ui->font->glyph_h);
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->loops, layout, renderer);
     ui_label_render(&ui->loops_val, layout, renderer);

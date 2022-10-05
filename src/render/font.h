@@ -30,29 +30,21 @@ struct font
 
 enum font_size { font_small = 0, font_big, font_size_max };
 enum font_style { font_nil = 0, font_bold, font_italic, font_style_max };
-struct font *make_font(enum font_size, enum font_style);
-
-extern struct font *font_mono4;
-extern struct font *font_mono6;
-extern struct font *font_mono8;
-extern struct font *font_mono10;
+const struct font *make_font(enum font_size, enum font_style);
 
 void fonts_populate(SDL_Renderer *);
 void fonts_close();
 
-struct font *font_open(SDL_Renderer *, const char *ttf, size_t px);
-void font_close(struct font *);
-
-void font_text_size(struct font *, size_t len, size_t *w, size_t *h);
+void font_text_size(const struct font *, size_t len, size_t *w, size_t *h);
 void font_render(
-        struct font *,
+        const struct font *,
         SDL_Renderer *,
         SDL_Point,
         struct rgba fg,
         const char *str, size_t len);
 
 void font_render_bg(
-        struct font *,
+        const struct font *,
         SDL_Renderer *,
         SDL_Point,
         struct rgba fg, struct rgba bg,

@@ -138,7 +138,7 @@ void ui_list_render(
     for (size_t i = first; i < last; ++i) {
         const struct ui_entry *entry = list->entries + i;
 
-        struct font *font = NULL;
+        const struct font *font = NULL;
         struct rgba fg = {0}, bg = {0};
         bool selected = entry->user == list->selected;
 

@@ -13,8 +13,6 @@
 // core
 // -----------------------------------------------------------------------------
 
-static struct font *ui_item_font(void) { return font_mono6; }
-
 struct ui_item
 {
     im_id id;
@@ -32,9 +30,7 @@ struct ui_item
 
 struct ui_item *ui_item_new(void)
 {
-    struct font *font = ui_item_font();
-
-    size_t width = 42 * ui_item_font()->glyph_w;
+    size_t width = 42 * ui_st.font.dim.w;
     struct pos pos = make_pos(
             render.rect.w - width - ui_star_width(render.ui.star),
             ui_topbar_height());
@@ -54,7 +50,7 @@ struct ui_item *ui_item_new(void)
 
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
         const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
-        if (config && config->ui.alloc) ui->states[i] = config->ui.alloc(font);
+        if (config && config->ui.alloc) ui->states[i] = config->ui.alloc();
     }
 
     return ui;
@@ -220,8 +216,6 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     if (ui_layout_is_nil(&layout)) return;
     if (ui->loading) return;
 
-    struct font *font = ui_item_font();
-
     ui_layout_dir(&layout, ui_layout_left);
     ui_button_render(&ui->help, &layout, renderer);
     ui_layout_dir(&layout, ui_layout_right);
@@ -229,13 +223,13 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     ui_button_render(&ui->io, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     ui_label_render(&ui->id_lbl, &layout, renderer);
     ui_link_render(&ui->id_val, &layout, renderer);
     ui_layout_next_row(&layout);
 
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     void *state = ui_item_state(ui, ui->id);
     const struct im_config *config = im_config_assert(im_id_item(ui->id));

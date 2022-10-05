@@ -17,9 +17,8 @@ struct ui_storage
     struct ui_label state, state_val;
 };
 
-static void *ui_storage_alloc(struct font *font)
+static void *ui_storage_alloc(void)
 {
-    (void) font;
     struct ui_storage *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_storage) {

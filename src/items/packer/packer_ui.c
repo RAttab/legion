@@ -16,9 +16,8 @@ struct ui_packer
     struct ui_label state, state_val;
 };
 
-static void *ui_packer_alloc(struct font *font)
+static void *ui_packer_alloc(void)
 {
-    (void) font;
     struct ui_packer *ui = calloc(1, sizeof(*ui));
 
     *ui = (struct ui_packer) {

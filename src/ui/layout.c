@@ -70,6 +70,16 @@ void ui_layout_sep_x(struct ui_layout *layout, int16_t px)
     layout->row.dim.w -= px;
 }
 
+void ui_layout_sep_col(struct ui_layout *layout)
+{
+    ui_layout_sep_x(layout, ui_st.font.dim.w);
+}
+
+void ui_layout_sep_cols(struct ui_layout *layout, size_t n)
+{
+    ui_layout_sep_x(layout, n * ui_st.font.dim.w);
+}
+
 void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
 {
     assert(layout->row.dim.h == 0);
@@ -80,7 +90,7 @@ void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
 
 void ui_layout_sep_row(struct ui_layout *layout)
 {
-    ui_layout_sep_y(layout, ui_st.font.base->glyph_h);
+    ui_layout_sep_y(layout, ui_st.font.dim.h);
 }
 
 void ui_layout_mid(struct ui_layout *layout, int width)

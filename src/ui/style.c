@@ -20,6 +20,9 @@ void ui_style_default(void)
     { // font
         s->font.base = make_font(font_small, font_nil);
         s->font.bold = make_font(font_small, font_bold);
+        s->font.dim = make_dim(
+                s->font.base->glyph_w,
+                s->font.base->glyph_h);
     }
 
     { // rgba

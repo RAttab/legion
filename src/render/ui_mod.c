@@ -30,19 +30,15 @@ struct ui_mod
     struct ui_code code;
 };
 
-static struct font *ui_mod_font(void) { return font_mono6; }
-
 struct ui_mod *ui_mod_new(void)
 {
     enum { cols = 80 };
-    struct font *font = ui_mod_font();
-
     struct pos pos = make_pos(
             ui_mods_width(render.ui.mods),
             ui_topbar_height());
 
     struct dim dim = make_dim(
-            (ui_code_num_len+1 + cols + 2) * font->glyph_w,
+            (ui_code_num_len+1 + cols + 2) * ui_st.font.dim.w,
             render.rect.h - pos.y - ui_status_height());
 
     struct ui_mod *ui = calloc(1, sizeof(*ui));
@@ -314,20 +310,18 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 
 void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 {
-    struct font *font = ui_mod_font();
-
     struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     ui_button_render(&ui->compile, &layout, renderer);
     ui_button_render(&ui->publish, &layout, renderer);
 
-    ui_layout_sep_x(&layout, 6);
+    ui_layout_sep_col(&layout);
 
     ui_button_render(&ui->mode, &layout, renderer);
     ui_button_render(&ui->indent, &layout, renderer);
 
-    ui_layout_sep_x(&layout, 6);
+    ui_layout_sep_col(&layout);
 
     ui_button_render(&ui->import, &layout, renderer);
     ui_button_render(&ui->export, &layout, renderer);
@@ -337,7 +331,7 @@ void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 
     ui_layout_dir(&layout, ui_layout_right);
     ui_layout_next_row(&layout);
-    ui_layout_sep_y(&layout, font->glyph_h);
+    ui_layout_sep_row(&layout);
 
     ui_code_render(&ui->code, &layout, renderer);
 }
