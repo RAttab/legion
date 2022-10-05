@@ -56,7 +56,7 @@ struct ui_man *ui_man_new(void)
     struct ui_man *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_man) {
         .panel = ui_panel_title(pos, dim, ui_str_c("man")),
-        .toc = ui_tree_new(make_dim(tree_width, ui_layout_inf), font, man_toc_max),
+        .toc = ui_tree_new(make_dim(tree_width, ui_layout_inf), man_toc_max),
         .doc = ui_doc_new(make_dim(doc_width, ui_layout_inf)),
         .page = link_home(),
     };
@@ -144,10 +144,9 @@ bool ui_man_event(struct ui_man *ui, SDL_Event *ev)
     if ((ret = ui_doc_event(&ui->doc, ev))) return true;
 
     if ((ret = ui_tree_event(&ui->toc, ev))) {
-        if (ret == ui_action) {
-            struct link link = link_from_u64(ui->toc.selected);
-            ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
-        }
+        if (ret != ui_action) return true;
+        struct link link = link_from_u64(ui->toc.selected);
+        ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
         return true;
     }
 

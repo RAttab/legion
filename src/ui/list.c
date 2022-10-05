@@ -140,13 +140,14 @@ void ui_list_render(
 
         struct font *font = NULL;
         struct rgba fg = {0}, bg = {0};
+        bool selected = entry->user == list->selected;
 
         if (entry->user == list->hover) {
-            font = list->s.hover.font;
+            font = selected ? list->s.selected.font : list->s.hover.font;
             fg = list->s.hover.fg;
             bg = list->s.hover.bg;
         }
-        else if (entry->user == list->selected) {
+        else if (selected) {
             font = list->s.selected.font;
             fg = list->s.selected.fg;
             bg = list->s.selected.bg;

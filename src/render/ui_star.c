@@ -112,9 +112,9 @@ struct ui_star *ui_star_new(void)
         .logistic = ui_button_new(ui_str_c("logistic")),
 
         .control_list = ui_tree_new(
-                make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
+                make_dim(ui_layout_inf, ui_layout_inf), im_id_str_len),
         .factory_list = ui_tree_new(
-                make_dim(ui_layout_inf, ui_layout_inf), font, im_id_str_len),
+                make_dim(ui_layout_inf, ui_layout_inf), im_id_str_len),
 
         .pills = ui_label_new(ui_str_c("pills: ")),
         .pills_val = ui_label_new(ui_str_v(4)),

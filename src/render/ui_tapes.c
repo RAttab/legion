@@ -60,7 +60,7 @@ struct ui_tapes *ui_tapes_new(void)
 
         .panel = ui_panel_title(pos, dim, ui_str_c("tapes")),
 
-        .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), font, symbol_cap),
+        .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), symbol_cap),
 
         .name = ui_label_new(ui_str_v(item_str_len)),
         .help = ui_button_new_s(&ui_st.button.line, ui_str_c("?")),

@@ -14,13 +14,15 @@
 // tree
 // -----------------------------------------------------------------------------
 
-struct ui_tree ui_tree_new(struct dim dim, struct font *font, size_t chars)
+struct ui_tree ui_tree_new(struct dim dim, size_t chars)
 {
+    const struct ui_tree_style *s = &ui_st.tree;
+
     return (struct ui_tree) {
         .w = ui_widget_new(dim.w, dim.h),
-        .scroll = ui_scroll_new(dim, font->glyph_h),
+        .s = *s,
 
-        .font = font,
+        .scroll = ui_scroll_new(dim, s->idle.font->glyph_h),
         .str = ui_str_v(chars),
 
         .len = 0,
@@ -30,6 +32,7 @@ struct ui_tree ui_tree_new(struct dim dim, struct font *font, size_t chars)
         .hover = 0,
         .selected = 0,
         .open = NULL,
+        .path = NULL,
     };
 }
 
@@ -63,16 +66,19 @@ ui_node ui_tree_user(struct ui_tree *tree, uint64_t user)
 
 void ui_tree_clear(struct ui_tree *tree)
 {
+    hset_clear(tree->path);
     tree->selected = ui_node_nil;
 }
 
 ui_node ui_tree_select(struct ui_tree *tree, uint64_t user)
 {
+    hset_clear(tree->path);
     ui_node index = ui_tree_user(tree, user);
     if (index == ui_node_nil) { tree->selected = 0; return index; }
-    tree->selected = user;
 
     struct ui_node *node = tree->nodes + index;
+    tree->selected = user;
+
     while (true) {
         if (!node->leaf) {
             node->open = true;
@@ -171,7 +177,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) tree->hover = 0;
         else {
-            size_t row = (point.y - rect.y) / tree->font->glyph_h;
+            size_t row = (point.y - rect.y) / tree->s.idle.font->glyph_h;
             row += ui_scroll_first(&tree->scroll);
 
             ui_node index = ui_tree_row(tree, row);
@@ -188,7 +194,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
 
-        size_t row = (point.y - rect.y) / tree->font->glyph_h;
+        size_t row = (point.y - rect.y) / tree->s.idle.font->glyph_h;
         row += ui_scroll_first(&tree->scroll);
 
         ui_node index = ui_tree_row(tree, row);
@@ -196,7 +202,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
         struct ui_node *node = tree->nodes + index;
 
-        size_t col = (point.x - rect.x) / tree->font->glyph_w;
+        size_t col = (point.x - rect.x) / tree->s.idle.font->glyph_w;
         if (col < node->depth) return ui_consume;
 
         if (!node->leaf && (!node->open || col == node->depth)) {
@@ -207,6 +213,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
         if (node->user && col > node->depth) {
             tree->selected = node->user;
+            hset_clear(tree->path);
             return ui_action;
         }
 
@@ -222,11 +229,19 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 // render
 // -----------------------------------------------------------------------------
 
+static void ui_tree_update_path(struct ui_tree *tree)
+{
+    if (!tree->selected) return;
+    if (tree->path && tree->path->len) return;
+
+    for (ui_node index = ui_tree_user(tree, tree->selected);
+         index != ui_node_nil; index = (tree->nodes + index)->parent)
+        tree->path = hset_put(tree->path, index + 1);
+}
+
 void ui_tree_render(
         struct ui_tree *tree, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct font *font = tree->font;
-
     if (!tree->len) ui_scroll_update(&tree->scroll, 0);
     else {
         size_t n = 1;
@@ -243,13 +258,30 @@ void ui_tree_render(
     size_t last = ui_scroll_last(&tree->scroll);
     size_t first = ui_scroll_first(&tree->scroll);
     ui_node index = ui_tree_row(tree, first);
+    ui_tree_update_path(tree);
 
     for (size_t i = first; i < last; ++i, index = ui_tree_next(tree, index)) {
         struct ui_node *node = tree->nodes + index;
 
-        struct rgba bg = rgba_nil();
-        if (node->user == tree->selected) bg = rgba_gray_a(0xFF, 0x11);
-        else if (node->user == tree->hover) bg = rgba_gray_a(0xFF, 0x22);
+        struct font *font = NULL;
+        struct rgba fg = {0}, bg = {0};
+        bool selected = hset_test(tree->path, index + 1);
+
+        if (node->user == tree->hover) {
+            font = selected ? tree->s.selected.font : tree->s.hover.font;
+            fg = tree->s.hover.fg;
+            bg = tree->s.hover.bg;
+        }
+        else if (selected) {
+            font = tree->s.selected.font;
+            fg = tree->s.selected.fg;
+            bg = tree->s.selected.bg;
+        }
+        else {
+            font = tree->s.idle.font;
+            fg = tree->s.idle.fg;
+            bg = tree->s.idle.bg;
+        }
 
         rgba_render(bg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -262,12 +294,12 @@ void ui_tree_render(
 
         if (!node->leaf) {
             const char *sigil = node->open ? "-" : "+";
-            font_render(font, renderer, pos_as_point(pos), rgba_white(), sigil, 1);
+            font_render(font, renderer, pos_as_point(pos), fg, sigil, 1);
         }
         pos.x += font->glyph_w;
 
         font_render(
-                font, renderer, pos_as_point(pos), rgba_white(),
+                font, renderer, pos_as_point(pos), fg,
                 node->str.str, node->str.len);
 
         pos.x = inner.base.pos.x;

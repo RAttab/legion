@@ -614,23 +614,31 @@ struct ui_node
     ui_node parent;
 };
 
+struct ui_tree_style
+{
+    struct {
+        struct font *font;
+        struct rgba fg, bg;
+    } idle, hover, selected;
+};
+
 struct ui_tree
 {
     struct ui_widget w;
-    struct ui_scroll scroll;
+    struct ui_tree_style s;
 
-    struct font *font;
+    struct ui_scroll scroll;
     struct ui_str str;
 
     ui_node len, cap;
     struct ui_node *nodes;
 
     uint64_t hover, selected;
-    struct hset *open;
+    struct hset *open, *path;
 };
 
 
-struct ui_tree ui_tree_new(struct dim, struct font *, size_t chars);
+struct ui_tree ui_tree_new(struct dim, size_t chars);
 void ui_tree_free(struct ui_tree *);
 
 struct ui_node *ui_tree_node(struct ui_tree *, ui_node);
@@ -731,6 +739,7 @@ extern struct ui_style
     struct ui_code_style code;
     struct ui_doc_style doc;
     struct ui_list_style list;
+    struct ui_tree_style tree;
 
 } ui_st;
 

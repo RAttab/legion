@@ -183,4 +183,25 @@ void ui_style_default(void)
             .bg = s->rgba.list.selected,
         },
     };
+
+    s->tree = (struct ui_tree_style) {
+        .idle = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = s->rgba.bg,
+        },
+
+        .hover = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = s->rgba.list.hover,
+        },
+
+        .selected = {
+            .font = s->font.bold,
+            .fg = s->rgba.fg,
+            .bg = s->rgba.list.selected,
+        },
+    };
+
 }
