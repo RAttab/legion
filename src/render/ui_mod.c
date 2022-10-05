@@ -227,6 +227,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     case EV_TAPE_SELECT:
     case EV_STARS_TOGGLE:
     case EV_MOD_CLEAR:
+    case EV_MODS_TOGGLE:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
         ui_panel_hide(&ui->panel);
