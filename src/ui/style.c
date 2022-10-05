@@ -79,6 +79,7 @@ void ui_style_default(void)
         s->label.index.bg = rgba_gray_a(0x44, 0x88);
 
         s->label.title = s->label.base;
+        s->label.title.font = s->font.bold;
         s->label.title.bg = rgba_gray_a(0x44, 0x44);
 
         fg(&s->label.in, s->rgba.in);
@@ -201,6 +202,25 @@ void ui_style_default(void)
             .font = s->font.bold,
             .fg = s->rgba.fg,
             .bg = s->rgba.list.selected,
+        },
+    };
+
+    s->panel = (struct ui_panel_style) {
+        .margin = make_dim(2, 2),
+
+        .bg = rgba_gray_a(0x11, 0x88),
+        .border = s->rgba.box.border,
+
+        .head = {
+            .font = s->font.base,
+            .fg = rgba_gray(0xAA),
+            .bg = rgba_gray(0x11),
+        },
+
+        .focused = {
+            .font = s->font.bold,
+            .fg = s->rgba.fg,
+            .bg = rgba_gray(0x22),
         },
     };
 

@@ -11,20 +11,22 @@
 // panel
 // -----------------------------------------------------------------------------
 
-static const struct dim ui_panel_margin = { .w = 2, .h = 2 };
-
 static struct ui_panel ui_panel_new(struct pos pos, struct dim dim)
 {
+    struct ui_panel_style *s = &ui_st.panel;
+
     return (struct ui_panel) {
         .w = (struct ui_widget) { .pos = pos, .dim = dim },
+        .s = *s,
+
         .state = ui_panel_visible,
         .layout = ui_layout_new(
                 make_pos(
-                        pos.x + ui_panel_margin.w,
-                        pos.y + ui_panel_margin.h),
+                        pos.x + s->margin.w,
+                        pos.y + s->margin.h),
                 make_dim(
-                        dim.w - (ui_panel_margin.w * 2),
-                        dim.h - (ui_panel_margin.h * 2))),
+                        dim.w - (s->margin.w * 2),
+                        dim.h - (s->margin.h * 2))),
     };
 }
 
@@ -55,8 +57,8 @@ void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 {
     panel->w.dim = dim;
     ui_layout_resize(&panel->layout, panel->layout.base.pos, make_dim(
-                    dim.w - (ui_panel_margin.w * 2),
-                    dim.h - (ui_panel_margin.h * 2)));
+                    dim.w - (panel->s.margin.w * 2),
+                    dim.h - (panel->s.margin.h * 2)));
 }
 
 void ui_panel_show(struct ui_panel *panel)
@@ -144,25 +146,34 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
 
     struct SDL_Rect rect = ui_widget_rect(&panel->w);
 
-    rgba_render(rgba_gray_a(0x11, 0x88), renderer);
+    rgba_render(panel->s.bg, renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     if (!panel->menu) {
-        rgba_render(rgba_gray(0x22), renderer);
+        struct rgba bg = panel->state == ui_panel_focused ?
+            panel->s.focused.bg : panel->s.head.bg;
+
+        rgba_render(bg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = rect.x, .y = rect.y,
                             .w = rect.w,
-                            .h = panel->close.w.dim.h + ui_panel_margin.h }));
+                            .h = panel->close.w.dim.h + panel->s.margin.h }));
 
-        rgba_render(rgba_gray(0x22), renderer);
+        rgba_render(panel->s.border, renderer);
         sdl_err(SDL_RenderDrawRect(renderer, &rect));
     }
 
     struct ui_layout layout = panel->layout;
 
     if (!panel->menu) {
-        panel->title.s.fg = panel->state == ui_panel_focused ?
-            ui_st.label.base.fg : rgba_gray(0xAA);
+        if (panel->state == ui_panel_focused) {
+            panel->title.s.font = panel->s.focused.font;
+            panel->title.s.fg = panel->s.focused.fg;
+        }
+        else {
+            panel->title.s.font = panel->s.head.font;
+            panel->title.s.fg = panel->s.head.fg;
+        }
         ui_label_render(&panel->title, &layout, renderer);
 
         ui_layout_dir(&layout, ui_layout_left);

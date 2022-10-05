@@ -666,9 +666,20 @@ enum ui_panel_state
     ui_panel_focused = 2,
 };
 
+struct ui_panel_style
+{
+    struct dim margin;
+    struct rgba bg, border;
+    struct {
+        struct font *font;
+        struct rgba fg, bg;
+    } head, focused;
+};
+
 struct ui_panel
 {
     struct ui_widget w;
+    struct ui_panel_style s;
     struct ui_layout layout;
 
     struct ui_label title;
@@ -740,6 +751,7 @@ extern struct ui_style
     struct ui_doc_style doc;
     struct ui_list_style list;
     struct ui_tree_style tree;
+    struct ui_panel_style panel;
 
 } ui_st;
 
