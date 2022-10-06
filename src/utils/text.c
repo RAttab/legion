@@ -210,6 +210,14 @@ static struct line *line_replace_tabs(struct text *text, struct line *line)
     return line;
 }
 
+uint16_t line_first_char(struct line *line)
+{
+    const char *it = line->c;
+    const char *end = it + line->len;
+    while (it < end && *it == ' ') it++;
+    return it - line->c;
+}
+
 
 // -----------------------------------------------------------------------------
 // text

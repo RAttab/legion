@@ -54,6 +54,7 @@ enum event
     EV_MODS_TOGGLE,
     EV_MOD_SELECT,
     EV_MOD_CLEAR,
+    EV_MOD_BREAKPOINT,
 
     EV_STARS_TOGGLE,
     EV_STAR_SELECT,
@@ -69,6 +70,8 @@ enum event
 
     EV_MAN_TOGGLE,
     EV_MAN_GOTO,
+
+    EV_IO,
 
     EV_MAX,
 };

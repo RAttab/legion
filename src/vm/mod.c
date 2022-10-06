@@ -183,10 +183,10 @@ vm_ip mod_byte(const struct mod *mod, size_t row, size_t col)
     const struct mod_index *it = mod->index;
     const struct mod_index *end = it + mod->index_len;
 
-    while (it < end) {
-        if (row == it->row && col >= it->col && col < it->col + it->len)
-            return it->ip;
-        it++;
+    for (; it < end; it++) {
+        if (row > it->row) continue;
+        if (row < it->row) return it->ip;
+        if (col < it->col + it->len) return it->ip;
     }
 
     return mod->index[mod->index_len-1].ip;

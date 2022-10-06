@@ -126,6 +126,9 @@ static void ui_code_set(struct ui_code *code, vm_ip ip)
         code->mark.row = 0;
         code->mark.col = 0;
         code->mark.len = 0;
+
+        code->breakpoint.ip = 0;
+        code->breakpoint.row = 0;
     }
 }
 
@@ -169,6 +172,69 @@ void ui_code_indent(struct ui_code *code)
     for (size_t row = code->view.top; row < code->carret.row; ++row)
         code->carret.line = code->carret.line->next;
     code->carret.col = legion_min(code->carret.col, code->carret.line->len);
+}
+
+void ui_code_breakpoint(struct ui_code *code, size_t row)
+{
+    if (!code->mod) return;
+
+    const struct mod_index *it = code->mod->index;
+    const struct mod_index *end = it + code->mod->index_len;
+
+    if (!code->disassembly) {
+        while (it < end && it->row < row) it++;
+        if (it == end) return;
+
+        if (code->breakpoint.row == it->row) {
+            code->breakpoint.ip = 0;
+            code->breakpoint.row = 0;
+        }
+        else {
+            code->breakpoint.ip = it->ip;
+            code->breakpoint.row = it->row;
+        }
+    }
+
+    else {
+        struct line *line = text_goto(&code->text, row);
+        if (!line) return;
+
+        vm_ip ip = line->user;
+        if (code->breakpoint.ip == ip) {
+            code->breakpoint.ip = 0;
+            code->breakpoint.row = 0;
+        }
+        else {
+            for (const struct mod_index *next = it + 1;
+                 next < end && next->ip < ip;
+                 it++, next++);
+
+            code->breakpoint.ip = ip;
+            code->breakpoint.row = it->row;
+        }
+    }
+
+    render_push_event(
+            EV_IO, vm_pack(IO_DBG_BREAK, ITEM_BRAIN), code->breakpoint.ip);
+}
+
+void ui_code_breakpoint_ip(struct ui_code *code, vm_ip ip)
+{
+    if (!code->mod || code->breakpoint.ip == ip) return;
+
+    if (!ip) {
+        code->breakpoint.ip = 0;
+        code->breakpoint.row = 0;
+        return;
+    }
+
+    const struct mod_index *it = code->mod->index;
+    const struct mod_index *end = it + code->mod->index_len;
+
+    while (it < end && it->ip < ip) it++;
+
+    code->breakpoint.ip = ip;
+    code->breakpoint.row = it < end ? it->row : code->text.lines;
 }
 
 
@@ -371,7 +437,52 @@ void ui_code_render(
             }
         }
 
-        ui_layout_sep_x(&inner, code->s.font->glyph_w);
+        // breakpoint
+        {
+            SDL_Rect rect = {
+                .x = code->w.pos.x,
+                .y = inner.row.pos.y,
+                .w = font->glyph_w * (ui_code_num_len + 1),
+                .h = font->glyph_h
+            };
+
+            bool is_highlight = sdl_rect_contains(&rect, &render.cursor.point);
+            bool is_breakpoint =
+                code->breakpoint.ip &&
+                (code->disassembly ?
+                        code->breakpoint.ip == line->user :
+                        code->breakpoint.row == row);
+
+            if (is_highlight || is_breakpoint) {
+                if (is_highlight)
+                    rgba_render(code->s.breakpoint.hover, renderer);
+                else rgba_render(code->s.breakpoint.bg, renderer);
+
+                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                    .x = inner.row.pos.x,
+                                    .y = inner.row.pos.y,
+                                    .w = inner.row.dim.w,
+                                    .h = font->glyph_h,
+                                }));
+            }
+
+            if (is_breakpoint) {
+                rgba_render(code->s.breakpoint.bg, renderer);
+
+                uint8_t margin = code->s.breakpoint.margin;
+                size_t size = font->glyph_w - margin * 2;
+                size_t mid_h = (font->glyph_h / 2) - (size / 2);
+
+                rgba_render(code->s.breakpoint.fg, renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                    .x = inner.row.pos.x + margin,
+                                    .y = inner.row.pos.y + mid_h,
+                                    .w = size, .h = size,
+                                }));
+            }
+
+            ui_layout_sep_col(&inner);
+        }
 
         // code line
         struct ui_widget w = ui_widget_new(font->glyph_w * code->cols, font->glyph_h);
@@ -381,11 +492,15 @@ void ui_code_render(
 
         // mark
         if (code->mark.row == row) {
-            size_t start = 0, end = code->cols;
+            size_t start = 0, end = 0;
 
             if (!code->disassembly) {
                 start = legion_bound(code->mark.col, col, col + len);
                 end = legion_bound(code->mark.col + code->mark.len, col, col + len);
+            }
+            else {
+                start = line_first_char(line);
+                end = line->len;
             }
 
             if (start != end) {
@@ -463,6 +578,9 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
 
     size_t col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
     size_t row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
+
+    if (col <= ui_code_num_len) ui_code_breakpoint(code, row + code->view.top);
+
     col = col < (ui_code_num_len+1) ? 0 : col - (ui_code_num_len+1);
 
     ui_code_view_carret_at(code, row, col);

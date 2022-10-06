@@ -104,6 +104,33 @@ static void ui_item_update(struct ui_item *ui)
     config->ui.update(state, chunk, ui->id);
 }
 
+static void ui_item_event_io(struct ui_item *ui, uintptr_t a1, uintptr_t a2)
+{
+    uint32_t io_raw = 0, item_raw = 0;
+    vm_unpack(a1, &io_raw, &item_raw);
+
+    enum io io = io_raw;
+    if (io_raw <= IO_MIN || io_raw >= IO_MAX) {
+        render_log(st_error, "invalid io event: io out-of-bounds '%x'", io_raw);
+        return;
+    }
+
+    enum item item = item_raw;
+    if (!item_raw || item_raw >= ITEM_MAX) {
+        render_log(st_error, "invalid io event: item out-of-bounds '%x'", item_raw);
+        return;
+    }
+
+    if (item != im_id_item(ui->id)) {
+        render_log(st_error, "invalid io event: target item '%x' != '%x'",
+                item, im_id_item(ui->id));
+        return;
+    }
+
+    vm_word arg = (uintptr_t) a2;
+    proxy_io(render.proxy, io, ui->id, &arg, 1);
+}
+
 static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
@@ -151,6 +178,13 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui->id = 0;
         ui_panel_hide(&ui->panel);
         return false;
+    }
+
+    case EV_IO: {
+        ui_item_event_io(ui,
+                (uintptr_t) ev->user.data1,
+                (uintptr_t) ev->user.data2);
+        return true;
     }
 
     default: { return false; }

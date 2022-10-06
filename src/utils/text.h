@@ -36,6 +36,8 @@ void line_setc(struct text *, struct line *, size_t len, const char *str);
 void line_setf(struct text *, struct line *, size_t len, const char *fmt, ...)
     legion_printf(4, 5);
 
+uint16_t line_first_char(struct line *);
+
 
 // -----------------------------------------------------------------------------
 // text

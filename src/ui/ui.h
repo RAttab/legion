@@ -464,6 +464,7 @@ struct ui_code_style
 {
     const struct font *font;
     struct { struct rgba fg, bg; } line, code;
+    struct { struct rgba fg, bg, hover; uint8_t margin; } breakpoint;
     struct rgba mark, error, carret;
 };
 
@@ -497,6 +498,7 @@ struct ui_code
     } carret;
 
     struct { size_t row, col, len; } mark;
+    struct { vm_ip ip; size_t row; } breakpoint;
 };
 
 struct ui_code ui_code_new(struct dim);
@@ -512,6 +514,8 @@ void ui_code_set_text(struct ui_code *code, const char *text, size_t len);
 vm_ip ui_code_ip(struct ui_code *);
 void ui_code_goto(struct ui_code *, vm_ip);
 void ui_code_indent(struct ui_code *);
+void ui_code_breakpoint(struct ui_code *, size_t row);
+void ui_code_breakpoint_ip(struct ui_code *, vm_ip ip);
 
 enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
 void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
