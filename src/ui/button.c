@@ -18,8 +18,8 @@ struct ui_button ui_button_new_s(const struct ui_button_style *s, struct ui_str 
 {
     return (struct ui_button) {
         .w = ui_widget_new(
-                s->font->glyph_w * ui_str_len(&str) + s->pad.w*2,
-                s->font->glyph_h + s->pad.h*2),
+                ui_st.font.dim.w * ui_str_len(&str) + s->margin.w*2,
+                ui_st.font.dim.h + s->margin.h*2),
         .s = *s,
         .str = str,
 
@@ -77,9 +77,11 @@ void ui_button_render(
 {
     ui_layout_add(layout, &button->w);
 
+    const struct font *font = NULL;
     struct rgba fg = {0}, bg = {0};
 
     if (button->disabled) {
+        font = button->s.disabled.font;
         fg = button->s.disabled.fg;
         bg = button->s.disabled.bg;
     }
@@ -87,16 +89,19 @@ void ui_button_render(
         switch (button->state)
         {
         case ui_button_idle: {
+            font = button->s.idle.font;
             fg = button->s.idle.fg;
             bg = button->s.idle.bg;
             break;
         }
         case ui_button_hover: {
+            font = button->s.hover.font;
             fg = button->s.hover.fg;
             bg = button->s.hover.bg;
             break;
         }
         case ui_button_pressed: {
+            font = button->s.pressed.font;
             fg = button->s.pressed.fg;
             bg = button->s.pressed.bg;
             break;
@@ -110,8 +115,8 @@ void ui_button_render(
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     SDL_Point point = {
-        .x = button->w.pos.x + button->s.pad.w,
-        .y = button->w.pos.y + button->s.pad.h
+        .x = button->w.pos.x + button->s.margin.w,
+        .y = button->w.pos.y + button->s.margin.h
     };
-    font_render(button->s.font, renderer, point, fg, button->str.str, button->str.len);
+    font_render(font, renderer, point, fg, button->str.str, button->str.len);
 }

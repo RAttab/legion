@@ -272,18 +272,20 @@ static void im_lab_io(
     }
 }
 
-static const vm_word im_lab_io_list[] =
+static const struct io_cmd im_lab_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
+    { IO_PING,       0, {} },
+    { IO_STATE,      1, { { "state", true } }},
+    { IO_RESET,      0, {} },
 
-    IO_ITEM,
-    IO_RESET,
+    { IO_ITEM,       1, { { "item", true } }},
 
-    IO_TAPE_AT,
-    IO_TAPE_KNOWN,
-    IO_ITEM_BITS,
-    IO_ITEM_KNOWN,
+    { IO_TAPE_AT,    2, { { "item", true },
+                          { "index", true } }},
+    { IO_TAPE_KNOWN, 1, { { "item", true } }},
+
+    { IO_ITEM_BITS,  1, { { "item", true } }},
+    { IO_ITEM_KNOWN, 1, { { "item", true } }},
 };
 
 

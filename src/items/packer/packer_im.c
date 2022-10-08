@@ -145,14 +145,15 @@ static void im_packer_io(
     }
 }
 
-static const vm_word im_packer_io_list[] =
+static const struct io_cmd im_packer_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-    IO_RESET,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
 
-    IO_ID,
-    IO_ITEM,
+    { IO_ID,     1, { { "pack-id", true } }},
+    { IO_PACK,   2, { { "item", true },
+                      { "loops", false } }},
 };
 
 

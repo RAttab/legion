@@ -234,6 +234,40 @@ static void proxy_update_status(struct proxy *, struct save *save)
     render_log_msg(status.type, status.msg, status.len);
 }
 
+static void proxy_update_state_io(struct proxy *proxy, struct world_io *io)
+{
+    if (!io->io) return;
+
+    char id_str[im_id_str_len] = {0};
+    im_id_str(io->src, id_str, sizeof(id_str));
+
+    struct symbol io_str = {0};
+    bool ok = atoms_str(proxy_atoms(proxy), io->io, &io_str);
+    assert(ok);
+
+    if (!io->len) {
+        render_log(st_info, "received IO command '%s' from '%s'",
+                io_str.c, id_str);
+        return;
+    }
+
+    enum { arg_str_len = 16 };
+    char arg_str[(2 + arg_str_len + 1) * 4 + 1] = {0};
+
+    char *it = arg_str;
+    for (size_t i = 0; i < io->len; ++i) {
+        *it = '0'; it++;
+        *it = 'x'; it++;
+        it += str_utox(io->args[i], it, arg_str_len);
+        *it = ' '; it++;
+    }
+    *it = '\0';
+    assert((uintptr_t)(it - arg_str) <= sizeof(arg_str));
+
+    render_log(st_info, "received IO command '%s' from '%s' with [ %s]",
+            io_str.c, id_str, arg_str);
+}
+
 static enum proxy_ret proxy_update_state(
         struct proxy *proxy, struct proxy_pipe *pipe, struct save *save)
 {
@@ -270,6 +304,7 @@ static enum proxy_ret proxy_update_state(
     }
 
     lisp_context(proxy->lisp, proxy->state->mods, proxy->state->atoms);
+    proxy_update_state_io(proxy, &proxy->state->io);
 
     return stream && proxy->state->stream != stream ?
         proxy_loaded : proxy_updated;

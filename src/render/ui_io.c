@@ -12,131 +12,33 @@
 #include "ui/ui.h"
 
 // -----------------------------------------------------------------------------
-// cmd
-// -----------------------------------------------------------------------------
-
-struct ui_io_arg
-{
-    struct ui_label name;
-    struct ui_input val;
-};
-
-static struct ui_io_arg ui_io_arg(const char *arg)
-{
-    return (struct ui_io_arg) {
-        .name = ui_label_new(ui_str_c(arg)),
-        .val = ui_input_new(20),
-    };
-}
-
-struct ui_io_cmd
-{
-    enum io id;
-    bool active;
-
-    struct ui_label name;
-    struct ui_button help;
-    size_t args;
-    struct ui_io_arg arg[4];
-    struct ui_button exec;
-};
-
-static struct ui_io_cmd ui_io_cmd(enum io id, size_t args)
-{
-    struct ui_io_cmd cmd = {
-        .id = id,
-        .active = false,
-        .name = ui_label_new_s(&ui_st.label.title, ui_str_v(symbol_cap)),
-        .help = ui_button_new_s(&ui_st.button.line, ui_str_c("?")),
-        .exec = ui_button_new(ui_str_c("exec >>")),
-        .args = args,
-    };
-
-    struct symbol str = {0};
-    bool ok = atoms_str(proxy_atoms(render.proxy), id, &str);
-    assert(ok);
-
-    ui_str_set_symbol(&cmd.name.str, &str);
-    cmd.name.w.dim.w = ui_layout_inf;
-
-    return cmd;
-}
-
-static struct ui_io_cmd ui_io_cmd0(enum io id)
-{
-    return ui_io_cmd(id, 0);
-}
-
-static struct ui_io_cmd ui_io_cmd1(enum io id, const char *arg)
-{
-    struct ui_io_cmd cmd = ui_io_cmd(id, 1);
-    cmd.arg[0] = ui_io_arg(arg);
-    return cmd;
-}
-
-static struct ui_io_cmd ui_io_cmd2(
-        enum io id, const char *arg0, const char *arg1)
-{
-    struct ui_io_cmd cmd = ui_io_cmd(id, 2);
-    cmd.arg[0] = ui_io_arg(arg0);
-    cmd.arg[1] = ui_io_arg(arg1);
-    return cmd;
-}
-
-static struct ui_io_cmd ui_io_cmd3(
-        enum io id, const char *arg0, const char *arg1, const char *arg2)
-{
-    struct ui_io_cmd cmd = ui_io_cmd(id, 3);
-    cmd.arg[0] = ui_io_arg(arg0);
-    cmd.arg[1] = ui_io_arg(arg1);
-    cmd.arg[2] = ui_io_arg(arg2);
-    return cmd;
-}
-
-static struct ui_io_cmd ui_io_cmd4(
-        enum io id,
-        const char *arg0, const char *arg1,
-        const char *arg2, const char *arg3)
-{
-    struct ui_io_cmd cmd = ui_io_cmd(id, 4);
-    cmd.arg[0] = ui_io_arg(arg0);
-    cmd.arg[1] = ui_io_arg(arg1);
-    cmd.arg[2] = ui_io_arg(arg2);
-    cmd.arg[3] = ui_io_arg(arg3);
-    return cmd;
-}
-
-
-// -----------------------------------------------------------------------------
 // io
 // -----------------------------------------------------------------------------
 
 enum
 {
-    ui_io_reset = 0,
-    ui_io_item,
-    ui_io_tape,
-    ui_io_mod,
+    ui_io_cmds_max = 32,
+    ui_io_args_max = 5,
+};
 
-    ui_io_name,
-    ui_io_send,
-    ui_io_dbg_attach,
-    ui_io_dbg_detach,
-    ui_io_dbg_break,
-    ui_io_dbg_step,
+struct ui_io_arg
+{
+    bool required;
+    struct ui_label name;
+    struct ui_input val;
+};
 
-    ui_io_set,
-    ui_io_cas,
-    ui_io_probe,
-    ui_io_scan,
-    ui_io_launch,
-    ui_io_target,
-    ui_io_grow,
-    ui_io_input,
-    ui_io_activate,
-    ui_io_value,
+struct ui_io_cmd
+{
+    enum io io;
 
-    ui_io_max,
+    struct ui_button name;
+    struct ui_button help;
+
+    size_t len;
+    struct ui_io_arg args[ui_io_args_max];
+
+    struct ui_button exec;
 };
 
 struct ui_io
@@ -144,15 +46,14 @@ struct ui_io
     im_id id;
     struct coord star;
 
-    size_t list_len;
-    const vm_word *list;
-
     bool loading;
+    enum io open;
 
     struct ui_panel panel;
-    struct ui_label target, target_val;
+    struct ui_label required;
 
-    struct ui_io_cmd io[ui_io_max];
+    size_t len;
+    struct ui_io_cmd cmds[ui_io_cmds_max];
 };
 
 
@@ -166,35 +67,29 @@ struct ui_io *ui_io_new(void)
 
     struct ui_io *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_io) {
+        .open = IO_NIL,
+
         .panel = ui_panel_title(pos, dim, ui_str_c("io")),
-        .target = ui_label_new(ui_str_c("target: ")),
-        .target_val = ui_label_new(ui_str_v(im_id_str_len)),
-        .io = {
-            [ui_io_reset] = ui_io_cmd0(IO_RESET),
-            [ui_io_item] = ui_io_cmd2(IO_ITEM, "item:  ", "loops: "),
-            [ui_io_tape] = ui_io_cmd2(IO_TAPE, "id:    ", "loops: "),
-            [ui_io_mod] = ui_io_cmd1(IO_MOD,   "id:    "),
-
-            [ui_io_name] = ui_io_cmd1(IO_NAME, "name:  "),
-            [ui_io_send] = ui_io_cmd4(IO_SEND,
-                    "len:   ", "[0]:   ", "[1]:   ", "[2]:   "),
-            [ui_io_dbg_attach] = ui_io_cmd0(IO_DBG_ATTACH),
-            [ui_io_dbg_detach] = ui_io_cmd0(IO_DBG_DETACH),
-            [ui_io_dbg_break] = ui_io_cmd1(IO_DBG_BREAK, "ip:    "),
-            [ui_io_dbg_step] = ui_io_cmd0(IO_DBG_STEP),
-
-            [ui_io_set] = ui_io_cmd2(IO_SET,   "index: ", "value: "),
-            [ui_io_cas] = ui_io_cmd3(IO_CAS,   "index: ", "test:  ", "value: "),
-            [ui_io_probe] = ui_io_cmd2(IO_PROBE, "item:  ", "coord: "),
-            [ui_io_scan] = ui_io_cmd1(IO_SCAN, "coord: "),
-            [ui_io_launch] = ui_io_cmd1(IO_LAUNCH, "dest:  "),
-            [ui_io_target] = ui_io_cmd1(IO_TARGET, "dest:  "),
-            [ui_io_grow] = ui_io_cmd0(IO_GROW),
-            [ui_io_input] = ui_io_cmd2(IO_INPUT, "item:  ", "coord: "),
-            [ui_io_activate] = ui_io_cmd0(IO_ACTIVATE),
-            [ui_io_value] = ui_io_cmd0(IO_VALUE),
-        },
+        .required = ui_label_new_s(&ui_st.label.required, ui_str_c("*")),
     };
+
+    for (size_t i = 0; i < ui_io_cmds_max; ++i) {
+        struct ui_io_cmd *cmd = ui->cmds + i;
+        *cmd = (struct ui_io_cmd) {
+            .name = ui_button_new_s(&ui_st.button.list.close, ui_str_v(symbol_cap)),
+            .help = ui_button_new(ui_str_c("?")),
+            .exec = ui_button_new(ui_str_c("exec >>")),
+        };
+
+        cmd->name.w.dim.w = ui_layout_inf;
+
+        for (size_t j = 0; j < ui_io_args_max; ++j) {
+            cmd->args[j] = (struct ui_io_arg) {
+                .name = ui_label_new(ui_str_v(10)),
+                .val = ui_input_new(22),
+            };
+        }
+    }
 
     ui_panel_hide(&ui->panel);
     return ui;
@@ -203,17 +98,18 @@ struct ui_io *ui_io_new(void)
 void ui_io_free(struct ui_io *ui)
 {
     ui_panel_free(&ui->panel);
-    ui_label_free(&ui->target);
-    ui_label_free(&ui->target_val);
+    ui_label_free(&ui->required);
 
-    for (size_t i = 0; i < ui_io_max; ++i) {
-        struct ui_io_cmd *cmd = &ui->io[i];
-        ui_label_free(&cmd->name);
+    for (size_t i = 0; i < ui_io_cmds_max; ++i) {
+        struct ui_io_cmd *cmd = ui->cmds + i;
+        ui_button_free(&cmd->name);
         ui_button_free(&cmd->help);
         ui_button_free(&cmd->exec);
-        for (size_t j = 0; j < cmd->args; ++j) {
-            ui_label_free(&cmd->arg[j].name);
-            ui_input_free(&cmd->arg[j].val);
+
+        for (size_t j = 0; j < cmd->len; ++j) {
+            struct ui_io_arg *arg = cmd->args + j;
+            ui_label_free(&arg->name);
+            ui_input_free(&arg->val);
         }
     }
 
@@ -222,21 +118,32 @@ void ui_io_free(struct ui_io *ui)
 
 static void ui_io_update(struct ui_io *ui)
 {
-    ui_str_set_id(&ui->target_val.str, ui->id);
-
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
-    ui->list = config->io_list;
-    ui->list_len = config->io_list_len;
 
-    for (size_t i = 0; i < ui_io_max; ++i) {
-        struct ui_io_cmd *cmd = &ui->io[i];
+    ui->len = config->io.len;
+    assert(ui->len <= ui_io_cmds_max);
 
-        for (size_t j = 0; j < cmd->args; ++j)
-            ui_input_clear(&cmd->arg[j].val);
+    for (size_t i = 0; i < ui->len; ++i) {
+        const struct io_cmd *cfg = config->io.list + i;
+        struct ui_io_cmd *cmd = ui->cmds + i;
 
-        cmd->active = false;
-        for (size_t k = 0; k < ui->list_len; ++k)
-            cmd->active = cmd->active || (cmd->id == ui->list[k]);
+        cmd->io = cfg->io;
+        ui_str_set_atom(&cmd->name.str, cmd->io);
+
+        cmd->len = cfg->len;
+        assert(cmd->len <= ui_io_args_max);
+
+        cmd->name.s = cmd->io == ui->open ?
+            ui_st.button.list.open : ui_st.button.list.close;
+
+        for (size_t j = 0; j < cmd->len; ++j) {
+            const struct io_param *param = cfg->params + j;
+            struct ui_io_arg *arg = cmd->args + j;
+
+            arg->required = param->required;
+            ui_str_setc(&arg->name.str, param->name);
+            ui_input_clear(&arg->val);
+        }
     }
 }
 
@@ -249,8 +156,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
         ui_panel_hide(&ui->panel);
         ui->id = 0;
         ui->star = coord_nil();
-        ui->list_len = 0;
-        ui->list = NULL;
+        ui->len = 0;
         return false;
     }
 
@@ -298,15 +204,11 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
 
 static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
-    struct symbol io = {0};
-    bool ok = atoms_str(proxy_atoms(render.proxy), cmd->id, &io);
-    assert(ok);
-
     char path[man_path_max] = {0};
     size_t len = snprintf(path, sizeof(path),
             "/items/%s/io/%.*s",
             item_str_c(im_id_item(ui->id)),
-            (unsigned) io.len, io.c);
+            (unsigned) cmd->name.str.len, cmd->name.str.str);
 
     struct link link = man_link(path, len);
     if (link_is_nil(link)) {
@@ -322,37 +224,54 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
     struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
     assert(chunk);
 
-    size_t len = cmd->args;
-    vm_word args[cmd->args];
+    vm_word args[ui_io_args_max];
     memset(args, 0, sizeof(args));
 
-    switch (cmd->id)
-    {
-    case IO_SEND: {
-        vm_word val = 0;
-        if (!ui_input_eval(&cmd->arg[0].val, &val)) return;
-        len = legion_min(val, im_packet_max);
-        len = legion_max(val, 0);
+    size_t len = 0;
+    for (size_t i = 0; i < cmd->len; ++i, ++len) {
+        struct ui_io_arg *arg = cmd->args + i;
 
-        for (size_t i = 0; i < len; ++i) {
-            if (!ui_input_eval(&cmd->arg[i+1].val, &val)) return;
-            args[i] = val;
+        if (!arg->val.buf.len) {
+            if (!arg->required) break;
+            render_log(st_error, "missing value for required argument '%.*s'",
+                    (unsigned) arg->name.str.len, arg->name.str.str);
+            return;
         }
-        break;
+
+        if (!ui_input_eval(&arg->val, args + i)) return;
     }
 
-    default: {
-        vm_word val = 0;
-        for (size_t i = 0; i < cmd->args; ++i) {
-            if (!ui_input_eval(&cmd->arg[i].val, &val)) return;
-            args[i] = val;
-        }
-        break;
-    }
+    im_id dst = ui->id;
+    const vm_word *it = args;
+    if (cmd->io == IO_SEND) {
+        dst = args[0];
+        it++; len--;
     }
 
-    proxy_io(render.proxy, cmd->id, ui->id, args, len);
+    proxy_io(render.proxy, cmd->io, dst, it, len);
 }
+
+static void ui_io_toggle(struct ui_io *ui, struct ui_io_cmd *cmd)
+{
+    if (ui->open == cmd->io) {
+        ui->open = IO_NIL;
+        cmd->name.s = ui_st.button.list.close;
+        return;
+    }
+
+    if (ui->open != IO_NIL) {
+        for (size_t i = 0; i < ui->len; ++i) {
+            struct ui_io_cmd *other = ui->cmds + i;
+            if (ui->open != other->io) continue;
+            other->name.s = ui_st.button.list.close;
+            break;
+        }
+    }
+
+    ui->open = cmd->io;
+    cmd->name.s = ui_st.button.list.open;
+}
+
 
 bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 {
@@ -363,25 +282,33 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 
     if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
 
-    for (size_t i = 0; i < ui_io_max; ++i) {
-        struct ui_io_cmd *cmd = &ui->io[i];
-        if (!cmd->active) continue;
+    for (size_t i = 0; i < ui->len; ++i) {
+        struct ui_io_cmd *cmd = ui->cmds + i;
 
-        for (size_t j = 0; j < cmd->args; ++j) {
-            if (!(ret = ui_input_event(&cmd->arg[j].val, ev))) continue;
+        if ((ret = ui_button_event(&cmd->name, ev))) {
             if (ret != ui_action) return true;
-
-            if (j + 1 == cmd->args) ui_io_exec(ui, cmd);
-            else  {
-                struct ui_input *next = &cmd->arg[j+1].val;
-                render_push_event(EV_FOCUS_INPUT, (uintptr_t) next, 0);
-            }
+            ui_io_toggle(ui, cmd);
             return true;
         }
 
         if ((ret = ui_button_event(&cmd->help, ev))) {
             if (ret != ui_action) return true;
             ui_io_help(ui, cmd);
+            return true;
+        }
+
+        if (ui->open != cmd->io) continue;
+
+        for (size_t j = 0; j < cmd->len; ++j) {
+            struct ui_io_arg *arg = cmd->args + j;
+
+            if (!(ret = ui_input_event(&arg->val, ev))) continue;
+            if (ret != ui_action) return true;
+
+            struct ui_io_arg *next = arg + 1;
+            if (next == cmd->args + cmd->len) ui_io_exec(ui, cmd);
+            else render_push_event(EV_FOCUS_INPUT, (uintptr_t) &next->val, 0);
+
             return true;
         }
 
@@ -401,35 +328,38 @@ void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
     if (ui_layout_is_nil(&layout)) return;
     if (ui->loading) return;
 
-    ui_label_render(&ui->target, &layout, renderer);
-    ui_label_render(&ui->target_val, &layout, renderer);
-    ui_layout_next_row(&layout);
-    ui_layout_sep_row(&layout);
-
-    for (size_t i = 0; i < ui_io_max; ++i) {
-        struct ui_io_cmd *cmd = &ui->io[i];
-        if (!cmd->active) continue;
+    for (size_t i = 0; i < ui->len; ++i) {
+        struct ui_io_cmd *cmd = ui->cmds + i;
 
         ui_layout_dir(&layout, ui_layout_left);
         ui_button_render(&cmd->help, &layout, renderer);
-        ui_layout_dir(&layout, ui_layout_right);
 
-        ui_label_render(&cmd->name, &layout, renderer);
+        ui_layout_dir(&layout, ui_layout_right);
+        ui_button_render(&cmd->name, &layout, renderer);
+
         ui_layout_next_row(&layout);
+
+        if (ui->open != cmd->io) continue;
         ui_layout_sep_y(&layout, 2);
 
-        for (size_t j = 0; j < cmd->args; ++j) {
-            struct ui_io_arg *arg = &cmd->arg[j];
+        for (size_t j = 0; j < cmd->len; ++j) {
+            struct ui_io_arg *arg = cmd->args + j;
+
             ui_layout_sep_cols(&layout, 2);
+
+            if (!arg->required) ui_layout_sep_col(&layout);
+            else ui_label_render(&ui->required, &layout, renderer);
+
             ui_label_render(&arg->name, &layout, renderer);
             ui_input_render(&arg->val, &layout, renderer);
+
             ui_layout_next_row(&layout);
         }
 
         ui_layout_sep_cols(&layout, 2);
         ui_button_render(&cmd->exec, &layout, renderer);
-        ui_layout_next_row(&layout);
 
+        ui_layout_next_row(&layout);
         ui_layout_sep_row(&layout);
     }
 }

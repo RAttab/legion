@@ -34,6 +34,6 @@ void im_nomad_config(struct im_config *config)
     config->ui.update = ui_nomad_update;
     config->ui.render = ui_nomad_render;
 
-    config->io_list = im_nomad_io_list;
-    config->io_list_len = array_len(im_nomad_io_list);
+    config->io.list = im_nomad_io_list;
+    config->io.len = array_len(im_nomad_io_list);
 }

@@ -357,9 +357,14 @@ enum ui_button_state
 
 struct ui_button_style
 {
-    const struct font *font;
-    struct { struct rgba fg, bg; } idle, hover, pressed, disabled;
-    struct dim pad;
+    struct dim margin;
+
+    struct
+    {
+        const struct font *font;
+        struct rgba fg, bg;
+    } idle, hover, pressed, disabled;
+
 };
 
 struct ui_button
@@ -740,16 +745,18 @@ extern struct ui_style
 
     struct
     {
-        struct ui_label_style base;
-        struct ui_label_style title, index;
+        struct ui_label_style base, bold;
+        struct ui_label_style index;
         struct ui_label_style in, out, work;
         struct ui_label_style active, waiting, error;
+        struct ui_label_style required;
     } label;
 
     struct
     {
         struct ui_button_style base;
         struct ui_button_style line;
+        struct { struct ui_button_style close, open; } list;
     } button;
 
     struct ui_link_style link;

@@ -35,6 +35,6 @@ void im_printer_config(struct im_config *config)
     config->ui.event = ui_printer_event;
     config->ui.render = ui_printer_render;
 
-    config->io_list = im_printer_io_list;
-    config->io_list_len = array_len(im_printer_io_list);
+    config->io.list = im_printer_io_list;
+    config->io.len = array_len(im_printer_io_list);
 }

@@ -34,6 +34,6 @@ void im_port_config(struct im_config *config)
     config->ui.update = ui_port_update;
     config->ui.render = ui_port_render;
 
-    config->io_list = im_port_io_list;
-    config->io_list_len = array_len(im_port_io_list);
+    config->io.list = im_port_io_list;
+    config->io.len = array_len(im_port_io_list);
 }

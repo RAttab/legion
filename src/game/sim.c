@@ -523,7 +523,7 @@ static void sim_cmd_io(
     bool ok = chunk_io(
             chunk,
             cmd->data.io.io,
-            0,
+            make_im_id(ITEM_USER, pipe->auth.user.id),
             cmd->data.io.dst,
             cmd->data.io.args,
             cmd->data.io.len);
@@ -535,10 +535,14 @@ static void sim_cmd_io(
                 sim_log_atom(sim, cmd->data.io.io).c);
     }
 
-    sim_log(pipe, st_info, "IO command '%x:%s' sent to '%s'",
-            cmd->data.io.io,
-            sim_log_atom(sim, cmd->data.io.io).c,
-            sim_log_id(cmd->data.io.dst).c);
+    // If our IO command generated a return value, proxy will generate a message
+    // which this log message would overwrite.
+    if (!world_user_io(sim->world, pipe->auth.user.id)->io) {
+        sim_log(pipe, st_info, "sent IO command '%x:%s' to '%s'",
+                cmd->data.io.io,
+                sim_log_atom(sim, cmd->data.io.io).c,
+                sim_log_id(cmd->data.io.dst).c);
+    }
 }
 
 static void sim_cmd_mod(

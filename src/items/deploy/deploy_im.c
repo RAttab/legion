@@ -120,13 +120,12 @@ static void im_deploy_io(
     }
 }
 
-static const vm_word im_deploy_io_list[] =
+static const struct io_cmd im_deploy_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-
-    IO_ITEM,
-    IO_RESET
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
+    { IO_ITEM,  1, { { "item", true } }},
 };
 
 

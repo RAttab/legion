@@ -33,6 +33,6 @@ void im_prober_config(struct im_config *config)
     config->ui.event = ui_prober_event;
     config->ui.render = ui_prober_render;
 
-    config->io_list = im_prober_io_list;
-    config->io_list_len = array_len(im_prober_io_list);
+    config->io.list = im_prober_io_list;
+    config->io.len = array_len(im_prober_io_list);
 }

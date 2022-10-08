@@ -117,3 +117,11 @@ enum legion_packed ioe
 };
 
 static_assert(sizeof(enum ioe) == 2);
+
+
+// -----------------------------------------------------------------------------
+// io_spec
+// -----------------------------------------------------------------------------
+
+struct io_param { const char *name; bool required; };
+struct io_cmd { enum io io; size_t len; struct io_param params[8]; };

@@ -254,14 +254,14 @@ static void im_collider_io(
     }
 }
 
-static const vm_word im_collider_io_list[] =
+static const struct io_cmd im_collider_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-    IO_RESET,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
 
-    IO_GROW,
-    IO_TAPE,
+    { IO_GROW, 0, {} },
+    { IO_TAPE, 1, { { "tape", true } }},
 };
 
 

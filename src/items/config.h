@@ -81,8 +81,11 @@ struct im_config
         im_ui_render_fn render;
     } ui;
 
-    size_t io_list_len;
-    const vm_word *io_list;
+    struct
+    {
+        size_t len;
+        const struct io_cmd *list;
+    } io;
 };
 
 const struct im_config *im_config(enum item);

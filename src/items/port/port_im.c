@@ -227,16 +227,19 @@ static void im_port_io(
     }
 }
 
-static const vm_word im_port_io_list[] =
+static const struct io_cmd im_port_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-    IO_RESET,
+    { IO_PING,   0, {} },
+    { IO_STATE,  1, { { "state", true } }},
+    { IO_RESET,  0, {} },
 
-    IO_ITEM,
-    IO_TARGET,
-    IO_INPUT,
-    IO_ACTIVATE,
+    { IO_ITEM,   2, { { "item", true },
+                      { "count", false } }},
+    { IO_TARGET, 1, { { "coord", true } }},
+    { IO_INPUT,  2, { { "item", true },
+                      { "coord", false } }},
+
+    { IO_ACTIVATE, 0, {} },
 };
 
 

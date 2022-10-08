@@ -130,12 +130,13 @@ static void im_prober_io(
     }
 }
 
-static const vm_word im_prober_io_list[] =
+static const struct io_cmd im_prober_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
 
-    IO_PROBE,
-    IO_VALUE,
-    IO_RESET,
+    { IO_PROBE, 2, { { "item", true },
+                     { "coord", false } }},
+    { IO_VALUE, 0, {} },
 };

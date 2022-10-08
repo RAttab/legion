@@ -173,13 +173,12 @@ static void im_printer_io(
     }
 }
 
-static const vm_word im_printer_io_list[] =
+static const struct io_cmd im_printer_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-
-    IO_TAPE,
-    IO_RESET,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
+    { IO_TAPE,  1, { { "tape", true } }},
 };
 
 

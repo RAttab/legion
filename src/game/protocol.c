@@ -63,7 +63,7 @@ void ack_reset(struct ack *ack)
     htable_clear(&ack->chunk.provided);
     ring_ack_reset(&ack->chunk.requested);
     ring_ack_reset(&ack->chunk.storage);
-    
+
     ack->chunk.pills = 0;
     memset(ack->chunk.active, 0, sizeof(ack->chunk.active));
 }
@@ -356,6 +356,41 @@ void state_free(struct state *state)
     free(state);
 }
 
+static void state_save_io(struct world *world, user_id user, struct save *save)
+{
+    save_write_magic(save, save_magic_io);
+
+    struct world_io *io = world_user_io(world, user);
+    save_write_value(save, io->io);
+
+    if (io->io) {
+        save_write_value(save, io->src);
+        save_write_value(save, io->len);
+        for (size_t i = 0; i < io->len; ++i)
+            save_write_value(save, io->args[i]);
+
+        world_user_io_clear(world, user);
+    }
+
+    save_write_magic(save, save_magic_io);
+}
+
+static bool state_load_io(struct state *state, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_io)) return false;
+    struct world_io *io = &state->io;
+
+    save_read_into(save, &io->io);
+    if (io->io) {
+        save_read_into(save, &io->src);
+        save_read_into(save, &io->len);
+        for (size_t i = 0; i < io->len; ++i)
+            save_read_into(save, io->args + i);
+    }
+
+    return save_read_magic(save, save_magic_io);
+}
+
 static void state_save_chunks(
         struct world *world,
         struct save *save,
@@ -424,6 +459,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     world_lanes_list_save(ctx->world, save, ctx->access);
     tech_save(world_tech(ctx->world, ctx->user), save);
     log_save_delta(world_log(ctx->world, ctx->user), save, ctx->ack->time);
+    state_save_io(ctx->world, ctx->user, save);
 
     {
         save_write_magic(save, save_magic_state_chunk);
@@ -462,6 +498,7 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
     if (!lanes_list_load_into(&state->lanes, save)) return false;
     if (!tech_load(&state->tech, save)) return false;
     if (!log_load_delta(state->log, save, ack->time)) return false;
+    if (!state_load_io(state, save)) return false;
 
     {
         if (!save_read_magic(save, save_magic_state_chunk)) return false;

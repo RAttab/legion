@@ -170,13 +170,11 @@ static void im_legion_io(
     }
 }
 
-static const vm_word im_legion_io_list[] =
+static const struct io_cmd im_legion_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-
-    IO_MOD,
-    IO_RESET,
-
-    IO_LAUNCH,
+    { IO_PING,   0, {} },
+    { IO_STATE,  1, { { "state", true } }},
+    { IO_RESET,  0, {} },
+    { IO_MOD,    1, { { "mod", true } }},
+    { IO_LAUNCH, 0, {} },
 };

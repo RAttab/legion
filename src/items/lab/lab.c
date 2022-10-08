@@ -33,6 +33,6 @@ void im_lab_config(struct im_config *config)
     config->ui.update = ui_lab_update;
     config->ui.render = ui_lab_render;
 
-    config->io_list = im_lab_io_list;
-    config->io_list_len = array_len(im_lab_io_list);
+    config->io.list = im_lab_io_list;
+    config->io.len = array_len(im_lab_io_list);
 }

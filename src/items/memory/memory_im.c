@@ -157,12 +157,16 @@ static void im_memory_io(
     }
 }
 
-static const vm_word im_memory_io_list[] =
+static const struct io_cmd im_memory_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
 
-    IO_GET,
-    IO_SET,
-    IO_CAS,
+    { IO_GET,   1, { { "index", true } }},
+    { IO_SET,   2, { { "index", true },
+                     { "value", true } }},
+    { IO_CAS,   3, { { "index", true },
+                     { "expected", true },
+                     { "value", true } }},
 };

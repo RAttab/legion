@@ -528,22 +528,26 @@ static void im_nomad_io(
     }
 }
 
-static const vm_word im_nomad_io_list[] =
+static const struct io_cmd im_nomad_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-    IO_RESET,
+    { IO_PING,   0, {} },
+    { IO_STATE,  1, { { "state", true } }},
+    { IO_RESET,  0, {} },
 
-    IO_MOD,
-    IO_GET,
-    IO_SET,
+    { IO_MOD,    1, { { "mod", true } }},
+    { IO_GET,    1, { { "index", true } }},
+    { IO_SET,    2, { { "index", true },
+                      { "value", true } }},
 
-    IO_ID,
-    IO_PACK,
-    IO_LOAD,
-    IO_UNLOAD,
+    { IO_ID,     1, { { "pack-id", true } }},
+    { IO_PACK,   2, { { "item", true },
+                      { "loops", false } }},
+    { IO_LOAD,   2, { { "item", true },
+                      { "loops", false } }},
+    { IO_UNLOAD, 1, { { "item", true } }},
 
-    IO_LAUNCH,
+    { IO_LAUNCH, 2, { { "coord", true },
+                      { "pack-id", false } }},
 };
 
 

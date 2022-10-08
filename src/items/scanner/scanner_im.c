@@ -134,12 +134,12 @@ static void im_scanner_io(
     }
 }
 
-static const vm_word im_scanner_io_list[] =
+static const struct io_cmd im_scanner_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
 
-    IO_SCAN,
-    IO_VALUE,
-    IO_RESET,
+    { IO_SCAN,  1, { { "coord", true } }},
+    { IO_VALUE, 0, {} },
 };

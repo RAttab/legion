@@ -209,13 +209,13 @@ struct state
     struct htable names;
     struct tech tech;
     struct log *log;
+    struct world_io io;
 
     struct
     {
         struct coord coord;
         struct chunk *chunk;
     } chunk;
-
 };
 
 struct state *state_alloc(void);

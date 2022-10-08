@@ -63,6 +63,6 @@ void im_brain_config(struct im_config *config)
     config->ui.event = ui_brain_event;
     config->ui.render = ui_brain_render;
 
-    config->io_list = im_brain_io_list;
-    config->io_list_len = array_len(im_brain_io_list);
+    config->io.list = im_brain_io_list;
+    config->io.len = array_len(im_brain_io_list);
 }

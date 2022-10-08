@@ -33,6 +33,6 @@ void im_storage_config(struct im_config *config)
     config->ui.update = ui_storage_update;
     config->ui.render = ui_storage_render;
 
-    config->io_list = im_storage_io_list;
-    config->io_list_len = array_len(im_storage_io_list);
+    config->io.list = im_storage_io_list;
+    config->io.len = array_len(im_storage_io_list);
 }

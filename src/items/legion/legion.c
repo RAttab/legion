@@ -33,6 +33,6 @@ void im_legion_config(struct im_config *config)
     config->ui.event = ui_legion_event;
     config->ui.render = ui_legion_render;
 
-    config->io_list = im_legion_io_list;
-    config->io_list_len = array_len(im_legion_io_list);
+    config->io.list = im_legion_io_list;
+    config->io.len = array_len(im_legion_io_list);
 }

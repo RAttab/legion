@@ -31,6 +31,6 @@ void im_transmit_config(struct im_config *config)
     config->ui.update = ui_transmit_update;
     config->ui.render = ui_transmit_render;
 
-    config->io_list = im_transmit_io_list;
-    config->io_list_len = array_len(im_transmit_io_list);
+    config->io.list = im_transmit_io_list;
+    config->io.len = array_len(im_transmit_io_list);
 }

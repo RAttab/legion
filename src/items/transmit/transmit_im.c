@@ -118,13 +118,15 @@ static void im_transmit_io(
     }
 }
 
-static const vm_word im_transmit_io_list[] =
+static const struct io_cmd im_transmit_io_list[] =
 {
-    IO_PING,
-    IO_STATE,
-    IO_RESET,
+    { IO_PING,     0, {} },
+    { IO_STATE,    1, { { "state", true } }},
+    { IO_RESET,    0, {} },
 
-    IO_CHANNEL,
-    IO_TARGET,
-    IO_TRANSMIT,
+    { IO_CHANNEL,  1, { { "channel", true } }},
+    { IO_TARGET,   1, { { "coord", true } }},
+    { IO_TRANSMIT, 3, { { "msg[0]", true },
+                        { "msg[1]", false },
+                        { "msg[2]", false } }},
 };

@@ -81,9 +81,8 @@ void ui_style_default(void)
         s->label.index.fg = rgba_gray(0x88);
         s->label.index.bg = rgba_gray_a(0x44, 0x88);
 
-        s->label.title = s->label.base;
-        s->label.title.font = s->font.bold;
-        s->label.title.bg = rgba_gray_a(0x44, 0x44);
+        s->label.bold = s->label.base;
+        s->label.bold.font = s->font.bold;
 
         fg(&s->label.in, s->rgba.in);
         fg(&s->label.out, s->rgba.out);
@@ -91,20 +90,46 @@ void ui_style_default(void)
         fg(&s->label.active, s->rgba.active);
         fg(&s->label.waiting, s->rgba.waiting);
         fg(&s->label.error, s->rgba.error);
+        fg(&s->label.required, rgba_red());
     }
 
     { // button
         s->button.base = (struct ui_button_style) {
-            .font = s->font.base,
-            .idle =     { .fg = s->rgba.fg,       .bg = rgba_gray(0x22) },
-            .hover =    { .fg = s->rgba.fg,       .bg = rgba_gray(0x33) },
-            .pressed =  { .fg = s->rgba.fg,       .bg = rgba_gray(0x11) },
-            .disabled = { .fg = s->rgba.disabled, .bg = rgba_gray(0x22) },
-            .pad = s->pad.box,
+            .idle = {
+                .font = s->font.base,
+                .fg = s->rgba.fg,
+                .bg = rgba_gray(0x22)
+            },
+            .hover = {
+                .font = s->font.base,
+                .fg = s->rgba.fg,
+                .bg = rgba_gray(0x33)
+            },
+            .pressed = {
+                .font = s->font.base,
+                .fg = s->rgba.fg,
+                .bg = rgba_gray(0x11)
+            },
+            .disabled = {
+                .font = s->font.base,
+                .fg = s->rgba.disabled,
+                .bg = rgba_gray(0x22)
+            },
+
+            .margin = s->pad.box,
         };
 
         s->button.line = s->button.base;
-        s->button.line.pad.h = 0;
+        s->button.line.margin.h = 0;
+
+        s->button.list.close = s->button.base;
+        s->button.list.close.idle.bg = ui_st.rgba.bg;
+
+        s->button.list.open = s->button.base;
+        s->button.list.open.idle.font = ui_st.font.bold;
+        s->button.list.open.hover.font = ui_st.font.bold;
+        s->button.list.open.pressed.font = ui_st.font.bold;
+        s->button.list.open.disabled.font = ui_st.font.bold;
     }
 
     s->link = (struct ui_link_style) {

@@ -29,6 +29,7 @@ struct world_user
     struct coord home;
     struct tech tech;
     struct log *log;
+    struct world_io io;
 };
 
 struct world
@@ -343,6 +344,17 @@ void world_log_push(
         vm_word value)
 {
     log_push(world_user(world, owner)->log, world->time, star, id, key, value);
+}
+
+struct world_io *world_user_io(struct world *world, user_id user_id)
+{
+    return &world_user(world, user_id)->io;
+}
+
+void world_user_io_clear(struct world *world, user_id user_id)
+{
+    struct world_io *io = &world_user(world, user_id)->io;
+    memset(io, 0, sizeof(*io));
 }
 
 

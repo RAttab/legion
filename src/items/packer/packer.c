@@ -33,6 +33,6 @@ void im_packer_config(struct im_config *config)
     config->ui.update = ui_packer_update;
     config->ui.render = ui_packer_render;
 
-    config->io_list = im_packer_io_list;
-    config->io_list_len = array_len(im_packer_io_list);
+    config->io.list = im_packer_io_list;
+    config->io.len = array_len(im_packer_io_list);
 }

@@ -43,6 +43,6 @@ void im_receive_config(struct im_config *config)
     config->ui.update = ui_receive_update;
     config->ui.render = ui_receive_render;
 
-    config->io_list = im_receive_io_list;
-    config->io_list_len = array_len(im_receive_io_list);
+    config->io.list = im_receive_io_list;
+    config->io.len = array_len(im_receive_io_list);
 }

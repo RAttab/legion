@@ -591,6 +591,14 @@ bool chunk_io(
         struct chunk *chunk,
         enum io io, im_id src, im_id dst, const vm_word *args, size_t len)
 {
+    enum item item = im_id_item(dst);
+    if (item == ITEM_USER) {
+        struct world_io *dst = world_user_io(chunk->world, chunk->owner);
+        *dst = (struct world_io) { .io = io, .src = src, .len = len };
+        memcpy(dst->args, args, len *sizeof(*args));
+        return true;
+    }
+
     struct active *active = active_index(chunk, im_id_item(dst));
     if (!active) return false;
 

@@ -47,6 +47,6 @@ void im_memory_config(struct im_config *config)
     config->ui.event = ui_memory_event;
     config->ui.render = ui_memory_render;
 
-    config->io_list = im_memory_io_list;
-    config->io_list_len = array_len(im_memory_io_list);
+    config->io.list = im_memory_io_list;
+    config->io.len = array_len(im_memory_io_list);
 }

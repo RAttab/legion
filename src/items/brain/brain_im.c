@@ -96,14 +96,6 @@ static void im_brain_recv(
     vm_push(&brain->vm, len);
 }
 
-static void im_brain_name(
-        struct im_brain *brain, struct chunk *chunk,
-        const vm_word *args, size_t len)
-{
-    if (len) chunk_rename(chunk, args[0]);
-    else vm_push(&brain->vm, chunk_name(chunk));
-}
-
 static void im_brain_log(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
@@ -112,30 +104,49 @@ static void im_brain_log(
     chunk_log(chunk, brain->id, args[0], args[1]);
 }
 
-static bool im_brain_specs(
+static struct specs_ret im_brain_specs(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
     if (!im_check_args(chunk, brain->id, IO_SPECS, len, 1))
-        return false;
+        return (struct specs_ret) { .ok = false };
 
     enum spec spec = spec_from_word(args[0]);
     if (!spec_validate(args[0])) {
         chunk_log(chunk, brain->id, IO_SPECS, IOE_A0_INVALID);
-        return false;
+        return (struct specs_ret) { .ok = false };
     }
 
-    struct specs_ret ret = specs_args(spec, args + 1, len - 1);
-    if (!ret.ok) return false;
+    return specs_args(spec, args + 1, len - 1);
+}
 
-    vm_push(&brain->vm, ret.word);
-    return true;
+static void im_brain_return_value(
+        struct im_brain *brain, struct chunk *chunk, im_id src, vm_word value)
+{
+    chunk_io(chunk, IO_RETURN, brain->id, src, &value, 1);
 }
 
 
 // -----------------------------------------------------------------------------
 // step
 // -----------------------------------------------------------------------------
+
+static void im_brain_step_name(
+        struct im_brain *brain, struct chunk *chunk,
+        const vm_word *args, size_t len)
+{
+    if (len) chunk_rename(chunk, args[0]);
+    else vm_push(&brain->vm, chunk_name(chunk));
+}
+
+static bool im_brain_step_specs(
+        struct im_brain *brain, struct chunk *chunk,
+        const vm_word *args, size_t len)
+{
+    struct specs_ret ret = im_brain_specs(brain, chunk, args, len);
+    if (ret.ok) vm_push(&brain->vm, ret.word);
+    return ret.ok;
+}
 
 static bool im_brain_step_recv(struct im_brain *brain)
 {
@@ -144,6 +155,7 @@ static bool im_brain_step_recv(struct im_brain *brain)
     return true;
 }
 
+// IO commands sent by the brain iteself.
 static void im_brain_step_io(
         struct im_brain *brain, struct chunk *chunk, const vm_word *io, size_t len)
 {
@@ -166,8 +178,8 @@ static void im_brain_step_io(
     case IO_LOG: { im_brain_log(brain, chunk, io + 1, len - 1); break; }
     case IO_TICK: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
     case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
-    case IO_NAME: { im_brain_name(brain, chunk, io + 1, len - 1); break; }
-    case IO_SPECS: { ok = im_brain_specs(brain, chunk, io + 1, len - 1); break; }
+    case IO_NAME: { im_brain_step_name(brain, chunk, io + 1, len - 1); break; }
+    case IO_SPECS: { ok = im_brain_step_specs(brain, chunk, io + 1, len - 1); break; }
 
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }
     }
@@ -210,6 +222,14 @@ static void im_brain_step(void *state, struct chunk *chunk)
 // io
 // -----------------------------------------------------------------------------
 
+static void im_brain_io_return(
+        struct im_brain *brain, struct chunk *chunk,
+        const vm_word *args, size_t len)
+{
+    if (!im_check_args(chunk, brain->id, IO_RETURN, len, 1)) return;
+    vm_push(&brain->vm, args[0]);
+}
+
 static void im_brain_io_state(
         struct im_brain *brain, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
@@ -243,12 +263,12 @@ static void im_brain_io_mod(
         return chunk_log(chunk, brain->id, IO_MOD, IOE_A0_UNKNOWN);
 }
 
-static void im_brain_io_return(
+static void im_brain_io_name(
         struct im_brain *brain, struct chunk *chunk,
-        const vm_word *args, size_t len)
+        im_id src, const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_RETURN, len, 1)) return;
-    vm_push(&brain->vm, args[0]);
+    if (len) chunk_rename(chunk, args[0]);
+    else im_brain_return_value(brain, chunk, src, chunk_name(chunk));
 }
 
 static void im_brain_io_send(
@@ -282,6 +302,7 @@ static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)
     brain->vm.specs.speed = old;
 }
 
+// IO commands sent from another item.
 static void im_brain_io(
         void *state, struct chunk *chunk,
         enum io io, im_id src,
@@ -291,17 +312,34 @@ static void im_brain_io(
 
     switch(io)
     {
-    case IO_RETURN: { im_brain_io_return(brain, chunk, args, len); return; }
 
+    case IO_RETURN: { im_brain_io_return(brain, chunk, args, len); return; }
     case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, NULL, 0); return; }
     case IO_PONG: { return; } // the return value of chunk_io is all we really need.
 
     case IO_STATE: { im_brain_io_state(brain, chunk, src, args, len); return; }
     case IO_RESET: { im_brain_reset(brain); return; }
+
+    case IO_ID: { im_brain_return_value(brain, chunk, src, brain->id); break; }
+    case IO_NAME: { im_brain_io_name(brain, chunk, src, args, len); return; }
     case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
 
+    case IO_TICK: {
+        vm_word value = world_time(chunk_world(chunk));
+        im_brain_return_value(brain, chunk, src, value);
+        break;
+    }
+    case IO_COORD: {
+        vm_word value = coord_to_u64(chunk_star(chunk)->coord);
+        im_brain_return_value(brain, chunk, src, value);
+        break;
+    }
+    case IO_SPECS: {
+        vm_word value = im_brain_specs(brain, chunk, args, len).word;
+        im_brain_return_value(brain, chunk, src, value);
+        break;
+    }
     case IO_LOG: { im_brain_log(brain, chunk, args, len); return; }
-    case IO_NAME: { im_brain_name(brain, chunk, args, len); return; }
 
     case IO_SEND: { im_brain_io_send(brain, args, len); return; }
     case IO_RECV: { im_brain_recv(brain, args, len); return; }
@@ -315,29 +353,31 @@ static void im_brain_io(
     }
 }
 
-static const vm_word im_brain_io_list[] =
+static const struct io_cmd im_brain_io_list[] =
 {
-    IO_RETURN,
+    { IO_PING,  0, {} },
+    { IO_STATE, 1, { { "state", true } }},
+    { IO_RESET, 0, {} },
 
-    IO_PING,
-    IO_PONG,
+    { IO_ID,    0, {} },
+    { IO_NAME,  1, { { "name", false } }},
+    { IO_MOD,   1, { { "mod-id", true } }},
 
-    IO_STATE,
-    IO_RESET,
-    IO_MOD,
+    { IO_TICK,  0, {} },
+    { IO_COORD, 0, {} },
+    { IO_SPECS, 1, { { "spec-id", true } }},
+    { IO_LOG,   2, { { "msg[0]", true },
+                     { "msg[1]", true } }},
 
-    IO_ID,
-    IO_LOG,
-    IO_TICK,
-    IO_COORD,
-    IO_NAME,
-    IO_SPECS,
+    { IO_SEND,  5, { { "dst-id", true },
+                     { "msg[0]", true },
+                     { "msg[1]", false },
+                     { "msg[2]", false },
+                     { "msg[3]", false } }},
+    { IO_RECV,  0, {} },
 
-    IO_SEND,
-    IO_RECV,
-
-    IO_DBG_ATTACH,
-    IO_DBG_DETACH,
-    IO_DBG_BREAK,
-    IO_DBG_STEP,
+    { IO_DBG_ATTACH, 0, {} },
+    { IO_DBG_DETACH, 0, {} },
+    { IO_DBG_BREAK,  1, { { "ip", false } }},
+    { IO_DBG_STEP,   0, {} },
 };
