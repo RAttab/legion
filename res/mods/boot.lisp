@@ -7,7 +7,7 @@
 ;; (mod launch.2) module and research to get to antenna is done via
 ;; the (mod lab.2) module.
 
-(defconst max-depth 2)
+(defconst max-depth 4)
 
 (defconst extract-count 2)
 (defconst condenser-count 2)
