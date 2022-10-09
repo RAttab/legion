@@ -15,7 +15,7 @@
 
 struct ui_stars
 {
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_tree tree;
 };
 
@@ -32,13 +32,13 @@ struct ui_stars *ui_stars_new(void)
         .tree = ui_tree_new(make_dim(ui_layout_inf, ui_layout_inf), symbol_cap),
     };
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
     return ui;
 }
 
 
 void ui_stars_free(struct ui_stars *ui) {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     ui_tree_free(&ui->tree);
     free(ui);
 }
@@ -69,7 +69,7 @@ static void ui_stars_update(struct ui_stars *ui)
         count++;
     }
 
-    ui_str_setf(&ui->panel.title.str, "stars (%zu)", count);
+    ui_str_setf(&ui->panel->title.str, "stars (%zu)", count);
 }
 
 static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
@@ -79,22 +79,22 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
 
     case EV_STATE_LOAD: {
         ui_stars_update(ui);
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         ui_stars_update(ui);
         return false;
     }
 
     case EV_STARS_TOGGLE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_panel_hide(&ui->panel);
+        if (ui_panel_is_visible(ui->panel))
+            ui_panel_hide(ui->panel);
         else {
             ui_stars_update(ui);
-            ui_panel_show(&ui->panel);
+            ui_panel_show(ui->panel);
         }
         return false;
     }
@@ -116,7 +116,7 @@ static bool ui_stars_event_user(struct ui_stars *ui, SDL_Event *ev)
     case EV_MOD_SELECT:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -129,7 +129,7 @@ bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
     if (ev->type == render.event && ui_stars_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_tree_event(&ui->tree, ev))) {
         if (ret != ui_action) return true;
@@ -146,12 +146,12 @@ bool ui_stars_event(struct ui_stars *ui, SDL_Event *ev)
         return true;
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_stars_render(struct ui_stars *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     ui_tree_render(&ui->tree, &layout, renderer);

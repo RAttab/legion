@@ -22,7 +22,7 @@ struct ui_mod
     bool disassembly;
     vm_ip ip;
 
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_button compile, publish;
     struct ui_button mode, indent;
     struct ui_button import, export;
@@ -54,7 +54,7 @@ struct ui_mod *ui_mod_new(void)
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf))
     };
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
 
     ui->disassembly = false;
     ui_str_setv(&ui->mode.str, "asm", 3);
@@ -64,7 +64,7 @@ struct ui_mod *ui_mod_new(void)
 
 void ui_mod_free(struct ui_mod *ui)
 {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     ui_button_free(&ui->compile);
     ui_button_free(&ui->publish);
     ui_button_free(&ui->mode);
@@ -134,7 +134,7 @@ static void ui_mod_update(struct ui_mod *ui)
 
     struct symbol name = {0};
     bool ok = proxy_mod_name(render.proxy, mod_major(ui->id), &name);
-    ui_str_setf(&ui->panel.title.str, "mod - %s.%x", name.c, mod_version(ui->id));
+    ui_str_setf(&ui->panel->title.str, "mod - %s.%x", name.c, mod_version(ui->id));
     assert(ok);
 }
 
@@ -151,7 +151,7 @@ static void ui_mod_select(struct ui_mod *ui, mod_id id, vm_ip ip)
 
     proxy_mod_select(render.proxy, ui->id);
     ui_code_clear(&ui->code);
-    ui_panel_show(&ui->panel);
+    ui_panel_show(ui->panel);
     ui_code_focus(&ui->code);
 }
 
@@ -206,12 +206,12 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
         ui->ip = 0;
 
         ui_code_clear(&ui->code);
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         ui_mod_update(ui);
         return false;
     }
@@ -239,7 +239,7 @@ static bool ui_mod_event_user(struct ui_mod *ui, SDL_Event *ev)
     case EV_MODS_TOGGLE:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         ui_code_clear(&ui->code);
         ui->mod = NULL;
         ui->id = 0;
@@ -256,7 +256,7 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
 
-    if ((ret = ui_panel_event(&ui->panel, ev))) {
+    if ((ret = ui_panel_event(ui->panel, ev))) {
         if (ret == ui_action)
             render_push_event(EV_MOD_CLEAR, 0, 0);
         return ret != ui_skip;
@@ -315,12 +315,12 @@ bool ui_mod_event(struct ui_mod *ui, SDL_Event *ev)
 
     if ((ret = ui_code_event(&ui->code, ev))) return true;
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_mod_render(struct ui_mod *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     ui_button_render(&ui->compile, &layout, renderer);

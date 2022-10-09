@@ -20,7 +20,7 @@ struct ui_tapes
     int tree_w;
     int tape_w;
 
-    struct ui_panel panel;
+    struct ui_panel *panel;
 
     struct ui_tree tree;
 
@@ -81,13 +81,13 @@ struct ui_tapes *ui_tapes_new(void)
         .known = ui_label_new(ui_str_c("*")),
     };
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
     return ui;
 }
 
 
 void ui_tapes_free(struct ui_tapes *ui) {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
 
     ui_tree_free(&ui->tree);
 
@@ -160,13 +160,13 @@ static void ui_tapes_update(struct ui_tapes *ui, enum item select)
     if (select) ui_tree_select(&ui->tree, select);
 
     if (!ui_tapes_selected(ui)) {
-        ui_panel_resize(&ui->panel, make_dim(
+        ui_panel_resize(ui->panel, make_dim(
                         ui->tree_w + ui_st.font.base->glyph_w,
                         ui->height));
         return;
     }
 
-    ui_panel_resize(&ui->panel, make_dim(
+    ui_panel_resize(ui->panel, make_dim(
                     ui->tree_w + ui->tape_w + ui_st.font.base->glyph_w,
                     ui->height));
 
@@ -191,22 +191,22 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         ui_tapes_update(ui, 0);
         return false;
     }
 
     case EV_TAPES_TOGGLE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_panel_hide(&ui->panel);
+        if (ui_panel_is_visible(ui->panel))
+            ui_panel_hide(ui->panel);
         else {
             ui_tapes_update(ui, 0);
-            ui_panel_show(&ui->panel);
+            ui_panel_show(ui->panel);
         }
         return false;
     }
@@ -214,7 +214,7 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     case EV_TAPE_SELECT: {
         enum item item = ((uintptr_t) ev->user.data1);
         ui_tapes_update(ui, item);
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
@@ -223,7 +223,7 @@ static bool ui_tapes_event_user(struct ui_tapes *ui, SDL_Event *ev)
     case EV_MOD_SELECT:
     case EV_LOG_TOGGLE:
     case EV_LOG_SELECT: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -260,7 +260,7 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
     if (ev->type == render.event && ui_tapes_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_tree_event(&ui->tree, ev))) {
         if (ret == ui_action) ui_tapes_update(ui, 0);
@@ -286,7 +286,7 @@ bool ui_tapes_event(struct ui_tapes *ui, SDL_Event *ev)
         }
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 // \TODO: basically a copy of ui_tape. Need to not do that.
@@ -336,7 +336,7 @@ void ui_tapes_render_tape(
 
 void ui_tapes_render(struct ui_tapes *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     ui_tree_render(&ui->tree, &layout, renderer);

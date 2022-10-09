@@ -16,7 +16,7 @@ enum { ui_man_cols = 90, ui_man_depth = 4 };
 
 struct ui_man
 {
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_tree toc;
     struct ui_doc doc;
 
@@ -67,7 +67,7 @@ struct ui_man *ui_man_new(void)
 
 void ui_man_free(struct ui_man *ui)
 {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     ui_tree_free(&ui->toc);
     ui_doc_free(&ui->doc);
 }
@@ -89,20 +89,20 @@ static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(&ui->panel))
+        if (ui_panel_is_visible(ui->panel))
             ui_man_update(ui);
         return false;
     }
 
     case EV_MAN_TOGGLE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_panel_hide(&ui->panel);
-        else ui_panel_show(&ui->panel);
+        if (ui_panel_is_visible(ui->panel))
+            ui_panel_hide(ui->panel);
+        else ui_panel_show(ui->panel);
         return false;
     }
 
@@ -119,12 +119,12 @@ static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
         }
 
         ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
     case EV_STAR_SELECT: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -137,7 +137,7 @@ bool ui_man_event(struct ui_man *ui, SDL_Event *ev)
     if (ev->type == render.event) return ui_man_event_user(ui, ev);
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_doc_event(&ui->doc, ev))) return true;
 
@@ -148,12 +148,12 @@ bool ui_man_event(struct ui_man *ui, SDL_Event *ev)
         return true;
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_man_render(struct ui_man *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     ui_tree_render(&ui->toc, &layout, renderer);

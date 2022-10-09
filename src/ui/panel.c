@@ -11,11 +11,16 @@
 // panel
 // -----------------------------------------------------------------------------
 
-static struct ui_panel ui_panel_new(struct pos pos, struct dim dim)
+static struct ui_panel *ui_panel_curr = NULL;
+struct ui_panel *ui_panel_current(void) { return ui_panel_curr; }
+
+
+static struct ui_panel *ui_panel_new(struct pos pos, struct dim dim)
 {
     struct ui_panel_style *s = &ui_st.panel;
 
-    return (struct ui_panel) {
+    struct ui_panel *panel = calloc(1, sizeof(*panel));
+    *panel = (struct ui_panel) {
         .w = (struct ui_widget) { .pos = pos, .dim = dim },
         .s = *s,
 
@@ -28,20 +33,23 @@ static struct ui_panel ui_panel_new(struct pos pos, struct dim dim)
                         dim.w - (s->margin.w * 2),
                         dim.h - (s->margin.h * 2))),
     };
-}
 
-struct ui_panel ui_panel_menu(struct pos pos, struct dim dim)
-{
-    struct ui_panel panel = ui_panel_new(pos, dim);
-    panel.menu = true;
+    ui_panel_curr = panel;
     return panel;
 }
 
-struct ui_panel ui_panel_title(struct pos pos, struct dim dim, struct ui_str str)
+struct ui_panel *ui_panel_menu(struct pos pos, struct dim dim)
 {
-    struct ui_panel panel = ui_panel_new(pos, dim);
-    panel.title = ui_label_new(str);
-    panel.close = ui_button_new(ui_str_c("X"));
+    struct ui_panel *panel = ui_panel_new(pos, dim);
+    panel->menu = true;
+    return panel;
+}
+
+struct ui_panel *ui_panel_title(struct pos pos, struct dim dim, struct ui_str str)
+{
+    struct ui_panel *panel = ui_panel_new(pos, dim);
+    panel->title = ui_label_new(str);
+    panel->close = ui_button_new(ui_str_c("X"));
     return panel;
 }
 
@@ -51,6 +59,7 @@ void ui_panel_free(struct ui_panel *panel)
         ui_label_free(&panel->title);
         ui_button_free(&panel->close);
     }
+    free(panel);
 }
 
 void ui_panel_resize(struct ui_panel *panel, struct dim dim)
@@ -63,14 +72,12 @@ void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 
 void ui_panel_show(struct ui_panel *panel)
 {
-    panel->state = ui_panel_visible;
+    panel->state = ui_panel_focused;
     render_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
 }
 
 void ui_panel_hide(struct ui_panel *panel)
 {
-    if (panel->state == ui_panel_focused)
-        render_push_event(EV_FOCUS_PANEL, 0, 0);
     panel->state = ui_panel_hidden;
 }
 
@@ -90,34 +97,46 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     case SDL_KEYDOWN: { return panel->state == ui_panel_focused ? ui_nil : ui_skip; }
 
     case SDL_MOUSEWHEEL:
+    case SDL_MOUSEBUTTONUP: {
+        struct SDL_Rect rect = ui_widget_rect(&panel->w);
+        if (!sdl_rect_contains(&rect, &render.cursor.point)) {
+            panel->state = ui_panel_visible;
+            return ui_skip;
+        }
+
+        if (panel->state == ui_panel_visible) {
+            panel->state = ui_panel_focused;
+            render_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
+        }
+
+        break;
+    }
+
+    case SDL_MOUSEMOTION:
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        panel->state = sdl_rect_contains(&rect, &render.cursor.point) ?
-            ui_panel_focused : ui_panel_visible;
-        if (panel->state != ui_panel_focused) return ui_skip;
-        // fallthrough
-    }
-    case SDL_MOUSEBUTTONUP:
-    case SDL_MOUSEMOTION: {
-        enum ui_ret ret = 0;
-        if (!panel->menu && (ret = ui_button_event(&panel->close, ev))) {
-            if (ret == ui_action) panel->state = ui_panel_hidden;
-            return ret;
-        }
-        return ui_nil;
+        if (!sdl_rect_contains(&rect, &render.cursor.point))
+            return ui_skip;
+        break;
     }
 
-    default: {
-        if (ev->type == render.event) {
-            if (ev->user.code == EV_FOCUS_PANEL) {
-                struct ui_panel *target = (void *) ev->user.data1;
-                panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
-            }
-        }
-        return ui_nil;
+    default: { break; }
     }
 
+    if (ev->type == render.event) {
+        if (ev->user.code == EV_FOCUS_PANEL) {
+            struct ui_panel *target = (void *) ev->user.data1;
+            panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
+        }
     }
+
+    enum ui_ret ret = 0;
+    if (!panel->menu && (ret = ui_button_event(&panel->close, ev))) {
+        if (ret == ui_action) panel->state = ui_panel_hidden;
+        return ret;
+    }
+
+    return ui_nil;
 }
 
 enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)

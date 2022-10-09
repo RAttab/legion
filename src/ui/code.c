@@ -23,6 +23,7 @@ struct ui_code ui_code_new(struct dim dim)
     struct ui_code code = {
         .w = ui_widget_new(dim.w, dim.h),
         .s = *s,
+        .p = ui_panel_current(),
 
         .scroll = ui_scroll_new(dim, s->font->glyph_h),
         .tooltip = ui_tooltip_new(ui_str_v(mod_err_cap), (SDL_Rect) {0}),
@@ -542,8 +543,12 @@ void ui_code_render(
         }
 
         // carret
-        if (code->focused && code->carret.blink && code->carret.row == row &&
-                (code->carret.col >= col && code->carret.col <= col + len))
+        if (    code->carret.blink &&
+                code->focused &&
+                code->p->state == ui_panel_focused &&
+                code->carret.row == row &&
+                (       code->carret.col >= col &&
+                        code->carret.col <= col + len))
         {
             rgba_render(code->s.carret, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {

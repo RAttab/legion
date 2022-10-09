@@ -49,7 +49,7 @@ struct ui_io
     bool loading;
     enum io open;
 
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_label required;
 
     size_t len;
@@ -91,13 +91,13 @@ struct ui_io *ui_io_new(void)
         }
     }
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
     return ui;
 }
 
 void ui_io_free(struct ui_io *ui)
 {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     ui_label_free(&ui->required);
 
     for (size_t i = 0; i < ui_io_cmds_max; ++i) {
@@ -153,7 +153,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         ui->id = 0;
         ui->star = coord_nil();
         ui->len = 0;
@@ -161,16 +161,16 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         if (coord_is_nil(ui->star)) return false;
         ui->loading = !proxy_chunk(render.proxy, ui->star);
         return false;
     }
 
     case EV_IO_TOGGLE: {
-        if (ui_panel_is_visible(&ui->panel))
-            ui_panel_hide(&ui->panel);
-        else ui_panel_show(&ui->panel);
+        if (ui_panel_is_visible(ui->panel))
+            ui_panel_hide(ui->panel);
+        else ui_panel_show(ui->panel);
         return false;
     }
 
@@ -184,7 +184,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     case EV_STAR_SELECT: {
         struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new)) {
-            ui_panel_hide(&ui->panel);
+            ui_panel_hide(ui->panel);
             ui->id = 0;
         }
         return false;
@@ -194,7 +194,7 @@ static bool ui_io_event_user(struct ui_io *ui, SDL_Event *ev)
     case EV_MAN_TOGGLE:
     case EV_STAR_CLEAR:
     case EV_ITEM_CLEAR: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -278,9 +278,9 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
     if (ev->type == render.event && ui_io_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
 
-    if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
+    if (ui->loading) return ui_panel_event_consume(ui->panel, ev);
 
     for (size_t i = 0; i < ui->len; ++i) {
         struct ui_io_cmd *cmd = ui->cmds + i;
@@ -319,12 +319,12 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
         }
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_io_render(struct ui_io *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
     if (ui->loading) return;
 

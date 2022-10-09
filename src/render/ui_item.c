@@ -19,7 +19,7 @@ struct ui_item
     struct coord star;
     bool loading;
 
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_button io;
     struct ui_button help;
     struct ui_label id_lbl;
@@ -38,6 +38,7 @@ struct ui_item *ui_item_new(void)
 
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {
+        .id = 0,
         .panel = ui_panel_title(pos, dim, ui_str_c("item")),
         .io = ui_button_new(ui_str_c("<< io")),
         .help = ui_button_new(ui_str_c("?")),
@@ -45,7 +46,7 @@ struct ui_item *ui_item_new(void)
         .id_val = ui_link_new(ui_str_v(im_id_str_len)),
     };
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
     ui->io.w.dim.w = ui_layout_inf;
 
     for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
@@ -58,7 +59,7 @@ struct ui_item *ui_item_new(void)
 
 void ui_item_free(struct ui_item *ui)
 {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     ui_button_free(&ui->io);
     ui_button_free(&ui->help);
     ui_label_free(&ui->id_lbl);
@@ -74,7 +75,7 @@ void ui_item_free(struct ui_item *ui)
 
 int16_t ui_item_width(struct ui_item *ui)
 {
-    return ui->panel.w.dim.w;
+    return ui->panel->w.dim.w;
 }
 
 static void *ui_item_state(struct ui_item *ui, im_id id)
@@ -111,19 +112,34 @@ static void ui_item_event_io(struct ui_item *ui, uintptr_t a1, uintptr_t a2)
 
     enum io io = io_raw;
     if (io_raw <= IO_MIN || io_raw >= IO_MAX) {
-        render_log(st_error, "invalid io event: io out-of-bounds '%x'", io_raw);
+        render_log(st_error, "invalid IO command: io out-of-bounds '%x'", io_raw);
         return;
     }
 
     enum item item = item_raw;
     if (!item_raw || item_raw >= ITEM_MAX) {
-        render_log(st_error, "invalid io event: item out-of-bounds '%x'", item_raw);
+        render_log(st_error, "invalid IO command: item out-of-bounds '%x'", item_raw);
+        return;
+    }
+
+    if (!ui->id) {
+        struct symbol io_str = {0};
+        atoms_str(proxy_atoms(render.proxy), io, &io_str);
+
+        render_log(st_error, "unable to execute IO command '%s': no item is selected",
+                io_str.c);
         return;
     }
 
     if (item != im_id_item(ui->id)) {
-        render_log(st_error, "invalid io event: target item '%x' != '%x'",
-                item, im_id_item(ui->id));
+        struct symbol io_str = {0};
+        atoms_str(proxy_atoms(render.proxy), io, &io_str);
+
+        struct symbol exp_str = {0};
+        atoms_str(proxy_atoms(render.proxy), item, &exp_str);
+
+        render_log(st_error, "unable to execute IO command '%s': item selected is not of type '%s'",
+                io_str.c, exp_str.c);
         return;
     }
 
@@ -137,14 +153,14 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         ui->id = 0;
         ui->star = coord_nil();
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         ui_item_update(ui);
         return false;
     }
@@ -152,7 +168,7 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     case EV_STAR_SELECT: {
         struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new)) {
-            ui_panel_hide(&ui->panel);
+            ui_panel_hide(ui->panel);
             ui->id = 0;
         }
         return false;
@@ -161,7 +177,7 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
     case EV_MAN_GOTO:
     case EV_MAN_TOGGLE:
     case EV_STAR_CLEAR: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         ui->id = 0;
         return false;
     }
@@ -170,13 +186,13 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui->id = (uintptr_t) ev->user.data1;
         ui->star = coord_from_u64((uintptr_t) ev->user.data2);
         ui_item_update(ui);
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
     case EV_ITEM_CLEAR: {
         ui->id = 0;
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -211,13 +227,13 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     if (ev->type == render.event && ui_item_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) {
-        if (ret == ui_consume && !ui_panel_is_visible(&ui->panel))
+    if ((ret = ui_panel_event(ui->panel, ev))) {
+        if (ret == ui_consume && !ui_panel_is_visible(ui->panel))
             render_push_event(EV_ITEM_CLEAR, 0, 0);
         return ret != ui_skip;
     }
 
-    if (ui->loading) return ui_panel_event_consume(&ui->panel, ev);
+    if (ui->loading) return ui_panel_event_consume(ui->panel, ev);
 
     if ((ret = ui_button_event(&ui->io, ev))) {
         if (ret != ui_action) return true;
@@ -241,12 +257,12 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
     if (config->ui.event && config->ui.event(state, ev)) return true;
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
     if (ui->loading) return;
 

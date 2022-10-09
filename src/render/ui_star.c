@@ -38,7 +38,7 @@ struct ui_star
     struct coord id;
     struct star star;
 
-    struct ui_panel panel;
+    struct ui_panel *panel;
 
     struct ui_button goto_factory, goto_map, goto_log;
     struct ui_label name, name_val;
@@ -166,7 +166,7 @@ struct ui_star *ui_star_new(void)
         },
     };
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
     ui->control.disabled = true;
 
     size_t goto_width = (width - ui_st.font.dim.w) / 3;
@@ -178,7 +178,7 @@ struct ui_star *ui_star_new(void)
 }
 
 void ui_star_free(struct ui_star *ui) {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
 
     ui_button_free(&ui->goto_map);
     ui_button_free(&ui->goto_factory);
@@ -253,7 +253,7 @@ void ui_star_free(struct ui_star *ui) {
 
 int16_t ui_star_width(const struct ui_star *ui)
 {
-    return ui->panel.w.dim.w;
+    return ui->panel->w.dim.w;
 }
 
 static void ui_star_update_list(
@@ -380,7 +380,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         ui->id = coord_nil();
         ui_tree_clear(&ui->control_list);
         ui_tree_clear(&ui->factory_list);
@@ -388,7 +388,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         ui_star_update(ui);
         return false;
     }
@@ -396,7 +396,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     case EV_STAR_SELECT: {
         ui->id = coord_from_u64((uintptr_t) ev->user.data1);
         ui_star_update(ui);
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
@@ -404,7 +404,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
     case EV_MAN_TOGGLE:
     case EV_STAR_CLEAR: {
         ui->id = coord_nil();
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         ui_tree_clear(&ui->control_list);
         ui_tree_clear(&ui->factory_list);
         return false;
@@ -421,7 +421,7 @@ static bool ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
         ui_tree_select(&ui->control_list, selected);
         ui_tree_select(&ui->factory_list, selected);
 
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
@@ -441,7 +441,7 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
     if (ev->type == render.event && ui_star_event_user(ui, ev)) return false;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) {
+    if ((ret = ui_panel_event(ui->panel, ev))) {
         if (ret == ui_consume) render_push_event(EV_STAR_CLEAR, 0, 0);
         return ret != ui_skip;
     }
@@ -507,12 +507,12 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return true;
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     ui_button_render(&ui->goto_log, &layout, renderer);

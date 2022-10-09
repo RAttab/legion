@@ -106,7 +106,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
         return ui_nil;
     }
 
-    case SDL_MOUSEBUTTONDOWN: {
+    case SDL_MOUSEBUTTONUP: {
         SDL_Point point = render.cursor.point;
         if (!sdl_rect_contains(&rect, &point)) return ui_nil;
 

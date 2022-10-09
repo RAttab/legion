@@ -15,7 +15,7 @@
 
 struct ui_topbar
 {
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_button save, load;
     struct ui_button pause, slow, fast, faster, fastest;
     struct ui_button home, stars, tapes, mods, log;
@@ -64,7 +64,7 @@ struct ui_topbar *ui_topbar_new(void)
 }
 
 void ui_topbar_free(struct ui_topbar *ui) {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
 
     ui_button_free(&ui->save);
     ui_button_free(&ui->load);
@@ -91,7 +91,7 @@ void ui_topbar_free(struct ui_topbar *ui) {
 
 int16_t ui_topbar_height(void)
 {
-    return render.ui.topbar->panel.w.dim.h;
+    return render.ui.topbar->panel->w.dim.h;
 }
 
 static void ui_topbar_update_speed(struct ui_topbar *ui)
@@ -167,7 +167,7 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
     if (ev->type == SDL_KEYDOWN) return ui_topbar_event_shortcuts(ui, ev);
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
 
     if ((ret = ui_button_event(&ui->save, ev))) {
         if (ret != ui_action) return true;
@@ -253,7 +253,7 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
         return true;
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 static void topbar_render_coord(
@@ -290,7 +290,8 @@ static void topbar_render_coord(
 
 void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
+    if (ui_layout_is_nil(&layout)) return;
 
     ui_button_render(&ui->save, &layout, renderer);
     ui_button_render(&ui->load, &layout, renderer);

@@ -22,7 +22,7 @@ static const time_sys ui_status_fade = 100 * ts_msec;
 struct ui_status
 {
     time_sys ts;
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_label status;
 };
 
@@ -42,14 +42,14 @@ struct ui_status *ui_status_new(void)
 }
 
 void ui_status_free(struct ui_status *ui) {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     ui_label_free(&ui->status);
     free(ui);
 }
 
 int16_t ui_status_height(void)
 {
-    return render.ui.status->panel.w.dim.h;
+    return render.ui.status->panel->w.dim.h;
 }
 
 void ui_status_set(
@@ -75,13 +75,14 @@ void ui_status_set(
 bool ui_status_event(struct ui_status *ui, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
-    return ui_panel_event_consume(&ui->panel, ev);
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 void ui_status_render(struct ui_status *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
+    if (ui_layout_is_nil(&layout)) return;
 
     time_sys delta = ts_now() - ui->ts;
     if (delta > ui_status_duration + ui_status_fade) ui->ts = 0;

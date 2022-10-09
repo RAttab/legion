@@ -195,44 +195,43 @@ bool map_event(struct map *map, SDL_Event *event)
     }
 
     case SDL_MOUSEMOTION: {
-        if (map->panning) {
-            int64_t xrel = scale_mult(map->scale, event->motion.xrel);
-            map->pos.x = i64_clamp(map->pos.x - xrel, 0, UINT32_MAX);
+        if (!map->panning)  break;
 
-            int64_t yrel = scale_mult(map->scale, event->motion.yrel);
-            map->pos.y = i64_clamp(map->pos.y - yrel, 0, UINT32_MAX);
+        int64_t xrel = scale_mult(map->scale, event->motion.xrel);
+        map->pos.x = i64_clamp(map->pos.x - xrel, 0, UINT32_MAX);
 
-            map->panned = true;
-        }
+        int64_t yrel = scale_mult(map->scale, event->motion.yrel);
+        map->pos.y = i64_clamp(map->pos.y - yrel, 0, UINT32_MAX);
+
+        map->panned = true;
         break;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
         SDL_MouseButtonEvent *b = &event->button;
         if (b->button == SDL_BUTTON_LEFT) map->panning = true;
-
-        if (map->scale < map_thresh_stars) {
-            SDL_Point point = render.cursor.point;
-            size_t px = scale_div(map->scale, map_star_px);
-            struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
-                        .x = point.x - px / 2,
-                        .y = point.y - px / 2,
-                        .h = px, .w = px,
-                    });
-
-            const struct star *star = proxy_star_in(render.proxy, rect);
-            if (star) render_push_event(EV_STAR_SELECT, coord_to_u64(star->coord), 0);
-        }
-
         break;
     }
 
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &event->button;
-        if (b->button == SDL_BUTTON_LEFT) {
-            map->panning = false;
-            map->panned = false;
-        }
+        if (b->button != SDL_BUTTON_LEFT) break;
+
+        map->panning = false;
+        if (map->panned) { map->panned = false; break; }
+        if (map->scale >= map_thresh_stars) break;
+
+        SDL_Point point = render.cursor.point;
+        size_t px = scale_div(map->scale, map_star_px);
+        struct rect rect = map_project_coord_rect(map, &(SDL_Rect) {
+                    .x = point.x - px / 2,
+                    .y = point.y - px / 2,
+                    .h = px, .w = px,
+                });
+
+        const struct star *star = proxy_star_in(render.proxy, rect);
+        if (star) render_push_event(EV_STAR_SELECT, coord_to_u64(star->coord), 0);
+
         break;
     }
 

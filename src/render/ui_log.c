@@ -36,7 +36,7 @@ struct ui_log
     struct coord coord;
     size_t len;
 
-    struct ui_panel panel;
+    struct ui_panel *panel;
     struct ui_logi items[world_log_cap];
 };
 
@@ -65,7 +65,7 @@ struct ui_log *ui_log_new(void)
         .panel = ui_panel_title(pos, dim, ui_str_c("log")),
     };
 
-    ui_panel_hide(&ui->panel);
+    ui_panel_hide(ui->panel);
     for (size_t i = 0; i < array_len(ui->items); ++i)
         ui->items[i] = ui_logi_new();
 
@@ -84,7 +84,7 @@ void ui_logi_free(struct ui_logi *ui)
 
 void ui_log_free(struct ui_log *ui)
 {
-    ui_panel_free(&ui->panel);
+    ui_panel_free(ui->panel);
     for (size_t i = 0; i < array_len(ui->items); ++i)
         ui_logi_free(ui->items + i);
     free(ui);
@@ -134,35 +134,35 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     {
 
     case EV_STATE_LOAD: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
     case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         ui_log_update(ui);
         return false;
     }
 
     case EV_LOG_TOGGLE: {
-        if (!ui_panel_is_visible(&ui->panel) || !coord_is_nil(ui->coord)) {
+        if (!ui_panel_is_visible(ui->panel) || !coord_is_nil(ui->coord)) {
             ui->coord = coord_nil();
             ui_log_update(ui);
-            ui_panel_show(&ui->panel);
+            ui_panel_show(ui->panel);
         }
-        else ui_panel_hide(&ui->panel);
+        else ui_panel_hide(ui->panel);
         return false;
     }
 
     case EV_LOG_SELECT: {
         ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
         ui_log_update(ui);
-        ui_panel_show(&ui->panel);
+        ui_panel_show(ui->panel);
         return false;
     }
 
     case EV_STAR_SELECT: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         if (coord_is_nil(ui->coord)) return false;
         ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
         ui_log_update(ui);
@@ -170,7 +170,7 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     }
 
     case EV_ITEM_SELECT: {
-        if (!ui_panel_is_visible(&ui->panel)) return false;
+        if (!ui_panel_is_visible(ui->panel)) return false;
         if (coord_is_nil(ui->coord)) return false;
         ui->coord = coord_from_u64((uintptr_t) ev->user.data2);
         ui_log_update(ui);
@@ -182,7 +182,7 @@ static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
     case EV_MODS_TOGGLE:
     case EV_MOD_SELECT:
     case EV_STARS_TOGGLE: {
-        ui_panel_hide(&ui->panel);
+        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -215,13 +215,13 @@ bool ui_log_event(struct ui_log *ui, SDL_Event *ev)
     if (ev->type == render.event && ui_log_event_user(ui, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(&ui->panel, ev))) return ret != ui_skip;
+    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
 
     for (size_t i = 0; i < ui->len; ++i) {
         if (ui_logi_event(ui->items + i, ui->coord, ev)) return true;
     }
 
-    return ui_panel_event_consume(&ui->panel, ev);
+    return ui_panel_event_consume(ui->panel, ev);
 }
 
 
@@ -244,7 +244,7 @@ void ui_logi_render(
 
 void ui_log_render(struct ui_log *ui, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(&ui->panel, renderer);
+    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
     if (ui_layout_is_nil(&layout)) return;
 
     for (size_t i = 0; i < ui->len; ++i) {

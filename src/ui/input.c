@@ -25,6 +25,7 @@ struct ui_input ui_input_new(size_t len)
                 s->font->glyph_w * len + s->pad.w * 2,
                 s->font->glyph_h + s->pad.h * 2),
         .s = *s,
+        .p = ui_panel_current(),
         .focused = false,
     };
 
@@ -126,7 +127,10 @@ void ui_input_render(
     size_t len = legion_min(input->buf.len - input->view.col, input->view.len);
     font_render(input->s.font, renderer, pos, input->s.fg, it, len);
 
-    if (input->focused && input->carret.blink) {
+    if (    input->carret.blink &&
+            input->focused &&
+            input->p->state == ui_panel_focused)
+    {
         size_t col = input->carret.col - input->view.col;
         size_t x = input->s.pad.w + col * input->s.font->glyph_w;
         size_t y = input->s.pad.h;

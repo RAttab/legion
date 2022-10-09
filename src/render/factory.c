@@ -440,16 +440,19 @@ bool factory_event(struct factory *factory, SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_MouseButtonEvent *b = &ev->button;
         if (b->button != SDL_BUTTON_LEFT) return false;
+
         factory->panning = true;
-        return factory_event_click(factory);
+        return false;
     }
 
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &ev->button;
         if (b->button != SDL_BUTTON_LEFT) return false;
+
         factory->panning = false;
-        factory->panned = false;
-        return false;
+        if (factory->panned) { factory->panned = false; return false; }
+
+        return factory_event_click(factory);
     }
 
     default: { return false; }
