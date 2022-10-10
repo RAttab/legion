@@ -314,6 +314,9 @@ void render_push_event(enum event code, uint64_t d0, uint64_t d1)
 
 void render_push_quit(void)
 {
+    // Prevents log spam as we're exiting.
+    proxy_set_speed(render.proxy, speed_pause);
+
     sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
 }
 
