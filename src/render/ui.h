@@ -88,18 +88,6 @@ struct ui_mods *ui_mods_new(void);
 void ui_mods_free(struct ui_mods *);
 bool ui_mods_event(struct ui_mods *, SDL_Event *);
 void ui_mods_render(struct ui_mods *, SDL_Renderer *);
-int16_t ui_mods_width(const struct ui_mods *);
-
-
-// -----------------------------------------------------------------------------
-// mod
-// -----------------------------------------------------------------------------
-
-struct ui_mod;
-struct ui_mod *ui_mod_new(void);
-void ui_mod_free(struct ui_mod *);
-bool ui_mod_event(struct ui_mod *, SDL_Event *);
-void ui_mod_render(struct ui_mod *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------

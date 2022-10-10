@@ -12,7 +12,6 @@
 #include "render/ui_status.c"
 #include "render/ui_tapes.c"
 #include "render/ui_mods.c"
-#include "render/ui_mod.c"
 #include "render/ui_stars.c"
 #include "render/ui_star.c"
 #include "render/ui_log.c"

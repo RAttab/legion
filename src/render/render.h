@@ -20,7 +20,6 @@ struct ui_topbar;
 struct ui_status;
 struct ui_tapes;
 struct ui_mods;
-struct ui_mod;
 struct ui_log;
 struct ui_stars;
 struct ui_star;
@@ -116,7 +115,6 @@ struct render
         struct ui_status *status;
         struct ui_tapes *tapes;
         struct ui_mods *mods;
-        struct ui_mod *mod;
         struct ui_log *log;
         struct ui_stars *stars;
         struct ui_star *star;

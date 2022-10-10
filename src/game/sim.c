@@ -571,6 +571,10 @@ static void sim_cmd_mod_register(
                 cmd->data.mod_register.c);
     }
 
+    const struct mod *mod = mods_get(world_mods(sim->world), id);
+    assert(mod);
+
+    sim_publish_mod(pipe, mod);
     sim_log(pipe, st_info, "mod '%s' registered with id '%u.%u'",
             cmd->data.mod_register.c,
             mod_major(id),

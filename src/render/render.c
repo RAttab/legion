@@ -117,7 +117,6 @@ static void ui_init(void)
     render.ui.status = ui_status_new();
     render.ui.tapes = ui_tapes_new();
     render.ui.mods = ui_mods_new();
-    render.ui.mod = ui_mod_new();
     render.ui.log = ui_log_new();
     render.ui.stars = ui_stars_new();
     render.ui.star = ui_star_new();
@@ -132,7 +131,6 @@ static void ui_close(void)
     ui_status_free(render.ui.status);
     ui_tapes_free(render.ui.tapes);
     ui_mods_free(render.ui.mods);
-    ui_mod_free(render.ui.mod);
     ui_log_free(render.ui.log);
     ui_stars_free(render.ui.stars);
     ui_star_free(render.ui.star);
@@ -152,7 +150,6 @@ static void ui_event(SDL_Event *event)
     if (ui_status_event(render.ui.status, event)) return;
     if (ui_tapes_event(render.ui.tapes, event)) return;
     if (ui_mods_event(render.ui.mods, event)) return;
-    if (ui_mod_event(render.ui.mod, event)) return;
     if (ui_log_event(render.ui.log, event)) return;
     if (ui_stars_event(render.ui.stars, event)) return;
     if (ui_star_event(render.ui.star, event)) return;
@@ -171,7 +168,6 @@ static void ui_render(SDL_Renderer *renderer)
     ui_status_render(render.ui.status, renderer);
     ui_tapes_render(render.ui.tapes, renderer);
     ui_mods_render(render.ui.mods, renderer);
-    ui_mod_render(render.ui.mod, renderer);
     ui_log_render(render.ui.log, renderer);
     ui_stars_render(render.ui.stars, renderer);
     ui_star_render(render.ui.star, renderer);

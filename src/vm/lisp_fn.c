@@ -102,6 +102,11 @@ static bool lisp_stmt(struct lisp *lisp)
         return true;
     }
 
+    case token_sep: {
+        lisp_err(lisp, "unexpected seperator token");
+        return false;
+    }
+
     default: { assert(false); }
     }
 }

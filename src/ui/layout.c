@@ -11,12 +11,12 @@
 // layout
 // -----------------------------------------------------------------------------
 
-void ui_layout_resize(struct ui_layout *ui, struct pos pos, struct dim dim)
+void ui_layout_resize(struct ui_layout *layout, struct pos pos, struct dim dim)
 {
-    ui->base.pos = pos;
-    ui->base.dim = dim;
-    ui->row.pos = pos;
-    ui->row.dim = (struct dim) { .w = dim.w, .h = 0 };
+    layout->base.pos = pos;
+    layout->base.dim = dim;
+    layout->row.pos = pos;
+    layout->row.dim = (struct dim) { .w = dim.w, .h = 0 };
 }
 
 struct ui_layout ui_layout_new(struct pos pos, struct dim dim)
@@ -50,6 +50,22 @@ void ui_layout_add(struct ui_layout *layout, struct ui_widget *widget)
 struct ui_layout ui_layout_inner(struct ui_layout *layout)
 {
     return ui_layout_new(layout->row.pos, layout->row.dim);
+}
+
+struct ui_layout ui_layout_split_x(struct ui_layout *layout, int16_t width)
+{
+    assert(width <= layout->row.dim.w);
+
+    int16_t height = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
+    struct ui_layout inner = ui_layout_new(layout->row.pos, make_dim(width,  height));
+
+    layout->base.pos.x = layout->row.pos.x + width;
+    layout->row.pos.x = layout->base.pos.x;
+
+    layout->base.dim.w = layout->row.dim.w - width;
+    layout->row.dim.w = layout->base.dim.w;
+
+    return inner;
 }
 
 void ui_layout_next_row(struct ui_layout *layout)
