@@ -16,5 +16,6 @@
 #include "ui/doc.c"
 #include "ui/list.c"
 #include "ui/tree.c"
+#include "ui/histo.c"
 #include "ui/panel.c"
 #include "ui/style.c"

@@ -672,6 +672,67 @@ void ui_tree_render(struct ui_tree *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// histo
+// -----------------------------------------------------------------------------
+
+typedef uint64_t ui_histo_data;
+
+struct ui_histo_series
+{
+    uint8_t col;
+    uint64_t user;
+    struct rgba fg;
+};
+
+struct ui_histo_style
+{
+    struct dim pad;
+    struct rgba edge;
+    struct { int16_t h, pad; } row;
+    struct { struct rgba fg, bg; } hover;
+    struct { struct dim pad; struct rgba fg; } axes;
+    struct { const struct font *font; struct rgba fg, bg; } value;
+};
+
+struct ui_histo
+{
+    struct ui_widget w;
+    struct ui_histo_style s;
+
+    struct pos inner;
+    struct dim row;
+
+    struct { ui_histo_data bound; } v;
+    struct { ui_histo_data scale, start; } t;
+    struct { ui_histo_data t; size_t row; } edge;
+    struct { ui_histo_data v; size_t row; bool active; } hover;
+    struct {
+        size_t len, cols, rows;
+        ui_histo_data *data;
+        struct ui_histo_series *list;
+    } series;
+};
+
+struct ui_histo ui_histo_new(
+        struct dim, const struct ui_histo_series *, size_t len);
+void ui_histo_free(struct ui_histo *);
+
+void ui_histo_clear(struct ui_histo *);
+
+ui_histo_data *ui_histo_at(struct ui_histo *, size_t row);
+ui_histo_data *ui_histo_at_t(struct ui_histo *, ui_histo_data t);
+ui_histo_data *ui_histo_at_series(struct ui_histo *, size_t series, size_t row);
+ui_histo_data *ui_histo_at_series_t(struct ui_histo *, size_t series, ui_histo_data t);
+
+void ui_histo_scale_t(struct ui_histo *, ui_histo_data scale);
+void ui_histo_advance(struct ui_histo *, ui_histo_data t);
+void ui_histo_push(struct ui_histo *, size_t series, ui_histo_data v);
+
+enum ui_ret ui_histo_event(struct ui_histo *, const SDL_Event *);
+void ui_histo_render(struct ui_histo *, struct ui_layout *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // panel
 // -----------------------------------------------------------------------------
 
@@ -775,6 +836,7 @@ extern struct ui_style
     struct ui_doc_style doc;
     struct ui_list_style list;
     struct ui_tree_style tree;
+    struct ui_histo_style histo;
     struct ui_panel_style panel;
 
 } ui_st;

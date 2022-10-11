@@ -241,6 +241,29 @@ void ui_style_default(void)
         },
     };
 
+    s->histo = (struct ui_histo_style) {
+        .pad = make_dim(2, 2),
+        .edge = rgba_red(),
+
+        .row = { .h = 18, .pad = 2 },
+
+        .hover = {
+            .fg = rgba_green(),
+            .bg = ui_st.rgba.list.hover
+        },
+
+        .axes = {
+            .pad = make_dim(0, 2),
+            .fg = ui_st.rgba.fg
+        },
+
+        .value = {
+            .font = ui_st.font.base,
+            .fg = ui_st.rgba.fg,
+            .bg = ui_st.rgba.bg,
+        },
+    };
+
     s->panel = (struct ui_panel_style) {
         .margin = make_dim(2, 2),
 
