@@ -150,6 +150,7 @@ enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
         return panel->state == ui_panel_focused ? ui_consume : ui_nil;
     }
 
+    case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
         return sdl_rect_contains(&rect, &render.cursor.point) ? ui_consume : ui_nil;

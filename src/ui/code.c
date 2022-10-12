@@ -767,7 +767,7 @@ enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
 
     case SDL_MOUSEMOTION: { return ui_code_event_motion(code); }
 
-    case SDL_MOUSEBUTTONDOWN: { return ui_code_event_click(code); }
+    case SDL_MOUSEBUTTONUP: { return ui_code_event_click(code); }
 
     case SDL_KEYDOWN: {
         if (!code->focused) return ui_nil;
