@@ -56,6 +56,7 @@ struct ui_star
 
     struct ui_star_workers workers;
 
+    struct ui_button energy_toggle;
     struct ui_label need, need_val;
     struct ui_label consumed, consumed_val;
     struct ui_label produced, produced_val;
@@ -129,6 +130,7 @@ struct ui_star *ui_star_new(void)
             .clean_val = ui_label_new(ui_str_v(3)),
         },
 
+        .energy_toggle = ui_button_new(ui_str_c("energy")),
         .need = ui_label_new(ui_str_c("- need:     ")),
         .need_val = ui_label_new(ui_str_v(str_scaled_len)),
         .consumed = ui_label_new(ui_str_c("- consumed: ")),
@@ -174,6 +176,8 @@ struct ui_star *ui_star_new(void)
     ui->goto_factory.w.dim.w = goto_width;
     ui->goto_log.w.dim.w = goto_width;
 
+    ui->energy_toggle.w.dim.w = ui_layout_inf;
+
     return ui;
 }
 
@@ -217,6 +221,7 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->workers.clean);
     ui_label_free(&ui->workers.clean_val);
 
+    ui_button_free(&ui->energy_toggle);
     ui_label_free(&ui->need);
     ui_label_free(&ui->need_val);
     ui_label_free(&ui->consumed);
@@ -507,6 +512,12 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return true;
     }
 
+    if ((ret = ui_button_event(&ui->energy_toggle, ev))) {
+        if (ret != ui_action) return true;
+        render_push_event(EV_ENERGY_TOGGLE, coord_to_u64(ui->star.coord), 0);
+        return true;
+    }
+
     return ui_panel_event_consume(ui->panel, ev);
 }
 
@@ -599,7 +610,7 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
         ui_layout_sep_row(&layout);
 
-        ui_label_render(&ui->energy, &layout, renderer);
+        ui_button_render(&ui->energy_toggle, &layout, renderer);
         ui_layout_next_row(&layout);
         ui_label_render(&ui->need, &layout, renderer);
         ui_label_render(&ui->need_val, &layout, renderer);

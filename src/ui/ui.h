@@ -680,7 +680,6 @@ typedef uint64_t ui_histo_data;
 struct ui_histo_series
 {
     uint8_t col;
-    uint64_t user;
     struct rgba fg;
 };
 
@@ -705,7 +704,7 @@ struct ui_histo
     struct { ui_histo_data bound; } v;
     struct { ui_histo_data scale, start; } t;
     struct { ui_histo_data t; size_t row; } edge;
-    struct { ui_histo_data v; size_t row; bool active; } hover;
+    struct { ui_histo_data t, v; size_t row; bool active; } hover;
     struct {
         size_t len, cols, rows;
         ui_histo_data *data;
@@ -805,6 +804,7 @@ extern struct ui_style
         struct { struct rgba bg, border; } box;
         struct { struct rgba hover, selected; } list;
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
+        struct { struct rgba solar, burner, kwheel, battery, consumed; } energy;
     } rgba;
 
     struct
@@ -819,6 +819,9 @@ extern struct ui_style
         struct ui_label_style in, out, work;
         struct ui_label_style active, waiting, error;
         struct ui_label_style required;
+        struct {
+            struct ui_label_style solar, burner, kwheel, battery, consumed;
+        } energy;
     } label;
 
     struct

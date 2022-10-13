@@ -35,6 +35,7 @@ struct energy
 
     im_energy current;
     im_energy produced, consumed, need;
+    struct { im_energy burner, battery; } item;
 };
 
 
@@ -94,12 +95,23 @@ inline void energy_produce(struct energy *en, im_energy value)
     en->produced += value;
 }
 
+inline void energy_produce_item(struct energy *en, enum item item, im_energy value)
+{
+    energy_produce(en, value);
+
+    switch (item) {
+    case ITEM_BURNER: { en->item.burner++; break; }
+    default: { assert(false); }
+    }
+}
+
 
 inline void energy_step_begin(struct energy *en, const struct star *star)
 {
     en->need = 0;
     en->produced = 0;
     en->consumed = 0;
+    en->item.battery = en->current;
     energy_produce(en, energy_production(en, star));
 }
 

@@ -136,6 +136,17 @@ void ui_io_render(struct ui_io *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// energy
+// -----------------------------------------------------------------------------
+
+struct ui_energy;
+struct ui_energy *ui_energy_new(void);
+void ui_energy_free(struct ui_energy *);
+bool ui_energy_event(struct ui_energy *, SDL_Event *);
+void ui_energy_render(struct ui_energy *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // log
 // -----------------------------------------------------------------------------
 

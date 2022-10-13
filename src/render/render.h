@@ -66,6 +66,7 @@ enum event
     EV_ITEM_CLEAR,
 
     EV_IO_TOGGLE,
+    EV_ENERGY_TOGGLE,
 
     EV_MAN_TOGGLE,
     EV_MAN_GOTO,
@@ -120,6 +121,7 @@ struct render
         struct ui_star *star;
         struct ui_item *item;
         struct ui_io *io;
+        struct ui_energy *energy;
         struct ui_man *man;
     } ui;
 };

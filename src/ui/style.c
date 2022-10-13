@@ -57,6 +57,12 @@ void ui_style_default(void)
         s->rgba.link.hover.bg = s->rgba.bg;
         s->rgba.link.pressed.fg = make_rgba(0x00, 0x00, 0x66, 0xFF);
         s->rgba.link.pressed.bg = s->rgba.bg;
+
+        s->rgba.energy.solar = rgba_yellow();
+        s->rgba.energy.burner = rgba_orange();
+        s->rgba.energy.kwheel = rgba_purple();
+        s->rgba.energy.battery = rgba_blue();
+        s->rgba.energy.consumed = rgba_red();
     }
 
     { // pad
@@ -91,6 +97,12 @@ void ui_style_default(void)
         fg(&s->label.waiting, s->rgba.waiting);
         fg(&s->label.error, s->rgba.error);
         fg(&s->label.required, rgba_red());
+
+        fg(&s->label.energy.solar, s->rgba.energy.solar);
+        fg(&s->label.energy.burner, s->rgba.energy.burner);
+        fg(&s->label.energy.kwheel, s->rgba.energy.kwheel);
+        fg(&s->label.energy.battery, s->rgba.energy.battery);
+        fg(&s->label.energy.consumed, s->rgba.energy.consumed);
     }
 
     { // button

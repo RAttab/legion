@@ -162,6 +162,11 @@ enum ui_ret ui_histo_event(struct ui_histo *histo, const SDL_Event *ev)
         histo->hover.v =
             ((cursor.x - histo->inner.x) * histo->v.bound) / histo->row.w;
 
+        size_t delta = histo->hover.row > histo->edge.row ?
+            histo->edge.row + (histo->series.rows - histo->hover.row) :
+            histo->edge.row - histo->hover.row;
+        histo->hover.t = histo->edge.t - (delta * histo->t.scale);
+
         return ui_nil;
     }
 
