@@ -63,7 +63,8 @@ struct ui_star
     struct ui_label stored, stored_val;
     struct ui_star_energy solar;
     struct ui_star_energy kwheel;
-    struct ui_star_energy store;
+    struct ui_star_energy burner;
+    struct ui_star_energy battery;
 
 };
 
@@ -131,26 +132,33 @@ struct ui_star *ui_star_new(void)
         },
 
         .energy_toggle = ui_button_new(ui_str_c("energy")),
-        .need = ui_label_new(ui_str_c("- need:     ")),
+        .need = ui_label_new(ui_str_c("- need:       ")),
         .need_val = ui_label_new(ui_str_v(str_scaled_len)),
-        .consumed = ui_label_new(ui_str_c("- consumed: ")),
+        .consumed = ui_label_new(ui_str_c("- consumed:   ")),
         .consumed_val = ui_label_new(ui_str_v(str_scaled_len)),
-        .produced = ui_label_new(ui_str_c("- produced: ")),
+        .produced = ui_label_new(ui_str_c("- produced:   ")),
         .produced_val = ui_label_new(ui_str_v(str_scaled_len)),
-        .stored = ui_label_new(ui_str_c("- stored:   ")),
+        .stored = ui_label_new(ui_str_c("- stored:     ")),
         .stored_val = ui_label_new(ui_str_v(str_scaled_len)),
 
         .solar = (struct ui_star_energy) {
-            .name = ui_label_new(ui_str_c("solar:         ")),
+            .name = ui_label_new(ui_str_c("solar:        ")),
             .count = ui_label_new(ui_str_v(3)),
             .prod = ui_label_new(ui_str_c("- production: ")),
             .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
+            .total = ui_label_new(ui_str_c("- total:      ")),
+            .total_val = ui_label_new(ui_str_v(str_scaled_len)),
+        },
+
+        .burner = (struct ui_star_energy) {
+            .name = ui_label_new(ui_str_c("burner:       ")),
+            .count = ui_label_new(ui_str_v(3)),
             .total = ui_label_new(ui_str_c("- total:      ")),
             .total_val = ui_label_new(ui_str_v(str_scaled_len)),
         },
 
         .kwheel = (struct ui_star_energy) {
-            .name = ui_label_new(ui_str_c("k-wheel:       ")),
+            .name = ui_label_new(ui_str_c("k-wheel:      ")),
             .count = ui_label_new(ui_str_v(3)),
             .prod = ui_label_new(ui_str_c("- production: ")),
             .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
@@ -158,12 +166,12 @@ struct ui_star *ui_star_new(void)
             .total_val = ui_label_new(ui_str_v(str_scaled_len)),
         },
 
-        .store = (struct ui_star_energy) {
-            .name = ui_label_new(ui_str_c("store:         ")),
+        .battery = (struct ui_star_energy) {
+            .name = ui_label_new(ui_str_c("battery:      ")),
             .count = ui_label_new(ui_str_v(3)),
-            .prod = ui_label_new(ui_str_c("- capacity: ")),
+            .prod = ui_label_new(ui_str_c("- capacity:   ")),
             .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
-            .total = ui_label_new(ui_str_c("- total:    ")),
+            .total = ui_label_new(ui_str_c("- total:      ")),
             .total_val = ui_label_new(ui_str_v(str_scaled_len)),
         },
     };
@@ -238,6 +246,13 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->solar.total);
     ui_label_free(&ui->solar.total_val);
 
+    ui_label_free(&ui->burner.name);
+    ui_label_free(&ui->burner.count);
+    ui_label_free(&ui->burner.prod);
+    ui_label_free(&ui->burner.prod_val);
+    ui_label_free(&ui->burner.total);
+    ui_label_free(&ui->burner.total_val);
+
     ui_label_free(&ui->kwheel.name);
     ui_label_free(&ui->kwheel.count);
     ui_label_free(&ui->kwheel.prod);
@@ -245,12 +260,12 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->kwheel.total);
     ui_label_free(&ui->kwheel.total_val);
 
-    ui_label_free(&ui->store.name);
-    ui_label_free(&ui->store.count);
-    ui_label_free(&ui->store.prod);
-    ui_label_free(&ui->store.prod_val);
-    ui_label_free(&ui->store.total);
-    ui_label_free(&ui->store.total_val);
+    ui_label_free(&ui->battery.name);
+    ui_label_free(&ui->battery.count);
+    ui_label_free(&ui->battery.prod);
+    ui_label_free(&ui->battery.prod_val);
+    ui_label_free(&ui->battery.total);
+    ui_label_free(&ui->battery.total_val);
 
     free(ui);
 }
@@ -324,8 +339,9 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_scaled(&ui->stored_val.str, 0);
 
         ui->solar.show = false;
+        ui->burner.show = false;
         ui->kwheel.show = false;
-        ui->store.show = false;
+        ui->battery.show = false;
         return;
     }
 
@@ -353,29 +369,35 @@ static void ui_star_update(struct ui_star *ui)
     }
 
     {
+        const struct tech *tech = proxy_tech(render.proxy);
         struct energy energy = *chunk_energy(chunk);
+
         ui_str_set_scaled(&ui->need_val.str, energy.need);
         ui_str_set_scaled(&ui->consumed_val.str, energy.consumed);
         ui_str_set_scaled(&ui->produced_val.str, energy.produced);
         ui_str_set_scaled(&ui->stored_val.str, energy.current);
 
-        ui->solar.show = energy.solar;
+        ui->solar.show = tech_known(tech, ITEM_SOLAR);
         ui_str_set_u64(&ui->solar.count.str, energy.solar);
         ui_str_set_scaled(&ui->solar.total_val.str, energy_prod_solar(&energy, &ui->star));
         energy.solar = 1;
         ui_str_set_scaled(&ui->solar.prod_val.str, energy_prod_solar(&energy, &ui->star));
 
-        ui->kwheel.show = energy.kwheel;
+        ui->burner.show = tech_known(tech, ITEM_BURNER);
+        ui_str_set_u64(&ui->burner.count.str, chunk_scan(chunk, ITEM_BURNER));
+        ui_str_set_scaled(&ui->burner.total_val.str, energy.item.burner);
+
+        ui->kwheel.show = tech_known(tech, ITEM_KWHEEL);
         ui_str_set_u64(&ui->kwheel.count.str, energy.kwheel);
         ui_str_set_scaled(&ui->kwheel.total_val.str, energy_prod_kwheel(&energy, &ui->star));
         energy.kwheel = 1;
         ui_str_set_scaled(&ui->kwheel.prod_val.str, energy_prod_kwheel(&energy, &ui->star));
 
-        ui->store.show = energy.battery;
-        ui_str_set_u64(&ui->store.count.str, energy.battery);
-        ui_str_set_scaled(&ui->store.total_val.str, energy_battery(&energy));
+        ui->battery.show = tech_known(tech, ITEM_BATTERY);
+        ui_str_set_u64(&ui->battery.count.str, energy.battery);
+        ui_str_set_scaled(&ui->battery.total_val.str, energy_battery(&energy));
         energy.battery = 1;
-        ui_str_set_scaled(&ui->store.prod_val.str, energy_battery(&energy));
+        ui_str_set_scaled(&ui->battery.prod_val.str, energy_battery(&energy));
     }
 }
 
@@ -638,6 +660,16 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
             ui_layout_next_row(&layout);
         }
 
+        if (ui->burner.show) {
+            ui_layout_sep_row(&layout);
+            ui_label_render(&ui->burner.name, &layout, renderer);
+            ui_label_render(&ui->burner.count, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->burner.total, &layout, renderer);
+            ui_label_render(&ui->burner.total_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+        }
+
         if (ui->kwheel.show) {
             ui_layout_sep_row(&layout);
             ui_label_render(&ui->kwheel.name, &layout, renderer);
@@ -651,16 +683,16 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
             ui_layout_next_row(&layout);
         }
 
-        if (ui->store.show) {
+        if (ui->battery.show) {
             ui_layout_sep_row(&layout);
-            ui_label_render(&ui->store.name, &layout, renderer);
-            ui_label_render(&ui->store.count, &layout, renderer);
+            ui_label_render(&ui->battery.name, &layout, renderer);
+            ui_label_render(&ui->battery.count, &layout, renderer);
             ui_layout_next_row(&layout);
-            ui_label_render(&ui->store.prod, &layout, renderer);
-            ui_label_render(&ui->store.prod_val, &layout, renderer);
+            ui_label_render(&ui->battery.prod, &layout, renderer);
+            ui_label_render(&ui->battery.prod_val, &layout, renderer);
             ui_layout_next_row(&layout);
-            ui_label_render(&ui->store.total, &layout, renderer);
-            ui_label_render(&ui->store.total_val, &layout, renderer);
+            ui_label_render(&ui->battery.total, &layout, renderer);
+            ui_label_render(&ui->battery.total_val, &layout, renderer);
             ui_layout_next_row(&layout);
         }
     }

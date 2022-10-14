@@ -112,7 +112,6 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
         break;
     }
 
-    case SDL_MOUSEMOTION:
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
         if (!sdl_rect_contains(&rect, &render.cursor.point))

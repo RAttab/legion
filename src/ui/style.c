@@ -254,10 +254,10 @@ void ui_style_default(void)
     };
 
     s->histo = (struct ui_histo_style) {
-        .pad = make_dim(2, 2),
+        .pad = make_dim(4, 4),
         .edge = rgba_red(),
 
-        .row = { .h = 18, .pad = 2 },
+        .row = { .h = 12, .pad = 2 },
 
         .hover = {
             .fg = rgba_green(),
@@ -265,7 +265,7 @@ void ui_style_default(void)
         },
 
         .axes = {
-            .pad = make_dim(0, 2),
+            .pad = make_dim(1, 2),
             .fg = ui_st.rgba.fg
         },
 

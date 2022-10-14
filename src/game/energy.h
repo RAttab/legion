@@ -111,6 +111,7 @@ inline void energy_step_begin(struct energy *en, const struct star *star)
     en->need = 0;
     en->produced = 0;
     en->consumed = 0;
+    en->item.burner = 0;
     en->item.battery = en->current;
     energy_produce(en, energy_production(en, star));
 }
