@@ -88,38 +88,11 @@ ui_histo_data *ui_histo_at(struct ui_histo *histo, size_t row)
     return histo->series.data + (row * histo->series.len);
 }
 
-ui_histo_data *ui_histo_at_t(struct ui_histo *histo, ui_histo_data t)
-{
-    if (!histo->series.data) return NULL;
-
-    assert(t <= histo->edge.t);
-    assert(t >= histo->edge.t - legion_min(
-                    histo->t.scale * histo->series.rows,
-                    histo->edge.t));
-
-    return ui_histo_at(histo,
-            ((histo->edge.t - t) / histo->t.scale) % histo->series.rows);
-}
-
-ui_histo_data *ui_histo_at_series(
-        struct ui_histo *histo, size_t series, size_t row)
-{
-    assert(series < histo->series.len);
-    return ui_histo_at(histo, row) + series;
-}
-
-ui_histo_data *ui_histo_at_series_t(
-        struct ui_histo *histo, size_t series, ui_histo_data t)
-{
-    assert(series < histo->series.len);
-    return ui_histo_at_t(histo, t) + series;
-}
-
-static size_t ui_histo_row_t(struct ui_histo *histo, size_t row)
+ui_histo_data ui_histo_row_t(struct ui_histo *histo, size_t row)
 {
     size_t delta = row > histo->edge.row ?
-        row + (histo->series.rows - histo->hover.row) :
-        row - histo->hover.row;
+        histo->edge.row + (histo->series.rows - row) :
+        histo->edge.row - row;
 
     return histo->edge.t -
         legion_min(histo->edge.t, delta * histo->t.scale);
@@ -283,9 +256,13 @@ void ui_histo_render(
 
     // Edge
     {
-        int16_t y = histo->inner.y + ((histo->edge.row + 1) * histo->row.h);
         rgba_render(histo->s.edge, renderer);
-        sdl_err(SDL_RenderDrawLine(renderer,left, y, right, y));
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                            .x = left,
+                            .y = histo->inner.y + (histo->edge.row * histo->row.h),
+                            .w = histo->row.w,
+                            .h = histo->row.h,
+                        }));
     }
 
     // Hover - fg

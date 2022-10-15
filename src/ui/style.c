@@ -51,18 +51,20 @@ void ui_style_default(void)
         s->rgba.list.hover = rgba_gray_a(0xFF, 0x22);
         s->rgba.list.selected = rgba_gray_a(0xFF, 0x11);
 
-        s->rgba.link.idle.fg = make_rgba(0x00, 0x00, 0xFF, 0xFF);
+        s->rgba.link.idle.fg = make_rgba(0x22, 0x22, 0xFF, 0xFF);
         s->rgba.link.idle.bg = s->rgba.bg;
         s->rgba.link.hover.fg = make_rgba(0x00, 0x00, 0xCC, 0xFF);
         s->rgba.link.hover.bg = s->rgba.bg;
         s->rgba.link.pressed.fg = make_rgba(0x00, 0x00, 0x66, 0xFF);
         s->rgba.link.pressed.bg = s->rgba.bg;
 
+
+        s->rgba.energy.consumed = rgba_red();
+        s->rgba.energy.saved = rgba_blue();
+        s->rgba.energy.stored = rgba_teal();
         s->rgba.energy.solar = rgba_yellow();
         s->rgba.energy.burner = rgba_orange();
         s->rgba.energy.kwheel = rgba_purple();
-        s->rgba.energy.battery = rgba_blue();
-        s->rgba.energy.consumed = rgba_red();
     }
 
     { // pad
@@ -98,11 +100,12 @@ void ui_style_default(void)
         fg(&s->label.error, s->rgba.error);
         fg(&s->label.required, rgba_red());
 
+        fg(&s->label.energy.consumed, s->rgba.energy.consumed);
+        fg(&s->label.energy.stored, s->rgba.energy.stored);
+        fg(&s->label.energy.saved, s->rgba.energy.saved);
         fg(&s->label.energy.solar, s->rgba.energy.solar);
         fg(&s->label.energy.burner, s->rgba.energy.burner);
         fg(&s->label.energy.kwheel, s->rgba.energy.kwheel);
-        fg(&s->label.energy.battery, s->rgba.energy.battery);
-        fg(&s->label.energy.consumed, s->rgba.energy.consumed);
     }
 
     { // button
@@ -255,7 +258,7 @@ void ui_style_default(void)
 
     s->histo = (struct ui_histo_style) {
         .pad = make_dim(4, 4),
-        .edge = rgba_red(),
+        .edge = make_rgba(0xFF, 0x00, 0x00, 0x33),
 
         .row = { .h = 12, .pad = 2 },
 

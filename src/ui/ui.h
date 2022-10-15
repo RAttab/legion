@@ -719,9 +719,7 @@ void ui_histo_free(struct ui_histo *);
 void ui_histo_clear(struct ui_histo *);
 
 ui_histo_data *ui_histo_at(struct ui_histo *, size_t row);
-ui_histo_data *ui_histo_at_t(struct ui_histo *, ui_histo_data t);
-ui_histo_data *ui_histo_at_series(struct ui_histo *, size_t series, size_t row);
-ui_histo_data *ui_histo_at_series_t(struct ui_histo *, size_t series, ui_histo_data t);
+ui_histo_data ui_histo_row_t(struct ui_histo *, size_t row);
 
 void ui_histo_scale_t(struct ui_histo *, ui_histo_data scale);
 void ui_histo_advance(struct ui_histo *, ui_histo_data t);
@@ -804,7 +802,10 @@ extern struct ui_style
         struct { struct rgba bg, border; } box;
         struct { struct rgba hover, selected; } list;
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
-        struct { struct rgba solar, burner, kwheel, battery, consumed; } energy;
+        struct {
+            struct rgba consumed, saved;
+            struct rgba stored, solar, burner, kwheel, battery;
+        } energy;
     } rgba;
 
     struct
@@ -820,7 +821,8 @@ extern struct ui_style
         struct ui_label_style active, waiting, error;
         struct ui_label_style required;
         struct {
-            struct ui_label_style solar, burner, kwheel, battery, consumed;
+            struct ui_label_style consumed, saved;
+            struct ui_label_style stored, solar, burner, kwheel;
         } energy;
     } label;
 

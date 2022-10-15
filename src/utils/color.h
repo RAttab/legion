@@ -29,6 +29,7 @@ inline struct rgba rgba_black(void )    { return rgba_gray(0x00); }
 inline struct rgba rgba_red(void)       { return make_rgba(0xCC, 0x00, 0x00, 0xFF); }
 inline struct rgba rgba_green(void)     { return make_rgba(0x00, 0xCC, 0x00, 0xFF); }
 inline struct rgba rgba_blue(void)      { return make_rgba(0x00, 0x00, 0xCC, 0xFF); }
+inline struct rgba rgba_teal(void)      { return make_rgba(0x00, 0x88, 0x88, 0xFF); }
 inline struct rgba rgba_yellow(void)    { return make_rgba(0xCC, 0xCC, 0x00, 0xFF); }
 inline struct rgba rgba_orange(void)    { return make_rgba(0xFF, 0xAA, 0x00, 0xFF); }
 inline struct rgba rgba_purple(void)    { return make_rgba(0x88, 0x00, 0x88, 0xFF); }
