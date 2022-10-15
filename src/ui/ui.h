@@ -804,7 +804,7 @@ extern struct ui_style
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
         struct {
             struct rgba consumed, saved;
-            struct rgba stored, solar, burner, kwheel, battery;
+            struct rgba stored, fusion, solar, burner, kwheel, battery;
         } energy;
     } rgba;
 
@@ -822,7 +822,7 @@ extern struct ui_style
         struct ui_label_style required;
         struct {
             struct ui_label_style consumed, saved;
-            struct ui_label_style stored, solar, burner, kwheel;
+            struct ui_label_style stored, fusion, solar, burner, kwheel;
         } energy;
     } label;
 

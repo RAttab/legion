@@ -26,6 +26,7 @@ enum
     ui_energy_right_first = ui_energy_left_last,
 
     ui_energy_stored = ui_energy_right_first,
+    ui_energy_fusion,
     ui_energy_solar,
     ui_energy_burner,
     ui_energy_kwheel,
@@ -52,6 +53,7 @@ struct ui_energy
     struct ui_label saved, saved_val, saved_tick;
 
     struct ui_label stored, stored_val, stored_tick;
+    struct ui_label fusion, fusion_val, fusion_tick;
     struct ui_label solar, solar_val, solar_tick;
     struct ui_label burner, burner_val, burner_tick;
     struct ui_label kwheel, kwheel_val, kwheel_tick;
@@ -74,6 +76,7 @@ struct ui_energy *ui_energy_new(void)
         [ui_energy_saved] =    { 0, ui_st.rgba.energy.saved },
 
         [ui_energy_stored] =   { 1, ui_st.rgba.energy.stored },
+        [ui_energy_fusion] =   { 1, ui_st.rgba.energy.fusion },
         [ui_energy_solar] =    { 1, ui_st.rgba.energy.solar },
         [ui_energy_burner] =   { 1, ui_st.rgba.energy.burner },
         [ui_energy_kwheel] =   { 1, ui_st.rgba.energy.kwheel },
@@ -104,6 +107,10 @@ struct ui_energy *ui_energy_new(void)
         .stored_val = ui_label_new(ui_str_v(str_scaled_len)),
         .stored_tick = ui_label_new(ui_str_v(str_scaled_len)),
 
+        .fusion = ui_label_new_s(&ui_st.label.energy.fusion, ui_str_c("fusion:   ")),
+        .fusion_val = ui_label_new(ui_str_v(str_scaled_len)),
+        .fusion_tick = ui_label_new(ui_str_v(str_scaled_len)),
+
         .solar = ui_label_new_s(&ui_st.label.energy.solar, ui_str_c("solar:    ")),
         .solar_val = ui_label_new(ui_str_v(str_scaled_len)),
         .solar_tick = ui_label_new(ui_str_v(str_scaled_len)),
@@ -127,6 +134,7 @@ struct ui_energy *ui_energy_new(void)
     ui->show[ui_energy_consumed] = true;
     ui->show[ui_energy_stored] = true;
     ui->show[ui_energy_saved] = true;
+    ui->show[ui_energy_fusion] = true;
 
     ui_input_set(&ui->scale_val, "1");
 
@@ -156,6 +164,10 @@ void ui_energy_free(struct ui_energy *ui)
     ui_label_free(&ui->stored);
     ui_label_free(&ui->stored_val);
     ui_label_free(&ui->stored_tick);
+
+    ui_label_free(&ui->fusion);
+    ui_label_free(&ui->fusion_val);
+    ui_label_free(&ui->fusion_tick);
 
     ui_label_free(&ui->solar);
     ui_label_free(&ui->solar_val);
@@ -198,8 +210,9 @@ void ui_energy_update_state(struct ui_energy *ui)
     const struct energy *energy = chunk_energy(chunk);
     ui_histo_advance(&ui->histo, t);
     ui_histo_push(&ui->histo, ui_energy_consumed, energy->consumed);
-    ui_histo_push(&ui->histo, ui_energy_saved, energy->current);
-    ui_histo_push(&ui->histo, ui_energy_stored, energy->item.battery);
+    ui_histo_push(&ui->histo, ui_energy_saved, energy->item.battery.stored);
+    ui_histo_push(&ui->histo, ui_energy_stored, energy->item.battery.produced);
+    ui_histo_push(&ui->histo, ui_energy_fusion, energy->item.fusion.produced);
     ui_histo_push(&ui->histo, ui_energy_solar, energy_prod_solar(energy, star));
     ui_histo_push(&ui->histo, ui_energy_burner, energy->item.burner);
     ui_histo_push(&ui->histo, ui_energy_kwheel, energy_prod_kwheel(energy, star));
@@ -226,6 +239,9 @@ static void ui_energy_update(struct ui_energy *ui)
 
         ui_set_nil(&ui->stored_val);
         ui_set_nil(&ui->stored_tick);
+
+        ui_set_nil(&ui->fusion_val);
+        ui_set_nil(&ui->fusion_tick);
 
         ui_set_nil(&ui->solar_val);
         ui_set_nil(&ui->solar_tick);
@@ -258,6 +274,9 @@ static void ui_energy_update(struct ui_energy *ui)
 
     ui_str_set_scaled(ui_set(&ui->stored_val), data[ui_energy_stored]);
     ui_str_set_scaled(ui_set(&ui->stored_tick), data[ui_energy_stored] / scale);
+
+    ui_str_set_scaled(ui_set(&ui->fusion_val), data[ui_energy_fusion]);
+    ui_str_set_scaled(ui_set(&ui->fusion_tick), data[ui_energy_fusion] / scale);
 
     ui_str_set_scaled(ui_set(&ui->solar_val), data[ui_energy_solar]);
     ui_str_set_scaled(ui_set(&ui->solar_tick), data[ui_energy_solar] / scale);
@@ -413,6 +432,16 @@ void ui_energy_render(struct ui_energy *ui, SDL_Renderer *renderer)
                 ui_label_render(&ui->stored_val, &layout, renderer);
                 ui_layout_sep_cols(&layout, 2);
                 ui_label_render(&ui->stored_tick, &layout, renderer);
+                ui_label_render(&ui->per_tick, &layout, renderer);
+                ui_layout_sep_col(&layout);
+                break;
+            }
+
+            case ui_energy_fusion: {
+                ui_label_render(&ui->fusion, &layout, renderer);
+                ui_label_render(&ui->fusion_val, &layout, renderer);
+                ui_layout_sep_cols(&layout, 2);
+                ui_label_render(&ui->fusion_tick, &layout, renderer);
                 ui_label_render(&ui->per_tick, &layout, renderer);
                 ui_layout_sep_col(&layout);
                 break;

@@ -9,6 +9,7 @@
 #include "items/item.h"
 #include "items/config.h"
 
+#include "items/fusion/fusion.h"
 #include "items/brain/brain.h"
 #include "items/deploy/deploy.h"
 #include "items/extract/extract.h"
@@ -88,6 +89,8 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_VEIN,          "vein",          bits_s, work_s),
     im_init(ITEM_BONE,          "bone",          bits_s, work_s),
     im_init(ITEM_TENDON,        "tendon",        bits_s, work_s),
+    im_init(ITEM_ROD,           "rod",           bits_s, work_s),
+    im_init(ITEM_TORUS,         "torus",         bits_s, work_s),
     im_init(ITEM_LIMB,          "limb",          bits_s, work_s),
     im_init(ITEM_SPINAL,        "spinal",        bits_s, work_s),
     im_init(ITEM_LENS,          "lens",          bits_s, work_s),
@@ -99,6 +102,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_ENGRAM,        "engram",        bits_s, work_s),
     im_init(ITEM_CORTEX,        "cortex",        bits_s, work_s),
     im_init(ITEM_EYE,           "eye",           bits_s, work_s),
+
     // Passive - T1
     im_init(ITEM_MAGNET,        "magnet",        bits_m, work_m),
     im_init(ITEM_FERROFLUID,    "ferrofluid",    bits_m, work_m),
@@ -108,6 +112,7 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init(ITEM_CONDUCTOR,     "conductor",     bits_m, work_m),
     im_init(ITEM_GALVANIC,      "galvanic",      bits_m, work_m),
     im_init(ITEM_ANTENNA,       "antenna",       bits_m, work_m),
+
     // Passive - T2
     im_init(ITEM_BIOSTEEL      , "biosteel",      bits_m, work_m),
     im_init(ITEM_NEUROSTEEL    , "neurosteel",    bits_m, work_m),
@@ -123,6 +128,7 @@ static struct im_config im_configs[ITEM_MAX] =
 
     // Active - First
     im_init_cfg(ITEM_BURNER,       "burner",    bits_m, work_m, im_burner_config),
+
     // Active - T0
     im_init_cfg(ITEM_DEPLOY,       "deploy",    bits_s, work_s, im_deploy_config),
     im_init_cfg(ITEM_EXTRACT,      "extract",   bits_s, work_s, im_extract_config),
@@ -135,16 +141,21 @@ static struct im_config im_configs[ITEM_MAX] =
     im_init_cfg(ITEM_LEGION,       "legion",    bits_s, work_s, im_legion_config),
     im_init_cfg(ITEM_LAB,          "lab",       bits_s, work_s, im_lab_config),
     im_init_cfg(ITEM_TEST,         "test",      bits_s, work_s, im_test_config),
+
     // Active - T1
     im_init_cfg(ITEM_STORAGE,      "storage",   bits_m, work_m, im_storage_config),
     im_init_cfg(ITEM_PORT,         "port",      bits_m, work_m, im_port_config),
     im_init_cfg(ITEM_CONDENSER,    "condenser", bits_m, work_m, im_extract_config),
     im_init_cfg(ITEM_TRANSMIT,     "transmit",  bits_m, work_m, im_transmit_config),
     im_init_cfg(ITEM_RECEIVE,      "receive",   bits_m, work_m, im_receive_config),
+
     // Active - T2
     im_init_cfg(ITEM_COLLIDER,     "collider",  bits_m, work_m, im_collider_config),
     im_init_cfg(ITEM_PACKER,       "packer",    bits_m, work_m, im_packer_config),
     im_init_cfg(ITEM_NOMAD,        "nomad",     bits_m, work_m, im_nomad_config),
+
+    // Active - Last
+    im_init_cfg(ITEM_FUSION,       "fusion",    bits_m, work_m, im_fusion_config),
 
     // Logistics
     im_init(ITEM_WORKER,  "worker",  bits_s, work_s),
@@ -182,6 +193,7 @@ im_list im_list_control = im_list_control_arr;
 const enum item im_list_factory_arr[] =
 {
     ITEM_BURNER,
+    ITEM_FUSION,
 
     ITEM_DEPLOY,
     ITEM_EXTRACT,
@@ -192,7 +204,6 @@ const enum item im_list_factory_arr[] =
     ITEM_STORAGE,
     ITEM_PORT,
     ITEM_CONDENSER,
-    /* ITEM_AUTO_DEPLOY, */
 
     ITEM_PACKER,
     ITEM_COLLIDER,
@@ -301,6 +312,8 @@ static struct io_config io_configs[IO_LEN + IOE_LEN] =
     io_init(IO_WORK),
     io_init(IO_OUTPUT),
     io_init(IO_CARGO),
+    io_init(IO_ENERGY),
+    io_init(IO_ACTIVE),
 
     // Errors
     ioe_init(IOE_MISSING_ARG),

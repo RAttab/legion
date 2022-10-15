@@ -82,6 +82,8 @@ enum legion_packed io
     IO_WORK     = IO_MIN + 0xF4,
     IO_OUTPUT   = IO_MIN + 0xF5,
     IO_CARGO    = IO_MIN + 0xF6,
+    IO_ENERGY   = IO_MIN + 0xF7,
+    IO_ACTIVE   = IO_MIN + 0xF8,
 
     IO_MAX,
     IO_LEN = IO_MAX - IO_MIN,

@@ -8,6 +8,7 @@
 #include "items/ui_tape.c"
 #include "items/populate.c"
 
+#include "items/fusion/fusion.c"
 #include "items/brain/brain.c"
 #include "items/deploy/deploy.c"
 #include "items/extract/extract.c"

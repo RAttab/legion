@@ -52,7 +52,7 @@ static void im_burner_step_in(struct im_burner *burner, struct chunk *chunk)
 
 static void im_burner_step_work(struct im_burner *burner, struct chunk *chunk)
 {
-    energy_produce_item(chunk_energy(chunk), ITEM_BURNER, burner->output);
+    energy_produce_burner(chunk_energy(chunk), burner->output);
 
     burner->work.left--;
     if (burner->work.left) return;

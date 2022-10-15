@@ -91,6 +91,14 @@
         memset(start, 0, end - start);          \
     } while (false);
 
+#define legion_zero_after(ptr, field)           \
+    do {                                        \
+        typeof(ptr) tp = (ptr);                 \
+        void *start = (&(tp->field)) + 1;       \
+        void *end = tp + 1;                     \
+        memset(start, 0, end - start);          \
+    } while (false);
+
 
 // -----------------------------------------------------------------------------
 // types

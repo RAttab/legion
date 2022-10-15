@@ -27,19 +27,22 @@ enum
 // energy
 // -----------------------------------------------------------------------------
 
-typedef uint64_t im_energy;
+typedef uint32_t im_energy;
 
 struct energy
 {
     uint8_t solar, kwheel, battery;
-
-    im_energy current;
     im_energy produced, consumed, need;
-    struct { im_energy burner, battery; } item;
+
+    struct {
+        im_energy burner;
+        struct { im_energy produced, stored; } battery;
+        struct { im_energy produced, saved, next; } fusion;
+    } item;
 };
 
 
-inline im_energy energy_battery(const struct energy *en)
+inline im_energy energy_battery_cap(const struct energy *en)
 {
     return en->battery * energy_battery_mul;
 }
@@ -69,42 +72,22 @@ inline im_energy energy_prod_kwheel(
     return energy_kwheel_output(elem_k, en->kwheel);
 }
 
-
-inline im_energy energy_production(
-        const struct energy *en, const struct star *star)
-{
-    return
-        energy_prod_solar(en, star) +
-        energy_prod_kwheel(en, star);
-}
-
-
 inline bool energy_consume(struct energy *en, im_energy value)
 {
     en->need += value;
-    if (value > en->current) return false;
 
-    en->current -= value;
+    if (en->consumed + value > en->produced) return false;
     en->consumed += value;
+
+    assert(en->consumed <= en->produced);
     return true;
 }
 
-inline void energy_produce(struct energy *en, im_energy value)
+inline void energy_produce_burner(struct energy *en, im_energy produced)
 {
-    en->current += value;
-    en->produced += value;
+    en->produced += produced;
+    en->item.burner += produced;
 }
-
-inline void energy_produce_item(struct energy *en, enum item item, im_energy value)
-{
-    energy_produce(en, value);
-
-    switch (item) {
-    case ITEM_BURNER: { en->item.burner++; break; }
-    default: { assert(false); }
-    }
-}
-
 
 inline void energy_step_begin(struct energy *en, const struct star *star)
 {
@@ -112,13 +95,37 @@ inline void energy_step_begin(struct energy *en, const struct star *star)
     en->produced = 0;
     en->consumed = 0;
     en->item.burner = 0;
-    en->item.battery = en->current;
-    energy_produce(en, energy_production(en, star));
+    en->item.fusion.saved = 0;
+    en->item.fusion.produced = legion_xchg(&en->item.fusion.next, 0);
+    en->item.battery.produced = legion_xchg(&en->item.battery.stored, 0);
+
+    en->produced =
+        en->item.fusion.produced +
+        en->item.battery.produced +
+        energy_prod_solar(en, star) +
+        energy_prod_kwheel(en, star);
+}
+
+// runs right before energy_step_end.
+inline im_energy energy_step_fusion(
+        struct energy *en, im_energy produced, im_energy cap)
+{
+    if (!produced) return 0;
+    en->item.fusion.next += produced;
+
+    im_energy save = en->produced - en->consumed;
+    save -= legion_min(save, energy_battery_cap(en));
+    save -= legion_min(save, en->item.fusion.saved);
+    save = legion_min(save, cap);
+
+    en->item.fusion.saved += save;
+    return save;
 }
 
 inline void energy_step_end(struct energy *en)
 {
-    en->current = legion_min(en->current, energy_battery(en));
+    im_energy excess = en->produced - en->consumed;
+    en->item.battery.stored = legion_min(excess, energy_battery_cap(en));
 }
 
 

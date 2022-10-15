@@ -375,7 +375,7 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_scaled(&ui->need_val.str, energy.need);
         ui_str_set_scaled(&ui->consumed_val.str, energy.consumed);
         ui_str_set_scaled(&ui->produced_val.str, energy.produced);
-        ui_str_set_scaled(&ui->stored_val.str, energy.current);
+        ui_str_set_scaled(&ui->stored_val.str, energy.item.battery.stored);
 
         ui->solar.show = tech_known(tech, ITEM_SOLAR);
         ui_str_set_u64(&ui->solar.count.str, energy.solar);
@@ -395,9 +395,9 @@ static void ui_star_update(struct ui_star *ui)
 
         ui->battery.show = tech_known(tech, ITEM_BATTERY);
         ui_str_set_u64(&ui->battery.count.str, energy.battery);
-        ui_str_set_scaled(&ui->battery.total_val.str, energy_battery(&energy));
+        ui_str_set_scaled(&ui->battery.total_val.str, energy_battery_cap(&energy));
         energy.battery = 1;
-        ui_str_set_scaled(&ui->battery.prod_val.str, energy_battery(&energy));
+        ui_str_set_scaled(&ui->battery.prod_val.str, energy_battery_cap(&energy));
     }
 }
 

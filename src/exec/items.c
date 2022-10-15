@@ -27,7 +27,7 @@ bool stats_run(void)
         if (!tape || !info) continue;
 
         atoms_str(atoms, id, &sym);
-        fprintf(stdout, "(%s\n  (rank %zu)\n  (energy %zu)",
+        fprintf(stdout, "(%s\n  (rank %zu)\n  (energy %u)",
                 sym.c, info->rank, tape_energy(tape));
 
         for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {

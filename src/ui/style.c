@@ -58,10 +58,10 @@ void ui_style_default(void)
         s->rgba.link.pressed.fg = make_rgba(0x00, 0x00, 0x66, 0xFF);
         s->rgba.link.pressed.bg = s->rgba.bg;
 
-
         s->rgba.energy.consumed = rgba_red();
         s->rgba.energy.saved = rgba_blue();
         s->rgba.energy.stored = rgba_teal();
+        s->rgba.energy.fusion = rgba_green();
         s->rgba.energy.solar = rgba_yellow();
         s->rgba.energy.burner = rgba_orange();
         s->rgba.energy.kwheel = rgba_purple();
@@ -103,6 +103,7 @@ void ui_style_default(void)
         fg(&s->label.energy.consumed, s->rgba.energy.consumed);
         fg(&s->label.energy.stored, s->rgba.energy.stored);
         fg(&s->label.energy.saved, s->rgba.energy.saved);
+        fg(&s->label.energy.fusion, s->rgba.energy.fusion);
         fg(&s->label.energy.solar, s->rgba.energy.solar);
         fg(&s->label.energy.burner, s->rgba.energy.burner);
         fg(&s->label.energy.kwheel, s->rgba.energy.kwheel);

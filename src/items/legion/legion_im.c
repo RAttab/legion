@@ -28,6 +28,7 @@ const enum item *im_legion_cargo(enum item type)
         static const enum item cargo[] = {
             ITEM_WORKER,
             ITEM_WORKER,
+            ITEM_FUSION,
             ITEM_DEPLOY,
             ITEM_EXTRACT,
             ITEM_EXTRACT,

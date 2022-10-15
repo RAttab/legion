@@ -55,6 +55,35 @@
       !item-elem-b)
   (out !item-tendon))
 
+ (!item-rod
+  (work 50)
+  (in !item-elem-b
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-b
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-a
+      !item-elem-b)
+  (out !item-rod))
+
+ (!item-torus
+  (work 4)
+  (in !item-elem-b
+      !item-elem-a
+      !item-elem-a
+      !item-elem-b
+      !item-elem-b
+      !item-elem-a
+      !item-elem-a
+      !item-elem-b)
+  (out !item-torus))
+
  (!item-lens
   (work 2)
   (in !item-elem-b
@@ -164,7 +193,18 @@
       !item-lens
       !item-lens
       !item-retina)
-  (out !item-eye)))
+  (out !item-eye))
+
+ (!item-fusion
+  (work 16)
+  (in !item-torus
+      !item-torus
+      !item-stem
+      !item-cortex
+      !item-stem
+      !item-torus
+      !item-torus)
+  (out !item-fusion)))
 
 
 ;; -----------------------------------------------------------------------------
