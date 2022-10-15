@@ -9,12 +9,10 @@
 #include "game/chunk.h"
 #include "game/energy.h"
 
-static void ui_energy_proxy_update(void *);
 
 // -----------------------------------------------------------------------------
 // energy
 // -----------------------------------------------------------------------------
-
 
 enum
 {
@@ -111,8 +109,6 @@ struct ui_energy *ui_energy_new(void)
 
     ui_input_set(&ui->scale_val, "1");
 
-    proxy_notify(render.proxy, ui_energy_proxy_update, ui);
-
     ui_panel_hide(ui->panel);
     return ui;
 }
@@ -159,6 +155,27 @@ static void ui_energy_clear(struct ui_energy *ui)
     ui_panel_hide(ui->panel);
 }
 
+void ui_energy_update_state(struct ui_energy *ui)
+{
+    if (!ui_panel_is_visible(ui->panel)) return;
+
+    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
+    if (!chunk) return;
+
+    world_ts t = proxy_time(render.proxy);
+    if (ui->last_t == t) return;
+    ui->last_t = t;
+
+    const struct star *star = chunk_star(chunk);
+    const struct energy *energy = chunk_energy(chunk);
+    ui_histo_advance(&ui->histo, t);
+    ui_histo_push(&ui->histo, ui_energy_consumed, energy->consumed);
+    ui_histo_push(&ui->histo, ui_energy_solar, energy_prod_solar(energy, star));
+    ui_histo_push(&ui->histo, ui_energy_burner, energy->item.burner);
+    ui_histo_push(&ui->histo, ui_energy_kwheel, energy_prod_kwheel(energy, star));
+    ui_histo_push(&ui->histo, ui_energy_battery, energy->item.battery);
+}
+
 static void ui_energy_update(struct ui_energy *ui)
 {
     struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
@@ -200,28 +217,6 @@ static void ui_energy_update(struct ui_energy *ui)
 
     ui_str_set_scaled(ui_set(&ui->battery_val), data[ui_energy_battery]);
     ui_str_set_scaled(ui_set(&ui->battery_tick), data[ui_energy_battery] / scale);
-}
-
-static void ui_energy_proxy_update(void *raw)
-{
-    struct ui_energy *ui = raw;
-    if (!ui_panel_is_visible(ui->panel)) return;
-
-    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
-    if (!chunk) return;
-
-    world_ts t = proxy_time(render.proxy);
-    if (ui->last_t == t) return;
-    ui->last_t = t;
-
-    const struct star *star = chunk_star(chunk);
-    const struct energy *energy = chunk_energy(chunk);
-    ui_histo_advance(&ui->histo, t);
-    ui_histo_push(&ui->histo, ui_energy_consumed, energy->consumed);
-    ui_histo_push(&ui->histo, ui_energy_solar, energy_prod_solar(energy, star));
-    ui_histo_push(&ui->histo, ui_energy_burner, energy->item.burner);
-    ui_histo_push(&ui->histo, ui_energy_kwheel, energy_prod_kwheel(energy, star));
-    ui_histo_push(&ui->histo, ui_energy_battery, energy->item.battery);
 }
 
 static bool ui_energy_event_user(struct ui_energy *ui, SDL_Event *ev)

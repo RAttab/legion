@@ -51,14 +51,6 @@ void proxy_pipe_close(struct proxy_pipe *);
 struct save_ring *proxy_pipe_in(struct proxy_pipe *);
 struct save_ring *proxy_pipe_out(struct proxy_pipe *);
 
-// -----------------------------------------------------------------------------
-// notify
-// -----------------------------------------------------------------------------
-// Unlike EV_STATE_UPDATE, the fn provided will be invoked for sim step that
-// wasn't skipped over. Use sparringly.
-
-typedef void (*proxy_fn) (void *);
-void proxy_notify(struct proxy *, proxy_fn, void *);
 
 // -----------------------------------------------------------------------------
 // state

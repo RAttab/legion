@@ -22,12 +22,6 @@ static void proxy_cmd(struct proxy *, const struct cmd *);
 // proxy
 // -----------------------------------------------------------------------------
 
-struct proxy_notify
-{
-    proxy_fn fn;
-    void *data;
-};
-
 struct proxy
 {
     struct save_ring *in, *out;
@@ -48,11 +42,6 @@ struct proxy
     } auth;
 
     char config[PATH_MAX + 1];
-
-    struct {
-        size_t len, cap;
-        struct proxy_notify *list;
-    } notify;
 };
 
 struct proxy *proxy_new(void)
@@ -232,33 +221,6 @@ static struct proxy_pipe *proxy_pipe(struct proxy *proxy)
     return (void *) atomic_load_explicit(&proxy->pipe, memory_order_acquire);
 }
 
-// -----------------------------------------------------------------------------
-// notify
-// -----------------------------------------------------------------------------
-
-void proxy_notify(struct proxy *proxy, proxy_fn fn, void *data)
-{
-    if (proxy->notify.len == proxy->notify.cap) {
-        size_t old = proxy->notify.cap;
-        proxy->notify.cap = old ? old * 2 : 1;
-        proxy->notify.list = realloc_zero(
-                proxy->notify.list, old, proxy->notify.cap, sizeof(*proxy->notify.list));
-    }
-
-    struct proxy_notify *notify = proxy->notify.list + proxy->notify.len;
-    proxy->notify.len++;
-
-    *notify = (struct proxy_notify) { .fn = fn, .data = data };
-}
-
-static void proxy_notify_invoke(struct proxy *proxy)
-{
-    for (size_t i = 0; i < proxy->notify.len; ++i) {
-        struct proxy_notify *notify = proxy->notify.list + i;
-        notify->fn(notify->data);
-    }
-}
-
 
 // -----------------------------------------------------------------------------
 // update
@@ -399,7 +361,7 @@ enum proxy_ret proxy_update(struct proxy *proxy)
         if (result != proxy_loaded && ret != proxy_nil) result = ret;
         save_ring_commit(pipe->in, save);
 
-        if (result != proxy_loaded) proxy_notify_invoke(proxy);
+        if (result != proxy_loaded) render_update_state();
     }
 
     // if the pipe was reset make sure to restore our subscriptions

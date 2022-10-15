@@ -146,6 +146,14 @@ static void ui_close(void)
     ui_clipboard_free(&render.ui.board);
 }
 
+void render_update_state(void)
+{
+    // We don't want to execute this when running in tests.
+    if (!render.init) return;
+
+    ui_energy_update_state(render.ui.energy);
+}
+
 static void ui_event(SDL_Event *event)
 {
     if (ui_topbar_event(render.ui.topbar, event)) return;
