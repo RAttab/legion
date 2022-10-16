@@ -124,6 +124,8 @@ void tech_populate(struct tech *tech)
     for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
         tape_set_put(&tech->known, it);
 
+    tape_set_put(&tech->known, ITEM_ROD);
+
     tape_set_put(&tech->known, ITEM_LEGION);
     tape_set_union(&tech->known, &tapes_info(ITEM_LEGION)->reqs);
 

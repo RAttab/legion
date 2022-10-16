@@ -21,6 +21,8 @@ void test_storage(void)
     struct coord home = world_home(world, user);
     struct chunk *chunk = world_chunk(world, home);
 
+    chunk_create(chunk, ITEM_SOLAR);
+
     const im_id extract_id = make_im_id(ITEM_EXTRACT, 1);
     const im_id printer_id = make_im_id(ITEM_PRINTER, 1);
 

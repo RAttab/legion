@@ -69,6 +69,9 @@ static void im_lab_step(void *state, struct chunk *chunk)
     }
 
     case im_lab_working: {
+        if (!energy_consume(chunk_energy(chunk), lab->item))
+            return;
+
         lab->work.left--;
         if (lab->work.left) return;
 

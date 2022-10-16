@@ -110,7 +110,7 @@ void ui_histo_advance(struct ui_histo *histo, ui_histo_data t)
     if (!histo->series.data) return;
     if (!histo->edge.t) { histo->edge.t = t; return; }
 
-    while (t > histo->edge.t + histo->t.scale) {
+    while (t >= histo->edge.t + histo->t.scale) {
         histo->edge.t += histo->t.scale;
         histo->edge.row = (histo->edge.row + 1) % histo->series.rows;
 
@@ -126,11 +126,25 @@ void ui_histo_push(struct ui_histo *histo, size_t series, ui_histo_data v)
     assert(series < histo->series.len);
     if (!histo->series.data) return;
 
-    ui_histo_data *it = histo->series.data + (histo->edge.row * histo->series.len);
-    it += series;
+    ui_histo_at(histo, histo->edge.row)[series] += v;
+}
 
-    *it += v;
-    while (*it > histo->v.bound) histo->v.bound *= 2;
+static void ui_histo_update_v_bound(struct ui_histo *histo)
+{
+    ui_histo_data max = 0, sum = 0, col = 0;
+    ui_histo_data *it = ui_histo_at(histo, histo->edge.row);
+
+    for (size_t series = 0; series < histo->series.len; ++series) {
+        if (col != histo->series.list[series].col) {
+            max = legion_max(max, sum);
+            sum = 0; col++;
+        }
+
+        sum += it[series];
+    }
+
+    max = legion_max(max, sum);
+    while (max > histo->v.bound) histo->v.bound *= 2;
 }
 
 
@@ -176,6 +190,7 @@ void ui_histo_render(
 
     if (!histo->series.data)
         ui_histo_init(histo, histo->w.pos, histo->w.dim);
+    ui_histo_update_v_bound(histo);
 
     const int16_t up = histo->w.pos.y + histo->s.pad.h;
     const int16_t down = histo->w.pos.y + histo->w.dim.h - histo->s.pad.h;

@@ -107,7 +107,6 @@ static void im_extract_step(void *state, struct chunk *chunk)
 
     const struct tape *tape = tape_packed_ptr(extract->tape);
     if (!tape) return;
-    if (!energy_consume(chunk_energy(chunk), tape_energy(tape))) return;
 
     struct tape_ret ret = tape_at(tape, tape_packed_it(extract->tape));
     switch (ret.state) {

@@ -19,7 +19,7 @@ static void im_fusion_init(void *state, struct chunk *chunk, im_id id)
 
     struct im_fusion *fusion = state;
     fusion->id = id;
-    fusion->energy = im_fusion_energy_rod;
+    fusion->energy = im_fusion_energy_cap;
 }
 
 
@@ -47,7 +47,7 @@ static void im_fusion_step(void *state, struct chunk *chunk)
     fusion->energy -= produced;
 
     if (!fusion->waiting) {
-        if (fusion->energy + im_fusion_energy_rod < im_fusion_energy_cap) {
+        if (fusion->energy + im_fusion_energy_rod <= im_fusion_energy_cap) {
             chunk_ports_request(chunk, fusion->id, im_fusion_input_item);
             fusion->waiting = true;
         }
@@ -57,10 +57,9 @@ static void im_fusion_step(void *state, struct chunk *chunk)
     enum item ret = chunk_ports_consume(chunk, fusion->id);
     if (!ret) return;
 
-    fusion->energy += im_fusion_energy_rod;
     fusion->waiting = false;
-
-    assert(fusion->energy < im_fusion_energy_cap);
+    fusion->energy += im_fusion_energy_rod;
+    assert(fusion->energy <= im_fusion_energy_cap);
 }
 
 // -----------------------------------------------------------------------------
@@ -122,13 +121,13 @@ static const struct io_cmd im_fusion_io_list[] =
 static bool im_fusion_flow(const void *state, struct flow *flow)
 {
     const struct im_fusion *fusion = state;
-    if (fusion->paused) return false;
+    if (fusion->paused || !fusion->waiting) return false;
 
     *flow = (struct flow) {
         .id = fusion->id,
-        .loops = fusion->waiting ? 1 : 0,
+        .loops = 1,
         .target = ITEM_ENERGY,
-        .item = fusion->waiting ? im_fusion_input_item : 0,
+        .item = im_fusion_input_item,
         .rank = tapes_info(im_fusion_input_item)->rank + 1,
     };
     return true;

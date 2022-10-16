@@ -20,6 +20,7 @@ enum
 
     ui_energy_consumed = ui_energy_left_first,
     ui_energy_saved,
+    ui_energy_need,
 
     ui_energy_left_last,
     ui_energy_left_len = ui_energy_left_last  - ui_energy_left_first,
@@ -51,6 +52,7 @@ struct ui_energy
 
     struct ui_label consumed, consumed_val, consumed_tick;
     struct ui_label saved, saved_val, saved_tick;
+    struct ui_label need, need_val, need_tick;
 
     struct ui_label stored, stored_val, stored_tick;
     struct ui_label fusion, fusion_val, fusion_tick;
@@ -74,6 +76,7 @@ struct ui_energy *ui_energy_new(void)
     struct ui_histo_series series[] = {
         [ui_energy_consumed] = { 0, ui_st.rgba.energy.consumed },
         [ui_energy_saved] =    { 0, ui_st.rgba.energy.saved },
+        [ui_energy_need] =     { 0, ui_st.rgba.energy.need },
 
         [ui_energy_stored] =   { 1, ui_st.rgba.energy.stored },
         [ui_energy_fusion] =   { 1, ui_st.rgba.energy.fusion },
@@ -102,6 +105,10 @@ struct ui_energy *ui_energy_new(void)
         .saved = ui_label_new_s(&ui_st.label.energy.saved, ui_str_c("saved:    ")),
         .saved_val = ui_label_new(ui_str_v(str_scaled_len)),
         .saved_tick = ui_label_new(ui_str_v(str_scaled_len)),
+
+        .need = ui_label_new_s(&ui_st.label.energy.need, ui_str_c("need:     ")),
+        .need_val = ui_label_new(ui_str_v(str_scaled_len)),
+        .need_tick = ui_label_new(ui_str_v(str_scaled_len)),
 
         .stored = ui_label_new_s(&ui_st.label.energy.stored, ui_str_c("stored:   ")),
         .stored_val = ui_label_new(ui_str_v(str_scaled_len)),
@@ -133,6 +140,7 @@ struct ui_energy *ui_energy_new(void)
     memset(ui->show, 0, sizeof(ui->show));
     ui->show[ui_energy_consumed] = true;
     ui->show[ui_energy_stored] = true;
+    ui->show[ui_energy_need] = true;
     ui->show[ui_energy_saved] = true;
     ui->show[ui_energy_fusion] = true;
 
@@ -160,6 +168,10 @@ void ui_energy_free(struct ui_energy *ui)
     ui_label_free(&ui->saved);
     ui_label_free(&ui->saved_val);
     ui_label_free(&ui->saved_tick);
+
+    ui_label_free(&ui->need);
+    ui_label_free(&ui->need_val);
+    ui_label_free(&ui->need_tick);
 
     ui_label_free(&ui->stored);
     ui_label_free(&ui->stored_val);
@@ -211,6 +223,7 @@ void ui_energy_update_state(struct ui_energy *ui)
     ui_histo_advance(&ui->histo, t);
     ui_histo_push(&ui->histo, ui_energy_consumed, energy->consumed);
     ui_histo_push(&ui->histo, ui_energy_saved, energy->item.battery.stored);
+    ui_histo_push(&ui->histo, ui_energy_need, energy->need - energy->consumed);
     ui_histo_push(&ui->histo, ui_energy_stored, energy->item.battery.produced);
     ui_histo_push(&ui->histo, ui_energy_fusion, energy->item.fusion.produced);
     ui_histo_push(&ui->histo, ui_energy_solar, energy_prod_solar(energy, star));
@@ -237,6 +250,9 @@ static void ui_energy_update(struct ui_energy *ui)
         ui_set_nil(&ui->saved_val);
         ui_set_nil(&ui->saved_tick);
 
+        ui_set_nil(&ui->need_val);
+        ui_set_nil(&ui->need_tick);
+
         ui_set_nil(&ui->stored_val);
         ui_set_nil(&ui->stored_tick);
 
@@ -261,6 +277,7 @@ static void ui_energy_update(struct ui_energy *ui)
     ui_histo_data t = ui->histo.hover.t;
     ui_histo_data scale = ui->histo.hover.row == ui->histo.edge.row ?
         proxy_time(render.proxy) - t : ui->histo.t.scale;
+    if (!scale) scale = 1;
 
     ui_str_setf(ui_set(&ui->time_val), "%lu - %lu", t, t + scale);
 
@@ -271,6 +288,9 @@ static void ui_energy_update(struct ui_energy *ui)
 
     ui_str_set_scaled(ui_set(&ui->saved_val), data[ui_energy_saved]);
     ui_str_set_scaled(ui_set(&ui->saved_tick), data[ui_energy_saved] / scale);
+
+    ui_str_set_scaled(ui_set(&ui->need_val), data[ui_energy_need]);
+    ui_str_set_scaled(ui_set(&ui->need_tick), data[ui_energy_need] / scale);
 
     ui_str_set_scaled(ui_set(&ui->stored_val), data[ui_energy_stored]);
     ui_str_set_scaled(ui_set(&ui->stored_tick), data[ui_energy_stored] / scale);
@@ -410,6 +430,16 @@ void ui_energy_render(struct ui_energy *ui, SDL_Renderer *renderer)
                 ui_label_render(&ui->saved_val, &layout, renderer);
                 ui_layout_sep_cols(&layout, 2);
                 ui_label_render(&ui->saved_tick, &layout, renderer);
+                ui_label_render(&ui->per_tick, &layout, renderer);
+                ui_layout_sep_col(&layout);
+                break;
+            }
+
+            case ui_energy_need: {
+                ui_label_render(&ui->need, &layout, renderer);
+                ui_label_render(&ui->need_val, &layout, renderer);
+                ui_layout_sep_cols(&layout, 2);
+                ui_label_render(&ui->need_tick, &layout, renderer);
                 ui_label_render(&ui->per_tick, &layout, renderer);
                 ui_layout_sep_col(&layout);
                 break;
