@@ -3,10 +3,10 @@
 ;; -----------------------------------------------------------------------------
 
 (!item-extract
- (!item-elem-a (work 1) (out !item-elem-a))
- (!item-elem-b (work 2) (out !item-elem-b))
- (!item-elem-c (work 2) (out !item-elem-c))
- (!item-elem-d (work 4) (out !item-elem-d)))
+ (!item-elem-a (work 1) (energy 1) (out !item-elem-a))
+ (!item-elem-b (work 2) (energy 1) (out !item-elem-b))
+ (!item-elem-c (work 2) (energy 2) (out !item-elem-c))
+ (!item-elem-d (work 4) (energy 2) (out !item-elem-d)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -17,6 +17,7 @@
 
  (!item-muscle
   (work 2)
+  (energy 2)
   (in !item-elem-a
       !item-elem-a
       !item-elem-a)
@@ -24,6 +25,7 @@
 
  (!item-nodule
   (work 2)
+  (energy 2)
   (in !item-elem-a
       !item-elem-b
       !item-elem-b
@@ -32,6 +34,7 @@
 
  (!item-vein
   (work 2)
+  (energy 2)
   (in !item-elem-a
       !item-elem-c
       !item-elem-a)
@@ -39,6 +42,7 @@
 
  (!item-bone
   (work 2)
+  (energy 2)
   (in !item-elem-b
       !item-elem-b
       !item-elem-b
@@ -48,6 +52,7 @@
 
  (!item-tendon
   (work 4)
+  (energy 2)
   (in !item-elem-b
       !item-elem-a
       !item-elem-a
@@ -56,7 +61,8 @@
   (out !item-tendon))
 
  (!item-rod
-  (work 50)
+  (work 8)
+  (energy 8)
   (in !item-elem-b
       !item-elem-a
       !item-elem-a
@@ -74,6 +80,7 @@
 
  (!item-torus
   (work 4)
+  (energy 4)
   (in !item-elem-b
       !item-elem-a
       !item-elem-a
@@ -86,6 +93,7 @@
 
  (!item-lens
   (work 2)
+  (energy 4)
   (in !item-elem-b
       !item-elem-c
       !item-elem-c
@@ -94,6 +102,7 @@
 
  (!item-nerve
   (work 2)
+  (energy 4)
   (in !item-elem-c
       !item-elem-c
       !item-elem-c)
@@ -101,6 +110,7 @@
 
  (!item-neuron
   (work 4)
+  (energy 4)
   (in !item-elem-c
       !item-elem-a
       !item-elem-c
@@ -125,6 +135,7 @@
 
  (!item-limb
   (work 2)
+  (energy 4)
   (in !item-bone
       !item-bone
       !item-tendon
@@ -135,6 +146,7 @@
 
  (!item-spinal
   (work 2)
+  (energy 4)
   (in !item-nerve
       !item-vein
       !item-nerve
@@ -144,6 +156,7 @@
 
  (!item-stem
   (work 2)
+  (energy 4)
   (in !item-neuron
       !item-neuron
       !item-vein
@@ -153,6 +166,7 @@
 
  (!item-lung
   (work 3)
+  (energy 4)
   (in !item-stem
       !item-nerve
       !item-muscle
@@ -163,6 +177,7 @@
 
  (!item-engram
   (work 4)
+  (energy 6)
   (in !item-nerve
       !item-neuron
       !item-neuron
@@ -174,6 +189,7 @@
 
  (!item-cortex
   (work 8)
+  (energy 8)
   (in !item-stem
       !item-vein
       !item-neuron
@@ -188,6 +204,7 @@
 
  (!item-eye
   (work 2)
+  (energy 6)
   (in !item-retina
       !item-lens
       !item-lens
@@ -197,12 +214,17 @@
 
  (!item-fusion
   (work 16)
+  (energy 16)
   (in !item-torus
+      !item-rod
+      !item-rod
       !item-torus
       !item-stem
       !item-cortex
       !item-stem
       !item-torus
+      !item-rod
+      !item-rod
       !item-torus)
   (out !item-fusion)))
 
@@ -215,6 +237,7 @@
 
  (!item-deploy
   (work 4)
+  (energy 8)
   (in !item-spinal
       !item-nodule
       !item-spinal)
@@ -222,6 +245,7 @@
 
  (!item-extract
   (work 4)
+  (energy 8)
   (in !item-muscle
       !item-muscle
       !item-nodule
@@ -231,6 +255,7 @@
 
  (!item-printer
   (work 4)
+  (energy 16)
   (in !item-vein
       !item-vein
       !item-nodule
@@ -240,6 +265,7 @@
 
  (!item-assembly
   (work 4)
+  (energy 16)
   (in !item-limb
       !item-limb
       !item-vein
@@ -251,6 +277,7 @@
 
  (!item-worker
   (work 6)
+  (energy 16)
   (in !item-lung
       !item-lung
       !item-stem
@@ -262,6 +289,7 @@
 
  (!item-memory
   (work 8)
+  (energy 16)
   (in !item-engram
       !item-engram
       !item-engram
@@ -273,6 +301,7 @@
 
  (!item-brain
   (work 10)
+  (energy 18)
   (in !item-memory
       !item-cortex
       !item-cortex
@@ -284,6 +313,7 @@
 
  (!item-prober
   (work 4)
+  (energy 18)
   (in !item-lung
       !item-nodule
       !item-eye
@@ -293,6 +323,7 @@
 
  (!item-scanner
   (work 6)
+  (energy 18)
   (in !item-lung
       !item-engram
       !item-nodule
@@ -305,12 +336,14 @@
 
  (!item-legion
   (work 24)
+  (energy 32)
   (in !item-lung
       !item-lung
       !item-lung
       !item-nodule
       !item-worker
       !item-worker
+      !item-fusion
       !item-extract
       !item-extract
       !item-printer
@@ -329,6 +362,7 @@
 
  (!item-lab
   (work 16)
+  (energy 32)
   (in !item-limb
       !item-limb
       !item-vein

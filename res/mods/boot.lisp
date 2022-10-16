@@ -56,6 +56,7 @@
   (deploy-tape !item-printer !item-vein printer-count)
   (deploy-tape !item-printer !item-bone printer-count)
   (deploy-tape !item-printer !item-tendon printer-count)
+  (deploy-tape !item-printer !item-rod printer-count)
   (deploy-tape !item-printer !item-lens printer-count)
   (deploy-tape !item-printer !item-nerve printer-count)
   (deploy-tape !item-printer !item-neuron printer-count)
@@ -96,6 +97,10 @@
   (assert (= (io !io-ping brain-os-id) !io-ok))
   (assert (= (io !io-ping brain-exec-id) !io-ok)))
 
+;; Fusion
+(progn
+  (deploy-tape !item-printer !item-torus 1)
+  (deploy-item !item-fusion 4))
 
 ;; Labs
 (progn
@@ -160,6 +165,7 @@
     (io !io-mod brain-id (mod launch.2)) !io-ok)
 
   (deploy-tape !item-assembly !item-worker active-count)
+  (deploy-tape !item-assembly !item-fusion active-count)
   (deploy-tape !item-assembly !item-extract active-count)
   (deploy-tape !item-assembly !item-printer active-count)
   (deploy-tape !item-assembly !item-assembly active-count)

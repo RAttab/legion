@@ -6,12 +6,12 @@
 
  (!item-elem-g
   (work 4)
-  (energy 1)
+  (energy 8)
   (out !item-elem-g))
 
  (!item-elem-h
   (work 8)
-  (energy 1)
+  (energy 12)
   (in !item-elem-d)
   (out !item-elem-h)))
 
@@ -24,6 +24,7 @@
 
  (!item-magnet
   (work 8)
+  (energy 16)
   (in !item-elem-d
       !item-elem-d
       !item-elem-b
@@ -34,6 +35,7 @@
 
  (!item-ferrofluid
   (work 8)
+  (energy 16)
   (in !item-elem-d
       !item-elem-c
       !item-elem-d
@@ -43,6 +45,7 @@
 
  (!item-semiconductor
   (work 10)
+  (energy 24)
   (in !item-elem-d
       !item-elem-d
       !item-elem-a
@@ -55,6 +58,7 @@
 
  (!item-conductor
   (work 10)
+  (energy 24)
   (in !item-elem-g
       !item-elem-g
       !item-elem-g
@@ -67,6 +71,7 @@
 
  (!item-galvanic
   (work 10)
+  (energy 24)
   (in !item-elem-g
       !item-elem-h
       !item-elem-h
@@ -86,6 +91,7 @@
 
  (!item-photovoltaic
   (work 8)
+  (energy 16)
   (in !item-semiconductor
       !item-semiconductor
       !item-nerve
@@ -98,6 +104,7 @@
 
  (!item-field
   (work 8)
+  (energy 16)
   (in !item-magnet
       !item-magnet
       !item-magnet
@@ -110,6 +117,7 @@
 
  (!item-antenna
   (work 12)
+  (energy 24)
   (in !item-bone
       !item-bone
       !item-nerve
@@ -132,6 +140,7 @@
 
  (!item-solar
   (work 6)
+  (energy 16)
   (in !item-photovoltaic
       !item-nerve
       !item-nodule
@@ -141,6 +150,7 @@
 
  (!item-storage
   (work 8)
+  (energy 16)
   (in !item-bone
       !item-bone
       !item-vein
@@ -152,6 +162,7 @@
 
  (!item-port
   (work 24)
+  (energy 32)
   (in !item-field
       !item-field
       !item-field
@@ -167,6 +178,7 @@
 
  (!item-pill
   (work 8)
+  (energy 24)
   (in !item-vein
       !item-ferrofluid
       !item-vein
@@ -179,6 +191,7 @@
 
  (!item-condenser
   (work 10)
+  (energy 24)
   (in !item-lung
       !item-lung
       !item-nodule
@@ -189,7 +202,7 @@
 
  (!item-battery
   (work 4)
-  (energy 1)
+  (energy 8)
   (in !item-bone
       !item-nerve
       !item-galvanic
