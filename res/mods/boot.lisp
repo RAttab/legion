@@ -16,7 +16,7 @@
 (defconst worker-count 20)
 (defconst lab-count 4)
 (defconst active-count 1)
-(defconst energy-target 100)
+(defconst energy-target 128)
 (defconst port-item-count 255)
 
 ;; Sanity checks
@@ -179,6 +179,15 @@
     (deploy-item !item-receive n)
     (deploy-item !item-legion n)))
 
+;; Batteries
+(progn
+  (wait-tech !item-galvanic)
+  (deploy-tape !item-printer !item-galvanic 2)
+
+  (wait-tech !item-battery)
+  (deploy-tape !item-assembly !item-battery 2)
+
+  (deploy-item !item-battery 8))
 
 
 ;; Pill logistics
@@ -220,6 +229,12 @@
 (defconst collider-size 16)
 
 (progn
+  (deploy-item !item-battery 8)
+  (deploy-item !item-solar
+	       (+ (/ energy-target
+		     (specs !spec-solar-energy (count !item-energy)))
+		  1))
+
   (wait-tech !item-accelerator)
   (deploy-tape !item-assembly !item-accelerator 2)
 
@@ -240,10 +255,6 @@
   (io !io-item (id !item-storage (count !item-storage)) !item-elem-m)
 
   ;; Burner
-  (wait-tech !item-galvanic)
-  (deploy-tape !item-printer !item-galvanic 2)
-  (wait-tech !item-battery)
-  (deploy-tape !item-assembly !item-battery 2)
   (wait-tech !item-biosteel)
   (deploy-tape !item-printer !item-biosteel 2)
   (wait-tech !item-heat-exchange)

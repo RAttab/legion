@@ -60,7 +60,7 @@ static void ui_histo_init(struct ui_histo *histo, struct pos pos, struct dim dim
     int16_t width = dim.w - side - histo->s.pad.w;
     int16_t height = dim.h - head - histo->s.pad.h;
 
-    histo->row = make_dim(width, histo->s.row.h + histo->s.row.pad);
+    histo->row = make_dim(width, (histo->s.row.h * histo->series.cols)  + histo->s.row.pad);
     histo->series.rows = height / histo->row.h;
 
     histo->series.data = calloc(

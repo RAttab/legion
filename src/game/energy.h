@@ -17,8 +17,8 @@ struct save;
 
 enum
 {
-    energy_battery_mul = 1000,
-    energy_solar_div = 1000,
+    energy_battery_mul = 32,
+    energy_solar_div = 1024,
     energy_kwheel_div = 10,
 };
 

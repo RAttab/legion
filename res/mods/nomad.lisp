@@ -30,6 +30,7 @@
     (load-item nomad-id !item-memory 1)
     (load-item nomad-id !item-worker 4)
     (load-item nomad-id !item-solar 20)
+    (load-item nomad-id !item-battery 4)
     (load-item nomad-id !item-port 1)
     (load-item nomad-id !item-pill pill-count)
     (load-item nomad-id !item-transmit 1)

@@ -18,23 +18,25 @@ enum
 {
     ui_energy_left_first = 0,
 
-    ui_energy_consumed = ui_energy_left_first,
-    ui_energy_saved,
-    ui_energy_need,
-
-    ui_energy_left_last,
-    ui_energy_left_len = ui_energy_left_last  - ui_energy_left_first,
-    ui_energy_right_first = ui_energy_left_last,
-
-    ui_energy_stored = ui_energy_right_first,
+    ui_energy_stored = ui_energy_left_first,
     ui_energy_fusion,
     ui_energy_solar,
     ui_energy_burner,
     ui_energy_kwheel,
 
+    ui_energy_left_last,
+    ui_energy_right_first = ui_energy_left_last,
+
+    ui_energy_consumed = ui_energy_right_first,
+    ui_energy_saved,
+    ui_energy_need,
+
     ui_energy_right_last,
-    ui_energy_right_len = ui_energy_right_last  - ui_energy_right_first,
+
+
     ui_energy_len = ui_energy_right_last,
+    ui_energy_left_len = ui_energy_left_last  - ui_energy_left_first,
+    ui_energy_right_len = ui_energy_right_last  - ui_energy_right_first,
 };
 
 struct ui_energy
@@ -74,15 +76,16 @@ struct ui_energy *ui_energy_new(void)
     struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
     struct ui_histo_series series[] = {
-        [ui_energy_consumed] = { 0, ui_st.rgba.energy.consumed },
-        [ui_energy_saved] =    { 0, ui_st.rgba.energy.saved },
-        [ui_energy_need] =     { 0, ui_st.rgba.energy.need },
 
-        [ui_energy_stored] =   { 1, ui_st.rgba.energy.stored },
-        [ui_energy_fusion] =   { 1, ui_st.rgba.energy.fusion },
-        [ui_energy_solar] =    { 1, ui_st.rgba.energy.solar },
-        [ui_energy_burner] =   { 1, ui_st.rgba.energy.burner },
-        [ui_energy_kwheel] =   { 1, ui_st.rgba.energy.kwheel },
+        [ui_energy_stored] =   { 0, ui_st.rgba.energy.stored },
+        [ui_energy_fusion] =   { 0, ui_st.rgba.energy.fusion },
+        [ui_energy_solar] =    { 0, ui_st.rgba.energy.solar },
+        [ui_energy_burner] =   { 0, ui_st.rgba.energy.burner },
+        [ui_energy_kwheel] =   { 0, ui_st.rgba.energy.kwheel },
+
+        [ui_energy_consumed] = { 1, ui_st.rgba.energy.consumed },
+        [ui_energy_saved] =    { 1, ui_st.rgba.energy.saved },
+        [ui_energy_need] =     { 1, ui_st.rgba.energy.need },
     };
 
     struct ui_energy *ui = calloc(1, sizeof(*ui));
@@ -415,48 +418,6 @@ void ui_energy_render(struct ui_energy *ui, SDL_Renderer *renderer)
             switch (left)
             {
 
-            case ui_energy_consumed: {
-                ui_label_render(&ui->consumed, &layout, renderer);
-                ui_label_render(&ui->consumed_val, &layout, renderer);
-                ui_layout_sep_cols(&layout, 2);
-                ui_label_render(&ui->consumed_tick, &layout, renderer);
-                ui_label_render(&ui->per_tick, &layout, renderer);
-                ui_layout_sep_col(&layout);
-                break;
-            }
-
-            case ui_energy_saved: {
-                ui_label_render(&ui->saved, &layout, renderer);
-                ui_label_render(&ui->saved_val, &layout, renderer);
-                ui_layout_sep_cols(&layout, 2);
-                ui_label_render(&ui->saved_tick, &layout, renderer);
-                ui_label_render(&ui->per_tick, &layout, renderer);
-                ui_layout_sep_col(&layout);
-                break;
-            }
-
-            case ui_energy_need: {
-                ui_label_render(&ui->need, &layout, renderer);
-                ui_label_render(&ui->need_val, &layout, renderer);
-                ui_layout_sep_cols(&layout, 2);
-                ui_label_render(&ui->need_tick, &layout, renderer);
-                ui_label_render(&ui->per_tick, &layout, renderer);
-                ui_layout_sep_col(&layout);
-                break;
-            }
-
-            default: { assert(false); }
-            }
-        }
-
-        ui_layout_sep_x(&layout, layout.row.dim.w - mid);
-
-        if (right < ui_energy_right_last && ui->show[right]) {
-            empty = false;
-
-            switch (right)
-            {
-
             case ui_energy_stored: {
                 ui_label_render(&ui->stored, &layout, renderer);
                 ui_label_render(&ui->stored_val, &layout, renderer);
@@ -502,6 +463,48 @@ void ui_energy_render(struct ui_energy *ui, SDL_Renderer *renderer)
                 ui_label_render(&ui->kwheel_val, &layout, renderer);
                 ui_layout_sep_cols(&layout, 2);
                 ui_label_render(&ui->kwheel_tick, &layout, renderer);
+                ui_label_render(&ui->per_tick, &layout, renderer);
+                ui_layout_sep_col(&layout);
+                break;
+            }
+
+            default: { assert(false); }
+            }
+        }
+
+        ui_layout_sep_x(&layout, layout.row.dim.w - mid);
+
+        if (right < ui_energy_right_last && ui->show[right]) {
+            empty = false;
+
+            switch (right)
+            {
+
+            case ui_energy_consumed: {
+                ui_label_render(&ui->consumed, &layout, renderer);
+                ui_label_render(&ui->consumed_val, &layout, renderer);
+                ui_layout_sep_cols(&layout, 2);
+                ui_label_render(&ui->consumed_tick, &layout, renderer);
+                ui_label_render(&ui->per_tick, &layout, renderer);
+                ui_layout_sep_col(&layout);
+                break;
+            }
+
+            case ui_energy_saved: {
+                ui_label_render(&ui->saved, &layout, renderer);
+                ui_label_render(&ui->saved_val, &layout, renderer);
+                ui_layout_sep_cols(&layout, 2);
+                ui_label_render(&ui->saved_tick, &layout, renderer);
+                ui_label_render(&ui->per_tick, &layout, renderer);
+                ui_layout_sep_col(&layout);
+                break;
+            }
+
+            case ui_energy_need: {
+                ui_label_render(&ui->need, &layout, renderer);
+                ui_label_render(&ui->need_val, &layout, renderer);
+                ui_layout_sep_cols(&layout, 2);
+                ui_label_render(&ui->need_tick, &layout, renderer);
                 ui_label_render(&ui->per_tick, &layout, renderer);
                 ui_layout_sep_col(&layout);
                 break;

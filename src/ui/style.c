@@ -58,14 +58,15 @@ void ui_style_default(void)
         s->rgba.link.pressed.fg = make_rgba(0x00, 0x00, 0x66, 0xFF);
         s->rgba.link.pressed.bg = s->rgba.bg;
 
-        s->rgba.energy.consumed = rgba_orange();
-        s->rgba.energy.saved = rgba_blue();
-        s->rgba.energy.need = rgba_red();
-        s->rgba.energy.stored = rgba_teal();
-        s->rgba.energy.fusion = rgba_green();
-        s->rgba.energy.solar = rgba_yellow();
-        s->rgba.energy.burner = rgba_orange();
-        s->rgba.energy.kwheel = rgba_purple();
+        s->rgba.energy.consumed = make_rgba(0xFF, 0xD7, 0x00, 0xFF); // Gold
+        s->rgba.energy.saved =    make_rgba(0xFF, 0x8C, 0x00, 0xFF); // SlateBlue
+        s->rgba.energy.need =     make_rgba(0x8B, 0x00, 0x00, 0xFF); // DarkRed
+
+        s->rgba.energy.stored =   make_rgba(0x00, 0x80, 0x80, 0xFF); // Teal
+        s->rgba.energy.fusion =   make_rgba(0x00, 0x64, 0x00, 0xFF); // DarkGreen
+        s->rgba.energy.solar =    make_rgba(0x00, 0xFF, 0x7F, 0xFF); // SpringGreen
+        s->rgba.energy.burner =   make_rgba(0xA5, 0x2A, 0x2A, 0xFF); // Brown
+        s->rgba.energy.kwheel =   make_rgba(0x4B, 0x00, 0x82, 0xFF); // Indigo
     }
 
     { // pad
@@ -263,7 +264,7 @@ void ui_style_default(void)
         .pad = make_dim(4, 4),
         .edge = make_rgba(0xFF, 0x00, 0x00, 0x33),
 
-        .row = { .h = 12, .pad = 2 },
+        .row = { .h = 8, .pad = 4 },
 
         .hover = {
             .fg = rgba_green(),
