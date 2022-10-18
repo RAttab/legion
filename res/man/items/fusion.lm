@@ -1,0 +1,21 @@
+{@ITEMS/fusion}
+{!item-fusion}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-fusion}
+
+{>id} {$!item-fusion}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-activate}
+
+{=RELATED}
+{n}{\tape\item-fusion}
