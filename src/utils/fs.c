@@ -141,6 +141,12 @@ bool file_exists(const char *path)
     failf_errno("unable to stat '%s'", path);
 }
 
+void file_truncate(const char *path, size_t len)
+{
+    if (truncate(path, len) < 0)
+        failf_errno("unable to truncate the file '%s' to '%zu'", path, len);
+}
+
 int file_create_tmp(const char *path, size_t len)
 {
     char tmp[PATH_MAX] = {0};

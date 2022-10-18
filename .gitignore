@@ -1,7 +1,4 @@
-test_*
-
-*.a
-*.o
-
+*.bak
+*.tmp
+*.legion
 build
-res/icons

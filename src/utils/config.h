@@ -22,6 +22,8 @@ struct reader
     struct token_ctx *ctx;
 };
 
+bool reader_goto_close(struct reader *);
+
 enum token_type reader_peek(struct reader *);
 bool reader_peek_close(struct reader *);
 bool reader_peek_eof(struct reader *);
@@ -66,7 +68,7 @@ void reader_expect(struct reader *reader, hash_val);
         if (symbol_hash(&_sym) != symbol_hash_c(_key))                  \
             reader_err(_in, "unexpected field key '%s'", _sym.c);       \
                                                                         \
-        word _ret = reader_atom (_in, _atoms);                        \
+        word _ret = reader_atom (_in, _atoms);                          \
         reader_close(_in);                                              \
         _ret;                                                           \
     })

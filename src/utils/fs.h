@@ -36,6 +36,7 @@ const char *dir_it_path(struct dir_it *);
 
 size_t file_len(int fd);
 bool file_exists(const char *path);
+void file_truncate(const char *path, size_t len);
 
 int file_create_tmp(const char *path, size_t len);
 void file_tmp_swap(const char *path);

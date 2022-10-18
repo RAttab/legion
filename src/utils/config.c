@@ -26,6 +26,22 @@ static void reader_free(struct reader *reader)
     token_ctx_free(reader->ctx);
 }
 
+bool reader_goto_close(struct reader *reader)
+{
+    size_t depth = 0;
+
+    struct token token = {0};
+    while (token_next(&reader->tok, &token)->type != token_nil) {
+        if (token.type == token_open) depth++;
+        else if (token.type == token_close) {
+            if (!depth) return true;
+            depth--;
+        }
+    }
+
+    return false;
+}
+
 enum token_type reader_peek(struct reader *reader)
 {
     struct token token = {0};
