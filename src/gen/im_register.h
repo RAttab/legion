@@ -14,15 +14,37 @@ im_register(item_elem_c, "item-elem-c");
 // passive
 // -----------------------------------------------------------------------------
 
+im_register(item_accelerator, "item-accelerator");
+im_register(item_biosteel, "item-biosteel");
+im_register(item_conductor, "item-conductor");
+im_register(item_cortex, "item-cortex");
+im_register(item_furnace, "item-furnace");
+im_register(item_heat_exchange, "item-heat-exchange");
+im_register(item_nodule, "item-nodule");
 im_register(item_rod, "item-rod");
+im_register(item_stem, "item-stem");
+im_register(item_storage, "item-storage");
+im_register(item_torus, "item-torus");
 
 // -----------------------------------------------------------------------------
 // active
 // -----------------------------------------------------------------------------
 
 im_register_cfg(item_burner, "item-burner", im_burner_config);
+im_register(item_assembly, "item-assembly");
+im_register(item_brain, "item-brain");
 im_register_cfg(item_collider, "item-collider", im_collider_config);
+im_register(item_extract, "item-extract");
+im_register(item_printer, "item-printer");
 im_register_cfg(item_fusion, "item-fusion", im_fusion_config);
+
+// -----------------------------------------------------------------------------
+// logistics
+// -----------------------------------------------------------------------------
+
+im_register(item_battery, "item-battery");
+im_register(item_solar, "item-solar");
+im_register(item_worker, "item-worker");
 
 // -----------------------------------------------------------------------------
 // sys

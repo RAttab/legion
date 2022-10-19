@@ -82,6 +82,14 @@ vm_word reader_word(struct reader *reader)
     return token.value.w;
 }
 
+struct symbol reader_atom_symbol(struct reader *reader)
+{
+    struct token token = {0};
+    if (!token_expect(&reader->tok, &token, token_atom))
+        return (struct symbol) {0};
+    return token.value.s;
+}
+
 vm_word reader_atom(struct reader *reader, struct atoms *atoms)
 {
     vm_word ret = 0;

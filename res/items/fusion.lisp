@@ -19,15 +19,15 @@
  (tape
   (work 16)
   (energy 16)
-  (host !item-assembly)
+  (host item-assembly)
 
-  (in !item-torus
-      (!item-rod 2)
-      !item-torus
-      !item-stem
-      !item-cortex
-      !item-stem
-      !item-torus
-      (!item-rod 2)
-      !item-torus)
-  (out !item-fusion)))
+  (in item-torus
+      (item-rod 2)
+      item-torus
+      item-stem
+      item-cortex
+      item-stem
+      item-torus
+      (item-rod 2)
+      item-torus)
+  (out item-fusion)))

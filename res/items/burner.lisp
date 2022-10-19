@@ -13,15 +13,11 @@
  (tape
   (work 20)
   (energy 112)
-  (host !item-assembly)
-  (in !item-biosteel
-      !item-furnace
-      !item-furnace
-      !item-furnace
-      !item-heat-exchange
-      !item-conductor
-      !item-battery
-      !item-battery
-      !item-battery
-      !item-biosteel)
-  (out !item-burner)))
+  (host item-assembly)
+  (in item-biosteel
+      (item-furnace 3)
+      item-heat-exchange
+      item-conductor
+      (item-battery 3)
+      item-biosteel)
+  (out item-burner)))

@@ -101,7 +101,7 @@ void code_file_open(struct code_file *file, const char *dir, const char *name)
 
 #pragma GCC diagnostic pop
 
-    file->mfile = mfilew_create_tmp(file->path, 4096);
+    file->mfile = mfilew_create_tmp(file->path, 16384);
     file->it = file->mfile.ptr;
     file->end = file->it + file->mfile.len;
 
@@ -137,6 +137,7 @@ struct code_state
     struct {
         struct code_file im_enum, im_bounds, im_register;
         struct code_file specs_enum, specs_value, specs_register;
+        struct code_file tape;
     } files;
 };
 
@@ -273,7 +274,7 @@ static void code_gen_items(struct code_state *state)
         struct symbol sym_enum = symbol_to_enum(info->name);
 
         code_file_writef(&state->files.im_enum,
-                "  item_%s = 0x%02lx,\n", sym_enum.c, info->atom);
+                "  item_%-20s = 0x%02lx,\n", sym_enum.c, info->atom);
 
         if (!info->config.len) {
             code_file_writef(&state->files.im_register,
@@ -314,12 +315,12 @@ static void code_gen_specs(
                 hash == symbol_hash_c("lab-energy"))
         {
             code_file_writef(&state->files.specs_enum,
-                    "\n  spec_%s_%s = make_spec(item_%s, %s),",
+                    "\n  spec_%s_%-20s = make_spec(item_%s, %s),",
                     item_enum.c, spec_enum.c, item_enum.c, spec_enum.c);
         }
         else {
             code_file_writef(&state->files.specs_enum,
-                    "\n  spec_%s_%s = make_spec(item_%s, %02x),",
+                    "\n  spec_%s_%-20s = make_spec(item_%s, 0x%x),",
                     item_enum.c, spec_enum.c, item_enum.c, seq++);
         }
 
@@ -338,15 +339,23 @@ static void code_gen_specs(
                     "spec_register(spec_%s_%s, \"spec_%s_%s\");\n",
                     item_enum.c, spec_enum.c, item_enum.c, spec.c);
 
-            vm_word value = 0;
+
+            code_file_writef(&state->files.specs_value,
+                    "\n  im_%s_%-20s = ", item_enum.c, spec_enum.c);
+
             switch (reader_peek(in)) {
-            case token_number: { value = reader_word(in); break; }
-            case token_atom: { value = reader_atom(in, state->atoms); break; }
+            case token_number: {
+                code_file_writef(&state->files.specs_value, "0x%lx,", reader_word(in));
+                break;
+            }
+            case token_atom: {
+                struct symbol atom = symbol_to_enum(reader_atom_symbol(in));
+                code_file_writef(&state->files.specs_value, "%s,", atom.c);
+                break;
+            }
             default: { reader_err(in, "unexpected token type: %s", reader_peek(in)); break; }
             }
 
-            code_file_writef(&state->files.specs_value,
-                    "\n  im_%s_%s = 0x%lx,", item_enum.c, spec_enum.c, value);
         }
 
         reader_close(in);
@@ -362,9 +371,111 @@ static void code_gen_specs(
 static void code_gen_tape(
         struct code_state *state, struct reader *in, const struct symbol *item)
 {
-    (void) state, (void) item;
+    uint8_t work = 0;
+    im_energy energy = 0;
+    struct symbol host = {0};
 
-    reader_goto_close(in);
+    size_t input = 0, output = 0;
+    struct symbol tape[256] = {0};
+
+    struct symbol item_enum = symbol_to_enum(*item);
+
+    while (!reader_peek_close(in)) {
+        reader_open(in);
+
+        struct symbol key = reader_symbol(in);
+        hash_val hash = symbol_hash(&key);
+
+        if (hash == symbol_hash_c("work")) {
+            vm_word value = reader_word(in);
+            if (value < 0 || value > UINT8_MAX)
+                reader_err(in, "invalid work value '%lx'", value);
+            work = value;
+            reader_close(in);
+            continue;
+        }
+
+        else if (hash == symbol_hash_c("energy")) {
+            vm_word value = reader_word(in);
+            if (value < 0 || value > UINT32_MAX)
+                reader_err(in, "invalid energy value '%lx'", value);
+            energy = value;
+            reader_close(in);
+            continue;
+        }
+
+        else if (hash == symbol_hash_c("host")) {
+            struct symbol value = reader_symbol(in);
+            if (!atoms_get(state->atoms, &value))
+                reader_err(in, "unknown host atom '%s'", value.c);
+            host = symbol_to_enum(value);
+            reader_close(in);
+            continue;
+        }
+
+        bool is_input = hash == symbol_hash_c("in");
+        bool is_output = hash == symbol_hash_c("out");
+        if (!is_input && !is_output) {
+            reader_err(in, "unknown field '%s'", key.c);
+            reader_goto_close(in);
+            continue;
+        }
+
+        while (!reader_peek_close(in)) {
+            vm_word count = 1;
+            struct symbol item = {0};
+
+            if (reader_peek(in) == token_symbol)
+                item = reader_symbol(in);
+            else {
+                reader_open(in);
+                item = reader_symbol(in);
+                count = reader_word(in);
+                reader_close(in);
+            }
+
+            if (!atoms_get(state->atoms, &item))
+                reader_err(in, "unknown atom '%s'", item.c);
+
+            if (count < 1 || count > UINT8_MAX) {
+                reader_err(in, "invalid count '%lx'", count);
+                count = 0;
+            }
+
+            if (count + input + output > UINT8_MAX) {
+                reader_err(in, "tape overflow: %zu + %zu + %zu", count, input, output);
+                count = 0;
+            }
+
+            item = symbol_to_enum(item);
+            for (size_t i = 0; i < (size_t) count; ++i) {
+                if (is_input) tape[input++] = item;
+                if (is_output) tape[input + output++] = item;
+            }
+        }
+
+        reader_close(in);
+    }
+    reader_close(in);
+
+    code_file_writef(&state->files.tape,
+            "\ntape_register(item_%s, %zu, {\n"
+            "  .id = item_%s\n"
+            "  .host = %s\n"
+            "  .work = %u\n"
+            "  .energy = %u\n"
+            "  .inputs = %zu\n"
+            "  .outputs = %zu\n"
+            "  .tape = {\n",
+            item_enum.c, input + output,
+            item_enum.c, host.c, work, energy, input, output);
+
+    for (size_t i = 0; i < input + output; ++i) {
+        code_file_writef(&state->files.tape,
+                "    [%03zu] = %s,\n", i, tape[i].c);
+    }
+
+    code_file_write(&state->files.tape, "  }\n});\n");
 }
 
 
@@ -436,6 +547,8 @@ bool code_run(const char *path)
         code_file_write(&state.files.specs_value, "enum\n{");
 
         code_file_open(&state.files.specs_register, state.path.out, "specs_register");
+
+        code_file_open(&state.files.tape, state.path.out, "tape");
     }
 
     {
@@ -470,6 +583,8 @@ bool code_run(const char *path)
         code_file_close(&state.files.specs_value);
 
         code_file_close(&state.files.specs_register);
+
+        code_file_close(&state.files.tape);
     }
 
     atoms_free(state.atoms);

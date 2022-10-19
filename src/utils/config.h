@@ -33,6 +33,7 @@ void reader_close(struct reader *);
 uint64_t reader_u64(struct reader *);
 vm_word reader_word(struct reader *);
 vm_word reader_atom(struct reader *, struct atoms *);
+struct symbol reader_atom_symbol(struct reader *);
 
 struct symbol reader_symbol(struct reader *);
 uint64_t reader_symbol_hash(struct reader *);

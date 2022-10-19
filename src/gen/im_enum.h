@@ -8,30 +8,52 @@ enum legion_packed item
 // natural
 // -----------------------------------------------------------------------------
 
-  item_elem_a = 0x01,
-  item_elem_b = 0x02,
-  item_elem_c = 0x03,
+  item_elem_a               = 0x01,
+  item_elem_b               = 0x02,
+  item_elem_c               = 0x03,
 
 // -----------------------------------------------------------------------------
 // passive
 // -----------------------------------------------------------------------------
 
-  item_rod = 0x04,
+  item_accelerator          = 0x04,
+  item_biosteel             = 0x05,
+  item_conductor            = 0x06,
+  item_cortex               = 0x07,
+  item_furnace              = 0x08,
+  item_heat_exchange        = 0x09,
+  item_nodule               = 0x0a,
+  item_rod                  = 0x0b,
+  item_stem                 = 0x0c,
+  item_storage              = 0x0d,
+  item_torus                = 0x0e,
 
 // -----------------------------------------------------------------------------
 // active
 // -----------------------------------------------------------------------------
 
-  item_burner = 0x05,
-  item_collider = 0x06,
-  item_fusion = 0x07,
+  item_burner               = 0x0f,
+  item_assembly             = 0x10,
+  item_brain                = 0x11,
+  item_collider             = 0x12,
+  item_extract              = 0x13,
+  item_printer              = 0x14,
+  item_fusion               = 0x15,
+
+// -----------------------------------------------------------------------------
+// logistics
+// -----------------------------------------------------------------------------
+
+  item_battery              = 0x16,
+  item_solar                = 0x17,
+  item_worker               = 0x18,
 
 // -----------------------------------------------------------------------------
 // sys
 // -----------------------------------------------------------------------------
 
-  item_data = 0x08,
-  item_dummy = 0x09,
-  item_energy = 0x0a,
-  item_user = 0x0b,
+  item_data                 = 0x19,
+  item_dummy                = 0x1a,
+  item_energy               = 0x1b,
+  item_user                 = 0x1c,
 };

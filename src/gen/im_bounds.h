@@ -7,14 +7,18 @@ enum
   items_natural_len = items_natural_last - items_natural_first,
 
   items_passive_first = 0x04,
-  items_passive_last = 0x05,
+  items_passive_last = 0x0f,
   items_passive_len = items_passive_last - items_passive_first,
 
-  items_active_first = 0x05,
-  items_active_last = 0x08,
+  items_active_first = 0x0f,
+  items_active_last = 0x16,
   items_active_len = items_active_last - items_active_first,
 
-  items_sys_first = 0x08,
-  items_sys_last = 0x0c,
+  items_logistics_first = 0x16,
+  items_logistics_last = 0x19,
+  items_logistics_len = items_logistics_last - items_logistics_first,
+
+  items_sys_first = 0x19,
+  items_sys_last = 0x1d,
   items_sys_len = items_sys_last - items_sys_first,
 };

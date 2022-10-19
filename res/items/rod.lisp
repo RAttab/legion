@@ -10,18 +10,10 @@
  (tape
   (work 8)
   (energy 8)
-  (host !item-printer)
-  (in !item-elem-b
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-b
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-a
-      !item-elem-b)
-  (out !item-rod)))
+  (host item-printer)
+  (in item-elem-b
+      (item-elem-a 5)
+      item-elem-b
+      (item-elem-a 5)
+      item-elem-b)
+  (out item-rod)))
