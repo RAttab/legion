@@ -1,4 +1,4 @@
-(item-fusion
+(fusion
 
  (info
   (type active)
@@ -6,15 +6,15 @@
   (config im_fusion_config))
 
  (specs
-  (fusion-input-item nil !item-rod)
+  (input-item var !item-rod)
 
-  (fusion-energy-out nil 20)
-  (fusion-energy-rod nil 128)
-  (fusion-energy-cap nil 16384)
+  (energy-out var 20)
+  (energy-rod var 128)
+  (energy-cap var 16384)
 
-  (fusion-lab-bits lab-bits 4)
-  (fusion-lab-work lab-work 8)
-  (fusion-lab-energy lab-energy 16))
+  (lab-bits var 4)
+  (lab-work var 8)
+  (lab-energy var 16))
 
  (tape
   (work 16)

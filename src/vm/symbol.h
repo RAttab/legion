@@ -54,6 +54,8 @@ inline bool symbol_eq(const struct symbol *lhs, const struct symbol *rhs)
     return symbol_cmp(lhs, rhs) == 0;
 }
 
+struct symbol symbol_concat(const char *lhs, const char *rhs);
+
 inline bool symbol_char(char c)
 {
     switch (c) {

@@ -38,6 +38,20 @@ struct symbol make_symbol_len(const char *str, size_t len)
     return symbol;
 }
 
+struct symbol symbol_concat(const char *lhs, const char *rhs)
+{
+    size_t lhs_len = strnlen(lhs, symbol_cap);
+    size_t rhs_len = strnlen(rhs, symbol_cap);
+    assert(lhs_len + rhs_len <= symbol_cap);
+
+    struct symbol symbol = { .len = lhs_len + rhs_len, .zero = 0 };
+    memcpy(symbol.c, lhs, lhs_len);
+    memcpy(symbol.c + lhs_len, rhs, rhs_len);
+
+    symbol_normalize(&symbol);
+    return symbol;
+}
+
 
 ssize_t symbol_parse(const char *base, size_t len, struct symbol *value)
 {
