@@ -15,17 +15,6 @@
 // tape
 // -----------------------------------------------------------------------------
 
-struct tape
-{
-    enum item id;
-    enum item host;
-    im_work work;
-    tape_it inputs, outputs;
-    im_energy energy;
-    enum item tape[];
-};
-
-
 enum item tape_id(const struct tape *tape) { return tape->id; }
 enum item tape_host(const struct tape *tape) { return tape->host; }
 im_energy tape_energy(const struct tape *tape) { return tape->energy; }

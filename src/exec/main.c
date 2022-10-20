@@ -41,7 +41,7 @@ static void usage(int code, const char *msg)
         "  -C --client  Connects to the game server at the given host\n"
         "  -N --config  Creates a new config file of type \"client\" or\n"
         "               \"server\" at the given path\n"
-        "  -O --code    Generate source files from the item configuration\n"
+        "  -D --db      Generate the database from the item files\n"
         "\n"
         "Arguments:\n"
         "  -f --file    Path to save file; default is './legion.save'\n"
@@ -70,7 +70,7 @@ int main(int argc, char *const argv[])
         { .val = 'S', .name = "server", .has_arg = required_argument },
         { .val = 'C', .name = "client", .has_arg = required_argument },
         { .val = 'N', .name = "config", .has_arg = required_argument },
-        { .val = 'O', .name = "code",   .has_arg = required_argument },
+        { .val = 'D', .name = "db",     .has_arg = required_argument },
 
         { .val = 'f', .name = "file",   .has_arg = required_argument },
         { .val = 'c', .name = "config", .has_arg = required_argument },
@@ -86,13 +86,13 @@ int main(int argc, char *const argv[])
         cmd_nil = 0,
         cmd_graph, cmd_items, cmd_token,
         cmd_local, cmd_server, cmd_client,
-        cmd_config, cmd_code,
+        cmd_config, cmd_db,
     } cmd = cmd_nil;
 
     static struct {
         const char *save;
         const char *config;
-        const char *code;
+        const char *db;
         const char *node;
         const char *service;
         const char *type;
@@ -121,7 +121,7 @@ int main(int argc, char *const argv[])
         case 'S': { cmd = cmd_server; commands++; args.node = optarg; break; }
         case 'C': { cmd = cmd_client; commands++; args.node = optarg; break; }
         case 'N': { cmd = cmd_config; commands++; args.type = optarg; break; }
-        case 'O': { cmd = cmd_code; commands++; args.code = optarg; break; }
+        case 'D': { cmd = cmd_db; commands++; args.db = optarg; break; }
 
         case 'f': { args.save = optarg; break; }
         case 'c': { args.config = optarg; break; }
@@ -160,8 +160,8 @@ int main(int argc, char *const argv[])
     else if (commands > 1) usage(1, "too many commands provided");
 
     // We don't want to run sys_populate for this command.
-    if (cmd == cmd_code)
-        return code_run(args.code) ? 0 : 1;
+    if (cmd == cmd_db)
+        return db_run(args.db) ? 0 : 1;
 
     sys_populate();
 

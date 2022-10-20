@@ -23,7 +23,8 @@
 
  (specs
   (lab-bits var 16) (lab-work var 32) (lab-energy var 16)
-  (energy-div var 1024))
+  (energy-div var 1024)
+  (energy fn))
 
  (tape (work 6) (energy 16) (host item-assembly)
        (in item-photovoltaic

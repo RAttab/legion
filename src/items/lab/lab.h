@@ -9,6 +9,7 @@
 #include "game/id.h"
 #include "items/item.h"
 #include "utils/rng.h"
+#include "ui/ui.h"
 
 struct im_config;
 

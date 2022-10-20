@@ -46,7 +46,15 @@ inline bool tape_state_item(enum tape_state state)
 // tape
 // -----------------------------------------------------------------------------
 
-struct tape;
+struct tape
+{
+    enum item id;
+    enum item host;
+    im_work work;
+    tape_it inputs, outputs;
+    im_energy energy;
+    enum item tape[];
+};
 
 struct tape_ret
 {
