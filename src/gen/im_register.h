@@ -9,40 +9,108 @@ im_register(item_nil, "item-nil");
 im_register(item_elem_a, "item-elem-a");
 im_register(item_elem_b, "item-elem-b");
 im_register(item_elem_c, "item-elem-c");
+im_register(item_elem_d, "item-elem-d");
+im_register(item_elem_e, "item-elem-e");
+im_register(item_elem_f, "item-elem-f");
+im_register(item_elem_g, "item-elem-g");
+im_register(item_elem_h, "item-elem-h");
+im_register(item_elem_i, "item-elem-i");
+im_register(item_elem_j, "item-elem-j");
+im_register(item_elem_k, "item-elem-k");
+
+// -----------------------------------------------------------------------------
+// synth
+// -----------------------------------------------------------------------------
+
+im_register(item_elem_l, "item-elem-l");
+im_register(item_elem_m, "item-elem-m");
+im_register(item_elem_n, "item-elem-n");
+im_register(item_elem_o, "item-elem-o");
+im_register(item_elem_p, "item-elem-p");
+im_register(item_elem_q, "item-elem-q");
+im_register(item_elem_r, "item-elem-r");
+im_register(item_elem_s, "item-elem-s");
+im_register(item_elem_t, "item-elem-t");
+im_register(item_elem_u, "item-elem-u");
+im_register(item_elem_v, "item-elem-v");
+im_register(item_elem_w, "item-elem-w");
+im_register(item_elem_x, "item-elem-x");
+im_register(item_elem_y, "item-elem-y");
+im_register(item_elem_z, "item-elem-z");
 
 // -----------------------------------------------------------------------------
 // passive
 // -----------------------------------------------------------------------------
 
 im_register(item_accelerator, "item-accelerator");
+im_register(item_antenna, "item-antenna");
 im_register(item_biosteel, "item-biosteel");
+im_register(item_bone, "item-bone");
 im_register(item_conductor, "item-conductor");
 im_register(item_cortex, "item-cortex");
+im_register(item_engram, "item-engram");
+im_register(item_eye, "item-eye");
+im_register(item_ferrofluid, "item-ferrofluid");
+im_register(item_field, "item-field");
+im_register(item_freezer, "item-freezer");
 im_register(item_furnace, "item-furnace");
+im_register(item_fusion, "item-fusion");
+im_register(item_galvanic, "item-galvanic");
 im_register(item_heat_exchange, "item-heat-exchange");
+im_register(item_lens, "item-lens");
+im_register(item_limb, "item-limb");
+im_register(item_lung, "item-lung");
+im_register(item_m_condenser, "item-m-condenser");
+im_register(item_m_lung, "item-m-lung");
+im_register(item_m_reactor, "item-m-reactor");
+im_register(item_m_release, "item-m-release");
+im_register(item_magnet, "item-magnet");
+im_register(item_muscle, "item-muscle");
+im_register(item_nerve, "item-nerve");
+im_register(item_neuron, "item-neuron");
+im_register(item_neurosteel, "item-neurosteel");
 im_register(item_nodule, "item-nodule");
+im_register(item_photovoltaic, "item-photovoltaic");
+im_register(item_retina, "item-retina");
 im_register(item_rod, "item-rod");
+im_register(item_semiconductor, "item-semiconductor");
+im_register(item_spinal, "item-spinal");
 im_register(item_stem, "item-stem");
-im_register(item_storage, "item-storage");
+im_register(item_tendon, "item-tendon");
 im_register(item_torus, "item-torus");
+im_register(item_vein, "item-vein");
 
 // -----------------------------------------------------------------------------
 // active
 // -----------------------------------------------------------------------------
 
-im_register_cfg(item_burner, "item-burner", im_burner_config);
 im_register(item_assembly, "item-assembly");
 im_register(item_brain, "item-brain");
-im_register_cfg(item_collider, "item-collider", im_collider_config);
+im_register(item_burner, "item-burner");
+im_register(item_collider, "item-collider");
+im_register(item_condenser, "item-condenser");
+im_register(item_deploy, "item-deploy");
 im_register(item_extract, "item-extract");
+im_register(item_lab, "item-lab");
+im_register(item_legion, "item-legion");
+im_register(item_memory, "item-memory");
+im_register(item_nomad, "item-nomad");
+im_register(item_packer, "item-packer");
+im_register(item_port, "item-port");
 im_register(item_printer, "item-printer");
-im_register_cfg(item_fusion, "item-fusion", im_fusion_config);
+im_register(item_prober, "item-prober");
+im_register(item_receive, "item-receive");
+im_register(item_scanner, "item-scanner");
+im_register(item_storage, "item-storage");
+im_register(item_transmit, "item-transmit");
 
 // -----------------------------------------------------------------------------
 // logistics
 // -----------------------------------------------------------------------------
 
 im_register(item_battery, "item-battery");
+im_register(item_kwheel, "item-kwheel");
+im_register(item_pill, "item-pill");
 im_register(item_solar, "item-solar");
 im_register(item_worker, "item-worker");
 

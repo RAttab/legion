@@ -3,22 +3,26 @@
 enum
 {
   items_natural_first = 0x01,
-  items_natural_last = 0x04,
+  items_natural_last = 0x0c,
   items_natural_len = items_natural_last - items_natural_first,
 
-  items_passive_first = 0x04,
-  items_passive_last = 0x0f,
+  items_synth_first = 0x0c,
+  items_synth_last = 0x1b,
+  items_synth_len = items_synth_last - items_synth_first,
+
+  items_passive_first = 0x1b,
+  items_passive_last = 0x40,
   items_passive_len = items_passive_last - items_passive_first,
 
-  items_active_first = 0x0f,
-  items_active_last = 0x16,
+  items_active_first = 0x40,
+  items_active_last = 0x53,
   items_active_len = items_active_last - items_active_first,
 
-  items_logistics_first = 0x16,
-  items_logistics_last = 0x19,
+  items_logistics_first = 0x53,
+  items_logistics_last = 0x58,
   items_logistics_len = items_logistics_last - items_logistics_first,
 
-  items_sys_first = 0x19,
-  items_sys_last = 0x1d,
+  items_sys_first = 0x58,
+  items_sys_last = 0x5c,
   items_sys_len = items_sys_last - items_sys_first,
 };

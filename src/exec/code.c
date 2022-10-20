@@ -101,7 +101,7 @@ void code_file_open(struct code_file *file, const char *dir, const char *name)
 
 #pragma GCC diagnostic pop
 
-    file->mfile = mfilew_create_tmp(file->path, 16384);
+    file->mfile = mfilew_create_tmp(file->path, 1048576);
     file->it = file->mfile.ptr;
     file->end = file->it + file->mfile.len;
 
@@ -241,8 +241,6 @@ static void code_gen_items(struct code_state *state)
     }
     vec_info_sort_fn(state->info, cmp);
 
-
-
     void write_bounds_end(enum code_type type, vm_word atom) {
         struct symbol sym_type = code_type_sym(type);
         code_file_writef(&state->files.im_bounds,
@@ -259,7 +257,7 @@ static void code_gen_items(struct code_state *state)
         info->atom = i + 1;
         struct symbol atom = symbol_concat("item-", info->name.c);
         bool ok = atoms_set(state->atoms, &atom, info->atom);
-        assert(ok);
+        if (!ok) errf("duplicate item: %s", atom.c);
 
         if (type != info->type) {
             if (type) write_bounds_end(type, info->atom);
