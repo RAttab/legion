@@ -67,5 +67,13 @@ struct specs_ret { bool ok; vm_word word; };
 struct specs_ret specs_var(enum spec);
 struct specs_ret specs_args(enum spec, const vm_word *args, size_t len);
 
+inline vm_word specs_var_assert(enum spec spec)
+{
+    struct specs_ret ret = specs_var(spec);
+    assert(ret.ok);
+    return ret.word;
+}
+
+
 void specs_populate(void);
 void specs_populate_atoms(struct atoms *);

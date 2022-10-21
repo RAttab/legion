@@ -86,7 +86,7 @@ uint64_t tech_learned_bits(const struct tech *tech, enum item item)
 {
     assert(item);
 
-    const uint8_t bits = im_config_assert(item)->lab_bits;
+    const uint8_t bits = specs_var_assert(make_spec(item, spec_lab_bits));
     const uint64_t mask = (1ULL << bits) - 1;
     if (tape_set_check(&tech->learned, item)) return mask;
 
@@ -96,7 +96,7 @@ uint64_t tech_learned_bits(const struct tech *tech, enum item item)
 
 void tech_learn_bit(struct tech *tech, enum item item, uint8_t bit)
 {
-    const uint8_t bits = im_config_assert(item)->lab_bits;
+    const uint8_t bits = specs_var_assert(make_spec(item, spec_lab_bits));
     assert(bit < bits);
 
     if (tape_set_check(&tech->learned, item)) return;

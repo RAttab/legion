@@ -103,10 +103,6 @@ enum
   im_eye_lab_work = 0x8,
   im_eye_lab_energy = 0x8,
 
-  im_fusion_lab_bits = 0x8,
-  im_fusion_lab_work = 0x8,
-  im_fusion_lab_energy = 0x8,
-
   im_photovoltaic_lab_bits = 0x8,
   im_photovoltaic_lab_work = 0x8,
   im_photovoltaic_lab_energy = 0x8,
@@ -223,6 +219,10 @@ enum
   im_assembly_lab_bits = 0x8,
   im_assembly_lab_work = 0x8,
   im_assembly_lab_energy = 0x8,
+
+  im_fusion_lab_bits = 0x8,
+  im_fusion_lab_work = 0x8,
+  im_fusion_lab_energy = 0x8,
 
   im_lab_lab_bits = 0x8,
   im_lab_lab_work = 0x8,

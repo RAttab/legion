@@ -10,6 +10,7 @@
 #include "game/sys.h"
 #include "items/config.h"
 #include "db/tapes.h"
+#include "db/specs.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,10 +21,8 @@ void check_learn_bits(struct tech *tech, enum item item)
 {
     if (tech_learned(tech, item)) return;
 
-    const struct im_config *config = im_config_assert(item);
-    assert(config);
-
-    for (uint8_t bit = 0; bit < config->lab_bits; ++bit) {
+    const uint8_t bits = specs_var_assert(make_spec(item, spec_lab_bits));
+    for (uint8_t bit = 0; bit < bits; ++bit) {
         assert(!tech_learned(tech, item));
         tech_learn_bit(tech, item, bit);
     }

@@ -6,6 +6,7 @@
 #include "items/collider/collider.h"
 #include "items/deploy/deploy.h"
 #include "items/extract/extract.h"
+#include "items/fusion/fusion.h"
 #include "items/lab/lab.h"
 #include "items/legion/legion.h"
 #include "items/memory/memory.h"
@@ -17,4 +18,5 @@
 #include "items/receive/receive.h"
 #include "items/scanner/scanner.h"
 #include "items/storage/storage.h"
+#include "items/test/test.h"
 #include "items/transmit/transmit.h"

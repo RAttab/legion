@@ -73,21 +73,6 @@
       item-retina)
   (out item-eye)))
 
-(fusion
- (info (type passive))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
- (tape (work 16) (energy 16) (host item-assembly)
-  (in item-torus
-      (item-rod 4)
-      item-torus
-      item-stem
-      item-cortex
-      item-stem
-      item-torus
-      (item-rod 4)
-      item-torus)
-  (out item-fusion)))
-
 ;; -----------------------------------------------------------------------------
 ;; t1
 ;; -----------------------------------------------------------------------------

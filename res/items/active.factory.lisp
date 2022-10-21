@@ -40,6 +40,21 @@
       (item-limb 2))
   (out item-assembly)))
 
+(fusion
+ (info (type active))
+ (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (tape (work 16) (energy 16) (host item-assembly)
+  (in item-torus
+      (item-rod 4)
+      item-torus
+      item-stem
+      item-cortex
+      item-stem
+      item-torus
+      (item-rod 4)
+      item-torus)
+  (out item-fusion)))
+
 (lab
  (info (type active) (list factory))
  (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
@@ -141,3 +156,10 @@
       item-biosteel
       (item-m-lung 2))
   (out item-nomad)))
+
+
+;; -----------------------------------------------------------------------------
+;; misc
+;; -----------------------------------------------------------------------------
+
+(test (info (type active)))

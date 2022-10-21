@@ -101,10 +101,6 @@ spec_register_var(spec_eye_lab_bits, "spec-eye-lab-bits", im_eye_lab_bits);
 spec_register_var(spec_eye_lab_work, "spec-eye-lab-work", im_eye_lab_work);
 spec_register_var(spec_eye_lab_energy, "spec-eye-lab-energy", im_eye_lab_energy);
 
-spec_register_var(spec_fusion_lab_bits, "spec-fusion-lab-bits", im_fusion_lab_bits);
-spec_register_var(spec_fusion_lab_work, "spec-fusion-lab-work", im_fusion_lab_work);
-spec_register_var(spec_fusion_lab_energy, "spec-fusion-lab-energy", im_fusion_lab_energy);
-
 spec_register_var(spec_photovoltaic_lab_bits, "spec-photovoltaic-lab-bits", im_photovoltaic_lab_bits);
 spec_register_var(spec_photovoltaic_lab_work, "spec-photovoltaic-lab-work", im_photovoltaic_lab_work);
 spec_register_var(spec_photovoltaic_lab_energy, "spec-photovoltaic-lab-energy", im_photovoltaic_lab_energy);
@@ -222,6 +218,10 @@ spec_register_var(spec_printer_lab_energy, "spec-printer-lab-energy", im_printer
 spec_register_var(spec_assembly_lab_bits, "spec-assembly-lab-bits", im_assembly_lab_bits);
 spec_register_var(spec_assembly_lab_work, "spec-assembly-lab-work", im_assembly_lab_work);
 spec_register_var(spec_assembly_lab_energy, "spec-assembly-lab-energy", im_assembly_lab_energy);
+
+spec_register_var(spec_fusion_lab_bits, "spec-fusion-lab-bits", im_fusion_lab_bits);
+spec_register_var(spec_fusion_lab_work, "spec-fusion-lab-work", im_fusion_lab_work);
+spec_register_var(spec_fusion_lab_energy, "spec-fusion-lab-energy", im_fusion_lab_energy);
 
 spec_register_var(spec_lab_lab_bits, "spec-lab-lab-bits", im_lab_lab_bits);
 spec_register_var(spec_lab_lab_work, "spec-lab-lab-work", im_lab_lab_work);

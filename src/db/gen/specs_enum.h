@@ -102,10 +102,6 @@ spec_eye_lab_bits = make_spec(item_eye, spec_lab_bits),
 spec_eye_lab_work = make_spec(item_eye, spec_lab_work),
 spec_eye_lab_energy = make_spec(item_eye, spec_lab_energy),
 
-spec_fusion_lab_bits = make_spec(item_fusion, spec_lab_bits),
-spec_fusion_lab_work = make_spec(item_fusion, spec_lab_work),
-spec_fusion_lab_energy = make_spec(item_fusion, spec_lab_energy),
-
 spec_photovoltaic_lab_bits = make_spec(item_photovoltaic, spec_lab_bits),
 spec_photovoltaic_lab_work = make_spec(item_photovoltaic, spec_lab_work),
 spec_photovoltaic_lab_energy = make_spec(item_photovoltaic, spec_lab_energy),
@@ -223,6 +219,10 @@ spec_printer_lab_energy = make_spec(item_printer, spec_lab_energy),
 spec_assembly_lab_bits = make_spec(item_assembly, spec_lab_bits),
 spec_assembly_lab_work = make_spec(item_assembly, spec_lab_work),
 spec_assembly_lab_energy = make_spec(item_assembly, spec_lab_energy),
+
+spec_fusion_lab_bits = make_spec(item_fusion, spec_lab_bits),
+spec_fusion_lab_work = make_spec(item_fusion, spec_lab_work),
+spec_fusion_lab_energy = make_spec(item_fusion, spec_lab_energy),
 
 spec_lab_lab_bits = make_spec(item_lab, spec_lab_bits),
 spec_lab_lab_work = make_spec(item_lab, spec_lab_work),

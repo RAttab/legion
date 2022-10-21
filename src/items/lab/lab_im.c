@@ -69,13 +69,14 @@ static void im_lab_step(void *state, struct chunk *chunk)
     }
 
     case im_lab_working: {
-        if (!energy_consume(chunk_energy(chunk), lab->item))
+        im_energy energy = specs_var_assert(make_spec(lab->item, spec_lab_energy));
+        if (!energy_consume(chunk_energy(chunk), energy))
             return;
 
         lab->work.left--;
         if (lab->work.left) return;
 
-        const uint8_t bits = im_config_assert(lab->item)->lab_bits;
+        const uint8_t bits = specs_var_assert(make_spec(lab->item, spec_lab_bits));
         uint8_t bit = rng_uni(&lab->rng, 0, bits);
         tech_learn_bit(tech, lab->item, bit);
 
@@ -118,16 +119,11 @@ static void im_lab_io_item(
         return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_INVALID);
 
     if (!im_check_known(chunk, lab->id, IO_ITEM, item)) return;
-
-    const struct im_config *config = im_config(item);
-    if (!config)
-        return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_UNKNOWN);
-
     if (tech_learned(chunk_tech(chunk), item)) return;
 
     im_lab_reset(lab, chunk);
     lab->item = item;
-    lab->work.cap = config->lab_work;
+    lab->work.cap = specs_var_assert(make_spec(item, spec_lab_work));
 }
 
 static void im_lab_io_tape_at(

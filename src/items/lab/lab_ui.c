@@ -75,7 +75,7 @@ void im_lab_bits_update(
     if (!item)
         ui->bits = ui->known = 0;
     else {
-        ui->bits = im_config_assert(item)->lab_bits;
+        ui->bits = specs_var_assert(make_spec(item, spec_lab_bits));
         ui->known = tech_learned_bits(tech, item);
     }
 }

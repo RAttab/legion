@@ -439,32 +439,6 @@ tape_register_begin(item_eye, 6) {
   tape_register_ix(  5, item_eye);
 tape_register_end()
 
-tape_register_begin(item_fusion, 16) {
-    .id = item_fusion,
-    .host = item_assembly,
-    .work = 16,
-    .energy = 16,
-    .inputs = 15,
-    .outputs = 1,
-  };
-  tape_register_ix(  0, item_torus);
-  tape_register_ix(  1, item_rod);
-  tape_register_ix(  2, item_rod);
-  tape_register_ix(  3, item_rod);
-  tape_register_ix(  4, item_rod);
-  tape_register_ix(  5, item_torus);
-  tape_register_ix(  6, item_stem);
-  tape_register_ix(  7, item_cortex);
-  tape_register_ix(  8, item_stem);
-  tape_register_ix(  9, item_torus);
-  tape_register_ix( 10, item_rod);
-  tape_register_ix( 11, item_rod);
-  tape_register_ix( 12, item_rod);
-  tape_register_ix( 13, item_rod);
-  tape_register_ix( 14, item_torus);
-  tape_register_ix( 15, item_fusion);
-tape_register_end()
-
 tape_register_begin(item_photovoltaic, 9) {
     .id = item_photovoltaic,
     .host = item_assembly,
@@ -1028,6 +1002,32 @@ tape_register_begin(item_assembly, 8) {
   tape_register_ix(  5, item_limb);
   tape_register_ix(  6, item_limb);
   tape_register_ix(  7, item_assembly);
+tape_register_end()
+
+tape_register_begin(item_fusion, 16) {
+    .id = item_fusion,
+    .host = item_assembly,
+    .work = 16,
+    .energy = 16,
+    .inputs = 15,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_torus);
+  tape_register_ix(  1, item_rod);
+  tape_register_ix(  2, item_rod);
+  tape_register_ix(  3, item_rod);
+  tape_register_ix(  4, item_rod);
+  tape_register_ix(  5, item_torus);
+  tape_register_ix(  6, item_stem);
+  tape_register_ix(  7, item_cortex);
+  tape_register_ix(  8, item_stem);
+  tape_register_ix(  9, item_torus);
+  tape_register_ix( 10, item_rod);
+  tape_register_ix( 11, item_rod);
+  tape_register_ix( 12, item_rod);
+  tape_register_ix( 13, item_rod);
+  tape_register_ix( 14, item_torus);
+  tape_register_ix( 15, item_fusion);
 tape_register_end()
 
 tape_register_begin(item_lab, 9) {

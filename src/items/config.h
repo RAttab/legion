@@ -59,9 +59,6 @@ struct im_config
 
     size_t size;
 
-    uint8_t lab_bits;
-    uint8_t lab_work;
-
     struct
     {
         im_init_fn init;
