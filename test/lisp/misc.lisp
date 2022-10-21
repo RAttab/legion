@@ -103,14 +103,12 @@
  (mod (specs !spec-test-var))
   (check (flags 0x1) (io 2)
 	 (sp 2)
-	 (s 0 0x0000011f00000000)
 	 (s 1 0x000000000000100e)))
 
 (misc/specs-fn
  (mod (specs !spec-test-fn 3 2))
   (check (flags 0x1) (io 4)
 	 (sp 4)
-	 (s 0 0x0000011f00000000)
 	 (s 1 0x000000000000100f)
 	 (s 2 0x0000000000000003)
 	 (s 3 0x0000000000000002)))
