@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
@@ -83,32 +83,32 @@ static void im_burner_io_state(
         struct im_burner *burner, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, burner->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, burner->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_ITEM: { value = burner->item; break; }
-    case IO_LOOP: { value = burner->loops; break; }
-    case IO_WORK: { value = burner->work.cap; break; }
-    case IO_OUTPUT: { value = burner->output; break; }
-    default: { chunk_log(chunk, burner->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_item: { value = burner->item; break; }
+    case io_loop: { value = burner->loops; break; }
+    case io_work: { value = burner->work.cap; break; }
+    case io_output: { value = burner->output; break; }
+    default: { chunk_log(chunk, burner->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, burner->id, src, &value, 1);
+    chunk_io(chunk, io_return, burner->id, src, &value, 1);
 }
 
 static void im_burner_io_item(
         struct im_burner *burner, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, burner->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, burner->id, io_item, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, burner->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, burner->id, io_item, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, burner->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, burner->id, io_item, item)) return;
 
     im_burner_reset(burner, chunk);
     burner->op = im_burner_in;
@@ -138,11 +138,11 @@ static void im_burner_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, burner->id, src, NULL, 0); return; }
-    case IO_STATE: { im_burner_io_state(burner, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, burner->id, src, NULL, 0); return; }
+    case io_state: { im_burner_io_state(burner, chunk, src, args, len); return; }
 
-    case IO_ITEM: { im_burner_io_item(burner, chunk, args, len); return; }
-    case IO_RESET: { im_burner_reset(burner, chunk); return; }
+    case io_item: { im_burner_io_item(burner, chunk, args, len); return; }
+    case io_reset: { im_burner_reset(burner, chunk); return; }
 
     default: { return; }
     }
@@ -150,10 +150,10 @@ static void im_burner_io(
 
 static const struct io_cmd im_burner_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
-    { IO_ITEM,  1, { { "item", true } }},
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
+    { io_item,  1, { { "item", true } }},
 };
 
 

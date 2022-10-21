@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "items/types.h"
 #include "game/chunk.h"
 
@@ -58,16 +58,16 @@ static void im_storage_io_state(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, storage->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, storage->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_ITEM: { value = storage->item; break; }
-    case IO_LOOP: { value = storage->count; break; }
-    default: { chunk_log(chunk, storage->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_item: { value = storage->item; break; }
+    case io_loop: { value = storage->count; break; }
+    default: { chunk_log(chunk, storage->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, storage->id, src, &value, 1);
+    chunk_io(chunk, io_return, storage->id, src, &value, 1);
 }
 
 static void im_storage_io_reset(struct im_storage *storage, struct chunk *chunk)
@@ -82,13 +82,13 @@ static void im_storage_io_item(
         struct im_storage *storage, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, storage->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, storage->id, io_item, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, storage->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, storage->id, io_item, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, storage->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, storage->id, io_item, item)) return;
 
     if (item == storage->item) return;
     im_storage_io_reset(storage, chunk);
@@ -104,12 +104,12 @@ static void im_storage_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, storage->id, src, NULL, 0); return; }
-    case IO_STATE: { im_storage_io_state(storage, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, storage->id, src, NULL, 0); return; }
+    case io_state: { im_storage_io_state(storage, chunk, src, args, len); return; }
 
-    case IO_ITEM: { im_storage_io_item(storage, chunk, args, len); return; }
+    case io_item: { im_storage_io_item(storage, chunk, args, len); return; }
 
-    case IO_RESET: { im_storage_io_reset(storage, chunk); return; }
+    case io_reset: { im_storage_io_reset(storage, chunk); return; }
 
     default: { return; }
     }
@@ -117,10 +117,10 @@ static void im_storage_io(
 
 static const struct io_cmd im_storage_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
-    { IO_ITEM,  1, { { "item", true } }},
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
+    { io_item,  1, { { "item", true } }},
 };
 
 

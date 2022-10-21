@@ -13,7 +13,7 @@
 #include "vm/symbol.h"
 #include "vm/mod.h"
 #include "vm/vm.h"
-#include "items/io.h"
+#include "db/io.h"
 
 struct save;
 

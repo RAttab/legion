@@ -723,7 +723,7 @@ static void chunk_lanes_receive(
     im_id dst = channels.c[packet_chan];
     if (!dst) return;
 
-    chunk_io(chunk, IO_RECV, 0, dst, data, len);
+    chunk_io(chunk, io_recv, 0, dst, data, len);
 }
 
 void chunk_lanes_arrive(
@@ -736,7 +736,7 @@ void chunk_lanes_arrive(
 
     case items_active_first...items_active_last: {
         if (!chunk_create_from(chunk, item, data, len))
-            chunk_log(chunk, make_im_id(item, 0), IO_ARRIVE, IOE_OUT_OF_SPACE);
+            chunk_log(chunk, make_im_id(item, 0), io_arrive, ioe_out_of_space);
         break;
     }
 
@@ -744,7 +744,7 @@ void chunk_lanes_arrive(
         struct cargo cargo = {0};
         if (len >= 1) cargo =cargo_from_word(data[0]);
         if (!pills_arrive(&chunk->pills, src, cargo))
-            chunk_log(chunk, make_im_id(item, 0), IO_ARRIVE, IOE_OUT_OF_SPACE);
+            chunk_log(chunk, make_im_id(item, 0), io_arrive, ioe_out_of_space);
         break;
     }
 

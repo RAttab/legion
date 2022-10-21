@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "vm/mod.h"
 #include "vm/token.h"
 #include "vm/atoms.h"

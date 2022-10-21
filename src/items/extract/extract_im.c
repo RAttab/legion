@@ -6,7 +6,7 @@
 #include "common.h"
 #include "game/chunk.h"
 #include "game/tape.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "items/types.h"
 
 
@@ -85,7 +85,7 @@ static void im_extract_step_output(
 {
     if (!extract->waiting) {
         if (!chunk_harvest(chunk, item)) {
-            chunk_log(chunk, extract->id, IO_STEP, IOE_STARVED);
+            chunk_log(chunk, extract->id, io_step, ioe_starved);
             im_extract_reset(extract, chunk);
             return;
         }
@@ -128,33 +128,33 @@ static void im_extract_io_state(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, extract->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, extract->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_TAPE: { value = tape_packed_id(extract->tape); break; }
-    case IO_LOOP: { value = extract->loops; break; }
-    default: { chunk_log(chunk, extract->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_tape: { value = tape_packed_id(extract->tape); break; }
+    case io_loop: { value = extract->loops; break; }
+    default: { chunk_log(chunk, extract->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, extract->id, src, &value, 1);
+    chunk_io(chunk, io_return, extract->id, src, &value, 1);
 }
 
 static void im_extract_io_tape(
         struct im_extract *extract, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, extract->id, IO_TAPE, len, 1)) return;
+    if (!im_check_args(chunk, extract->id, io_tape, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, extract->id, IO_TAPE, IOE_A0_INVALID);
+        return chunk_log(chunk, extract->id, io_tape, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, extract->id, IO_TAPE, item)) return;
+    if (!im_check_known(chunk, extract->id, io_tape, item)) return;
 
     const struct tape *tape = tapes_get(item);
     if (!tape || tape_host(tape) != im_id_item(extract->id))
-        return chunk_log(chunk, extract->id, IO_TAPE, IOE_A0_INVALID);
+        return chunk_log(chunk, extract->id, io_tape, ioe_a0_invalid);
 
     im_extract_reset(extract, chunk);
     extract->tape = tape_pack(item, 0, tape);
@@ -170,11 +170,11 @@ static void im_extract_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, extract->id, src, NULL, 0); return; }
-    case IO_STATE: { im_extract_io_state(extract, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, extract->id, src, NULL, 0); return; }
+    case io_state: { im_extract_io_state(extract, chunk, src, args, len); return; }
 
-    case IO_TAPE: { im_extract_io_tape(extract, chunk, args, len); return; }
-    case IO_RESET: { im_extract_reset(extract, chunk); return; }
+    case io_tape: { im_extract_io_tape(extract, chunk, args, len); return; }
+    case io_reset: { im_extract_reset(extract, chunk); return; }
 
     default: { return; }
     }
@@ -182,10 +182,10 @@ static void im_extract_io(
 
 static const struct io_cmd im_extract_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
-    { IO_TAPE,  1, { { "tape", true } }},
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
+    { io_tape,  1, { { "tape", true } }},
 };
 
 

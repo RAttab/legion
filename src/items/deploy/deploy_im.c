@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
@@ -51,7 +51,7 @@ static void im_deploy_step(void *state, struct chunk *chunk)
     assert(ret == deploy->item);
 
     if (!chunk_create(chunk, deploy->item))
-        chunk_log(chunk, deploy->id, IO_STEP, IOE_OUT_OF_SPACE);
+        chunk_log(chunk, deploy->id, io_step, ioe_out_of_space);
 
     deploy->waiting = false;
     if (deploy->loops != im_loops_inf) --deploy->loops;
@@ -68,33 +68,33 @@ static void im_deploy_io_state(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, deploy->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, deploy->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_ITEM: { value = deploy->item; break; }
-    case IO_LOOP: { value = deploy->loops; break; }
-    default: { chunk_log(chunk, deploy->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_item: { value = deploy->item; break; }
+    case io_loop: { value = deploy->loops; break; }
+    default: { chunk_log(chunk, deploy->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, deploy->id, src, &value, 1);
+    chunk_io(chunk, io_return, deploy->id, src, &value, 1);
 }
 
 static void im_deploy_io_item(
         struct im_deploy *deploy, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, deploy->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, deploy->id, io_item, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, deploy->id, io_item, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, deploy->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, deploy->id, io_item, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, deploy->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, deploy->id, io_item, item)) return;
 
     im_deploy_reset(deploy, chunk);
     deploy->item = item;
@@ -110,11 +110,11 @@ static void im_deploy_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, deploy->id, src, NULL, 0); return; }
-    case IO_STATE: { im_deploy_io_state(deploy, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, deploy->id, src, NULL, 0); return; }
+    case io_state: { im_deploy_io_state(deploy, chunk, src, args, len); return; }
 
-    case IO_ITEM: { im_deploy_io_item(deploy, chunk, args, len); return; }
-    case IO_RESET: { im_deploy_reset(deploy, chunk); return; }
+    case io_item: { im_deploy_io_item(deploy, chunk, args, len); return; }
+    case io_reset: { im_deploy_reset(deploy, chunk); return; }
 
     default: { return; }
     }
@@ -122,10 +122,10 @@ static void im_deploy_io(
 
 static const struct io_cmd im_deploy_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
-    { IO_ITEM,  1, { { "item", true } }},
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
+    { io_item,  1, { { "item", true } }},
 };
 
 

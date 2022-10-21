@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/chunk.h"
-#include "items/io.h"
+#include "db/io.h"
 
 
 // -----------------------------------------------------------------------------
@@ -65,19 +65,19 @@ static void im_legion_make(
 
         case item_brain:  {
             if (!chunk_create_from(chunk, *it, &mod, src ? 1 : 0))
-                chunk_log(chunk, id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                chunk_log(chunk, id, io_arrive, ioe_out_of_space);
             break;
         }
 
         case item_memory: {
             if (!chunk_create_from(chunk, *it, &src, mod ? 1 : 0))
-                chunk_log(chunk, id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                chunk_log(chunk, id, io_arrive, ioe_out_of_space);
             break;
         }
 
         default: {
             if (!chunk_create(chunk, *it))
-                chunk_log(chunk, id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                chunk_log(chunk, id, io_arrive, ioe_out_of_space);
             break;
         }
 
@@ -96,15 +96,15 @@ static void im_legion_io_state(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, legion->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, legion->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_MOD: { value = legion->mod; break; }
-    default: { chunk_log(chunk, legion->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_mod: { value = legion->mod; break; }
+    default: { chunk_log(chunk, legion->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, legion->id, src, &value, 1);
+    chunk_io(chunk, io_return, legion->id, src, &value, 1);
 }
 
 static void im_legion_io_reset(struct im_legion *legion, struct chunk *chunk)
@@ -117,11 +117,11 @@ static void im_legion_io_mod(
         struct im_legion *legion, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, legion->id, IO_MOD, len, 1)) return;
+    if (!im_check_args(chunk, legion->id, io_mod, len, 1)) return;
 
     mod_id mod = args[0];
     if (!mod_validate(args[0]))
-        return chunk_log(chunk, legion->id, IO_MOD, IOE_A0_INVALID);
+        return chunk_log(chunk, legion->id, io_mod, ioe_a0_invalid);
 
     legion->mod = mod;
 }
@@ -130,11 +130,11 @@ static void im_legion_io_launch(
         struct im_legion *legion, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, legion->id, IO_LAUNCH, len, 1)) return;
+    if (!im_check_args(chunk, legion->id, io_launch, len, 1)) return;
 
     struct coord dst = coord_from_u64(args[0]);
     if (!coord_validate(args[0]))
-        return chunk_log(chunk, legion->id, IO_MOD, IOE_A0_INVALID);
+        return chunk_log(chunk, legion->id, io_mod, ioe_a0_invalid);
 
     const vm_word data[] = {
         coord_to_u64(chunk_star(chunk)->coord),
@@ -159,13 +159,13 @@ static void im_legion_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, legion->id, src, NULL, 0); return; }
-    case IO_STATE: { im_legion_io_state(legion, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, legion->id, src, NULL, 0); return; }
+    case io_state: { im_legion_io_state(legion, chunk, src, args, len); return; }
 
-    case IO_MOD: { im_legion_io_mod(legion, chunk, args, len); return; }
-    case IO_RESET: { im_legion_io_reset(legion, chunk); return; }
+    case io_mod: { im_legion_io_mod(legion, chunk, args, len); return; }
+    case io_reset: { im_legion_io_reset(legion, chunk); return; }
 
-    case IO_LAUNCH: { im_legion_io_launch(legion, chunk, args, len); return; }
+    case io_launch: { im_legion_io_launch(legion, chunk, args, len); return; }
 
     default: { return; }
     }
@@ -173,9 +173,9 @@ static void im_legion_io(
 
 static const struct io_cmd im_legion_io_list[] =
 {
-    { IO_PING,   0, {} },
-    { IO_STATE,  1, { { "state", true } }},
-    { IO_RESET,  0, {} },
-    { IO_MOD,    1, { { "mod", true } }},
-    { IO_LAUNCH, 0, {} },
+    { io_ping,   0, {} },
+    { io_state,  1, { { "state", true } }},
+    { io_reset,  0, {} },
+    { io_mod,    1, { { "mod", true } }},
+    { io_launch, 0, {} },
 };

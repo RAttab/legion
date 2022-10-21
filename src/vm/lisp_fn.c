@@ -815,7 +815,7 @@ static void lisp_fn_specs(struct lisp *lisp)
     lisp_write_value(lisp, (vm_word) 0); // dst -> (self)
 
     lisp_write_op(lisp, OP_PUSH);
-    lisp_write_value(lisp, (vm_word) IO_SPECS); // ops
+    lisp_write_value(lisp, (vm_word) io_specs); // ops
 
     lisp_write_op(lisp, OP_PACK);
 
@@ -833,7 +833,7 @@ static void lisp_fn_specs(struct lisp *lisp)
     lisp_write_value(lisp, (uint8_t) len);
 
     lisp_write_op(lisp, OP_PUSH);
-    lisp_write_value(lisp, (vm_word) IO_OK);
+    lisp_write_value(lisp, (vm_word) io_ok);
 
     lisp_write_op(lisp, OP_EQ);
 

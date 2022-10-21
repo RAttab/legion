@@ -67,7 +67,7 @@ struct ui_io *ui_io_new(void)
 
     struct ui_io *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_io) {
-        .open = IO_NIL,
+        .open = io_nil,
 
         .panel = ui_panel_title(pos, dim, ui_str_c("io")),
         .required = ui_label_new_s(&ui_st.label.required, ui_str_c("*")),
@@ -244,7 +244,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 
     im_id dst = ui->id;
     const vm_word *it = args;
-    if (cmd->io == IO_SEND) {
+    if (cmd->io == io_send) {
         dst = args[0];
         it++; len--;
     }
@@ -255,12 +255,12 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 static void ui_io_toggle(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
     if (ui->open == cmd->io) {
-        ui->open = IO_NIL;
+        ui->open = io_nil;
         cmd->name.s = ui_st.button.list.close;
         return;
     }
 
-    if (ui->open != IO_NIL) {
+    if (ui->open != io_nil) {
         for (size_t i = 0; i < ui->len; ++i) {
             struct ui_io_cmd *other = ui->cmds + i;
             if (ui->open != other->io) continue;

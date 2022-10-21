@@ -111,7 +111,7 @@ static void ui_item_event_io(struct ui_item *ui, uintptr_t a1, uintptr_t a2)
     vm_unpack(a1, &io_raw, &item_raw);
 
     enum io io = io_raw;
-    if (io_raw <= IO_MIN || io_raw >= IO_MAX) {
+    if (io_raw <= io_min || io_raw >= io_max) {
         render_log(st_error, "invalid IO command: io out-of-bounds '%x'", io_raw);
         return;
     }

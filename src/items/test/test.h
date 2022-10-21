@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "game/id.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "vm/vm.h"
 

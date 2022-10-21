@@ -9,7 +9,7 @@
 
 */
 
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
@@ -165,14 +165,14 @@ static void im_nomad_make(
 
             case item_brain: {
                 if (!chunk_create_from(chunk, cargo->item, &mod, mod ? 1 : 0))
-                    chunk_log(chunk, nomad->id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                    chunk_log(chunk, nomad->id, io_arrive, ioe_out_of_space);
                 else mod = 0;
                 break;
             }
 
             default: {
                 if (!chunk_create(chunk, cargo->item))
-                    chunk_log(chunk, nomad->id, IO_ARRIVE, IOE_OUT_OF_SPACE);
+                    chunk_log(chunk, nomad->id, io_arrive, ioe_out_of_space);
                 break;
             }
 
@@ -262,15 +262,15 @@ static void im_nomad_io_state(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_MOD: { value = nomad->mod; break; }
-    case IO_ITEM: { value = nomad->item; break; }
-    case IO_LOOP: { value = nomad->loops; break; }
+    case io_mod: { value = nomad->mod; break; }
+    case io_item: { value = nomad->item; break; }
+    case io_loop: { value = nomad->loops; break; }
 
-    case IO_CARGO: {
+    case io_cargo: {
         if (len == 1) {
             value = im_nomad_cargo_count(nomad);
             break;
@@ -278,7 +278,7 @@ static void im_nomad_io_state(
 
         enum item item = args[1];
         if (!item_validate(args[1])) {
-            chunk_log(chunk, nomad->id, IO_STATE, IOE_A1_INVALID);
+            chunk_log(chunk, nomad->id, io_state, ioe_a1_invalid);
             break;
         }
 
@@ -287,35 +287,35 @@ static void im_nomad_io_state(
         break;
     }
 
-    default: { chunk_log(chunk, nomad->id, IO_STATE, IOE_A0_INVALID); break; }
+    default: { chunk_log(chunk, nomad->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, nomad->id, src, &value, 1);
+    chunk_io(chunk, io_return, nomad->id, src, &value, 1);
 }
 
 static void im_nomad_io_id(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_ID, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_id, len, 1)) return;
 
     im_id id = args[0];
     enum item item = im_id_item(id);
 
     if (!id_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_ID, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_id, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_ID, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_id, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, nomad->id, IO_ID, item)) return;
+    if (!im_check_known(chunk, nomad->id, io_id, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
     if (!cargo || cargo->count == im_nomad_cargo_max)
-        return chunk_log(chunk, nomad->id, IO_ID, IOE_OUT_OF_SPACE);
+        return chunk_log(chunk, nomad->id, io_id, ioe_out_of_space);
 
     if (!chunk_delete(chunk, id))
-        return chunk_log(chunk, nomad->id, IO_ID, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_id, ioe_a0_invalid);
 
     im_nomad_cargo_inc(cargo, nomad->item);
 }
@@ -324,24 +324,24 @@ static void im_nomad_io_pack(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_PACK, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_pack, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_PACK, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_pack, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_PACK, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_pack, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, nomad->id, IO_PACK, item)) return;
+    if (!im_check_known(chunk, nomad->id, io_pack, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
-    if (!cargo) return chunk_log(chunk, nomad->id, IO_PACK, IOE_OUT_OF_SPACE);
+    if (!cargo) return chunk_log(chunk, nomad->id, io_pack, ioe_out_of_space);
 
     im_loops loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
-    if (!loops) return chunk_log(chunk, nomad->id, IO_PACK, IOE_OUT_OF_SPACE);
+    if (!loops) return chunk_log(chunk, nomad->id, io_pack, ioe_out_of_space);
 
     im_nomad_port_setup(nomad, chunk, im_nomad_pack, item, loops);
 }
@@ -350,23 +350,23 @@ static void im_nomad_io_load(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_LOAD, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_load, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_LOAD, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_load, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_LOAD, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_load, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, nomad->id, IO_LOAD, item)) return;
+    if (!im_check_known(chunk, nomad->id, io_load, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
-    if (!cargo) return chunk_log(chunk, nomad->id, IO_LOAD, IOE_OUT_OF_SPACE);
+    if (!cargo) return chunk_log(chunk, nomad->id, io_load, ioe_out_of_space);
 
     im_loops loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
     loops = legion_min(loops, im_nomad_cargo_max - cargo->count);
-    if (!loops) return chunk_log(chunk, nomad->id, IO_LOAD, IOE_OUT_OF_SPACE);
+    if (!loops) return chunk_log(chunk, nomad->id, io_load, ioe_out_of_space);
 
     im_nomad_port_setup(nomad, chunk, im_nomad_load, item, loops);
 }
@@ -375,20 +375,20 @@ static void im_nomad_io_unload(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_UNLOAD, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_unload, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_UNLOAD, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_unload, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, nomad->id, IO_UNLOAD, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_unload, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, nomad->id, IO_UNLOAD, item)) return;
+    if (!im_check_known(chunk, nomad->id, io_unload, item)) return;
 
     struct im_nomad_cargo *cargo = im_nomad_cargo_unload(nomad, item);
-    if (!cargo) return chunk_log(chunk, nomad->id, IO_UNLOAD, IOE_A0_INVALID);
+    if (!cargo) return chunk_log(chunk, nomad->id, io_unload, ioe_a0_invalid);
 
     im_nomad_port_setup(nomad, chunk, im_nomad_unload, item, cargo->count);
 }
@@ -397,11 +397,11 @@ static void im_nomad_io_mod(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_MOD, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_mod, len, 1)) return;
 
     mod_id mod = args[0];
     if (!mod_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_MOD, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_mod, ioe_a0_invalid);
 
     nomad->mod = mod;
 }
@@ -411,22 +411,22 @@ static void im_nomad_io_get(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_GET, len, 1)) goto fail;
+    if (!im_check_args(chunk, nomad->id, io_get, len, 1)) goto fail;
 
     uint8_t index = args[0];
     if (args[0] < 0 || (size_t) args[0] >= array_len(nomad->memory)) {
-        chunk_log(chunk, nomad->id, IO_GET, IOE_A0_INVALID);
+        chunk_log(chunk, nomad->id, io_get, ioe_a0_invalid);
         goto fail;
     }
 
     vm_word value = nomad->memory[index];
-    chunk_io(chunk, IO_RETURN, nomad->id, src, &value, 1);
+    chunk_io(chunk, io_return, nomad->id, src, &value, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, nomad->id, src, &fail, 1);
+        chunk_io(chunk, io_return, nomad->id, src, &fail, 1);
     }
     return;
 }
@@ -435,11 +435,11 @@ static void im_nomad_io_set(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_SET, len, 2)) return;
+    if (!im_check_args(chunk, nomad->id, io_set, len, 2)) return;
 
     uint8_t index = args[0];
     if (args[0] < 0 || (size_t) args[0] >= array_len(nomad->memory))
-        return chunk_log(chunk, nomad->id, IO_GET, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_get, ioe_a0_invalid);
 
     nomad->memory[index] = args[1];
 }
@@ -449,13 +449,13 @@ static void im_nomad_io_launch(
         struct im_nomad *nomad, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, nomad->id, IO_LAUNCH, len, 1)) return;
+    if (!im_check_args(chunk, nomad->id, io_launch, len, 1)) return;
 
     struct coord dst = coord_from_u64(args[0]);
     if (!coord_validate(args[0]))
-        return chunk_log(chunk, nomad->id, IO_MOD, IOE_A0_INVALID);
+        return chunk_log(chunk, nomad->id, io_mod, ioe_a0_invalid);
 
-    // Given that a brain can't both be packed and still be able to issue
+    // given that a brain can't both be packed and still be able to issue
     // IO_LAUNCH, IO_LAUNCH has an optional argument that acts like IO_ID prior
     // to launching.
     if (len > 1) {
@@ -463,19 +463,19 @@ static void im_nomad_io_launch(
         enum item item = im_id_item(id);
 
         if (!id_validate(args[1]))
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A1_INVALID);
+            return chunk_log(chunk, nomad->id, io_launch, ioe_a1_invalid);
 
         if (!item_is_active(item) && !item_is_logistics(item))
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A1_INVALID);
+            return chunk_log(chunk, nomad->id, io_launch, ioe_a1_invalid);
 
-        if (!im_check_known(chunk, nomad->id, IO_LAUNCH, item)) return;
+        if (!im_check_known(chunk, nomad->id, io_launch, item)) return;
 
         struct im_nomad_cargo *cargo = im_nomad_cargo_load(nomad, item);
         if (!cargo || cargo->count == im_nomad_cargo_max)
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_OUT_OF_SPACE);
+            return chunk_log(chunk, nomad->id, io_launch, ioe_out_of_space);
 
         if (!chunk_delete(chunk, id))
-            return chunk_log(chunk, nomad->id, IO_LAUNCH, IOE_A1_INVALID);
+            return chunk_log(chunk, nomad->id, io_launch, ioe_a1_invalid);
 
         im_nomad_cargo_inc(cargo, item);
     }
@@ -509,20 +509,20 @@ static void im_nomad_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, nomad->id, src, NULL, 0); return; }
-    case IO_STATE: { im_nomad_io_state(nomad, chunk, src, args, len); return; }
-    case IO_RESET: { im_nomad_reset(nomad, chunk); return; }
+    case io_ping: { chunk_io(chunk, io_pong, nomad->id, src, NULL, 0); return; }
+    case io_state: { im_nomad_io_state(nomad, chunk, src, args, len); return; }
+    case io_reset: { im_nomad_reset(nomad, chunk); return; }
 
-    case IO_MOD: { im_nomad_io_mod(nomad, chunk, args, len); return; }
-    case IO_GET: { im_nomad_io_get(nomad, chunk, src, args, len); return; }
-    case IO_SET: { im_nomad_io_set(nomad, chunk, args, len); return; }
+    case io_mod: { im_nomad_io_mod(nomad, chunk, args, len); return; }
+    case io_get: { im_nomad_io_get(nomad, chunk, src, args, len); return; }
+    case io_set: { im_nomad_io_set(nomad, chunk, args, len); return; }
 
-    case IO_ID: { im_nomad_io_id(nomad, chunk, args, len); return; }
-    case IO_PACK: { im_nomad_io_pack(nomad, chunk, args, len); return; }
-    case IO_LOAD: { im_nomad_io_load(nomad, chunk, args, len); return; }
-    case IO_UNLOAD: { im_nomad_io_unload(nomad, chunk, args, len); return; }
+    case io_id: { im_nomad_io_id(nomad, chunk, args, len); return; }
+    case io_pack: { im_nomad_io_pack(nomad, chunk, args, len); return; }
+    case io_load: { im_nomad_io_load(nomad, chunk, args, len); return; }
+    case io_unload: { im_nomad_io_unload(nomad, chunk, args, len); return; }
 
-    case IO_LAUNCH: { im_nomad_io_launch(nomad, chunk, args, len); return; }
+    case io_launch: { im_nomad_io_launch(nomad, chunk, args, len); return; }
 
     default: { return; }
     }
@@ -530,23 +530,23 @@ static void im_nomad_io(
 
 static const struct io_cmd im_nomad_io_list[] =
 {
-    { IO_PING,   0, {} },
-    { IO_STATE,  1, { { "state", true } }},
-    { IO_RESET,  0, {} },
+    { io_ping,   0, {} },
+    { io_state,  1, { { "state", true } }},
+    { io_reset,  0, {} },
 
-    { IO_MOD,    1, { { "mod", true } }},
-    { IO_GET,    1, { { "index", true } }},
-    { IO_SET,    2, { { "index", true },
+    { io_mod,    1, { { "mod", true } }},
+    { io_get,    1, { { "index", true } }},
+    { io_set,    2, { { "index", true },
                       { "value", true } }},
 
-    { IO_ID,     1, { { "pack-id", true } }},
-    { IO_PACK,   2, { { "item", true },
+    { io_id,     1, { { "pack-id", true } }},
+    { io_pack,   2, { { "item", true },
                       { "loops", false } }},
-    { IO_LOAD,   2, { { "item", true },
+    { io_load,   2, { { "item", true },
                       { "loops", false } }},
-    { IO_UNLOAD, 1, { { "item", true } }},
+    { io_unload, 1, { { "item", true } }},
 
-    { IO_LAUNCH, 2, { { "coord", true },
+    { io_launch, 2, { { "coord", true },
                       { "pack-id", false } }},
 };
 

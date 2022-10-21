@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/chunk.h"
-#include "items/io.h"
+#include "db/io.h"
 
 
 // -----------------------------------------------------------------------------
@@ -54,14 +54,14 @@ static void im_memory_io_state(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, memory->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, memory->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    default: { chunk_log(chunk, memory->id, IO_STATE, IOE_A0_INVALID); break; }
+    default: { chunk_log(chunk, memory->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, memory->id, src, &value, 1);
+    chunk_io(chunk, io_return, memory->id, src, &value, 1);
 }
 
 static void im_memory_io_reset(struct im_memory *memory)
@@ -74,22 +74,22 @@ static void im_memory_io_get(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, memory->id, IO_GET, len, 1)) goto fail;
+    if (!im_check_args(chunk, memory->id, io_get, len, 1)) goto fail;
 
     uint8_t index = args[0];
     if (args[0] < 0 || args[0] >= memory->len) {
-        chunk_log(chunk, memory->id, IO_GET, IOE_A0_INVALID);
+        chunk_log(chunk, memory->id, io_get, ioe_a0_invalid);
         goto fail;
     }
 
     vm_word value = memory->data[index];
-    chunk_io(chunk, IO_RETURN, memory->id, src, &value, 1);
+    chunk_io(chunk, io_return, memory->id, src, &value, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, memory->id, src, &fail, 1);
+        chunk_io(chunk, io_return, memory->id, src, &fail, 1);
     }
     return;
 }
@@ -98,11 +98,11 @@ static void im_memory_io_set(
         struct im_memory *memory, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, memory->id, IO_SET, len, 2)) return;
+    if (!im_check_args(chunk, memory->id, io_set, len, 2)) return;
 
     uint8_t index = args[0];
     if (args[0] < 0 || args[0] >= memory->len)
-        return chunk_log(chunk, memory->id, IO_GET, IOE_A0_INVALID);
+        return chunk_log(chunk, memory->id, io_get, ioe_a0_invalid);
 
     memory->data[index] = args[1];
 }
@@ -112,11 +112,11 @@ static void im_memory_io_cas(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, memory->id, IO_CAS, len, 3)) goto fail;
+    if (!im_check_args(chunk, memory->id, io_cas, len, 3)) goto fail;
 
     uint8_t index = args[0];
     if (args[0] < 0 || args[0] >= memory->len) {
-        chunk_log(chunk, memory->id, IO_CAS, IOE_A0_INVALID);
+        chunk_log(chunk, memory->id, io_cas, ioe_a0_invalid);
         goto fail;
     }
 
@@ -125,13 +125,13 @@ static void im_memory_io_cas(
     vm_word old = memory->data[index];
     if (old == exp) memory->data[index] = val;
 
-    chunk_io(chunk, IO_RETURN, memory->id, src, &old, 1);
+    chunk_io(chunk, io_return, memory->id, src, &old, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, memory->id, src, &fail, 1);
+        chunk_io(chunk, io_return, memory->id, src, &fail, 1);
     }
     return;
 }
@@ -145,13 +145,13 @@ static void im_memory_io(
 
     switch (io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, memory->id, src, NULL, 0); return; }
-    case IO_STATE: { im_memory_io_state(memory, chunk, src, args, len); return; }
-    case IO_RESET: { im_memory_io_reset(memory); return; }
+    case io_ping: { chunk_io(chunk, io_pong, memory->id, src, NULL, 0); return; }
+    case io_state: { im_memory_io_state(memory, chunk, src, args, len); return; }
+    case io_reset: { im_memory_io_reset(memory); return; }
 
-    case IO_GET: { im_memory_io_get(memory, chunk, src, args, len); return; }
-    case IO_SET: { im_memory_io_set(memory, chunk, args, len); return; }
-    case IO_CAS: { im_memory_io_cas(memory, chunk, src, args, len); return; }
+    case io_get: { im_memory_io_get(memory, chunk, src, args, len); return; }
+    case io_set: { im_memory_io_set(memory, chunk, args, len); return; }
+    case io_cas: { im_memory_io_cas(memory, chunk, src, args, len); return; }
 
     default: { return; }
     }
@@ -159,14 +159,14 @@ static void im_memory_io(
 
 static const struct io_cmd im_memory_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
 
-    { IO_GET,   1, { { "index", true } }},
-    { IO_SET,   2, { { "index", true },
+    { io_get,   1, { { "index", true } }},
+    { io_set,   2, { { "index", true },
                      { "value", true } }},
-    { IO_CAS,   3, { { "index", true },
+    { io_cas,   3, { { "index", true },
                      { "expected", true },
                      { "value", true } }},
 };

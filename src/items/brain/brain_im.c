@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/io.h"
+#include "db/io.h"
 #include "game/chunk.h"
 #include "game/world.h"
 #include "db/specs.h"
@@ -100,7 +100,7 @@ static void im_brain_log(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_LOG, len, 2)) return;
+    if (!im_check_args(chunk, brain->id, io_log, len, 2)) return;
     chunk_log(chunk, brain->id, args[0], args[1]);
 }
 
@@ -108,12 +108,12 @@ static struct specs_ret im_brain_specs(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_SPECS, len, 1))
+    if (!im_check_args(chunk, brain->id, io_specs, len, 1))
         return (struct specs_ret) { .ok = false };
 
     enum spec spec = spec_from_word(args[0]);
     if (!spec_validate(args[0])) {
-        chunk_log(chunk, brain->id, IO_SPECS, IOE_A0_INVALID);
+        chunk_log(chunk, brain->id, io_specs, ioe_a0_invalid);
         return (struct specs_ret) { .ok = false };
     }
 
@@ -123,7 +123,7 @@ static struct specs_ret im_brain_specs(
 static void im_brain_return_value(
         struct im_brain *brain, struct chunk *chunk, im_id src, vm_word value)
 {
-    chunk_io(chunk, IO_RETURN, brain->id, src, &value, 1);
+    chunk_io(chunk, io_return, brain->id, src, &value, 1);
 }
 
 
@@ -163,8 +163,8 @@ static void im_brain_step_io(
     vm_unpack(io[0], &atom, &dst);
 
     if (!dst) dst = brain->id;
-    if (atom < (uint32_t) IO_MIN || atom >= (uint32_t) IO_MAX) {
-        chunk_log(chunk, brain->id, IO_STEP, IOE_VM_FAULT);
+    if (atom < (uint32_t) io_min || atom >= (uint32_t) io_max) {
+        chunk_log(chunk, brain->id, io_step, ioe_vm_fault);
         vm_io_fault(&brain->vm);
         return;
     }
@@ -172,21 +172,21 @@ static void im_brain_step_io(
     bool ok = true;
     switch (atom)
     {
-    case IO_RECV: { ok = im_brain_step_recv(brain); break; }
+    case io_recv: { ok = im_brain_step_recv(brain); break; }
 
-    case IO_ID: { vm_push(&brain->vm, brain->id); break; }
-    case IO_LOG: { im_brain_log(brain, chunk, io + 1, len - 1); break; }
-    case IO_TICK: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
-    case IO_COORD: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
-    case IO_NAME: { im_brain_step_name(brain, chunk, io + 1, len - 1); break; }
-    case IO_SPECS: { ok = im_brain_step_specs(brain, chunk, io + 1, len - 1); break; }
+    case io_id: { vm_push(&brain->vm, brain->id); break; }
+    case io_log: { im_brain_log(brain, chunk, io + 1, len - 1); break; }
+    case io_tick: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
+    case io_coord: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
+    case io_name: { im_brain_step_name(brain, chunk, io + 1, len - 1); break; }
+    case io_specs: { ok = im_brain_step_specs(brain, chunk, io + 1, len - 1); break; }
 
     default: { ok = chunk_io(chunk, atom, brain->id, dst, io + 1, len - 1); break; }
     }
 
     // ALL IO operations must push a value on the stack to maintain our lisp
     // language invariant that all statements return a value on the stack.
-    vm_push(&brain->vm, ok ? IO_OK : IO_FAIL);
+    vm_push(&brain->vm, ok ? io_ok : io_fail);
 }
 
 static void im_brain_vm_step(struct im_brain *brain, struct chunk *chunk)
@@ -197,7 +197,7 @@ static void im_brain_vm_step(struct im_brain *brain, struct chunk *chunk)
     if (brain->vm.ip == brain->breakpoint) brain->debug = true;
 
     if (mod == VM_FAULT)
-        return chunk_log(chunk, brain->id, IO_STEP, IOE_VM_FAULT);
+        return chunk_log(chunk, brain->id, io_step, ioe_vm_fault);
 
     if (mod == VM_RESET) { im_brain_reset(brain); return; }
     if (mod) { im_brain_mod(brain, chunk, mod); return; }
@@ -226,7 +226,7 @@ static void im_brain_io_return(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_RETURN, len, 1)) return;
+    if (!im_check_args(chunk, brain->id, io_return, len, 1)) return;
     vm_push(&brain->vm, args[0]);
 }
 
@@ -234,33 +234,33 @@ static void im_brain_io_state(
         struct im_brain *brain, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, brain->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_MOD: { value = brain->mod_id; break; }
-    case IO_DBG_BREAK: { value = brain->breakpoint; break; }
-    default: { chunk_log(chunk, brain->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_mod: { value = brain->mod_id; break; }
+    case io_dbg_break: { value = brain->breakpoint; break; }
+    default: { chunk_log(chunk, brain->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, brain->id, src, &value, 1);
+    chunk_io(chunk, io_return, brain->id, src, &value, 1);
 }
 
 static void im_brain_io_mod(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_MOD, len, 1)) return;
+    if (!im_check_args(chunk, brain->id, io_mod, len, 1)) return;
 
     mod_id id = args[0];
     if (!mod_validate(args[0]))
-        return chunk_log(chunk, brain->id, IO_MOD, IOE_A0_INVALID);
+        return chunk_log(chunk, brain->id, io_mod, ioe_a0_invalid);
 
     vm_reset(&brain->vm);
     im_brain_mod(brain, chunk, id);
 
     if (id && !brain->mod)
-        return chunk_log(chunk, brain->id, IO_MOD, IOE_A0_UNKNOWN);
+        return chunk_log(chunk, brain->id, io_mod, ioe_a0_unknown);
 }
 
 static void im_brain_io_name(
@@ -282,11 +282,11 @@ static void im_brain_io_dbg_break(
         struct im_brain *brain, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, brain->id, IO_DBG_BREAK, len, 1)) return;
+    if (!im_check_args(chunk, brain->id, io_dbg_break, len, 1)) return;
 
     vm_ip ip = args[0];
     if (!ip_validate(args[0]))
-        return chunk_log(chunk, brain->id, IO_DBG_BREAK, IOE_A0_INVALID);
+        return chunk_log(chunk, brain->id, io_dbg_break, ioe_a0_invalid);
 
     brain->breakpoint = ip ? ip : IP_NIL;
     brain->vm.specs.speed = brain->breakpoint != IP_NIL ? 1 : im_brain_speed(brain);
@@ -295,7 +295,7 @@ static void im_brain_io_dbg_break(
 static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)
 {
     if (!brain->debug)
-        return chunk_log(chunk, brain->id, IO_DBG_STEP, IOE_INVALID_STATE);
+        return chunk_log(chunk, brain->id, io_dbg_step, ioe_invalid_state);
 
     uint8_t old = legion_xchg(&brain->vm.specs.speed, 1);
     im_brain_vm_step(brain, chunk);
@@ -313,41 +313,41 @@ static void im_brain_io(
     switch(io)
     {
 
-    case IO_RETURN: { im_brain_io_return(brain, chunk, args, len); return; }
-    case IO_PING: { chunk_io(chunk, IO_PONG, brain->id, src, NULL, 0); return; }
-    case IO_PONG: { return; } // the return value of chunk_io is all we really need.
+    case io_return: { im_brain_io_return(brain, chunk, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, brain->id, src, NULL, 0); return; }
+    case io_pong: { return; } // the return value of chunk_io is all we really need.
 
-    case IO_STATE: { im_brain_io_state(brain, chunk, src, args, len); return; }
-    case IO_RESET: { im_brain_reset(brain); return; }
+    case io_state: { im_brain_io_state(brain, chunk, src, args, len); return; }
+    case io_reset: { im_brain_reset(brain); return; }
 
-    case IO_ID: { im_brain_return_value(brain, chunk, src, brain->id); break; }
-    case IO_NAME: { im_brain_io_name(brain, chunk, src, args, len); return; }
-    case IO_MOD: { im_brain_io_mod(brain, chunk, args, len); return; }
+    case io_id: { im_brain_return_value(brain, chunk, src, brain->id); break; }
+    case io_name: { im_brain_io_name(brain, chunk, src, args, len); return; }
+    case io_mod: { im_brain_io_mod(brain, chunk, args, len); return; }
 
-    case IO_TICK: {
+    case io_tick: {
         vm_word value = world_time(chunk_world(chunk));
         im_brain_return_value(brain, chunk, src, value);
         break;
     }
-    case IO_COORD: {
+    case io_coord: {
         vm_word value = coord_to_u64(chunk_star(chunk)->coord);
         im_brain_return_value(brain, chunk, src, value);
         break;
     }
-    case IO_SPECS: {
+    case io_specs: {
         vm_word value = im_brain_specs(brain, chunk, args, len).word;
         im_brain_return_value(brain, chunk, src, value);
         break;
     }
-    case IO_LOG: { im_brain_log(brain, chunk, args, len); return; }
+    case io_log: { im_brain_log(brain, chunk, args, len); return; }
 
-    case IO_SEND: { im_brain_io_send(brain, args, len); return; }
-    case IO_RECV: { im_brain_recv(brain, args, len); return; }
+    case io_send: { im_brain_io_send(brain, args, len); return; }
+    case io_recv: { im_brain_recv(brain, args, len); return; }
 
-    case IO_DBG_ATTACH: { brain->debug = true; return; }
-    case IO_DBG_DETACH: { brain->debug = false; return; }
-    case IO_DBG_BREAK: { im_brain_io_dbg_break(brain, chunk, args, len); return; }
-    case IO_DBG_STEP: { im_brain_io_dbg_step(brain, chunk); return; }
+    case io_dbg_attach: { brain->debug = true; return; }
+    case io_dbg_detach: { brain->debug = false; return; }
+    case io_dbg_break: { im_brain_io_dbg_break(brain, chunk, args, len); return; }
+    case io_dbg_step: { im_brain_io_dbg_step(brain, chunk); return; }
 
     default: { return; }
     }
@@ -355,29 +355,29 @@ static void im_brain_io(
 
 static const struct io_cmd im_brain_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
 
-    { IO_ID,    0, {} },
-    { IO_NAME,  1, { { "name", false } }},
-    { IO_MOD,   1, { { "mod-id", true } }},
+    { io_id,    0, {} },
+    { io_name,  1, { { "name", false } }},
+    { io_mod,   1, { { "mod-id", true } }},
 
-    { IO_TICK,  0, {} },
-    { IO_COORD, 0, {} },
-    { IO_SPECS, 1, { { "spec-id", true } }},
-    { IO_LOG,   2, { { "msg[0]", true },
+    { io_tick,  0, {} },
+    { io_coord, 0, {} },
+    { io_specs, 1, { { "spec-id", true } }},
+    { io_log,   2, { { "msg[0]", true },
                      { "msg[1]", true } }},
 
-    { IO_SEND,  5, { { "dst-id", true },
+    { io_send,  5, { { "dst-id", true },
                      { "msg[0]", true },
                      { "msg[1]", false },
                      { "msg[2]", false },
                      { "msg[3]", false } }},
-    { IO_RECV,  0, {} },
+    { io_recv,  0, {} },
 
-    { IO_DBG_ATTACH, 0, {} },
-    { IO_DBG_DETACH, 0, {} },
-    { IO_DBG_BREAK,  1, { { "ip", false } }},
-    { IO_DBG_STEP,   0, {} },
+    { io_dbg_attach, 0, {} },
+    { io_dbg_detach, 0, {} },
+    { io_dbg_break,  1, { { "ip", false } }},
+    { io_dbg_step,   0, {} },
 };

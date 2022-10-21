@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
@@ -65,16 +65,16 @@ static void im_packer_io_state(
         struct im_packer *packer, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, packer->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, packer->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_ITEM: { value = packer->item; break; }
-    case IO_LOOP: { value = packer->loops; break; }
-    default: { chunk_log(chunk, packer->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_item: { value = packer->item; break; }
+    case io_loop: { value = packer->loops; break; }
+    default: { chunk_log(chunk, packer->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, packer->id, src, &value, 1);
+    chunk_io(chunk, io_return, packer->id, src, &value, 1);
 }
 
 
@@ -82,21 +82,21 @@ static void im_packer_io_id(
         struct im_packer *packer, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, packer->id, IO_ID, len, 1)) return;
+    if (!im_check_args(chunk, packer->id, io_id, len, 1)) return;
 
     im_id id = args[0];
     enum item item = im_id_item(id);
 
     if (!id_validate(args[0]))
-        return chunk_log(chunk, packer->id, IO_ID, IOE_A0_INVALID);
+        return chunk_log(chunk, packer->id, io_id, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, packer->id, IO_ID, IOE_A0_INVALID);
+        return chunk_log(chunk, packer->id, io_id, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, packer->id, IO_ID, item)) return;
+    if (!im_check_known(chunk, packer->id, io_id, item)) return;
 
     if (!chunk_delete(chunk, id))
-        return chunk_log(chunk, packer->id, IO_ID, IOE_A0_INVALID);
+        return chunk_log(chunk, packer->id, io_id, ioe_a0_invalid);
 
     chunk_ports_produce(chunk, packer->id, item);
     packer->waiting = true;
@@ -108,17 +108,17 @@ static void im_packer_io_item(
         struct im_packer *packer, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, packer->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, packer->id, io_item, len, 1)) return;
 
     enum item item = args[0];
 
     if (!item_validate(args[0]))
-        return chunk_log(chunk, packer->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, packer->id, io_item, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
-        return chunk_log(chunk, packer->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, packer->id, io_item, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, packer->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, packer->id, io_item, item)) return;
 
     im_packer_reset(packer, chunk);
     packer->item = item;
@@ -134,12 +134,12 @@ static void im_packer_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, packer->id, src, NULL, 0); return; }
-    case IO_STATE: { im_packer_io_state(packer, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, packer->id, src, NULL, 0); return; }
+    case io_state: { im_packer_io_state(packer, chunk, src, args, len); return; }
 
-    case IO_ID: { im_packer_io_id(packer, chunk, args, len); return; }
-    case IO_ITEM: { im_packer_io_item(packer, chunk, args, len); return; }
-    case IO_RESET: { im_packer_reset(packer, chunk); return; }
+    case io_id: { im_packer_io_id(packer, chunk, args, len); return; }
+    case io_item: { im_packer_io_item(packer, chunk, args, len); return; }
+    case io_reset: { im_packer_reset(packer, chunk); return; }
 
     default: { return; }
     }
@@ -147,12 +147,12 @@ static void im_packer_io(
 
 static const struct io_cmd im_packer_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
 
-    { IO_ID,     1, { { "pack-id", true } }},
-    { IO_PACK,   2, { { "item", true },
+    { io_id,     1, { { "pack-id", true } }},
+    { io_pack,   2, { { "item", true },
                       { "loops", false } }},
 };
 

@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "items/types.h"
 #include "game/chunk.h"
 
@@ -176,36 +176,36 @@ static void im_collider_io_state(
         struct im_collider *collider, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, collider->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, collider->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0])
     {
-    case IO_SIZE: { value = collider->size; break; }
-    case IO_RATE: { value = collider->rate; break; }
+    case io_size: { value = collider->size; break; }
+    case io_rate: { value = collider->rate; break; }
 
-    case IO_TAPE: { value = tape_packed_id(collider->tape); break; }
-    case IO_LOOP: { value = collider->loops; break; }
+    case io_tape: { value = tape_packed_id(collider->tape); break; }
+    case io_loop: { value = collider->loops; break; }
 
-    case IO_WORK: {
+    case io_work: {
         value = collider->tape ? tape_work_cap(tape_packed_ptr(collider->tape)) : 0;
         break;
     }
 
-    default: { chunk_log(chunk, collider->id, IO_STATE, IOE_A0_INVALID); break; }
+    default: { chunk_log(chunk, collider->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, collider->id, src, &value, 1);
+    chunk_io(chunk, io_return, collider->id, src, &value, 1);
 }
 
 static void im_collider_io_grow(
         struct im_collider *collider, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, collider->id, IO_TAPE, len, 1)) return;
+    if (!im_check_args(chunk, collider->id, io_tape, len, 1)) return;
 
     uint8_t loops = legion_min(args[0], im_collider_size_max - collider->size);
-    if (!loops) return chunk_log(chunk, collider->id, IO_GROW, IOE_OUT_OF_SPACE);
+    if (!loops) return chunk_log(chunk, collider->id, io_grow, ioe_out_of_space);
 
     im_collider_reset(collider, chunk);
     collider->op = im_collider_grow;
@@ -216,17 +216,17 @@ static void im_collider_io_tape(
         struct im_collider *collider, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, collider->id, IO_TAPE, len, 1)) return;
+    if (!im_check_args(chunk, collider->id, io_tape, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, collider->id, IO_TAPE, IOE_A0_INVALID);
+        return chunk_log(chunk, collider->id, io_tape, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, collider->id, IO_TAPE, item)) return;
+    if (!im_check_known(chunk, collider->id, io_tape, item)) return;
 
     const struct tape *tape = tapes_get(item);
     if (!tape || tape_host(tape) != im_id_item(collider->id))
-        return chunk_log(chunk, collider->id, IO_TAPE, IOE_A0_INVALID);
+        return chunk_log(chunk, collider->id, io_tape, ioe_a0_invalid);
 
     im_collider_reset(collider, chunk);
     collider->op = im_collider_tape;
@@ -243,12 +243,12 @@ static void im_collider_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, collider->id, src, NULL, 0); return; }
-    case IO_STATE: { im_collider_io_state(collider, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, collider->id, src, NULL, 0); return; }
+    case io_state: { im_collider_io_state(collider, chunk, src, args, len); return; }
 
-    case IO_GROW: { im_collider_io_grow(collider, chunk, args, len); return; }
-    case IO_TAPE: { im_collider_io_tape(collider, chunk, args, len); return; }
-    case IO_RESET: { im_collider_reset(collider, chunk); return; }
+    case io_grow: { im_collider_io_grow(collider, chunk, args, len); return; }
+    case io_tape: { im_collider_io_tape(collider, chunk, args, len); return; }
+    case io_reset: { im_collider_reset(collider, chunk); return; }
 
     default: { return; }
     }
@@ -256,12 +256,12 @@ static void im_collider_io(
 
 static const struct io_cmd im_collider_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
 
-    { IO_GROW, 0, {} },
-    { IO_TAPE, 1, { { "tape", true } }},
+    { io_grow, 0, {} },
+    { io_tape, 1, { { "tape", true } }},
 };
 
 

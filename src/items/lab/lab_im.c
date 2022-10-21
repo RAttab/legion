@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "items/types.h"
 #include "game/chunk.h"
 
@@ -97,28 +97,28 @@ static void im_lab_io_state(
         struct im_lab *lab, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, lab->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, lab->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_ITEM: { value = lab->item; break; }
-    default: { chunk_log(chunk, lab->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_item: { value = lab->item; break; }
+    default: { chunk_log(chunk, lab->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, lab->id, src, &value, 1);
+    chunk_io(chunk, io_return, lab->id, src, &value, 1);
 }
 
 static void im_lab_io_item(
         struct im_lab *lab, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, lab->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, lab->id, io_item, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, lab->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, lab->id, io_item, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, lab->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, lab->id, io_item, item)) return;
     if (tech_learned(chunk_tech(chunk), item)) return;
 
     im_lab_reset(lab, chunk);
@@ -131,25 +131,25 @@ static void im_lab_io_tape_at(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, lab->id, IO_TAPE_AT, len, 2)) goto fail;
+    if (!im_check_args(chunk, lab->id, io_tape_at, len, 2)) goto fail;
 
     enum item item = args[0];
     if (!item_validate(args[0])) {
-        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A0_INVALID);
+        chunk_log(chunk, lab->id, io_tape_at, ioe_a0_invalid);
         goto fail;
     }
 
-    if (!im_check_known(chunk, lab->id, IO_TAPE_AT, item)) goto fail;
+    if (!im_check_known(chunk, lab->id, io_tape_at, item)) goto fail;
 
     const struct tape *tape = tapes_get(item);
     if (!tape) {
-        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A0_UNKNOWN);
+        chunk_log(chunk, lab->id, io_tape_at, ioe_a0_unknown);
         goto fail;
     }
 
     tape_it index = args[1];
     if (!tape_it_validate(args[1])) {
-        chunk_log(chunk, lab->id, IO_TAPE_AT, IOE_A1_INVALID);
+        chunk_log(chunk, lab->id, io_tape_at, ioe_a1_invalid);
         goto fail;
     }
 
@@ -158,13 +158,13 @@ static void im_lab_io_tape_at(
     if (ret.state == tape_input || ret.state == tape_output)
         result = vm_pack(ret.item, ret.state);
 
-    chunk_io(chunk, IO_RETURN, lab->id, src, &result, 1);
+    chunk_io(chunk, io_return, lab->id, src, &result, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+        chunk_io(chunk, io_return, lab->id, src, &fail, 1);
     }
     return;
 }
@@ -174,23 +174,23 @@ static void im_lab_io_tape_known(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, lab->id, IO_TAPE_KNOWN, len, 1)) goto fail;
+    if (!im_check_args(chunk, lab->id, io_tape_known, len, 1)) goto fail;
 
     enum item item = args[0];
     if (!item_validate(args[0])) {
-        chunk_log(chunk, lab->id, IO_TAPE_KNOWN, IOE_A0_INVALID);
+        chunk_log(chunk, lab->id, io_tape_known, ioe_a0_invalid);
         goto fail;
     }
 
     struct tech *tech = chunk_tech(chunk);
     vm_word known = tech_known(tech, item) ? 1 : 0;
-    chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
+    chunk_io(chunk, io_return, lab->id, src, &known, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+        chunk_io(chunk, io_return, lab->id, src, &fail, 1);
     }
     return;
 }
@@ -200,23 +200,23 @@ static void im_lab_io_item_bits(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, lab->id, IO_ITEM_BITS, len, 1)) goto fail;
+    if (!im_check_args(chunk, lab->id, io_item_bits, len, 1)) goto fail;
 
     enum item item = args[0];
     if (!item_validate(args[0])) {
-        chunk_log(chunk, lab->id, IO_ITEM_BITS, IOE_A0_INVALID);
+        chunk_log(chunk, lab->id, io_item_bits, ioe_a0_invalid);
         goto fail;
     }
 
     struct tech *tech = chunk_tech(chunk);
     vm_word bits = tech_learned_bits(tech, item);
-    chunk_io(chunk, IO_RETURN, lab->id, src, &bits, 1);
+    chunk_io(chunk, io_return, lab->id, src, &bits, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+        chunk_io(chunk, io_return, lab->id, src, &fail, 1);
     }
     return;
 }
@@ -226,23 +226,23 @@ static void im_lab_io_item_known(
         im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, lab->id, IO_ITEM_KNOWN, len, 1)) goto fail;
+    if (!im_check_args(chunk, lab->id, io_item_known, len, 1)) goto fail;
 
     enum item item = args[0];
     if (!item_validate(args[0])) {
-        chunk_log(chunk, lab->id, IO_ITEM_KNOWN, IOE_A0_INVALID);
+        chunk_log(chunk, lab->id, io_item_known, ioe_a0_invalid);
         goto fail;
     }
 
     struct tech *tech = chunk_tech(chunk);
     vm_word known = tech_learned(tech, item) ? 1 : 0;
-    chunk_io(chunk, IO_RETURN, lab->id, src, &known, 1);
+    chunk_io(chunk, io_return, lab->id, src, &known, 1);
     return;
 
   fail:
     {
         vm_word fail = 0;
-        chunk_io(chunk, IO_RETURN, lab->id, src, &fail, 1);
+        chunk_io(chunk, io_return, lab->id, src, &fail, 1);
     }
     return;
 }
@@ -256,16 +256,16 @@ static void im_lab_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, lab->id, src, NULL, 0); return; }
-    case IO_STATE: { im_lab_io_state(lab, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, lab->id, src, NULL, 0); return; }
+    case io_state: { im_lab_io_state(lab, chunk, src, args, len); return; }
 
-    case IO_ITEM: { im_lab_io_item(lab, chunk, args, len); return; }
-    case IO_RESET: { im_lab_reset(lab, chunk); return; }
+    case io_item: { im_lab_io_item(lab, chunk, args, len); return; }
+    case io_reset: { im_lab_reset(lab, chunk); return; }
 
-    case IO_TAPE_AT: { im_lab_io_tape_at(lab, chunk, src, args, len); return; }
-    case IO_TAPE_KNOWN: { im_lab_io_tape_known(lab, chunk, src, args, len); return; }
-    case IO_ITEM_BITS: { im_lab_io_item_bits(lab, chunk, src, args, len); return; }
-    case IO_ITEM_KNOWN: { im_lab_io_item_known(lab, chunk, src, args, len); return; }
+    case io_tape_at: { im_lab_io_tape_at(lab, chunk, src, args, len); return; }
+    case io_tape_known: { im_lab_io_tape_known(lab, chunk, src, args, len); return; }
+    case io_item_bits: { im_lab_io_item_bits(lab, chunk, src, args, len); return; }
+    case io_item_known: { im_lab_io_item_known(lab, chunk, src, args, len); return; }
 
     default: { return; }
     }
@@ -273,18 +273,18 @@ static void im_lab_io(
 
 static const struct io_cmd im_lab_io_list[] =
 {
-    { IO_PING,       0, {} },
-    { IO_STATE,      1, { { "state", true } }},
-    { IO_RESET,      0, {} },
+    { io_ping,       0, {} },
+    { io_state,      1, { { "state", true } }},
+    { io_reset,      0, {} },
 
-    { IO_ITEM,       1, { { "item", true } }},
+    { io_item,       1, { { "item", true } }},
 
-    { IO_TAPE_AT,    2, { { "item", true },
+    { io_tape_at,    2, { { "item", true },
                           { "index", true } }},
-    { IO_TAPE_KNOWN, 1, { { "item", true } }},
+    { io_tape_known, 1, { { "item", true } }},
 
-    { IO_ITEM_BITS,  1, { { "item", true } }},
-    { IO_ITEM_KNOWN, 1, { { "item", true } }},
+    { io_item_bits,  1, { { "item", true } }},
+    { io_item_known, 1, { { "item", true } }},
 };
 
 

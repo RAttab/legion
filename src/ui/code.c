@@ -216,7 +216,7 @@ void ui_code_breakpoint(struct ui_code *code, size_t row)
     }
 
     render_push_event(
-            EV_IO, vm_pack(IO_DBG_BREAK, item_brain), code->breakpoint.ip);
+            EV_IO, vm_pack(io_dbg_break, item_brain), code->breakpoint.ip);
 }
 
 void ui_code_breakpoint_ip(struct ui_code *code, vm_ip ip)

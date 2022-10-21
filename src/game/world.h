@@ -9,7 +9,7 @@
 #include "game/id.h"
 #include "game/coord.h"
 #include "game/user.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "vm/mod.h"
 #include "vm/vm.h"

@@ -135,6 +135,7 @@ struct db_state
 {
     struct {
         char in[PATH_MAX];
+        char io[PATH_MAX];
         char out[PATH_MAX];
     } path;
 
@@ -146,6 +147,7 @@ struct db_state
         struct db_file im_control, im_factory;
         struct db_file specs_enum, specs_value, specs_register;
         struct db_file tapes;
+        struct db_file io_enum, ioe_enum, io_register;
     } files;
 };
 
@@ -519,7 +521,7 @@ static void db_gen_tape(
 }
 
 
-static void db_gen_rest(struct db_state *state, const char *file)
+static void db_gen_specs_tapes(struct db_state *state, const char *file)
 {
     struct config config = {0};
     struct reader *in = config_read(&config, file);
@@ -557,6 +559,63 @@ static void db_gen_rest(struct db_state *state, const char *file)
 }
 
 
+// -----------------------------------------------------------------------------
+// io
+// -----------------------------------------------------------------------------
+
+static void db_gen_io(struct db_state *state, const char *file)
+{
+    struct config config = {0};
+    struct reader *in = config_read(&config, file);
+
+    while (!reader_peek_eof(in)) {
+        reader_open(in);
+        struct symbol type = reader_symbol(in);
+        hash_val hash = symbol_hash(&type);
+
+        if (hash == symbol_hash_c("io")) {
+            for (size_t i = 0; !reader_peek_close(in); i++) {
+                struct symbol io = reader_symbol(in);
+                struct symbol io_enum = symbol_to_enum(io);
+
+                db_file_writef(&state->files.io_enum,
+                        "%-20s = io_min + 0x%02lx,\n", io_enum.c, i);
+                db_file_writef(&state->files.io_register,
+                        "io_register(%s, \"%s\", %u),\n",
+                        io_enum.c, io.c, io.len);
+            }
+
+            reader_close(in);
+            continue;
+        }
+
+        else if (hash == symbol_hash_c("ioe")) {
+            for (size_t i = 0; !reader_peek_close(in); i++) {
+                struct symbol ioe = reader_symbol(in);
+                struct symbol ioe_enum = symbol_to_enum(ioe);
+
+                db_file_writef(&state->files.ioe_enum,
+                        "%-20s = ioe_min + 0x%02lx,\n", ioe_enum.c, i);
+                db_file_writef(&state->files.io_register,
+                        "ioe_register(%s, \"%s\", %u),\n",
+                        ioe_enum.c, ioe.c, ioe.len);
+            }
+
+            reader_close(in);
+            continue;
+        }
+
+        else {
+            reader_err(in, "unknown type io '%s'", type.c);
+            reader_goto_close(in);
+            continue;
+        }
+    }
+
+    config_close(&config);
+}
+
+
 
 // -----------------------------------------------------------------------------
 // run
@@ -566,6 +625,7 @@ bool db_run(const char *path)
 {
     struct db_state state = {0};
     snprintf(state.path.in, sizeof(state.path.in), "%s/res/items", path);
+    snprintf(state.path.io, sizeof(state.path.io), "%s/res/io.lisp", path);
     snprintf(state.path.out, sizeof(state.path.out), "%s/src/db/gen", path);
 
     state.atoms = atoms_new();
@@ -589,8 +649,11 @@ bool db_run(const char *path)
         db_file_open(&state.files.specs_value, state.path.out, "specs_value");
         db_file_write(&state.files.specs_value, "enum\n{");
 
-
         db_file_open(&state.files.tapes, state.path.out, "tapes");
+
+        db_file_open(&state.files.io_enum, state.path.out, "io_enum");
+        db_file_open(&state.files.ioe_enum, state.path.out, "ioe_enum");
+        db_file_open(&state.files.io_register, state.path.out, "io_register");
     }
 
     {
@@ -605,9 +668,11 @@ bool db_run(const char *path)
     {
         struct dir_it *it = dir_it(state.path.in);
         while (dir_it_next(it))
-            db_gen_rest(&state, dir_it_path(it));
+            db_gen_specs_tapes(&state, dir_it_path(it));
         dir_it_free(it);
     }
+
+    db_gen_io(&state, state.path.io);
 
     {
         db_file_write(&state.files.im_enum, "};\n");
@@ -625,6 +690,11 @@ bool db_run(const char *path)
         db_file_close(&state.files.specs_register);
 
         db_file_close(&state.files.tapes);
+
+        db_file_close(&state.files.io_enum);
+        db_file_close(&state.files.ioe_enum);
+        db_file_close(&state.files.io_register);
+
     }
 
     atoms_free(state.atoms);

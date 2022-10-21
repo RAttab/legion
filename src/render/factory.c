@@ -5,7 +5,7 @@
 
 #include "game/chunk.h"
 #include "game/coord.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "items/types.h"
 #include "render/ui.h"

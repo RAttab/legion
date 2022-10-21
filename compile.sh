@@ -7,6 +7,7 @@ CC=${CC:-gcc}
 : ${VALGRIND:=""}
 : ${PROFILE:=""}
 : ${VERBOSE:=""}
+: ${SKIPDB:=""}
 
 if [ ! -z "${VERBOSE}" ]; then set -o xtrace; fi
 
@@ -41,7 +42,7 @@ LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
 
-if [ -f "./legion" ]; then
+if [[ ( -f "./legion" ) && ( -z "${SKIPDB}" ) ]]; then
     $ECHO "db generation..."
     $TIME ./legion --db "${PREFIX}"
     rm "${PREFIX}"/src/db/gen/*.bak

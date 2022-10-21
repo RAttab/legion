@@ -47,8 +47,8 @@ void test_port(void)
     chunk_lanes_arrive(src_chunk, item_pill, dst, &pill_data, 1);
     chunk_lanes_arrive(dst_chunk, item_pill, src, &pill_data, 1);
 
-    chunk_io(src_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
-    chunk_io(dst_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
+    chunk_io(src_chunk, io_item, sys_id, storage_id, &item_elem_a, 1);
+    chunk_io(dst_chunk, io_item, sys_id, storage_id, &item_elem_a, 1);
 
     const vm_word dst_data = coord_to_u64(dst);
     const vm_word src_data = coord_to_u64(src);
@@ -57,35 +57,35 @@ void test_port(void)
 
 
     for (size_t it = 0; it < 10; ++it) {
-        chunk_io(src_chunk, IO_ITEM, sys_id, port_id, &item_nil_data, 1);
-        chunk_io(dst_chunk, IO_ITEM, sys_id, port_id, &item_nil_data, 1);
-        chunk_io(src_chunk, IO_TARGET, sys_id, port_id, &dst_data, 1);
-        chunk_io(dst_chunk, IO_TARGET, sys_id, port_id, &src_data, 1);
-        chunk_io(src_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
-        chunk_io(dst_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
+        chunk_io(src_chunk, io_item, sys_id, port_id, &item_nil_data, 1);
+        chunk_io(dst_chunk, io_item, sys_id, port_id, &item_nil_data, 1);
+        chunk_io(src_chunk, io_target, sys_id, port_id, &dst_data, 1);
+        chunk_io(dst_chunk, io_target, sys_id, port_id, &src_data, 1);
+        chunk_io(src_chunk, io_activate, sys_id, port_id, NULL, 0);
+        chunk_io(dst_chunk, io_activate, sys_id, port_id, NULL, 0);
 
         step_for(world, load_ticks);
 
         assert(storage_count(src_chunk, storage_id, test_id) == elem_count - 1);
         assert(storage_count(dst_chunk, storage_id, test_id) == elem_count - 1);
-        chunk_io(src_chunk, IO_RESET, sys_id, port_id, NULL, 0);
-        chunk_io(dst_chunk, IO_RESET, sys_id, port_id, NULL, 0);
+        chunk_io(src_chunk, io_reset, sys_id, port_id, NULL, 0);
+        chunk_io(dst_chunk, io_reset, sys_id, port_id, NULL, 0);
 
         wait_travel(world, im_port_speed, src, dst);
 
-        chunk_io(src_chunk, IO_ITEM, sys_id, port_id, item_a_data, array_len(item_a_data));
-        chunk_io(dst_chunk, IO_ITEM, sys_id, port_id, item_a_data, array_len(item_a_data));
-        chunk_io(src_chunk, IO_TARGET, sys_id, port_id, &dst_data, 1);
-        chunk_io(dst_chunk, IO_TARGET, sys_id, port_id, &src_data, 1);
-        chunk_io(src_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
-        chunk_io(dst_chunk, IO_ACTIVATE, sys_id, port_id, NULL, 0);
+        chunk_io(src_chunk, io_item, sys_id, port_id, item_a_data, array_len(item_a_data));
+        chunk_io(dst_chunk, io_item, sys_id, port_id, item_a_data, array_len(item_a_data));
+        chunk_io(src_chunk, io_target, sys_id, port_id, &dst_data, 1);
+        chunk_io(dst_chunk, io_target, sys_id, port_id, &src_data, 1);
+        chunk_io(src_chunk, io_activate, sys_id, port_id, NULL, 0);
+        chunk_io(dst_chunk, io_activate, sys_id, port_id, NULL, 0);
 
         step_for(world, load_ticks);
 
         assert(storage_count(src_chunk, storage_id, test_id) == 0);
         assert(storage_count(dst_chunk, storage_id, test_id) == 0);
-        chunk_io(src_chunk, IO_RESET, sys_id, port_id, NULL, 0);
-        chunk_io(dst_chunk, IO_RESET, sys_id, port_id, NULL, 0);
+        chunk_io(src_chunk, io_reset, sys_id, port_id, NULL, 0);
+        chunk_io(dst_chunk, io_reset, sys_id, port_id, NULL, 0);
 
         wait_travel(world, im_port_speed, src, dst);
     }

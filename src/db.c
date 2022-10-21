@@ -3,6 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "db/io.c"
 #include "db/items.c"
 #include "db/tapes.c"
 #include "db/specs.c"

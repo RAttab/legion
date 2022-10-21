@@ -5,7 +5,7 @@
 
 
 #include "common.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "items/types.h"
 #include "game/chunk.h"
 
@@ -120,19 +120,19 @@ static void im_port_io_state(
         struct im_port *port, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, port->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, port->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0]) {
-    case IO_TARGET: { value = coord_to_u64(port->target); break; }
-    case IO_ITEM: { value = port->want.item; break; }
-    case IO_LOOP: { value = port->want.count; break; }
-    case IO_HAS_ITEM: { value = port->has.item; break; }
-    case IO_HAS_LOOP: { value = port->has.count; break; }
-    default: { chunk_log(chunk, port->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_target: { value = coord_to_u64(port->target); break; }
+    case io_item: { value = port->want.item; break; }
+    case io_loop: { value = port->want.count; break; }
+    case io_has_item: { value = port->has.item; break; }
+    case io_has_loop: { value = port->has.count; break; }
+    default: { chunk_log(chunk, port->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, port->id, src, &value, 1);
+    chunk_io(chunk, io_return, port->id, src, &value, 1);
 }
 
 static void im_port_io_reset(struct im_port *port, struct chunk *chunk)
@@ -140,7 +140,7 @@ static void im_port_io_reset(struct im_port *port, struct chunk *chunk)
     if (port->state >= im_port_docked) {
         chunk_ports_reset(chunk, port->id);
         if (!chunk_pills_undock(chunk, port->origin, port->has))
-            chunk_log(chunk, port->id, IO_RESET, IOE_OUT_OF_SPACE);
+            chunk_log(chunk, port->id, io_reset, ioe_out_of_space);
     }
 
     legion_zero_from(port, has);
@@ -150,18 +150,18 @@ static void im_port_io_item(
         struct im_port *port, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, port->id, IO_ITEM, len, 1)) return;
+    if (!im_check_args(chunk, port->id, io_item, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(args[0]))
-        return chunk_log(chunk, port->id, IO_ITEM, IOE_A0_INVALID);
+        return chunk_log(chunk, port->id, io_item, ioe_a0_invalid);
 
-    if (!im_check_known(chunk, port->id, IO_ITEM, item)) return;
+    if (!im_check_known(chunk, port->id, io_item, item)) return;
 
     uint8_t count = 0;
     if (len >= 2) {
         if (args[1] < 0 || args[1] > UINT8_MAX)
-            return chunk_log(chunk, port->id, IO_ITEM, IOE_A1_INVALID);
+            return chunk_log(chunk, port->id, io_item, ioe_a1_invalid);
         count = args[1];
     }
 
@@ -174,7 +174,7 @@ static void im_port_io_target(
         struct im_port *port, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, port->id, IO_TARGET, len, 1)) return;
+    if (!im_check_args(chunk, port->id, io_target, len, 1)) return;
 
     // nil -> return to sender
     port->target = coord_from_u64(args[0]);
@@ -184,12 +184,12 @@ static void im_port_io_input(
         struct im_port *port, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, port->id, IO_INPUT, len, 1)) return;
+    if (!im_check_args(chunk, port->id, io_input, len, 1)) return;
 
     // nil -> input all
     enum item item = args[0];
     if (args[0] < 0 || args[0] > items_max)
-        return chunk_log(chunk, port->id, IO_INPUT, IOE_A0_INVALID);
+        return chunk_log(chunk, port->id, io_input, ioe_a0_invalid);
 
     struct coord coord = coord_nil();
     if (len >= 2) coord_from_u64(args[1]);
@@ -214,14 +214,14 @@ static void im_port_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, port->id, src, NULL, 0); return; }
-    case IO_STATE: { im_port_io_state(port, chunk, src, args, len); return; }
-    case IO_RESET: { im_port_io_reset(port, chunk); return; }
+    case io_ping: { chunk_io(chunk, io_pong, port->id, src, NULL, 0); return; }
+    case io_state: { im_port_io_state(port, chunk, src, args, len); return; }
+    case io_reset: { im_port_io_reset(port, chunk); return; }
 
-    case IO_ITEM: { im_port_io_item(port, chunk, args, len); return; }
-    case IO_TARGET: {im_port_io_target(port, chunk, args, len); return; }
-    case IO_INPUT: {im_port_io_input(port, chunk, args, len); return; }
-    case IO_ACTIVATE: {im_port_io_activate(port); return; }
+    case io_item: { im_port_io_item(port, chunk, args, len); return; }
+    case io_target: {im_port_io_target(port, chunk, args, len); return; }
+    case io_input: {im_port_io_input(port, chunk, args, len); return; }
+    case io_activate: {im_port_io_activate(port); return; }
 
     default: { return; }
     }
@@ -229,17 +229,17 @@ static void im_port_io(
 
 static const struct io_cmd im_port_io_list[] =
 {
-    { IO_PING,   0, {} },
-    { IO_STATE,  1, { { "state", true } }},
-    { IO_RESET,  0, {} },
+    { io_ping,   0, {} },
+    { io_state,  1, { { "state", true } }},
+    { io_reset,  0, {} },
 
-    { IO_ITEM,   2, { { "item", true },
+    { io_item,   2, { { "item", true },
                       { "count", false } }},
-    { IO_TARGET, 1, { { "coord", true } }},
-    { IO_INPUT,  2, { { "item", true },
+    { io_target, 1, { { "coord", true } }},
+    { io_input,  2, { { "item", true },
                       { "coord", false } }},
 
-    { IO_ACTIVATE, 0, {} },
+    { io_activate, 0, {} },
 };
 
 

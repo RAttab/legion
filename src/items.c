@@ -5,7 +5,6 @@
 
 #include "items/checks.c"
 #include "items/ui_tape.c"
-#include "items/populate.c"
 
 #include "items/fusion/fusion.c"
 #include "items/brain/brain.c"

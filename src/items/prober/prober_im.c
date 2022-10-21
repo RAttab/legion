@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "items/io.h"
+#include "db/io.h"
 #include "game/chunk.h"
 
 
@@ -59,28 +59,28 @@ static void im_prober_io_state(
         struct im_prober *prober, struct chunk *chunk, im_id src,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, prober->id, IO_STATE, len, 1)) return;
+    if (!im_check_args(chunk, prober->id, io_state, len, 1)) return;
     vm_word value = 0;
 
     switch (args[0])
     {
-    case IO_TARGET: { value = coord_to_u64(prober->coord);  break; }
-    case IO_ITEM: { value = prober->item; break; }
-    default: { chunk_log(chunk, prober->id, IO_STATE, IOE_A0_INVALID); break; }
+    case io_target: { value = coord_to_u64(prober->coord);  break; }
+    case io_item: { value = prober->item; break; }
+    default: { chunk_log(chunk, prober->id, io_state, ioe_a0_invalid); break; }
     }
 
-    chunk_io(chunk, IO_RETURN, prober->id, src, &value, 1);
+    chunk_io(chunk, io_return, prober->id, src, &value, 1);
 }
 
 static void im_prober_io_probe(
         struct im_prober *prober, struct chunk *chunk,
         const vm_word *args, size_t len)
 {
-    if (!im_check_args(chunk, prober->id, IO_PROBE, len, 1)) return;
+    if (!im_check_args(chunk, prober->id, io_probe, len, 1)) return;
 
     enum item item = args[0];
     if (!item_validate(item))
-        return chunk_log(chunk, prober->id, IO_SCAN, IOE_A0_INVALID);
+        return chunk_log(chunk, prober->id, io_scan, ioe_a0_invalid);
 
     struct coord coord = coord_nil();
     if (len >= 2) coord = coord_from_u64(args[1]);
@@ -94,7 +94,7 @@ static void im_prober_io_probe(
     uint64_t delta = coord_dist(origin, coord) / im_prober_div;
     if (delta >= UINT8_MAX) {
         im_prober_reset(prober);
-        return chunk_log(chunk, prober->id, IO_SCAN, IOE_OUT_OF_RANGE);
+        return chunk_log(chunk, prober->id, io_scan, ioe_out_of_range);
     }
 
     prober->work.cap = prober->work.left = delta;
@@ -104,7 +104,7 @@ static void im_prober_io_probe(
 static void im_prober_io_value(
         struct im_prober *prober, struct chunk *chunk, im_id src)
 {
-    chunk_io(chunk, IO_RETURN, prober->id, src, &prober->result, 1);
+    chunk_io(chunk, io_return, prober->id, src, &prober->result, 1);
 
     if (prober->result != im_prober_empty)
         im_prober_reset(prober);
@@ -119,12 +119,12 @@ static void im_prober_io(
 
     switch(io)
     {
-    case IO_PING: { chunk_io(chunk, IO_PONG, prober->id, src, NULL, 0); return; }
-    case IO_STATE: { im_prober_io_state(prober, chunk, src, args, len); return; }
+    case io_ping: { chunk_io(chunk, io_pong, prober->id, src, NULL, 0); return; }
+    case io_state: { im_prober_io_state(prober, chunk, src, args, len); return; }
 
-    case IO_PROBE: { im_prober_io_probe(prober, chunk, args, len); return; }
-    case IO_VALUE: { im_prober_io_value(prober, chunk, src); return; }
-    case IO_RESET: { im_prober_reset(prober); return; }
+    case io_probe: { im_prober_io_probe(prober, chunk, args, len); return; }
+    case io_value: { im_prober_io_value(prober, chunk, src); return; }
+    case io_reset: { im_prober_reset(prober); return; }
 
     default: { return; }
     }
@@ -132,11 +132,11 @@ static void im_prober_io(
 
 static const struct io_cmd im_prober_io_list[] =
 {
-    { IO_PING,  0, {} },
-    { IO_STATE, 1, { { "state", true } }},
-    { IO_RESET, 0, {} },
+    { io_ping,  0, {} },
+    { io_state, 1, { { "state", true } }},
+    { io_reset, 0, {} },
 
-    { IO_PROBE, 2, { { "item", true },
+    { io_probe, 2, { { "item", true },
                      { "coord", false } }},
-    { IO_VALUE, 0, {} },
+    { io_value, 0, {} },
 };
