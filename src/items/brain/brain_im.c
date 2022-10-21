@@ -6,7 +6,7 @@
 #include "items/io.h"
 #include "game/chunk.h"
 #include "game/world.h"
-#include "game/specs.h"
+#include "db/specs.h"
 #include "vm/op.h"
 
 static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id);
@@ -27,7 +27,7 @@ static void im_brain_init(void *state, struct chunk *chunk, im_id id)
 
     switch (im_id_item(id))
     {
-    case ITEM_BRAIN: {
+    case item_brain: {
         vm_init(&brain->vm, im_brain_stack_base, im_brain_speed_base);
         break;
     }
@@ -69,7 +69,7 @@ static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id)
 static uint8_t im_brain_speed(struct im_brain *brain)
 {
     switch (im_id_item(brain->id)) {
-    case ITEM_BRAIN: { return vm_speed(im_brain_speed_base); }
+    case item_brain: { return vm_speed(im_brain_speed_base); }
     default: { assert(false); }
     }
 }

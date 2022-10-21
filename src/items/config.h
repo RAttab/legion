@@ -7,7 +7,7 @@
 
 #include "game/id.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "vm/vm.h"
 
 #include "SDL.h"
@@ -88,15 +88,5 @@ struct im_config
     } io;
 };
 
-const struct im_config *im_config(enum item);
 
-inline const struct im_config *im_config_assert(enum item item)
-{
-    const struct im_config *config = im_config(item);
-    assert(config);
-
-    return config;
-}
-
-void im_populate(void);
-void im_populate_atoms(struct atoms *);
+void io_populate_atoms(struct atoms *atoms);

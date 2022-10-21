@@ -100,7 +100,7 @@ static bool man_page_index(
             struct symbol sym = make_symbol_len(str.it, str.len);
             vm_word word = atoms_get(atoms, &sym);
 
-            if (word <= ITEM_NIL || word >= ITEM_MAX) {
+            if (word <= item_nil || word >= items_max) {
                 man_err(&parser, "invalid item atom: %.*s -> %lx",
                         str.len, str.it, word);
                 continue;

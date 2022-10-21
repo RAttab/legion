@@ -6,7 +6,8 @@
 #include "common.h"
 #include "vm/atoms.h"
 #include "game/tape.h"
-#include "items/item.h"
+#include "db/items.h"
+#include "db/tapes.h"
 #include "items/config.h"
 #include "render/render.h"
 
@@ -21,7 +22,7 @@ bool stats_run(void)
     struct atoms *atoms = atoms_new();
     im_populate_atoms(atoms);
 
-    for (enum item id = 0; id < ITEM_MAX; ++id) {
+    for (enum item id = 0; id < items_max; ++id) {
         const struct tape *tape = tapes_get(id);
         const struct tape_info *info = tapes_info(id);
         if (!tape || !info) continue;
@@ -30,10 +31,10 @@ bool stats_run(void)
         fprintf(stdout, "(%s\n  (rank %zu)\n  (energy %u)",
                 sym.c, info->rank, tape_energy(tape));
 
-        for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {
+        for (size_t i = 0; i < items_natural_len; ++i) {
             if (!info->elems[i]) continue;
 
-            atoms_str(atoms, ITEM_NATURAL_FIRST + i, &sym);
+            atoms_str(atoms, items_natural_first + i, &sym);
             fprintf(stdout, "\n  (%s %u)", sym.c, info->elems[i]);
         }
 

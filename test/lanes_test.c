@@ -61,7 +61,7 @@ void test_basics(void)
 
     const user_id user = 13;
     const size_t speed = 100;
-    const enum item item = ITEM_PILL;
+    const enum item item = item_pill;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
 
@@ -99,8 +99,8 @@ void test_speed(void)
     enum { count = 10 };
     const size_t speed_slow = 10;
     const size_t speed_fast = speed_slow * 100;
-    const enum item item_slow = ITEM_PILL;
-    const enum item item_fast = ITEM_MEMORY;
+    const enum item item_slow = item_pill;
+    const enum item item_fast = item_memory;
     const struct coord src = sector->stars[0].coord;
     const struct coord dst = sector->stars[1].coord;
     struct chunk *chunk_dst = world_chunk_alloc(world, dst, user_admin);

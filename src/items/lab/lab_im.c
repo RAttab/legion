@@ -26,7 +26,7 @@ static void im_lab_init(void *state, struct chunk *chunk, im_id id)
 static void im_lab_reset(struct im_lab *lab, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, lab->id);
-    lab->item = ITEM_NIL;
+    lab->item = item_nil;
     lab->state = im_lab_idle;
     lab->work.left = 0;
     lab->work.cap = 0;
@@ -40,7 +40,7 @@ static void im_lab_reset(struct im_lab *lab, struct chunk *chunk)
 static void im_lab_step(void *state, struct chunk *chunk)
 {
     struct im_lab *lab = state;
-    if (lab->item == ITEM_NIL) return;
+    if (lab->item == item_nil) return;
 
     struct tech *tech = chunk_tech(chunk);
 
@@ -301,7 +301,7 @@ static bool im_lab_flow(const void *state, struct flow *flow)
     const struct im_lab *lab = state;
     if (!lab->item) return false;
 
-    enum item item = lab->state == im_lab_waiting ? lab->item : ITEM_NIL;
+    enum item item = lab->state == im_lab_waiting ? lab->item : item_nil;
     *flow = (struct flow) {
         .id = lab->id,
         .loops = im_loops_inf,

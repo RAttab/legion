@@ -47,7 +47,7 @@ enum
 void im_brain_config(struct im_config *config)
 {
     switch(config->type) {
-    case ITEM_BRAIN: { config->size = im_brain_len_base; break; }
+    case item_brain: { config->size = im_brain_len_base; break; }
     default: { assert(false); }
     }
 

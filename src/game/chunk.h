@@ -11,7 +11,7 @@
 #include "game/world.h"
 #include "game/pills.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "vm/vm.h"
 #include "utils/ring.h"
 #include "utils/hash.h"

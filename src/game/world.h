@@ -10,7 +10,7 @@
 #include "game/coord.h"
 #include "game/user.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "vm/mod.h"
 #include "vm/vm.h"
 

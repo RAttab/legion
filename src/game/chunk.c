@@ -47,12 +47,12 @@ struct chunk
 
     struct htable listen;
 
-    struct active active[ITEMS_ACTIVE_LEN];
+    struct active active[items_active_len];
 };
 
 static struct active *active_index(struct chunk *chunk, enum item item)
 {
-    size_t index = item - ITEM_ACTIVE_FIRST;
+    size_t index = item - items_active_first;
 
     if (!item_is_active(item)) return NULL;
     if (index >= array_len(chunk->active)) return NULL;
@@ -90,7 +90,7 @@ struct chunk *chunk_alloc_empty(void)
 
     pills_init(&chunk->pills);
     for (size_t i = 0; i < array_len(chunk->active); ++i)
-        active_init(chunk->active + i, ITEM_ACTIVE_FIRST + i);
+        active_init(chunk->active + i, items_active_first + i);
 
     return chunk;
 }
@@ -205,7 +205,7 @@ static bool chunk_load_active(struct chunk *chunk, struct save *save)
     for (size_t i = 0; i < array_len(chunk->active); ++i) {
         struct active *it = chunk->active + i;
 
-        active_init(it, ITEM_ACTIVE_FIRST + i);
+        active_init(it, items_active_first + i);
         if (it->skip) continue;
 
         if (!active_load(it, save, chunk)) return false;
@@ -273,7 +273,7 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 static void chunk_save_delta_provided(
         struct chunk *chunk, struct save *save, const struct chunk_ack *ack)
 {
-    assert(chunk->provided.len < ITEM_MAX);
+    assert(chunk->provided.len < items_max);
     for (const struct htable_bucket *it = htable_next(&chunk->provided, NULL);
          it; it = htable_next(&chunk->provided, it))
     {
@@ -327,7 +327,7 @@ static void chunk_save_delta_active(
 {
     for (struct active *it = active_next(chunk, NULL); it; it = active_next(chunk, it)) {
         hash_val hash = active_hash(it, hash_init());
-        if (ack->active[it->type - ITEM_ACTIVE_FIRST] == hash) continue;
+        if (ack->active[it->type - items_active_first] == hash) continue;
 
         save_write_value(save, it->type);
         save_write_value(save, hash);
@@ -347,7 +347,7 @@ static bool chunk_load_delta_active(
         assert(active && !active->skip);
 
         if (!active_load(active, save, NULL)) return false;
-        ack->active[type - ITEM_ACTIVE_FIRST] = hash;
+        ack->active[type - items_active_first] = hash;
     }
 
     return true;
@@ -478,9 +478,9 @@ void chunk_rename(struct chunk *chunk, vm_word new)
 
 bool chunk_harvest(struct chunk *chunk, enum item item)
 {
-    assert(item >= ITEM_NATURAL_FIRST && item < ITEM_SYNTH_FIRST);
+    assert(item_is_natural(item));
 
-    size_t i = item - ITEM_NATURAL_FIRST;
+    size_t i = item - items_natural_first;
     if (!chunk->star.elems[i]) return false;
     chunk->star.elems[i]--;
     return true;
@@ -538,12 +538,12 @@ static bool chunk_create_logistics(struct chunk *chunk, enum item item)
 
     uint8_t *count = NULL;
     switch (item) {
-    case ITEM_WORKER:  { count = &chunk->workers.count; break; }
-    case ITEM_SOLAR:   { count = &chunk->energy.solar; break; }
-    case ITEM_KWHEEL:  { count = &chunk->energy.kwheel; break; }
-    case ITEM_BATTERY: { count = &chunk->energy.battery; break; }
+    case item_worker:  { count = &chunk->workers.count; break; }
+    case item_solar:   { count = &chunk->energy.solar; break; }
+    case item_kwheel:  { count = &chunk->energy.kwheel; break; }
+    case item_battery: { count = &chunk->energy.battery; break; }
 
-    case ITEM_PILL: {
+    case item_pill: {
         vm_word cargo = 0;
         chunk_lanes_arrive(chunk, item, coord_nil(), &cargo, 1);
         return true;
@@ -592,7 +592,7 @@ bool chunk_io(
         enum io io, im_id src, im_id dst, const vm_word *args, size_t len)
 {
     enum item item = im_id_item(dst);
-    if (item == ITEM_USER) {
+    if (item == item_user) {
         struct world_io *dst = world_user_io(chunk->world, chunk->owner);
         *dst = (struct world_io) { .io = io, .src = src, .len = len };
         memcpy(dst->args, args, len *sizeof(*args));
@@ -644,18 +644,18 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
     switch (item)
     {
 
-    case ITEM_WORKER:  { return chunk->workers.count; }
-    case ITEM_PILL:    { return pills_count(&chunk->pills); }
-    case ITEM_SOLAR:   { return chunk->energy.solar; }
-    case ITEM_KWHEEL:  { return chunk->energy.kwheel; }
-    case ITEM_BATTERY: { return chunk->energy.battery; }
-    case ITEM_ENERGY:  { return chunk->star.energy; }
+    case item_worker:  { return chunk->workers.count; }
+    case item_pill:    { return pills_count(&chunk->pills); }
+    case item_solar:   { return chunk->energy.solar; }
+    case item_kwheel:  { return chunk->energy.kwheel; }
+    case item_battery: { return chunk->energy.battery; }
+    case item_energy:  { return chunk->star.energy; }
 
-    case ITEM_NATURAL_FIRST ... ITEM_NATURAL_LAST: {
-        if (item == ITEM_NATURAL_LAST) return -1;
-        return chunk->star.elems[item - ITEM_NATURAL_FIRST];
+    case items_natural_first ... (items_natural_last-1): {
+        if (item == items_natural_last) return -1;
+        return chunk->star.elems[item - items_natural_first];
     }
-    case ITEM_ACTIVE_FIRST ... ITEM_ACTIVE_LAST: {
+    case items_active_first ... (items_active_last-1): {
         struct active *active = active_index(chunk, item);
         return active ? (ssize_t) active_count(active) : (ssize_t) -1;
     }
@@ -734,13 +734,13 @@ void chunk_lanes_arrive(
     switch (item)
     {
 
-    case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: {
+    case items_active_first...items_active_last: {
         if (!chunk_create_from(chunk, item, data, len))
             chunk_log(chunk, make_im_id(item, 0), IO_ARRIVE, IOE_OUT_OF_SPACE);
         break;
     }
 
-    case ITEM_PILL: {
+    case item_pill: {
         struct cargo cargo = {0};
         if (len >= 1) cargo =cargo_from_word(data[0]);
         if (!pills_arrive(&chunk->pills, src, cargo))
@@ -748,7 +748,7 @@ void chunk_lanes_arrive(
         break;
     }
 
-    case ITEM_DATA: {
+    case item_data: {
         chunk_lanes_receive(chunk, src, data, len);
         break;
     }
@@ -779,9 +779,9 @@ void chunk_lanes_launch(
 
     switch (item)
     {
-    case ITEM_ACTIVE_FIRST...ITEM_ACTIVE_LAST: { break; }
-    case ITEM_PILL: { break; }
-    case ITEM_DATA: { break; }
+    case items_active_first...items_active_last: { break; }
+    case item_pill: { break; }
+    case item_data: { break; }
     default: { assert(false); }
     }
 
@@ -811,7 +811,7 @@ void chunk_ports_reset(struct chunk *chunk, im_id id)
     if (!ports) return;
 
     if (ports->in_state == ports_requested) {
-        if (im_id_item(id) == ITEM_STORAGE)
+        if (im_id_item(id) == item_storage)
             ring16_replace(chunk->storage, id, 0);
         else
             ring16_replace(chunk->requested, id, 0);
@@ -833,7 +833,7 @@ bool chunk_ports_produce(struct chunk *chunk, im_id id, enum item item)
     struct ports *ports = active_ports(active, id);
     if (!ports) return false;
 
-    if (ports->out != ITEM_NIL) return false;
+    if (ports->out != item_nil) return false;
     ports->out = item;
 
     struct ring16 *provided = NULL;
@@ -860,7 +860,7 @@ bool chunk_ports_consumed(struct chunk *chunk, im_id id)
 {
     struct active *active = active_index_assert(chunk, im_id_item(id));
     struct ports *ports = active_ports(active, id);
-    return ports && ports->out == ITEM_NIL;
+    return ports && ports->out == item_nil;
 }
 
 void chunk_ports_request(struct chunk *chunk, im_id id, enum item item)
@@ -875,7 +875,7 @@ void chunk_ports_request(struct chunk *chunk, im_id id, enum item item)
     ports->in = item;
     ports->in_state = ports_requested;
 
-    if (im_id_item(id) == ITEM_STORAGE)
+    if (im_id_item(id) == item_storage)
         chunk->storage = ring16_push(chunk->storage, id);
     else chunk->requested = ring16_push(chunk->requested, id);
 }
@@ -884,11 +884,11 @@ enum item chunk_ports_consume(struct chunk *chunk, im_id id)
 {
     struct active *active = active_index_assert(chunk, im_id_item(id));
     struct ports *ports = active_ports(active, id);
-    if (!ports) return ITEM_NIL;
+    if (!ports) return item_nil;
 
-    if (ports->in_state != ports_received) return ITEM_NIL;
+    if (ports->in_state != ports_received) return item_nil;
     enum item ret = ports->in;
-    ports->in = ITEM_NIL;
+    ports->in = item_nil;
     ports->in_state = ports_nil;
     return ret;
 }
@@ -916,7 +916,7 @@ static bool chunk_ports_step_queue(
     if (!src) { chunk->workers.clean++; goto nomatch; }
 
     // Moving to and from storage just adds noise.
-    if (im_id_item(src) == ITEM_STORAGE && im_id_item(dst) == ITEM_STORAGE) {
+    if (im_id_item(src) == item_storage && im_id_item(dst) == item_storage) {
         ring16_push(provided, src);
         goto nomatch;
     }
@@ -924,7 +924,7 @@ static bool chunk_ports_step_queue(
     struct ports *out = active_ports(active_index_assert(chunk, im_id_item(src)), src);
     assert(out && out->out == in->in);
 
-    out->out = ITEM_NIL;
+    out->out = item_nil;
     in->in_state = ports_received;
 
     chunk->workers.ops =

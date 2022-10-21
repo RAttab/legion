@@ -23,8 +23,8 @@ enum
     im_collider_size_max = 64,
 };
 
-static const enum item im_collider_grow_item = ITEM_ACCELERATOR;
-static const enum item im_collider_junk = ITEM_ELEM_O;
+static const enum item im_collider_grow_item = item_accelerator;
+static const enum item im_collider_junk = item_elem_o;
 
 enum legion_packed im_collider_op
 {

@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/config.h"
 #include "game/world.h"
 #include "utils/hash.h"

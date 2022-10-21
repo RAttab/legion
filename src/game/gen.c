@@ -156,9 +156,9 @@ vm_word gen_name_star(struct coord coord, world_seed seed, struct atoms *atoms)
 static void gen_inc(struct star *star, enum item item, uint16_t inc)
 {
     uint16_t *ptr = NULL;
-    if (item == ITEM_ENERGY) ptr = &star->energy;
-    else if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
-        ptr = &star->elems[item - ITEM_NATURAL_FIRST];
+    if (item == item_energy) ptr = &star->energy;
+    else if (item_is_natural(item))
+        ptr = &star->elems[item - items_natural_first];
     else assert(false);
 
     *ptr = u16_saturate_add(*ptr, inc);
@@ -310,11 +310,11 @@ static enum roll_type gen_populate_roll_type(struct reader *in)
 static enum item gen_populate_roll_item(struct reader *in, struct atoms *atoms)
 {
     vm_word item = reader_atom(in, atoms);
-    if (item == ITEM_ENERGY) return item;
-    if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST) return item;
+    if (item == item_energy) return item;
+    if (item_is_natural(item)) return item;
 
     reader_err(in, "invalid item atom: %lx", item);
-    return ITEM_ELEM_A;
+    return item_elem_a;
 }
 
 static uint16_t gen_populate_roll_count(struct reader *in)

@@ -523,7 +523,7 @@ static void sim_cmd_io(
     bool ok = chunk_io(
             chunk,
             cmd->data.io.io,
-            make_im_id(ITEM_USER, pipe->auth.user.id),
+            make_im_id(item_user, pipe->auth.user.id),
             cmd->data.io.dst,
             cmd->data.io.args,
             cmd->data.io.len);

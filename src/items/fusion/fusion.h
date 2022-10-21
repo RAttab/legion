@@ -7,7 +7,8 @@
 
 #include "common.h"
 #include "game/id.h"
-#include "items/item.h"
+#include "db/items.h"
+#include "db/specs.h"
 #include "items/types.h"
 
 struct im_config;
@@ -17,7 +18,7 @@ struct im_config;
 // fusion
 // -----------------------------------------------------------------------------
 
-static const enum item im_fusion_input_item = ITEM_ROD;
+static const enum item im_fusion_input_item = item_rod;
 
 static const im_energy im_fusion_energy_output = 20;
 static const im_energy im_fusion_energy_rod = 1024;

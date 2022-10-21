@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "vm/symbol.h"
-#include "items/item.h"
+#include "db/items.h"
 
 struct lisp;
 struct atoms;

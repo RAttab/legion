@@ -278,7 +278,7 @@ static bool im_collider_flow(const void *state, struct flow *flow)
         *flow = (struct flow) {
             .id = collider->id,
             .loops = collider->loops,
-            .target = ITEM_COLLIDER,
+            .target = item_collider,
             .state = tape_input,
             .item = im_collider_grow_item,
             .rank = tapes_info(im_collider_grow_item)->rank,

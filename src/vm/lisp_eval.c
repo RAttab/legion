@@ -6,8 +6,8 @@
 // included in lisp.c
 
 #include "game/id.h"
-#include "game/specs.h"
-#include "items/item.h"
+#include "db/specs.h"
+#include "db/items.h"
 
 // -----------------------------------------------------------------------------
 // index
@@ -176,7 +176,7 @@ static vm_word lisp_eval_pack(struct lisp *lisp)
 static vm_word lisp_eval_id(struct lisp *lisp)
 {
     vm_word type = lisp_eval(lisp);
-    if (type < 0 || type > ITEM_MAX)
+    if (type < 0 || type > items_max)
         lisp_err(lisp, "invalid item type: %lx", type);
 
     vm_word seq = lisp_eval(lisp);

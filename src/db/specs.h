@@ -41,7 +41,7 @@ enum legion_packed spec
 
     #include "gen/specs_enum.h"
 
-    spec_max,
+    spec_max = make_spec(items_max, 0x00),
 };
 
 inline enum item spec_item(enum spec spec) { return spec >> 4; }

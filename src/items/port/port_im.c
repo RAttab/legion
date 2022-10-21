@@ -75,7 +75,7 @@ static void im_port_step_launch(struct im_port *port, struct chunk *chunk)
     const vm_word data = cargo_to_word(port->has);
     struct coord dst = coord_is_nil(port->target) ? port->origin : port->target;
 
-    chunk_lanes_launch(chunk, ITEM_PILL, im_port_speed, dst, &data, 1);
+    chunk_lanes_launch(chunk, item_pill, im_port_speed, dst, &data, 1);
 
     port->state = im_port_docking;
     port->has = (struct cargo) {0};
@@ -188,7 +188,7 @@ static void im_port_io_input(
 
     // nil -> input all
     enum item item = args[0];
-    if (args[0] < 0 || args[0] > ITEM_MAX)
+    if (args[0] < 0 || args[0] > items_max)
         return chunk_log(chunk, port->id, IO_INPUT, IOE_A0_INVALID);
 
     struct coord coord = coord_nil();

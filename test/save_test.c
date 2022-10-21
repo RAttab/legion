@@ -37,7 +37,7 @@ void check_file(const char *path)
 
         vm_word arg = mod->id;
         struct chunk *chunk = world_chunk(old, coord);
-        bool ok = chunk_io(chunk, IO_MOD, 0, make_im_id(ITEM_BRAIN, 1), &arg, 1);
+        bool ok = chunk_io(chunk, IO_MOD, 0, make_im_id(item_brain, 1), &arg, 1);
         assert(ok);
     }
 
@@ -59,7 +59,7 @@ void check_file(const char *path)
 
         assert(new);
 
-        for (enum item item = 0; item < ITEM_MAX; ++item)
+        for (enum item item = 0; item < items_max; ++item)
             assert(world_scan(old, coord, item) <= world_scan(new, coord, item));
 
         struct vec64 *old_atoms = atoms_list(world_atoms(old));

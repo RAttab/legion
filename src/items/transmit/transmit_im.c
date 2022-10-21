@@ -4,7 +4,7 @@
 */
 
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "items/receive/receive.h"
 #include "game/chunk.h"
@@ -94,7 +94,7 @@ static void im_transmit_io_transmit(
     memcpy(packet+1, args, packet_len * sizeof(packet[0]));
 
     chunk_lanes_launch(chunk,
-            ITEM_DATA, packet_speed, transmit->target, packet, 1+packet_len);
+            item_data, packet_speed, transmit->target, packet, 1+packet_len);
 }
 
 static void im_transmit_io(

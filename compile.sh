@@ -11,7 +11,7 @@ CC=${CC:-gcc}
 if [ ! -z "${VERBOSE}" ]; then set -o xtrace; fi
 
 declare -a SRC
-SRC=(common items ui render game vm utils)
+SRC=(common items ui render game vm utils db)
 
 declare -a TEST
 : ${TEST:="ring text lisp chunk lanes tech save protocol items proxy man"}
@@ -40,6 +40,12 @@ CFLAGS="$CFLAGS -Wno-address-of-packed-member" # very annoying
 LIBS="liblegion.a"
 LIBS="$LIBS $(sdl2-config --libs)"
 LIBS="$LIBS $(pkg-config --libs freetype2)"
+
+if [ -f "./legion" ]; then
+    $ECHO "db generation..."
+    $TIME ./legion --db "${PREFIX}"
+    rm "${PREFIX}"/src/db/gen/*.bak
+fi
 
 mkdir -p "obj"
 $ECHO "object compilation..."

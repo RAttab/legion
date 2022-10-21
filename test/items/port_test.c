@@ -20,32 +20,32 @@ void test_port(void)
     struct coord dst = sector->stars[1].coord;
     struct chunk *dst_chunk = world_chunk_alloc(world, dst, user);
 
-    chunk_create(src_chunk, ITEM_PORT);
-    chunk_create(dst_chunk, ITEM_PORT);
-    const im_id port_id = make_im_id(ITEM_PORT, 1);
+    chunk_create(src_chunk, item_port);
+    chunk_create(dst_chunk, item_port);
+    const im_id port_id = make_im_id(item_port, 1);
 
-    chunk_create(src_chunk, ITEM_STORAGE);
-    chunk_create(dst_chunk, ITEM_STORAGE);
-    const im_id storage_id = make_im_id(ITEM_STORAGE, 1);
+    chunk_create(src_chunk, item_storage);
+    chunk_create(dst_chunk, item_storage);
+    const im_id storage_id = make_im_id(item_storage, 1);
 
-    chunk_create(src_chunk, ITEM_TEST);
-    chunk_create(dst_chunk, ITEM_TEST);
-    const im_id test_id = make_im_id(ITEM_TEST, 1);
+    chunk_create(src_chunk, item_test);
+    chunk_create(dst_chunk, item_test);
+    const im_id test_id = make_im_id(item_test, 1);
 
-    chunk_create(src_chunk, ITEM_WORKER);
-    chunk_create(dst_chunk, ITEM_WORKER);
+    chunk_create(src_chunk, item_worker);
+    chunk_create(dst_chunk, item_worker);
 
     const im_id sys_id = 0;
-    const vm_word item_elem_a = ITEM_ELEM_A;
+    const vm_word item_elem_a = item_elem_a;
 
     // need to make one step for the items to be created.
     world_step(world);
 
     enum { load_ticks = 20, elem_count = 2 };
 
-    const vm_word pill_data = cargo_to_word(make_cargo(ITEM_ELEM_A, elem_count));
-    chunk_lanes_arrive(src_chunk, ITEM_PILL, dst, &pill_data, 1);
-    chunk_lanes_arrive(dst_chunk, ITEM_PILL, src, &pill_data, 1);
+    const vm_word pill_data = cargo_to_word(make_cargo(item_elem_a, elem_count));
+    chunk_lanes_arrive(src_chunk, item_pill, dst, &pill_data, 1);
+    chunk_lanes_arrive(dst_chunk, item_pill, src, &pill_data, 1);
 
     chunk_io(src_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
     chunk_io(dst_chunk, IO_ITEM, sys_id, storage_id, &item_elem_a, 1);
@@ -53,7 +53,7 @@ void test_port(void)
     const vm_word dst_data = coord_to_u64(dst);
     const vm_word src_data = coord_to_u64(src);
     const vm_word item_a_data[] = { item_elem_a, elem_count };
-    const vm_word item_nil_data = ITEM_NIL;
+    const vm_word item_nil_data = item_nil;
 
 
     for (size_t it = 0; it < 10; ++it) {

@@ -6,7 +6,7 @@
 #include "game/chunk.h"
 #include "game/coord.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "render/ui.h"
 #include "utils/vec.h"
@@ -522,7 +522,7 @@ static void factory_render_flow(
     default: { assert(false); }
     }
 
-    if (im_id_item(flow->id) == ITEM_PORT &&
+    if (im_id_item(flow->id) == item_port &&
             flow->state == tape_output &&
             flow->tape_len)
     {

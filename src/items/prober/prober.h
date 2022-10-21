@@ -10,7 +10,7 @@
 #include "game/id.h"
 #include "game/coord.h"
 #include "game/world.h"
-#include "items/item.h"
+#include "db/items.h"
 
 struct im_config;
 

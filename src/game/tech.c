@@ -66,7 +66,7 @@ void tech_learn(struct tech *tech, enum item item)
             // We want to unlock elem-o whenever we unlock elem-m. Problem is
             // that elem-o doesn't have a tape which means that we need a
             // special shim for it. Not elegant but whatever.
-            if (it == ITEM_ELEM_M) tape_set_put(&tech->known, ITEM_ELEM_O);
+            if (it == item_elem_m) tape_set_put(&tech->known, item_elem_o);
         }
     }
 }
@@ -120,15 +120,15 @@ void tech_learn_bit(struct tech *tech, enum item item, uint8_t bit)
 
 void tech_populate(struct tech *tech)
 {
-    tape_set_put(&tech->known, ITEM_NIL);
-    for (enum item it = ITEM_NATURAL_FIRST; it < ITEM_NATURAL_LAST; ++it)
+    tape_set_put(&tech->known, item_nil);
+    for (enum item it = items_natural_first; it < items_natural_last; ++it)
         tape_set_put(&tech->known, it);
 
-    tape_set_put(&tech->known, ITEM_ROD);
+    tape_set_put(&tech->known, item_rod);
 
-    tape_set_put(&tech->known, ITEM_LEGION);
-    tape_set_union(&tech->known, &tapes_info(ITEM_LEGION)->reqs);
+    tape_set_put(&tech->known, item_legion);
+    tape_set_union(&tech->known, &tapes_info(item_legion)->reqs);
 
-    tape_set_put(&tech->known, ITEM_LAB);
-    tape_set_union(&tech->known, &tapes_info(ITEM_LAB)->reqs);
+    tape_set_put(&tech->known, item_lab);
+    tape_set_union(&tech->known, &tapes_info(item_lab)->reqs);
 }

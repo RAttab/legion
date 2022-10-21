@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "items/item.h"
+#include "db/items.h"
 
 
 // -----------------------------------------------------------------------------

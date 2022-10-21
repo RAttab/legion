@@ -4,7 +4,7 @@
 */
 
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
 
@@ -167,7 +167,7 @@ static bool im_burner_flow(const void *state, struct flow *flow)
     if (!burner->item) return false;
 
     enum item rank_item = burner->item;
-    if (rank_item == ITEM_ELEM_O) rank_item = ITEM_ELEM_M;
+    if (rank_item == item_elem_o) rank_item = item_elem_m;
 
     *flow = (struct flow) {
         .id = burner->id,

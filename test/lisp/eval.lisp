@@ -275,8 +275,8 @@
 
 (eval/id
  (mod
-  (defconst X (id !item-data 0xAA))
-  (assert (= X 0xF0AA)))
+  (defconst X (id !item-elem-a 0xAA))
+  (assert (= X 0x01AA)))
  (check))
 
 (eval/specs-var

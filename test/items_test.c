@@ -10,7 +10,7 @@
 #include "game/lanes.h"
 #include "game/sys.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "items/config.h"
 #include "items/test/test.h"

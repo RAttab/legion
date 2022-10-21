@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "game/energy.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "utils/bits.h"
 
 struct atoms;
@@ -119,7 +119,7 @@ inline tape_packed tape_packed_it_zero(tape_packed packed)
 // -----------------------------------------------------------------------------
 
 struct tape_set { uint64_t s[4]; };
-static_assert(sizeof(struct tape_set) * 8 >= ITEM_MAX);
+static_assert(sizeof(struct tape_set) * 8 >= items_max);
 
 size_t tape_set_len(const struct tape_set *);
 bool tape_set_empty(const struct tape_set *);
@@ -136,19 +136,3 @@ size_t tape_set_intersect(const struct tape_set *, const struct tape_set *);
 
 void tape_set_save(const struct tape_set *, struct save *);
 bool tape_set_load(struct tape_set *, struct save *);
-
-
-// -----------------------------------------------------------------------------
-// tapes
-// -----------------------------------------------------------------------------
-
-void tapes_populate(struct atoms *);
-const struct tape *tapes_get(enum item id);
-
-struct tape_info
-{
-    size_t rank;
-    struct tape_set reqs;
-    uint16_t elems[ITEMS_NATURAL_LEN];
-};
-const struct tape_info *tapes_info(enum item id);

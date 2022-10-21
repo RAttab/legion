@@ -10,7 +10,7 @@
 */
 
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
 #include "utils/bits.h"
@@ -65,7 +65,7 @@ static void im_nomad_cargo_dec(struct im_nomad_cargo *cargo, enum item item)
     assert(cargo->count);
 
     cargo->count--;
-    if (!cargo->count) cargo->item = ITEM_NIL;
+    if (!cargo->count) cargo->item = item_nil;
 }
 
 // -----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ static void im_nomad_port_reset(struct im_nomad *nomad, struct chunk *chunk)
 {
     chunk_ports_reset(chunk, nomad->id);
     nomad->op = im_nomad_nil;
-    nomad->item = ITEM_NIL;
+    nomad->item = item_nil;
     nomad->loops = 0;
     nomad->waiting = false;
 }
@@ -163,7 +163,7 @@ static void im_nomad_make(
             switch (cargo->item)
             {
 
-            case ITEM_BRAIN: {
+            case item_brain: {
                 if (!chunk_create_from(chunk, cargo->item, &mod, mod ? 1 : 0))
                     chunk_log(chunk, nomad->id, IO_ARRIVE, IOE_OUT_OF_SPACE);
                 else mod = 0;

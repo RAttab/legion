@@ -5,6 +5,7 @@
 
 #include "items/ui_tape.h"
 #include "utils/str.h"
+#include "db/tapes.h"
 
 // -----------------------------------------------------------------------------
 // tape

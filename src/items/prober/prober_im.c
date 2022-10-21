@@ -26,7 +26,7 @@ static void im_prober_init(void *state, struct chunk *chunk, im_id id)
 
 static void im_prober_reset(struct im_prober *prober)
 {
-    prober->item = ITEM_NIL;
+    prober->item = item_nil;
     prober->coord = coord_nil();
     prober->result = im_prober_empty;
     prober->work.left = 0;

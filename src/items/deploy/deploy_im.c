@@ -4,7 +4,7 @@
 */
 
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
 

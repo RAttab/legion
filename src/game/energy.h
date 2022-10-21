@@ -68,7 +68,7 @@ inline im_energy energy_kwheel_output(uint8_t elem_k, size_t kwheel)
 inline im_energy energy_prod_kwheel(
         const struct energy *en, const struct star *star)
 {
-    const uint16_t elem_k = star_scan(star, ITEM_ELEM_K);
+    const uint16_t elem_k = star_scan(star, item_elem_k);
     return energy_kwheel_output(elem_k, en->kwheel);
 }
 

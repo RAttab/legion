@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "game/save.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "game/coord.h"
 #include "game/world.h"
 #include "vm/vm.h"
@@ -29,7 +29,7 @@ struct legion_packed star
     legion_pad(6);
 
     uint16_t energy;
-    uint16_t elems[ITEMS_NATURAL_LEN];
+    uint16_t elems[items_natural_len];
 };
 static_assert(sizeof(struct star) == 5 * 8);
 
@@ -38,9 +38,9 @@ void star_save(const struct star *, struct save *);
 
 inline uint16_t star_scan(const struct star *star, enum item item)
 {
-    if (item == ITEM_ENERGY) return star->energy;
-    if (item >= ITEM_NATURAL_FIRST && item < ITEM_NATURAL_LAST)
-        return star->elems[item - ITEM_NATURAL_FIRST];
+    if (item == item_energy) return star->energy;
+    if (item >= items_natural_first && item < items_natural_last)
+        return star->elems[item - items_natural_first];
     return 0;
 }
 

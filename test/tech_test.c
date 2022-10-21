@@ -9,6 +9,7 @@
 #include "game/tech.h"
 #include "game/sys.h"
 #include "items/config.h"
+#include "db/tapes.h"
 
 
 // -----------------------------------------------------------------------------
@@ -52,9 +53,9 @@ void test_tech(void)
     struct tech tech = {0};
     tech_populate(&tech);
 
-    for (enum item it = ITEM_ACTIVE_FIRST; it < ITEM_ACTIVE_LAST; ++it)
+    for (enum item it = items_active_first; it < items_active_last; ++it)
         check_learn_item(&tech, it);
-    for (enum item it = ITEM_LOGISTICS_FIRST; it < ITEM_LOGISTICS_LAST; ++it)
+    for (enum item it = items_logistics_first; it < items_logistics_last; ++it)
         check_learn_item(&tech, it);
 
     tech_free(&tech);

@@ -40,30 +40,6 @@ const struct im_config *im_config(enum item item)
     return &im_configs[item];
 }
 
-// -----------------------------------------------------------------------------
-// list
-// -----------------------------------------------------------------------------
-
-static const enum item im_list_control_arr[] =
-{
-    #include "gen/im_control.h"
-    0,
-};
-im_list im_list_control = im_list_control_arr;
-
-
-static const enum item im_list_factory_arr[] =
-{
-    #include "gen/im_factory.h"
-    0,
-};
-im_list im_list_factory = im_list_factory_arr;
-
-
-// -----------------------------------------------------------------------------
-// populate
-// -----------------------------------------------------------------------------
-
 void im_populate(void)
 {
     for (size_t i = 1; i < items_max; ++i) {
@@ -83,6 +59,26 @@ void im_populate_atoms(struct atoms *atoms)
         assert(ok);
     }
 }
+
+// -----------------------------------------------------------------------------
+// list
+// -----------------------------------------------------------------------------
+
+static const enum item im_list_control_arr[] =
+{
+    #include "gen/im_control.h"
+    0,
+};
+im_list im_list_control = im_list_control_arr;
+
+
+static const enum item im_list_factory_arr[] =
+{
+    #include "gen/im_factory.h"
+    0,
+};
+im_list im_list_factory = im_list_factory_arr;
+
 
 // -----------------------------------------------------------------------------
 // str

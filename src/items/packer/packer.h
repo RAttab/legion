@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "game/id.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 
 struct im_config;

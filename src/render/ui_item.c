@@ -25,7 +25,7 @@ struct ui_item
     struct ui_label id_lbl;
     struct ui_link id_val;
 
-    void *states[ITEMS_ACTIVE_LEN];
+    void *states[items_active_len];
 };
 
 struct ui_item *ui_item_new(void)
@@ -49,8 +49,8 @@ struct ui_item *ui_item_new(void)
     ui_panel_hide(ui->panel);
     ui->io.w.dim.w = ui_layout_inf;
 
-    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
-        const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
+    for (size_t i = 0; i < items_active_len; ++i) {
+        const struct im_config *config = im_config(items_active_first + i);
         if (config && config->ui.alloc) ui->states[i] = config->ui.alloc();
     }
 
@@ -65,8 +65,8 @@ void ui_item_free(struct ui_item *ui)
     ui_label_free(&ui->id_lbl);
     ui_link_free(&ui->id_val);
 
-    for (size_t i = 0; i < ITEMS_ACTIVE_LEN; ++i) {
-        const struct im_config *config = im_config(ITEM_ACTIVE_FIRST + i);
+    for (size_t i = 0; i < items_active_len; ++i) {
+        const struct im_config *config = im_config(items_active_first + i);
         if (config && config->ui.free) config->ui.free(ui->states[i]);
     }
 
@@ -80,7 +80,7 @@ int16_t ui_item_width(struct ui_item *ui)
 
 static void *ui_item_state(struct ui_item *ui, im_id id)
 {
-    void *state =  ui->states[im_id_item(id) - ITEM_ACTIVE_FIRST];
+    void *state =  ui->states[im_id_item(id) - items_active_first];
     assert(state);
     return state;
 }
@@ -117,7 +117,7 @@ static void ui_item_event_io(struct ui_item *ui, uintptr_t a1, uintptr_t a2)
     }
 
     enum item item = item_raw;
-    if (!item_raw || item_raw >= ITEM_MAX) {
+    if (!item_raw || item_raw >= items_max) {
         render_log(st_error, "invalid IO command: item out-of-bounds '%x'", item_raw);
         return;
     }

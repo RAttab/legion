@@ -8,6 +8,7 @@
 #include "ui/ui.h"
 #include "game/tech.h"
 #include "items/lab/lab.h"
+#include "db/tapes.h"
 
 
 // -----------------------------------------------------------------------------
@@ -114,7 +115,7 @@ void ui_tapes_free(struct ui_tapes *ui) {
 
 static bool ui_tapes_selected(struct ui_tapes *ui)
 {
-    return ui->tree.selected && ui->tree.selected < ITEM_MAX;
+    return ui->tree.selected && ui->tree.selected < items_max;
 }
 
 static void ui_tapes_update_cat(
@@ -123,7 +124,7 @@ static void ui_tapes_update_cat(
     const struct tech *tech = proxy_tech(render.proxy);
 
     ui_node parent = ui_tree_index(&ui->tree);
-    ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + ITEM_MAX), name);
+    ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + items_max), name);
 
     for (enum item it = first; it < last; ++it) {
         const struct im_config *config = im_config(it);
@@ -151,11 +152,11 @@ static void ui_tapes_update_cat(
 static void ui_tapes_update(struct ui_tapes *ui, enum item select)
 {
     ui_tree_reset(&ui->tree);
-    ui_tapes_update_cat(ui, "Natural", ITEM_NATURAL_FIRST, ITEM_NATURAL_LAST);
-    ui_tapes_update_cat(ui, "Synthesized", ITEM_SYNTH_FIRST, ITEM_SYNTH_LAST);
-    ui_tapes_update_cat(ui, "Passive", ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
-    ui_tapes_update_cat(ui, "Active", ITEM_ACTIVE_FIRST, ITEM_ACTIVE_LAST);
-    ui_tapes_update_cat(ui, "Logistics", ITEM_LOGISTICS_FIRST, ITEM_LOGISTICS_LAST);
+    ui_tapes_update_cat(ui, "Natural", items_natural_first, items_natural_last);
+    ui_tapes_update_cat(ui, "Synthesized", items_synth_first, items_synth_last);
+    ui_tapes_update_cat(ui, "Passive", items_passive_first, items_passive_last);
+    ui_tapes_update_cat(ui, "Active", items_active_first, items_active_last);
+    ui_tapes_update_cat(ui, "Logistics", items_logistics_first, items_logistics_last);
 
     if (select) ui_tree_select(&ui->tree, select);
 

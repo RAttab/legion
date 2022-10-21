@@ -140,9 +140,10 @@ enum legion_packed item
   item_data                 = 0x58,
   item_dummy                = 0x59,
   item_energy               = 0x5a,
-  item_user                 = 0x5b,
-  items_sys_last = 0x5c,
+  item_test                 = 0x5b,
+  item_user                 = 0x5c,
+  items_sys_last = 0x5d,
   items_sys_len = items_sys_last - items_sys_first,
 
-  items_max = 0x5c,
+  items_max = 0x5d,
 };

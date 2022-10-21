@@ -512,7 +512,7 @@ static void db_gen_tape(
 
     for (size_t i = 0; i < input + output; ++i) {
         db_file_writef(&state->files.tapes,
-                "  tape_register_ix(0x%03zu, %s);\n", i, tape[i].c);
+                "  tape_register_ix(%3zu, %s);\n", i, tape[i].c);
     }
 
     db_file_write(&state->files.tapes, "tape_register_end()\n");

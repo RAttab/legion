@@ -8,7 +8,9 @@
 #include "game/tape.h"
 #include "game/gen.h"
 #include "game/man.h"
-#include "game/specs.h"
+#include "db/specs.h"
+#include "db/items.h"
+#include "db/tapes.h"
 #include "items/config.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
@@ -30,13 +32,14 @@ static void sys_populate_impl(void)
     im_populate();
     mod_compiler_init();
     specs_populate();
+    tapes_populate();
 
     {
         struct atoms *atoms = atoms_new();
-        im_populate_atoms(atoms);
 
+        im_populate_atoms(atoms);
+        io_populate_atoms(atoms);
         gen_populate(atoms);
-        tapes_populate(atoms);
         man_populate(atoms);
 
         atoms_free(atoms);

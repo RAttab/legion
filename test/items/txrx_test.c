@@ -21,14 +21,14 @@ void test_txrx(void)
     struct chunk *chunk_src = world_chunk_alloc(world, src, user_admin);
     struct chunk *chunk_dst = world_chunk_alloc(world, dst, user_admin);
 
-    chunk_create(chunk_src, ITEM_TRANSMIT);
-    chunk_create(chunk_dst, ITEM_RECEIVE);
-    chunk_create(chunk_dst, ITEM_TEST);
+    chunk_create(chunk_src, item_transmit);
+    chunk_create(chunk_dst, item_receive);
+    chunk_create(chunk_dst, item_test);
     world_step(world);
 
-    im_id id_tx = make_im_id(ITEM_TRANSMIT, 1);
-    im_id id_rx = make_im_id(ITEM_RECEIVE, 1);
-    im_id id_test = make_im_id(ITEM_TEST, 1);
+    im_id id_tx = make_im_id(item_transmit, 1);
+    im_id id_rx = make_im_id(item_receive, 1);
+    im_id id_test = make_im_id(item_test, 1);
 
     const struct im_test *test = chunk_get(chunk_dst, id_test);
     const vm_word packet[im_packet_max] = {

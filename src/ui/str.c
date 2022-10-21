@@ -9,7 +9,7 @@
 #include "render/render.h"
 #include "game/id.h"
 #include "game/proxy.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "vm/atoms.h"
 #include "utils/str.h"
 

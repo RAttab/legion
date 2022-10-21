@@ -10,10 +10,10 @@ tape_register_begin(item_muscle, 4) {
     .inputs = 3,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_a);
-  tape_register_ix(0x001, item_elem_a);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_muscle);
+  tape_register_ix(  0, item_elem_a);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_muscle);
 tape_register_end()
 
 tape_register_begin(item_nodule, 5) {
@@ -24,11 +24,11 @@ tape_register_begin(item_nodule, 5) {
     .inputs = 4,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_a);
-  tape_register_ix(0x001, item_elem_b);
-  tape_register_ix(0x002, item_elem_b);
-  tape_register_ix(0x003, item_elem_a);
-  tape_register_ix(0x004, item_nodule);
+  tape_register_ix(  0, item_elem_a);
+  tape_register_ix(  1, item_elem_b);
+  tape_register_ix(  2, item_elem_b);
+  tape_register_ix(  3, item_elem_a);
+  tape_register_ix(  4, item_nodule);
 tape_register_end()
 
 tape_register_begin(item_vein, 4) {
@@ -39,10 +39,10 @@ tape_register_begin(item_vein, 4) {
     .inputs = 3,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_a);
-  tape_register_ix(0x001, item_elem_c);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_vein);
+  tape_register_ix(  0, item_elem_a);
+  tape_register_ix(  1, item_elem_c);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_vein);
 tape_register_end()
 
 tape_register_begin(item_bone, 6) {
@@ -53,12 +53,12 @@ tape_register_begin(item_bone, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_b);
-  tape_register_ix(0x002, item_elem_b);
-  tape_register_ix(0x003, item_elem_b);
-  tape_register_ix(0x004, item_elem_b);
-  tape_register_ix(0x005, item_bone);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_b);
+  tape_register_ix(  2, item_elem_b);
+  tape_register_ix(  3, item_elem_b);
+  tape_register_ix(  4, item_elem_b);
+  tape_register_ix(  5, item_bone);
 tape_register_end()
 
 tape_register_begin(item_tendon, 6) {
@@ -69,12 +69,12 @@ tape_register_begin(item_tendon, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_a);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_elem_a);
-  tape_register_ix(0x004, item_elem_b);
-  tape_register_ix(0x005, item_tendon);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_elem_a);
+  tape_register_ix(  4, item_elem_b);
+  tape_register_ix(  5, item_tendon);
 tape_register_end()
 
 tape_register_begin(item_rod, 14) {
@@ -85,20 +85,20 @@ tape_register_begin(item_rod, 14) {
     .inputs = 13,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_a);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_elem_a);
-  tape_register_ix(0x004, item_elem_a);
-  tape_register_ix(0x005, item_elem_a);
-  tape_register_ix(0x006, item_elem_b);
-  tape_register_ix(0x007, item_elem_a);
-  tape_register_ix(0x008, item_elem_a);
-  tape_register_ix(0x009, item_elem_a);
-  tape_register_ix(0x010, item_elem_a);
-  tape_register_ix(0x011, item_elem_a);
-  tape_register_ix(0x012, item_elem_b);
-  tape_register_ix(0x013, item_rod);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_elem_a);
+  tape_register_ix(  4, item_elem_a);
+  tape_register_ix(  5, item_elem_a);
+  tape_register_ix(  6, item_elem_b);
+  tape_register_ix(  7, item_elem_a);
+  tape_register_ix(  8, item_elem_a);
+  tape_register_ix(  9, item_elem_a);
+  tape_register_ix( 10, item_elem_a);
+  tape_register_ix( 11, item_elem_a);
+  tape_register_ix( 12, item_elem_b);
+  tape_register_ix( 13, item_rod);
 tape_register_end()
 
 tape_register_begin(item_torus, 9) {
@@ -109,15 +109,15 @@ tape_register_begin(item_torus, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_a);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_elem_b);
-  tape_register_ix(0x004, item_elem_b);
-  tape_register_ix(0x005, item_elem_a);
-  tape_register_ix(0x006, item_elem_a);
-  tape_register_ix(0x007, item_elem_b);
-  tape_register_ix(0x008, item_torus);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_elem_b);
+  tape_register_ix(  4, item_elem_b);
+  tape_register_ix(  5, item_elem_a);
+  tape_register_ix(  6, item_elem_a);
+  tape_register_ix(  7, item_elem_b);
+  tape_register_ix(  8, item_torus);
 tape_register_end()
 
 tape_register_begin(item_lens, 5) {
@@ -128,11 +128,11 @@ tape_register_begin(item_lens, 5) {
     .inputs = 4,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_c);
-  tape_register_ix(0x002, item_elem_c);
-  tape_register_ix(0x003, item_elem_b);
-  tape_register_ix(0x004, item_lens);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_c);
+  tape_register_ix(  2, item_elem_c);
+  tape_register_ix(  3, item_elem_b);
+  tape_register_ix(  4, item_lens);
 tape_register_end()
 
 tape_register_begin(item_nerve, 4) {
@@ -143,10 +143,10 @@ tape_register_begin(item_nerve, 4) {
     .inputs = 3,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_c);
-  tape_register_ix(0x001, item_elem_c);
-  tape_register_ix(0x002, item_elem_c);
-  tape_register_ix(0x003, item_nerve);
+  tape_register_ix(  0, item_elem_c);
+  tape_register_ix(  1, item_elem_c);
+  tape_register_ix(  2, item_elem_c);
+  tape_register_ix(  3, item_nerve);
 tape_register_end()
 
 tape_register_begin(item_neuron, 6) {
@@ -157,12 +157,12 @@ tape_register_begin(item_neuron, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_c);
-  tape_register_ix(0x001, item_elem_a);
-  tape_register_ix(0x002, item_elem_c);
-  tape_register_ix(0x003, item_elem_a);
-  tape_register_ix(0x004, item_elem_c);
-  tape_register_ix(0x005, item_neuron);
+  tape_register_ix(  0, item_elem_c);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_elem_c);
+  tape_register_ix(  3, item_elem_a);
+  tape_register_ix(  4, item_elem_c);
+  tape_register_ix(  5, item_neuron);
 tape_register_end()
 
 tape_register_begin(item_retina, 5) {
@@ -173,11 +173,11 @@ tape_register_begin(item_retina, 5) {
     .inputs = 4,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_c);
-  tape_register_ix(0x001, item_elem_b);
-  tape_register_ix(0x002, item_elem_b);
-  tape_register_ix(0x003, item_elem_c);
-  tape_register_ix(0x004, item_retina);
+  tape_register_ix(  0, item_elem_c);
+  tape_register_ix(  1, item_elem_b);
+  tape_register_ix(  2, item_elem_b);
+  tape_register_ix(  3, item_elem_c);
+  tape_register_ix(  4, item_retina);
 tape_register_end()
 
 tape_register_begin(item_magnet, 7) {
@@ -188,13 +188,13 @@ tape_register_begin(item_magnet, 7) {
     .inputs = 6,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_d);
-  tape_register_ix(0x001, item_elem_d);
-  tape_register_ix(0x002, item_elem_b);
-  tape_register_ix(0x003, item_elem_b);
-  tape_register_ix(0x004, item_elem_d);
-  tape_register_ix(0x005, item_elem_d);
-  tape_register_ix(0x006, item_magnet);
+  tape_register_ix(  0, item_elem_d);
+  tape_register_ix(  1, item_elem_d);
+  tape_register_ix(  2, item_elem_b);
+  tape_register_ix(  3, item_elem_b);
+  tape_register_ix(  4, item_elem_d);
+  tape_register_ix(  5, item_elem_d);
+  tape_register_ix(  6, item_magnet);
 tape_register_end()
 
 tape_register_begin(item_ferrofluid, 6) {
@@ -205,12 +205,12 @@ tape_register_begin(item_ferrofluid, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_d);
-  tape_register_ix(0x001, item_elem_c);
-  tape_register_ix(0x002, item_elem_d);
-  tape_register_ix(0x003, item_elem_c);
-  tape_register_ix(0x004, item_elem_d);
-  tape_register_ix(0x005, item_ferrofluid);
+  tape_register_ix(  0, item_elem_d);
+  tape_register_ix(  1, item_elem_c);
+  tape_register_ix(  2, item_elem_d);
+  tape_register_ix(  3, item_elem_c);
+  tape_register_ix(  4, item_elem_d);
+  tape_register_ix(  5, item_ferrofluid);
 tape_register_end()
 
 tape_register_begin(item_semiconductor, 9) {
@@ -221,15 +221,15 @@ tape_register_begin(item_semiconductor, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_d);
-  tape_register_ix(0x001, item_elem_d);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_elem_c);
-  tape_register_ix(0x004, item_elem_c);
-  tape_register_ix(0x005, item_elem_a);
-  tape_register_ix(0x006, item_elem_d);
-  tape_register_ix(0x007, item_elem_d);
-  tape_register_ix(0x008, item_semiconductor);
+  tape_register_ix(  0, item_elem_d);
+  tape_register_ix(  1, item_elem_d);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_elem_c);
+  tape_register_ix(  4, item_elem_c);
+  tape_register_ix(  5, item_elem_a);
+  tape_register_ix(  6, item_elem_d);
+  tape_register_ix(  7, item_elem_d);
+  tape_register_ix(  8, item_semiconductor);
 tape_register_end()
 
 tape_register_begin(item_conductor, 9) {
@@ -240,15 +240,15 @@ tape_register_begin(item_conductor, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_g);
-  tape_register_ix(0x001, item_elem_g);
-  tape_register_ix(0x002, item_elem_g);
-  tape_register_ix(0x003, item_elem_d);
-  tape_register_ix(0x004, item_elem_d);
-  tape_register_ix(0x005, item_elem_g);
-  tape_register_ix(0x006, item_elem_g);
-  tape_register_ix(0x007, item_elem_g);
-  tape_register_ix(0x008, item_conductor);
+  tape_register_ix(  0, item_elem_g);
+  tape_register_ix(  1, item_elem_g);
+  tape_register_ix(  2, item_elem_g);
+  tape_register_ix(  3, item_elem_d);
+  tape_register_ix(  4, item_elem_d);
+  tape_register_ix(  5, item_elem_g);
+  tape_register_ix(  6, item_elem_g);
+  tape_register_ix(  7, item_elem_g);
+  tape_register_ix(  8, item_conductor);
 tape_register_end()
 
 tape_register_begin(item_galvanic, 9) {
@@ -259,15 +259,15 @@ tape_register_begin(item_galvanic, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_g);
-  tape_register_ix(0x001, item_elem_h);
-  tape_register_ix(0x002, item_elem_h);
-  tape_register_ix(0x003, item_elem_g);
-  tape_register_ix(0x004, item_elem_g);
-  tape_register_ix(0x005, item_elem_h);
-  tape_register_ix(0x006, item_elem_h);
-  tape_register_ix(0x007, item_elem_g);
-  tape_register_ix(0x008, item_galvanic);
+  tape_register_ix(  0, item_elem_g);
+  tape_register_ix(  1, item_elem_h);
+  tape_register_ix(  2, item_elem_h);
+  tape_register_ix(  3, item_elem_g);
+  tape_register_ix(  4, item_elem_g);
+  tape_register_ix(  5, item_elem_h);
+  tape_register_ix(  6, item_elem_h);
+  tape_register_ix(  7, item_elem_g);
+  tape_register_ix(  8, item_galvanic);
 tape_register_end()
 
 tape_register_begin(item_biosteel, 14) {
@@ -278,20 +278,20 @@ tape_register_begin(item_biosteel, 14) {
     .inputs = 11,
     .outputs = 3,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_b);
-  tape_register_ix(0x002, item_elem_h);
-  tape_register_ix(0x003, item_elem_b);
-  tape_register_ix(0x004, item_elem_b);
-  tape_register_ix(0x005, item_elem_m);
-  tape_register_ix(0x006, item_elem_b);
-  tape_register_ix(0x007, item_elem_b);
-  tape_register_ix(0x008, item_elem_h);
-  tape_register_ix(0x009, item_elem_b);
-  tape_register_ix(0x010, item_elem_b);
-  tape_register_ix(0x011, item_elem_o);
-  tape_register_ix(0x012, item_biosteel);
-  tape_register_ix(0x013, item_elem_o);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_b);
+  tape_register_ix(  2, item_elem_h);
+  tape_register_ix(  3, item_elem_b);
+  tape_register_ix(  4, item_elem_b);
+  tape_register_ix(  5, item_elem_m);
+  tape_register_ix(  6, item_elem_b);
+  tape_register_ix(  7, item_elem_b);
+  tape_register_ix(  8, item_elem_h);
+  tape_register_ix(  9, item_elem_b);
+  tape_register_ix( 10, item_elem_b);
+  tape_register_ix( 11, item_elem_o);
+  tape_register_ix( 12, item_biosteel);
+  tape_register_ix( 13, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_neurosteel, 14) {
@@ -302,20 +302,20 @@ tape_register_begin(item_neurosteel, 14) {
     .inputs = 11,
     .outputs = 3,
   };
-  tape_register_ix(0x000, item_elem_d);
-  tape_register_ix(0x001, item_elem_d);
-  tape_register_ix(0x002, item_elem_h);
-  tape_register_ix(0x003, item_elem_d);
-  tape_register_ix(0x004, item_elem_d);
-  tape_register_ix(0x005, item_elem_m);
-  tape_register_ix(0x006, item_elem_d);
-  tape_register_ix(0x007, item_elem_d);
-  tape_register_ix(0x008, item_elem_h);
-  tape_register_ix(0x009, item_elem_d);
-  tape_register_ix(0x010, item_elem_d);
-  tape_register_ix(0x011, item_elem_o);
-  tape_register_ix(0x012, item_neurosteel);
-  tape_register_ix(0x013, item_elem_o);
+  tape_register_ix(  0, item_elem_d);
+  tape_register_ix(  1, item_elem_d);
+  tape_register_ix(  2, item_elem_h);
+  tape_register_ix(  3, item_elem_d);
+  tape_register_ix(  4, item_elem_d);
+  tape_register_ix(  5, item_elem_m);
+  tape_register_ix(  6, item_elem_d);
+  tape_register_ix(  7, item_elem_d);
+  tape_register_ix(  8, item_elem_h);
+  tape_register_ix(  9, item_elem_d);
+  tape_register_ix( 10, item_elem_d);
+  tape_register_ix( 11, item_elem_o);
+  tape_register_ix( 12, item_neurosteel);
+  tape_register_ix( 13, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_limb, 7) {
@@ -326,13 +326,13 @@ tape_register_begin(item_limb, 7) {
     .inputs = 6,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_bone);
-  tape_register_ix(0x001, item_bone);
-  tape_register_ix(0x002, item_tendon);
-  tape_register_ix(0x003, item_tendon);
-  tape_register_ix(0x004, item_muscle);
-  tape_register_ix(0x005, item_muscle);
-  tape_register_ix(0x006, item_limb);
+  tape_register_ix(  0, item_bone);
+  tape_register_ix(  1, item_bone);
+  tape_register_ix(  2, item_tendon);
+  tape_register_ix(  3, item_tendon);
+  tape_register_ix(  4, item_muscle);
+  tape_register_ix(  5, item_muscle);
+  tape_register_ix(  6, item_limb);
 tape_register_end()
 
 tape_register_begin(item_spinal, 6) {
@@ -343,12 +343,12 @@ tape_register_begin(item_spinal, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_nerve);
-  tape_register_ix(0x001, item_vein);
-  tape_register_ix(0x002, item_nerve);
-  tape_register_ix(0x003, item_vein);
-  tape_register_ix(0x004, item_nerve);
-  tape_register_ix(0x005, item_spinal);
+  tape_register_ix(  0, item_nerve);
+  tape_register_ix(  1, item_vein);
+  tape_register_ix(  2, item_nerve);
+  tape_register_ix(  3, item_vein);
+  tape_register_ix(  4, item_nerve);
+  tape_register_ix(  5, item_spinal);
 tape_register_end()
 
 tape_register_begin(item_stem, 6) {
@@ -359,12 +359,12 @@ tape_register_begin(item_stem, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_neuron);
-  tape_register_ix(0x001, item_neuron);
-  tape_register_ix(0x002, item_vein);
-  tape_register_ix(0x003, item_neuron);
-  tape_register_ix(0x004, item_neuron);
-  tape_register_ix(0x005, item_stem);
+  tape_register_ix(  0, item_neuron);
+  tape_register_ix(  1, item_neuron);
+  tape_register_ix(  2, item_vein);
+  tape_register_ix(  3, item_neuron);
+  tape_register_ix(  4, item_neuron);
+  tape_register_ix(  5, item_stem);
 tape_register_end()
 
 tape_register_begin(item_lung, 7) {
@@ -375,13 +375,13 @@ tape_register_begin(item_lung, 7) {
     .inputs = 6,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_stem);
-  tape_register_ix(0x001, item_nerve);
-  tape_register_ix(0x002, item_muscle);
-  tape_register_ix(0x003, item_muscle);
-  tape_register_ix(0x004, item_muscle);
-  tape_register_ix(0x005, item_nerve);
-  tape_register_ix(0x006, item_lung);
+  tape_register_ix(  0, item_stem);
+  tape_register_ix(  1, item_nerve);
+  tape_register_ix(  2, item_muscle);
+  tape_register_ix(  3, item_muscle);
+  tape_register_ix(  4, item_muscle);
+  tape_register_ix(  5, item_nerve);
+  tape_register_ix(  6, item_lung);
 tape_register_end()
 
 tape_register_begin(item_engram, 8) {
@@ -392,14 +392,14 @@ tape_register_begin(item_engram, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_nerve);
-  tape_register_ix(0x001, item_neuron);
-  tape_register_ix(0x002, item_neuron);
-  tape_register_ix(0x003, item_nerve);
-  tape_register_ix(0x004, item_neuron);
-  tape_register_ix(0x005, item_neuron);
-  tape_register_ix(0x006, item_nerve);
-  tape_register_ix(0x007, item_engram);
+  tape_register_ix(  0, item_nerve);
+  tape_register_ix(  1, item_neuron);
+  tape_register_ix(  2, item_neuron);
+  tape_register_ix(  3, item_nerve);
+  tape_register_ix(  4, item_neuron);
+  tape_register_ix(  5, item_neuron);
+  tape_register_ix(  6, item_nerve);
+  tape_register_ix(  7, item_engram);
 tape_register_end()
 
 tape_register_begin(item_cortex, 11) {
@@ -410,17 +410,17 @@ tape_register_begin(item_cortex, 11) {
     .inputs = 10,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_stem);
-  tape_register_ix(0x001, item_vein);
-  tape_register_ix(0x002, item_neuron);
-  tape_register_ix(0x003, item_neuron);
-  tape_register_ix(0x004, item_neuron);
-  tape_register_ix(0x005, item_vein);
-  tape_register_ix(0x006, item_neuron);
-  tape_register_ix(0x007, item_neuron);
-  tape_register_ix(0x008, item_neuron);
-  tape_register_ix(0x009, item_vein);
-  tape_register_ix(0x010, item_cortex);
+  tape_register_ix(  0, item_stem);
+  tape_register_ix(  1, item_vein);
+  tape_register_ix(  2, item_neuron);
+  tape_register_ix(  3, item_neuron);
+  tape_register_ix(  4, item_neuron);
+  tape_register_ix(  5, item_vein);
+  tape_register_ix(  6, item_neuron);
+  tape_register_ix(  7, item_neuron);
+  tape_register_ix(  8, item_neuron);
+  tape_register_ix(  9, item_vein);
+  tape_register_ix( 10, item_cortex);
 tape_register_end()
 
 tape_register_begin(item_eye, 6) {
@@ -431,12 +431,12 @@ tape_register_begin(item_eye, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_retina);
-  tape_register_ix(0x001, item_lens);
-  tape_register_ix(0x002, item_lens);
-  tape_register_ix(0x003, item_lens);
-  tape_register_ix(0x004, item_retina);
-  tape_register_ix(0x005, item_eye);
+  tape_register_ix(  0, item_retina);
+  tape_register_ix(  1, item_lens);
+  tape_register_ix(  2, item_lens);
+  tape_register_ix(  3, item_lens);
+  tape_register_ix(  4, item_retina);
+  tape_register_ix(  5, item_eye);
 tape_register_end()
 
 tape_register_begin(item_fusion, 16) {
@@ -447,22 +447,22 @@ tape_register_begin(item_fusion, 16) {
     .inputs = 15,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_torus);
-  tape_register_ix(0x001, item_rod);
-  tape_register_ix(0x002, item_rod);
-  tape_register_ix(0x003, item_rod);
-  tape_register_ix(0x004, item_rod);
-  tape_register_ix(0x005, item_torus);
-  tape_register_ix(0x006, item_stem);
-  tape_register_ix(0x007, item_cortex);
-  tape_register_ix(0x008, item_stem);
-  tape_register_ix(0x009, item_torus);
-  tape_register_ix(0x010, item_rod);
-  tape_register_ix(0x011, item_rod);
-  tape_register_ix(0x012, item_rod);
-  tape_register_ix(0x013, item_rod);
-  tape_register_ix(0x014, item_torus);
-  tape_register_ix(0x015, item_fusion);
+  tape_register_ix(  0, item_torus);
+  tape_register_ix(  1, item_rod);
+  tape_register_ix(  2, item_rod);
+  tape_register_ix(  3, item_rod);
+  tape_register_ix(  4, item_rod);
+  tape_register_ix(  5, item_torus);
+  tape_register_ix(  6, item_stem);
+  tape_register_ix(  7, item_cortex);
+  tape_register_ix(  8, item_stem);
+  tape_register_ix(  9, item_torus);
+  tape_register_ix( 10, item_rod);
+  tape_register_ix( 11, item_rod);
+  tape_register_ix( 12, item_rod);
+  tape_register_ix( 13, item_rod);
+  tape_register_ix( 14, item_torus);
+  tape_register_ix( 15, item_fusion);
 tape_register_end()
 
 tape_register_begin(item_photovoltaic, 9) {
@@ -473,15 +473,15 @@ tape_register_begin(item_photovoltaic, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_semiconductor);
-  tape_register_ix(0x001, item_semiconductor);
-  tape_register_ix(0x002, item_nerve);
-  tape_register_ix(0x003, item_bone);
-  tape_register_ix(0x004, item_bone);
-  tape_register_ix(0x005, item_nerve);
-  tape_register_ix(0x006, item_semiconductor);
-  tape_register_ix(0x007, item_semiconductor);
-  tape_register_ix(0x008, item_photovoltaic);
+  tape_register_ix(  0, item_semiconductor);
+  tape_register_ix(  1, item_semiconductor);
+  tape_register_ix(  2, item_nerve);
+  tape_register_ix(  3, item_bone);
+  tape_register_ix(  4, item_bone);
+  tape_register_ix(  5, item_nerve);
+  tape_register_ix(  6, item_semiconductor);
+  tape_register_ix(  7, item_semiconductor);
+  tape_register_ix(  8, item_photovoltaic);
 tape_register_end()
 
 tape_register_begin(item_field, 9) {
@@ -492,15 +492,15 @@ tape_register_begin(item_field, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_magnet);
-  tape_register_ix(0x001, item_magnet);
-  tape_register_ix(0x002, item_magnet);
-  tape_register_ix(0x003, item_nerve);
-  tape_register_ix(0x004, item_nerve);
-  tape_register_ix(0x005, item_magnet);
-  tape_register_ix(0x006, item_magnet);
-  tape_register_ix(0x007, item_magnet);
-  tape_register_ix(0x008, item_field);
+  tape_register_ix(  0, item_magnet);
+  tape_register_ix(  1, item_magnet);
+  tape_register_ix(  2, item_magnet);
+  tape_register_ix(  3, item_nerve);
+  tape_register_ix(  4, item_nerve);
+  tape_register_ix(  5, item_magnet);
+  tape_register_ix(  6, item_magnet);
+  tape_register_ix(  7, item_magnet);
+  tape_register_ix(  8, item_field);
 tape_register_end()
 
 tape_register_begin(item_antenna, 12) {
@@ -511,18 +511,18 @@ tape_register_begin(item_antenna, 12) {
     .inputs = 11,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_bone);
-  tape_register_ix(0x001, item_bone);
-  tape_register_ix(0x002, item_nerve);
-  tape_register_ix(0x003, item_conductor);
-  tape_register_ix(0x004, item_conductor);
-  tape_register_ix(0x005, item_nerve);
-  tape_register_ix(0x006, item_conductor);
-  tape_register_ix(0x007, item_conductor);
-  tape_register_ix(0x008, item_nerve);
-  tape_register_ix(0x009, item_bone);
-  tape_register_ix(0x010, item_bone);
-  tape_register_ix(0x011, item_antenna);
+  tape_register_ix(  0, item_bone);
+  tape_register_ix(  1, item_bone);
+  tape_register_ix(  2, item_nerve);
+  tape_register_ix(  3, item_conductor);
+  tape_register_ix(  4, item_conductor);
+  tape_register_ix(  5, item_nerve);
+  tape_register_ix(  6, item_conductor);
+  tape_register_ix(  7, item_conductor);
+  tape_register_ix(  8, item_nerve);
+  tape_register_ix(  9, item_bone);
+  tape_register_ix( 10, item_bone);
+  tape_register_ix( 11, item_antenna);
 tape_register_end()
 
 tape_register_begin(item_accelerator, 9) {
@@ -533,15 +533,15 @@ tape_register_begin(item_accelerator, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_conductor);
-  tape_register_ix(0x001, item_conductor);
-  tape_register_ix(0x002, item_nerve);
-  tape_register_ix(0x003, item_field);
-  tape_register_ix(0x004, item_field);
-  tape_register_ix(0x005, item_nerve);
-  tape_register_ix(0x006, item_conductor);
-  tape_register_ix(0x007, item_conductor);
-  tape_register_ix(0x008, item_accelerator);
+  tape_register_ix(  0, item_conductor);
+  tape_register_ix(  1, item_conductor);
+  tape_register_ix(  2, item_nerve);
+  tape_register_ix(  3, item_field);
+  tape_register_ix(  4, item_field);
+  tape_register_ix(  5, item_nerve);
+  tape_register_ix(  6, item_conductor);
+  tape_register_ix(  7, item_conductor);
+  tape_register_ix(  8, item_accelerator);
 tape_register_end()
 
 tape_register_begin(item_heat_exchange, 6) {
@@ -552,12 +552,12 @@ tape_register_begin(item_heat_exchange, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_conductor);
-  tape_register_ix(0x002, item_conductor);
-  tape_register_ix(0x003, item_conductor);
-  tape_register_ix(0x004, item_biosteel);
-  tape_register_ix(0x005, item_heat_exchange);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_conductor);
+  tape_register_ix(  2, item_conductor);
+  tape_register_ix(  3, item_conductor);
+  tape_register_ix(  4, item_biosteel);
+  tape_register_ix(  5, item_heat_exchange);
 tape_register_end()
 
 tape_register_begin(item_furnace, 10) {
@@ -568,16 +568,16 @@ tape_register_begin(item_furnace, 10) {
     .inputs = 7,
     .outputs = 3,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_heat_exchange);
-  tape_register_ix(0x002, item_heat_exchange);
-  tape_register_ix(0x003, item_elem_m);
-  tape_register_ix(0x004, item_heat_exchange);
-  tape_register_ix(0x005, item_heat_exchange);
-  tape_register_ix(0x006, item_biosteel);
-  tape_register_ix(0x007, item_elem_o);
-  tape_register_ix(0x008, item_furnace);
-  tape_register_ix(0x009, item_elem_o);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_heat_exchange);
+  tape_register_ix(  2, item_heat_exchange);
+  tape_register_ix(  3, item_elem_m);
+  tape_register_ix(  4, item_heat_exchange);
+  tape_register_ix(  5, item_heat_exchange);
+  tape_register_ix(  6, item_biosteel);
+  tape_register_ix(  7, item_elem_o);
+  tape_register_ix(  8, item_furnace);
+  tape_register_ix(  9, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_freezer, 8) {
@@ -588,14 +588,14 @@ tape_register_begin(item_freezer, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_heat_exchange);
-  tape_register_ix(0x001, item_heat_exchange);
-  tape_register_ix(0x002, item_neurosteel);
-  tape_register_ix(0x003, item_elem_m);
-  tape_register_ix(0x004, item_neurosteel);
-  tape_register_ix(0x005, item_heat_exchange);
-  tape_register_ix(0x006, item_heat_exchange);
-  tape_register_ix(0x007, item_freezer);
+  tape_register_ix(  0, item_heat_exchange);
+  tape_register_ix(  1, item_heat_exchange);
+  tape_register_ix(  2, item_neurosteel);
+  tape_register_ix(  3, item_elem_m);
+  tape_register_ix(  4, item_neurosteel);
+  tape_register_ix(  5, item_heat_exchange);
+  tape_register_ix(  6, item_heat_exchange);
+  tape_register_ix(  7, item_freezer);
 tape_register_end()
 
 tape_register_begin(item_m_reactor, 16) {
@@ -606,22 +606,22 @@ tape_register_begin(item_m_reactor, 16) {
     .inputs = 13,
     .outputs = 3,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_heat_exchange);
-  tape_register_ix(0x002, item_neurosteel);
-  tape_register_ix(0x003, item_elem_m);
-  tape_register_ix(0x004, item_elem_m);
-  tape_register_ix(0x005, item_neurosteel);
-  tape_register_ix(0x006, item_elem_m);
-  tape_register_ix(0x007, item_neurosteel);
-  tape_register_ix(0x008, item_elem_m);
-  tape_register_ix(0x009, item_elem_m);
-  tape_register_ix(0x010, item_neurosteel);
-  tape_register_ix(0x011, item_heat_exchange);
-  tape_register_ix(0x012, item_biosteel);
-  tape_register_ix(0x013, item_elem_o);
-  tape_register_ix(0x014, item_m_reactor);
-  tape_register_ix(0x015, item_elem_o);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_heat_exchange);
+  tape_register_ix(  2, item_neurosteel);
+  tape_register_ix(  3, item_elem_m);
+  tape_register_ix(  4, item_elem_m);
+  tape_register_ix(  5, item_neurosteel);
+  tape_register_ix(  6, item_elem_m);
+  tape_register_ix(  7, item_neurosteel);
+  tape_register_ix(  8, item_elem_m);
+  tape_register_ix(  9, item_elem_m);
+  tape_register_ix( 10, item_neurosteel);
+  tape_register_ix( 11, item_heat_exchange);
+  tape_register_ix( 12, item_biosteel);
+  tape_register_ix( 13, item_elem_o);
+  tape_register_ix( 14, item_m_reactor);
+  tape_register_ix( 15, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_m_condenser, 14) {
@@ -632,20 +632,20 @@ tape_register_begin(item_m_condenser, 14) {
     .inputs = 11,
     .outputs = 3,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_field);
-  tape_register_ix(0x002, item_elem_m);
-  tape_register_ix(0x003, item_elem_m);
-  tape_register_ix(0x004, item_field);
-  tape_register_ix(0x005, item_elem_m);
-  tape_register_ix(0x006, item_field);
-  tape_register_ix(0x007, item_elem_m);
-  tape_register_ix(0x008, item_elem_m);
-  tape_register_ix(0x009, item_field);
-  tape_register_ix(0x010, item_biosteel);
-  tape_register_ix(0x011, item_elem_o);
-  tape_register_ix(0x012, item_m_condenser);
-  tape_register_ix(0x013, item_elem_o);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_field);
+  tape_register_ix(  2, item_elem_m);
+  tape_register_ix(  3, item_elem_m);
+  tape_register_ix(  4, item_field);
+  tape_register_ix(  5, item_elem_m);
+  tape_register_ix(  6, item_field);
+  tape_register_ix(  7, item_elem_m);
+  tape_register_ix(  8, item_elem_m);
+  tape_register_ix(  9, item_field);
+  tape_register_ix( 10, item_biosteel);
+  tape_register_ix( 11, item_elem_o);
+  tape_register_ix( 12, item_m_condenser);
+  tape_register_ix( 13, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_m_release, 12) {
@@ -656,18 +656,18 @@ tape_register_begin(item_m_release, 12) {
     .inputs = 9,
     .outputs = 3,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_ferrofluid);
-  tape_register_ix(0x002, item_ferrofluid);
-  tape_register_ix(0x003, item_ferrofluid);
-  tape_register_ix(0x004, item_elem_m);
-  tape_register_ix(0x005, item_ferrofluid);
-  tape_register_ix(0x006, item_ferrofluid);
-  tape_register_ix(0x007, item_ferrofluid);
-  tape_register_ix(0x008, item_biosteel);
-  tape_register_ix(0x009, item_elem_o);
-  tape_register_ix(0x010, item_m_release);
-  tape_register_ix(0x011, item_elem_o);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_ferrofluid);
+  tape_register_ix(  2, item_ferrofluid);
+  tape_register_ix(  3, item_ferrofluid);
+  tape_register_ix(  4, item_elem_m);
+  tape_register_ix(  5, item_ferrofluid);
+  tape_register_ix(  6, item_ferrofluid);
+  tape_register_ix(  7, item_ferrofluid);
+  tape_register_ix(  8, item_biosteel);
+  tape_register_ix(  9, item_elem_o);
+  tape_register_ix( 10, item_m_release);
+  tape_register_ix( 11, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_m_lung, 10) {
@@ -678,16 +678,16 @@ tape_register_begin(item_m_lung, 10) {
     .inputs = 9,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_m_reactor);
-  tape_register_ix(0x002, item_neurosteel);
-  tape_register_ix(0x003, item_m_condenser);
-  tape_register_ix(0x004, item_m_condenser);
-  tape_register_ix(0x005, item_neurosteel);
-  tape_register_ix(0x006, item_m_release);
-  tape_register_ix(0x007, item_m_release);
-  tape_register_ix(0x008, item_m_release);
-  tape_register_ix(0x009, item_m_lung);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_m_reactor);
+  tape_register_ix(  2, item_neurosteel);
+  tape_register_ix(  3, item_m_condenser);
+  tape_register_ix(  4, item_m_condenser);
+  tape_register_ix(  5, item_neurosteel);
+  tape_register_ix(  6, item_m_release);
+  tape_register_ix(  7, item_m_release);
+  tape_register_ix(  8, item_m_release);
+  tape_register_ix(  9, item_m_lung);
 tape_register_end()
 
 tape_register_begin(item_worker, 8) {
@@ -698,14 +698,14 @@ tape_register_begin(item_worker, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_lung);
-  tape_register_ix(0x001, item_lung);
-  tape_register_ix(0x002, item_stem);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_stem);
-  tape_register_ix(0x005, item_limb);
-  tape_register_ix(0x006, item_limb);
-  tape_register_ix(0x007, item_worker);
+  tape_register_ix(  0, item_lung);
+  tape_register_ix(  1, item_lung);
+  tape_register_ix(  2, item_stem);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_stem);
+  tape_register_ix(  5, item_limb);
+  tape_register_ix(  6, item_limb);
+  tape_register_ix(  7, item_worker);
 tape_register_end()
 
 tape_register_begin(item_solar, 6) {
@@ -716,12 +716,12 @@ tape_register_begin(item_solar, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_photovoltaic);
-  tape_register_ix(0x001, item_nerve);
-  tape_register_ix(0x002, item_nodule);
-  tape_register_ix(0x003, item_nerve);
-  tape_register_ix(0x004, item_photovoltaic);
-  tape_register_ix(0x005, item_solar);
+  tape_register_ix(  0, item_photovoltaic);
+  tape_register_ix(  1, item_nerve);
+  tape_register_ix(  2, item_nodule);
+  tape_register_ix(  3, item_nerve);
+  tape_register_ix(  4, item_photovoltaic);
+  tape_register_ix(  5, item_solar);
 tape_register_end()
 
 tape_register_begin(item_pill, 9) {
@@ -732,15 +732,15 @@ tape_register_begin(item_pill, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_vein);
-  tape_register_ix(0x001, item_ferrofluid);
-  tape_register_ix(0x002, item_vein);
-  tape_register_ix(0x003, item_bone);
-  tape_register_ix(0x004, item_bone);
-  tape_register_ix(0x005, item_vein);
-  tape_register_ix(0x006, item_ferrofluid);
-  tape_register_ix(0x007, item_vein);
-  tape_register_ix(0x008, item_pill);
+  tape_register_ix(  0, item_vein);
+  tape_register_ix(  1, item_ferrofluid);
+  tape_register_ix(  2, item_vein);
+  tape_register_ix(  3, item_bone);
+  tape_register_ix(  4, item_bone);
+  tape_register_ix(  5, item_vein);
+  tape_register_ix(  6, item_ferrofluid);
+  tape_register_ix(  7, item_vein);
+  tape_register_ix(  8, item_pill);
 tape_register_end()
 
 tape_register_begin(item_battery, 8) {
@@ -751,14 +751,14 @@ tape_register_begin(item_battery, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_bone);
-  tape_register_ix(0x001, item_nerve);
-  tape_register_ix(0x002, item_galvanic);
-  tape_register_ix(0x003, item_galvanic);
-  tape_register_ix(0x004, item_galvanic);
-  tape_register_ix(0x005, item_nerve);
-  tape_register_ix(0x006, item_bone);
-  tape_register_ix(0x007, item_battery);
+  tape_register_ix(  0, item_bone);
+  tape_register_ix(  1, item_nerve);
+  tape_register_ix(  2, item_galvanic);
+  tape_register_ix(  3, item_galvanic);
+  tape_register_ix(  4, item_galvanic);
+  tape_register_ix(  5, item_nerve);
+  tape_register_ix(  6, item_bone);
+  tape_register_ix(  7, item_battery);
 tape_register_end()
 
 tape_register_begin(item_elem_m, 13) {
@@ -769,19 +769,19 @@ tape_register_begin(item_elem_m, 13) {
     .inputs = 11,
     .outputs = 2,
   };
-  tape_register_ix(0x000, item_elem_a);
-  tape_register_ix(0x001, item_elem_a);
-  tape_register_ix(0x002, item_elem_a);
-  tape_register_ix(0x003, item_elem_d);
-  tape_register_ix(0x004, item_elem_d);
-  tape_register_ix(0x005, item_elem_g);
-  tape_register_ix(0x006, item_elem_d);
-  tape_register_ix(0x007, item_elem_d);
-  tape_register_ix(0x008, item_elem_a);
-  tape_register_ix(0x009, item_elem_a);
-  tape_register_ix(0x010, item_elem_a);
-  tape_register_ix(0x011, item_elem_m);
-  tape_register_ix(0x012, item_elem_o);
+  tape_register_ix(  0, item_elem_a);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_elem_d);
+  tape_register_ix(  4, item_elem_d);
+  tape_register_ix(  5, item_elem_g);
+  tape_register_ix(  6, item_elem_d);
+  tape_register_ix(  7, item_elem_d);
+  tape_register_ix(  8, item_elem_a);
+  tape_register_ix(  9, item_elem_a);
+  tape_register_ix( 10, item_elem_a);
+  tape_register_ix( 11, item_elem_m);
+  tape_register_ix( 12, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_elem_n, 23) {
@@ -792,29 +792,29 @@ tape_register_begin(item_elem_n, 23) {
     .inputs = 21,
     .outputs = 2,
   };
-  tape_register_ix(0x000, item_elem_b);
-  tape_register_ix(0x001, item_elem_b);
-  tape_register_ix(0x002, item_elem_b);
-  tape_register_ix(0x003, item_elem_b);
-  tape_register_ix(0x004, item_elem_b);
-  tape_register_ix(0x005, item_elem_d);
-  tape_register_ix(0x006, item_elem_d);
-  tape_register_ix(0x007, item_elem_d);
-  tape_register_ix(0x008, item_elem_d);
-  tape_register_ix(0x009, item_elem_e);
-  tape_register_ix(0x010, item_elem_e);
-  tape_register_ix(0x011, item_elem_e);
-  tape_register_ix(0x012, item_elem_d);
-  tape_register_ix(0x013, item_elem_d);
-  tape_register_ix(0x014, item_elem_d);
-  tape_register_ix(0x015, item_elem_d);
-  tape_register_ix(0x016, item_elem_b);
-  tape_register_ix(0x017, item_elem_b);
-  tape_register_ix(0x018, item_elem_b);
-  tape_register_ix(0x019, item_elem_b);
-  tape_register_ix(0x020, item_elem_b);
-  tape_register_ix(0x021, item_elem_n);
-  tape_register_ix(0x022, item_elem_o);
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_b);
+  tape_register_ix(  2, item_elem_b);
+  tape_register_ix(  3, item_elem_b);
+  tape_register_ix(  4, item_elem_b);
+  tape_register_ix(  5, item_elem_d);
+  tape_register_ix(  6, item_elem_d);
+  tape_register_ix(  7, item_elem_d);
+  tape_register_ix(  8, item_elem_d);
+  tape_register_ix(  9, item_elem_e);
+  tape_register_ix( 10, item_elem_e);
+  tape_register_ix( 11, item_elem_e);
+  tape_register_ix( 12, item_elem_d);
+  tape_register_ix( 13, item_elem_d);
+  tape_register_ix( 14, item_elem_d);
+  tape_register_ix( 15, item_elem_d);
+  tape_register_ix( 16, item_elem_b);
+  tape_register_ix( 17, item_elem_b);
+  tape_register_ix( 18, item_elem_b);
+  tape_register_ix( 19, item_elem_b);
+  tape_register_ix( 20, item_elem_b);
+  tape_register_ix( 21, item_elem_n);
+  tape_register_ix( 22, item_elem_o);
 tape_register_end()
 
 tape_register_begin(item_elem_o, 0) {
@@ -835,14 +835,14 @@ tape_register_begin(item_memory, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_engram);
-  tape_register_ix(0x001, item_engram);
-  tape_register_ix(0x002, item_engram);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_engram);
-  tape_register_ix(0x005, item_engram);
-  tape_register_ix(0x006, item_engram);
-  tape_register_ix(0x007, item_memory);
+  tape_register_ix(  0, item_engram);
+  tape_register_ix(  1, item_engram);
+  tape_register_ix(  2, item_engram);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_engram);
+  tape_register_ix(  5, item_engram);
+  tape_register_ix(  6, item_engram);
+  tape_register_ix(  7, item_memory);
 tape_register_end()
 
 tape_register_begin(item_brain, 8) {
@@ -853,14 +853,14 @@ tape_register_begin(item_brain, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_memory);
-  tape_register_ix(0x001, item_cortex);
-  tape_register_ix(0x002, item_cortex);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_cortex);
-  tape_register_ix(0x005, item_cortex);
-  tape_register_ix(0x006, item_memory);
-  tape_register_ix(0x007, item_brain);
+  tape_register_ix(  0, item_memory);
+  tape_register_ix(  1, item_cortex);
+  tape_register_ix(  2, item_cortex);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_cortex);
+  tape_register_ix(  5, item_cortex);
+  tape_register_ix(  6, item_memory);
+  tape_register_ix(  7, item_brain);
 tape_register_end()
 
 tape_register_begin(item_prober, 6) {
@@ -871,12 +871,12 @@ tape_register_begin(item_prober, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_lung);
-  tape_register_ix(0x001, item_nodule);
-  tape_register_ix(0x002, item_eye);
-  tape_register_ix(0x003, item_eye);
-  tape_register_ix(0x004, item_eye);
-  tape_register_ix(0x005, item_prober);
+  tape_register_ix(  0, item_lung);
+  tape_register_ix(  1, item_nodule);
+  tape_register_ix(  2, item_eye);
+  tape_register_ix(  3, item_eye);
+  tape_register_ix(  4, item_eye);
+  tape_register_ix(  5, item_prober);
 tape_register_end()
 
 tape_register_begin(item_scanner, 9) {
@@ -887,15 +887,15 @@ tape_register_begin(item_scanner, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_lung);
-  tape_register_ix(0x001, item_engram);
-  tape_register_ix(0x002, item_nodule);
-  tape_register_ix(0x003, item_eye);
-  tape_register_ix(0x004, item_eye);
-  tape_register_ix(0x005, item_eye);
-  tape_register_ix(0x006, item_eye);
-  tape_register_ix(0x007, item_eye);
-  tape_register_ix(0x008, item_scanner);
+  tape_register_ix(  0, item_lung);
+  tape_register_ix(  1, item_engram);
+  tape_register_ix(  2, item_nodule);
+  tape_register_ix(  3, item_eye);
+  tape_register_ix(  4, item_eye);
+  tape_register_ix(  5, item_eye);
+  tape_register_ix(  6, item_eye);
+  tape_register_ix(  7, item_eye);
+  tape_register_ix(  8, item_scanner);
 tape_register_end()
 
 tape_register_begin(item_legion, 22) {
@@ -906,28 +906,28 @@ tape_register_begin(item_legion, 22) {
     .inputs = 21,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_lung);
-  tape_register_ix(0x001, item_lung);
-  tape_register_ix(0x002, item_lung);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_worker);
-  tape_register_ix(0x005, item_worker);
-  tape_register_ix(0x006, item_fusion);
-  tape_register_ix(0x007, item_extract);
-  tape_register_ix(0x008, item_extract);
-  tape_register_ix(0x009, item_printer);
-  tape_register_ix(0x010, item_printer);
-  tape_register_ix(0x011, item_assembly);
-  tape_register_ix(0x012, item_assembly);
-  tape_register_ix(0x013, item_deploy);
-  tape_register_ix(0x014, item_deploy);
-  tape_register_ix(0x015, item_memory);
-  tape_register_ix(0x016, item_brain);
-  tape_register_ix(0x017, item_prober);
-  tape_register_ix(0x018, item_nodule);
-  tape_register_ix(0x019, item_cortex);
-  tape_register_ix(0x020, item_cortex);
-  tape_register_ix(0x021, item_legion);
+  tape_register_ix(  0, item_lung);
+  tape_register_ix(  1, item_lung);
+  tape_register_ix(  2, item_lung);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_worker);
+  tape_register_ix(  5, item_worker);
+  tape_register_ix(  6, item_fusion);
+  tape_register_ix(  7, item_extract);
+  tape_register_ix(  8, item_extract);
+  tape_register_ix(  9, item_printer);
+  tape_register_ix( 10, item_printer);
+  tape_register_ix( 11, item_assembly);
+  tape_register_ix( 12, item_assembly);
+  tape_register_ix( 13, item_deploy);
+  tape_register_ix( 14, item_deploy);
+  tape_register_ix( 15, item_memory);
+  tape_register_ix( 16, item_brain);
+  tape_register_ix( 17, item_prober);
+  tape_register_ix( 18, item_nodule);
+  tape_register_ix( 19, item_cortex);
+  tape_register_ix( 20, item_cortex);
+  tape_register_ix( 21, item_legion);
 tape_register_end()
 
 tape_register_begin(item_transmit, 8) {
@@ -938,14 +938,14 @@ tape_register_begin(item_transmit, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_eye);
-  tape_register_ix(0x001, item_eye);
-  tape_register_ix(0x002, item_eye);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_antenna);
-  tape_register_ix(0x005, item_antenna);
-  tape_register_ix(0x006, item_antenna);
-  tape_register_ix(0x007, item_transmit);
+  tape_register_ix(  0, item_eye);
+  tape_register_ix(  1, item_eye);
+  tape_register_ix(  2, item_eye);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_antenna);
+  tape_register_ix(  5, item_antenna);
+  tape_register_ix(  6, item_antenna);
+  tape_register_ix(  7, item_transmit);
 tape_register_end()
 
 tape_register_begin(item_receive, 8) {
@@ -956,14 +956,14 @@ tape_register_begin(item_receive, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_antenna);
-  tape_register_ix(0x001, item_antenna);
-  tape_register_ix(0x002, item_antenna);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_engram);
-  tape_register_ix(0x005, item_engram);
-  tape_register_ix(0x006, item_engram);
-  tape_register_ix(0x007, item_receive);
+  tape_register_ix(  0, item_antenna);
+  tape_register_ix(  1, item_antenna);
+  tape_register_ix(  2, item_antenna);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_engram);
+  tape_register_ix(  5, item_engram);
+  tape_register_ix(  6, item_engram);
+  tape_register_ix(  7, item_receive);
 tape_register_end()
 
 tape_register_begin(item_deploy, 4) {
@@ -974,10 +974,10 @@ tape_register_begin(item_deploy, 4) {
     .inputs = 3,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_spinal);
-  tape_register_ix(0x001, item_nodule);
-  tape_register_ix(0x002, item_spinal);
-  tape_register_ix(0x003, item_deploy);
+  tape_register_ix(  0, item_spinal);
+  tape_register_ix(  1, item_nodule);
+  tape_register_ix(  2, item_spinal);
+  tape_register_ix(  3, item_deploy);
 tape_register_end()
 
 tape_register_begin(item_extract, 6) {
@@ -988,12 +988,12 @@ tape_register_begin(item_extract, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_muscle);
-  tape_register_ix(0x001, item_muscle);
-  tape_register_ix(0x002, item_nodule);
-  tape_register_ix(0x003, item_muscle);
-  tape_register_ix(0x004, item_muscle);
-  tape_register_ix(0x005, item_extract);
+  tape_register_ix(  0, item_muscle);
+  tape_register_ix(  1, item_muscle);
+  tape_register_ix(  2, item_nodule);
+  tape_register_ix(  3, item_muscle);
+  tape_register_ix(  4, item_muscle);
+  tape_register_ix(  5, item_extract);
 tape_register_end()
 
 tape_register_begin(item_printer, 6) {
@@ -1004,12 +1004,12 @@ tape_register_begin(item_printer, 6) {
     .inputs = 5,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_vein);
-  tape_register_ix(0x001, item_vein);
-  tape_register_ix(0x002, item_nodule);
-  tape_register_ix(0x003, item_vein);
-  tape_register_ix(0x004, item_vein);
-  tape_register_ix(0x005, item_printer);
+  tape_register_ix(  0, item_vein);
+  tape_register_ix(  1, item_vein);
+  tape_register_ix(  2, item_nodule);
+  tape_register_ix(  3, item_vein);
+  tape_register_ix(  4, item_vein);
+  tape_register_ix(  5, item_printer);
 tape_register_end()
 
 tape_register_begin(item_assembly, 8) {
@@ -1020,14 +1020,14 @@ tape_register_begin(item_assembly, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_limb);
-  tape_register_ix(0x001, item_limb);
-  tape_register_ix(0x002, item_vein);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_vein);
-  tape_register_ix(0x005, item_limb);
-  tape_register_ix(0x006, item_limb);
-  tape_register_ix(0x007, item_assembly);
+  tape_register_ix(  0, item_limb);
+  tape_register_ix(  1, item_limb);
+  tape_register_ix(  2, item_vein);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_vein);
+  tape_register_ix(  5, item_limb);
+  tape_register_ix(  6, item_limb);
+  tape_register_ix(  7, item_assembly);
 tape_register_end()
 
 tape_register_begin(item_lab, 9) {
@@ -1038,15 +1038,15 @@ tape_register_begin(item_lab, 9) {
     .inputs = 8,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_limb);
-  tape_register_ix(0x001, item_limb);
-  tape_register_ix(0x002, item_vein);
-  tape_register_ix(0x003, item_nodule);
-  tape_register_ix(0x004, item_nodule);
-  tape_register_ix(0x005, item_vein);
-  tape_register_ix(0x006, item_cortex);
-  tape_register_ix(0x007, item_cortex);
-  tape_register_ix(0x008, item_lab);
+  tape_register_ix(  0, item_limb);
+  tape_register_ix(  1, item_limb);
+  tape_register_ix(  2, item_vein);
+  tape_register_ix(  3, item_nodule);
+  tape_register_ix(  4, item_nodule);
+  tape_register_ix(  5, item_vein);
+  tape_register_ix(  6, item_cortex);
+  tape_register_ix(  7, item_cortex);
+  tape_register_ix(  8, item_lab);
 tape_register_end()
 
 tape_register_begin(item_storage, 8) {
@@ -1057,14 +1057,14 @@ tape_register_begin(item_storage, 8) {
     .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_bone);
-  tape_register_ix(0x001, item_bone);
-  tape_register_ix(0x002, item_vein);
-  tape_register_ix(0x003, item_vein);
-  tape_register_ix(0x004, item_vein);
-  tape_register_ix(0x005, item_bone);
-  tape_register_ix(0x006, item_bone);
-  tape_register_ix(0x007, item_storage);
+  tape_register_ix(  0, item_bone);
+  tape_register_ix(  1, item_bone);
+  tape_register_ix(  2, item_vein);
+  tape_register_ix(  3, item_vein);
+  tape_register_ix(  4, item_vein);
+  tape_register_ix(  5, item_bone);
+  tape_register_ix(  6, item_bone);
+  tape_register_ix(  7, item_storage);
 tape_register_end()
 
 tape_register_begin(item_port, 12) {
@@ -1075,18 +1075,18 @@ tape_register_begin(item_port, 12) {
     .inputs = 11,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_field);
-  tape_register_ix(0x001, item_field);
-  tape_register_ix(0x002, item_field);
-  tape_register_ix(0x003, item_field);
-  tape_register_ix(0x004, item_field);
-  tape_register_ix(0x005, item_nodule);
-  tape_register_ix(0x006, item_limb);
-  tape_register_ix(0x007, item_limb);
-  tape_register_ix(0x008, item_limb);
-  tape_register_ix(0x009, item_nodule);
-  tape_register_ix(0x010, item_storage);
-  tape_register_ix(0x011, item_port);
+  tape_register_ix(  0, item_field);
+  tape_register_ix(  1, item_field);
+  tape_register_ix(  2, item_field);
+  tape_register_ix(  3, item_field);
+  tape_register_ix(  4, item_field);
+  tape_register_ix(  5, item_nodule);
+  tape_register_ix(  6, item_limb);
+  tape_register_ix(  7, item_limb);
+  tape_register_ix(  8, item_limb);
+  tape_register_ix(  9, item_nodule);
+  tape_register_ix( 10, item_storage);
+  tape_register_ix( 11, item_port);
 tape_register_end()
 
 tape_register_begin(item_condenser, 7) {
@@ -1097,13 +1097,13 @@ tape_register_begin(item_condenser, 7) {
     .inputs = 6,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_lung);
-  tape_register_ix(0x001, item_lung);
-  tape_register_ix(0x002, item_nodule);
-  tape_register_ix(0x003, item_lung);
-  tape_register_ix(0x004, item_lung);
-  tape_register_ix(0x005, item_lung);
-  tape_register_ix(0x006, item_condenser);
+  tape_register_ix(  0, item_lung);
+  tape_register_ix(  1, item_lung);
+  tape_register_ix(  2, item_nodule);
+  tape_register_ix(  3, item_lung);
+  tape_register_ix(  4, item_lung);
+  tape_register_ix(  5, item_lung);
+  tape_register_ix(  6, item_condenser);
 tape_register_end()
 
 tape_register_begin(item_collider, 10) {
@@ -1114,16 +1114,16 @@ tape_register_begin(item_collider, 10) {
     .inputs = 9,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_brain);
-  tape_register_ix(0x001, item_nodule);
-  tape_register_ix(0x002, item_accelerator);
-  tape_register_ix(0x003, item_accelerator);
-  tape_register_ix(0x004, item_nodule);
-  tape_register_ix(0x005, item_accelerator);
-  tape_register_ix(0x006, item_accelerator);
-  tape_register_ix(0x007, item_nodule);
-  tape_register_ix(0x008, item_storage);
-  tape_register_ix(0x009, item_collider);
+  tape_register_ix(  0, item_brain);
+  tape_register_ix(  1, item_nodule);
+  tape_register_ix(  2, item_accelerator);
+  tape_register_ix(  3, item_accelerator);
+  tape_register_ix(  4, item_nodule);
+  tape_register_ix(  5, item_accelerator);
+  tape_register_ix(  6, item_accelerator);
+  tape_register_ix(  7, item_nodule);
+  tape_register_ix(  8, item_storage);
+  tape_register_ix(  9, item_collider);
 tape_register_end()
 
 tape_register_begin(item_burner, 11) {
@@ -1134,17 +1134,17 @@ tape_register_begin(item_burner, 11) {
     .inputs = 10,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_furnace);
-  tape_register_ix(0x002, item_furnace);
-  tape_register_ix(0x003, item_furnace);
-  tape_register_ix(0x004, item_heat_exchange);
-  tape_register_ix(0x005, item_conductor);
-  tape_register_ix(0x006, item_battery);
-  tape_register_ix(0x007, item_battery);
-  tape_register_ix(0x008, item_battery);
-  tape_register_ix(0x009, item_biosteel);
-  tape_register_ix(0x010, item_burner);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_furnace);
+  tape_register_ix(  2, item_furnace);
+  tape_register_ix(  3, item_furnace);
+  tape_register_ix(  4, item_heat_exchange);
+  tape_register_ix(  5, item_conductor);
+  tape_register_ix(  6, item_battery);
+  tape_register_ix(  7, item_battery);
+  tape_register_ix(  8, item_battery);
+  tape_register_ix(  9, item_biosteel);
+  tape_register_ix( 10, item_burner);
 tape_register_end()
 
 tape_register_begin(item_packer, 12) {
@@ -1155,18 +1155,18 @@ tape_register_begin(item_packer, 12) {
     .inputs = 11,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_neurosteel);
-  tape_register_ix(0x002, item_freezer);
-  tape_register_ix(0x003, item_freezer);
-  tape_register_ix(0x004, item_freezer);
-  tape_register_ix(0x005, item_worker);
-  tape_register_ix(0x006, item_storage);
-  tape_register_ix(0x007, item_storage);
-  tape_register_ix(0x008, item_storage);
-  tape_register_ix(0x009, item_neurosteel);
-  tape_register_ix(0x010, item_biosteel);
-  tape_register_ix(0x011, item_packer);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_neurosteel);
+  tape_register_ix(  2, item_freezer);
+  tape_register_ix(  3, item_freezer);
+  tape_register_ix(  4, item_freezer);
+  tape_register_ix(  5, item_worker);
+  tape_register_ix(  6, item_storage);
+  tape_register_ix(  7, item_storage);
+  tape_register_ix(  8, item_storage);
+  tape_register_ix(  9, item_neurosteel);
+  tape_register_ix( 10, item_biosteel);
+  tape_register_ix( 11, item_packer);
 tape_register_end()
 
 tape_register_begin(item_nomad, 14) {
@@ -1177,20 +1177,20 @@ tape_register_begin(item_nomad, 14) {
     .inputs = 13,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_biosteel);
-  tape_register_ix(0x001, item_pill);
-  tape_register_ix(0x002, item_brain);
-  tape_register_ix(0x003, item_memory);
-  tape_register_ix(0x004, item_pill);
-  tape_register_ix(0x005, item_packer);
-  tape_register_ix(0x006, item_storage);
-  tape_register_ix(0x007, item_storage);
-  tape_register_ix(0x008, item_storage);
-  tape_register_ix(0x009, item_pill);
-  tape_register_ix(0x010, item_biosteel);
-  tape_register_ix(0x011, item_m_lung);
-  tape_register_ix(0x012, item_m_lung);
-  tape_register_ix(0x013, item_nomad);
+  tape_register_ix(  0, item_biosteel);
+  tape_register_ix(  1, item_pill);
+  tape_register_ix(  2, item_brain);
+  tape_register_ix(  3, item_memory);
+  tape_register_ix(  4, item_pill);
+  tape_register_ix(  5, item_packer);
+  tape_register_ix(  6, item_storage);
+  tape_register_ix(  7, item_storage);
+  tape_register_ix(  8, item_storage);
+  tape_register_ix(  9, item_pill);
+  tape_register_ix( 10, item_biosteel);
+  tape_register_ix( 11, item_m_lung);
+  tape_register_ix( 12, item_m_lung);
+  tape_register_ix( 13, item_nomad);
 tape_register_end()
 
 tape_register_begin(item_elem_a, 1) {
@@ -1201,7 +1201,7 @@ tape_register_begin(item_elem_a, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_a);
+  tape_register_ix(  0, item_elem_a);
 tape_register_end()
 
 tape_register_begin(item_elem_b, 1) {
@@ -1212,7 +1212,7 @@ tape_register_begin(item_elem_b, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_b);
+  tape_register_ix(  0, item_elem_b);
 tape_register_end()
 
 tape_register_begin(item_elem_c, 1) {
@@ -1223,7 +1223,7 @@ tape_register_begin(item_elem_c, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_c);
+  tape_register_ix(  0, item_elem_c);
 tape_register_end()
 
 tape_register_begin(item_elem_d, 1) {
@@ -1234,7 +1234,7 @@ tape_register_begin(item_elem_d, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_d);
+  tape_register_ix(  0, item_elem_d);
 tape_register_end()
 
 tape_register_begin(item_elem_g, 1) {
@@ -1245,7 +1245,7 @@ tape_register_begin(item_elem_g, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_g);
+  tape_register_ix(  0, item_elem_g);
 tape_register_end()
 
 tape_register_begin(item_elem_h, 1) {
@@ -1256,7 +1256,7 @@ tape_register_begin(item_elem_h, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_h);
+  tape_register_ix(  0, item_elem_h);
 tape_register_end()
 
 tape_register_begin(item_elem_e, 1) {
@@ -1267,7 +1267,7 @@ tape_register_begin(item_elem_e, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_e);
+  tape_register_ix(  0, item_elem_e);
 tape_register_end()
 
 tape_register_begin(item_elem_f, 1) {
@@ -1278,5 +1278,5 @@ tape_register_begin(item_elem_f, 1) {
     .inputs = 0,
     .outputs = 1,
   };
-  tape_register_ix(0x000, item_elem_i);
+  tape_register_ix(  0, item_elem_i);
 tape_register_end()

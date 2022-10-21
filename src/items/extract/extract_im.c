@@ -207,7 +207,7 @@ static bool im_extract_flow(const void *state, struct flow *flow)
         .loops = extract->loops,
         .target = target,
         .state = ret.state,
-        .item = ret.state ? ret.item : ITEM_NIL,
+        .item = ret.state ? ret.item : item_nil,
         .tape_it = tape_packed_it(extract->tape),
         .tape_len = tape_len(tape),
         .rank = tapes_info(target)->rank,

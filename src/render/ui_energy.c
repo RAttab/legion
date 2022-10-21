@@ -240,9 +240,9 @@ static void ui_energy_update(struct ui_energy *ui)
     if (!chunk) { ui_energy_clear(ui); return; }
 
     const struct tech *tech = proxy_tech(render.proxy);
-    ui->show[ui_energy_solar] = tech_known(tech, ITEM_SOLAR);
-    ui->show[ui_energy_burner] = tech_known(tech, ITEM_BURNER);
-    ui->show[ui_energy_kwheel] = tech_known(tech, ITEM_KWHEEL);
+    ui->show[ui_energy_solar] = tech_known(tech, item_solar);
+    ui->show[ui_energy_burner] = tech_known(tech, item_burner);
+    ui->show[ui_energy_kwheel] = tech_known(tech, item_kwheel);
 
     if (!ui->histo.hover.active) {
         ui_set_nil(&ui->time_val);

@@ -3,7 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/item.c"
 #include "items/checks.c"
 #include "items/ui_tape.c"
 #include "items/populate.c"

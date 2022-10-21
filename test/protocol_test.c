@@ -64,7 +64,7 @@ void check(void)
 
         vm_word arg = mod->id;
         struct chunk *chunk = world_chunk(world, home);
-        bool ok = chunk_io(chunk, IO_MOD, 0, make_im_id(ITEM_BRAIN, 1), &arg, 1);
+        bool ok = chunk_io(chunk, IO_MOD, 0, make_im_id(item_brain, 1), &arg, 1);
         assert(ok);
     }
 

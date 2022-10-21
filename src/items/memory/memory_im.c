@@ -15,7 +15,7 @@
 static size_t im_memory_len(enum item type)
 {
     switch (type) {
-    case ITEM_MEMORY: { return im_memory_len_base; }
+    case item_memory: { return im_memory_len_base; }
     default: { assert(false); }
     }
 }

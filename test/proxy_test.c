@@ -37,7 +37,7 @@ void check_basics(void)
         struct lisp_ret ret = proxy_eval(proxy, eval, sizeof(eval));
         assert(ret.ok);
 
-        proxy_io(proxy, IO_MOD, make_im_id(ITEM_BRAIN, 1), &ret.value, 1);
+        proxy_io(proxy, IO_MOD, make_im_id(item_brain, 1), &ret.value, 1);
     }
 
     proxy_set_speed(proxy, speed_fast);

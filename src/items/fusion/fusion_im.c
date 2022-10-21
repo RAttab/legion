@@ -4,7 +4,7 @@
 */
 
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/types.h"
 #include "game/chunk.h"
 
@@ -126,7 +126,7 @@ static bool im_fusion_flow(const void *state, struct flow *flow)
     *flow = (struct flow) {
         .id = fusion->id,
         .loops = 1,
-        .target = ITEM_ENERGY,
+        .target = item_energy,
         .item = im_fusion_input_item,
         .rank = tapes_info(im_fusion_input_item)->rank + 1,
     };

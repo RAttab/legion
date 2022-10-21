@@ -8,7 +8,7 @@
 #include "ui/ui.h"
 #include "game/chunk.h"
 #include "game/energy.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "utils/vec.h"
 
 
@@ -281,7 +281,7 @@ static void ui_star_update_list(
 {
     ui_tree_reset(tree);
 
-    enum item item = ITEM_NIL;
+    enum item item = item_nil;
     ui_node parent = ui_node_nil;
     struct vec16 *ids = chunk_list_filter(chunk, filter);
 
@@ -357,7 +357,7 @@ static void ui_star_update(struct ui_star *ui)
     ui_star_update_list(chunk, &ui->control_list, im_list_control);
     ui_star_update_list(chunk, &ui->factory_list, im_list_factory);
 
-    ui_str_set_u64(&ui->pills_val.str, chunk_scan(chunk, ITEM_PILL));
+    ui_str_set_u64(&ui->pills_val.str, chunk_scan(chunk, item_pill));
 
     {
         struct workers workers = chunk_workers(chunk);
@@ -377,23 +377,23 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_scaled(&ui->produced_val.str, energy.produced);
         ui_str_set_scaled(&ui->stored_val.str, energy.item.battery.stored);
 
-        ui->solar.show = tech_known(tech, ITEM_SOLAR);
+        ui->solar.show = tech_known(tech, item_solar);
         ui_str_set_u64(&ui->solar.count.str, energy.solar);
         ui_str_set_scaled(&ui->solar.total_val.str, energy_prod_solar(&energy, &ui->star));
         energy.solar = 1;
         ui_str_set_scaled(&ui->solar.prod_val.str, energy_prod_solar(&energy, &ui->star));
 
-        ui->burner.show = tech_known(tech, ITEM_BURNER);
-        ui_str_set_u64(&ui->burner.count.str, chunk_scan(chunk, ITEM_BURNER));
+        ui->burner.show = tech_known(tech, item_burner);
+        ui_str_set_u64(&ui->burner.count.str, chunk_scan(chunk, item_burner));
         ui_str_set_scaled(&ui->burner.total_val.str, energy.item.burner);
 
-        ui->kwheel.show = tech_known(tech, ITEM_KWHEEL);
+        ui->kwheel.show = tech_known(tech, item_kwheel);
         ui_str_set_u64(&ui->kwheel.count.str, energy.kwheel);
         ui_str_set_scaled(&ui->kwheel.total_val.str, energy_prod_kwheel(&energy, &ui->star));
         energy.kwheel = 1;
         ui_str_set_scaled(&ui->kwheel.prod_val.str, energy_prod_kwheel(&energy, &ui->star));
 
-        ui->battery.show = tech_known(tech, ITEM_BATTERY);
+        ui->battery.show = tech_known(tech, item_battery);
         ui_str_set_u64(&ui->battery.count.str, energy.battery);
         ui_str_set_scaled(&ui->battery.total_val.str, energy_battery_cap(&energy));
         energy.battery = 1;
@@ -573,8 +573,8 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_label_render(&ui->energy_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
-        for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i) {
-            if (i == ITEMS_NATURAL_LEN-1)
+        for (size_t i = 0; i < items_natural_len; ++i) {
+            if (i == items_natural_len-1)
                 ui_layout_sep_x(&layout,
                         (ui_star_elems_col_len+1)*2 * ui_st.font.dim.w);
 

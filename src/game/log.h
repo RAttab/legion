@@ -8,7 +8,7 @@
 #include "common.h"
 #include "game/world.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 
 struct ack;
 

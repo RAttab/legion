@@ -11,7 +11,7 @@
 #include "game/tech.h"
 #include "game/tape.h"
 #include "game/save.h"
-#include "game/specs.h"
+#include "db/specs.h"
 #include "game/sector.h"
 #include "items/config.h"
 #include "items/legion/legion.h"
@@ -478,13 +478,13 @@ static struct coord world_populate_home(struct sector *sector)
     for (size_t i = 0; i < sector->stars_len; ++i) {
         const struct star *star = &sector->stars[i];
 
-        if (star_scan(star, ITEM_ENERGY) < 10000) continue;
-        if (star_scan(star, ITEM_ELEM_A) < 50000) continue;
-        if (star_scan(star, ITEM_ELEM_B) < 50000) continue;
-        if (star_scan(star, ITEM_ELEM_C) < 50000) continue;
-        if (star_scan(star, ITEM_ELEM_D) < 50000) continue;
-        if (star_scan(star, ITEM_ELEM_G) < 20000) continue;
-        if (star_scan(star, ITEM_ELEM_H) < 20000) continue;
+        if (star_scan(star, item_energy) < 10000) continue;
+        if (star_scan(star, item_elem_a) < 50000) continue;
+        if (star_scan(star, item_elem_b) < 50000) continue;
+        if (star_scan(star, item_elem_c) < 50000) continue;
+        if (star_scan(star, item_elem_d) < 50000) continue;
+        if (star_scan(star, item_elem_g) < 20000) continue;
+        if (star_scan(star, item_elem_h) < 20000) continue;
         return star->coord;
     }
     return coord_nil();
@@ -519,7 +519,7 @@ void world_populate_user(struct world *world, user_id id)
         struct chunk *chunk = world_chunk_alloc(world, user->home, user->id);
         assert(chunk);
 
-        for (const enum item *it = im_legion_cargo(ITEM_LEGION); *it; it++) {
+        for (const enum item *it = im_legion_cargo(item_legion); *it; it++) {
             bool ok = chunk_create(chunk, *it);
             assert(ok);
         }
@@ -532,6 +532,7 @@ void world_populate_user(struct world *world, user_id id)
 void world_populate(struct world *world)
 {
     im_populate_atoms(world->atoms);
+    io_populate_atoms(world->atoms);
     specs_populate_atoms(world->atoms);
     mods_populate(world->mods, world->atoms);
     world_populate_user(world, user_admin);

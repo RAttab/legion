@@ -4,7 +4,7 @@
 */
 
 #include "game/lanes.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "items/config.h"
 #include "utils/hset.h"
 #include "utils/hash.h"

@@ -7,6 +7,9 @@
 
 #include "tapes.h"
 
+#include <sys/mman.h>
+
+
 // -----------------------------------------------------------------------------
 // tape
 // -----------------------------------------------------------------------------
@@ -37,8 +40,8 @@ static const struct tape_info *tapes_info_for(enum item id)
 
     if (!tape->inputs) {
         info->rank = 1;
-        if (id >= ITEM_NATURAL_FIRST && id < ITEM_SYNTH_FIRST)
-            info->elems[id - ITEM_NATURAL_FIRST] = 1;
+        if (id >= items_natural_first && id < items_synth_first)
+            info->elems[id - items_natural_first] = 1;
         return info;
     }
 
@@ -46,7 +49,7 @@ static const struct tape_info *tapes_info_for(enum item id)
         const struct tape_info *input = tapes_info_for(tape->tape[i]);
         info->rank = legion_max(info->rank, input->rank + 1);
 
-        for (size_t i = 0; i < ITEMS_NATURAL_LEN; ++i)
+        for (size_t i = 0; i < items_natural_len; ++i)
             info->elems[i] += input->elems[i];
 
         tape_set_union(&info->reqs, &input->reqs);
@@ -59,15 +62,21 @@ static const struct tape_info *tapes_info_for(enum item id)
 
 void tapes_populate(void)
 {
+    const size_t len = 2 * s_page_len;
+    void *it = mmap(0, len, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if (it == MAP_FAILED) fail_errno("unable to mmap tapes");
+    void *const end = it + len;
+
 
 #define tape_register_begin(_item, _len)                                \
     {                                                                   \
-        struct tape **tape = &(tapes.index[_item]);                     \
-        *tape = malloc(sizeof(struct tape) + _len * sizeof(enum item)); \
-        **tape = (struct tape)
-    
+        struct tape *tape = tapes.index[_item] = it;                    \
+        it += sizeof(struct tape) + _len * sizeof(enum item);           \
+        assert(it <= end);                                              \
+        *tape = (struct tape)
+
 #define tape_register_ix(_ix, _item) \
-    (*tape)->tape[_ix] = _item
+    tape->tape[_ix] = _item
 
 #define tape_register_end() }
 
@@ -76,6 +85,7 @@ void tapes_populate(void)
 #undef tape_register_begin
 #undef tape_register_end
 
-    for (enum item item = 0; item < ITEM_MAX; ++item)
+
+    for (enum item item = 0; item < items_max; ++item)
         (void) tapes_info_for(item);
 }

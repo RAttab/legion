@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "game/tape.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "vm/vm.h"
 
 

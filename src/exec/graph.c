@@ -5,7 +5,8 @@
 
 #include "common.h"
 #include "game/tape.h"
-#include "items/item.h"
+#include "db/items.h"
+#include "db/tapes.h"
 #include "items/config.h"
 #include "utils/htable.h"
 #include "render/render.h"
@@ -92,7 +93,7 @@ void graph_graph(struct graph *graph)
     struct set *outputs = set_alloc();
     htable_reserve(&graph->graph, 0xFF);
 
-    for (enum item item = 0; item < ITEM_MAX; ++item) {
+    for (enum item item = 0; item < items_max; ++item) {
         const struct tape *tape = tapes_get(item);
         if (!tape) continue;
         set_put(graph->items, item);
@@ -148,13 +149,13 @@ void graph_dot(struct graph *graph)
 
     graph_write(graph, "strict digraph {\n");
 
-    graph_color(graph, "blue",   ITEM_NATURAL_FIRST, ITEM_NATURAL_LAST);
-    graph_color(graph, "purple", ITEM_SYNTH_FIRST,   ITEM_SYNTH_LAST);
-    graph_color(graph, "green",  ITEM_PASSIVE_FIRST, ITEM_PASSIVE_LAST);
-    graph_color(graph, "red",    ITEM_ACTIVE_FIRST,  ITEM_LOGISTICS_LAST);
+    graph_color(graph, "blue",   items_natural_first, items_natural_last);
+    graph_color(graph, "purple", items_synth_first,   items_synth_last);
+    graph_color(graph, "green",  items_passive_first, items_passive_last);
+    graph_color(graph, "red",    items_active_first,  items_logistics_last);
 
     char label[item_str_len] = {0};
-    for (enum item it = 0; it < ITEM_MAX; ++it) {
+    for (enum item it = 0; it < items_max; ++it) {
         if (!set_test(graph->items, it)) continue;
         item_str(it, label, sizeof(label));
         graph_writef(graph, "subgraph { \"%02x\" [label=\"%02x:%s\"] }\n", it, it, label);

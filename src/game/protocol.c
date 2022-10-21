@@ -100,7 +100,7 @@ static void ack_save(const struct ack *ack, struct save *save)
 
     for (size_t i = 0; i < array_len(cack->active); ++i) {
         if (!cack->active[i]) continue;
-        save_write_value(save, (enum item) (ITEM_ACTIVE_FIRST + i));
+        save_write_value(save, (enum item) (items_active_first + i));
         save_write_value(save, cack->active[i]);
     }
     save_write_value(save, (enum item) 0);
@@ -142,7 +142,7 @@ static struct ack *ack_load(struct save *save)
         if (!item) break;
 
         hash_val hash = save_read_type(save, typeof(hash));
-        cack->active[item - ITEM_ACTIVE_FIRST] = hash;
+        cack->active[item - items_active_first] = hash;
     }
 
     if (!save_read_magic(save, save_magic_ack)) { free(ack); return NULL; }

@@ -11,7 +11,7 @@
 #include "common.h"
 #include "game/id.h"
 #include "items/io.h"
-#include "items/item.h"
+#include "db/items.h"
 #include "vm/vm.h"
 
 struct im_config;

@@ -8,6 +8,9 @@
 #include "common.h"
 #include "vm/vm.h"
 
+struct atoms;
+struct im_config;
+
 // -----------------------------------------------------------------------------
 // db
 // -----------------------------------------------------------------------------
@@ -22,6 +25,15 @@ extern im_list im_list_control;
 extern im_list im_list_factory;
 
 const struct im_config *im_config(enum item item);
+inline const struct im_config *im_config_assert(enum item item)
+{
+    const struct im_config *config = im_config(item);
+    assert(config);
+    return config;
+}
+
+void im_populate(void);
+void im_populate_atoms(struct atoms *);
 
 
 // -----------------------------------------------------------------------------
@@ -72,3 +84,5 @@ enum { item_str_len = 16 };
 
 size_t item_str(enum item item, char *dst, size_t len);
 const char *item_str_c(enum item item);
+
+
