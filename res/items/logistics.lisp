@@ -23,7 +23,7 @@
 
  (specs
   (lab-bits u8 16) (lab-work work 32) (lab-energy energy 16)
-  (energy-div energy 1024)
+  (energy-div energy 4096)
   (energy fn))
 
  (tape (work 6) (energy 16) (host item-assembly)
@@ -51,7 +51,8 @@
 
 (battery
  (info (type logistics))
- (specs (lab-bits u8 16) (lab-work work 24) (lab-energy energy 32))
+ (specs (lab-bits u8 16) (lab-work work 24) (lab-energy energy 32)
+	(storage-cap energy 8))
  (tape (work 4) (energy 8) (host item-assembly)
        (in item-bone
 	   item-nerve
@@ -65,4 +66,7 @@
 ;; t3
 ;; -----------------------------------------------------------------------------
 
-(kwheel (info (type logistics)))
+(kwheel
+ (info (type logistics))
+ (specs (lab-bits u8 64) (lab-work work 128) (lab-energy energy 256)
+	(energy-div energy 100)))

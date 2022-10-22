@@ -152,7 +152,7 @@ static const im_energy im_worker_lab_energy = 0x8;
 static const uint8_t im_solar_lab_bits = 0x10;
 static const im_work im_solar_lab_work = 0x20;
 static const im_energy im_solar_lab_energy = 0x10;
-static const im_energy im_solar_energy_div = 0x400;
+static const im_energy im_solar_energy_div = 0x1000;
 
 static const uint8_t im_pill_lab_bits = 0x10;
 static const im_work im_pill_lab_work = 0x20;
@@ -161,6 +161,12 @@ static const im_energy im_pill_lab_energy = 0x20;
 static const uint8_t im_battery_lab_bits = 0x10;
 static const im_work im_battery_lab_work = 0x18;
 static const im_energy im_battery_lab_energy = 0x20;
+static const im_energy im_battery_storage_cap = 0x8;
+
+static const uint8_t im_kwheel_lab_bits = 0x40;
+static const im_work im_kwheel_lab_work = 0x80;
+static const im_energy im_kwheel_lab_energy = 0x100;
+static const im_energy im_kwheel_energy_div = 0x64;
 
 static const uint8_t im_elem_m_lab_bits = 0x10;
 static const im_work im_elem_m_lab_work = 0x80;

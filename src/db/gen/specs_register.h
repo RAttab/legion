@@ -162,6 +162,12 @@ spec_register_var(spec_pill_lab_energy, "spec-pill-lab-energy", im_pill_lab_ener
 spec_register_var(spec_battery_lab_bits, "spec-battery-lab-bits", im_battery_lab_bits);
 spec_register_var(spec_battery_lab_work, "spec-battery-lab-work", im_battery_lab_work);
 spec_register_var(spec_battery_lab_energy, "spec-battery-lab-energy", im_battery_lab_energy);
+spec_register_var(spec_battery_storage_cap, "spec-battery-storage-cap", im_battery_storage_cap);
+
+spec_register_var(spec_kwheel_lab_bits, "spec-kwheel-lab-bits", im_kwheel_lab_bits);
+spec_register_var(spec_kwheel_lab_work, "spec-kwheel-lab-work", im_kwheel_lab_work);
+spec_register_var(spec_kwheel_lab_energy, "spec-kwheel-lab-energy", im_kwheel_lab_energy);
+spec_register_var(spec_kwheel_energy_div, "spec-kwheel-energy-div", im_kwheel_energy_div);
 
 spec_register_var(spec_elem_m_lab_bits, "spec-elem-m-lab-bits", im_elem_m_lab_bits);
 spec_register_var(spec_elem_m_lab_work, "spec-elem-m-lab-work", im_elem_m_lab_work);

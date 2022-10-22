@@ -16,7 +16,7 @@
 (defconst worker-count 20)
 (defconst lab-count 4)
 (defconst active-count 1)
-(defconst energy-target 128)
+(defconst energy-target 64)
 (defconst port-item-count 255)
 
 ;; Sanity checks

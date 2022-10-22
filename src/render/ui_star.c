@@ -9,6 +9,7 @@
 #include "game/chunk.h"
 #include "game/energy.h"
 #include "db/items.h"
+#include "db/specs.h"
 #include "utils/vec.h"
 
 
@@ -61,6 +62,7 @@ struct ui_star
     struct ui_label consumed, consumed_val;
     struct ui_label produced, produced_val;
     struct ui_label stored, stored_val;
+    struct ui_star_energy fusion;
     struct ui_star_energy solar;
     struct ui_star_energy kwheel;
     struct ui_star_energy burner;
@@ -140,6 +142,15 @@ struct ui_star *ui_star_new(void)
         .produced_val = ui_label_new(ui_str_v(str_scaled_len)),
         .stored = ui_label_new(ui_str_c("- stored:     ")),
         .stored_val = ui_label_new(ui_str_v(str_scaled_len)),
+
+        .fusion = (struct ui_star_energy) {
+            .name = ui_label_new(ui_str_c("fusion:       ")),
+            .count = ui_label_new(ui_str_v(3)),
+            .prod = ui_label_new(ui_str_c("- production: ")),
+            .prod_val = ui_label_new(ui_str_v(str_scaled_len)),
+            .total = ui_label_new(ui_str_c("- total:      ")),
+            .total_val = ui_label_new(ui_str_v(str_scaled_len)),
+        },
 
         .solar = (struct ui_star_energy) {
             .name = ui_label_new(ui_str_c("solar:        ")),
@@ -238,6 +249,13 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->produced_val);
     ui_label_free(&ui->stored);
     ui_label_free(&ui->stored_val);
+
+    ui_label_free(&ui->fusion.name);
+    ui_label_free(&ui->fusion.count);
+    ui_label_free(&ui->fusion.prod);
+    ui_label_free(&ui->fusion.prod_val);
+    ui_label_free(&ui->fusion.total);
+    ui_label_free(&ui->fusion.total_val);
 
     ui_label_free(&ui->solar.name);
     ui_label_free(&ui->solar.count);
@@ -338,6 +356,7 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_scaled(&ui->produced_val.str, 0);
         ui_str_set_scaled(&ui->stored_val.str, 0);
 
+        ui->fusion.show = false;
         ui->solar.show = false;
         ui->burner.show = false;
         ui->kwheel.show = false;
@@ -377,6 +396,11 @@ static void ui_star_update(struct ui_star *ui)
         ui_str_set_scaled(&ui->produced_val.str, energy.produced);
         ui_str_set_scaled(&ui->stored_val.str, energy.item.battery.stored);
 
+        ui->fusion.show = tech_known(tech, item_fusion);
+        ui_str_set_u64(&ui->fusion.count.str, chunk_scan(chunk, item_fusion));
+        ui_str_set_scaled(&ui->fusion.total_val.str, energy.item.fusion.produced);
+        ui_str_set_scaled(&ui->fusion.prod_val.str, im_fusion_energy_output);
+
         ui->solar.show = tech_known(tech, item_solar);
         ui_str_set_u64(&ui->solar.count.str, energy.solar);
         ui_str_set_scaled(&ui->solar.total_val.str, energy_prod_solar(&energy, &ui->star));
@@ -396,8 +420,7 @@ static void ui_star_update(struct ui_star *ui)
         ui->battery.show = tech_known(tech, item_battery);
         ui_str_set_u64(&ui->battery.count.str, energy.battery);
         ui_str_set_scaled(&ui->battery.total_val.str, energy_battery_cap(&energy));
-        energy.battery = 1;
-        ui_str_set_scaled(&ui->battery.prod_val.str, energy_battery_cap(&energy));
+        ui_str_set_scaled(&ui->battery.prod_val.str, im_battery_storage_cap);
     }
 }
 
@@ -646,6 +669,19 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_label_render(&ui->stored, &layout, renderer);
         ui_label_render(&ui->stored_val, &layout, renderer);
         ui_layout_next_row(&layout);
+
+        if (ui->fusion.show) {
+            ui_layout_sep_row(&layout);
+            ui_label_render(&ui->fusion.name, &layout, renderer);
+            ui_label_render(&ui->fusion.count, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->fusion.prod, &layout, renderer);
+            ui_label_render(&ui->fusion.prod_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+            ui_label_render(&ui->fusion.total, &layout, renderer);
+            ui_label_render(&ui->fusion.total_val, &layout, renderer);
+            ui_layout_next_row(&layout);
+        }
 
         if (ui->solar.show) {
             ui_layout_sep_row(&layout);

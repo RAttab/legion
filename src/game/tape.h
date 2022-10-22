@@ -10,8 +10,6 @@
 #include "db/items.h"
 #include "utils/bits.h"
 
-struct atoms;
-
 
 // -----------------------------------------------------------------------------
 // types

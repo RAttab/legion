@@ -163,6 +163,12 @@ spec_pill_lab_energy = make_spec(item_pill, spec_lab_energy),
 spec_battery_lab_bits = make_spec(item_battery, spec_lab_bits),
 spec_battery_lab_work = make_spec(item_battery, spec_lab_work),
 spec_battery_lab_energy = make_spec(item_battery, spec_lab_energy),
+spec_battery_storage_cap = make_spec(item_battery, 0x0),
+
+spec_kwheel_lab_bits = make_spec(item_kwheel, spec_lab_bits),
+spec_kwheel_lab_work = make_spec(item_kwheel, spec_lab_work),
+spec_kwheel_lab_energy = make_spec(item_kwheel, spec_lab_energy),
+spec_kwheel_energy_div = make_spec(item_kwheel, 0x0),
 
 spec_elem_m_lab_bits = make_spec(item_elem_m, spec_lab_bits),
 spec_elem_m_lab_work = make_spec(item_elem_m, spec_lab_work),
