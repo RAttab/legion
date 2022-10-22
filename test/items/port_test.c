@@ -36,7 +36,7 @@ void test_port(void)
     chunk_create(dst_chunk, item_worker);
 
     const im_id sys_id = 0;
-    const vm_word item_elem_a = item_elem_a;
+    const vm_word im_elem_a = item_elem_a;
 
     // need to make one step for the items to be created.
     world_step(world);
@@ -47,8 +47,8 @@ void test_port(void)
     chunk_lanes_arrive(src_chunk, item_pill, dst, &pill_data, 1);
     chunk_lanes_arrive(dst_chunk, item_pill, src, &pill_data, 1);
 
-    chunk_io(src_chunk, io_item, sys_id, storage_id, &item_elem_a, 1);
-    chunk_io(dst_chunk, io_item, sys_id, storage_id, &item_elem_a, 1);
+    chunk_io(src_chunk, io_item, sys_id, storage_id, &im_elem_a, 1);
+    chunk_io(dst_chunk, io_item, sys_id, storage_id, &im_elem_a, 1);
 
     const vm_word dst_data = coord_to_u64(dst);
     const vm_word src_data = coord_to_u64(src);
