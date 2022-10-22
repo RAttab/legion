@@ -264,6 +264,10 @@ void ui_histo_render(
                 sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                                     .x = pos.x, .y = pos.y, .w = w, .h = h }));
 
+                rgba_render(histo->s.border, renderer);
+                sdl_err(SDL_RenderDrawRect(renderer, &(SDL_Rect) {
+                                    .x = pos.x, .y = pos.y, .w = w, .h = h }));
+
                 pos.x += w;
             }
         }

@@ -686,7 +686,7 @@ struct ui_histo_series
 struct ui_histo_style
 {
     struct dim pad;
-    struct rgba edge;
+    struct rgba edge, border;
     struct { int16_t h, pad; } row;
     struct { struct rgba fg, bg; } hover;
     struct { struct dim pad; struct rgba fg; } axes;

@@ -263,6 +263,7 @@ void ui_style_default(void)
     s->histo = (struct ui_histo_style) {
         .pad = make_dim(4, 4),
         .edge = make_rgba(0xFF, 0x00, 0x00, 0x33),
+        .border = rgba_black(),
 
         .row = { .h = 8, .pad = 4 },
 
