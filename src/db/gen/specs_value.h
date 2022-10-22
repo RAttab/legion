@@ -193,14 +193,17 @@ static const im_energy im_scanner_lab_energy = 0x8;
 static const uint8_t im_legion_lab_bits = 0x8;
 static const im_work im_legion_lab_work = 0x8;
 static const im_energy im_legion_lab_energy = 0x8;
+static const uint16_t im_legion_travel_speed = 0x64;
 
 static const uint8_t im_transmit_lab_bits = 0x8;
 static const im_work im_transmit_lab_work = 0x8;
 static const im_energy im_transmit_lab_energy = 0x8;
+static const uint16_t im_transmit_launch_speed = 0x1f4;
 
 static const uint8_t im_receive_lab_bits = 0x8;
 static const im_work im_receive_lab_work = 0x8;
 static const im_energy im_receive_lab_energy = 0x8;
+enum { im_receive_buffer_max = 0x1 };
 
 static const uint8_t im_deploy_lab_bits = 0x8;
 static const im_work im_deploy_lab_work = 0x8;
@@ -233,10 +236,12 @@ static const im_energy im_lab_lab_energy = 0x8;
 static const uint8_t im_storage_lab_bits = 0x8;
 static const im_work im_storage_lab_work = 0x8;
 static const im_energy im_storage_lab_energy = 0x8;
+static const uint16_t im_storage_max = 0x1000;
 
 static const uint8_t im_port_lab_bits = 0x8;
 static const im_work im_port_lab_work = 0x8;
 static const im_energy im_port_lab_energy = 0x8;
+static const uint16_t im_port_launch_speed = 0x64;
 
 static const uint8_t im_condenser_lab_bits = 0x8;
 static const im_work im_condenser_lab_work = 0x8;
@@ -245,6 +250,9 @@ static const im_energy im_condenser_lab_energy = 0x8;
 static const uint8_t im_collider_lab_bits = 0x8;
 static const im_work im_collider_lab_work = 0x8;
 static const im_energy im_collider_lab_energy = 0x8;
+static const uint8_t im_collider_grow_max = 0x40;
+static const enum item im_collider_grow_item = item_accelerator;
+static const enum item im_collider_junk_item = item_elem_o;
 
 static const uint8_t im_burner_lab_bits = 0x8;
 static const im_work im_burner_lab_work = 0x8;
@@ -257,6 +265,10 @@ static const im_energy im_packer_lab_energy = 0x8;
 static const uint8_t im_nomad_lab_bits = 0x8;
 static const im_work im_nomad_lab_work = 0x8;
 static const im_energy im_nomad_lab_energy = 0x8;
+static const uint16_t im_nomad_travel_speed = 0x64;
+enum { im_nomad_memory_len = 0x3 };
+enum { im_nomad_cargo_len = 0xc };
+static const uint8_t im_nomad_cargo_max = 0xff;
 
 static const uint8_t im_elem_a_lab_bits = 0x8;
 static const im_work im_elem_a_lab_work = 0x1;

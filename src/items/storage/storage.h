@@ -15,8 +15,6 @@ struct im_config;
 // storage
 // -----------------------------------------------------------------------------
 
-enum { im_storage_max = 4096 };
-
 struct legion_packed im_storage
 {
     im_id id;

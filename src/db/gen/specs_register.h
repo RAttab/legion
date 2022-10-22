@@ -186,22 +186,27 @@ spec_register_var(spec_brain_lab_energy, "spec-brain-lab-energy", im_brain_lab_e
 spec_register_var(spec_prober_lab_bits, "spec-prober-lab-bits", im_prober_lab_bits);
 spec_register_var(spec_prober_lab_work, "spec-prober-lab-work", im_prober_lab_work);
 spec_register_var(spec_prober_lab_energy, "spec-prober-lab-energy", im_prober_lab_energy);
+spec_register_fn(spec_prober_work_cap, "spec-prober-work-cap", spec_prober_work_cap_fn);
 
 spec_register_var(spec_scanner_lab_bits, "spec-scanner-lab-bits", im_scanner_lab_bits);
 spec_register_var(spec_scanner_lab_work, "spec-scanner-lab-work", im_scanner_lab_work);
 spec_register_var(spec_scanner_lab_energy, "spec-scanner-lab-energy", im_scanner_lab_energy);
+spec_register_fn(spec_scanner_work_cap, "spec-scanner-work-cap", spec_scanner_work_cap_fn);
 
 spec_register_var(spec_legion_lab_bits, "spec-legion-lab-bits", im_legion_lab_bits);
 spec_register_var(spec_legion_lab_work, "spec-legion-lab-work", im_legion_lab_work);
 spec_register_var(spec_legion_lab_energy, "spec-legion-lab-energy", im_legion_lab_energy);
+spec_register_var(spec_legion_travel_speed, "spec-legion-travel-speed", im_legion_travel_speed);
 
 spec_register_var(spec_transmit_lab_bits, "spec-transmit-lab-bits", im_transmit_lab_bits);
 spec_register_var(spec_transmit_lab_work, "spec-transmit-lab-work", im_transmit_lab_work);
 spec_register_var(spec_transmit_lab_energy, "spec-transmit-lab-energy", im_transmit_lab_energy);
+spec_register_var(spec_transmit_launch_speed, "spec-transmit-launch-speed", im_transmit_launch_speed);
 
 spec_register_var(spec_receive_lab_bits, "spec-receive-lab-bits", im_receive_lab_bits);
 spec_register_var(spec_receive_lab_work, "spec-receive-lab-work", im_receive_lab_work);
 spec_register_var(spec_receive_lab_energy, "spec-receive-lab-energy", im_receive_lab_energy);
+spec_register_var(spec_receive_buffer_max, "spec-receive-buffer-max", im_receive_buffer_max);
 
 spec_register_var(spec_deploy_lab_bits, "spec-deploy-lab-bits", im_deploy_lab_bits);
 spec_register_var(spec_deploy_lab_work, "spec-deploy-lab-work", im_deploy_lab_work);
@@ -234,10 +239,12 @@ spec_register_var(spec_lab_lab_energy, "spec-lab-lab-energy", im_lab_lab_energy)
 spec_register_var(spec_storage_lab_bits, "spec-storage-lab-bits", im_storage_lab_bits);
 spec_register_var(spec_storage_lab_work, "spec-storage-lab-work", im_storage_lab_work);
 spec_register_var(spec_storage_lab_energy, "spec-storage-lab-energy", im_storage_lab_energy);
+spec_register_var(spec_storage_max, "spec-storage-max", im_storage_max);
 
 spec_register_var(spec_port_lab_bits, "spec-port-lab-bits", im_port_lab_bits);
 spec_register_var(spec_port_lab_work, "spec-port-lab-work", im_port_lab_work);
 spec_register_var(spec_port_lab_energy, "spec-port-lab-energy", im_port_lab_energy);
+spec_register_var(spec_port_launch_speed, "spec-port-launch-speed", im_port_launch_speed);
 
 spec_register_var(spec_condenser_lab_bits, "spec-condenser-lab-bits", im_condenser_lab_bits);
 spec_register_var(spec_condenser_lab_work, "spec-condenser-lab-work", im_condenser_lab_work);
@@ -246,10 +253,16 @@ spec_register_var(spec_condenser_lab_energy, "spec-condenser-lab-energy", im_con
 spec_register_var(spec_collider_lab_bits, "spec-collider-lab-bits", im_collider_lab_bits);
 spec_register_var(spec_collider_lab_work, "spec-collider-lab-work", im_collider_lab_work);
 spec_register_var(spec_collider_lab_energy, "spec-collider-lab-energy", im_collider_lab_energy);
+spec_register_var(spec_collider_grow_max, "spec-collider-grow-max", im_collider_grow_max);
+spec_register_var(spec_collider_grow_item, "spec-collider-grow-item", im_collider_grow_item);
+spec_register_var(spec_collider_junk_item, "spec-collider-junk-item", im_collider_junk_item);
+spec_register_fn(spec_collider_output_rate, "spec-collider-output-rate", spec_collider_output_rate_fn);
 
 spec_register_var(spec_burner_lab_bits, "spec-burner-lab-bits", im_burner_lab_bits);
 spec_register_var(spec_burner_lab_work, "spec-burner-lab-work", im_burner_lab_work);
 spec_register_var(spec_burner_lab_energy, "spec-burner-lab-energy", im_burner_lab_energy);
+spec_register_fn(spec_burner_energy, "spec-burner-energy", spec_burner_energy_fn);
+spec_register_fn(spec_burner_work_cap, "spec-burner-work-cap", spec_burner_work_cap_fn);
 
 spec_register_var(spec_packer_lab_bits, "spec-packer-lab-bits", im_packer_lab_bits);
 spec_register_var(spec_packer_lab_work, "spec-packer-lab-work", im_packer_lab_work);
@@ -258,6 +271,10 @@ spec_register_var(spec_packer_lab_energy, "spec-packer-lab-energy", im_packer_la
 spec_register_var(spec_nomad_lab_bits, "spec-nomad-lab-bits", im_nomad_lab_bits);
 spec_register_var(spec_nomad_lab_work, "spec-nomad-lab-work", im_nomad_lab_work);
 spec_register_var(spec_nomad_lab_energy, "spec-nomad-lab-energy", im_nomad_lab_energy);
+spec_register_var(spec_nomad_travel_speed, "spec-nomad-travel-speed", im_nomad_travel_speed);
+spec_register_var(spec_nomad_memory_len, "spec-nomad-memory-len", im_nomad_memory_len);
+spec_register_var(spec_nomad_cargo_len, "spec-nomad-cargo-len", im_nomad_cargo_len);
+spec_register_var(spec_nomad_cargo_max, "spec-nomad-cargo-max", im_nomad_cargo_max);
 
 spec_register_var(spec_elem_a_lab_bits, "spec-elem-a-lab-bits", im_elem_a_lab_bits);
 spec_register_var(spec_elem_a_lab_work, "spec-elem-a-lab-work", im_elem_a_lab_work);

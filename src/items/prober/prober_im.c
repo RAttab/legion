@@ -33,6 +33,11 @@ static void im_prober_reset(struct im_prober *prober)
     prober->work.cap = 0;
 }
 
+im_work im_prober_work_cap(struct coord origin, struct coord target) {
+    uint64_t delta = coord_dist(origin, target) / im_prober_div;
+    return delta > UINT8_MAX ? UINT8_MAX : delta;
+}
+
 
 // -----------------------------------------------------------------------------
 // step
@@ -91,13 +96,13 @@ static void im_prober_io_probe(
     prober->item = item;
     prober->coord = coord;
 
-    uint64_t delta = coord_dist(origin, coord) / im_prober_div;
-    if (delta >= UINT8_MAX) {
+    uint8_t work = im_prober_work_cap(origin, coord);
+    if (work == UINT8_MAX) {
         im_prober_reset(prober);
         return chunk_log(chunk, prober->id, io_scan, ioe_out_of_range);
     }
 
-    prober->work.cap = prober->work.left = delta;
+    prober->work.cap = prober->work.left = work;
     prober->result = im_prober_empty;
 }
 

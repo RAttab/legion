@@ -109,7 +109,7 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
 
     ui_str_set_u64(&ui->size_val.str, collider->size);
 
-    unsigned pct = (100 * im_collider_rate(collider->size)) / im_collider_size_max;
+    unsigned pct = (100 * im_collider_rate(collider->size)) / im_collider_grow_max;
     ui_str_set_u64(&ui->rate_val.str, pct);
 
     ui->state.op = collider->op;

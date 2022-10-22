@@ -76,7 +76,8 @@
 
 (storage
  (info (type active) (list factory))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8)
+	(max u16 4096))
  (tape (work 8) (energy 16) (host item-assembly)
   (in (item-bone 2)
       (item-vein 3)
@@ -85,7 +86,8 @@
 
 (port
  (info (type active) (list factory))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8)
+	(launch-speed u16 100))
  (tape (work 24) (energy 32) (host item-assembly)
   (in (item-field 5)
       item-nodule
@@ -109,7 +111,11 @@
 
 (collider
  (info (type active) (list factory))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8)
+	(grow-max u8 64)
+	(grow-item item !item_accelerator)
+	(junk-item item !item-elem-o)
+	(output-rate fn))
  (tape (work 16) (energy 128) (host item-assembly)
   (in item-brain
       item-nodule
@@ -122,7 +128,9 @@
 
 (burner
  (info (type active) (list factory))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8)
+	(energy fn)
+	(work-cap fn))
  (tape (work 20) (energy 112) (host item-assembly)
   (in item-biosteel
       (item-furnace 3)
@@ -147,7 +155,11 @@
 
 (nomad
  (info (type active) (list factory))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8)
+	(travel-speed u16 100)
+	(memory-len enum 3)
+	(cargo-len enum 12)
+	(cargo-max u8 255))
  (tape (work 42) (energy 256) (host item-assembly)
   (in item-biosteel
       item-pill

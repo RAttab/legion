@@ -36,14 +36,6 @@ struct legion_packed im_nomad_cargo
 
 static_assert(sizeof(struct im_nomad_cargo) == 2);
 
-enum
-{
-    im_nomad_speed = 100,
-    im_nomad_memory_len = 3,
-    im_nomad_cargo_len = 12,
-    im_nomad_cargo_max = UINT8_MAX,
-};
-
 
 struct legion_packed im_nomad
 {

@@ -16,8 +16,6 @@ struct im_config;
 // port
 // -----------------------------------------------------------------------------
 
-enum { im_port_speed = 100 };
-
 enum legion_packed im_port_state
 {
     im_port_idle = 0,

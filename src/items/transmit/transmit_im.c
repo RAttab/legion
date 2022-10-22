@@ -87,7 +87,7 @@ static void im_transmit_io_transmit(
         return chunk_log(chunk, transmit->id, io_transmit, ioe_invalid_state);
 
     const size_t packet_len = legion_min(len, (size_t) im_packet_max);
-    const size_t packet_speed = im_transmit_speed;
+    const size_t packet_speed = im_transmit_launch_speed;
 
     vm_word packet[1 + packet_len];
     packet[0] = im_packet_pack(transmit->channel, packet_len);

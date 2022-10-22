@@ -33,13 +33,17 @@ static void im_scanner_reset(struct im_scanner *scanner)
     scanner->work.cap = 0;
 }
 
+im_work im_scanner_work_cap(struct coord origin, struct coord target)
+{
+    uint64_t delta = coord_dist(origin, target) / im_scanner_div;
+    return delta < UINT8_MAX ? delta : UINT8_MAX;
+}
+
 static uint8_t im_scanner_work(struct im_scanner *scanner, struct chunk *chunk)
 {
     struct coord origin = chunk_star(chunk)->coord;
     struct coord next = world_scan_peek(chunk_world(chunk), &scanner->it);
-
-    uint64_t delta = coord_dist(origin, next) / im_scanner_div;
-    return delta < UINT8_MAX ? delta : UINT8_MAX;
+    return im_scanner_work_cap(origin, next);
 }
 
 

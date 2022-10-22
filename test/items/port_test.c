@@ -4,6 +4,7 @@
 */
 
 #include "items/port/port.h"
+#include "db/specs.h"
 
 
 void test_port(void)
@@ -71,7 +72,7 @@ void test_port(void)
         chunk_io(src_chunk, io_reset, sys_id, port_id, NULL, 0);
         chunk_io(dst_chunk, io_reset, sys_id, port_id, NULL, 0);
 
-        wait_travel(world, im_port_speed, src, dst);
+        wait_travel(world, im_port_launch_speed, src, dst);
 
         chunk_io(src_chunk, io_item, sys_id, port_id, item_a_data, array_len(item_a_data));
         chunk_io(dst_chunk, io_item, sys_id, port_id, item_a_data, array_len(item_a_data));
@@ -87,6 +88,6 @@ void test_port(void)
         chunk_io(src_chunk, io_reset, sys_id, port_id, NULL, 0);
         chunk_io(dst_chunk, io_reset, sys_id, port_id, NULL, 0);
 
-        wait_travel(world, im_port_speed, src, dst);
+        wait_travel(world, im_port_launch_speed, src, dst);
     }
 }

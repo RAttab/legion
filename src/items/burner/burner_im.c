@@ -29,6 +29,35 @@ static void im_burner_reset(struct im_burner *burner, struct chunk *chunk)
 }
 
 
+im_energy im_burner_energy(enum item item)
+{
+    if (item_is_elem(item)) return item;
+
+
+    const struct tape_info *info = tapes_info(item);
+    if (!info) return 0;
+
+    im_energy output = 0;
+    for (enum item i = 0; i < array_len(info->elems); ++i)
+        if (info->elems[i]) output += i;
+
+    return output;
+}
+
+im_work im_burner_work_cap(enum item item)
+{
+    size_t sum = 1;
+    if (!item_is_elem(item)) {
+        const struct tape_info *info = tapes_info(item);
+        if (!info) return 0;
+
+        for (enum item i = 0; i < array_len(info->elems); ++i)
+            if (info->elems[i]) sum += info->elems[i];
+    }
+
+    return legion_max(1UL, u64_log2(sum));
+}
+
 // -----------------------------------------------------------------------------
 // step
 // -----------------------------------------------------------------------------
@@ -114,19 +143,8 @@ static void im_burner_io_item(
     burner->op = im_burner_in;
     burner->item = item;
     burner->loops = im_loops_io(len > 1 ? args[1] : im_loops_inf);
-
-    size_t sum = 1;
-    if (item_is_elem(item)) burner->output = item;
-    else {
-        const struct tape_info *info = tapes_info(item);
-        for (enum item i = 0; i < array_len(info->elems); ++i) {
-            if (!info->elems[i]) continue;
-            sum += info->elems[i];
-            burner->output += i;
-        }
-    }
-
-    burner->work.cap = legion_max(1UL, u64_log2(sum));
+    burner->output = im_burner_energy(item);
+    burner->work.cap = im_burner_work_cap(item);
 }
 
 static void im_burner_io(

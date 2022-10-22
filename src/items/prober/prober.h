@@ -36,3 +36,5 @@ struct legion_packed im_prober
 static_assert(sizeof(struct im_prober) == 24);
 
 void im_prober_config(struct im_config *);
+
+im_work im_prober_work_cap(struct coord origin, struct coord target);

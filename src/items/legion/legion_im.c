@@ -144,7 +144,7 @@ static void im_legion_io_launch(
     chunk_lanes_launch(
             chunk,
             im_id_item(legion->id),
-            im_legion_speed,
+            im_legion_travel_speed,
             dst,
             data, array_len(data));
     chunk_delete(chunk, legion->id);

@@ -4,6 +4,7 @@
 */
 
 #include "items/transmit/transmit.h"
+#include "db/specs.h"
 
 
 // -----------------------------------------------------------------------------
@@ -43,7 +44,7 @@ void test_txrx(void)
 
     { // unconfigured
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
-        wait_travel(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_launch_speed, src, dst);
         chunk_io(chunk_dst, io_receive, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, io_recv, id_rx, NULL, 0));
     }
@@ -53,7 +54,7 @@ void test_txrx(void)
         chunk_io(chunk_src, io_target, 0, id_tx, &target, 1);
 
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
-        wait_travel(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_launch_speed, src, dst);
         chunk_io(chunk_dst, io_receive, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, io_recv, id_rx, NULL, 0));
     }
@@ -68,7 +69,7 @@ void test_txrx(void)
     for (size_t it = 0; it < 5; ++it) {
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
 
-        wait_travel(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_launch_speed, src, dst);
 
         chunk_io(chunk_dst, io_receive, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, io_recv, id_rx, packet, array_len(packet)));
@@ -82,7 +83,7 @@ void test_txrx(void)
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
 
-        wait_travel(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_launch_speed, src, dst);
 
         chunk_io(chunk_dst, io_receive, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, io_recv, id_rx, packet, array_len(packet)));
@@ -96,7 +97,7 @@ void test_txrx(void)
         chunk_io(chunk_dst, io_reset, 0, id_rx, NULL, 0);
 
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
-        wait_travel(world, im_transmit_speed, src, dst);
+        wait_travel(world, im_transmit_launch_speed, src, dst);
         chunk_io(chunk_dst, io_receive, id_test, id_rx, NULL, 0);
         assert(im_test_check(test, io_recv, id_rx, NULL, 0));
 

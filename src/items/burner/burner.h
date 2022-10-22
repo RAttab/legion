@@ -42,3 +42,6 @@ struct legion_packed im_burner
 static_assert(sizeof(struct im_burner) == 12);
 
 void im_burner_config(struct im_config *);
+
+im_energy im_burner_energy(enum item);
+im_work im_burner_work_cap(enum item);

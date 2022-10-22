@@ -15,7 +15,7 @@
 
 uint8_t im_collider_rate(uint8_t size)
 {
-    const uint64_t k = im_collider_size_max / u64_log2(im_collider_size_max);
+    const uint64_t k = im_collider_grow_max / u64_log2(im_collider_grow_max);
     return k * (log(size + 1) / log(2));
 }
 
@@ -115,9 +115,9 @@ static void im_collider_step_out(
         struct im_collider *collider, struct chunk *chunk)
 {
     if (!collider->waiting) {
-        uint8_t sample = rng_uni(&collider->rng, 1, im_collider_size_max);
+        uint8_t sample = rng_uni(&collider->rng, 1, im_collider_grow_max);
         collider->out.item = sample < collider->rate ?
-            tape_packed_id(collider->tape) : im_collider_junk;
+            tape_packed_id(collider->tape) : im_collider_junk_item;
 
         chunk_ports_produce(chunk, collider->id, collider->out.item);
         collider->waiting = true;
@@ -204,7 +204,7 @@ static void im_collider_io_grow(
 {
     if (!im_check_args(chunk, collider->id, io_tape, len, 1)) return;
 
-    uint8_t loops = legion_min(args[0], im_collider_size_max - collider->size);
+    uint8_t loops = legion_min(args[0], im_collider_grow_max - collider->size);
     if (!loops) return chunk_log(chunk, collider->id, io_grow, ioe_out_of_space);
 
     im_collider_reset(collider, chunk);

@@ -493,7 +493,7 @@ static void im_nomad_io_launch(
     chunk_lanes_launch(
             chunk,
             im_id_item(nomad->id),
-            im_nomad_speed,
+            im_nomad_travel_speed,
             dst,
             data, array_len(data));
     chunk_delete(chunk, nomad->id);

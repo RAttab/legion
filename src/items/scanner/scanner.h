@@ -34,3 +34,5 @@ struct legion_packed im_scanner
 static_assert(sizeof(struct im_scanner) == 32);
 
 void im_scanner_config(struct im_config *);
+
+im_work im_scanner_work_cap(struct coord origin, struct coord target);

@@ -75,7 +75,7 @@ static void im_port_step_launch(struct im_port *port, struct chunk *chunk)
     const vm_word data = cargo_to_word(port->has);
     struct coord dst = coord_is_nil(port->target) ? port->origin : port->target;
 
-    chunk_lanes_launch(chunk, item_pill, im_port_speed, dst, &data, 1);
+    chunk_lanes_launch(chunk, item_pill, im_port_launch_speed, dst, &data, 1);
 
     port->state = im_port_docking;
     port->has = (struct cargo) {0};

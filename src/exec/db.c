@@ -383,6 +383,8 @@ static void db_gen_specs(
                 item->c, spec.c,
                 item_enum.c, spec_enum.c);
 
+
+        bool is_enum = false;
         if (type_hash == symbol_hash_c("word"))
             type = make_symbol("vm_word");
 
@@ -395,8 +397,17 @@ static void db_gen_specs(
         else if (type_hash == symbol_hash_c("u8"))
             type = make_symbol("uint8_t");
 
+        else if (type_hash == symbol_hash_c("u16"))
+            type = make_symbol("uint16_t");
+
+        else if (type_hash == symbol_hash_c("u32"))
+            type = make_symbol("uint32_t");
+
         else if (type_hash == symbol_hash_c("energy"))
             type = make_symbol("im_energy");
+
+        else if (type_hash == symbol_hash_c("enum"))
+            is_enum = true;
 
         else {
             reader_err(in, "unknown type '%s'", type.c);
@@ -404,18 +415,20 @@ static void db_gen_specs(
             continue;
         }
 
-        db_file_writef(&state->files.specs_value,
+        if (is_enum) db_file_writef(&state->files.specs_value,
+                "enum { im_%s_%s = ", item_enum.c, spec_enum.c);
+        else db_file_writef(&state->files.specs_value,
                 "static const %s im_%s_%s = ", type.c, item_enum.c, spec_enum.c);
 
         enum token_type token = reader_peek(in);
         switch (token) {
         case token_number: {
-            db_file_writef(&state->files.specs_value, "0x%lx;\n", reader_word(in));
+            db_file_writef(&state->files.specs_value, "0x%lx", reader_word(in));
             break;
         }
         case token_atom: {
             struct symbol atom = symbol_to_enum(reader_atom_symbol(in));
-            db_file_writef(&state->files.specs_value, "%s;\n", atom.c);
+            db_file_writef(&state->files.specs_value, "%s", atom.c);
             break;
         }
         default: {
@@ -424,6 +437,8 @@ static void db_gen_specs(
             continue;
         }
         }
+
+        db_file_write(&state->files.specs_value, is_enum ? " };\n" : ";\n");
 
         reader_close(in);
     }

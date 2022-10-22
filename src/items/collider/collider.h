@@ -18,14 +18,6 @@ struct im_config;
 // collider
 // -----------------------------------------------------------------------------
 
-enum
-{
-    im_collider_size_max = 64,
-};
-
-static const enum item im_collider_grow_item = item_accelerator;
-static const enum item im_collider_junk = item_elem_o;
-
 enum legion_packed im_collider_op
 {
     im_collider_nil = 0,
