@@ -41,7 +41,7 @@
   (out item-assembly)))
 
 (fusion
- (info (type active))
+ (info (type active) (list factory))
  (specs (lab-bits u8 8) (lab-work work 8) (lab-energy u8 8)
 	(input-item item !item-rod)
 	(energy_output energy 20)
