@@ -62,10 +62,10 @@ void ui_style_default(void)
         s->rgba.energy.saved =    make_rgba(0xFF, 0x8C, 0x00, 0xFF); // SlateBlue
         s->rgba.energy.need =     make_rgba(0x8B, 0x00, 0x00, 0xFF); // DarkRed
 
-        s->rgba.energy.stored =   make_rgba(0x00, 0x80, 0x80, 0xFF); // Teal
+        s->rgba.energy.stored =   make_rgba(0x00, 0x00, 0x80, 0xFF); // Navy
         s->rgba.energy.fusion =   make_rgba(0x00, 0x64, 0x00, 0xFF); // DarkGreen
-        s->rgba.energy.solar =    make_rgba(0x00, 0xFF, 0x7F, 0xFF); // SpringGreen
-        s->rgba.energy.burner =   make_rgba(0xA5, 0x2A, 0x2A, 0xFF); // Brown
+        s->rgba.energy.solar =    make_rgba(0x80, 0x80, 0x00, 0xFF); // Olive
+        s->rgba.energy.burner =   make_rgba(0x80, 0x00, 0x80, 0xFF); // Purple
         s->rgba.energy.kwheel =   make_rgba(0x4B, 0x00, 0x82, 0xFF); // Indigo
     }
 

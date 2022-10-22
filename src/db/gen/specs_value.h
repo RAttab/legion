@@ -296,7 +296,7 @@ static const uint8_t im_elem_g_lab_bits = 0x10;
 static const im_work im_elem_g_lab_work = 0x10;
 static const im_energy im_elem_g_lab_energy = 0x10;
 
-static const uint8_t im_elem_h_lab_bits = 0x10;
+static const uint8_t im_elem_h_lab_bits = 0x18;
 static const im_work im_elem_h_lab_work = 0x20;
 static const im_energy im_elem_h_lab_energy = 0x18;
 
