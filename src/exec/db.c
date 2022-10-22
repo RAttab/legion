@@ -358,9 +358,10 @@ static void db_gen_specs(
         }
 
 
-        hash_val type = reader_symbol_hash(in);
+        struct symbol type = reader_symbol(in);
+        hash_val type_hash = symbol_hash(&type);
 
-        if (type == symbol_hash_c("fn")) {
+        if (type_hash == symbol_hash_c("fn")) {
             db_file_writef(&state->files.specs_register,
                     "spec_register_fn("
                     "spec_%s_%s, "
@@ -369,35 +370,59 @@ static void db_gen_specs(
                     item_enum.c, spec_enum.c,
                     item->c, spec.c,
                     item_enum.c, spec_enum.c);
+            reader_close(in);
+            continue;
         }
 
-        else if (type == symbol_hash_c("var")) {
+        db_file_writef(&state->files.specs_register,
+                "spec_register_var("
+                "spec_%s_%s, "
+                "\"spec-%s-%s\", "
+                "im_%s_%s);\n",
+                item_enum.c, spec_enum.c,
+                item->c, spec.c,
+                item_enum.c, spec_enum.c);
 
-            db_file_writef(&state->files.specs_register,
-                    "spec_register_var("
-                    "spec_%s_%s, "
-                    "\"spec-%s-%s\", "
-                    "im_%s_%s);\n",
-                    item_enum.c, spec_enum.c,
-                    item->c, spec.c,
-                    item_enum.c, spec_enum.c);
+        if (type_hash == symbol_hash_c("word"))
+            type = make_symbol("vm_word");
 
-            db_file_writef(&state->files.specs_value,
-                    "\n  im_%s_%s = ", item_enum.c, spec_enum.c);
+        else if (type_hash == symbol_hash_c("item"))
+            type = make_symbol("enum item");
 
-            switch (reader_peek(in)) {
-            case token_number: {
-                db_file_writef(&state->files.specs_value, "0x%lx,", reader_word(in));
-                break;
-            }
-            case token_atom: {
-                struct symbol atom = symbol_to_enum(reader_atom_symbol(in));
-                db_file_writef(&state->files.specs_value, "%s,", atom.c);
-                break;
-            }
-            default: { reader_err(in, "unexpected token type: %s", reader_peek(in)); break; }
-            }
+        else if (type_hash == symbol_hash_c("work"))
+            type = make_symbol("im_work");
 
+        else if (type_hash == symbol_hash_c("u8"))
+            type = make_symbol("uint8_t");
+
+        else if (type_hash == symbol_hash_c("energy"))
+            type = make_symbol("im_energy");
+
+        else {
+            reader_err(in, "unknown type '%s'", type.c);
+            reader_goto_close(in);
+            continue;
+        }
+
+        db_file_writef(&state->files.specs_value,
+                "static const %s im_%s_%s = ", type.c, item_enum.c, spec_enum.c);
+
+        enum token_type token = reader_peek(in);
+        switch (token) {
+        case token_number: {
+            db_file_writef(&state->files.specs_value, "0x%lx;\n", reader_word(in));
+            break;
+        }
+        case token_atom: {
+            struct symbol atom = symbol_to_enum(reader_atom_symbol(in));
+            db_file_writef(&state->files.specs_value, "%s;\n", atom.c);
+            break;
+        }
+        default: {
+            reader_err(in, "unexpected token type: %s", token_type_str(token));
+            reader_goto_close(in);
+            continue;
+        }
         }
 
         reader_close(in);
@@ -647,7 +672,6 @@ bool db_run(const char *path)
         db_file_open(&state.files.specs_enum, state.path.out, "specs_enum");
         db_file_open(&state.files.specs_register, state.path.out, "specs_register");
         db_file_open(&state.files.specs_value, state.path.out, "specs_value");
-        db_file_write(&state.files.specs_value, "enum\n{");
 
         db_file_open(&state.files.tapes, state.path.out, "tapes");
 
@@ -684,7 +708,6 @@ bool db_run(const char *path)
         db_file_close(&state.files.im_control);
         db_file_close(&state.files.im_factory);
 
-        db_file_write(&state.files.specs_value, "};\n");
         db_file_close(&state.files.specs_value);
         db_file_close(&state.files.specs_enum);
         db_file_close(&state.files.specs_register);

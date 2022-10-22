@@ -222,6 +222,10 @@ spec_register_var(spec_assembly_lab_energy, "spec-assembly-lab-energy", im_assem
 spec_register_var(spec_fusion_lab_bits, "spec-fusion-lab-bits", im_fusion_lab_bits);
 spec_register_var(spec_fusion_lab_work, "spec-fusion-lab-work", im_fusion_lab_work);
 spec_register_var(spec_fusion_lab_energy, "spec-fusion-lab-energy", im_fusion_lab_energy);
+spec_register_var(spec_fusion_input_item, "spec-fusion-input-item", im_fusion_input_item);
+spec_register_var(spec_fusion_energy_output, "spec-fusion-energy_output", im_fusion_energy_output);
+spec_register_var(spec_fusion_energy_rod, "spec-fusion-energy_rod", im_fusion_energy_rod);
+spec_register_var(spec_fusion_energy_cap, "spec-fusion-energy_cap", im_fusion_energy_cap);
 
 spec_register_var(spec_lab_lab_bits, "spec-lab-lab-bits", im_lab_lab_bits);
 spec_register_var(spec_lab_lab_work, "spec-lab-lab-work", im_lab_lab_work);

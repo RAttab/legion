@@ -4,7 +4,7 @@
 
 (deploy
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy u8 8))
  (tape (work 4) (energy 8) (host item-assembly)
   (in item-spinal
       item-nodule
@@ -13,7 +13,7 @@
 
 (extract
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy u8 8))
  (tape (work 4) (energy 8) (host item-assembly)
   (in (item-muscle 2)
       item-nodule
@@ -22,7 +22,7 @@
 
 (printer
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy u8 8))
  (tape (work 4) (energy 16) (host item-assembly)
   (in (item-vein 2)
       item-nodule
@@ -31,7 +31,7 @@
 
 (assembly
  (info (type active) (list factory) (config printer))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy u8 8))
  (tape (work 4) (energy 16) (host item-assembly)
   (in (item-limb 2)
       item-vein
@@ -42,7 +42,11 @@
 
 (fusion
  (info (type active))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy u8 8)
+	(input-item item !item-rod)
+	(energy_output energy 20)
+	(energy_rod energy 1024)
+	(energy_cap energy 16384))
  (tape (work 16) (energy 16) (host item-assembly)
   (in item-torus
       (item-rod 4)
@@ -57,7 +61,7 @@
 
 (lab
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 16) (energy 32) (host item-assembly)
   (in (item-limb 2)
       item-vein
@@ -72,7 +76,7 @@
 
 (storage
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 8) (energy 16) (host item-assembly)
   (in (item-bone 2)
       (item-vein 3)
@@ -81,7 +85,7 @@
 
 (port
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 24) (energy 32) (host item-assembly)
   (in (item-field 5)
       item-nodule
@@ -92,7 +96,7 @@
 
 (condenser
  (info (type active) (list factory) (config extract))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 10) (energy 24) (host item-assembly)
   (in (item-lung 2)
       item-nodule
@@ -105,7 +109,7 @@
 
 (collider
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 16) (energy 128) (host item-assembly)
   (in item-brain
       item-nodule
@@ -118,7 +122,7 @@
 
 (burner
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 20) (energy 112) (host item-assembly)
   (in item-biosteel
       (item-furnace 3)
@@ -130,7 +134,7 @@
 
 (packer
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 20) (energy 112) (host item-assembly)
   (in item-biosteel
       item-neurosteel
@@ -143,7 +147,7 @@
 
 (nomad
  (info (type active) (list factory))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 42) (energy 256) (host item-assembly)
   (in item-biosteel
       item-pill

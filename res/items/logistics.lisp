@@ -4,7 +4,7 @@
 
 (worker
  (info (type logistics))
- (specs (lab-bits var 8) (lab-work var 16) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 16) (lab-energy energy 8))
  (tape (work 6) (energy 16) (host item-assembly)
        (in (item-lung 2)
 	   item-stem
@@ -22,8 +22,8 @@
  (info (type logistics))
 
  (specs
-  (lab-bits var 16) (lab-work var 32) (lab-energy var 16)
-  (energy-div var 1024)
+  (lab-bits u8 16) (lab-work work 32) (lab-energy energy 16)
+  (energy-div energy 1024)
   (energy fn))
 
  (tape (work 6) (energy 16) (host item-assembly)
@@ -37,7 +37,7 @@
 
 (pill
  (info (type logistics))
- (specs (lab-bits var 16) (lab-work var 32) (lab-energy var 32))
+ (specs (lab-bits u8 16) (lab-work work 32) (lab-energy energy 32))
  (tape (work 8) (energy 24) (host item-assembly)
        (in item-vein
 	   item-ferrofluid
@@ -51,7 +51,7 @@
 
 (battery
  (info (type logistics))
- (specs (lab-bits var 16) (lab-work var 24) (lab-energy var 32))
+ (specs (lab-bits u8 16) (lab-work work 24) (lab-energy energy 32))
  (tape (work 4) (energy 8) (host item-assembly)
        (in item-bone
 	   item-nerve

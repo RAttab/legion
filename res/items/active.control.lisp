@@ -4,7 +4,7 @@
 
 (memory
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 8) (energy 16) (host item-assembly)
   (in (item-engram 3)
       item-nodule
@@ -13,7 +13,7 @@
 
 (brain
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 10) (energy 18) (host item-assembly)
   (in item-memory
       (item-cortex 2)
@@ -24,7 +24,7 @@
 
 (prober
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 4) (energy 18) (host item-assembly)
   (in item-lung
       item-nodule
@@ -33,7 +33,7 @@
 
 (scanner
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 6) (energy 18) (host item-assembly)
   (in item-lung
       item-engram
@@ -43,7 +43,7 @@
 
 (legion
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 24) (energy 32) (host item-assembly)
   (in (item-lung 3)
       item-nodule
@@ -66,7 +66,7 @@
 
 (transmit
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 16) (energy 20) (host item-assembly)
   (in (item-eye 3)
       item-nodule
@@ -75,7 +75,7 @@
 
 (receive
  (info (type active) (list control))
- (specs (lab-bits var 8) (lab-work var 8) (lab-energy var 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
  (tape (work 16) (energy 20) (host item-assembly)
   (in (item-antenna 3)
       item-nodule

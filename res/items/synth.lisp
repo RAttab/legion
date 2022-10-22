@@ -4,7 +4,7 @@
 
 (elem-m
  (info (type synth))
- (specs (lab-bits var 16) (lab-work var 128) (lab-energy var 64))
+ (specs (lab-bits u8 16) (lab-work work 128) (lab-energy energy 64))
  
  (tape
   (host item-collider)
@@ -20,7 +20,7 @@
 
 (elem-n
  (info (type synth))
- (specs (lab-bits var 16) (lab-work var 192) (lab-energy var 96))
+ (specs (lab-bits u8 16) (lab-work work 192) (lab-energy energy 96))
  
  (tape
   (host item-collider)
@@ -36,7 +36,7 @@
 
 (elem-o
  (info (type synth))
- (specs (lab-bits var 128) (lab-work var 8) (lab-energy var 16))
+ (specs (lab-bits u8 128) (lab-work work 8) (lab-energy energy 16))
  (tape (host item-dummy)))
 
  
