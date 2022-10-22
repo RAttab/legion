@@ -14,12 +14,12 @@
 
 (elem-c
  (info (type natural))
- (specs (lab-bits u8 8) (lab-work work 4) (lab-energy energy 4))
+ (specs (lab-bits u8 12) (lab-work work 4) (lab-energy energy 4))
  (tape (host item-extract) (work 2) (energy 2) (out item-elem-c)))
 
 (elem-d
  (info (type natural))
- (specs (lab-bits u8 8) (lab-work work 4) (lab-energy energy 4))
+ (specs (lab-bits u8 12) (lab-work work 8) (lab-energy energy 8))
  (tape (host item-extract) (work 4) (energy 4) (out item-elem-d)))
 
 
@@ -29,12 +29,12 @@
 
 (elem-g
  (info (type natural))
- (specs (lab-bits u8 16) (lab-work work 16) (lab-energy energy 8))
+ (specs (lab-bits u8 16) (lab-work work 16) (lab-energy energy 16))
  (tape (host item-condenser) (work 4) (energy 8) (out item-elem-g)))
 
 (elem-h
  (info (type natural))
- (specs (lab-bits u8 16) (lab-work work 32) (lab-energy energy 16))
+ (specs (lab-bits u8 24) (lab-work work 32) (lab-energy energy 24))
  (tape (host item-condenser) (work 8) (energy 12) (out item-elem-h)))
 
 

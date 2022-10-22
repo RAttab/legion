@@ -13,7 +13,7 @@
 
 (spinal
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 12))
  (tape (work 2) (energy 4) (host item-assembly)
   (in item-nerve
       item-vein
@@ -24,7 +24,7 @@
 
 (stem
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 12) (lab-energy energy 8))
  (tape (work 2) (energy 4) (host item-assembly)
   (in (item-neuron 2)
       item-vein
@@ -33,7 +33,7 @@
 
 (lung
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 8) (lab-work work 12) (lab-energy energy 12))
  (tape (work 3) (energy 4) (host item-assembly)
   (in item-stem
       item-nerve
@@ -43,7 +43,7 @@
 
 (engram
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 12) (lab-work work 12) (lab-energy energy 16))
  (tape (work 4) (energy 6) (host item-assembly)
   (in item-nerve
       (item-neuron 2)
@@ -54,7 +54,7 @@
 
 (cortex
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 12) (lab-work work 16) (lab-energy energy 24))
  (tape (work 8) (energy 8) (host item-assembly)
   (in item-stem
       item-vein
@@ -66,7 +66,7 @@
 
 (eye
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 12) (lab-work work 24) (lab-energy energy 16))
  (tape (work 2) (energy 6) (host item-assembly)
   (in item-retina
       (item-lens 3)
@@ -79,7 +79,7 @@
 
 (photovoltaic
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 16) (lab-work work 32) (lab-energy energy 32))
  (tape (work 8) (energy 16) (host item-assembly)
   (in (item-semiconductor 2)
       item-nerve
@@ -90,7 +90,7 @@
 
 (field
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 20) (lab-work work 32) (lab-energy energy 48))
  (tape (work 8) (energy 16) (host item-assembly)
   (in (item-magnet 3)
       (item-nerve 2)
@@ -99,7 +99,7 @@
 
 (antenna
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 24) (lab-work work 56) (lab-energy energy 48))
  (tape (work 12) (energy 24) (host item-assembly)
   (in (item-bone 2)
       item-nerve
@@ -117,7 +117,7 @@
 
 (accelerator
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 32) (lab-work work 64) (lab-energy energy 64))
  (tape (work 16) (energy 64) (host item-assembly)
   (in (item-conductor 2)
       item-nerve
@@ -128,7 +128,7 @@
 
 (heat-exchange
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 32) (lab-work work 76) (lab-energy energy 64))
  (tape (work 16) (energy 72) (host item-assembly)
   (in item-biosteel
       (item-conductor 3)
@@ -137,7 +137,7 @@
 
 (furnace
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 36) (lab-work work 64) (lab-energy energy 76))
  (tape (work 20) (energy 76) (host item-assembly)
   (in item-biosteel
       (item-heat-exchange 2)
@@ -150,7 +150,7 @@
 
 (freezer
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 36) (lab-work work 64) (lab-energy energy 76))
  (tape (work 20) (energy 76) (host item-assembly)
   (in (item-heat-exchange 2)
       item-neurosteel
@@ -161,7 +161,7 @@
 
 (m-reactor
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 32) (lab-work work 92) (lab-energy energy 76))
  (tape (work 32) (energy 128) (host item-assembly)
   (in item-biosteel
       item-heat-exchange
@@ -180,7 +180,7 @@
 
 (m-condenser
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 32) (lab-work work 76) (lab-energy energy 92))
  (tape (work 32) (energy 128) (host item-assembly)
   (in item-biosteel
       item-field
@@ -197,7 +197,7 @@
 
 (m-release
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 32) (lab-work work 76) (lab-energy energy 76))
  (tape (work 32) (energy 144) (host item-assembly)
   (in item-biosteel
       (item-ferrofluid 3)
@@ -210,7 +210,7 @@
 
 (m-lung
  (info (type passive))
- (specs (lab-bits u8 8) (lab-work work 8) (lab-energy energy 8))
+ (specs (lab-bits u8 36) (lab-work work 92) (lab-energy energy 92))
  (tape (work 40) (energy 256) (host item-assembly)
   (in item-biosteel
       item-m-reactor
