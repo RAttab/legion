@@ -11,6 +11,31 @@ static struct line *ui_code_view_update(struct ui_code *code);
 
 
 // -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_code_style_default(struct ui_style *s)
+{
+    s->code = (struct ui_code_style) {
+        .font = s->font.base,
+        .line = { .fg = s->label.index.fg, .bg = s->label.index.bg },
+        .code = { .fg = s->rgba.fg, .bg = s->rgba.bg },
+        .mark = make_rgba(0x00, 0xFF, 0x00, 0x66),
+        .error = make_rgba(0xFF, 0x00, 0x00, 0x66),
+
+        .breakpoint = {
+            .fg = rgba_red(),
+            .bg = make_rgba(0xFF, 0xFF, 0x00, 0x33),
+            .hover = make_rgba(0xFF, 0xFF, 0x00, 0x88),
+            .margin = 1,
+        },
+
+        .carret = s->rgba.carret,
+    };
+}
+
+
+// -----------------------------------------------------------------------------
 // code
 // -----------------------------------------------------------------------------
 

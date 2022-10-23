@@ -21,6 +21,7 @@ struct mod;
 
 enum { ui_code_num_len = 4 };
 
+
 struct ui_code_style
 {
     const struct font *font;
@@ -28,6 +29,9 @@ struct ui_code_style
     struct { struct rgba fg, bg, hover; uint8_t margin; } breakpoint;
     struct rgba mark, error, carret;
 };
+
+void ui_code_style_default(struct ui_style *);
+
 
 struct ui_code
 {

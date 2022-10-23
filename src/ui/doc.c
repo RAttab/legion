@@ -5,6 +5,36 @@
 
 #include "doc.h"
 
+// -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_doc_style_default(struct ui_style *s)
+{
+    s->doc = (struct ui_doc_style) {
+        .text = { .font = s->font.base, .fg = s->rgba.fg, .bg = s->rgba.bg },
+        .bold = { .font = s->font.bold, .fg = s->rgba.fg, .bg = s->rgba.bg },
+
+        .code = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = rgba_gray_a(0x66, 0x33),
+        },
+
+#define make_from(src) { .font = s->font.base, .fg = (src).fg, .bg = (src).bg }
+        .link =    make_from(s->rgba.link.idle),
+        .hover =   make_from(s->rgba.link.hover),
+        .pressed = make_from(s->rgba.link.pressed),
+#undef make_from
+
+        .underline = { .fg = s->rgba.fg, .offset = 2 },
+    };
+}
+
+
+// -----------------------------------------------------------------------------
+// doc
+// -----------------------------------------------------------------------------
 
 static void ui_doc_check_font(const struct font *base, const struct font *other)
 {

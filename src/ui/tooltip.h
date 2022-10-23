@@ -20,6 +20,9 @@ struct ui_tooltip_style
     struct dim pad;
 };
 
+void ui_tooltip_style_default(struct ui_style *);
+
+
 struct ui_tooltip
 {
     struct ui_widget w;

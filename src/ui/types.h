@@ -11,6 +11,7 @@
 #include "SDL.h"
 
 struct font;
+struct ui_style;
 struct ui_panel;
 struct ui_layout;
 

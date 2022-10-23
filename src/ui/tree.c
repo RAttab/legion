@@ -8,6 +8,34 @@
 
 
 // -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_tree_style_default(struct ui_style *s)
+{
+    s->tree = (struct ui_tree_style) {
+        .idle = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = s->rgba.bg,
+        },
+
+        .hover = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = s->rgba.list.hover,
+        },
+
+        .selected = {
+            .font = s->font.bold,
+            .fg = s->rgba.fg,
+            .bg = s->rgba.list.selected,
+        },
+    };
+}
+
+
+// -----------------------------------------------------------------------------
 // tree
 // -----------------------------------------------------------------------------
 

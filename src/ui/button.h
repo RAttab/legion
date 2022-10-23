@@ -20,6 +20,7 @@ enum ui_button_state
     ui_button_pressed,
 };
 
+
 struct ui_button_style
 {
     struct dim margin;
@@ -31,6 +32,9 @@ struct ui_button_style
     } idle, hover, pressed, disabled;
 
 };
+
+void ui_button_style_default(struct ui_style *);
+
 
 struct ui_button
 {

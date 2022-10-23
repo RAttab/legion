@@ -5,6 +5,37 @@
 
 #include "histo.h"
 
+// -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_histo_style_default(struct ui_style *s)
+{
+    s->histo = (struct ui_histo_style) {
+        .pad = make_dim(4, 4),
+        .edge = make_rgba(0xFF, 0x00, 0x00, 0x33),
+        .border = rgba_black(),
+
+        .row = { .h = 8, .pad = 4 },
+
+        .hover = {
+            .fg = rgba_green(),
+            .bg = ui_st.rgba.list.hover
+        },
+
+        .axes = {
+            .pad = make_dim(1, 2),
+            .fg = ui_st.rgba.fg
+        },
+
+        .value = {
+            .font = ui_st.font.base,
+            .fg = ui_st.rgba.fg,
+            .bg = ui_st.rgba.bg,
+        },
+    };
+}
+
 
 // -----------------------------------------------------------------------------
 // histo

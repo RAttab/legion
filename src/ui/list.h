@@ -19,6 +19,7 @@ struct ui_entry
     uint64_t user;
 };
 
+
 struct ui_list_style
 {
     struct {
@@ -26,6 +27,9 @@ struct ui_list_style
         struct rgba fg, bg;
     } idle, hover, selected;
 };
+
+void ui_list_style_default(struct ui_style *);
+
 
 struct ui_list
 {

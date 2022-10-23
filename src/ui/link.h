@@ -20,11 +20,14 @@ enum ui_link_state
     ui_link_pressed,
 };
 
+
 struct ui_link_style
 {
     const struct font *font;
     struct { struct rgba fg, bg; } idle, hover, pressed, disabled;
 };
+
+void ui_link_style_default(struct ui_style *);
 
 struct ui_link
 {

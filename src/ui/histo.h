@@ -14,11 +14,13 @@
 
 typedef uint64_t ui_histo_data;
 
+
 struct ui_histo_series
 {
     uint8_t col;
     struct rgba fg;
 };
+
 
 struct ui_histo_style
 {
@@ -29,6 +31,9 @@ struct ui_histo_style
     struct { struct dim pad; struct rgba fg; } axes;
     struct { const struct font *font; struct rgba fg, bg; } value;
 };
+
+void ui_histo_style_default(struct ui_style *);
+
 
 struct ui_histo
 {

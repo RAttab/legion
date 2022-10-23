@@ -19,6 +19,7 @@
 typedef uint32_t ui_node;
 static legion_unused ui_node ui_node_nil = -1;
 
+
 struct ui_node
 {
     bool open, leaf;
@@ -28,6 +29,7 @@ struct ui_node
     ui_node parent;
 };
 
+
 struct ui_tree_style
 {
     struct {
@@ -35,6 +37,9 @@ struct ui_tree_style
         struct rgba fg, bg;
     } idle, hover, selected;
 };
+
+void ui_tree_style_default(struct ui_style *);
+
 
 struct ui_tree
 {

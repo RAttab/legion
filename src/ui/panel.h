@@ -21,6 +21,7 @@ enum ui_panel_state
     ui_panel_focused = 2,
 };
 
+
 struct ui_panel_style
 {
     struct dim margin;
@@ -30,6 +31,9 @@ struct ui_panel_style
         struct rgba fg, bg;
     } head, focused;
 };
+
+void ui_panel_style_default(struct ui_style *);
+
 
 struct ui_panel
 {

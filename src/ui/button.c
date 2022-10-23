@@ -7,6 +7,51 @@
 
 
 // -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_button_style_default(struct ui_style *s)
+{
+    s->button.base = (struct ui_button_style) {
+        .idle = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = rgba_gray(0x22)
+        },
+        .hover = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = rgba_gray(0x33)
+        },
+        .pressed = {
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = rgba_gray(0x11)
+        },
+        .disabled = {
+            .font = s->font.base,
+            .fg = s->rgba.disabled,
+            .bg = rgba_gray(0x22)
+        },
+
+        .margin = s->pad.box,
+    };
+
+    s->button.line = s->button.base;
+    s->button.line.margin.h = 0;
+
+    s->button.list.close = s->button.base;
+    s->button.list.close.idle.bg = ui_st.rgba.bg;
+
+    s->button.list.open = s->button.base;
+    s->button.list.open.idle.font = ui_st.font.bold;
+    s->button.list.open.hover.font = ui_st.font.bold;
+    s->button.list.open.pressed.font = ui_st.font.bold;
+    s->button.list.open.disabled.font = ui_st.font.bold;
+}
+
+
+// -----------------------------------------------------------------------------
 // button
 // -----------------------------------------------------------------------------
 

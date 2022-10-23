@@ -7,6 +7,24 @@
 
 
 // -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_link_style_default(struct ui_style *s)
+{
+    s->link = (struct ui_link_style) {
+        .font = s->font.base,
+#define make_from(src) { .fg = (src).fg, .bg = (src).bg }
+        .idle =     make_from(s->rgba.link.idle),
+        .hover =    make_from(s->rgba.link.hover),
+        .pressed =  make_from(s->rgba.link.pressed),
+#undef make_from
+        .disabled = { .fg = s->rgba.disabled, .bg = s->rgba.bg },
+    };
+}
+
+
+// -----------------------------------------------------------------------------
 // link
 // -----------------------------------------------------------------------------
 

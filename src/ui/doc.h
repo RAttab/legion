@@ -25,6 +25,9 @@ struct ui_doc_style
     struct { struct rgba fg; int8_t offset; } underline;
 };
 
+void ui_doc_style_default(struct ui_style *);
+
+
 struct ui_doc
 {
     struct ui_widget w;

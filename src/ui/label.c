@@ -7,6 +7,51 @@
 
 
 // -----------------------------------------------------------------------------
+// style
+// -----------------------------------------------------------------------------
+
+void ui_label_style_default(struct ui_style *s)
+{
+    void fg(struct ui_label_style *label, struct rgba fg)
+    {
+        *label = s->label.base;
+        label->fg = fg;
+    }
+
+    s->label.base = (struct ui_label_style) {
+        .font = s->font.base,
+        .fg = s->rgba.fg,
+        .bg = s->rgba.bg,
+        .disabled = s->rgba.disabled,
+    };
+
+    s->label.index = s->label.base;
+    s->label.index.fg = rgba_gray(0x88);
+    s->label.index.bg = rgba_gray_a(0x44, 0x88);
+
+    s->label.bold = s->label.base;
+    s->label.bold.font = s->font.bold;
+
+    fg(&s->label.in, s->rgba.in);
+    fg(&s->label.out, s->rgba.out);
+    fg(&s->label.work, s->rgba.work);
+    fg(&s->label.active, s->rgba.active);
+    fg(&s->label.waiting, s->rgba.waiting);
+    fg(&s->label.error, s->rgba.error);
+    fg(&s->label.required, rgba_red());
+
+    fg(&s->label.energy.consumed, s->rgba.energy.consumed);
+    fg(&s->label.energy.stored, s->rgba.energy.stored);
+    fg(&s->label.energy.need, s->rgba.energy.need);
+    fg(&s->label.energy.saved, s->rgba.energy.saved);
+    fg(&s->label.energy.fusion, s->rgba.energy.fusion);
+    fg(&s->label.energy.solar, s->rgba.energy.solar);
+    fg(&s->label.energy.burner, s->rgba.energy.burner);
+    fg(&s->label.energy.kwheel, s->rgba.energy.kwheel);
+}
+
+
+// -----------------------------------------------------------------------------
 // label
 // -----------------------------------------------------------------------------
 

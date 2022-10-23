@@ -17,12 +17,16 @@ struct symbol;
 
 enum { ui_input_cap = 256 };
 
+
 struct ui_input_style
 {
     const struct font *font;
     struct rgba fg, bg, border, carret;
     struct dim pad;
 };
+
+void ui_input_style_default(struct ui_style *);
+
 
 struct ui_input
 {

@@ -17,6 +17,9 @@ struct ui_scroll_style
     struct rgba fg, bg;
 };
 
+void ui_scroll_style_default(struct ui_style *);
+
+
 struct ui_scroll
 {
     struct ui_widget w;

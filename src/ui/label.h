@@ -19,6 +19,9 @@ struct ui_label_style
     struct rgba fg, bg, disabled;
 };
 
+void ui_label_style_default(struct ui_style *);
+
+
 struct ui_label
 {
     struct ui_widget w;
