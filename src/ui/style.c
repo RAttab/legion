@@ -57,10 +57,15 @@ void ui_style_default(void)
         s->rgba.link.pressed.fg = make_rgba(0x00, 0x00, 0x66, 0xFF);
         s->rgba.link.pressed.bg = s->rgba.bg;
 
+        s->rgba.worker.queue = make_rgba(0x00, 0x00, 0x80, 0xFF); // Navy
+        s->rgba.worker.work =  make_rgba(0xFF, 0xD7, 0x00, 0xFF); // Gold
+        s->rgba.worker.clean = make_rgba(0x80, 0x80, 0x00, 0xFF); // Olive
+        s->rgba.worker.fail =  make_rgba(0x8B, 0x00, 0x00, 0xFF); // DarkRed
+        s->rgba.worker.idle =  make_rgba(0x80, 0x00, 0x80, 0xFF); // Purple
+
         s->rgba.energy.consumed = make_rgba(0xFF, 0xD7, 0x00, 0xFF); // Gold
         s->rgba.energy.saved =    make_rgba(0xFF, 0x8C, 0x00, 0xFF); // SlateBlue
         s->rgba.energy.need =     make_rgba(0x8B, 0x00, 0x00, 0xFF); // DarkRed
-
         s->rgba.energy.stored =   make_rgba(0x00, 0x00, 0x80, 0xFF); // Navy
         s->rgba.energy.fusion =   make_rgba(0x00, 0x64, 0x00, 0xFF); // DarkGreen
         s->rgba.energy.solar =    make_rgba(0x80, 0x80, 0x00, 0xFF); // Olive

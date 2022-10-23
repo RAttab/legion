@@ -19,7 +19,8 @@
 
 struct ui_star_workers
 {
-    struct ui_label workers, workers_val;
+    struct ui_button toggle;
+    struct ui_label count, count_val;
     struct ui_label queue, queue_val;
     struct ui_label idle, idle_val;
     struct ui_label fail, fail_val;
@@ -121,8 +122,9 @@ struct ui_star *ui_star_new(void)
         .pills_val = ui_label_new(ui_str_v(4)),
 
         .workers = (struct ui_star_workers) {
-            .workers = ui_label_new(ui_str_c("workers: ")),
-            .workers_val = ui_label_new(ui_str_v(3)),
+            .toggle = ui_button_new(ui_str_c("worker")),
+            .count = ui_label_new(ui_str_c("- count: ")),
+            .count_val = ui_label_new(ui_str_v(3)),
             .queue = ui_label_new(ui_str_c("- queue: ")),
             .queue_val = ui_label_new(ui_str_v(3)),
             .idle = ui_label_new(ui_str_c("- idle:  ")),
@@ -195,6 +197,7 @@ struct ui_star *ui_star_new(void)
     ui->goto_factory.w.dim.w = goto_width;
     ui->goto_log.w.dim.w = goto_width;
 
+    ui->workers.toggle.w.dim.w = ui_layout_inf;
     ui->energy_toggle.w.dim.w = ui_layout_inf;
 
     return ui;
@@ -229,8 +232,9 @@ void ui_star_free(struct ui_star *ui) {
     ui_label_free(&ui->pills);
     ui_label_free(&ui->pills_val);
 
-    ui_label_free(&ui->workers.workers);
-    ui_label_free(&ui->workers.workers_val);
+    ui_button_free(&ui->workers.toggle);
+    ui_label_free(&ui->workers.count);
+    ui_label_free(&ui->workers.count_val);
     ui_label_free(&ui->workers.queue);
     ui_label_free(&ui->workers.queue_val);
     ui_label_free(&ui->workers.idle);
@@ -346,7 +350,7 @@ static void ui_star_update(struct ui_star *ui)
 
         ui_str_set_u64(&ui->pills_val.str, 0);
 
-        ui_str_set_u64(&ui->workers.workers_val.str, 0);
+        ui_str_set_u64(&ui->workers.count_val.str, 0);
         ui_str_set_u64(&ui->workers.idle_val.str, 0);
         ui_str_set_u64(&ui->workers.fail_val.str, 0);
         ui_str_set_u64(&ui->workers.queue_val.str, 0);
@@ -380,7 +384,7 @@ static void ui_star_update(struct ui_star *ui)
 
     {
         struct workers workers = chunk_workers(chunk);
-        ui_str_set_u64(&ui->workers.workers_val.str, workers.count);
+        ui_str_set_u64(&ui->workers.count_val.str, workers.count);
         ui_str_set_u64(&ui->workers.queue_val.str, workers.queue);
         ui_str_set_u64(&ui->workers.idle_val.str, workers.idle);
         ui_str_set_u64(&ui->workers.fail_val.str, workers.fail);
@@ -557,6 +561,12 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return true;
     }
 
+    if ((ret = ui_button_event(&ui->workers.toggle, ev))) {
+        if (ret != ui_action) return true;
+        render_push_event(EV_WORKER_TOGGLE, coord_to_u64(ui->star.coord), 0);
+        return true;
+    }
+
     if ((ret = ui_button_event(&ui->energy_toggle, ev))) {
         if (ret != ui_action) return true;
         render_push_event(EV_ENERGY_TOGGLE, coord_to_u64(ui->star.coord), 0);
@@ -637,8 +647,10 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
 
         ui_layout_sep_row(&layout);
 
-        ui_label_render(&ui->workers.workers, &layout, renderer);
-        ui_label_render(&ui->workers.workers_val, &layout, renderer);
+        ui_button_render(&ui->workers.toggle, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->workers.count, &layout, renderer);
+        ui_label_render(&ui->workers.count_val, &layout, renderer);
         ui_layout_next_row(&layout);
         ui_label_render(&ui->workers.queue, &layout, renderer);
         ui_label_render(&ui->workers.queue_val, &layout, renderer);

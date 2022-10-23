@@ -31,6 +31,7 @@ extern struct ui_style
         struct { struct rgba bg, border; } box;
         struct { struct rgba hover, selected; } list;
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
+        struct { struct rgba queue, work, clean, fail, idle; } worker;
         struct {
             struct rgba consumed, saved, need;
             struct rgba stored, fusion, solar, burner, kwheel, battery;

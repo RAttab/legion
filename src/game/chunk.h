@@ -105,7 +105,8 @@ void chunk_ports_request(struct chunk *, im_id, enum item);
 
 struct workers
 {
-    uint8_t count, queue, idle, fail, clean;
+    uint16_t queue;
+    uint8_t count, idle, fail, clean;
     struct vec32 *ops;
 };
 

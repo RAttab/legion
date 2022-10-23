@@ -55,8 +55,9 @@ static struct active *active_index(struct chunk *chunk, enum item item)
     size_t index = item - items_active_first;
 
     if (!item_is_active(item)) return NULL;
-    if (index >= array_len(chunk->active)) return NULL;
-    if (chunk->active[index].skip) return NULL;
+
+    assert(index < array_len(chunk->active));
+    assert(!chunk->active[index].skip);
 
     return chunk->active + index;
 }
@@ -165,6 +166,26 @@ static bool chunk_load_provided(struct chunk *chunk, struct save *save)
     return true;
 }
 
+static void chunk_save_workers(struct chunk *chunk, struct save *save)
+{
+    save_write_value(save, chunk->workers.count);
+    save_write_value(save, chunk->workers.queue);
+    save_write_value(save, chunk->workers.idle);
+    save_write_value(save, chunk->workers.fail);
+    save_write_value(save, chunk->workers.clean);
+    save_write_vec32(save, chunk->workers.ops);
+}
+
+static bool chunk_load_workers(struct chunk *chunk, struct save *save)
+{
+    save_read_into(save, &chunk->workers.count);
+    save_read_into(save, &chunk->workers.queue);
+    save_read_into(save, &chunk->workers.idle);
+    save_read_into(save, &chunk->workers.fail);
+    save_read_into(save, &chunk->workers.clean);
+    return save_read_vec32(save, &chunk->workers.ops);
+}
+
 static void chunk_save_listen(struct chunk *chunk, struct save *save)
 {
     save_write_value(save, chunk->listen.len);
@@ -227,10 +248,9 @@ void chunk_save(struct chunk *chunk, struct save *save)
 
     pills_save(&chunk->pills, save);
     energy_save(&chunk->energy, save);
-    save_write_value(save, chunk->workers.count);
-    save_write_vec32(save, chunk->workers.ops);
-
     log_save(chunk->log, save);
+
+    chunk_save_workers(chunk, save);
     chunk_save_listen(chunk, save);
     chunk_save_active(chunk, save);
 
@@ -254,10 +274,10 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     if (!(pills_load(&chunk->pills, save))) goto fail;
     if (!energy_load(&chunk->energy, save)) goto fail;
-    save_read_into(save, &chunk->workers.count);
-    if (!save_read_vec32(save, &chunk->workers.ops)) goto fail;
+
 
     if (!(chunk->log = log_load(save))) goto fail;
+    if (!chunk_load_workers(chunk, save)) goto fail;
     if (!chunk_load_listen(chunk, save)) goto fail;
     if (!chunk_load_active(chunk, save)) goto fail;
 
@@ -396,10 +416,9 @@ void chunk_save_delta(
 
     chunk_save_delta_pills(chunk, save, cack);
     energy_save(&chunk->energy, save);
-    save_write_value(save, chunk->workers.count);
-    save_write_vec32(save, chunk->workers.ops);
-
     log_save_delta(chunk->log, save, cack->time);
+
+    chunk_save_workers(chunk, save);
     chunk_save_listen(chunk, save);
     chunk_save_delta_active(chunk, save, cack);
 
@@ -422,10 +441,9 @@ bool chunk_load_delta(struct chunk *chunk, struct save *save, struct ack *ack)
 
     if (!chunk_load_delta_pills(chunk, save, &ack->chunk)) return false;
     if (!energy_load(&chunk->energy, save)) return false;
-    save_read_into(save, &chunk->workers.count);
-    if (!save_read_vec32(save, &chunk->workers.ops)) return false;
 
     if (!log_load_delta(chunk->log, save, ack->chunk.time)) return false;
+    if (!chunk_load_workers(chunk, save)) return false;
     if (!chunk_load_listen(chunk, save)) return false;
     if (!chunk_load_delta_active(chunk, save, &ack->chunk)) return false;
 

@@ -136,6 +136,18 @@ void ui_io_render(struct ui_io *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// worker
+// -----------------------------------------------------------------------------
+
+struct ui_worker;
+struct ui_worker *ui_worker_new(void);
+void ui_worker_free(struct ui_worker *);
+void ui_worker_update_state(struct ui_worker *);
+bool ui_worker_event(struct ui_worker *, SDL_Event *);
+void ui_worker_render(struct ui_worker *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // energy
 // -----------------------------------------------------------------------------
 

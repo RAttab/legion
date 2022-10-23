@@ -102,9 +102,10 @@ struct ui_histo ui_histo_new(
         legend->name.s.fg = list[i].fg;
     }
 
+    histo.legend.rows = legion_max(histo.legend.rows, len - col_start);
     histo.legend_h = histo.s.value.font->glyph_h * (3 + histo.legend.rows);
-    ui_input_set(&histo.legend.scale.val, "1");
 
+    ui_input_set(&histo.legend.scale.val, "1");
     return histo;
 }
 
@@ -194,10 +195,29 @@ void ui_histo_scale_t(struct ui_histo *histo, ui_histo_data scale)
     histo->t.scale = scale;
 }
 
+static void ui_histo_update_v_bound(struct ui_histo *histo)
+{
+    ui_histo_data max = 0, sum = 0, col = 0;
+    ui_histo_data *it = ui_histo_at(histo, histo->edge.row);
+
+    for (size_t series = 0; series < histo->series.len; ++series) {
+        if (col != histo->series.list[series].col) {
+            max = legion_max(max, sum);
+            sum = 0; col++;
+        }
+
+        sum += it[series];
+    }
+
+    max = legion_max(max, sum);
+    while (max > histo->v.bound) histo->v.bound *= 2;
+}
+
 void ui_histo_advance(struct ui_histo *histo, ui_histo_data t)
 {
     if (!histo->series.data) return;
     if (!histo->edge.t) { histo->edge.t = t; return; }
+    ui_histo_update_v_bound(histo);
 
     while (t >= histo->edge.t + histo->t.scale) {
         histo->edge.t += histo->t.scale;
@@ -216,24 +236,6 @@ void ui_histo_push(struct ui_histo *histo, size_t series, ui_histo_data v)
     if (!histo->series.data) return;
 
     ui_histo_at(histo, histo->edge.row)[series] += v;
-}
-
-static void ui_histo_update_v_bound(struct ui_histo *histo)
-{
-    ui_histo_data max = 0, sum = 0, col = 0;
-    ui_histo_data *it = ui_histo_at(histo, histo->edge.row);
-
-    for (size_t series = 0; series < histo->series.len; ++series) {
-        if (col != histo->series.list[series].col) {
-            max = legion_max(max, sum);
-            sum = 0; col++;
-        }
-
-        sum += it[series];
-    }
-
-    max = legion_max(max, sum);
-    while (max > histo->v.bound) histo->v.bound *= 2;
 }
 
 void ui_histo_update_legend(struct ui_histo *histo)
@@ -407,12 +409,12 @@ void ui_histo_render(
         ui_histo_init(histo, histo->w.pos, histo->w.dim);
 
     ui_histo_render_legend(histo, renderer);
+    ui_histo_update_v_bound(histo);
 
     const int16_t up = histo->w.pos.y + histo->legend_h + histo->s.pad.h;
     const int16_t down = histo->w.pos.y + histo->w.dim.h - histo->s.pad.h;
     const int16_t left = histo->w.pos.x + histo->s.pad.w;
     const int16_t right = histo->w.pos.x + histo->w.dim.w - histo->s.pad.w;
-    ui_histo_update_v_bound(histo);
 
     // Axes
     {
@@ -473,6 +475,7 @@ void ui_histo_render(
                 }
 
                 int16_t w = (*it * histo->row.w) / histo->v.bound;
+                assert(w <= histo->row.w);
 
                 rgba_render(series->fg, renderer);
                 sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
