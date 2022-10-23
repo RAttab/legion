@@ -3,14 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
-#include "render/render.h"
-#include "game/id.h"
-#include "game/proxy.h"
-#include "db/items.h"
+#include "str.h"
 #include "vm/atoms.h"
+#include "game/proxy.h"
 #include "utils/str.h"
 
 #include <stdarg.h>

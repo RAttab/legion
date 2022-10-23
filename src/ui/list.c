@@ -3,9 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
+#include "list.h"
 
 
 struct ui_list ui_list_new(struct dim dim, size_t chars)

@@ -29,7 +29,7 @@ struct ui_tapes
     struct ui_button help;
 
     struct ui_label lab;
-    struct im_lab_bits lab_val;
+    struct ui_lab_bits lab_val;
 
     struct ui_label energy, energy_val;
 
@@ -65,7 +65,7 @@ struct ui_tapes *ui_tapes_new(void)
         .help = ui_button_new_s(&ui_st.button.line, ui_str_c("?")),
 
         .lab = ui_label_new(ui_str_c("lab:  ")),
-        .lab_val = im_lab_bits_new(),
+        .lab_val = ui_lab_bits_new(),
 
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
@@ -178,7 +178,7 @@ static void ui_tapes_update(struct ui_tapes *ui, enum item select)
 
     ui_str_set_item(&ui->name.str, item);
 
-    im_lab_bits_update(&ui->lab_val, tech, item);
+    ui_lab_bits_update(&ui->lab_val, tech, item);
     ui_str_set_scaled(&ui->energy_val.str, tape_energy(tape));
 
     ui_str_set_item(&ui->host_val.str, tape_host(tape));
@@ -359,7 +359,7 @@ void ui_tapes_render(struct ui_tapes *ui, SDL_Renderer *renderer)
     ui_layout_sep_row(&inner);
 
     ui_label_render(&ui->lab, &inner, renderer);
-    im_lab_bits_render(&ui->lab_val, &inner, renderer);
+    ui_lab_bits_render(&ui->lab_val, &inner, renderer);
     ui_layout_next_row(&inner);
 
     ui_label_render(&ui->energy, &inner, renderer);

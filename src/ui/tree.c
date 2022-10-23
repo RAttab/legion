@@ -4,10 +4,7 @@
 */
 
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
-#include "utils/hset.h"
+#include "tree.h"
 
 
 // -----------------------------------------------------------------------------

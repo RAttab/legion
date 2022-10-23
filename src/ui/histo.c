@@ -3,8 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
+#include "histo.h"
 
 
 // -----------------------------------------------------------------------------

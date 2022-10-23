@@ -3,11 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
-#include "render/render.h"
-#include "utils/sdl.h"
+#include "link.h"
 
 
 // -----------------------------------------------------------------------------

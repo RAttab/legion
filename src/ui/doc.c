@@ -3,10 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
-#include "game/man.h"
+#include "doc.h"
 
 
 static void ui_doc_check_font(const struct font *base, const struct font *other)

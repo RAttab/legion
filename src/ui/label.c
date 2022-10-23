@@ -3,9 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
+#include "label.h"
 
 
 // -----------------------------------------------------------------------------
@@ -85,48 +83,4 @@ void ui_values_set(struct ui_values *values, struct ui_label *label, uint64_t us
     }
 
     ui_set_nil(label);
-}
-
-// -----------------------------------------------------------------------------
-// specialized
-// -----------------------------------------------------------------------------
-
-struct ui_label ui_waiting_new(void)
-{
-    return ui_label_new(ui_str_v(8));
-}
-
-void ui_waiting_idle(struct ui_label *label)
-{
-    label->disabled = true;
-    ui_str_setc(&label->str, "idle");
-}
-
-void ui_waiting_set(struct ui_label *label, bool waiting)
-{
-    label->disabled = false;
-
-    if (waiting) {
-        ui_str_setc(&label->str, "waiting");
-        label->s.fg = ui_st.rgba.waiting;
-    }
-    else {
-        ui_str_setc(&label->str, "working");
-        label->s.fg = ui_st.rgba.working;
-    }
-}
-
-
-struct ui_label ui_loops_new(void)
-{
-    return ui_label_new(ui_str_v(3));
-}
-
-void ui_loops_set(struct ui_label *label, im_loops loops)
-{
-    label->disabled = false;
-
-    if (loops != im_loops_inf)
-        ui_str_set_u64(&label->str, loops);
-    else ui_str_setc(&label->str, "inf");
 }

@@ -3,9 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ui/ui.h"
-#include "render/font.h"
+#include "style.h"
+
 
 // -----------------------------------------------------------------------------
 // style
@@ -17,6 +16,10 @@ void ui_style_default(void)
 {
     struct ui_style *s = &ui_st;
 
+    // -------------------------------------------------------------------------
+    // font
+    // -------------------------------------------------------------------------
+
     { // font
         s->font.base = make_font(font_small, font_nil);
         s->font.bold = make_font(font_small, font_bold);
@@ -24,6 +27,10 @@ void ui_style_default(void)
                 s->font.base->glyph_w,
                 s->font.base->glyph_h);
     }
+
+    // -------------------------------------------------------------------------
+    // rgba
+    // -------------------------------------------------------------------------
 
     { // rgba
         s->rgba.fg = rgba_white();
@@ -69,9 +76,19 @@ void ui_style_default(void)
         s->rgba.energy.kwheel =   make_rgba(0x4B, 0x00, 0x82, 0xFF); // Indigo
     }
 
+
+    // -------------------------------------------------------------------------
+    // pad
+    // -------------------------------------------------------------------------
+
     { // pad
         s->pad.box = make_dim(6, 2);
     }
+
+
+    // -------------------------------------------------------------------------
+    // label
+    // -------------------------------------------------------------------------
 
     { // label
         void fg(struct ui_label_style *label, struct rgba fg)
@@ -112,6 +129,11 @@ void ui_style_default(void)
         fg(&s->label.energy.kwheel, s->rgba.energy.kwheel);
     }
 
+
+    // -------------------------------------------------------------------------
+    // button
+    // -------------------------------------------------------------------------
+
     { // button
         s->button.base = (struct ui_button_style) {
             .idle = {
@@ -151,6 +173,11 @@ void ui_style_default(void)
         s->button.list.open.disabled.font = ui_st.font.bold;
     }
 
+
+    // -------------------------------------------------------------------------
+    // link
+    // -------------------------------------------------------------------------
+
     s->link = (struct ui_link_style) {
         .font = s->font.base,
 #define make_from(src) { .fg = (src).fg, .bg = (src).bg }
@@ -161,6 +188,11 @@ void ui_style_default(void)
         .disabled = { .fg = s->rgba.disabled, .bg = s->rgba.bg },
     };
 
+
+    // -------------------------------------------------------------------------
+    // tooltip
+    // -------------------------------------------------------------------------
+
     s->tooltip = (struct ui_tooltip_style) {
         .font = s->font.base,
         .fg = s->rgba.fg,
@@ -169,10 +201,20 @@ void ui_style_default(void)
         .pad = s->pad.box,
     };
 
+
+    // -------------------------------------------------------------------------
+    // scroll
+    // -------------------------------------------------------------------------
+
     s->scroll = (struct ui_scroll_style) {
         .fg = rgba_gray(0x88),
         .bg = s->rgba.bg,
     };
+
+
+    // -------------------------------------------------------------------------
+    // input
+    // -------------------------------------------------------------------------
 
     s->input = (struct ui_input_style) {
         .font = s->font.base,
@@ -182,6 +224,11 @@ void ui_style_default(void)
         .carret = s->rgba.carret,
         .pad = make_dim(2, 2),
     };
+
+
+    // -------------------------------------------------------------------------
+    // code
+    // -------------------------------------------------------------------------
 
     s->code = (struct ui_code_style) {
         .font = s->font.base,
@@ -201,6 +248,10 @@ void ui_style_default(void)
     };
 
 
+    // -------------------------------------------------------------------------
+    // doc
+    // -------------------------------------------------------------------------
+
     s->doc = (struct ui_doc_style) {
         .text = { .font = s->font.base, .fg = s->rgba.fg, .bg = s->rgba.bg },
         .bold = { .font = s->font.bold, .fg = s->rgba.fg, .bg = s->rgba.bg },
@@ -219,6 +270,11 @@ void ui_style_default(void)
 
         .underline = { .fg = s->rgba.fg, .offset = 2 },
     };
+
+
+    // -------------------------------------------------------------------------
+    // list
+    // -------------------------------------------------------------------------
 
     s->list = (struct ui_list_style) {
         .idle = {
@@ -240,6 +296,11 @@ void ui_style_default(void)
         },
     };
 
+
+    // -------------------------------------------------------------------------
+    // tree
+    // -------------------------------------------------------------------------
+
     s->tree = (struct ui_tree_style) {
         .idle = {
             .font = s->font.base,
@@ -259,6 +320,11 @@ void ui_style_default(void)
             .bg = s->rgba.list.selected,
         },
     };
+
+
+    // -------------------------------------------------------------------------
+    // histo
+    // -------------------------------------------------------------------------
 
     s->histo = (struct ui_histo_style) {
         .pad = make_dim(4, 4),
@@ -283,6 +349,11 @@ void ui_style_default(void)
             .bg = ui_st.rgba.bg,
         },
     };
+
+
+    // -------------------------------------------------------------------------
+    // panel
+    // -------------------------------------------------------------------------
 
     s->panel = (struct ui_panel_style) {
         .margin = make_dim(2, 2),

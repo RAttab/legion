@@ -41,19 +41,3 @@ struct legion_packed im_lab
 static_assert(sizeof(struct im_lab) == 16);
 
 void im_lab_config(struct im_config *);
-
-
-// -----------------------------------------------------------------------------
-// ui
-// -----------------------------------------------------------------------------
-
-struct im_lab_bits
-{
-    uint8_t bits;
-    uint64_t known;
-    struct dim margin;
-};
-
-struct im_lab_bits im_lab_bits_new(void);
-void im_lab_bits_update(struct im_lab_bits *, const struct tech *, enum item);
-void im_lab_bits_render(struct im_lab_bits *, struct ui_layout *, SDL_Renderer *);

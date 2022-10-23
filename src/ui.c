@@ -3,6 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "render/render.h"
+#include "render/font.h"
+#include "utils/sdl.h"
+
 #include "ui/str.c"
 #include "ui/layout.c"
 #include "ui/clipboard.c"
@@ -17,5 +21,6 @@
 #include "ui/list.c"
 #include "ui/tree.c"
 #include "ui/histo.c"
+#include "ui/game.c"
 #include "ui/panel.c"
 #include "ui/style.c"
