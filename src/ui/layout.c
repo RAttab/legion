@@ -67,14 +67,6 @@ struct ui_layout ui_layout_split_x(struct ui_layout *layout, int16_t width)
     return inner;
 }
 
-void ui_layout_next_row(struct ui_layout *layout)
-{
-    layout->row.pos.x = layout->base.pos.x;
-    layout->row.pos.y += layout->row.dim.h;
-
-    layout->row.dim.w = layout->base.dim.w;
-    layout->row.dim.h = 0;
-}
 
 void ui_layout_sep_x(struct ui_layout *layout, int16_t px)
 {
@@ -95,6 +87,30 @@ void ui_layout_sep_cols(struct ui_layout *layout, size_t n)
     ui_layout_sep_x(layout, n * ui_st.font.dim.w);
 }
 
+void ui_layout_tab(struct ui_layout *layout, size_t n)
+{
+    // \todo I don't have a need for it yet.
+    assert(layout->dir == ui_layout_right);
+
+    int16_t w = n * ui_st.font.dim.w;
+    int16_t x = layout->base.pos.x + w;
+
+    assert(w <= layout->base.dim.w);
+    assert(x >= layout->row.pos.x);
+
+    layout->row.dim.w -= x - layout->row.pos.x;
+    layout->row.pos.x = x;
+}
+
+void ui_layout_mid(struct ui_layout *layout, int width)
+{
+    int x = layout->base.pos.x + (layout->base.dim.w/2 - width/2);
+    assert(layout->row.pos.x < x);
+    layout->row.pos.x = x;
+    layout->row.dim.w = width;
+}
+
+
 void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
 {
     assert(layout->row.dim.h == 0);
@@ -108,13 +124,15 @@ void ui_layout_sep_row(struct ui_layout *layout)
     ui_layout_sep_y(layout, ui_st.font.dim.h);
 }
 
-void ui_layout_mid(struct ui_layout *layout, int width)
+void ui_layout_next_row(struct ui_layout *layout)
 {
-    int x = layout->base.pos.x + (layout->base.dim.w/2 - width/2);
-    assert(layout->row.pos.x < x);
-    layout->row.pos.x = x;
-    layout->row.dim.w = width;
+    layout->row.pos.x = layout->base.pos.x;
+    layout->row.pos.y += layout->row.dim.h;
+
+    layout->row.dim.w = layout->base.dim.w;
+    layout->row.dim.h = 0;
 }
+
 
 void ui_layout_dir(struct ui_layout *layout, enum ui_layout_dir dir)
 {
