@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/save.h"
+#include "utils/save.h"
 #include "utils/vec.h"
 #include "utils/err.h"
 
@@ -61,9 +61,9 @@ void *save_bytes(struct save *save)
 // implementations
 // -----------------------------------------------------------------------------
 
-#include "game/save_mem.c"
-#include "game/save_ring.c"
-#include "game/save_file.c"
+#include "utils/save_mem.c"
+#include "utils/save_ring.c"
+#include "utils/save_file.c"
 
 
 // -----------------------------------------------------------------------------

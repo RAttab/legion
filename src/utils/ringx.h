@@ -123,7 +123,7 @@ struct ringx_name *ringx_fn(push) (struct ringx_name *ring, ringx_type val)
 // -----------------------------------------------------------------------------
 
 #ifdef ringx_save
-#include "game/save.h"
+#include "utils/save.h"
 
 #define ringx_magic ringx_concat(save_magic, ringx_name)
 

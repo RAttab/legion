@@ -10,7 +10,7 @@
 #include "game/log.h"
 #include "game/tech.h"
 #include "game/tape.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "db/specs.h"
 #include "game/sector.h"
 #include "items/config.h"

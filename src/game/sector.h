@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "db/items.h"
 #include "game/coord.h"
 #include "game/world.h"

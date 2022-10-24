@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/sim.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "game/protocol.h"
 #include "game/chunk.h"
 #include "utils/time.h"

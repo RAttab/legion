@@ -6,7 +6,7 @@
 #include "utils/err.h"
 #include "utils/heap.h"
 #include "utils/bits.h"
-#include "game/save.h"
+#include "utils/save.h"
 
 #include <sys/mman.h>
 

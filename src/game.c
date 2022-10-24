@@ -21,5 +21,4 @@
 #include "game/user.c"
 #include "game/sim.c"
 #include "game/protocol.c"
-#include "game/save.c"
 #include "game/man.c"

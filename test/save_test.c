@@ -6,7 +6,7 @@
 #include "common.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"

@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "game/id.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "game/world.h"
 #include "game/pills.h"
 #include "db/io.h"

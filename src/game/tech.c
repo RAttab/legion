@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/tech.h"
-#include "game/save.h"
+#include "utils/save.h"
 
 // -----------------------------------------------------------------------------
 // tech

@@ -8,7 +8,7 @@
 #include "vm/atoms.h"
 #include "game/log.h"
 #include "game/gen.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "game/tape.h"
 #include "game/chunk.h"
 #include "game/world.h"

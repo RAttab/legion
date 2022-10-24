@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "game/energy.h"
-#include "game/save.h"
+#include "utils/save.h"
 #include "db/specs.h"
 
 

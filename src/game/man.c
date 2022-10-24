@@ -8,6 +8,8 @@
 #include "utils/vec.h"
 #include "utils/hash.h"
 
+#include <unistd.h>
+
 
 // -----------------------------------------------------------------------------
 // link
