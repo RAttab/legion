@@ -69,6 +69,11 @@ bool energy_consume(struct energy *en, im_energy value)
     return true;
 }
 
+bool energy_can_consume(const struct energy *en, im_energy value)
+{
+    return en->consumed + value > en->produced;
+}
+
 void energy_produce_burner(struct energy *en, im_energy produced)
 {
     en->produced += produced;

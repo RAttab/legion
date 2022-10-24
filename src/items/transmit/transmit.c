@@ -24,6 +24,7 @@ void im_transmit_config(struct im_config *config)
     config->size = sizeof(struct im_transmit);
 
     config->im.init = im_transmit_init;
+    config->im.step = im_transmit_step;
     config->im.io = im_transmit_io;
 
     config->ui.alloc = ui_transmit_alloc;

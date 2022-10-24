@@ -29,10 +29,14 @@ static void im_port_init(void *state, struct chunk *chunk, im_id id)
 
 static void im_port_step_dock(struct im_port *port, struct chunk *chunk)
 {
+    if (!energy_can_consume(chunk_energy(chunk), im_port_dock_energy))
+        return;
+
     struct pills_ret ret = chunk_pills_dock(
             chunk, port->input.coord, port->input.item);
     if (!ret.ok) return;
 
+    energy_consume(chunk_energy(chunk), im_port_dock_energy);
     port->state = im_port_docked;
     port->origin = ret.coord;
     port->has = ret.cargo;
@@ -72,6 +76,9 @@ static void im_port_step_load(struct im_port *port, struct chunk *chunk)
 
 static void im_port_step_launch(struct im_port *port, struct chunk *chunk)
 {
+    if (!energy_consume(chunk_energy(chunk), im_port_launch_energy))
+        return;
+
     const vm_word data = cargo_to_word(port->has);
     struct coord dst = coord_is_nil(port->target) ? port->origin : port->target;
 

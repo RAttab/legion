@@ -191,10 +191,12 @@ static const im_energy im_brain_lab_energy = 0xc;
 static const uint8_t im_prober_lab_bits = 0x8;
 static const im_work im_prober_lab_work = 0xc;
 static const im_energy im_prober_lab_energy = 0x8;
+static const im_energy im_prober_work_energy = 0x8;
 
 static const uint8_t im_scanner_lab_bits = 0x8;
 static const im_work im_scanner_lab_work = 0xc;
 static const im_energy im_scanner_lab_energy = 0x8;
+static const im_energy im_scanner_work_energy = 0x8;
 
 static const uint8_t im_legion_lab_bits = 0x10;
 static const im_work im_legion_lab_work = 0x10;
@@ -204,6 +206,7 @@ static const uint16_t im_legion_travel_speed = 0x64;
 static const uint8_t im_transmit_lab_bits = 0x10;
 static const im_work im_transmit_lab_work = 0x10;
 static const im_energy im_transmit_lab_energy = 0x18;
+static const im_energy im_transmit_launch_energy = 0x20;
 static const uint16_t im_transmit_launch_speed = 0x1f4;
 
 static const uint8_t im_receive_lab_bits = 0x10;
@@ -247,6 +250,8 @@ static const uint16_t im_storage_max = 0x1000;
 static const uint8_t im_port_lab_bits = 0x10;
 static const im_work im_port_lab_work = 0x38;
 static const im_energy im_port_lab_energy = 0x38;
+static const im_energy im_port_dock_energy = 0x40;
+static const im_energy im_port_launch_energy = 0x80;
 static const uint16_t im_port_launch_speed = 0x64;
 
 static const uint8_t im_condenser_lab_bits = 0x10;

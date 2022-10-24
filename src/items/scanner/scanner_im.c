@@ -57,7 +57,12 @@ static void im_scanner_step(void *state, struct chunk *chunk)
 
     if (coord_is_nil(scanner->it.coord)) return;
     if (scanner->result != im_scanner_empty) return;
-    if (scanner->work.left) { scanner->work.left--; return; }
+
+    if (scanner->work.left) {
+        if (energy_consume(chunk_energy(chunk), im_scanner_work_energy))
+            scanner->work.left--;
+        return;
+    }
 
     struct coord coord = world_scan_next(chunk_world(chunk), &scanner->it);
 

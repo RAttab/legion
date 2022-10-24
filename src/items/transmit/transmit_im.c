@@ -30,6 +30,30 @@ static void im_transmit_reset(struct im_transmit *transmit, struct chunk *chunk)
     transmit->target = coord_nil();
 }
 
+// -----------------------------------------------------------------------------
+// step
+// -----------------------------------------------------------------------------
+
+static void im_transmit_step(void *state, struct chunk *chunk)
+{
+    struct im_transmit *transmit = state;
+
+    if (!transmit->packet.len) return;
+    if (!energy_consume(chunk_energy(chunk), im_transmit_launch_energy))
+        return;
+
+    size_t len = transmit->packet.len;
+    vm_word packet[1 + len];
+    packet[0] = im_packet_pack(transmit->channel, len);
+    memcpy(packet + 1, transmit->packet.data, len * sizeof(packet[0]));
+
+    chunk_lanes_launch(chunk,
+            item_data, im_transmit_launch_speed, transmit->target, packet, len + 1);
+
+    transmit->packet.len = 0;
+}
+
+
 
 // -----------------------------------------------------------------------------
 // io
@@ -86,15 +110,9 @@ static void im_transmit_io_transmit(
     if (coord_is_nil(transmit->target))
         return chunk_log(chunk, transmit->id, io_transmit, ioe_invalid_state);
 
-    const size_t packet_len = legion_min(len, (size_t) im_packet_max);
-    const size_t packet_speed = im_transmit_launch_speed;
-
-    vm_word packet[1 + packet_len];
-    packet[0] = im_packet_pack(transmit->channel, packet_len);
-    memcpy(packet+1, args, packet_len * sizeof(packet[0]));
-
-    chunk_lanes_launch(chunk,
-            item_data, packet_speed, transmit->target, packet, 1+packet_len);
+    transmit->packet.chan = transmit->channel;
+    transmit->packet.len = legion_min(len, (size_t) im_packet_max);
+    memcpy(transmit->packet.data, args, transmit->packet.len * sizeof(args[0]));
 }
 
 static void im_transmit_io(

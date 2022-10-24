@@ -22,6 +22,8 @@ void test_txrx(void)
     struct chunk *chunk_src = world_chunk_alloc(world, src, user_admin);
     struct chunk *chunk_dst = world_chunk_alloc(world, dst, user_admin);
 
+    chunk_create(chunk_src, item_fusion);
+    chunk_create(chunk_src, item_fusion);
     chunk_create(chunk_src, item_transmit);
     chunk_create(chunk_dst, item_receive);
     chunk_create(chunk_dst, item_test);
@@ -81,6 +83,7 @@ void test_txrx(void)
     // oversaturate the rx buffer
     for (size_t it = 0; it < 5; ++it) {
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
+        world_step(world);
         chunk_io(chunk_src, io_transmit, 0, id_tx, packet, array_len(packet));
 
         wait_travel(world, im_transmit_launch_speed, src, dst);

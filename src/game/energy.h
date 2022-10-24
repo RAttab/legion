@@ -37,6 +37,7 @@ im_energy energy_kwheel_output(uint8_t elem_k, size_t kwheel);
 im_energy energy_prod_kwheel(const struct energy *, const struct star *);
     
 bool energy_consume(struct energy *, im_energy);
+bool energy_can_consume(const struct energy *, im_energy);
 void energy_produce_burner(struct energy *, im_energy);
 
 void energy_step_begin(struct energy *, const struct star *star);

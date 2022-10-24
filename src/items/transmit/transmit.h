@@ -20,13 +20,12 @@ struct im_config;
 struct legion_packed im_transmit
 {
     im_id id;
-
-    legion_pad(1);
-
     uint8_t channel;
+    legion_pad(5);
     struct coord target;
+    struct im_packet packet;
 };
 
-static_assert(sizeof(struct im_transmit) == 12);
+static_assert(sizeof(struct im_transmit) == 48);
 
 void im_transmit_config(struct im_config *);

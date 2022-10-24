@@ -87,6 +87,8 @@
 (port
  (info (type active) (list factory))
  (specs (lab-bits u8 16) (lab-work work 56) (lab-energy energy 56)
+	(dock-energy energy 64)
+	(launch-energy energy 128)
 	(launch-speed u16 100))
  (tape (work 24) (energy 32) (host item-assembly)
   (in (item-field 5)

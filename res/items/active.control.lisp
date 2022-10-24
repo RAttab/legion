@@ -25,7 +25,7 @@
 (prober
  (info (type active) (list control))
  (specs (lab-bits u8 8) (lab-work work 12) (lab-energy energy 8)
-	(work-cap fn))
+	(work-energy energy 8) (work-cap fn))
  (tape (work 4) (energy 18) (host item-assembly)
   (in item-lung
       item-nodule
@@ -35,7 +35,7 @@
 (scanner
  (info (type active) (list control))
  (specs (lab-bits u8 8) (lab-work work 12) (lab-energy energy 8)
-	(work-cap fn))
+	(work-energy energy 8) (work-cap fn))
  (tape (work 6) (energy 18) (host item-assembly)
   (in item-lung
       item-engram
@@ -70,6 +70,7 @@
 (transmit
  (info (type active) (list control))
  (specs (lab-bits u8 16) (lab-work work 16) (lab-energy energy 24)
+	(launch-energy energy 32)
 	(launch-speed u16 500))
  (tape (work 16) (energy 20) (host item-assembly)
   (in (item-eye 3)

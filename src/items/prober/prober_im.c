@@ -49,7 +49,12 @@ static void im_prober_step(void *state, struct chunk *chunk)
 
     if (!prober->item) return;
     if (prober->result != im_prober_empty) return;
-    if (prober->work.left) { prober->work.left--; return; }
+
+    if (prober->work.left) {
+        if (energy_consume(chunk_energy(chunk), im_prober_work_energy))
+            prober->work.left--;
+        return;
+    }
 
     ssize_t ret = world_scan(chunk_world(chunk), prober->coord, prober->item);
     prober->result = ret < 0 ? 0 : ret;

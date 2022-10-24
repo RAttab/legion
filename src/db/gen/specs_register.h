@@ -192,11 +192,13 @@ spec_register_var(spec_brain_lab_energy, "spec-brain-lab-energy", im_brain_lab_e
 spec_register_var(spec_prober_lab_bits, "spec-prober-lab-bits", im_prober_lab_bits);
 spec_register_var(spec_prober_lab_work, "spec-prober-lab-work", im_prober_lab_work);
 spec_register_var(spec_prober_lab_energy, "spec-prober-lab-energy", im_prober_lab_energy);
+spec_register_var(spec_prober_work_energy, "spec-prober-work-energy", im_prober_work_energy);
 spec_register_fn(spec_prober_work_cap, "spec-prober-work-cap", spec_prober_work_cap_fn);
 
 spec_register_var(spec_scanner_lab_bits, "spec-scanner-lab-bits", im_scanner_lab_bits);
 spec_register_var(spec_scanner_lab_work, "spec-scanner-lab-work", im_scanner_lab_work);
 spec_register_var(spec_scanner_lab_energy, "spec-scanner-lab-energy", im_scanner_lab_energy);
+spec_register_var(spec_scanner_work_energy, "spec-scanner-work-energy", im_scanner_work_energy);
 spec_register_fn(spec_scanner_work_cap, "spec-scanner-work-cap", spec_scanner_work_cap_fn);
 
 spec_register_var(spec_legion_lab_bits, "spec-legion-lab-bits", im_legion_lab_bits);
@@ -207,6 +209,7 @@ spec_register_var(spec_legion_travel_speed, "spec-legion-travel-speed", im_legio
 spec_register_var(spec_transmit_lab_bits, "spec-transmit-lab-bits", im_transmit_lab_bits);
 spec_register_var(spec_transmit_lab_work, "spec-transmit-lab-work", im_transmit_lab_work);
 spec_register_var(spec_transmit_lab_energy, "spec-transmit-lab-energy", im_transmit_lab_energy);
+spec_register_var(spec_transmit_launch_energy, "spec-transmit-launch-energy", im_transmit_launch_energy);
 spec_register_var(spec_transmit_launch_speed, "spec-transmit-launch-speed", im_transmit_launch_speed);
 
 spec_register_var(spec_receive_lab_bits, "spec-receive-lab-bits", im_receive_lab_bits);
@@ -250,6 +253,8 @@ spec_register_var(spec_storage_max, "spec-storage-max", im_storage_max);
 spec_register_var(spec_port_lab_bits, "spec-port-lab-bits", im_port_lab_bits);
 spec_register_var(spec_port_lab_work, "spec-port-lab-work", im_port_lab_work);
 spec_register_var(spec_port_lab_energy, "spec-port-lab-energy", im_port_lab_energy);
+spec_register_var(spec_port_dock_energy, "spec-port-dock-energy", im_port_dock_energy);
+spec_register_var(spec_port_launch_energy, "spec-port-launch-energy", im_port_launch_energy);
 spec_register_var(spec_port_launch_speed, "spec-port-launch-speed", im_port_launch_speed);
 
 spec_register_var(spec_condenser_lab_bits, "spec-condenser-lab-bits", im_condenser_lab_bits);
