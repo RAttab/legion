@@ -5,7 +5,6 @@
 
 #include "render/render.c"
 #include "render/font.c"
-#include "render/sprites.c"
 #include "render/map.c"
 #include "render/factory.c"
 #include "render/ui_topbar.c"
