@@ -1,3 +1,49 @@
 {@LISP/ASSERT}
 
-blah
+{=SYNOPSIS}
+
+({*assert} {_predicate}) -> 0
+
+
+{=DESCRIPTION}
+
+Function used to help find bugs in a program by halting execution in
+unexpected situations.
+
+If {_predicate} evaluates to false (i.e. is equal to zero), {*assert}
+will raise the {*USER_FAULT} flag and halt execution. If it instead
+evaluates to true (i.e. is not equal to zero) then the function
+returns the value 0 and the mod continues normally.
+
+
+{=RETURN}
+
+The value 0 is always returned.
+
+
+{=FAULTS}
+
+{*USER_FAULT} is raised if {_predicate} evaluates to false.
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  <predicate>
+  (JNZ @false)
+  (FAULT)
+  (@ false)
+  (PUSH 0))
+}
+
+
+{=EXAMPLE}
+
+{`
+;; Ensures that (id !item-brain 1) exists
+(assert (= (io !io-ping (id !item-brain 1)) !io-ok))
+}
+
+
+{=RELATED}
