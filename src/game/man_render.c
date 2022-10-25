@@ -286,6 +286,20 @@ static void man_render_new_line(struct man_parser *parser)
     (void) man_render_newline(parser);
 }
 
+static void man_render_tab(struct man_parser *parser)
+{
+    struct man_token token = man_parser_until_close(parser);
+
+    uint64_t len = 0;
+    (void) str_atou(token.it, token.len, &len);
+
+    size_t col = len + parser->out.indent;
+    if (col < parser->out.col.it) return;
+
+    size_t spaces = col - parser->out.col.it;
+    man_render_repeat(parser, man_current(parser->out.man), ' ', spaces);
+}
+
 static void man_render_list_end(struct man_parser *parser)
 {
     (void) man_parser_until_close(parser);
@@ -409,6 +423,7 @@ static struct man *man_page_render(
             case man_markup_list_end: { man_render_list_end(&parser); break; }
 
             case man_markup_newline: { man_render_new_line(&parser); break; }
+            case man_markup_tab: { man_render_tab(&parser); break; }
 
             case man_markup_bold:
             case man_markup_underline: { man_render_style(&parser, type); break; }

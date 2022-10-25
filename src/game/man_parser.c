@@ -28,6 +28,7 @@ enum man_markup_type
     man_markup_list_end  = '<',
 
     man_markup_newline   = 'n',
+    man_markup_tab       = 't',
 
     man_markup_underline = '_',
     man_markup_bold      = '*',
@@ -54,6 +55,7 @@ static enum man_markup_type man_markup_type(char c)
     case man_markup_list_end:  { return man_markup_list_end; }
 
     case man_markup_newline:   { return man_markup_newline; }
+    case man_markup_tab:       { return man_markup_tab; }
 
     case man_markup_underline: { return man_markup_underline; }
     case man_markup_bold:      { return man_markup_bold; }
