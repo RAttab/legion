@@ -2,23 +2,25 @@
 
 {=SYNOPSIS}
 
-({*assert} {_predicate}) -> 0
+{n} ({*assert} {_predicate}) -> 0
 
 
 {=DESCRIPTION}
 
-Function used to help find bugs in a program by halting execution in
-unexpected situations.
+Utility function used to help find bugs in a mod by halting execution
+in the event of unexpected assumption. Typically used to assert a
+given assumption that the programmer has about the current state.
 
 If {_predicate} evaluates to false (i.e. is equal to zero), {*assert}
 will raise the {*USER_FAULT} flag and halt execution. If it instead
 evaluates to true (i.e. is not equal to zero) then the function
-returns the value 0 and the mod continues normally.
+returns the value 0 and the mod continues to execute normally.
 
 
 {=RETURN}
 
-The value 0 is always returned.
+{*assert} always returns the value 0 if {_predicate} evaluates to
+true. It never returns if {_predicate} evaluates to false.
 
 
 {=FAULTS}

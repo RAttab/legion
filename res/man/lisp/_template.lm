@@ -1,0 +1,35 @@
+{@LISP/fn}
+{!item-dummy}
+
+{=SYNOPSIS}
+
+({*fn} {_arg}) -> ret
+
+
+{=DESCRIPTION}
+
+High-level use-case
+
+Detailed explanation
+
+
+{=RETURN}
+
+The value 0 is always returned.
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  (PUSH 0))
+}
+
+
+{=EXAMPLE}
+
+{`
+}
+
+
+{=RELATED}
