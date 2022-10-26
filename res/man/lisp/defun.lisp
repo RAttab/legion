@@ -37,8 +37,8 @@ of the function.
 
 The body of the function is composed of a list of {_statements} that
 will be executed in sequence. The return value of the last statement
-will be returned to the caller of the function. It is currently not
-possible to return multiple values to the caller.
+will be returned to the caller of the function. It is not possible to
+return multiple values to the caller.
 
 All functions must be defined at the top-level of a mod and can't be
 nested. Calling a user-defined functions can be done using the same
