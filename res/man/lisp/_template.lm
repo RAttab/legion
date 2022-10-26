@@ -3,7 +3,7 @@
 
 {=SYNOPSIS}
 
-({*fn} {_arg}) -> ret
+{n} ({*fn} {_arg}) -> ret
 
 
 {=DESCRIPTION}
