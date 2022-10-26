@@ -1,0 +1,56 @@
+{@LISP/MOD}
+
+{=SYNOPSIS}
+
+{n} {*const} ({*mod} {_mod-spec}) -> {_mod-id}
+
+
+{=DESCRIPTION}
+
+Translates a mod specification into a mod id. Typically used to
+specify the arguments to the core function {*load} or to one of the
+{*!io-mod} commands.
+
+{_mod-spec} can be specified using the following syntax:
+
+{`
+;; Returns the id of the current mod
+(mod)
+
+;; Returns the latest version of my-mod
+(mod my-mod)
+
+;; Returns version 2 of my-mod
+(mod my-mod.2)
+}
+
+While the mod name in {_mod-spec} must be registered for the function
+to compile, it is not required for the mod version to exist at
+compilation time.Specifying a mod versions that doesn't exist is
+required to resolve circular dependencies between mods.
+
+
+{=RETURN}
+
+{*mod} returns the {_mod-id} associated with {_mod-spec}.
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  (PUSH <mod-id>))
+}
+
+
+{=EXAMPLE}
+
+{`
+;; Executes my-mod on a brain
+(io !io-mod (id !item-brain 1) (mod my-mod))
+}
+
+
+{=RELATED}
+
+{/lisp/load}

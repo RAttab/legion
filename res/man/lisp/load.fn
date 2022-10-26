@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*load} {_mod})
+{n} ({*load} {_statement})
 
 
 {=DESCRIPTION}
@@ -11,27 +11,14 @@ Loads and executes the specified {_mod}. Typically used to facilitate
 the encapsulation of processing logic within mods by allowing
 execution to switch from one related set of operations to another.
 
-{_mod} must refer to an existing mod and can be specified using the
-following syntax:
+{_statement} will be executed to resolve a mod id. A valid mod id can
+be constructed by using the {*mod} core function.
 
-{`
-;; Loads the latest version of my-mod
-(load my-mod)
-
-;; Loads version 2 of my-mod
-(load my-mod.2)
-}
-
-While {_mod} must be registered for the function to compile, it is not
-required for the mod version to exist at compilation time. Specifying
-mod versions that doesn't exist is required to resolve circular
-dependencies between mods.
-
-Upon execution, {*load} will reset the state of the processor
-(i.e. clear all the registers as well as empty the stack) before
-attempting to switch the execution over to {_mod}. If the version of
-{_mod} does not exist then {*FAULT_CODE} will be raised and execution
-will halt.
+{*load} will reset the state of the processor (i.e. clear all the
+registers as well as empty the stack) before attempting to switch the
+execution over to the provided mod id. If the mod id is not valid or
+if the version of the mod does not exist then {*FAULT_CODE} will be
+raised and execution will halt.
 
 
 {=RETURN}
@@ -41,24 +28,28 @@ will halt.
 
 {=FAULTS}
 
-{*FAULT_CODE} is raised if {_mod} does not exist.
+{*FAULT_CODE} is raised if {_statement} is not a valid mod id or if
+the version of the mod specified does not exist.
 
 
 {=ASSEMBLY}
 
 {`
 (asm
-  (LOAD <mod>))
+  <statement>
+  (LOAD))
 }
 
 
 {=EXAMPLE}
 
 {`
-(load my-other-mod)
+(load (mod my-other-mod))
 
 ;; Any statement after the load statement will not be executed.
 }
 
 
 {=RELATED}
+
+{/lisp/mod}
