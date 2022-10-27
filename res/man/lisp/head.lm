@@ -68,7 +68,7 @@ values in registers to avoid polluting the stack between our calls to
 {*head}.
 
 {`
-(when (= (io !io-recv (id !item-brain 1)) !io-ok)
+(when (= (io !io-recv (self)) !io-ok)
   (let ((len (head)) (sum 0))
     (while len
       (set sum (+ (head) sum))

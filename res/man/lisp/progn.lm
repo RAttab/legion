@@ -1,0 +1,40 @@
+{@LISP/PROGN}
+
+{=SYNOPSIS}
+
+{n} ({*progn} {_statement}) -> {_value}
+
+
+{=DESCRIPTION}
+
+Executes the list of {_statements} in sequence returning the {_value}
+of the last statement. Typically used to create a logical grouping of
+statements or to include multiple statements as a function argument
+that only allows for a single statement.
+
+
+{=RETURN}
+
+{*progn} returns the {_value} of the last statement executed.
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  <statements>)
+}
+
+
+{=EXAMPLE}
+
+{`
+(if is-good
+  (progn ;; True-clause which only allows for a single statement
+    (io !io-log (self) !my-test !all-good)
+    (io !io-set (id !item-memory 1) 0 !all-good))
+  (io !io-log (self) !my-test !uh-oh))
+}
+
+
+{=RELATED}
