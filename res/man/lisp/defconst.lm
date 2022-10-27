@@ -1,0 +1,70 @@
+{@LISP/DEFCONST}
+
+{=SYNOPSIS}
+
+{n} ({*defconst} {_name} {_const-statement}) -> 0
+
+
+{=DESCRIPTION}
+
+Defines a symbolic constant to represent the result of a constant
+statement. Typically used to give a symbolic {_name} to magic values
+that are used in a mod.
+
+Each constant created by {*defconst} is associated to a symbolic
+{_name} by which it will be referred in a given mod. It must be unique
+within a mod with respect to other constants and variable names; that
+is, a variable can't reuse the name of a constant. All constants are
+global to a mod and their declarations can't be nested within function
+arguments.
+
+The value of a constant is defined by {_const-statement} which is a
+statement that can be evaluated during the compilation of a mod. These
+constant statements form a subset of all valid Lisp statements and is
+composed of {*constants}, {*literals}, {*atoms} and {*constant
+functions} whose arguments are all constant statements. A list of
+constant functions is available in the {/lisp/defconst/related}
+section and are also marked as {*const} in the synopsis of their man
+page.
+
+The restriction on {_const-statement} allows for constants to be
+resolved and replaced by literal values during compilation and
+therefore, unlike variables, have no limit as to how many can exist
+within a given mod. They also incur no additional stack or cycle
+performance overhead and can therefore but used liberally to make mods
+more readable.
+
+The {*defconst} statement must appear before a reference to its
+symbolic {_name} name within a mod. This is a unlike {*defun} where
+the definition can appear after a reference to its symbolic name.
+
+
+{=RETURN}
+
+{*defconst} always returns the value 0. Note that this return value
+can't be used as the function can't be nested as an argument to
+another function.
+
+
+{=EXAMPLE}
+
+{`
+(defconst my-const 0xDEADC0DE)
+(defconst my-other-const (pack ?my-atom my-const))
+}
+
+
+{=RELATED}
+
+{>Logical}
+
+{>Mathematical}
+
+{>Binary}
+
+{>Comparison}
+
+{>Utilities}
+{/lisp/mod}
+
+{<}

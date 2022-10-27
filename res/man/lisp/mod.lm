@@ -53,4 +53,5 @@ required to resolve circular dependencies between mods.
 
 {=RELATED}
 
-{/lisp/load}
+{/lisp/defconst}
+{n} {/lisp/load}
