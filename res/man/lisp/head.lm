@@ -1,0 +1,82 @@
+{@LISP/HEAD}
+
+{=SYNOPSIS}
+
+{n} ({*head}) -> {_value}
+
+
+{=DESCRIPTION}
+
+Returns the current {_value} on top of the stack. Typically used to
+extract the result of an IO command that pushed multiple values on the
+stack.
+
+{*head} is an atypical function that does nothing and, in so doing,
+returns the current {_value} on top of the processor's stack. This
+should only be used in cases where it's known that a particular
+function has pushed multiple values on the stack. The number of
+elements to be extracted will always be made explicit either by a
+length value or in the documentation of the core function.
+
+Extracting too many or too few elements will unbalance the stack which
+will cause all further execution to be undefined. This will usually
+result in one of the subsequent operation to raise a fault and halt
+execution. Because the operation that raised the fault will be
+disjoint from the faulty code, it may be difficult to pinpoint the
+exact source of the problem.
+
+It is also important to ensure that no intermediary values have been
+pushed on the stack between the function call and the calls to
+{*head}. It's good practice to extract the values immediately after
+they've been push and before doing any processing by storing them in
+registers using {*let} or {*set} statements.
+
+For IO commands that always return a single value on the stack
+(e.g. {_io-coord}), the {*ior} function exists as an easier and safer
+short-hand.
+
+
+{=RETURN}
+
+{*head} return the current head of the stack.
+
+
+{=FAULT}
+
+{*FAULT_STACK} is raised if the stack is currently empty. Unbalancing
+the stack leads to undefined execution which can cause any of the
+fault flags to be raised.
+
+
+{=EXAMPLE}
+
+Usage example with the {*unpack} function which pushes two values on
+the stack. We can extract the first value normally as the return value
+of the {*unpack} function but the second value needs to be extracted
+with {*head}.
+
+{`
+(let ((hi (unpack value))
+      (lo (head)))
+  (+ hi lo))
+}
+
+Usage example using the {*item-brain} {_io-recv} command which, if it
+succeeds, returns a length argument followed by the content of the
+packet pushed on the stack. In this case we store our intermediary
+values in registers to avoid polluting the stack between our calls to
+{*head}.
+
+{`
+(when (= (io !io-recv (id !item-brain 1)) !io-ok)
+  (let ((len (head)) (sum 0))
+    (while len
+      (set sum (+ (head) sum))
+      (set len (- len 1))))
+    sum)
+}
+
+
+{=RELATED}
+
+{% link to: /lisp/let /lisp/io /lisp/ior /lisp/unpack }
