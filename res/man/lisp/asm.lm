@@ -1,0 +1,55 @@
+{@LISP/ASM}
+
+{=SYNOPSIS}
+
+{n} ({*asm} <statements>)
+
+
+{=DESCRIPTION}
+
+Executes a list of {_statements} as is. Typically used to encapsulate
+assembly instructions which don't follow the normal rules of the Lisp
+language.
+
+The Lisp language mandates that all functions must return at least one
+value on the stack. This restriction can't be applied to many assembly
+instructions that simply can't meet this requirement (e.g. {*POP}). To
+allow for Lisp and assembly code to co-mingle, the {*asm} function
+removes this restriction on all {_statements} executed within it's
+body. As a result, it's the responsibility of the programmer to
+maintain the stack balance within the {*asm} function which includes
+ensuring that at least one value is returned at the end of the body.
+
+By bypassing the restrictions imposed by the Lisp language, {*asm}
+functions can outperform the compiler in terms of both cycles and
+stack usage. The downside is that writing assembly code directly is
+much more error prone and verbose. While it is possible to include any
+arbitrary statements within an {*asm} block, it's good practice to
+keep these blocks short and limited to assembly instructions.
+
+The Legion editor uses an {*asm} function to represent the disassembly
+of a given mod which makes its output a valid Lisp program. This
+disassembly can be a valuable in certain debugging scenario and also
+acts as a learning tool to better understand the output of the
+compiler.
+
+
+{=RETURN}
+
+{*asm} is not required to return a value or to maintain the stack
+balance. It is the responsibility of the programmer to maintain the
+stack balance which includes returning at least one value.
+
+
+{=EXAMPLE}
+
+{`
+(+ 1
+  (asm
+    (PUSH 2)
+    (PUSH 3)
+    (ADD)))
+}
+
+
+{=RELATED}
