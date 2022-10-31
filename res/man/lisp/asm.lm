@@ -2,12 +2,12 @@
 
 {=SYNOPSIS}
 
-{n} ({*asm} <statements>)
+{n} ({*asm} <body>)
 
 
 {=DESCRIPTION}
 
-Executes a list of {_statements} as is. Typically used to encapsulate
+Executes a list of statements as is. Typically used to encapsulate
 assembly instructions which don't follow the normal rules of the Lisp
 language.
 
@@ -15,10 +15,10 @@ The Lisp language mandates that all functions must return at least one
 value on the stack. This restriction can't be applied to many assembly
 instructions that simply can't meet this requirement (e.g. {*POP}). To
 allow for Lisp and assembly code to co-mingle, the {*asm} function
-removes this restriction on all {_statements} executed within it's
-body. As a result, it's the responsibility of the programmer to
+removes this restriction on all statements executed within it's
+{_body}. As a result, it's the responsibility of the programmer to
 maintain the stack balance within the {*asm} function which includes
-ensuring that at least one value is returned at the end of the body.
+ensuring that at least one value is returned at the end of the {_body}.
 
 By bypassing the restrictions imposed by the Lisp language, {*asm}
 functions can outperform the compiler in terms of both cycles and
@@ -40,6 +40,16 @@ compiler.
 balance. It is the responsibility of the programmer to maintain the
 stack balance which includes returning at least one value.
 
+
+{=ASSEMBLY}
+
+{`
+(asm
+  <body[0]>
+  <body[1]>
+  <...>
+  <body[n]>)
+}
 
 {=EXAMPLE}
 

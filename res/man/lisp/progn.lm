@@ -2,13 +2,13 @@
 
 {=SYNOPSIS}
 
-{n} ({*progn} {_statement}) -> {_value}
+{n} ({*progn} {_body}) -> {_value}
 
 
 {=DESCRIPTION}
 
-Executes the list of {_statements} in sequence returning the {_value}
-of the last statement. Typically used to create a logical grouping of
+Executes the list of statements in sequence returning the {_value} of
+the last statement. Typically used to create a logical grouping of
 statements or to include multiple statements as a function argument
 that only allows for a single statement.
 
@@ -22,7 +22,12 @@ that only allows for a single statement.
 
 {`
 (asm
-  <statements>)
+  <body[0]>
+  (POP)
+  <body[1]>
+  (POP)
+  <...>
+  <body[n]>)
 }
 
 

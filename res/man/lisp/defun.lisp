@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*defun} {_name} ({_parameters}) <statements>) -> 0
+{n} ({*defun} {_name} ({_parameters}) <body>) -> 0
 
 
 {=DESCRIPTION}
@@ -35,7 +35,7 @@ variables to four and implies that if four parameter variables are
 specified then no additional variables can be defined within the body
 of the function.
 
-The body of the function is composed of a list of {_statements} that
+The {_body} of the function is composed of a list of statements that
 will be executed in sequence. The return value of the last statement
 will be returned to the caller of the function. It is not possible to
 return multiple values to the caller.
@@ -68,7 +68,12 @@ value of the last statement in the body.
 {`
 (asm
   (JMP @end)
-  <statements>
+  <body[0]>
+  (POP)
+  <body[1]>
+  (POP)
+  <...>
+  <body[n]>
   (SWAP)
   (RET)
   (@ end))
