@@ -1,0 +1,85 @@
+{@LISP/IF}
+
+{=SYNOPSIS}
+
+{n} ({*if} {_predicate} {_true-value} {_false-value}) -> {_return}
+
+
+{=DESCRIPTION}
+
+Conditional execution of one of two statement based on the result of a
+predicate. Typically used to control the flow of execution to react to
+runtime conditions.
+
+The execution flow in an {*if} function is controlled by the result of
+the {_predicate} statement where a true value (i.e. any value other
+then 0) will cause {_true-value} to be executed and a false value
+(i.e. the value 0) will cause {_false-value} to be executed. For a given
+invocation of an {*if} function both of these clause are mutually
+exclusive and only one of the two branches is ever executed.
+
+The {_false-value} argument can be omitted from an {*if} function in
+which case it becomes functionally equivalent to a {*when}
+function. The {*unless} function is also provided as the functional
+inverse of the {*when} function.
+
+Only one statement can be provided as the {_true-value} or the
+{_false-value}. This limitation can be circumvented through the use of
+the {*progn} function.
+
+
+{=RETURN}
+
+{*if} returns the value of either the {_true-value} statement if
+{_predicate} evaluates to true (i.e. any value other then 0). If
+{_predicate} evaluates to false (i.e. the value 0) and a
+{_false-value} is provided then the result of {_false-value} is
+returned. If no {_false-value} is provided and {_predicate} evaluates
+to false then the value 0 is returned.
+
+
+{=ASSEMBLY}
+
+If both {_true-value} and {_false-value} are provided then the
+following assembly will be emitted:
+
+{`
+(asm
+  <predicate>
+  (JZ @false)
+  <true-value>
+  (JMP @end)
+  (@ false)
+  <false-value>
+  (@ end))
+}
+
+If no {_false-value} is provided then the following assembly will be
+emitted instead:
+
+{`
+(asm
+  <predicate>
+  (JZ @false)
+  <true-value>
+  (JMP @end)
+  (@ false)
+  (PUSH 0)
+  (@ end))
+}
+
+
+{=EXAMPLE}
+
+{`
+(if is-good
+  (progn
+    (io !io-log (self) ?my-test ?all-good)
+    (io !io-set (id !item-memory 1) 0 ?all-good))
+  (io !io-log (self) ?my-test ?uh-oh))
+}
+
+
+{=RELATED}
+
+{/lisp/progn}
