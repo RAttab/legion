@@ -1,0 +1,78 @@
+{@LISP/LET}
+
+{=SYNOPSIS}
+
+{n} ({*let} (({_name} {_value}) ...) <body>) -> {_return}
+
+
+{=DESCRIPTION}
+
+Binds the result of statements to variables. Typically used for saving
+the intermediate results of a computation that might be used multiple
+times.
+
+The first argument to the {*let} function is a list of zero or more
+variable declarations where each variable is bound to a {_name} and
+initialized with the return {_value} of a statement. The symbolic
+{_name} of a variable can be used to access its current {_value}
+within the {_body} of the function and it must be unique with respect
+to all parameters and variables active in the current scope. The
+{_value} of a variable can be changed within the {_body} by providing
+its symbolic {_name} as the first argument to the {*set} function.
+
+Each variable is allocated a register and each register can only be
+allocated to a single variable or parameter at a time. This constrains
+the number of active variables and parameters within a given scope to
+four as the Legion processor only has four registers. When a {*let}
+function returns, the registers associated with its variables are
+freed and can be reused by subsequent {*let} functions.
+
+{_body} is made up of one or more statements that are executed in
+sequence where the value of the last statement becomes the return
+value of the {*let} function.
+
+
+{=RETURN}
+
+{*let} returns the value of the last statement executed.
+
+
+{=ASSEMBLY}
+
+In the following assembly template, {_$<i>} represents the first
+available register that will be allocated to a variable, {_$<i+1>} the
+second available register and so on. As an example, if there are
+currently no active parameters or variables the {_$<i>} will represent
+register {_$0} and {_$<i+1>} register {_$1}.
+
+{`
+(asm
+  <value[0]>
+  (POPR $<i>)
+  <value[1]>
+  (POPR $<i+1>)
+  <...>
+  <value[n]>
+  (POPR $<i+n>)
+  <body[0]>
+  (POP)
+  <body[1]>
+  (POP)
+  <...>
+  <body[n]>)
+}
+
+
+{=EXAMPLE}
+
+{`
+(let ((hi (unpack x))
+      (lo (head)))
+  (* (+ hi lo) lo))
+}
+
+
+{=RELATED}
+
+{/lisp/defun}
+{% /lisp/set}
