@@ -297,7 +297,7 @@ static void man_render_tab(struct man_parser *parser)
     if (col < parser->out.col.it) return;
 
     size_t spaces = col - parser->out.col.it;
-    man_render_repeat(parser, man_current(parser->out.man), ' ', spaces);
+    man_render_repeat(parser, man_markup(parser->out.man, markup_text), ' ', spaces);
 }
 
 static void man_render_list_end(struct man_parser *parser)
