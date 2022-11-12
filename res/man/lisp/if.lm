@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*if} {_predicate} {_true-value} {_false-value})
+{n} {*const} ({*if} {_predicate} {_true-value} {_false-value})
 
 
 {=DESCRIPTION}
@@ -82,4 +82,6 @@ emitted instead:
 
 {=RELATED}
 
-{/lisp/progn}
+{/lisp/defconst}
+{n} {/lisp/progn}
+{n} {/lisp/case}

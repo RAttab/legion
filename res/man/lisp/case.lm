@@ -1,0 +1,136 @@
+{@LISP/CASE}
+
+{=SYNOPSIS}
+
+{n} ({*case} {_value}
+{n}{t2} (({_test[i]} {_branch[i][j]}))
+{n}{t2} ({_variable} {_default[k]}))
+
+
+{=DESCRIPTION}
+
+Conditional execution of statements whose {_test} clause matches an
+input {_value}. Typically used to switch execution based on a fixed
+set of possible values.
+
+The return value of the {_value} statement is tested sequentially
+against each {_test} clause to determine which set of {_branch}
+statements to execute. {_test} clauses are statements whose return
+value will be tested for equality against {_value}. The first matching
+{_test} clause will execute its associated {_branch} statements
+sequentially where the last return value will become the return value
+of the {*case} function. All subsequent {_test} clauses will be not be
+evaluated or checked. There can be no more then 32 {_test} clauses.
+
+If there are no matching {_test} clauses then an optional set of
+{_default} statements can be executed where the last return value will
+become the return value of the {*case} function. {_value} will be
+bound to the symbol {_variable} and allocated to a register scoped to
+the statements in {_default}. If no default clause is provided then
+the {*case} function will return the value 0.
+
+
+{=RETURN}
+
+{*case} returns the value of the last statement of {_branch} for the
+first {_test} value that matches {_value}. If no {_test} value match
+{_value} then {*case} returns the value of the last statement of
+{_default}. If no default clause is provided and no {_test} value
+match {_value} then the value 0 is returned.
+
+
+{=EXAMPLE}
+
+{`
+(defun exec (command argument)
+  (case command
+    ((?cmd-load (load mod))
+     (?cmd-exec (io !io-log (self) ?exec argument)
+                (io !io-mod (id !item-brain 2) argument))
+     (?cmd-quit (io !io-reset (self))))
+    (value (io !io-log (self) ?err-unknown-command value))))
+}
+
+Same example but with no default clause:
+
+{`
+(defun exec (command argument)
+  (case command
+    ((?cmd-load (load mod))
+     (?cmd-exec (io !io-log (self) ?exec argument)
+                (io !io-mod (id !item-brain 2) argument))
+     (?cmd-quit (io !io-reset (self))))))
+}
+
+
+{=ASSEMBLY}
+
+In the following assembly templates, {_$<l>} represents the first
+available register that will be allocated for {_variable}.
+
+{`
+(asm
+  <value>
+
+  (DUPE)            ;; Duplicate the test value
+  <test[0]>
+  (EQ)
+  (JZ @test-1)
+  (POP)             ;; Discard the test value
+  <branch[0][0]>
+  (POP)
+  <branch[0][1]>
+  (POP)
+  <...>
+  <branch[0][n]>
+  (JMP @end)
+
+  (@ test-1)
+  (DUPE)            ;; Duplicate the test value
+  <test[1]>
+  (EQ)
+  (JZ @test-2)
+  (POP)             ;; Discard the test value
+  <branch[1][...]>  ;; Execute all the branch statements
+  (JMP @end)
+
+  <...>
+
+  (@ test-n)
+  (DUPE)            ;; Duplicate the test value
+  <test[n]>
+  (EQ)
+  (JZ @default)
+  (POP)             ;; Discard the test value
+  <branch[n][...]>  ;; Execute all the branch statements
+  (JMP @end)
+
+  (@ default)
+  (POPR $<l>)      ;; Save the test value
+  <default[0]>
+  (POP)
+  <default[1]>
+  (POP)
+  <...>
+  <default[n]>
+
+  (@ end))
+}
+
+If no {_default} clause is provided then the following assembly will
+be emitted after the {_@default} label:
+
+{`
+(asm
+  <...>
+
+  (@ default)
+  (PUSH 0)
+
+  (@ end))
+}
+
+
+{=RELATED}
+
+{/lisp/if}
