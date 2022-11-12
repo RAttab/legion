@@ -2,21 +2,21 @@
 
 {=SYNOPSIS}
 
-{n} ({*head}) -> {_value}
+{n} ({*head})
 
 
 {=DESCRIPTION}
 
-Returns the current {_value} on top of the stack. Typically used to
+Returns the current value on top of the stack. Typically used to
 extract the result of an IO command that pushed multiple values on the
 stack.
 
 {*head} is an atypical function that does nothing and, in so doing,
-returns the current {_value} on top of the processor's stack. This
-should only be used in cases where it's known that a particular
-function has pushed multiple values on the stack. The number of
-elements to be extracted will always be made explicit either by a
-length value or in the documentation of the core function.
+returns the current value on top of the processor's stack. This should
+only be used in cases where it's known that a particular function has
+pushed multiple values on the stack. The number of elements to be
+extracted will always be made explicit either by a length value or in
+the documentation of the core function.
 
 Extracting too many or too few elements will unbalance the stack which
 will cause all further execution to be undefined. This will usually

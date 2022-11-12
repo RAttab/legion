@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*if} {_predicate} {_true-value} {_false-value}) -> {_return}
+{n} ({*if} {_predicate} {_true-value} {_false-value})
 
 
 {=DESCRIPTION}

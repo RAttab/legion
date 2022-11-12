@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} {*const} ({*mod} {_mod-spec}) -> {_mod-id}
+{n} {*const} ({*mod} {_mod-spec})
 
 
 {=DESCRIPTION}
@@ -32,7 +32,7 @@ required to resolve circular dependencies between mods.
 
 {=RETURN}
 
-{*mod} returns the {_mod-id} associated with {_mod-spec}.
+{*mod} returns the mod id associated with {_mod-spec}.
 
 
 {=ASSEMBLY}

@@ -2,32 +2,32 @@
 
 {=SYNOPSIS}
 
-{n} ({*progn} {_body}) -> {_value}
+{n} ({*progn} {_statement[i]})
 
 
 {=DESCRIPTION}
 
-Executes the list of statements in sequence returning the {_value} of
-the last statement. Typically used to create a logical grouping of
-statements or to include multiple statements as a function argument
-that only allows for a single statement.
+Executes one or more {_statement} in sequence returning the value of
+the last statement executed. Typically used to create a logical
+grouping of statements or to include multiple statements as a function
+argument that only allows for a single statement.
 
 
 {=RETURN}
 
-{*progn} returns the {_value} of the last statement executed.
+{*progn} returns the value of the last statement executed.
 
 
 {=ASSEMBLY}
 
 {`
 (asm
-  <body[0]>
+  <statement[0]>
   (POP)
-  <body[1]>
+  <statement[1]>
   (POP)
   <...>
-  <body[n]>)
+  <statement[n]>)
 }
 
 

@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*defun} {_name} ({_parameters}) <body>) -> 0
+{n} ({*defun} {_name} ({_parameter[i]}) {_statement[j]})
 
 
 {=DESCRIPTION}
@@ -16,14 +16,14 @@ referred to when calling the function. It must be unique within the
 current mod and with respect to the predefined core functions provided
 by the Legion system.
 
-{_parameters} defines a list of zero to four parameter variables that
+{_parameter} defines a list of zero to four parameter variables that
 will be bound to each of the arguments provided by the caller. Each
 parameter is specified by a symbol that must be unique within the
 parameter list. Each arguments will be bound to a parameter variable
 in the written order where the first argument will be bound to the
 first parameter, the second argument to the second parameter, etc.
 
-If {_parameters} is empty then no arguments will be bound. If too few
+If {_parameter} is empty then no arguments will be bound. If too few
 parameter variables are specified then the extra arguments will not be
 bound to variables. If too many parameter variables are specified then
 the content of the extra variables will be undefined.
@@ -35,10 +35,10 @@ variables to four and implies that if four parameter variables are
 specified then no additional variables can be defined within the body
 of the function.
 
-The {_body} of the function is composed of a list of statements that
-will be executed in sequence. The return value of the last statement
-will be returned to the caller of the function. It is not possible to
-return multiple values to the caller.
+The body of the function is composed of a list of {_statement} that
+will be executed in sequence. The return value of the last
+{_statement} will be returned to the caller of the function. It is not
+possible to return multiple values to the caller.
 
 All functions must be defined at the top-level of a mod and can't be
 nested. Calling a user-defined functions can be done using the same
@@ -68,12 +68,12 @@ value of the last statement in the body.
 {`
 (asm
   (JMP @end)
-  <body[0]>
+  <statement[0]>
   (POP)
-  <body[1]>
+  <statement[1]>
   (POP)
   <...>
-  <body[n]>
+  <statement[n]>
   (SWAP)
   (RET)
   (@ end))

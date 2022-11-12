@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*assert} {_predicate}) -> 0
+{n} ({*assert} {_predicate})
 
 
 {=DESCRIPTION}

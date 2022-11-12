@@ -2,7 +2,7 @@
 
 {=SYNOPSIS}
 
-{n} ({*defconst} {_name} {_const-value}) -> 0
+{n} ({*defconst} {_name} {_const-value})
 
 
 {=DESCRIPTION}
