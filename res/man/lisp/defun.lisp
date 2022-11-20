@@ -63,6 +63,21 @@ return value of the user-defined function which will be the return
 value of the last statement in the body.
 
 
+{=EXAMPLE}
+
+{`
+;; Creates a function to count the number of instances of an item
+;; within our current star.
+(defun count (item)
+  (io !io-probe (id !item-prober 1) item (ior !io-coord (self)))
+  (let ((count -1))
+    (while (< count 0) (set count (ior !io-value prober-id)))
+    count))
+
+(count !item-elem-a)
+}
+
+
 {=ASSEMBLY}
 
 {`
@@ -78,21 +93,6 @@ value of the last statement in the body.
   (RET)
   (@ end))
   (PUSH 0)
-}
-
-
-{=EXAMPLE}
-
-{`
-;; Creates a function to count the number of instances of an item
-;; within our current star.
-(defun count (item)
-  (io !io-probe (id !item-prober 1) item (ior !io-coord (self)))
-  (let ((count -1))
-    (while (< count 0) (set count (ior !io-value prober-id)))
-    count))
-
-(count !item-elem-a)
 }
 
 

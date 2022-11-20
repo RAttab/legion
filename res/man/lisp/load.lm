@@ -32,21 +32,21 @@ raised and execution will halt.
 the version of the mod specified does not exist.
 
 
-{=ASSEMBLY}
-
-{`
-(asm
-  <statement>
-  (LOAD))
-}
-
-
 {=EXAMPLE}
 
 {`
 (load (mod my-other-mod))
 
 ;; Any statement after the load statement will not be executed.
+}
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  <statement>
+  (LOAD))
 }
 
 

@@ -38,6 +38,17 @@ returned. If no {_false-value} is provided and {_predicate} evaluates
 to false then the value 0 is returned.
 
 
+{=EXAMPLE}
+
+{`
+(if is-good
+  (progn
+    (io !io-log (self) ?my-test ?all-good)
+    (io !io-set (id !item-memory 1) 0 ?all-good))
+  (io !io-log (self) ?my-test ?uh-oh))
+}
+
+
 {=ASSEMBLY}
 
 If both {_true-value} and {_false-value} are provided then the
@@ -66,17 +77,6 @@ emitted instead:
   (@ false)
   (PUSH 0)
   (@ end))
-}
-
-
-{=EXAMPLE}
-
-{`
-(if is-good
-  (progn
-    (io !io-log (self) ?my-test ?all-good)
-    (io !io-set (id !item-memory 1) 0 ?all-good))
-  (io !io-log (self) ?my-test ?uh-oh))
 }
 
 

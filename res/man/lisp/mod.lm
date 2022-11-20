@@ -35,19 +35,19 @@ required to resolve circular dependencies between mods.
 {*mod} returns the mod id associated with {_mod-spec}.
 
 
-{=ASSEMBLY}
-
-{`
-(asm
-  (PUSH <mod-id>))
-}
-
-
 {=EXAMPLE}
 
 {`
 ;; Executes my-mod on a brain
 (io !io-mod (id !item-brain 1) (mod my-mod))
+}
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  (PUSH <mod-id>))
 }
 
 

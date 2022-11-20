@@ -76,6 +76,10 @@ values in registers to avoid polluting the stack between our calls to
     sum)
 }
 
+{=ASSEMBLY}
+
+No assembly is generated for the {*head} function.
+
 
 {=RELATED}
 

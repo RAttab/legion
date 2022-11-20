@@ -1,21 +1,27 @@
-{@LISP/fn}
+{@LISP/FN}
 {!item-dummy}
 
 {=SYNOPSIS}
 
-{n} ({*fn} {_arg}) -> ret
+{n} ({*fn} {_arg})
 
 
 {=DESCRIPTION}
 
-High-level use-case
+High-level use-case. Typically used to...
 
 Detailed explanation
 
 
 {=RETURN}
 
-The value 0 is always returned.
+{*fn} always returns the value 0.
+
+
+{=EXAMPLE}
+
+{`
+}
 
 
 {=ASSEMBLY}
@@ -23,12 +29,6 @@ The value 0 is always returned.
 {`
 (asm
   (PUSH 0))
-}
-
-
-{=EXAMPLE}
-
-{`
 }
 
 

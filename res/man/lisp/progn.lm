@@ -18,6 +18,17 @@ argument that only allows for a single statement.
 {*progn} returns the value of the last statement executed.
 
 
+{=EXAMPLE}
+
+{`
+(if is-good
+  (progn ;; True-clause which only allows for a single statement
+    (io !io-log (self) ?my-test ?all-good)
+    (io !io-set (id !item-memory 1) 0 ?all-good))
+  (io !io-log (self) ?my-test ?uh-oh))
+}
+
+
 {=ASSEMBLY}
 
 {`
@@ -28,17 +39,6 @@ argument that only allows for a single statement.
   (POP)
   <...>
   <statement[n]>)
-}
-
-
-{=EXAMPLE}
-
-{`
-(if is-good
-  (progn ;; True-clause which only allows for a single statement
-    (io !io-log (self) ?my-test ?all-good)
-    (io !io-set (id !item-memory 1) 0 ?all-good))
-  (io !io-log (self) ?my-test ?uh-oh))
 }
 
 

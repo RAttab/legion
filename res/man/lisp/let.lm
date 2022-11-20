@@ -37,6 +37,15 @@ the last statement is the return value of the {*let} function.
 {*let} returns the value of the last {_statement} executed.
 
 
+{=EXAMPLE}
+
+{`
+(let ((hi (unpack x))
+      (lo (head)))
+  (* (+ hi lo) lo))
+}
+
+
 {=ASSEMBLY}
 
 In the following assembly template, {_$<i>} represents the first
@@ -60,15 +69,6 @@ register {_$0} and {_$<i+1>} register {_$1}.
   (POP)
   <...>
   <statement[n]>)
-}
-
-
-{=EXAMPLE}
-
-{`
-(let ((hi (unpack x))
-      (lo (head)))
-  (* (+ hi lo) lo))
 }
 
 

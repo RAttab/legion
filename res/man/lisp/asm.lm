@@ -41,16 +41,6 @@ balance. It is the responsibility of the programmer to maintain the
 stack balance which includes returning at least one value.
 
 
-{=ASSEMBLY}
-
-{`
-(asm
-  <op[0]>
-  <op[1]>
-  <...>
-  <op[n]>)
-}
-
 {=EXAMPLE}
 
 {`
@@ -59,6 +49,17 @@ stack balance which includes returning at least one value.
     (PUSH 2)
     (PUSH 3)
     (ADD)))
+}
+
+
+{=ASSEMBLY}
+
+{`
+(asm
+  <op[0]>
+  <op[1]>
+  <...>
+  <op[n]>)
 }
 
 

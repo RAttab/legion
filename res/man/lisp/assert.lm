@@ -28,6 +28,14 @@ true. It never returns if {_predicate} evaluates to false.
 {*USER_FAULT} is raised if {_predicate} evaluates to false.
 
 
+{=EXAMPLE}
+
+{`
+;; Ensures that (id !item-brain 1) exists
+(assert (= (io !io-ping (id !item-brain 1)) !io-ok))
+}
+
+
 {=ASSEMBLY}
 
 {`
@@ -37,14 +45,6 @@ true. It never returns if {_predicate} evaluates to false.
   (FAULT)
   (@ false)
   (PUSH 0))
-}
-
-
-{=EXAMPLE}
-
-{`
-;; Ensures that (id !item-brain 1) exists
-(assert (= (io !io-ping (id !item-brain 1)) !io-ok))
 }
 
 
