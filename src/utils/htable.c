@@ -114,7 +114,8 @@ struct htable_ret htable_get(const struct htable *ht, uint64_t key)
 }
 
 
-struct htable_ret htable_try_put(struct htable *ht, uint64_t key, uint64_t value)
+static bool htable_try_put(
+        struct htable *ht, uint64_t key, uint64_t value, struct htable_ret *ret)
 {
     assert(key);
 
@@ -126,22 +127,26 @@ struct htable_ret htable_try_put(struct htable *ht, uint64_t key, uint64_t value
 
         if (bucket->key) {
             if (bucket->key != key) continue;
-            return (struct htable_ret) { .ok = false, .value = bucket->value };
+            *ret = (struct htable_ret) { .ok = false, .value = bucket->value };
+            return true;
         }
 
         ht->len++;
         bucket->key = key;
         bucket->value = value;
-        return (struct htable_ret) { .ok = true };
+        *ret = (struct htable_ret) { .ok = true };
+        return true;
     }
 
-    return (struct htable_ret) { .ok = false };
+    return false;
 }
 
 struct htable_ret htable_put(struct htable *ht, uint64_t key, uint64_t value)
 {
-    struct htable_ret ret = htable_try_put(ht, key, value);
-    if (ret.ok || ret.value) return ret;
+    assert(key);
+
+    struct htable_ret ret = {0};
+    if (htable_try_put(ht, key, value, &ret)) return ret;
 
     htable_resize(ht, ht->cap * 2);
     return htable_put(ht, key, value);
