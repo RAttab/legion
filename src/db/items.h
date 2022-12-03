@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "vm/vm.h"
+#include "vm/atoms.h"
 
 struct atoms;
 struct im_config;

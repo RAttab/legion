@@ -674,11 +674,9 @@ bool db_run(const char *path)
     {
         db_file_open(&state.files.im_enum, state.path.out, "item");
         db_file_write(&state.files.im_enum,
-                "enum legion_packed item\n{\n  item_nil = 0x00,\n");
+                "enum legion_packed item\n{\n  item_nil = atom_nil,\n");
 
         db_file_open(&state.files.im_register, state.path.out, "im_register");
-        db_file_write(&state.files.im_register,
-                "im_register(item_nil, \"nil\", 3, \"item-nil\"),\n");
 
         db_file_open(&state.files.im_includes, state.path.out, "im_includes");
         db_file_open(&state.files.im_control, state.path.out, "im_control");

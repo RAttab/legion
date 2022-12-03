@@ -362,7 +362,8 @@ static struct symbol sim_log_mod(struct sim *sim, mod_id mod)
 static struct symbol sim_log_atom(struct sim *sim, vm_word atom)
 {
     struct symbol str = {0};
-    atoms_str(world_atoms(sim->world), atom, &str);
+    bool ok = atoms_str(world_atoms(sim->world), atom, &str);
+    assert(ok);
     return str;
 }
 

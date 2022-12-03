@@ -3,7 +3,7 @@
 
 enum legion_packed item
 {
-  item_nil = 0x00,
+  item_nil = atom_nil,
 
 // -----------------------------------------------------------------------------
 // natural

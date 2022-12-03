@@ -10,6 +10,7 @@
 #include "game/protocol.h"
 #include "utils/htable.h"
 
+static uint64_t atoms_insert(struct atoms *, const struct symbol *, vm_word);
 
 // -----------------------------------------------------------------------------
 // atoms
@@ -30,6 +31,7 @@ struct atoms
 
     struct htable istr;
     struct htable iword;
+    uint64_t inil;
 };
 
 enum { atoms_default_cap = 1 << 10 };
@@ -37,14 +39,20 @@ enum { atoms_default_cap = 1 << 10 };
 struct atoms *atoms_new(void)
 {
     struct atoms *atoms = calloc(1, sizeof(*atoms));
-    atoms->id = 1UL << 31;
+    atoms->id = atom_ns_user;
 
     atoms->base = alloc_cache(atoms_default_cap * sizeof(*atoms->base));
     atoms->end = atoms->base + atoms_default_cap;
-    atoms->it = atoms->base + 1; // htable can't index 0
+    atoms->it = atoms->base;
 
     htable_reserve(&atoms->istr, atoms_default_cap);
     htable_reserve(&atoms->iword, atoms_default_cap);
+
+
+    struct symbol nil = make_symbol_len("nil", 3);
+    atoms->inil = atoms_insert(atoms, &nil, 0);
+    struct htable_ret ret = htable_put(&atoms->istr, symbol_hash(&nil), atoms->inil);
+    assert(ret.ok);
 
     return atoms;
 }
@@ -65,7 +73,7 @@ void atoms_free(struct atoms *atoms)
 static void atoms_load_data(
         struct atoms *atoms, const struct atom_data *it, size_t len)
 {
-    // first entry is always empty.
+    // First entry is nil which is initialized in atoms_new
     if (it == atoms->base) { it++; len--; }
 
     for (const struct atom_data *end = it + len; it < end; it++) {
@@ -134,7 +142,7 @@ void atoms_save_delta(
     save_write_value(save, atoms->id);
     save_write_value(save, start);
     save_write_value(save, delta);
-    save_write(save, atoms->base + ack->atoms, delta * sizeof(*atoms->it));
+    save_write(save, atoms->base + start, delta * sizeof(*atoms->it));
 
     save_write_magic(save, save_magic_atoms);
 }
@@ -151,6 +159,7 @@ bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
     // instance. It's not great but the alternative is to force a round-trip to
     // server in the middle of lisp_eval.
     for (struct atom_data *it = atoms->base + start; it < atoms->it; ++it) {
+        // first entry is nil which is initialized in atoms_new
         if (it == atoms->base) continue;
 
         struct htable_ret ret = {0};
@@ -206,6 +215,8 @@ static uint64_t atoms_insert(
 
 bool atoms_set(struct atoms *atoms, const struct symbol *symbol, vm_word id)
 {
+    assert(id);
+
     uint64_t hash = symbol_hash(symbol);
     if (htable_get(&atoms->iword, id).ok) return false;
     if (htable_get(&atoms->istr, hash).ok) return false;
@@ -248,12 +259,14 @@ vm_word atoms_make(struct atoms *atoms, const struct symbol *symbol)
 
 bool atoms_str(struct atoms *atoms, vm_word id, struct symbol *dst)
 {
-    if (!id) return false;
+    size_t index = 0;
+    if (likely(id)) {
+        struct htable_ret ret = htable_get(&atoms->iword, id);
+        if (!ret.ok) return false;
+        index = ret.value;
+    }
 
-    struct htable_ret ret = htable_get(&atoms->iword, id);
-    if (!ret.ok) return false;
-
-    memcpy(dst, &atoms->base[ret.value].symbol, sizeof(*dst));
+    memcpy(dst, &atoms->base[index].symbol, sizeof(*dst));
     return true;
 }
 

@@ -26,7 +26,7 @@ struct legion_packed im_test
     im_id src;
     enum io io;
     uint8_t len;
-    legion_pad(3);
+    legion_pad(1);
     vm_word args[7];
 };
 

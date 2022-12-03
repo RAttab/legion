@@ -62,14 +62,33 @@ const struct sector *world_sector(struct world *, struct coord);
 vm_word world_star_name(struct world *, struct coord);
 bool world_user_access(struct world *, user_set, struct coord);
 
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
 enum { world_log_cap = 64 };
 struct log *world_log(struct world *, user_id);
 void world_log_push(
         struct world *, user_id, struct coord, im_id, vm_word key, vm_word value);
 
-struct world_io { enum io io; id_t src; vm_word args[4]; uint8_t len; };
+
+// -----------------------------------------------------------------------------
+// user-io
+// -----------------------------------------------------------------------------
+
+struct legion_packed world_io
+{
+    enum io io;
+    id_t src;
+    uint8_t len;
+    legion_pad(1);
+    vm_word args[4];
+};
+
 struct world_io *world_user_io(struct world *, user_id);
 void world_user_io_clear(struct world *, user_id);
+
 
 // -----------------------------------------------------------------------------
 // scan-it
