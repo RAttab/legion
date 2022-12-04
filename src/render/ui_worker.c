@@ -129,6 +129,7 @@ static bool ui_worker_event_user(struct ui_worker *ui, SDL_Event *ev)
     case EV_STATE_LOAD:
     case EV_MAN_GOTO:
     case EV_MAN_TOGGLE:
+    case EV_PILLS_TOGGLE:
     case EV_ENERGY_TOGGLE:
     case EV_STAR_CLEAR:
     case EV_ITEM_SELECT: { ui_worker_clear(ui); return false; }

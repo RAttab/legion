@@ -15,6 +15,8 @@
 // pills
 // -----------------------------------------------------------------------------
 
+enum { pills_cap = 1024 };
+
 struct pills
 {
     uint16_t count, cap;
@@ -40,5 +42,6 @@ struct pills_ret
     struct cargo cargo;
 };
 
+struct pills_ret pills_next(struct pills *pills, size_t *index);
 struct pills_ret pills_dock(struct pills *, struct coord, enum item);
 bool pills_arrive(struct pills *, struct coord, struct cargo);

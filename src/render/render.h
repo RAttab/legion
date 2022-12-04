@@ -25,6 +25,7 @@ struct ui_stars;
 struct ui_star;
 struct ui_item;
 struct ui_io;
+struct ui_pills;
 struct ui_worker;
 struct ui_energy;
 
@@ -68,6 +69,7 @@ enum event
     EV_ITEM_CLEAR,
 
     EV_IO_TOGGLE,
+    EV_PILLS_TOGGLE,
     EV_WORKER_TOGGLE,
     EV_ENERGY_TOGGLE,
 
@@ -124,6 +126,7 @@ struct render
         struct ui_star *star;
         struct ui_item *item;
         struct ui_io *io;
+        struct ui_pills *pills;
         struct ui_worker *worker;
         struct ui_energy *energy;
         struct ui_man *man;

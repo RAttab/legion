@@ -39,6 +39,11 @@ inline struct cargo make_cargo(enum item item, uint8_t count)
     return (struct cargo) { .item = item, .count = count };
 }
 
+inline struct cargo cargo_nil()
+{
+    return make_cargo(item_nil, 0);
+}
+
 inline uint16_t cargo_to_u16(struct cargo cargo)
 {
     return (((uint16_t) cargo.item) << 8) | cargo.count;
@@ -62,6 +67,11 @@ inline struct cargo cargo_from_word(vm_word word)
     assert(word >= 0 && word < UINT16_MAX);
     return cargo_from_u16(word);
 };
+
+inline int cargo_cmp(struct cargo lhs, struct cargo rhs)
+{
+    return lhs.item != rhs.item ? lhs.item - rhs.item : lhs.count - rhs.count;
+}
 
 
 // -----------------------------------------------------------------------------

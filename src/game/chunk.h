@@ -80,6 +80,7 @@ struct energy *chunk_energy(struct chunk *);
 ssize_t chunk_scan(struct chunk *, enum item);
 
 
+struct pills *chunk_pills(struct chunk *);
 struct pills_ret chunk_pills_dock(struct chunk *, struct coord, enum item);
 bool chunk_pills_undock(struct chunk *, struct coord, struct cargo);
 

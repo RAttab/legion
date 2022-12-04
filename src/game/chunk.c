@@ -775,6 +775,11 @@ void chunk_lanes_arrive(
     }
 }
 
+struct pills *chunk_pills(struct chunk *chunk)
+{
+    return &chunk->pills;
+}
+
 struct pills_ret chunk_pills_dock(
         struct chunk *chunk, struct coord coord, enum item item)
 {

@@ -176,6 +176,7 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
 
     case EV_MAN_GOTO:
     case EV_MAN_TOGGLE:
+    case EV_PILLS_TOGGLE:
     case EV_WORKER_TOGGLE:
     case EV_ENERGY_TOGGLE:
     case EV_STAR_CLEAR: {

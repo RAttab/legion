@@ -10,8 +10,6 @@
 // pills
 // -----------------------------------------------------------------------------
 
-enum { pills_cap = 1024 };
-
 void pills_init(struct pills *pills)
 {
     memset(pills, 0, sizeof(*pills));
@@ -110,6 +108,21 @@ size_t pills_count(struct pills *pills)
     return pills->count;
 }
 
+struct pills_ret pills_next(struct pills *pills, size_t *index)
+{
+    bits_copy(&pills->match, &pills->free);
+    bits_flip(&pills->match);
+
+    *index = bits_next(&pills->match, *index);
+    if (*index == pills->match.len)
+        return (struct pills_ret) { .ok = false };
+
+    return (struct pills_ret) {
+        .ok = true,
+        .coord = pills->coord[*index],
+        .cargo = pills->cargo[*index],
+    };
+}
 
 struct pills_ret pills_dock(struct pills *pills, struct coord coord, enum item item)
 {

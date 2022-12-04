@@ -136,6 +136,17 @@ void ui_io_render(struct ui_io *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
+// pills
+// -----------------------------------------------------------------------------
+
+struct ui_pills;
+struct ui_pills *ui_pills_new(void);
+void ui_pills_free(struct ui_pills *);
+bool ui_pills_event(struct ui_pills *, SDL_Event *);
+void ui_pills_render(struct ui_pills *, SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // worker
 // -----------------------------------------------------------------------------
 

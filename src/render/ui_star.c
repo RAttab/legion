@@ -54,7 +54,10 @@ struct ui_star
 
     struct ui_tree control_list, factory_list;
 
-    struct ui_label pills, pills_val;
+    struct {
+        struct ui_button toggle;
+        struct ui_label count, count_val;
+    } pills;
 
     struct ui_star_workers workers;
 
@@ -118,8 +121,11 @@ struct ui_star *ui_star_new(void)
         .factory_list = ui_tree_new(
                 make_dim(ui_layout_inf, ui_layout_inf), im_id_str_len),
 
-        .pills = ui_label_new(ui_str_c("pills: ")),
-        .pills_val = ui_label_new(ui_str_v(4)),
+        .pills = {
+            .toggle = ui_button_new(ui_str_c("pills")),
+            .count = ui_label_new(ui_str_c("- count: ")),
+            .count_val = ui_label_new(ui_str_v(4)),
+        },
 
         .workers = (struct ui_star_workers) {
             .toggle = ui_button_new(ui_str_c("worker")),
@@ -197,6 +203,7 @@ struct ui_star *ui_star_new(void)
     ui->goto_factory.w.dim.w = goto_width;
     ui->goto_log.w.dim.w = goto_width;
 
+    ui->pills.toggle.w.dim.w = ui_layout_inf;
     ui->workers.toggle.w.dim.w = ui_layout_inf;
     ui->energy_toggle.w.dim.w = ui_layout_inf;
 
@@ -229,8 +236,9 @@ void ui_star_free(struct ui_star *ui) {
     ui_tree_free(&ui->control_list);
     ui_tree_free(&ui->factory_list);
 
-    ui_label_free(&ui->pills);
-    ui_label_free(&ui->pills_val);
+    ui_button_free(&ui->pills.toggle);
+    ui_label_free(&ui->pills.count);
+    ui_label_free(&ui->pills.count_val);
 
     ui_button_free(&ui->workers.toggle);
     ui_label_free(&ui->workers.count);
@@ -348,7 +356,7 @@ static void ui_star_update(struct ui_star *ui)
         ui_tree_clear(&ui->factory_list);
         ui_tree_reset(&ui->factory_list);
 
-        ui_str_set_u64(&ui->pills_val.str, 0);
+        ui_str_set_u64(&ui->pills.count_val.str, 0);
 
         ui_str_set_u64(&ui->workers.count_val.str, 0);
         ui_str_set_u64(&ui->workers.idle_val.str, 0);
@@ -380,7 +388,7 @@ static void ui_star_update(struct ui_star *ui)
     ui_star_update_list(chunk, &ui->control_list, im_list_control);
     ui_star_update_list(chunk, &ui->factory_list, im_list_factory);
 
-    ui_str_set_u64(&ui->pills_val.str, chunk_scan(chunk, item_pill));
+    ui_str_set_u64(&ui->pills.count_val.str, chunk_scan(chunk, item_pill));
 
     {
         struct workers workers = chunk_workers(chunk);
@@ -561,6 +569,12 @@ bool ui_star_event(struct ui_star *ui, SDL_Event *ev)
         return true;
     }
 
+    if ((ret = ui_button_event(&ui->pills.toggle, ev))) {
+        if (ret != ui_action) return true;
+        render_push_event(EV_PILLS_TOGGLE, coord_to_u64(ui->star.coord), 0);
+        return true;
+    }
+
     if ((ret = ui_button_event(&ui->workers.toggle, ev))) {
         if (ret != ui_action) return true;
         render_push_event(EV_WORKER_TOGGLE, coord_to_u64(ui->star.coord), 0);
@@ -641,8 +655,10 @@ void ui_star_render(struct ui_star *ui, SDL_Renderer *renderer)
         ui_tree_render(&ui->factory_list, &layout, renderer);
 
     if (ui->logistic.disabled) {
-        ui_label_render(&ui->pills, &layout, renderer);
-        ui_label_render(&ui->pills_val, &layout, renderer);
+        ui_button_render(&ui->pills.toggle, &layout, renderer);
+        ui_layout_next_row(&layout);
+        ui_label_render(&ui->pills.count, &layout, renderer);
+        ui_label_render(&ui->pills.count_val, &layout, renderer);
         ui_layout_next_row(&layout);
 
         ui_layout_sep_row(&layout);
