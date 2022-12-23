@@ -19,6 +19,7 @@ const struct tape *tapes_get(enum item id);
 struct tape_info
 {
     size_t rank;
+    im_energy energy;
     struct tape_set reqs;
     uint16_t elems[items_natural_len];
 };

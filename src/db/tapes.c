@@ -45,10 +45,13 @@ static const struct tape_info *tapes_info_for(enum item id)
         return info;
     }
 
+    info->energy = tape->energy * tape->work;
+
     for (size_t i = 0; i < tape->inputs; ++i) {
         const struct tape_info *input = tapes_info_for(tape->tape[i]);
         info->rank = legion_max(info->rank, input->rank + 1);
 
+        info->energy += input->energy;
         for (size_t i = 0; i < items_natural_len; ++i)
             info->elems[i] += input->elems[i];
 
