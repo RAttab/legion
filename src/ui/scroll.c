@@ -79,7 +79,7 @@ enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
 
     case SDL_MOUSEWHEEL: {
         SDL_Rect widget = ui_widget_rect(&scroll->w);
-        if (!sdl_rect_contains(&widget, &render.cursor.point))
+        if (!SDL_PointInRect(&render.cursor.point, &widget))
             return ui_nil;
 
         ui_scroll_move(scroll, -ev->wheel.y);
@@ -88,7 +88,7 @@ enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
 
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Rect bar = ui_scroll_rect(scroll);
-        if (!sdl_rect_contains(&bar, &render.cursor.point))
+        if (!SDL_PointInRect(&render.cursor.point, &bar))
             return ui_nil;
 
         scroll->drag.start = render.cursor.point.y;

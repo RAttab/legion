@@ -200,7 +200,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
     case SDL_MOUSEMOTION: {
         SDL_Point point = render.cursor.point;
-        if (!sdl_rect_contains(&rect, &point)) tree->hover = 0;
+        if (!SDL_PointInRect(&point, &rect)) tree->hover = 0;
         else {
             size_t row = (point.y - rect.y) / tree->s.idle.font->glyph_h;
             row += ui_scroll_first(&tree->scroll);
@@ -217,7 +217,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
 
     case SDL_MOUSEBUTTONUP: {
         SDL_Point point = render.cursor.point;
-        if (!sdl_rect_contains(&rect, &point)) return ui_nil;
+        if (!SDL_PointInRect(&point, &rect)) return ui_nil;
 
         size_t row = (point.y - rect.y) / tree->s.idle.font->glyph_h;
         row += ui_scroll_first(&tree->scroll);

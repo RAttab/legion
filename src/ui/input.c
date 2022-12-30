@@ -168,7 +168,7 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     SDL_Point cursor = render.cursor.point;
     SDL_Rect rect = ui_widget_rect(&input->w);
 
-    input->focused = sdl_rect_contains(&rect, &cursor);
+    input->focused = SDL_PointInRect(&cursor, &rect);
     if (!input->focused) return ui_nil;
 
     size_t col = (cursor.x - input->w.pos.x) / input->s.font->glyph_w;

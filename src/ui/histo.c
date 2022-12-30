@@ -304,7 +304,7 @@ enum ui_ret ui_histo_event(struct ui_histo *histo, const SDL_Event *ev)
             .h = histo->row.h * histo->series.rows,
         };
 
-        if (!sdl_rect_contains(&inner, &cursor)) {
+        if (!SDL_PointInRect(&cursor, &inner)) {
             histo->hover.active = false;
             return ui_nil;
         }

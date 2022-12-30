@@ -125,7 +125,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     case SDL_MOUSEWHEEL:
     case SDL_MOUSEBUTTONUP: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        if (!sdl_rect_contains(&rect, &render.cursor.point)) {
+        if (!SDL_PointInRect(&render.cursor.point, &rect)) {
             panel->state = ui_panel_visible;
             return ui_skip;
         }
@@ -140,7 +140,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        if (!sdl_rect_contains(&rect, &render.cursor.point))
+        if (!SDL_PointInRect(&render.cursor.point, &rect))
             return ui_skip;
         break;
     }
@@ -178,7 +178,7 @@ enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
     case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        return sdl_rect_contains(&rect, &render.cursor.point) ? ui_consume : ui_nil;
+        return SDL_PointInRect(&render.cursor.point, &rect) ? ui_consume : ui_nil;
     }
 
     default: { return ui_nil; }

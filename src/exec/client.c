@@ -9,7 +9,6 @@
 #include "render/render.h"
 #include "utils/net.h"
 #include "utils/time.h"
-#include "utils/sdl.h"
 
 #include <sys/epoll.h>
 
@@ -147,7 +146,8 @@ bool client_run(const char *node, const char *service, const char *config)
     client.proxy = proxy_new();
     proxy_auth(client.proxy, config);
 
-    sdl_disable_signals();
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
+
     render_init(client.proxy);
     render_fork();
 

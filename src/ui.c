@@ -5,7 +5,6 @@
 
 #include "render/render.h"
 #include "render/font.h"
-#include "utils/sdl.h"
 
 #include "ui/str.c"
 #include "ui/layout.c"

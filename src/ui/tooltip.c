@@ -59,7 +59,7 @@ enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
         tooltip->w.pos = make_pos(cursor.x + render.cursor.size, cursor.y);
 
         if (!tooltip->rect.w && !tooltip->rect.h)
-            tooltip->disabled = !sdl_rect_contains(&tooltip->rect, &cursor);
+            tooltip->disabled = !SDL_PointInRect(&cursor, &tooltip->rect);
 
         return ui_nil;
     }

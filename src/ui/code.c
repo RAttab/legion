@@ -371,7 +371,7 @@ static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
 {
     SDL_Point cursor = render.cursor.point;
     SDL_Rect rect = ui_widget_rect(&code->w);
-    if (!sdl_rect_contains(&rect, &cursor)) return false;
+    if (!SDL_PointInRect(&cursor, &rect)) return false;
 
     size_t rel_col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
     size_t rel_row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
@@ -470,7 +470,7 @@ void ui_code_render(
                 .h = font->glyph_h
             };
 
-            bool is_highlight = sdl_rect_contains(&rect, &render.cursor.point);
+            bool is_highlight = SDL_PointInRect(&render.cursor.point, &rect);
             bool is_breakpoint =
                 code->breakpoint.ip &&
                 (code->disassembly ?
@@ -601,7 +601,7 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
     SDL_Point cursor = render.cursor.point;
     SDL_Rect rect = ui_widget_rect(&code->w);
 
-    code->focused = sdl_rect_contains(&rect, &cursor);
+    code->focused = SDL_PointInRect(&cursor, &rect);
     if (!code->focused) return ui_nil;
 
     size_t col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;

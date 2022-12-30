@@ -95,7 +95,7 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point cursor = render.cursor.point;
         SDL_Rect rect = ui_widget_rect(&doc->w);
-        if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
+        if (!SDL_PointInRect(&cursor, &rect)) return ui_nil;
 
         doc->pressed = true;
         return ui_consume;
@@ -106,7 +106,7 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
 
         SDL_Point cursor = render.cursor.point;
         SDL_Rect rect = ui_widget_rect(&doc->w);
-        if (!sdl_rect_contains(&rect, &cursor)) return ui_nil;
+        if (!SDL_PointInRect(&cursor, &rect)) return ui_nil;
 
         const struct font *font = doc->s.text.font;
         uint8_t col = (cursor.x - doc->w.pos.x) / font->glyph_w;
@@ -259,7 +259,7 @@ void ui_doc_render(
                 .h = font->glyph_h,
             };
 
-            if (!sdl_rect_contains(&rect, &render.cursor.point)) {
+            if (!SDL_PointInRect(&render.cursor.point, &rect)) {
                 font = doc->s.link.font;
                 fg = doc->s.link.fg;
                 bg = doc->s.link.bg;
