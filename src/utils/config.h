@@ -36,7 +36,10 @@ vm_word reader_atom(struct reader *, struct atoms *);
 struct symbol reader_atom_symbol(struct reader *);
 
 struct symbol reader_symbol(struct reader *);
-uint64_t reader_symbol_hash(struct reader *);
+hash_val reader_symbol_hash(struct reader *);
+
+struct reader_table { const char *str; hash_val hash; uint64_t value; };
+uint64_t reader_symbol_table(struct reader *, struct reader_table *, size_t len);
 
 void reader_expect(struct reader *reader, hash_val);
 #define reader_symbol_str(_reader, _str) \

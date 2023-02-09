@@ -124,6 +124,27 @@ hash_val reader_symbol_hash(struct reader *reader)
     return symbol_hash(&token.value.s);
 }
 
+uint64_t reader_symbol_table(
+        struct reader *reader, struct reader_table *table, size_t len)
+{
+    if (!unlikely(table[0].hash)) {
+        for (size_t i = 0; i < len; ++i) {
+            size_t len = strlen(table[i].str);
+            table[i].hash = hash_bytes(hash_init(), table[i].str, len);
+        }
+    }
+
+    struct symbol sym = reader_symbol(reader);
+    hash_val hash = symbol_hash(&sym);
+
+    for (size_t i = 0; i < len; ++i)
+        if (hash == table[i].hash)
+            return table[i].value;
+
+    token_err(&reader->tok, "synmbol '%s' not in table", sym.c);
+    return 0;
+}
+
 void reader_expect(struct reader *reader, hash_val hash)
 {
     struct symbol key = reader_symbol(reader);
