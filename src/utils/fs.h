@@ -68,3 +68,32 @@ struct mfilew
 
 struct mfilew mfilew_create_tmp(const char *path, size_t len);
 void mfilew_close(struct mfilew *);
+
+
+// -----------------------------------------------------------------------------
+// mfile_writer
+// -----------------------------------------------------------------------------
+
+struct mfile_writer
+{
+    struct mfilew mfile;
+    char *it, *end;
+    char path[PATH_MAX];
+};
+
+void mfile_writer_open(struct mfile_writer *, const char *path, size_t cap);
+void mfile_writer_close(struct mfile_writer *);
+
+#define mfile_write(_f, _str)                           \
+    do {                                                \
+        struct mfile_writer *f = (_f);                  \
+        f->it += snprintf(f->it, f->end - f->it, _str); \
+        assert(f->it < f->end);                         \
+    } while (false)
+
+#define mfile_writef(_f, _fmt, ...)                                     \
+    do {                                                                \
+        struct mfile_writer *f = (_f);                                  \
+        f->it += snprintf(f->it, f->end - f->it, _fmt, __VA_ARGS__);    \
+        assert(f->it < f->end);                                         \
+    } while (false)

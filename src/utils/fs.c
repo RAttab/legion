@@ -260,3 +260,28 @@ void mfilew_close(struct mfilew *file)
 {
     munmap((void *) file->ptr, file->len);
 }
+
+// -----------------------------------------------------------------------------
+// mfile_writer
+// -----------------------------------------------------------------------------
+
+void mfile_writer_open(struct mfile_writer *file, const char *path, size_t cap)
+{
+    size_t len = strnlen(path, PATH_MAX - 1);
+    memcpy(file->path, path, len);
+    file->path[len] = 0;
+
+    file->mfile = mfilew_create_tmp(file->path, cap);
+    file->it = file->mfile.ptr;
+    file->end = file->it + file->mfile.len;
+}
+
+void mfile_writer_close(struct mfile_writer *file)
+{
+    assert(file->it < file->end);
+
+    size_t len = file->it - file->mfile.ptr;
+    mfilew_close(&file->mfile);
+    file_tmp_swap(file->path);
+    file_truncate(file->path, len);
+}
