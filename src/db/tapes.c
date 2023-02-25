@@ -45,19 +45,30 @@ static const struct tape_info *tapes_info_for(enum item id)
         return info;
     }
 
-    info->energy = tape->energy * tape->work;
+    info->work.peak = tape->work;
+    info->work.total = tape->work;
+    info->energy.peak = tape->energy;
+    info->energy.total = tape->energy * tape->work;
 
+    im_work work_max = 0;
     for (size_t i = 0; i < tape->inputs; ++i) {
         const struct tape_info *input = tapes_info_for(tape->tape[i]);
         info->rank = legion_max(info->rank, input->rank + 1);
 
-        info->energy += input->energy;
+        work_max = legion_max(work_max, input->work.peak);
+        info->work.total += input->work.total;
+
+        info->energy.peak = legion_max(info->energy.peak, input->energy.peak);
+        info->energy.total += input->energy.total;
+
         for (size_t i = 0; i < items_natural_len; ++i)
             info->elems[i] += input->elems[i];
 
         tape_set_union(&info->reqs, &input->reqs);
         tape_set_put(&info->reqs, tape->tape[i]);
     }
+
+    info->work.peak += work_max;
 
     return info;
 }
