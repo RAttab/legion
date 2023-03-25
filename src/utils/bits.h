@@ -110,6 +110,7 @@ bool bits_load(struct bits *, struct save *);
 void bits_save(const struct bits *, struct save *);
 hash_val bits_hash(const struct bits *, hash_val);
 
+size_t bits_dump(const struct bits *bits, char *dst, size_t len);
 
 inline void bits_reset(struct bits *bits)
 {
@@ -135,15 +136,33 @@ inline bool bits_test(const struct bits *bits, size_t index)
     return bits_array_c(bits)[index / 64] & 1ULL << (index % 64);
 }
 
+inline bool bits_has(const struct bits *bits, size_t index)
+{
+    if (index >= bits->len) return false;
+    return bits_array_c(bits)[index / 64] & 1ULL << (index % 64);
+}
+
 inline void bits_set(struct bits *bits, size_t index)
 {
     assert(index < bits->len);
     bits_array(bits)[index / 64] |= 1ULL << (index % 64);
 }
 
+inline void bits_put(struct bits *bits, size_t index)
+{
+    if (unlikely(index >= bits->len)) bits_grow(bits, index + 1);
+    bits_array(bits)[index / 64] |= 1ULL << (index % 64);
+}
+
 inline void bits_unset(struct bits *bits, size_t index)
 {
     assert(index < bits->len);
+    bits_array(bits)[index / 64] &= ~(1ULL << (index % 64));
+}
+
+inline void bits_del(struct bits *bits, size_t index)
+{
+    if (unlikely(index >= bits->len)) return;
     bits_array(bits)[index / 64] &= ~(1ULL << (index % 64));
 }
 
@@ -154,6 +173,39 @@ inline void bits_flip(struct bits *bits)
         *it = ~*it;
 }
 
+inline size_t bits_count(const struct bits *bits)
+{
+    size_t sum = 0;
+    const uint64_t *it = bits_array_c(bits);
+    const uint64_t *end = it + u64_ceil_div(bits->len, 64);
+    for (; it < end; ++it) sum += u64_pop(*it);
+    return sum;
+}
+
+inline bool bits_eq(const struct bits *lhs, const struct bits *rhs)
+{
+    const uint64_t *l = bits_array_c(lhs);
+    const uint64_t *le = bits_array_c(lhs) + u64_ceil_div(lhs->len, 64);
+
+    const uint64_t *r = bits_array_c(rhs);
+    const uint64_t *re = bits_array_c(rhs) + u64_ceil_div(rhs->len, 64);
+
+    for (; l < le && r < re; l++, r++)
+        if (*l != *r) return false;
+    for (; l < le; ++l) if (*l) return false;
+    for (; r < re; ++r) if (*r) return false;
+    return true;
+}
+
+inline void bits_intersect(struct bits *lhs, const struct bits *rhs)
+{
+    size_t end = u64_ceil_div(legion_min(lhs->len, rhs->len), 64);
+    for (size_t i = 0; i < end; ++i) {
+        uint64_t *dst = bits_array(lhs) + i;
+        *dst &= bits_array_c(rhs)[i];
+    }
+}
+
 inline void bits_minus(struct bits *lhs, const struct bits *rhs)
 {
     size_t end = u64_ceil_div(legion_min(lhs->len, rhs->len), 64);
@@ -161,6 +213,31 @@ inline void bits_minus(struct bits *lhs, const struct bits *rhs)
         uint64_t *dst = bits_array(lhs) + i;
         *dst &= ~(*dst & bits_array_c(rhs)[i]);
     }
+}
+
+inline bool bits_contains(const struct bits *lhs, const struct bits *rhs)
+{
+    const uint64_t *l = bits_array_c(lhs);
+    const uint64_t *r = bits_array_c(rhs);
+
+    size_t len = u64_ceil_div(legion_min(lhs->len, rhs->len), 64);
+    for (size_t i = 0; i < len; ++i, ++l, ++r)
+        if ((*l & *r) != *r) return false;
+
+    return true;
+}
+
+inline size_t bits_msb(const struct bits *bits)
+{
+    const uint64_t *end = bits_array_c(bits);
+    const uint64_t *it = end + u64_ceil_div(bits->len, 64) - 1;
+
+    do {
+        size_t ix = u64_clz(*it);
+        if (ix < 64) return ((it - end) * 64) + (63 - ix);
+    } while (--it != end);
+
+    return bits->len;
 }
 
 inline size_t bits_next(const struct bits *bits, size_t start)

@@ -72,3 +72,18 @@ hash_val bits_hash(const struct bits *bits, hash_val hash)
     return hash;
 
 }
+
+size_t bits_dump(const struct bits *bits, char *start, size_t len)
+{
+    char *it = start;
+    char *const end = it + len;
+
+    it += snprintf(it, end - it, "{ ");
+
+    for (uint32_t ix = bits_next(bits, 0);
+         ix < bits->len; ix = bits_next(bits, ix + 1))
+        it += snprintf(it, end - it, "%02x ", ix);
+
+    it += snprintf(it, end - it, "}");
+    return it - start;
+}
