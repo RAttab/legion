@@ -70,6 +70,19 @@ void reader_close(struct reader *reader)
     token_expect(&reader->tok, &token, token_close);
 }
 
+size_t reader_until_close(struct reader *reader, char *dst, size_t cap)
+{
+    const char *src = reader->tok.it;
+    bool read_close = reader_goto_close(reader);
+
+    size_t len = reader->tok.it - src - (read_close ? 1 : 0);
+    for (; len && str_is_space(*src); src++, len--);
+    if (len > cap) len = cap;
+
+    memcpy(dst, src, len);
+    return len;
+}
+
 uint64_t reader_u64(struct reader *reader)
 {
     return reader_word(reader);

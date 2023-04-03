@@ -22,7 +22,6 @@ struct reader
     struct token_ctx *ctx;
 };
 
-bool reader_goto_close(struct reader *);
 
 enum token_type reader_peek(struct reader *);
 bool reader_peek_close(struct reader *);
@@ -30,11 +29,14 @@ bool reader_peek_eof(struct reader *);
 
 void reader_open(struct reader *);
 void reader_close(struct reader *);
+
+bool reader_goto_close(struct reader *);
+size_t reader_until_close(struct reader *, char *dst, size_t cap);
+
 uint64_t reader_u64(struct reader *);
 vm_word reader_word(struct reader *);
 vm_word reader_atom(struct reader *, struct atoms *);
 struct symbol reader_atom_symbol(struct reader *);
-
 struct symbol reader_symbol(struct reader *);
 hash_val reader_symbol_hash(struct reader *);
 
@@ -42,6 +44,7 @@ struct reader_table { const char *str; hash_val hash; uint64_t value; };
 uint64_t reader_symbol_table(struct reader *, struct reader_table *, size_t len);
 
 void reader_expect(struct reader *reader, hash_val);
+
 #define reader_symbol_str(_reader, _str) \
     do { reader_expect((_reader), symbol_hash_c(_str)); } while (false)
 
