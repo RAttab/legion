@@ -42,10 +42,21 @@ inline bool str_is_number(char c)
 {
     switch (c) {
     case '-': case 'x':
-    case '0'...'9': case 'a'...'f':
+    case '0'...'9':
+    case 'a'...'f':
     case 'A'...'F':
         return true;
 
+    default: return false;
+    }
+}
+
+inline bool str_is_vowel(char c)
+{
+    switch (c) {
+    case 'a': case 'e': case 'i': case 'o': case 'u': case 'y':
+    case 'A': case 'E': case 'I': case 'O': case 'U': case 'Y':
+        return true;
     default: return false;
     }
 }
