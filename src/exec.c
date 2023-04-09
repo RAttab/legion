@@ -12,6 +12,7 @@ static void usage(int code, const char *msg);
 #include "exec/client.c"
 #include "exec/server.c"
 #include "exec/config.c"
+#include "exec/tech.c"
 #include "exec/db.c"
 #include "exec/main.c"
 
