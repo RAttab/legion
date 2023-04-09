@@ -16,16 +16,14 @@
 // info
 // -----------------------------------------------------------------------------
 
-#define info(msg)                                       \
-    do {                                                \
-        fprintf(stderr, "%s:%u: <inf> " msg "\n",       \
-                __FILE__, __LINE__);                    \
+#define info(msg)                               \
+    do {                                        \
+        fprintf(stdout, "<inf> " msg "\n");     \
     } while(false)
 
-#define infof(fmt, ...)                                 \
-    do {                                                \
-        fprintf(stderr, "%s:%u: <inf> " fmt "\n",       \
-                __FILE__, __LINE__, __VA_ARGS__);       \
+#define infof(fmt, ...)                                         \
+    do {                                                        \
+        fprintf(stdout, "<inf> " fmt "\n", __VA_ARGS__);        \
     } while(false)
 
 
