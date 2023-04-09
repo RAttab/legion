@@ -58,7 +58,7 @@ bool rng_prob(struct rng *rng, double prob)
 
 uint64_t rng_uni(struct rng *rng, uint64_t min, uint64_t max)
 {
-    assert(max - min != 0);
+    assert(min < max);
     return rng_step(rng) % (max - min) + min;
 }
 
