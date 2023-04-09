@@ -5,37 +5,13 @@
 
 #include "common.h"
 #include "vm/atoms.h"
+#include "items/im_type.h"
 #include "utils/fs.h"
 #include "utils/config.h"
 
 // -----------------------------------------------------------------------------
 // info
 // -----------------------------------------------------------------------------
-
-enum db_type
-{
-    type_nil = 0,
-    type_natural,
-    type_synth,
-    type_passive,
-    type_active,
-    type_logistics,
-    type_sys,
-};
-
-struct symbol db_type_sym(enum db_type type)
-{
-    switch (type)
-    {
-    case type_natural: { return make_symbol("natural"); }
-    case type_synth: { return make_symbol("synth"); }
-    case type_passive: { return make_symbol("passive"); }
-    case type_active: { return make_symbol("active"); }
-    case type_logistics: { return make_symbol("logistics"); }
-    case type_sys: { return make_symbol("sys"); }
-    case type_nil: default: { assert(false); }
-    }
-}
 
 enum db_order
 {
@@ -53,7 +29,7 @@ enum db_list
 
 struct db_info
 {
-    enum db_type type;
+    enum im_type type;
     enum db_order order;
     enum db_list list;
     struct symbol name, config;
@@ -193,15 +169,16 @@ static void db_parse_atoms(struct db_state *state, const char *path)
             uint64_t hash = symbol_hash(&field);
 
             if (hash == symbol_hash_c("type")) {
-                struct symbol type = reader_symbol(in);
-                uint64_t hash = symbol_hash(&type);
-                if (hash == symbol_hash_c("natural"))   info->type = type_natural;
-                else if (hash == symbol_hash_c("synth"))     info->type = type_synth;
-                else if (hash == symbol_hash_c("passive"))   info->type = type_passive;
-                else if (hash == symbol_hash_c("active"))    info->type = type_active;
-                else if (hash == symbol_hash_c("logistics")) info->type = type_logistics;
-                else if (hash == symbol_hash_c("sys"))       info->type = type_sys;
-                else reader_err(in, "unkown info type: %s", type.c);
+                static struct reader_table types[] = {
+                    { .str = "nil",       .value = im_type_nil },
+                    { .str = "natural",   .value = im_type_natural },
+                    { .str = "synth",     .value = im_type_synthetic },
+                    { .str = "passive",   .value = im_type_passive },
+                    { .str = "active",    .value = im_type_active },
+                    { .str = "logistics", .value = im_type_logistics },
+                    { .str = "sys",       .value = im_type_sys }
+                };
+                info->type = reader_symbol_table(in, types, array_len(types));
                 reader_close(in);
             }
 
@@ -233,7 +210,7 @@ static void db_parse_atoms(struct db_state *state, const char *path)
             else reader_goto_close(in);
 
         }
-        assert(info->type != type_nil);
+        assert(info->type != im_type_nil);
 
         reader_close(in); // info
 
@@ -261,8 +238,8 @@ static void db_gen_items(struct db_state *state)
     }
     vec_info_sort_fn(state->info, cmp);
 
-    void write_bounds_end(enum db_type type, vm_word atom) {
-        struct symbol sym_type = db_type_sym(type);
+    void write_bounds_end(enum im_type type, vm_word atom) {
+        struct symbol sym_type = make_symbol(im_type_str(type));
         db_file_writef(&state->files.im_enum,
                 "  items_%s_last = 0x%02lx,\n"
                 "  items_%s_len = items_%s_last - items_%s_first,\n",
@@ -270,7 +247,7 @@ static void db_gen_items(struct db_state *state)
                 sym_type.c, sym_type.c, sym_type.c);
     }
 
-    enum db_type type = type_nil;
+    enum im_type type = im_type_nil;
     for (size_t i = 0; i < state->info->len; ++i) {
         struct db_info *info = state->info->vals + i;
 
@@ -282,7 +259,7 @@ static void db_gen_items(struct db_state *state)
         if (type != info->type) {
             if (type) write_bounds_end(type, info->atom);
             type = info->type;
-            struct symbol sym_type = db_type_sym(type);
+            struct symbol sym_type = make_symbol(im_type_str(type));
             db_file_write_sep(&state->files.im_enum, sym_type.c);
             db_file_write_sep(&state->files.im_register, sym_type.c);
             db_file_writef(&state->files.im_enum,
@@ -294,7 +271,7 @@ static void db_gen_items(struct db_state *state)
         db_file_writef(&state->files.im_enum,
                 "  item_%-20s = 0x%02lx,\n", sym_enum.c, info->atom);
 
-        if (info->type != type_active) {
+        if (info->type != im_type_active) {
             db_file_writef(&state->files.im_register,
                     "im_register(item_%s, \"%s\", %u, \"item-%s\"),\n",
                     sym_enum.c, info->name.c, info->name.len, info->name.c);
@@ -584,6 +561,9 @@ static void db_gen_specs_tapes(struct db_state *state, const char *file)
 
             else if (hash == symbol_hash_c("tape"))
                 db_gen_tape(state, in, &item);
+
+            else if (hash == symbol_hash_c("dbg"))
+                reader_goto_close(in);
 
             else {
                 reader_err(in, "unknown section: %s", section.c);
