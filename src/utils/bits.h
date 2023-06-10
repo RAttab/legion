@@ -235,7 +235,7 @@ inline size_t bits_msb(const struct bits *bits)
     do {
         size_t ix = u64_clz(*it);
         if (ix < 64) return ((it - end) * 64) + (63 - ix);
-    } while (--it != end);
+    } while (--it >= end);
 
     return bits->len;
 }
