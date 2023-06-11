@@ -3,8 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-// SURPRISE!
-static void usage(int code, const char *msg);
+void usage(int code, const char *msg);
 
 #include "exec/graph.c"
 #include "exec/items.c"
@@ -14,5 +13,4 @@ static void usage(int code, const char *msg);
 #include "exec/config.c"
 #include "exec/tech.c"
 #include "exec/db.c"
-#include "exec/main.c"
 

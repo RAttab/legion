@@ -138,13 +138,17 @@ static void dump_dot_suffix(struct mfile_writer *out)
 // dump
 // -----------------------------------------------------------------------------
 
-static void tech_dump(struct tree *tree)
+static void tech_dump(struct tree *tree, const char *output)
 {
+    char path[PATH_MAX] = {0};
+
     struct mfile_writer lisp = {0};
-    mfile_writer_open(&lisp, "./tech.lisp", 1048576);
+    snprintf(path, sizeof(path), "%s/tech.lisp", output);
+    mfile_writer_open(&lisp, path, 1048576);
 
     struct mfile_writer dot = {0};
-    mfile_writer_open(&dot, "./tech.dot", 1048576);
+    snprintf(path, sizeof(path), "%s/tech.dot", output);
+    mfile_writer_open(&dot, path, 1048576);
     mfile_write(&dot, "strict digraph {\n\n");
 
     for (node_id id = 0; id < node_id_max; ++id) {

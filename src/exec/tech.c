@@ -52,13 +52,13 @@ static const size_t child_count_cap = 32;
 // main
 // -----------------------------------------------------------------------------
 
-bool tech_run(const char *path)
+bool tech_run(const char *path, const char *output)
 {
     struct tree tree = tree_init();
     tech_parse(&tree, path);
     tech_check_inputs(&tree);
     tech_gen(&tree);
     tech_check_outputs(&tree);
-    tech_dump(&tree);
+    tech_dump(&tree, output);
     return true;
 }
