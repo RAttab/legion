@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/token.h"
+#include "utils/token.h"
 #include "utils/str.h"
 
 

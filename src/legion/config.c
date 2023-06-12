@@ -5,8 +5,8 @@
 
 
 #include "common.h"
-#include "vm/symbol.h"
 #include "game/user.h"
+#include "utils/symbol.h"
 #include "utils/config.h"
 
 

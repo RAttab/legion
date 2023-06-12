@@ -68,4 +68,6 @@ void test_storage(void)
         chunk_io(chunk, io_reset, sys_id, extract_id, NULL, 0);
         chunk_io(chunk, io_reset, sys_id, printer_id, NULL, 0);
     }
+
+    world_free(world);
 }

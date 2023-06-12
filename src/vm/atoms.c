@@ -8,7 +8,9 @@
 
 #include "vm/atoms.h"
 #include "game/protocol.h"
+#include "utils/err.h"
 #include "utils/htable.h"
+#include "utils/config.h"
 
 static uint64_t atoms_insert(struct atoms *, const struct symbol *, vm_word);
 
@@ -302,4 +304,37 @@ struct vec64 *atoms_list(struct atoms *atoms)
     }
 
     return list;
+}
+
+// -----------------------------------------------------------------------------
+// config
+// -----------------------------------------------------------------------------
+
+int64_t reader_atom(struct reader *reader, struct atoms *atoms)
+{
+    int64_t ret = 0;
+    struct token token = {0};
+
+    switch (token_next(&reader->tok, &token)->type)
+    {
+    case token_atom: { ret = atoms_get(atoms, &token.value.s); break; }
+    case token_atom_make: { ret = atoms_make(atoms, &token.value.s); break; }
+    default: {
+        token_err(&reader->tok, "unexpected token '%s' != 'atom'",
+                token_type_str(token.type));
+        break;
+    }
+    }
+
+    if (!ret) token_err(&reader->tok, "unknown atom '%s'", token.value.s.c);
+    return ret;
+}
+
+void writer_atom_fetch(struct writer *writer, struct atoms *atoms, int64_t val)
+{
+    struct symbol symbol = {0};
+    if (!atoms_str(atoms, val, &symbol))
+        failf("unknown atom for value '%lx'", val);
+
+    writer_atom(writer, &symbol);
 }

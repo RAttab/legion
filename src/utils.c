@@ -15,3 +15,5 @@
 #include "utils/heap.c"
 #include "utils/config.c"
 #include "utils/save.c"
+#include "utils/symbol.c"
+#include "utils/token.c"

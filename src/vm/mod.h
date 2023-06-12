@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "vm/vm.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 #include "game/user.h"
 
 

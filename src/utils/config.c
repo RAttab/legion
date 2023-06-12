@@ -88,7 +88,7 @@ uint64_t reader_u64(struct reader *reader)
     return reader_word(reader);
 }
 
-vm_word reader_word(struct reader *reader)
+int64_t reader_word(struct reader *reader)
 {
     struct token token = {0};
     if (!token_expect(&reader->tok, &token, token_number)) return 0;
@@ -101,26 +101,6 @@ struct symbol reader_atom_symbol(struct reader *reader)
     if (!token_expect(&reader->tok, &token, token_atom))
         return (struct symbol) {0};
     return token.value.s;
-}
-
-vm_word reader_atom(struct reader *reader, struct atoms *atoms)
-{
-    vm_word ret = 0;
-    struct token token = {0};
-
-    switch (token_next(&reader->tok, &token)->type)
-    {
-    case token_atom: { ret = atoms_get(atoms, &token.value.s); break; }
-    case token_atom_make: { ret = atoms_make(atoms, &token.value.s); break; }
-    default: {
-        token_err(&reader->tok, "unexpected token '%s' != 'atom'",
-                token_type_str(token.type));
-        break;
-    }
-    }
-
-    if (!ret) token_err(&reader->tok, "unknown atom '%s'", token.value.s.c);
-    return ret;
 }
 
 struct symbol reader_symbol(struct reader *reader)
@@ -301,7 +281,7 @@ void writer_u64(struct writer *writer, uint64_t val)
     writer_write(writer, str, sizeof(str));
 }
 
-void writer_word(struct writer *writer, vm_word val)
+void writer_word(struct writer *writer, int64_t val)
 {
     char str[21] = {0};
     size_t len = str_utoa(val, str, sizeof(str));
@@ -322,15 +302,6 @@ void writer_atom(struct writer *writer, const struct symbol *val)
     writer_space(writer);
     writer_out(writer, '!');
     writer_write(writer, val->c, val->len);
-}
-
-void writer_atom_fetch(struct writer *writer, struct atoms *atoms, vm_word val)
-{
-    struct symbol symbol = {0};
-    if (!atoms_str(atoms, val, &symbol))
-        failf("unknown atom for value '%lx'", val);
-
-    writer_atom(writer, &symbol);
 }
 
 

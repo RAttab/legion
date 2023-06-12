@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 #include "utils/htable.h"
 
 struct reader;

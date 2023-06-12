@@ -5,7 +5,7 @@
 
 #include "io.h"
 #include "vm/atoms.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 
 // -----------------------------------------------------------------------------
 // io

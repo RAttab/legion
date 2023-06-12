@@ -90,4 +90,6 @@ void test_port(void)
 
         wait_travel(world, im_port_launch_speed, src, dst);
     }
+
+    world_free(world);
 }

@@ -11,6 +11,7 @@
 #include "utils/time.h"
 
 #include <sys/epoll.h>
+#include <unistd.h>
 
 static_assert(EAGAIN == EWOULDBLOCK);
 

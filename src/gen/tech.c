@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 #include "items/im_type.h"
 #include "utils/fs.h"
 #include "utils/rng.h"
@@ -52,13 +52,13 @@ static const size_t child_count_cap = 32;
 // main
 // -----------------------------------------------------------------------------
 
-bool tech_run(const char *path, const char *output)
+bool tech_run(const char *res, const char *src, const char *output)
 {
     struct tree tree = tree_init();
-    tech_parse(&tree, path);
+    tech_parse(&tree, res);
     tech_check_inputs(&tree);
     tech_gen(&tree);
     tech_check_outputs(&tree);
-    tech_dump(&tree, output);
+    tech_dump(&tree, src, output);
     return true;
 }

@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "vm/token.h"
+#include "utils/token.h"
 #include "utils/fs.h"
 
 struct atoms;
@@ -34,8 +34,8 @@ bool reader_goto_close(struct reader *);
 size_t reader_until_close(struct reader *, char *dst, size_t cap);
 
 uint64_t reader_u64(struct reader *);
-vm_word reader_word(struct reader *);
-vm_word reader_atom(struct reader *, struct atoms *);
+int64_t reader_word(struct reader *);
+int64_t reader_atom(struct reader *, struct atoms *);
 struct symbol reader_atom_symbol(struct reader *);
 struct symbol reader_symbol(struct reader *);
 hash_val reader_symbol_hash(struct reader *);
@@ -99,8 +99,8 @@ void writer_open(struct writer *);
 void writer_open_nl(struct writer *);
 void writer_close(struct writer *);
 void writer_u64(struct writer *, uint64_t);
-void writer_word(struct writer *, vm_word);
-void writer_atom_fetch(struct writer *, struct atoms *, vm_word);
+void writer_word(struct writer *, int64_t);
+void writer_atom_fetch(struct writer *, struct atoms *, int64_t);
 void writer_atom(struct writer *, const struct symbol *);
 void writer_symbol(struct writer *, const struct symbol *);
 

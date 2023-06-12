@@ -1,0 +1,113 @@
+/* gen.c
+   Rémi Attab (remi.attab@gmail.com), 18 Oct 2022
+   FreeBSD-style copyright and disclaimer apply
+*/
+
+#include "common.h"
+#include "items/im_type.h"
+#include "utils/err.h"
+#include "utils/fs.h"
+#include "utils/config.h"
+#include "utils/htable.h"
+
+
+// -----------------------------------------------------------------------------
+// misc
+// -----------------------------------------------------------------------------
+
+struct symbol symbol_to_enum(struct symbol sym)
+{
+    for (size_t i = 0; i < sym.len; ++i)
+        if (sym.c[i] == '-') sym.c[i] = '_';
+    return sym;
+}
+
+
+// -----------------------------------------------------------------------------
+// implementation
+// -----------------------------------------------------------------------------
+
+#include "db_types.c"
+#include "db_parse.c"
+#include "db_gen.c"
+
+
+// -----------------------------------------------------------------------------
+// run
+// -----------------------------------------------------------------------------
+
+bool db_run(const char *res, const char *src)
+{
+    struct db_state state = {0};
+    snprintf(state.path.in, sizeof(state.path.in), "%s/items", res);
+    snprintf(state.path.io, sizeof(state.path.io), "%s/io.lisp", res);
+    snprintf(state.path.out, sizeof(state.path.out), "%s", src);
+
+    state.info = vec_info_reserve(255);
+
+    {
+        db_file_open(&state.files.im_enum, state.path.out, "item");
+        db_file_write(&state.files.im_enum,
+                "enum legion_packed item\n{\n  item_nil = atom_nil,\n");
+
+        db_file_open(&state.files.im_register, state.path.out, "im_register");
+
+        db_file_open(&state.files.im_includes, state.path.out, "im_includes");
+        db_file_open(&state.files.im_control, state.path.out, "im_control");
+        db_file_open(&state.files.im_factory, state.path.out, "im_factory");
+
+        db_file_open(&state.files.specs_enum, state.path.out, "specs_enum");
+        db_file_open(&state.files.specs_register, state.path.out, "specs_register");
+        db_file_open(&state.files.specs_value, state.path.out, "specs_value");
+
+        db_file_open(&state.files.tapes, state.path.out, "tapes");
+
+        db_file_open(&state.files.io_enum, state.path.out, "io_enum");
+        db_file_open(&state.files.ioe_enum, state.path.out, "ioe_enum");
+        db_file_open(&state.files.io_register, state.path.out, "io_register");
+    }
+
+    {
+        struct dir_it *it = dir_it(state.path.in);
+        while (dir_it_next(it))
+            db_parse_atoms(&state, dir_it_path(it));
+        dir_it_free(it);
+    }
+
+    db_gen_items(&state);
+
+    {
+        struct dir_it *it = dir_it(state.path.in);
+        while (dir_it_next(it))
+            db_gen_specs_tapes(&state, dir_it_path(it));
+        dir_it_free(it);
+    }
+
+    db_gen_io(&state, state.path.io);
+
+    {
+        db_file_write(&state.files.im_enum, "};\n");
+        db_file_close(&state.files.im_enum);
+
+        db_file_close(&state.files.im_register);
+
+        db_file_close(&state.files.im_includes);
+        db_file_close(&state.files.im_control);
+        db_file_close(&state.files.im_factory);
+
+        db_file_close(&state.files.specs_value);
+        db_file_close(&state.files.specs_enum);
+        db_file_close(&state.files.specs_register);
+
+        db_file_close(&state.files.tapes);
+
+        db_file_close(&state.files.io_enum);
+        db_file_close(&state.files.ioe_enum);
+        db_file_close(&state.files.io_register);
+
+    }
+
+    htable_reset(&state.atoms);
+    free(state.info);
+    return true;
+}

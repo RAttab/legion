@@ -6,8 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "vm/vm.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 
 
 // -----------------------------------------------------------------------------
@@ -38,7 +37,7 @@ struct token
 {
     enum token_type type;
     uint32_t row, col, len;
-    union { struct symbol s; vm_word w; } value;
+    union { struct symbol s; int64_t w; } value;
 };
 
 

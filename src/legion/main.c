@@ -15,15 +15,6 @@
 // declarations
 // -----------------------------------------------------------------------------
 
-bool graph_run(void);
-bool stats_run(void);
-
-bool db_run(const char *path);
-
-bool tech_run(
-        const char *path,
-        const char *output);
-
 bool local_run(
         const char *file,
         world_seed seed);
@@ -57,29 +48,21 @@ void usage(int code, const char *msg)
 
     static const char usage[] =
         "legion --help\n"
-        "       --graph\n"
-        "       --items\n"
         "       --token\n"
+        "       --config <type> [--config <path>] [--name <name>] [--auth <token>]\n"
         "       --local [--file <path>] [--seed <seed>]\n"
         "       --client <host> [--port <port>] [--config <path>]\n"
         "       --server <host> [--port <port>] [--file <path>] [--config <path>]\n"
         "                       [--seed <seed>]\n"
-        "       --config <type> [--config <path>] [--name <name>] [--auth <token>]\n"
-        "       --gen <path>\n"
-        "       --tech <path> [--output <path>]\n"
         "\n"
         "Commands:\n"
         "  -h --help    Prints this message\n"
-        "  -G --graph   Output dotfile of tape graph to stdout\n"
-        "  -I --items   Dumps stats about item requirements\n"
         "  -T --token   Generates an auth token\n"
+        "  -N --config  Creates a new config file of type \"client\" or\n"
+        "               \"server\" at the given path\n"
         "  -L --local   Starts the game locally; default command\n"
         "  -S --server  Starts a game server listening on the given host\n"
         "  -C --client  Connects to the game server at the given host\n"
-        "  -N --config  Creates a new config file of type \"client\" or\n"
-        "               \"server\" at the given path\n"
-        "  -D --db      Generate the database from the item files\n"
-        "  -E --tech    Generate the tech tree from the tech files\n"
         "\n"
         "Arguments:\n"
         "  -f --file    Path to save file; default is './legion.save'\n"
@@ -102,19 +85,15 @@ void usage(int code, const char *msg)
 
 int main(int argc, char *const argv[])
 {
-    const char *optstring = "+hGITLN:S:C:D:E:f:c:p:s:n:a:";
+    const char *optstring = "+hTN:LS:C:D:E:f:c:p:s:n:a:";
     struct option longopts[] = {
         { .val = 'h', .name = "help",   .has_arg = no_argument },
 
-        { .val = 'G', .name = "graph",  .has_arg = no_argument },
-        { .val = 'I', .name = "items",  .has_arg = no_argument },
         { .val = 'T', .name = "token",  .has_arg = no_argument },
+        { .val = 'N', .name = "config", .has_arg = required_argument },
         { .val = 'L', .name = "local",  .has_arg = no_argument },
         { .val = 'S', .name = "server", .has_arg = required_argument },
         { .val = 'C', .name = "client", .has_arg = required_argument },
-        { .val = 'N', .name = "config", .has_arg = required_argument },
-        { .val = 'D', .name = "db",     .has_arg = required_argument },
-        { .val = 'E', .name = "tech",   .has_arg = required_argument },
 
         { .val = 'f', .name = "file",   .has_arg = required_argument },
         { .val = 'c', .name = "config", .has_arg = required_argument },
@@ -122,16 +101,14 @@ int main(int argc, char *const argv[])
         { .val = 's', .name = "seed",   .has_arg = required_argument },
         { .val = 'n', .name = "name",   .has_arg = required_argument },
         { .val = 'a', .name = "auth",   .has_arg = required_argument },
-        { .val = 'o', .name = "output", .has_arg = required_argument },
 
         {0},
     };
 
     enum {
         cmd_nil = 0,
-        cmd_graph, cmd_items, cmd_token,
+        cmd_token, cmd_config,
         cmd_local, cmd_server, cmd_client,
-        cmd_config, cmd_db, cmd_tech,
     } cmd = cmd_nil;
 
     static struct {
@@ -142,7 +119,6 @@ int main(int argc, char *const argv[])
         const char *node;
         const char *service;
         const char *type;
-        const char *output;
         world_seed seed;
         user_token auth;
         struct symbol name;
@@ -151,7 +127,6 @@ int main(int argc, char *const argv[])
         .config = "./legion.lisp",
         .service = "18181", // Dihedral Prime beause it makes me sound smart.
         .seed = 0,
-        .output = ".",
     };
 
     bool done = false;
@@ -162,20 +137,15 @@ int main(int argc, char *const argv[])
         case -1: { done = true; break; }
 
         case 'h': { usage(0, NULL); }
-        case 'G': { cmd = cmd_graph; commands++; break; }
-        case 'I': { cmd = cmd_items; commands++; break; }
         case 'T': { cmd = cmd_token; commands++; break; }
+        case 'N': { cmd = cmd_config; commands++; args.type = optarg; break; }
         case 'L': { cmd = cmd_local; commands++; break; }
         case 'S': { cmd = cmd_server; commands++; args.node = optarg; break; }
         case 'C': { cmd = cmd_client; commands++; args.node = optarg; break; }
-        case 'N': { cmd = cmd_config; commands++; args.type = optarg; break; }
-        case 'D': { cmd = cmd_db; commands++; args.db = optarg; break; }
-        case 'E': { cmd = cmd_tech; commands++; args.tech = optarg; break; }
 
         case 'f': { args.save = optarg; break; }
         case 'c': { args.config = optarg; break; }
         case 'p': { args.service = optarg; break; }
-        case 'o': { args.output = optarg; break; }
 
         case 's': {
             size_t len = strlen(optarg);
@@ -209,21 +179,19 @@ int main(int argc, char *const argv[])
     if (commands == 0) cmd = cmd_local;
     else if (commands > 1) usage(1, "too many commands provided");
 
-    // We don't want to run sys_populate for this command.
-    if (cmd == cmd_db)
-        return db_run(args.db) ? 0 : 1;
-    if (cmd == cmd_tech)
-        return tech_run(args.tech, args.output) ? 0 : 1;
-
     sys_populate();
 
     bool ok = false;
     switch (cmd)
     {
-    case cmd_graph:  { ok = graph_run(); break; }
-    case cmd_items:  { ok = stats_run(); break; }
-    case cmd_local:  { ok = local_run(args.save, args.seed); break; }
+
+    case cmd_config: {
+        ok = config_run(args.type, args.config, &args.name, args.auth);
+        break;
+    }
     case cmd_token:  { ok = true; fprintf(stdout, "%lx\n", make_user_token()); break; }
+
+    case cmd_local:  { ok = local_run(args.save, args.seed); break; }
     case cmd_client: {
         ok = client_run(args.node, args.service, args.config);
         break;
@@ -232,10 +200,7 @@ int main(int argc, char *const argv[])
         ok = server_run(args.node, args.service, args.save, args.config, args.seed);
         break;
     }
-    case cmd_config: {
-        ok = config_run(args.type, args.config, &args.name, args.auth);
-        break;
-    }
+
     default: { assert(false); }
     }
 

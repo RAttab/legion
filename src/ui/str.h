@@ -9,7 +9,7 @@
 #include "clipboard.h"
 
 #include "vm/vm.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 #include "game/id.h"
 #include "game/coord.h"
 #include "db/items.h"

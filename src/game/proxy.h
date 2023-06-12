@@ -10,7 +10,7 @@
 #include "game/sim.h"
 #include "vm/vm.h"
 #include "vm/mod.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 
 struct sector;
 struct tech;

@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 #include "utils/str.h"
 
 

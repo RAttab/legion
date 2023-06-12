@@ -138,12 +138,12 @@ static void dump_dot_suffix(struct mfile_writer *out)
 // dump
 // -----------------------------------------------------------------------------
 
-static void tech_dump(struct tree *tree, const char *output)
+static void tech_dump(struct tree *tree, const char *src, const char *output)
 {
     char path[PATH_MAX] = {0};
 
     struct mfile_writer lisp = {0};
-    snprintf(path, sizeof(path), "%s/tech.lisp", output);
+    snprintf(path, sizeof(path), "%s/tech.lisp", src);
     mfile_writer_open(&lisp, path, 1048576);
 
     struct mfile_writer dot = {0};

@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "vm/symbol.h"
+#include "utils/symbol.h"
 #include "db/items.h"
 
 struct lisp;
