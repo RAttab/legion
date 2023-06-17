@@ -60,5 +60,6 @@ bool tech_run(const char *res, const char *src, const char *output)
     tech_gen(&tree);
     tech_check_outputs(&tree);
     tech_dump(&tree, src, output);
+    tree_free(&tree);
     return true;
 }

@@ -159,7 +159,6 @@ static void tech_parse(struct tree *tree, const char *path)
     struct config config = {0};
     struct reader *in = config_read(&config, path);
 
-
     while (!reader_peek_eof(in)) {
         reader_open(in);
 
@@ -207,4 +206,6 @@ static void tech_parse(struct tree *tree, const char *path)
 
         reader_close(in);
     }
+
+    config_close(&config);
 }

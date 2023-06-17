@@ -80,7 +80,7 @@ static size_t edges_dec_at(struct edges *edges, struct edge *it, size_t count)
     it->count -= legion_min(count, it->count);
     if (it->count) return it->count;
 
-    for (; it < end - 1; ++it) *it = *(it + 1);
+    for (; it < (end - 1); ++it) *it = *(it + 1);
     edges->len--;
 
     return 0;
@@ -88,11 +88,8 @@ static size_t edges_dec_at(struct edges *edges, struct edge *it, size_t count)
 
 static size_t edges_dec(struct edges *edges, node_id id, uint32_t count)
 {
-    struct edge *it = edges->list;
-    const struct edge *end = it + edges->len;
-    for (; it < end && it->id < id; ++it);
-
-    return it->id == id ? edges_dec_at(edges, it, count) : 0;
+    struct edge *it = edges_find(edges, id);
+    return it ? edges_dec_at(edges, it, count) : 0;
 }
 
 
@@ -119,6 +116,14 @@ struct legion_packed node
     struct { struct edges in, needs; } base;
     struct edges out;
 };
+
+
+static void node_free(struct node *node)
+{
+    bits_free(&node->children.set);
+    bits_free(&node->needs.set);
+    free(node->specs.data);
+}
 
 static void node_dump(const struct node *node, const char *title)
 {
@@ -190,6 +195,7 @@ static void node_needs_dec(struct node *node, node_id id, size_t count)
 
 struct tree
 {
+    size_t len;
     struct node *nodes;
     struct htable symbols;
     struct { node_id printer, assembly; } ids;
@@ -199,11 +205,12 @@ static struct tree tree_init(void)
 {
     struct tree tree = {0};
 
-    const size_t len = sizeof(struct node) * layer_cap * index_cap;
+    tree.len = sizeof(struct node) * layer_cap * index_cap;
     const int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE;
-    tree.nodes = mmap(NULL, len, PROT_READ | PROT_WRITE, flags, -1, 0);
+    tree.nodes = mmap(NULL, tree.len, PROT_READ | PROT_WRITE, flags, -1, 0);
     if (tree.nodes == MAP_FAILED)
-        failf_errno("unable to mmap tree of len='%lx'", len);
+        failf_errno("unable to mmap tree of len='%lx'", tree.len);
+
     htable_reset(&tree.symbols);
     return tree;
 }
@@ -212,6 +219,18 @@ static struct node *tree_node(struct tree *tree, node_id id)
 {
     struct node *node = tree->nodes + id;
     return node->id ? node : NULL;
+}
+
+static void tree_free(struct tree *tree)
+{
+    htable_reset(&tree->symbols);
+
+    for (size_t id = 0; id < node_id_max; ++id) {
+        struct node *node = tree_node(tree, id);
+        if (node) node_free(node);
+    }
+
+    munmap(tree->nodes, tree->len);
 }
 
 static struct node *tree_symbol(struct tree *tree, const struct symbol *sym)

@@ -7,6 +7,67 @@
 // lisp
 // -----------------------------------------------------------------------------
 
+static void dump_tape(
+        struct mfile_writer *out, struct tree *tree, struct node *node)
+{
+    if (!node->children.edges.len) return;
+
+    struct rng rng = rng_make(node->id);
+
+    static struct edges ins = {0}; // TODO: memory corruption if not static
+    edges_copy(&ins, &node->children.edges);
+
+    static struct edge tape[256] = {0};
+    size_t front = 0, back = array_len(tape);
+
+    while (ins.len) {
+        size_t i = rng_uni(&rng, 0, ins.len);
+        struct edge in = ins.list[i];
+
+        if (ins.len == 1) {
+            if (front && tape[front-1].id == in.id)
+                tape[front-1].count += in.count;
+            else if (back < array_len(tape) && tape[back].id == in.id)
+                tape[front].count += in.count;
+            else tape[front++] = in;
+            break;
+        }
+
+        enum { op_front = 0, op_back, op_both } op;
+        op = rng_uni(&rng, 0, in.count > 1 ? op_both + 1 : op_back + 1);
+
+        size_t max = in.count;
+        if (op == op_both) max /= 2;
+        struct edge edge = {.id = in.id, .count = rng_uni(&rng, 0, max) + 1 };
+
+        if (op == op_front || op == op_both) {
+            if (front && tape[front-1].id == edge.id)
+                tape[front-1].count += edge.count;
+            else tape[front++] = edge;
+            edges_dec(&ins, edge.id, edge.count);
+        }
+
+        if (op == op_back || op == op_both) {
+            if (back < array_len(tape) && tape[back].id == edge.id)
+                tape[back].count += edge.count;
+            else tape[--back] = edge;
+            edges_dec(&ins, edge.id, edge.count);
+        }
+    }
+
+    mfile_write(out, "    (in ");
+    for (size_t i = 0; true; i++) {
+        if (i == front) i = back;
+        if (i == array_len(tape)) break;
+
+        struct edge *edge = tape + i;
+        struct node *child = tree_node(tree, edge->id);
+        mfile_writef(out, "%s(item-%s %u)",
+                i ? "\n        " : "", child->name.c, edge->count);
+    }
+    mfile_write(out, ")\n");
+}
+
 static void dump_lisp_node(
         struct mfile_writer *out, struct tree *tree, struct node *node)
 {
@@ -48,16 +109,18 @@ static void dump_lisp_node(
         mfile_writef(out, " (work %u) (energy %u) (host %s)\n",
                 node->work.node, node->energy.node, host->name.c);
 
-        if (node->children.edges.len) {
-            mfile_write(out, "    (in ");
-            for (size_t i = 0; i < node->children.edges.len; ++i) {
-                struct edge *edge = node->children.edges.list + i;
-                struct node *child = tree_node(tree, edge->id);
-                mfile_writef(out, "%s(item-%s %u)",
-                        i ? "\n        " : "", child->name.c, edge->count);
-            }
-            mfile_write(out, ")\n");
-        }
+        dump_tape(out, tree, node);
+
+        /* if (node->children.edges.len) { */
+        /*     mfile_write(out, "    (in "); */
+        /*     for (size_t i = 0; i < node->children.edges.len; ++i) { */
+        /*         struct edge *edge = node->children.edges.list + i; */
+        /*         struct node *child = tree_node(tree, edge->id); */
+        /*         mfile_writef(out, "%s(item-%s %u)", */
+        /*                 i ? "\n        " : "", child->name.c, edge->count); */
+        /*     } */
+        /*     mfile_write(out, ")\n"); */
+        /* } */
 
         mfile_writef(out, "    (out (item-%s 1)))\n", node->name.c);
     }

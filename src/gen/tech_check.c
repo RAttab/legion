@@ -216,6 +216,9 @@ static void check_needs(struct tree *tree, struct node *node)
         const struct edge *need = edges_find(&node->needs.edges, id);
         check_delta_id("need", tree, node, id, need->count, base->count);
     }
+
+    bits_free(&bits);
+    bits_free(&base);
 }
 
 static void check_children(struct tree *tree, struct node *node)
