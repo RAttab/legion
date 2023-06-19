@@ -224,6 +224,10 @@ inline bool bits_contains(const struct bits *lhs, const struct bits *rhs)
     for (size_t i = 0; i < len; ++i, ++l, ++r)
         if ((*l & *r) != *r) return false;
 
+    size_t max = u64_ceil_div(rhs->len, 64);
+    for (size_t i = len; len < max; ++i, ++r)
+        if (*r) return false;
+
     return true;
 }
 

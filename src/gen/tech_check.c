@@ -16,67 +16,65 @@ static void check_basics(struct node *node)
         errf("[%02x:%s] missing energy:node", node->id, node->name.c);
 }
 
-static void check_inputs_sum_needs(
+static struct edges *check_inputs_sum_needs(
         struct tree *tree,
         struct node *node,
         struct edges *sum,
         size_t count)
 {
-    if (node->base.needs.len) {
-        for (size_t i = 0; i < node->base.needs.len; ++i) {
-            const struct edge *need = node->base.needs.list + i;
-            edges_inc(sum, need->id, need->count * count);
+    if (edges_len(node->base.needs)) {
+        for (size_t i = 0; i < edges_len(node->base.needs); ++i) {
+            const struct edge *need = node->base.needs->vals + i;
+            sum = edges_inc(sum, need->id, need->count * count);
         }
-        return;
+        return sum;
     }
 
-    if (node->base.in.len) {
-        for (size_t i = 0; i < node->base.in.len; ++i) {
-            const struct edge *in = node->base.in.list + i;
-            check_inputs_sum_needs(
+    if (edges_len(node->base.in)) {
+        for (size_t i = 0; i < edges_len(node->base.in); ++i) {
+            const struct edge *in = node->base.in->vals + i;
+            sum = check_inputs_sum_needs(
                     tree, tree_node(tree, in->id),
                     sum, in->count * count);
         }
-        return;
+        return sum;
     }
 
-    edges_inc(sum, node->id, count);
+    return edges_inc(sum, node->id, count);
 }
 
-static void check_inputs_sum_elems(
+static struct edges *check_inputs_sum_elems(
         struct tree *tree,
         struct node *node,
         struct edges *sum,
         uint32_t count)
 {
-    size_t div = legion_min(1U, edges_count(&node->out, node->id));
-    for (size_t i = 0; i < node->base.in.len; ++i) {
-        struct edge *elem = node->base.in.list + i;
-        edges_inc(sum, elem->id, elem->count * count);
-        check_inputs_sum_elems(
+    size_t div = legion_min(1U, edges_count(node->out, node->id));
+    for (size_t i = 0; i < edges_len(node->base.in); ++i) {
+        struct edge *elem = node->base.in->vals + i;
+        sum = edges_inc(sum, elem->id, elem->count * count);
+        sum = check_inputs_sum_elems(
                 tree, tree_node(tree, elem->id),
                 sum, (elem->count / div) * count);
     }
+    return sum;
 }
 
 static void check_inputs_needs(struct tree *tree, struct node *node)
 {
-    if (!node->base.needs.len) return;
+    if (!edges_len(node->base.needs)) return;
 
-    struct edges ins = {0};
-    edges_init(&ins);
-
-    for (size_t i = 0; i < node->base.in.len; ++i) {
-        struct edge *in = node->base.in.list + i;
-        check_inputs_sum_needs(
+    struct edges *ins = NULL;
+    for (size_t i = 0; i < edges_len(node->base.in); ++i) {
+        struct edge *in = node->base.in->vals + i;
+        ins = check_inputs_sum_needs(
                 tree, tree_node(tree, in->id),
-                &ins, in->count);
+                ins, in->count);
     }
 
-    struct edges *needs = &node->needs.edges;
-
-    for (size_t i = 0; i < ins.len; ++i) {
-        struct edge *exp = ins.list + i;
+    struct edges *needs = node->needs.edges;
+    for (size_t i = 0; i < edges_len(ins); ++i) {
+        struct edge *exp = ins->vals + i;
         uint32_t val = edges_count(needs, exp->id);
         if (val >= exp->count) continue;
 
@@ -86,27 +84,25 @@ static void check_inputs_needs(struct tree *tree, struct node *node)
                 val, exp->count);
     }
 
-    for (size_t i = 0; i < ins.len; ++i)
-        node_needs_dec(node, ins.list[i].id, ins.list[i].count);
+    for (size_t i = 0; i < edges_len(ins); ++i)
+        node_needs_dec(node, ins->vals[i].id, ins->vals[i].count);
 
-    struct edges elems = {0};
-    edges_init(&elems);
-
-    for (size_t i = 0; i < needs->len; ++i) {
-        struct edge *need = needs->list + i;
-        check_inputs_sum_elems(
+    struct edges *elems = NULL;
+    for (size_t i = 0; i < edges_len(needs); ++i) {
+        struct edge *need = needs->vals + i;
+        elems = check_inputs_sum_elems(
                 tree, tree_node(tree, need->id),
-                &elems, need->count);
+                elems, need->count);
     }
 
-    for (size_t i = 0; i < elems.len; ++i) {
-        struct edge *exp = elems.list + i;
+    for (size_t i = 0; i < edges_len(elems); ++i) {
+        struct edge *exp = elems->vals + i;
 
         uint32_t val = edges_count(needs, exp->id);
         if (val >= exp->count) continue;
 
-        uint32_t in = edges_count(&ins, exp->id);
-        uint32_t base = edges_count(&node->base.needs, exp->id);
+        uint32_t in = edges_count(ins, exp->id);
+        uint32_t base = edges_count(node->base.needs, exp->id);
 
         errf("[%02x:%s] inputs.elems: field=%02x:%s, val=%u, exp=%u | %u >= %u { ins=%u + elems=%u }",
                 node->id, node->name.c,
@@ -114,8 +110,11 @@ static void check_inputs_needs(struct tree *tree, struct node *node)
                 val, exp->count, base, in + exp->count, in, exp->count);
     }
 
-    for (size_t i = 0; i < elems.len; ++i)
-        node_needs_dec(node, elems.list[i].id, elems.list[i].count);
+    for (size_t i = 0; i < edges_len(elems); ++i)
+        node_needs_dec(node, elems->vals[i].id, elems->vals[i].count);
+
+    edges_free(ins);
+    edges_free(elems);
 }
 
 static void tech_check_inputs(struct tree *tree)
@@ -170,9 +169,9 @@ static void check_tape(struct node *node)
 {
     size_t ins = 0;
     size_t work = node->work.node;
-    size_t outs = legion_max(node->out.len, 1U);
-    for (size_t i = 0; i < node->children.edges.len; ++i)
-        ins += node->children.edges.list[i].count;
+    size_t outs = legion_max(edges_len(node->out), 1U);
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i)
+        ins += node->children.edges->vals[i].count;
 
     size_t total = ins + work + outs;
     if (total >= UINT8_MAX) {
@@ -184,8 +183,8 @@ static void check_tape(struct node *node)
 static void check_needs(struct tree *tree, struct node *node)
 {
     struct bits base = {0};
-    for (size_t i = 0; i < node->base.needs.len; ++i)
-        bits_put(&base, node->base.needs.list[i].id);
+    for (size_t i = 0; i < edges_len(node->base.needs); ++i)
+        bits_put(&base, node->base.needs->vals[i].id);
 
     struct bits bits = {0};
 
@@ -212,8 +211,8 @@ static void check_needs(struct tree *tree, struct node *node)
     for (node_id id = bits_next(&bits, 0);
          id < bits.len; id = bits_next(&bits, id + 1))
     {
-        const struct edge *base = edges_find(&node->base.needs, id);
-        const struct edge *need = edges_find(&node->needs.edges, id);
+        const struct edge *base = edges_find(node->base.needs, id);
+        const struct edge *need = edges_find(node->needs.edges, id);
         check_delta_id("need", tree, node, id, need->count, base->count);
     }
 
@@ -223,10 +222,10 @@ static void check_needs(struct tree *tree, struct node *node)
 
 static void check_children(struct tree *tree, struct node *node)
 {
-    for (size_t i = 0; i < node->children.edges.len; ++i) {
-        const struct edge *edge = node->children.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+        const struct edge *edge = node->children.edges->vals + i;
 
-        if (node->children.edges.len == 1 && edge->count == 1) {
+        if (edges_len(node->children.edges) == 1 && edge->count == 1) {
             errf("[%02x:%s] singleton: id=%02x:%s",
                     node->id, node->name.c,
                     edge->id, tree_name(tree, edge->id).c);
@@ -244,8 +243,8 @@ static void check_deps(struct tree *tree, struct node *node, struct bits *set)
 
     void check_node(struct node *node) {
         bits_put(set, node->id);
-        for (size_t i = 0; i < node->children.edges.len; ++i) {
-            struct edge *edge = node->children.edges.list + i;
+        for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+            struct edge *edge = node->children.edges->vals + i;
             if (bits_has(set, edge->id)) continue;
 
             struct node *child = tree_node(tree, edge->id);
@@ -276,6 +275,7 @@ static void check_host(struct tree *tree, struct node *node)
 static void tech_check_outputs(struct tree *tree)
 {
     struct bits deps = {0};
+    size_t generated = 0;
 
     for (node_id id = 0; id < node_id_max; ++id) {
         struct node *node = tree_node(tree, id);
@@ -284,12 +284,14 @@ static void tech_check_outputs(struct tree *tree)
 
         check_tape(node);
         check_children(tree, node);
-        if (!node->generated && node->base.needs.len)
+        if (!node->generated && edges_len(node->base.needs))
             check_needs(tree, node);
 
-        if (!node->generated)
-            check_deps(tree, node, &deps);
+        if (node->generated) generated++;
+        else check_deps(tree, node, &deps);
     }
+
+    infof("generated: %zu", generated);
 
     for (node_id id = 0; id < node_id_max; ++id) {
         struct node *node = tree_node(tree, id);

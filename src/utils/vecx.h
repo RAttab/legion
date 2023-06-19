@@ -23,7 +23,7 @@
 // vecx
 // -----------------------------------------------------------------------------
 
-struct vecx_name
+struct legion_packed vecx_name
 {
     uint32_t len, cap;
     vecx_type vals[];
@@ -70,6 +70,7 @@ struct vecx_name *vecx_fn(append) (struct vecx_name *vec, vecx_type val)
 inline legion_always_inline
 struct vecx_name *vecx_fn(copy) (struct vecx_name *old)
 {
+    if (!old) return NULL;
     struct vecx_name *new = vecx_fn(reserve)(old->cap);
     memcpy(new, old, sizeof(*old) + old->len * sizeof(old->vals[0]));
     return new;

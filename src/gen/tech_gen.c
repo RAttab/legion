@@ -25,25 +25,28 @@ static void gen_node_name(struct gen *gen)
         "alm", "alt", "ate", "ex", "gen", "itil", "ide", "ium", "ols", "on", "oid",
         "ry", "sh", "tor" };
 
-    struct node *node = gen->node;
-
-
     struct symbol name = {0};
+    struct node *node = gen->node;
 
     void append(const char *src)
     {
         char *dst = name.c + name.len;
 
-        if (str_is_vowel(*src) && str_is_vowel(*dst))
+        if (str_is_vowel(*src) && str_is_vowel(*(dst - 1))) {
+            name.len--;
             dst--;
+        }
+
+        if (*src == *(dst - 1))
+            src++;
 
         for (; *src && name.len < name_cap; ++dst, ++src, ++name.len)
             *dst = *src;
     }
 
     void append_syllable(size_t ix) {
-        assert(ix < node->needs.edges.len);
-        const struct node *elem = tree_node(gen->tree, node->needs.edges.list[ix].id);
+        assert(ix < edges_len(node->needs.edges));
+        const struct node *elem = tree_node(gen->tree, node->needs.edges->vals[ix].id);
         assert(elem);
         const struct symbol *syllable = &elem->syllable;
         append(syllable->c);
@@ -64,7 +67,7 @@ static void gen_node_name(struct gen *gen)
         append(heads[head]);
 
         size_t syllables = rng_uni(&gen->rng, 2, 3);
-        size_t ix = node->needs.edges.len - 1;
+        size_t ix = edges_len(node->needs.edges) - 1;
         do {
             if (syllables-- == 0) {
                 append_tail();
@@ -78,7 +81,7 @@ static void gen_node_name(struct gen *gen)
         } while (ix && name.len + 3 + 4 < name_cap);
 
         append_tail();
-        
+
         if (tree_set_symbol(gen->tree, node, &name)) {
             node->name = name;
             return;
@@ -93,8 +96,8 @@ static void gen_threshold(struct gen *gen)
     struct node *node = gen->node;
 
     struct edge *max = NULL;
-    for (size_t i = 0; i < node->needs.edges.len; ++i) {
-        struct edge *need = node->needs.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->needs.edges); ++i) {
+        struct edge *need = node->needs.edges->vals + i;
         if (max && max->count > need->count) continue;
         max = need;
     }
@@ -111,17 +114,13 @@ static bool gen_trim_needs(struct gen *gen)
 {
     struct node *node = gen->node;
 
-    const struct edge *it = node->needs.edges.list;
-    const struct edge *end = it + node->needs.edges.len;
-    const struct edge *base = node->base.needs.list;
-
     bool trimmed = false;
-    while (it < end) {
-        while (base->id < it->id) base++;
-        assert(base->id == it->id);
+    for (size_t ix = 0; ix < edges_len(node->needs.edges);) {
+        struct edge *it = node->needs.edges->vals + ix;
+        const struct edge *base = edges_find(node->base.needs, it->id);
 
         if (base->count == it->count || it->count > gen->threshold) {
-            it++;
+            ix++;
             continue;
         }
 
@@ -129,7 +128,6 @@ static bool gen_trim_needs(struct gen *gen)
                 it->id, it->count, gen->threshold);
 
         node_needs_dec(node, it->id, it->count);
-        end = node->needs.edges.list + node->needs.edges.len;
         trimmed = true;
     }
 
@@ -143,20 +141,18 @@ static void gen_child_elem(struct gen *gen)
     struct node *node = gen->node;
     const uint8_t layer = node_id_layer(node->id);
 
-    struct edge *it = node->needs.edges.list;
-    const struct edge *end = it + node->needs.edges.len;
+    for (size_t ix = 0; ix < edges_len(node->needs.edges);) {
+        struct edge *it = node->needs.edges->vals + ix;
 
-    while (it < end) {
         assert(layer > node_id_layer(it->id));
-        if (node_id_layer(it->id) < layer - 1) { it++; continue; }
+        if (node_id_layer(it->id) < layer - 1) { ix++; continue; }
 
         node_child_inc(node, it->id, legion_min(it->count, child_count_cap));
         node_needs_dec(node, it->id, it->count);
-        end = node->needs.edges.list + node->needs.edges.len;
     }
 
-    if (node->needs.edges.len == 1) {
-        struct edge *edge = node->needs.edges.list;
+    if (edges_len(node->needs.edges) == 1) {
+        struct edge *edge = node->needs.edges->vals;
         node_child_inc(node, edge->id, legion_min(edge->count, child_count_cap));
         node_needs_dec(node, edge->id, edge->count);
     }
@@ -169,14 +165,12 @@ struct gen_count gen_child_count(const struct node *node, const struct node *chi
     if (!bits_contains(&node->needs.set, &child->needs.set))
         return (struct gen_count) { .count = 0, .set = 0 };
 
-    const struct edge *n = node->needs.edges.list;
-    const struct edge *c = child->needs.edges.list;
-    const struct edge *end = c + child->needs.edges.len;
     struct gen_count ret = { .count = UINT32_MAX, .set = 0, .msb = 0 };
 
-    for (; c < end && ret.count > 0; c++) {
-        while (n->id < c->id) n++;
-        if (n->id != c->id) break;
+    for (size_t i = 0; i < edges_len(child->needs.edges); ++i) {
+        const struct edge *c = child->needs.edges->vals + i;
+        const struct edge *n = edges_find(node->needs.edges, c->id);
+        assert(n);
 
         ret.set++;
         ret.msb = c->id;
@@ -189,8 +183,8 @@ struct gen_count gen_child_count(const struct node *node, const struct node *chi
 
 static void gen_child_link(struct node *node, const struct node *child, size_t count)
 {
-    for (size_t i = 0; i < child->needs.edges.len; ++i) {
-        const struct edge *needs = child->needs.edges.list + i;
+    for (size_t i = 0; i < edges_len(child->needs.edges); ++i) {
+        const struct edge *needs = child->needs.edges->vals + i;
         node_needs_dec(node, needs->id, needs->count * count);
     }
 
@@ -198,14 +192,14 @@ static void gen_child_link(struct node *node, const struct node *child, size_t c
     node_dump(node, "gen.child.link");
 }
 
-static bool gen_child_create(struct gen *gen, size_t layer)
+static bool gen_child_create(struct gen *gen, uint8_t layer)
 {
     struct node *node = gen->node;
 
     {
         char str[256];
         bits_dump(&node->needs.set, str, sizeof(str));
-        infof("gen.child.set: %s", str);
+        infof("gen.child.set: layer=%u, set=%s", layer, str);
     }
 
     struct node *child = tree_append(gen->tree, layer);
@@ -215,14 +209,14 @@ static bool gen_child_create(struct gen *gen, size_t layer)
     child->generated = true;
 
     uint32_t max = 0;
-    for (size_t i = 0; i < node->needs.edges.len; ++i)
-        max = legion_max(max, node->needs.edges.list[i].count);
+    for (size_t i = 0; i < edges_len(node->needs.edges); ++i)
+        max = legion_max(max, node->needs.edges->vals[i].count);
 
     const size_t div = 10;
     uint32_t min = UINT32_MAX;
 
-    for (size_t i = 0; i < node->needs.edges.len; ++i) {
-        struct edge *needs = node->needs.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->needs.edges); ++i) {
+        struct edge *needs = node->needs.edges->vals + i;
 
         uint32_t mult = rng_exp(&gen->rng, 1, div);
         uint32_t count = (max * mult) / div;
@@ -239,12 +233,12 @@ static bool gen_child_create(struct gen *gen, size_t layer)
         min = legion_min(min, needs->count / count);
     }
 
-    for (size_t i = 0; i < child->needs.edges.len; ++i) {
-        struct edge *needs = child->needs.edges.list + i;
+    for (size_t i = 0; i < edges_len(child->needs.edges); ++i) {
+        struct edge *needs = child->needs.edges->vals + i;
         node_needs_dec(node, needs->id, needs->count * min);
     }
-    for (size_t i = 0; i < child->children.edges.len; ++i) {
-        struct edge *needs = child->children.edges.list + i;
+    for (size_t i = 0; i < edges_len(child->children.edges); ++i) {
+        struct edge *needs = child->children.edges->vals + i;
         node_needs_dec(node, needs->id, needs->count * min);
     }
     node_child_inc(node, child->id, min);
@@ -257,13 +251,13 @@ static bool gen_child_create(struct gen *gen, size_t layer)
 static void gen_children(struct gen *gen)
 {
     struct node *node = gen->node;
-    if (!node->needs.edges.len) return;
+    if (!edges_len(node->needs.edges)) return;
 
     const uint8_t top = node_id_layer(node->id) - 1;
 
     uint8_t max = 0;
-    for (size_t i = 0; i < node->children.edges.len; ++i)
-        max = legion_max(max, node_id_layer(node->children.edges.list[i].id));
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i)
+        max = legion_max(max, node_id_layer(node->children.edges->vals[i].id));
 
     // Ensures that our first child is: in the layer directly below our node to
     // ensure that we have the right depth; that it uses our MSB element so that
@@ -294,7 +288,7 @@ static void gen_children(struct gen *gen)
     }
 
     // Link to as many nodes in the tree as possible.
-    while (node->needs.edges.len) {
+    while (edges_len(node->needs.edges)) {
         const struct node *child = NULL;
         struct gen_count match = { .count = 0, .set = 0, .msb = 0 };
 
@@ -326,7 +320,7 @@ static void gen_children(struct gen *gen)
     }
 
     // If all else fails create new nodes to drain the rest of our needs.
-    for (size_t failures = 0; node->needs.edges.len; gen_trim_needs(gen)) {
+    for (size_t failures = 0; edges_len(node->needs.edges); gen_trim_needs(gen)) {
         const uint8_t bottom = node_id_layer(bits_msb(&node->needs.set));
         assert(top > bottom);
 
@@ -347,8 +341,8 @@ static void gen_host(struct gen *gen)
         }
     }
 
-    for (size_t i = 0; i < node->children.edges.len; ++i) {
-        struct node *child = tree_node(gen->tree, node->children.edges.list[i].id);
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+        struct node *child = tree_node(gen->tree, node->children.edges->vals[i].id);
         if (im_type_elem(child->type)) {
             node->host.id = gen->tree->ids.printer;
             return;
@@ -392,11 +386,12 @@ static void gen_update(struct gen *gen)
     uint32_t child_work_max = 0;
     uint32_t child_energy_max = 0;
 
-    edges_init(&node->needs.edges);
     bits_reset(&node->needs.set);
+    if (node->needs.edges)
+        node->needs.edges->len = 0;
 
-    for (size_t i = 0; i < node->children.edges.len; ++i) {
-        struct edge *edge = node->children.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+        struct edge *edge = node->children.edges->vals + i;
         struct node *child = tree_node(gen->tree, edge->id);
 
         tape_len += edge->count;
@@ -407,8 +402,8 @@ static void gen_update(struct gen *gen)
         node->energy.total += child->energy.total * edge->count;
         child_energy_max = legion_max(child_energy_max, child->energy.node);
 
-        for (size_t j = 0; j < child->needs.edges.len; ++j) {
-            struct edge *it = child->needs.edges.list + j;
+        for (size_t j = 0; j < edges_len(child->needs.edges); ++j) {
+            struct edge *it = child->needs.edges->vals + j;
             node_needs_inc(node, it->id, it->count * edge->count);
         }
     }
@@ -448,7 +443,7 @@ static void gen_node(struct tree *tree, struct node *node)
 
     // For generated nodes, base won't have been initialized so do it here.
     if (node->generated)
-        memcpy(&node->base.needs, &node->needs.edges, sizeof(node->base.needs));
+        node->base.needs = edges_copy(node->needs.edges);
 
     if (!im_type_elem(node->type)) {
         gen_threshold(&gen);
@@ -459,8 +454,8 @@ static void gen_node(struct tree *tree, struct node *node)
     gen_host(&gen);
     gen_lab(&gen);
 
-    for (size_t i = 0; i < node->children.edges.len; ++i)
-        gen_node(tree, tree_node(tree, node->children.edges.list[i].id));
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i)
+        gen_node(tree, tree_node(tree, node->children.edges->vals[i].id));
 
     gen_update(&gen);
     if (!node->name.len) gen_node_name(&gen);
@@ -474,14 +469,14 @@ static void gen_elem_setup(struct node *node)
 
 static void gen_elem_inc(struct tree *tree, struct node *node)
 {
-    for (size_t i = 0; i < node->children.edges.len; ++i) {
-        struct edge *child = node->children.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+        struct edge *child = node->children.edges->vals + i;
 
         struct node *elem = tree_node(tree, child->id);
         assert(elem && im_type_elem(elem->type));
 
-        for (size_t j = 0; j < elem->needs.edges.len; ++j) {
-            struct edge *e = elem->needs.edges.list + j;
+        for (size_t j = 0; j < edges_len(elem->needs.edges); ++j) {
+            struct edge *e = elem->needs.edges->vals + j;
             node_needs_inc(node, e->id, e->count * child->count);
         }
     }
@@ -489,25 +484,27 @@ static void gen_elem_inc(struct tree *tree, struct node *node)
 
 static void gen_item_inc(struct tree *tree, struct node *node)
 {
-    struct edges sum = {0};
+    struct edges *sum = NULL;
 
-    for (size_t i = 0; i < node->needs.edges.len; ++i) {
-        struct edge *needs = node->needs.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->needs.edges); ++i) {
+        struct edge *needs = node->needs.edges->vals + i;
 
         struct node *elem = tree_node(tree, needs->id);
         assert(elem && im_type_elem(elem->type));
 
-        for (size_t j = 0; j < elem->needs.edges.len; ++j) {
-            struct edge *e = elem->needs.edges.list + j;
+        for (size_t j = 0; j < edges_len(elem->needs.edges); ++j) {
+            struct edge *e = elem->needs.edges->vals + j;
             if (e->id != needs->id)
-                edges_inc(&sum, e->id, e->count * needs->count);
+                sum = edges_inc(sum, e->id, e->count * needs->count);
         }
     }
 
-    for (size_t i = 0; i < sum.len; ++i) {
-        const struct edge *e = sum.list + i;
+    for (size_t i = 0; i < edges_len(sum); ++i) {
+        const struct edge *e = sum->vals + i;
         node_needs_inc(node, e->id, e->count);
     }
+
+    edges_free(sum);
 }
 
 // If a tape has multiple outputs we divides its needs by the number of outputs
@@ -515,12 +512,12 @@ static void gen_item_inc(struct tree *tree, struct node *node)
 // to deal with ratios in the rest of the algorithm.
 static void gen_out_div(struct node *node)
 {
-    size_t div = edges_count(&node->out, node->id);
-    if (!div) edges_inc(&node->out, node->id, 1);
+    size_t div = edges_count(node->out, node->id);
+    if (!div) node->out = edges_inc(node->out, node->id, 1);
     if (div <= 1) return;
 
-    for (size_t i = 0; i < node->needs.edges.len; ++i) {
-        struct edge *needs = node->needs.edges.list + i;
+    for (size_t i = 0; i < edges_len(node->needs.edges); ++i) {
+        struct edge *needs = node->needs.edges->vals + i;
         needs->count = u64_ceil_div(needs->count, div);
     }
 }

@@ -21,30 +21,35 @@ inline node_id node_id_first(uint8_t layer) { return make_node_id(layer, 0); }
 inline node_id node_id_last(uint8_t layer) { return make_node_id(layer, index_cap); }
 
 // -----------------------------------------------------------------------------
-// edge_list
+// edges
 // -----------------------------------------------------------------------------
 
 struct legion_packed edge { node_id id; uint32_t count; };
 
-struct legion_packed edges
-{
-    uint8_t len;
-    struct edge list[edges_cap];
-};
+#define vecx_type struct edge
+#define vecx_name edges
+#include "utils/vecx.h"
 
-static void edges_init(struct edges *edges) { memset(edges, 0, sizeof(*edges)); }
-
-static void edges_copy(struct edges *dst, const struct edges *src)
+static size_t edges_dump(struct edges *edges, char *dst, size_t len)
 {
-    memcpy(dst, src, sizeof(*src));
+    char *it = dst;
+    char *const end = it + len;
+
+    it += snprintf(it, end - it, "%zu:{", edges_len(edges));
+    for (size_t i = 0; i < edges_len(edges); ++i) {
+        const struct edge *edge = edges->vals + i;
+        it += snprintf(it, end - it, " %02x:%u", edge->id, edge->count);
+    }
+    it += snprintf(it, end - it, " }");
+
+    return it - dst;
 }
 
 static struct edge *edges_find(struct edges *edges, node_id id)
 {
-    struct edge *it = edges->list;
-    struct edge *const end = it + edges->len;
-    for (; it < end && it->id < id; ++it);
-    return it->id == id ? it : NULL;
+    for (size_t i = 0; i < edges_len(edges); ++i)
+        if (edges->vals[i].id == id) return edges->vals + i;
+    return NULL;
 }
 
 static uint32_t edges_count(struct edges *edges, node_id id)
@@ -53,43 +58,31 @@ static uint32_t edges_count(struct edges *edges, node_id id)
     return it ? it->count : 0;
 }
 
-static size_t edges_inc(struct edges *edges, node_id id, uint32_t count)
+static struct edges *edges_inc(struct edges *edges, node_id id, uint32_t count)
 {
-    assert(edges->len < edges_cap);
+    struct edge *it = edges_find(edges, id);
+    if (it) { it->count += count; return edges; }
 
-    struct edge *edge = edges->list;
-    struct edge *const end = edge + edges->len;
-    for (; edge < end && edge->id < id; ++edge);
-
-    if (edge->id == id) edge->count += count;
-    else {
-        for (struct edge *it = end; it > edge; --it) *it = *(it - 1);
-        *edge = (struct edge) { .id = id, .count = count };
-        edges->len++;
+    edges = edges_append(edges, (struct edge) { .id = id, .count = count });
+    for (size_t i = edges_len(edges) - 1; i > 0; --i) {
+        if (edges->vals[i].id > edges->vals[i-1].id) break;
+        legion_swap(edges->vals + i, edges->vals + (i-1));
     }
-
-    return edge - edges->list;
-}
-
-
-static size_t edges_dec_at(struct edges *edges, struct edge *it, size_t count)
-{
-    struct edge *const end = it + edges->len;
-    assert(it < end);
-
-    it->count -= legion_min(count, it->count);
-    if (it->count) return it->count;
-
-    for (; it < (end - 1); ++it) *it = *(it + 1);
-    edges->len--;
-
-    return 0;
+    return edges;
 }
 
 static size_t edges_dec(struct edges *edges, node_id id, uint32_t count)
 {
     struct edge *it = edges_find(edges, id);
-    return it ? edges_dec_at(edges, it, count) : 0;
+    if (!it) return 0;
+
+    it->count -= legion_min(count, it->count);
+    if (it->count) return it->count;
+
+    for (size_t i = it - edges->vals; i < edges_len(edges) - 1; ++i)
+        edges->vals[i] = edges->vals[i + 1];
+    edges->len--;
+    return 0;
 }
 
 
@@ -112,9 +105,9 @@ struct legion_packed node
     struct { node_id id; struct symbol name; } host;
 
     struct { uint8_t bits, work; uint16_t energy; } lab;
-    struct { struct bits set; struct edges edges; } children, needs;
-    struct { struct edges in, needs; } base;
-    struct edges out;
+    struct { struct bits set; struct edges *edges; } children, needs;
+    struct { struct edges *in, *needs; } base;
+    struct edges *out;
 };
 
 
@@ -122,6 +115,11 @@ static void node_free(struct node *node)
 {
     bits_free(&node->children.set);
     bits_free(&node->needs.set);
+    edges_free(node->children.edges);
+    edges_free(node->needs.edges);
+    edges_free(node->base.needs);
+    edges_free(node->base.in);
+    edges_free(node->out);
     free(node->specs.data);
 }
 
@@ -138,54 +136,34 @@ static void node_dump(const struct node *node, const char *title)
     default: { type = '?'; break; }
     }
 
-    char child_edges_str[256] = {0};
-    {
-        char *it = child_edges_str;
-        char *const end = child_edges_str + sizeof(child_edges_str);
+    char children_str[256] = {0};
+    edges_dump(node->children.edges, children_str, sizeof(children_str));
 
-        it += snprintf(it, end - it, "%u:{", node->children.edges.len);
-        for (size_t i = 0; i < node->children.edges.len; ++i) {
-            const struct edge *edge = node->children.edges.list + i;
-            it += snprintf(it, end - it, " %02x:%u", edge->id, edge->count);
-        }
-        it += snprintf(it, end - it, " }");
-    }
-
-    char needs_edges_str[256] = {0};
-    {
-        char *it = needs_edges_str;
-        char *const end = needs_edges_str + sizeof(needs_edges_str);
-
-        it += snprintf(it, end - it, "%u:{", node->needs.edges.len);
-        for (size_t i = 0; i < node->needs.edges.len; ++i) {
-            const struct edge *edge = node->needs.edges.list + i;
-            it += snprintf(it, end - it, " %02x:%u", edge->id, edge->count);
-        }
-        it += snprintf(it, end - it, " }");
-    }
+    char needs_str[256] = {0};
+    edges_dump(node->needs.edges, needs_str, sizeof(needs_str));
 
     infof("%s: id=%02x:%s:%c, child=%s, needs=%s, work=%u/%u/%u, en=%u/%u",
             title, node->id, node->name.c, type,
-            child_edges_str, needs_edges_str,
+            children_str, needs_str,
             node->work.node, node->work.min, node->work.total,
             node->energy.node, node->energy.total);
 }
 
 static void node_child_inc(struct node *node, node_id id, size_t count)
 {
-    edges_inc(&node->children.edges, id, count);
+    node->children.edges = edges_inc(node->children.edges, id, count);
     bits_put(&node->children.set, id);
 }
 
 static void node_needs_inc(struct node *node, node_id id, size_t count)
 {
-    edges_inc(&node->needs.edges, id, count);
+    node->needs.edges = edges_inc(node->needs.edges, id, count);
     bits_put(&node->needs.set, id);
 }
 
 static void node_needs_dec(struct node *node, node_id id, size_t count)
 {
-    if (!edges_dec(&node->needs.edges, id, count))
+    if (!edges_dec(node->needs.edges, id, count))
         bits_del(&node->needs.set, id);
 }
 

@@ -133,7 +133,7 @@ static struct node *parse_tape(
             switch (type) {
             case tape_needs: { node_needs_inc(node, child->id, count); break; }
             case tape_in: { node_child_inc(node, child->id, count); break; }
-            case tape_out: { edges_inc(&node->out, child->id, count); break; }
+            case tape_out: { node->out = edges_inc(node->out, child->id, count); break; }
             default: { assert(false); }
             }
 
@@ -144,8 +144,8 @@ static struct node *parse_tape(
     }
     reader_close(in);
 
-    edges_copy(&node->base.in, &node->children.edges);
-    edges_copy(&node->base.needs, &node->needs.edges);
+    node->base.in = edges_copy(node->children.edges);
+    node->base.needs = edges_copy(node->needs.edges);
 
     return node;
 }
