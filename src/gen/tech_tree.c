@@ -94,7 +94,8 @@ struct legion_packed node
 {
     node_id id;
     enum im_type type;
-    bool generated, done;
+    bool done, generated;
+    uint8_t tier;
 
     struct symbol name, syllable, config, list;
 

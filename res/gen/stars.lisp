@@ -1,12 +1,3 @@
-(starter
- (hue 0)
- (weight 50)
- (rolls
-  (one !item-energy 30000)
-  (one !item-elem-k 100)
-  (all-of !item-elem-a !item-elem-d 60000)
-  (all-of !item-elem-g !item-elem-h 30000)))
-
 (barren
  (hue 270)
  (weight 200)
@@ -15,23 +6,32 @@
   (one !item-elem-k 100)
   (rng !item-elem-a !item-elem-j 100)))
 
-(extract
+(starter
+ (hue 0)
+ (weight 50)
+ (rolls
+  (one !item-energy 30000)
+  (one !item-elem-k 100)
+  (all-of !item-elem-a !item-elem-d 60000)
+  (all-of !item-elem-e !item-elem-f 30000)))
+
+(nomad-elem-common
  (hue 180)
  (weight 350)
  (rolls
   (one !item-energy 10000)
   (one !item-elem-k 100)
   (rng !item-elem-a !item-elem-j 1000)
-  (one-of !item-elem-a !item-elem-f 65000)))
+  (one-of !item-elem-g !item-elem-h 65000)))
 
-(condenser
+(nomad-elem-rare
  (hue 120)
- (weight 250)
+ (weight 10)
  (rolls
   (one !item-energy 10000)
   (one !item-elem-k 100)
   (rng !item-elem-a !item-elem-j 1000)
-  (one-of !item-elem-g !item-elem-j 65000)))
+  (one-of !item-elem-i !item-elem-j 10000)))
 
 (power
  (hue 60)

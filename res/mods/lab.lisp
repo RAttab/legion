@@ -9,62 +9,102 @@
 (assert (= (head) ?lab-count))
 (let ((n (head)))
 
-  ;; Elems
+  ;; In-order list of all the deploy-tape function calls in boot.lisp
+  ;; plus a few tweaks here and there.
+
+  ;; Extract
   (lab n !item-elem-a)
   (lab n !item-elem-b)
   (lab n !item-elem-c)
   (lab n !item-elem-d)
 
-  ;; T0
-  (lab n !item-muscle)
-  (lab n !item-nodule)
-  (lab n !item-vein)
-  (lab n !item-bone)
-  (lab n !item-tendon)
-  (lab n !item-lens)
-  (lab n !item-nerve)
-  (lab n !item-neuron)
-  (lab n !item-retina)
-  (lab n !item-limb)
-  (lab n !item-stem)
-  (lab n !item-lung)
-  (lab n !item-spinal)
-  (lab n !item-engram)
-  (lab n !item-cortex)
-  (lab n !item-eye)
+  ;; Printers
+  (lab n !item-monobarex)
+  (lab n !item-monarkols)
+  (lab n !item-monobarols)
+  (lab n !item-monochate)
+  (lab n !item-monocharkoid)
+  (lab n !item-monobararkon)
+  (lab n !item-duodylium)
+  (lab n !item-duodylitil)
 
-  ;; T1
-  (lab n !item-semiconductor)
-  (lab n !item-photovoltaic)
-  (lab n !item-elem-g)
-  (lab n !item-conductor)
-  (lab n !item-antenna)
-  (lab n !item-elem-h)
-  (lab n !item-galvanic)
-  (lab n !item-battery)
-  (lab n !item-magnet)
-  (lab n !item-field)
-  (lab n !item-storage)
-  (lab n !item-ferrofluid)
+  ;; Workers
+  (lab n !item-printer)
 
-  ;; T2
+  ;; Assembly
+  (lab n !item-tridylarkitil)
+  (lab n !item-extract)
+  (lab n !item-rod)
+  (lab n !item-duochium)
+  (lab n !item-tridylate)
+  (lab n !item-trichubarium)
+  (lab n !item-tetradylchols-tribarsh)
+  (lab n !item-pentadylchutor)
+  (lab n !item-hexadylchate-pentabaron)
   (lab n !item-memory)
+  (lab n !item-deploy)
+
+  ;; Condenser
+  (lab n !item-tetradylchitil-duobarate)
+  (lab n !item-pentadylchate)
+  (lab n !item-elem-e)
+  (lab n !item-elem-f)
+
+  ;; Solar
+  (lab n !item-duerltor)
+  (lab n !item-duerldylon-monochols)
+  (lab n !item-trifimbarsh)
+  (lab n !item-solar)
+
+  ;; OS
+  (lab n !item-receive)
+  (lab n !item-trifimate)
+  (lab n !item-tetrafimry)
+  (lab n !item-transmit)
+
+  ;; Legion
+  (lab n !item-fusion)
+  (lab n !item-assembly)
+  (lab n !item-worker)
+  (lab n !item-prober)
+  (lab n !item-legion)
   (lab n !item-brain)
-  (lab n !item-elem-h)
+  (lab n !item-prober)
+
+  ;; Battery
+  (lab n !item-duerldylon-monochols)
+  (lab n !item-monochury)
+  (lab n !item-trifimbarsh)
+  (lab n !item-duerlry)
+  (lab n !item-trerlchury-duobargen)
+  (lab n !item-storage)
+  (lab n !item-battery)
+
+  ;; Port
+  (lab n !item-duerlex)
+  (lab n !item-tetrafimalt)
+  (lab n !item-pentafimchex-monobarsh)
+  (lab n !item-tetrerlbargen)
+  (lab n !item-penterltor)
+
+  ;; Collider
   (lab n !item-accelerator)
   (lab n !item-elem-m)
-  (lab n !item-biosteel)
-  (lab n !item-heat-exchange)
-  (lab n !item-furnace)
+  (lab n !item-elem-n)
+  (lab n !item-elem-l)
+  (lab n !item-pentalofchols)
   (lab n !item-pill)
-  (lab n !item-neurosteel)
-  (lab n !item-freezer)
-  (lab n !item-worker)
-  (lab n !item-m-reactor)
-  (lab n !item-m-condenser)
-  (lab n !item-m-release)
-  (lab n !item-m-lung)
-  (lab n !item-packer))
+
+  ;; Nomad
+  (lab n !item-pentamoxate)
+  (lab n !item-hexamoxchoid-monobary)
+  (lab n !item-packer)
+  (lab n !item-condenser)
+  (lab n !item-transmit)
+  (lab n !item-prober)
+  (lab n !item-port)
+  (lab n !item-elem-g)
+  (lab n !item-elem-h))
 
 
 (defun lab (n item)

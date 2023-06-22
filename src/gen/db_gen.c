@@ -51,7 +51,7 @@ static void db_gen_items(struct db_state *state)
         struct symbol sym_enum = symbol_to_enum(info->name);
 
         db_file_writef(&state->files.im_enum,
-                "  item_%-20s = 0x%02lx,\n", sym_enum.c, info->atom);
+                "  item_%-30s = 0x%02lx,\n", sym_enum.c, info->atom);
 
         if (info->type != im_type_active) {
             db_file_writef(&state->files.im_register,

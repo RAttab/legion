@@ -14,7 +14,8 @@
 (defconst printer-count 4)
 (defconst assembly-count 2)
 (defconst worker-count 20)
-(defconst lab-count 4)
+(defconst lab-count 2)
+(defconst burner-count 2)
 (defconst active-count 1)
 (defconst energy-target 64)
 (defconst port-item-count 255)
@@ -33,12 +34,12 @@
   (io !io-log (self) ?booting (ior !io-coord (self))))
 
 
-;; Elem - Extract
+;; Extract
 (progn
   (set-tape 1 1 !item-extract !item-elem-a)
   (set-tape 2 1 !item-extract !item-elem-b)
-  (set-tape 1 1 !item-printer !item-muscle)
-  (set-tape 2 1 !item-printer !item-nodule)
+  (set-tape 1 1 !item-printer !item-monobarex)
+  (set-tape 2 1 !item-printer !item-monobararkon)
 
   (deploy-tape !item-extract !item-elem-b extract-count)
   (set-tape 1 2 !item-extract !item-elem-a)
@@ -46,64 +47,68 @@
   (deploy-tape !item-extract !item-elem-d extract-count))
 
 
-;; Printers - T0
+;; Printers
 (progn
-  (set-tape 1 1 !item-printer !item-nodule)
-  (set-tape 2 1 !item-printer !item-vein)
+  (set-tape 1 1 !item-printer !item-monobarex)
+  (set-tape 2 1 !item-printer !item-monocharkoid)
 
-  (deploy-tape !item-printer !item-muscle (- printer-count 2))
-  (deploy-tape !item-printer !item-nodule printer-count)
-  (deploy-tape !item-printer !item-vein printer-count)
-  (deploy-tape !item-printer !item-bone printer-count)
-  (deploy-tape !item-printer !item-tendon printer-count)
-  (deploy-tape !item-printer !item-rod printer-count)
-  (deploy-tape !item-printer !item-lens printer-count)
-  (deploy-tape !item-printer !item-nerve printer-count)
-  (deploy-tape !item-printer !item-neuron printer-count)
-  (deploy-tape !item-printer !item-retina printer-count)
+  (deploy-tape !item-printer !item-monarkols printer-count)
+  (deploy-tape !item-printer !item-monobarols printer-count)
+  (deploy-tape !item-printer !item-monochate printer-count)
+  (deploy-tape !item-printer !item-monocharkoid printer-count)
+  (deploy-tape !item-printer !item-monobararkon printer-count)
+  (deploy-tape !item-printer !item-duodylium printer-count)
+  (deploy-tape !item-printer !item-duodylitil printer-count)
 
-  (set-tape 1 2 !item-printer !item-muscle))
+  (set-tape 1 2 !item-printer !item-monobarex))
 
+;; Rod
+(progn
+  (set-tape 2 1 !item-assembly !item-tridylarkitil)
+  (deploy-tape !item-assembly !item-extract assembly-count)
+  (deploy-tape !item-assembly !item-rod assembly-count))
+  (deploy-item !item-fusion 4)
 
 ;; Workers
 (progn
-  (set-tape 2 1 !item-assembly !item-limb)
-
-  (deploy-tape !item-assembly !item-limb assembly-count)
-  (deploy-tape !item-assembly !item-stem assembly-count)
-  (deploy-tape !item-assembly !item-lung assembly-count)
-
+  (set-tape 2 1 !item-assembly !item-tridylarkitil)
+  (deploy-tape !item-assembly !item-printer assembly-count)
   (deploy-item !item-worker worker-count))
 
 
-;; Assembly - T0 Passive
+;; Assembly
 (progn
-  (deploy-tape !item-assembly !item-spinal assembly-count)
-  (deploy-tape !item-assembly !item-engram assembly-count)
-  (deploy-tape !item-assembly !item-cortex assembly-count)
-  (deploy-tape !item-assembly !item-eye assembly-count)
+  ;; Required to build assemblies
+  (set-tape 2 1 !item-assembly !item-tridylarkitil)
+  (deploy-tape !item-assembly !item-tridylarkitil assembly-count)
+  (io !io-reset (id !item-assembly 2))
 
-  ;; required for building brain
-  (deploy-tape !item-assembly !item-memory assembly-count)
+  ;; Passives
+  (deploy-tape !item-printer !item-tridylate printer-count)
+  (deploy-tape !item-assembly !item-duochium assembly-count)
+  (deploy-tape !item-assembly !item-trichubarium assembly-count)
+  (deploy-tape !item-assembly !item-tetradylchols-tribarsh assembly-count)
+  (deploy-tape !item-assembly !item-pentadylchutor assembly-count)
+  (deploy-tape !item-assembly !item-hexadylchate-pentabaron assembly-count)
 
-  (assert (= (io !io-reset (id !item-assembly 2)) !io-ok)))
+  ;; Requirements
+  (deploy-tape !item-assembly !item-memory assembly-count))
 
 
-;; OS - we reserve the juicy brain ids for os
+;; OS - we reserve the juicy brain and memory ids for os
 (defconst brain-os-id (id !item-brain 2))
 (defconst brain-exec-id (id !item-brain 3))
 (progn
   (deploy-item !item-brain 2)
+  (deploy-item !item-memory (os.memory-need))
   (assert (= (io !io-ping brain-os-id) !io-ok))
   (assert (= (io !io-ping brain-exec-id) !io-ok)))
 
-;; Fusion
-(progn
-  (deploy-tape !item-printer !item-torus 1)
-  (deploy-item !item-fusion 4))
 
 ;; Labs
 (progn
+  (deploy-tape !item-assembly !item-deploy assembly-count)
+  (deploy-tape !item-assembly !item-brain assembly-count)
   (deploy-item !item-lab lab-count)
   (deploy-item !item-brain 1)
 
@@ -112,99 +117,93 @@
     (assert (= (io !io-mod id-brain (mod lab.2)) !io-ok))))
 
 
-;; Energy - Solar
+;; Condenser
 (progn
-  (wait-tech !item-semiconductor)
-  (deploy-tape !item-printer !item-semiconductor printer-count)
+  (deploy-tape-wait-tech !item-assembly !item-tetradylchitil-duobarate assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-pentadylchate assembly-count)
+  (wait-tech !item-condenser)
 
-  (wait-tech !item-photovoltaic)
-  (deploy-tape !item-assembly !item-photovoltaic printer-count)
+  (deploy-tape !item-condenser !item-elem-e condenser-count)
+  (deploy-tape !item-condenser !item-elem-f condenser-count))
 
-  (wait-tech !item-solar)
-  (deploy-tape !item-assembly !item-solar assembly-count)
+
+;; Solar
+(progn
+  (deploy-tape-wait-tech !item-printer !item-duerltor printer-count)
+  (deploy-tape-wait-tech !item-printer !item-duerldylon-monochols printer-count)
+  (deploy-tape-wait-tech !item-printer !item-trifimbarsh printer-count)
+  (deploy-tape-wait-tech !item-assembly !item-solar assembly-count)
+
   (deploy-item !item-solar
 	       (+ (/ energy-target
 		     (specs !spec-solar-energy (count !item-energy)))
 		  1)))
 
 
-;; Elem - Condenser
+;; OS
 (progn
-  (wait-tech !item-condenser)
-  (deploy-tape !item-condenser !item-elem-g condenser-count)
-  (deploy-tape !item-condenser !item-elem-h condenser-count))
+  ;; Requirements for data network
+  (deploy-tape-wait-tech !item-assembly !item-receive assembly-count)
+  (deploy-tape-wait-tech !item-printer !item-trifimate printer-count)
+  (deploy-tape-wait-tech !item-assembly !item-tetrafimry assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-transmit assembly-count)
 
-;; OS - data network and boot
-(progn
-  ;; Antenna's for parent
-  (wait-tech !item-conductor)
-  (deploy-tape !item-printer !item-conductor printer-count)
-  (wait-tech !item-antenna)
-  (deploy-tape !item-assembly !item-antenna assembly-count)
-  (wait-tech !item-transmit)
-  (deploy-item !item-transmit 1)
-  (wait-tech !item-receive)
+  ;; Parent network - won't be used in homeworld but still needed to
+  ;; make the ids align.
   (deploy-item !item-receive 1)
+  (deploy-item !item-transmit 1)
 
-  ;; This brain is used as the execution thread for os.
-  (deploy-item !item-memory (os.memory-need))
+  ;; Boot
   (os.boot brain-os-id brain-exec-id))
 
 
-;; Legions
+;; Legion
 (when (<= (os.depth) max-depth)
 
-  (wait-tech !item-scanner)
-  (deploy-item !item-scanner 1)
-  (deploy-item !item-prober 1)
   (deploy-item !item-brain 1)
+  (deploy-item !item-prober 1)
+  (deploy-item-wait-tech !item-scanner 1)
 
   (assert (= (count !item-scanner) 1))
   (assert (= (count !item-prober) 2))
   (let ((brain-id (id !item-brain (count !item-brain))))
     (io !io-mod brain-id (mod launch.2)) !io-ok)
 
-  (deploy-tape !item-assembly !item-worker active-count)
-  (deploy-tape !item-assembly !item-fusion active-count)
-  (deploy-tape !item-assembly !item-extract active-count)
-  (deploy-tape !item-assembly !item-printer active-count)
-  (deploy-tape !item-assembly !item-assembly active-count)
-  (deploy-tape !item-assembly !item-deploy active-count)
-  (deploy-tape !item-assembly !item-brain active-count)
-  (deploy-tape !item-assembly !item-prober active-count)
-  (deploy-tape !item-assembly !item-scanner active-count)
+  (deploy-tape !item-assembly !item-fusion assembly-count)
+  (deploy-tape !item-assembly !item-assembly assembly-count)
+  (deploy-tape !item-assembly !item-worker assembly-count)
+  (deploy-tape !item-assembly !item-prober assembly-count)
+  (deploy-tape !item-assembly !item-legion assembly-count)
+  (deploy-tape !item-assembly !item-brain assembly-count)
+  (deploy-tape !item-assembly !item-prober assembly-count)
 
   (let ((n (os.child-cap)))
     (deploy-item !item-transmit n)
     (deploy-item !item-receive n)
     (deploy-item !item-legion n)))
 
-;; Batteries
-(progn
-  (wait-tech !item-galvanic)
-  (deploy-tape !item-printer !item-galvanic 2)
 
-  (wait-tech !item-battery)
-  (deploy-tape !item-assembly !item-battery 2)
+;; Battery
+(progn
+  (deploy-tape-wait-tech !item-printer !item-duerldylon-monochols printer-count)
+  (deploy-tape-wait-tech !item-printer !item-monochury printer-count)
+  (deploy-tape-wait-tech !item-printer !item-trifimbarsh printer-count)
+  (deploy-tape-wait-tech !item-printer !item-duerlry printer-count)
+  (deploy-tape-wait-tech !item-assembly !item-trerlchury-duobargen assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-storage assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-battery printer-count)
 
   (deploy-item !item-battery 8))
 
 
-;; Pill logistics
+;; Port
 ;; Requires the spanning tree to figure out where home is.
 (defconst elem-count 11)
 (progn
-  (deploy-tape !item-printer !item-magnet printer-count)
-  (deploy-tape !item-printer !item-ferrofluid printer-count)
-
-  (wait-tech !item-storage)
-  (deploy-tape !item-assembly !item-storage active-count)
-
-  (wait-tech !item-field)
-  (deploy-tape !item-assembly !item-field assembly-count)
-
-  (wait-tech !item-port)
-  (deploy-item !item-port elem-count)
+  (deploy-tape-wait-tech !item-printer !item-duerlex printer-count)
+  (deploy-tape-wait-tech !item-assembly !item-tetrafimalt assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-pentafimchex-monobarsh assembly-count)
+  (deploy-item-wait-tech !item-port elem-count)
 
   (when (os.is-home)
     (deploy-item !item-storage elem-count)
@@ -212,7 +211,11 @@
 	 (io !io-input (id !item-port (+ i 1)) (+ !item-elem-a i))
 	 (io !io-item (id !item-storage (+ i 1)) (+ !item-elem-a i))))
 
+
+  (deploy-tape-wait-tech !item-assembly !item-tetrerlbargen assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-penterltor assembly-count)
   (wait-tech !item-pill)
+
   (unless (os.is-home)
     (for (i 0) (< i elem-count) (+ i 1)
 	 (io !io-item (id !item-port (+ i 1)) (+ !item-elem-a i) port-item-count)
@@ -224,10 +227,8 @@
 
 
 ;; Collider
-
-(defconst collider-id (id !item-collider 1))
 (defconst collider-size 16)
-
+(defconst collider-id (id !item-collider 1))
 (progn
   (deploy-item !item-battery 8)
   (deploy-item !item-solar
@@ -235,78 +236,57 @@
 		     (specs !spec-solar-energy (count !item-energy)))
 		  1))
 
-  (wait-tech !item-accelerator)
-  (deploy-tape !item-assembly !item-accelerator 2)
-
+  (deploy-tape-wait-tech !item-assembly !item-accelerator assembly-count)
   (wait-tech !item-collider)
-  (deploy-item !item-collider 1)
 
-  (io !io-grow collider-id collider-size)
-  (while (< (ior !io-state collider-id !io-size) collider-size))
+  (for (id 0) (< id 3) (+ id 1)
+       (deploy-item !item-collider 1)
 
-  (wait-tech !item-elem-m)
-  (io !io-tape collider-id !item-elem-m)
+       (let ((elem-id (+ !item-elem-m id))
+	     (collider-id (id !item-collider (count !item-collider))))
+	 (io !io-grow collider-id collider-size)
+	 (while (< (ior !io-state collider-id !io-size) collider-size))
+
+	 (wait-tech elem-id)
+	 (io !io-tape collider-id elem-id)
+
+	 (deploy-item !item-storage 1)
+	 (io !io-item (id !item-storage (count !item-storage)) elem-id)))
 
   ;; Until we have a burner we need to store the garbage o elements
   (deploy-item !item-storage 1)
   (io !io-item (id !item-storage (count !item-storage)) !item-elem-o)
 
-  (deploy-item !item-storage 1)
-  (io !io-item (id !item-storage (count !item-storage)) !item-elem-m)
-
   ;; Burner
-  (wait-tech !item-biosteel)
-  (deploy-tape !item-printer !item-biosteel 2)
-  (wait-tech !item-heat-exchange)
-  (deploy-tape !item-assembly !item-heat-exchange 2)
-  (wait-tech !item-furnace)
-  (deploy-tape !item-assembly !item-furnace 2)
-
-  (wait-tech !item-burner)
-  (deploy-item !item-burner 4)
-  (set-item 1 4 !item-burner !item-elem-o))
+  (deploy-tape-wait-tech !item-printer !item-pentalofchols printer-count)
+  (deploy-item-wait-tech !item-burner burner-count)
+  (set-item 1 burner-count !item-burner !item-elem-o))
 
 
 ;; Nomad
-
-;; Must match values in nomad mod
+;; Constants must match values in nomad mod
 (defconst nomad-ix-home 0)
 (defconst nomad-ix-elem 1)
 (defconst nomad-ix-nomad 0)
 (defconst nomad-ix-prober 1)
 (defconst nomad-ix-scanner 2)
-
 (progn
-  (deploy-tape !item-assembly !item-pill 1)
-  (wait-tech !item-neurosteel)
-  (deploy-tape !item-printer !item-neurosteel 2)
-  (wait-tech !item-freezer)
-  (deploy-tape !item-assembly !item-freezer 2)
-  (wait-tech !item-packer)
-  (deploy-tape !item-assembly !item-packer 1)
-  (wait-tech !item-m-reactor)
-  (deploy-tape !item-assembly !item-m-reactor 1)
-  (wait-tech !item-m-condenser)
-  (deploy-tape !item-assembly !item-m-condenser 1)
-  (wait-tech !item-m-release)
-  (deploy-tape !item-assembly !item-m-release 1)
-  (wait-tech !item-m-lung)
-  (deploy-tape !item-assembly !item-m-lung 1)
+  (deploy-tape !item-assembly !item-pill assembly-count)
 
-  (deploy-tape !item-assembly !item-condenser 1)
-  (deploy-tape !item-assembly !item-transmit 1)
-  (deploy-tape !item-assembly !item-receive 1)
-  (deploy-tape !item-assembly !item-prober 1)
-  (deploy-tape !item-assembly !item-port 1)
+  (deploy-tape-wait-tech !item-assembly !item-pentamoxate assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-hexamoxchoid-monobary assembly-count)
+  (deploy-tape-wait-tech !item-assembly !item-packer assembly-count)
 
-  (wait-tech !item-nomad)
-  (deploy-item !item-nomad 4)
-  (io !io-set (id !item-nomad 1) nomad-ix-elem !item-elem-e)
-  (io !io-set (id !item-nomad 2) nomad-ix-elem !item-elem-f)
-  (io !io-set (id !item-nomad 3) nomad-ix-elem !item-elem-i)
-  (io !io-set (id !item-nomad 4) nomad-ix-elem !item-elem-j)
+  (deploy-tape !item-assembly !item-condenser assembly-count)
+  (deploy-tape !item-assembly !item-transmit assembly-count)
+  (deploy-tape !item-assembly !item-prober assembly-count)
+  (deploy-tape !item-assembly !item-port assembly-count)
 
-  (for (it 1) (<= it 4) (+ it 1)
+  (deploy-item-wait-tech !item-nomad 2)
+  (io !io-set (id !item-nomad 1) nomad-ix-elem !item-elem-g)
+  (io !io-set (id !item-nomad 2) nomad-ix-elem !item-elem-h)
+
+  (for (it 1) (<= it 2) (+ it 1)
        (io !io-set (id !item-nomad it) nomad-ix-home (ior !io-coord (self)))
 
        (deploy-item !item-memory 1)
@@ -328,6 +308,12 @@
 ;; utils
 ;; -----------------------------------------------------------------------------
 
+(defun count (item)
+  (io !io-probe prober-id item (ior !io-coord (self)))
+  (let ((count -1))
+    (while (< count 0) (set count (ior !io-value prober-id)))
+    count))
+
 (defun set-tape (id n host tape)
   (assert (> id 0))
   (set n (+ id n))
@@ -347,6 +333,14 @@
   (assert (= (io !io-item (id !item-deploy 1) item n) !io-ok))
   (while (/= (ior !io-state deploy-id !io-item) 0)))
 
+(defun deploy-item-wait-tech (item n)
+  (assert (= (io !io-ping (id !item-lab 1)) !io-ok))
+  (while (= (ior !io-tape-known (id !item-lab 1) item) 0))
+
+  (assert (= (io !io-tape (id !item-assembly 1) item n) !io-ok))
+  (assert (= (io !io-item (id !item-deploy 1) item n) !io-ok))
+  (while (/= (ior !io-state deploy-id !io-item) 0)))
+
 (defun deploy-tape (host tape n)
   (let ((id (+ (count host) 1)))
     (assert (> id 0))
@@ -355,11 +349,16 @@
     (while (/= (ior !io-state deploy-id !io-item) 0))
     (set-tape id n host tape)))
 
-(defun count (item)
-  (io !io-probe prober-id item (ior !io-coord (self)))
-  (let ((count -1))
-    (while (< count 0) (set count (ior !io-value prober-id)))
-    count))
+(defun deploy-tape-wait-tech (host tape n)
+  (assert (= (io !io-ping (id !item-lab 1)) !io-ok))
+  (while (= (ior !io-tape-known (id !item-lab 1) tape) 0))
+
+  (let ((id (+ (count host) 1)))
+    (assert (> id 0))
+    (assert (= (io !io-tape (id !item-assembly 1) host n) !io-ok))
+    (assert (= (io !io-item (id !item-deploy 1) host n) !io-ok))
+    (while (/= (ior !io-state deploy-id !io-item) 0))
+    (set-tape id n host tape)))
 
 (defun wait-tech (item)
   (assert (= (io !io-ping (id !item-lab 1)) !io-ok))

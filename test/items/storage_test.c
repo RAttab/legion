@@ -23,50 +23,50 @@ void test_storage(void)
 
     chunk_create(chunk, item_solar);
 
-    const im_id extract_id = make_im_id(item_extract, 1);
-    const im_id printer_id = make_im_id(item_printer, 1);
+    const im_id extract_elem_b_id = make_im_id(item_extract, 1);
+    const im_id extract_elem_d_id = make_im_id(item_extract, 2);
 
     chunk_create(chunk, item_storage);
     const im_id storage_id = make_im_id(item_storage, 1);
     chunk_create(chunk, item_storage);
-    const im_id storage_muscle_id = make_im_id(item_storage, 2);
+    const im_id storage_d_id = make_im_id(item_storage, 2);
 
     chunk_create(chunk, item_test);
     const im_id test_id = make_im_id(item_test, 1);
 
     const im_id sys_id = 0;
-    const vm_word im_elem_a = item_elem_a;
-    const vm_word im_muscle = item_muscle;
+    const vm_word im_elem_b = item_elem_b;
+    const vm_word im_elem_d = item_elem_d;
 
     // need to make one step for the items to be created.
     world_step(world);
 
-    chunk_io(chunk, io_item, sys_id, storage_id, &im_elem_a, 1);
+    chunk_io(chunk, io_item, sys_id, storage_id, &im_elem_b, 1);
 
     for (size_t it = 0; it < 10; ++it) {
-        chunk_io(chunk, io_tape, sys_id, extract_id, &im_elem_a, 1);
-        step_for(world, 8);
+        chunk_io(chunk, io_tape, sys_id, extract_elem_b_id, &im_elem_b, 1);
+        step_for(world, 10);
         assert(storage_count(chunk, storage_id, test_id) == 1);
-        chunk_io(chunk, io_reset, sys_id, extract_id, NULL, 0);
+        chunk_io(chunk, io_reset, sys_id, extract_elem_b_id, NULL, 0);
 
-        chunk_io(chunk, io_tape, sys_id, printer_id, &im_muscle, 1);
-        step_for(world, 8);
+        chunk_io(chunk, io_tape, sys_id, extract_elem_d_id, &im_elem_d, 1);
+        step_for(world, 10);
         assert(storage_count(chunk, storage_id, test_id) == 0);
-        chunk_io(chunk, io_reset, sys_id, printer_id, NULL, 0);
+        chunk_io(chunk, io_reset, sys_id, extract_elem_d_id, NULL, 0);
     }
 
-    chunk_io(chunk, io_item, sys_id, storage_id, &im_elem_a, 1);
-    chunk_io(chunk, io_item, sys_id, storage_muscle_id, &im_muscle, 1);
+    chunk_io(chunk, io_item, sys_id, storage_id, &im_elem_b, 1);
+    chunk_io(chunk, io_item, sys_id, storage_d_id, &im_elem_d, 1);
 
     for (size_t it = 0; it < 10; ++it) {
-        chunk_io(chunk, io_tape, sys_id, extract_id, &im_elem_a, 1);
-        chunk_io(chunk, io_tape, sys_id, printer_id, &im_muscle, 1);
+        chunk_io(chunk, io_tape, sys_id, extract_elem_b_id, &im_elem_b, 1);
+        chunk_io(chunk, io_tape, sys_id, extract_elem_d_id, &im_elem_d, 1);
 
         step_for(world, 100);
-        assert(storage_count(chunk, storage_muscle_id, test_id) > 1);
+        assert(storage_count(chunk, storage_d_id, test_id) > 1);
 
-        chunk_io(chunk, io_reset, sys_id, extract_id, NULL, 0);
-        chunk_io(chunk, io_reset, sys_id, printer_id, NULL, 0);
+        chunk_io(chunk, io_reset, sys_id, extract_elem_b_id, NULL, 0);
+        chunk_io(chunk, io_reset, sys_id, extract_elem_d_id, NULL, 0);
     }
 
     world_free(world);

@@ -10,8 +10,6 @@
 static void dump_tape(
         struct mfile_writer *out, struct tree *tree, struct node *node)
 {
-    if (!edges_len(node->children.edges)) return;
-
     struct rng rng = rng_make(node->id);
     struct edges *ins = edges_copy(node->children.edges);
 
@@ -64,18 +62,43 @@ static void dump_tape(
 
     edges_free(legion_xchg(&ins, NULL));
 
-    mfile_write(out, "    (in ");
-    for (size_t i = 0; true; i++) {
-        if (i == front) i = back;
-        if (i == array_len(tape)) break;
+    mfile_write(out, "  (tape");
+    struct symbol *host = &node->host.name;
+    struct node *n = tree_node(tree, node->host.id);
+    if (n) host = &n->name;
+    mfile_writef(out, " (work %u) (energy %u) (host item-%s)\n",
+            node->work.node, node->energy.node, host->c);
 
-        struct edge *edge = tape + i;
-        struct node *child = tree_node(tree, edge->id);
-        mfile_writef(out, "%s(item-%s %u)",
-                i ? "\n        " : "", child->name.c, edge->count);
+    // Inputs
+    if (edges_len(node->children.edges)) {
+        mfile_write(out, "    (in ");
+        for (size_t i = 0; true; i++) {
+            if (i == front) i = back;
+            if (i == array_len(tape)) break;
+
+            struct edge *edge = tape + i;
+            struct node *child = tree_node(tree, edge->id);
+            mfile_writef(out, "%s(item-%s %u)",
+                    i ? "\n        " : "", child->name.c, edge->count);
+        }
+        mfile_write(out, ")\n");
     }
-    mfile_write(out, ")\n");
 
+    // Outputs
+    {
+        mfile_write(out, "    (out ");
+        if (!edges_len(node->out))
+            mfile_writef(out, "(item-%s 1)", node->name.c);
+        else {
+            for (size_t i = 0; i < edges_len(node->out); ++i) {
+                struct edge *edge = node->out->vals + i;
+                struct node *child = tree_node(tree, edge->id);
+                mfile_writef(out, "%s(item-%s %u)",
+                        i ? "\n         " : "", child->name.c, edge->count);
+            }
+        }
+        mfile_write(out, "))\n");
+    }
 }
 
 static void dump_lisp_node(
@@ -84,9 +107,12 @@ static void dump_lisp_node(
     mfile_writef(out, "(%s\n", node->name.c);
 
     { // info
-        mfile_writef(out, "  (info (type %s)", im_type_str(node->type));
+        mfile_writef(out, "  (info (tier %u) (type %s)",
+                node->tier, im_type_str(node->type));
+
         if (node->config.len)
             mfile_writef(out, " (config %s)", node->config.c);
+
         if (node->list.len)
             mfile_writef(out, " (list %s)", node->list.c);
 
@@ -113,18 +139,7 @@ static void dump_lisp_node(
         mfile_write(out, ")\n");
     }
 
-    { // tape
-        mfile_write(out, "  (tape");
-
-        struct symbol *host = &node->host.name;
-        struct node *n = tree_node(tree, node->host.id);
-        if (n) host = &n->name;
-
-        mfile_writef(out, " (work %u) (energy %u) (host item-%s)\n",
-                node->work.node, node->energy.node, host->c);
-        dump_tape(out, tree, node);
-        mfile_writef(out, "    (out (item-%s 1)))\n", node->name.c);
-    }
+    dump_tape(out, tree, node);
 
     { // dbg
         mfile_write(out, "  (dbg\n");

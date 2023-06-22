@@ -127,8 +127,8 @@
  (info (tier 0) (type active) (list factory))
  (specs (input-item item !item-rod)
 	(energy-output energy 20)
-	(energy-rod energy 1024)
-	(energy-cap energy 16384))
+	(energy-rod energy 4096)
+	(energy-cap energy 65536))
  (tape (layer 4)
        (needs (elem-a 80)
 	      (elem-b 160)
@@ -363,7 +363,7 @@
 (collider
  (info (tier 2) (type active) (list factory))
  (specs (grow-max u8 64)
-	(grow-item item !item_accelerator)
+	(grow-item item !item-accelerator)
 	(junk-item item !item-elem-o)
 	(output-rate fn))
  (tape (layer 7)
@@ -422,16 +422,8 @@
 ;;  (info (tier 3) (type natural) (syllable ko))
 ;;  (tape (layer 0) (host siphon) (work 4) (energy 4)))
 
-;; (elem-i
-;;  (info (tier 4) (type natural) (syllable ist))
-;;  (tape (layer 0) (host extract) (work 4) (energy 4)))
-
-;; (elem-j
-;;  (info (tier 5) (type natural) (syllable jat))
-;;  (tape (layer 0) (host condenser) (work 4) (energy 4)))
-
 ;; -----------------------------------------------------------------------------
-;; layer 15
+;; Layer 15
 ;; -----------------------------------------------------------------------------
 
 (user (info (type sys)) (tape (layer 15)))
@@ -439,3 +431,56 @@
 (dummy (info (type sys)) (tape (layer 15)))
 (energy (info (type sys)) (tape (layer 15)))
 (test (info (type active)) (tape (layer 15) (work 1) (energy 1)))
+
+;; -----------------------------------------------------------------------------
+;; Placeholders
+;; -----------------------------------------------------------------------------
+
+(elem-i
+ (info (tier 4) (type natural) (syllable ist))
+ (tape (layer 14) (host extract) (work 4) (energy 4)))
+(elem-j
+ (info (tier 5) (type natural) (syllable jat))
+ (tape (layer 14) (host condenser) (work 4) (energy 4)))
+(elem-k
+ (info (tier 3) (type natural) (syllable ko))
+ (tape (layer 14) (host extract) (work 4) (energy 4)))
+
+(elem-p
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-q
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-r
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-s
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-t
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-u
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-v
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-w
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-x
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-y
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+(elem-z
+ (info (type synth) (syllable abc))
+ (tape (layer 14) (host extract) (work 1) (energy 1)))
+
+(kwheel
+ (info (tier 3) (type logistics))
+ (specs (energy-div energy 100))
+ (tape (layer 14) (work 1) (energy 1)))

@@ -8,6 +8,7 @@
 #include "common.h"
 #include "vm/vm.h"
 #include "vm/atoms.h"
+#include "utils/symbol.h"
 
 struct atoms;
 struct im_config;
@@ -81,7 +82,8 @@ inline bool item_is_logistics(enum item item)
 // str
 // -----------------------------------------------------------------------------
 
-enum { item_str_len = 16 };
+// Must match name_cap in gen/tech.c
+enum { item_str_len = symbol_cap - 5 };
 
 size_t item_str(enum item item, char *dst, size_t len);
 const char *item_str_c(enum item item);

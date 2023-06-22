@@ -39,7 +39,7 @@ struct symbol symbol_to_enum(struct symbol sym)
 bool db_run(const char *res, const char *src)
 {
     struct db_state state = {0};
-    snprintf(state.path.in, sizeof(state.path.in), "%s/items", res);
+    snprintf(state.path.in, sizeof(state.path.in), "%s/tech.lisp", src);
     snprintf(state.path.io, sizeof(state.path.io), "%s/io.lisp", res);
     snprintf(state.path.out, sizeof(state.path.out), "%s", src);
 
@@ -67,22 +67,9 @@ bool db_run(const char *res, const char *src)
         db_file_open(&state.files.io_register, state.path.out, "io_register");
     }
 
-    {
-        struct dir_it *it = dir_it(state.path.in);
-        while (dir_it_next(it))
-            db_parse_atoms(&state, dir_it_path(it));
-        dir_it_free(it);
-    }
-
+    db_parse_atoms(&state, state.path.in);
     db_gen_items(&state);
-
-    {
-        struct dir_it *it = dir_it(state.path.in);
-        while (dir_it_next(it))
-            db_gen_specs_tapes(&state, dir_it_path(it));
-        dir_it_free(it);
-    }
-
+    db_gen_specs_tapes(&state, state.path.in);
     db_gen_io(&state, state.path.io);
 
     {

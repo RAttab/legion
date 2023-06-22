@@ -9,6 +9,7 @@
 
 struct parse_info
 {
+    uint8_t tier;
     enum im_type type;
     struct symbol syllable, config, list;
     struct { size_t len; char *data; } specs;
@@ -21,7 +22,13 @@ static void parse_info(struct reader *in, struct parse_info *info)
 
         hash_val hash = reader_symbol_hash(in);
 
-        if (hash == symbol_hash_c("type")) {
+        if (hash == symbol_hash_c("tier")) {
+            info->tier = reader_word(in);
+            reader_close(in);
+            continue;
+        }
+
+        else if (hash == symbol_hash_c("type")) {
             static struct reader_table types[] = {
                 { .str = "nil",       .value = im_type_nil },
                 { .str = "natural",   .value = im_type_natural },
@@ -200,6 +207,7 @@ static void tech_parse(struct tree *tree, const char *path)
                 struct node *node = parse_tape(tree, in, &item);
                 node->name = item;
                 node->type = info.type;
+                node->tier = info.tier;
                 node->syllable = info.syllable;
                 node->config = info.config;
                 node->list = info.list;

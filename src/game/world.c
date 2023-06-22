@@ -483,8 +483,8 @@ static struct coord world_populate_home(struct sector *sector)
         if (star_scan(star, item_elem_b) < 50000) continue;
         if (star_scan(star, item_elem_c) < 50000) continue;
         if (star_scan(star, item_elem_d) < 50000) continue;
-        if (star_scan(star, item_elem_g) < 20000) continue;
-        if (star_scan(star, item_elem_h) < 20000) continue;
+        if (star_scan(star, item_elem_e) < 20000) continue;
+        if (star_scan(star, item_elem_f) < 20000) continue;
         return star->coord;
     }
     return coord_nil();

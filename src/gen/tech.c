@@ -23,6 +23,8 @@ enum
 {
     layer_cap = 16,
     index_cap = 16,
+
+    // Must match item_str_len in db/items.h
     name_cap = symbol_cap - 5,
 
     threshold_div = 5,

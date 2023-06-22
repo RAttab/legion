@@ -196,8 +196,10 @@ struct gen_count gen_child_count(const struct node *node, const struct node *chi
     return ret;
 }
 
-static void gen_child_link(struct node *node, const struct node *child, size_t count)
+static void gen_child_link(struct node *node, struct node *child, size_t count)
 {
+    child->tier = legion_min(child->tier, node->tier);
+
     for (size_t i = 0; i < edges_len(child->needs.edges); ++i) {
         const struct edge *needs = child->needs.edges->vals + i;
         node_needs_dec(node, needs->id, needs->count * count);
@@ -222,6 +224,7 @@ static bool gen_child_create(struct gen *gen, uint8_t layer)
 
     child->type = im_type_passive;
     child->generated = true;
+    child->tier = node->tier;
 
     uint32_t max = 0;
     for (size_t i = 0; i < edges_len(node->needs.edges); ++i)
@@ -279,12 +282,12 @@ static void gen_children(struct gen *gen)
     // any newly added elements get added into the tree.
     if (max < top) {
         struct gen_count match = {0};
-        const struct node *child = NULL;
+        struct node *child = NULL;
 
-        const struct node *first = gen->tree->nodes + node_id_last(top) - 1;
-        const struct node *last = gen->tree->nodes + node_id_first(top) - 1;
+        struct node *first = gen->tree->nodes + node_id_last(top) - 1;
+        struct node *last = gen->tree->nodes + node_id_first(top) - 1;
 
-        for (const struct node *it = first; it > last; --it) {
+        for (struct node *it = first; it > last; --it) {
             if (!it->id) continue;
             if (im_type_elem(it->type)) continue;
             if (node->type == im_type_passive && it->type != im_type_passive)
@@ -304,16 +307,16 @@ static void gen_children(struct gen *gen)
 
     // Link to as many nodes in the tree as possible.
     while (edges_len(node->needs.edges)) {
-        const struct node *child = NULL;
+        struct node *child = NULL;
         struct gen_count match = { .count = 0, .set = 0, .msb = 0 };
 
         const uint8_t bottom = node_id_layer(bits_msb(&node->needs.set));
         assert(top > bottom);
 
-        const struct node *first = gen->tree->nodes + node_id_last(top) - 1;
-        const struct node *last = gen->tree->nodes + node_id_first(bottom + 1) - 1;
+        struct node *first = gen->tree->nodes + node_id_last(top) - 1;
+        struct node *last = gen->tree->nodes + node_id_first(bottom + 1) - 1;
 
-        for (const struct node *it = first; it > last; --it) {
+        for (struct node *it = first; it > last; --it) {
             if (!it->id) continue;
             if (im_type_elem(it->type)) continue;
             if (node->type == im_type_passive && it->type != im_type_passive)
@@ -380,7 +383,8 @@ static void gen_lab(struct gen *gen)
     }
 
     uint8_t layer = node_id_layer(node->id);
-    node->lab.bits = fuzz((layer * 64) / layer_cap);
+    const uint8_t bits_mult = layer_cap / 2;
+    node->lab.bits = legion_min(64U, fuzz(node->tier * bits_mult + layer));
     node->lab.work = fuzz((layer * UINT8_MAX) / layer_cap);
     node->lab.energy = fuzz(1ULL << layer);
 }

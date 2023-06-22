@@ -1,5 +1,5 @@
 (elem-a
-  (info (type natural))
+  (info (tier 0) (type natural))
   (specs (lab-bits u8 1) (lab-work work 1) (lab-energy energy 1))
   (tape (work 1) (energy 1) (host item-extract)
     (out (item-elem-a 1)))
@@ -12,7 +12,7 @@
       (01 elem-a 1))))
 
 (elem-b
-  (info (type natural))
+  (info (tier 0) (type natural))
   (specs (lab-bits u8 1) (lab-work work 1) (lab-energy energy 1))
   (tape (work 2) (energy 2) (host item-extract)
     (out (item-elem-b 1)))
@@ -25,7 +25,7 @@
       (02 elem-b 1))))
 
 (elem-c
-  (info (type natural))
+  (info (tier 0) (type natural))
   (specs (lab-bits u8 1) (lab-work work 1) (lab-energy energy 1))
   (tape (work 2) (energy 4) (host item-extract)
     (out (item-elem-c 1)))
@@ -38,8 +38,8 @@
       (03 elem-c 1))))
 
 (elem-o
-  (info (type synth))
-  (specs (lab-bits u8 1) (lab-work work 1) (lab-energy energy 1))
+  (info (tier 2) (type synth))
+  (specs (lab-bits u8 18) (lab-work work 1) (lab-energy energy 1))
   (tape (work 1) (energy 1) (host item-dummy)
     (out (item-elem-o 1)))
   (dbg
@@ -51,8 +51,8 @@
       (04 elem-o 1))))
 
 (elem-g
-  (info (type natural))
-  (specs (lab-bits u8 1) (lab-work work 1) (lab-energy energy 1))
+  (info (tier 2) (type natural))
+  (specs (lab-bits u8 13) (lab-work work 1) (lab-energy energy 1))
   (tape (work 16) (energy 32) (host item-extract)
     (out (item-elem-g 1)))
   (dbg
@@ -64,8 +64,8 @@
       (05 elem-g 1))))
 
 (elem-h
-  (info (type natural))
-  (specs (lab-bits u8 1) (lab-work work 1) (lab-energy energy 1))
+  (info (tier 2) (type natural))
+  (specs (lab-bits u8 9) (lab-work work 1) (lab-energy energy 1))
   (tape (work 16) (energy 42) (host item-condenser)
     (out (item-elem-h 1)))
   (dbg
@@ -77,8 +77,8 @@
       (06 elem-h 1))))
 
 (elem-d
-  (info (type natural))
-  (specs (lab-bits u8 4) (lab-work work 13) (lab-energy energy 1))
+  (info (tier 0) (type natural))
+  (specs (lab-bits u8 1) (lab-work work 13) (lab-energy energy 1))
   (tape (work 4) (energy 6) (host item-extract)
     (in (item-elem-b 2))
     (out (item-elem-d 1)))
@@ -93,8 +93,8 @@
       (10 elem-d 1))))
 
 (monobarex
-  (info (type passive))
-  (specs (lab-bits u8 5) (lab-work work 18) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 1) (lab-work work 18) (lab-energy energy 2))
   (tape (work 3) (energy 3) (host item-printer)
     (in (item-elem-a 5)
         (item-elem-b 1))
@@ -111,8 +111,8 @@
       (02 elem-b 1))))
 
 (monobararkon
-  (info (type passive))
-  (specs (lab-bits u8 2) (lab-work work 12) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 1) (lab-work work 12) (lab-energy energy 2))
   (tape (work 3) (energy 3) (host item-printer)
     (in (item-elem-b 9)
         (item-elem-a 1)
@@ -131,8 +131,8 @@
       (02 elem-b 10))))
 
 (monocharkoid
-  (info (type passive))
-  (specs (lab-bits u8 3) (lab-work work 11) (lab-energy energy 1))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 1) (lab-work work 11) (lab-energy energy 1))
   (tape (work 3) (energy 6) (host item-printer)
     (in (item-elem-c 2)
         (item-elem-a 1)
@@ -152,8 +152,8 @@
       (03 elem-c 5))))
 
 (elem-e
-  (info (type natural))
-  (specs (lab-bits u8 3) (lab-work work 10) (lab-energy energy 1))
+  (info (tier 1) (type natural))
+  (specs (lab-bits u8 6) (lab-work work 10) (lab-energy energy 1))
   (tape (work 8) (energy 4) (host item-condenser)
     (in (item-elem-a 3)
         (item-elem-c 1))
@@ -171,8 +171,8 @@
       (14 elem-e 1))))
 
 (monochate
-  (info (type passive))
-  (specs (lab-bits u8 5) (lab-work work 16) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 12) (lab-work work 16) (lab-energy energy 2))
   (tape (work 3) (energy 5) (host item-printer)
     (in (item-elem-c 32))
     (out (item-monochate 1)))
@@ -186,8 +186,8 @@
       (03 elem-c 32))))
 
 (monochury
-  (info (type passive))
-  (specs (lab-bits u8 3) (lab-work work 16) (lab-energy energy 1))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 6) (lab-work work 16) (lab-energy energy 1))
   (tape (work 3) (energy 6) (host item-printer)
     (in (item-elem-c 32))
     (out (item-monochury 1)))
@@ -201,8 +201,8 @@
       (03 elem-c 32))))
 
 (monobarols
-  (info (type passive))
-  (specs (lab-bits u8 5) (lab-work work 20) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 12) (lab-work work 20) (lab-energy energy 2))
   (tape (work 3) (energy 3) (host item-printer)
     (in (item-elem-b 7))
     (out (item-monobarols 1)))
@@ -216,8 +216,8 @@
       (02 elem-b 7))))
 
 (monarkols
-  (info (type passive))
-  (specs (lab-bits u8 3) (lab-work work 17) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 1) (lab-work work 17) (lab-energy energy 2))
   (tape (work 2) (energy 2) (host item-printer)
     (in (item-elem-a 17))
     (out (item-monarkols 1)))
@@ -231,8 +231,8 @@
       (01 elem-a 17))))
 
 (extract
-  (info (type active) (list factory))
-  (specs (lab-bits u8 5) (lab-work work 35) (lab-energy energy 5))
+  (info (tier 0) (type active) (list factory))
+  (specs (lab-bits u8 2) (lab-work work 35) (lab-energy energy 5))
   (tape (work 4) (energy 4) (host item-assembly)
     (in (item-monobararkon 1)
         (item-monobarex 3))
@@ -249,8 +249,8 @@
       (02 elem-b 13))))
 
 (printer
-  (info (type active) (list factory))
-  (specs (lab-bits u8 9) (lab-work work 18) (lab-energy energy 5))
+  (info (tier 0) (type active) (list factory))
+  (specs (lab-bits u8 2) (lab-work work 18) (lab-energy energy 5))
   (tape (work 4) (energy 7) (host item-assembly)
     (in (item-monocharkoid 1)
         (item-monobarex 3)
@@ -269,8 +269,8 @@
       (03 elem-c 10))))
 
 (duodylium
-  (info (type passive))
-  (specs (lab-bits u8 6) (lab-work work 33) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 1) (lab-work work 33) (lab-energy energy 2))
   (tape (work 5) (energy 8) (host item-printer)
     (in (item-elem-c 2)
         (item-elem-d 2)
@@ -289,8 +289,8 @@
       (10 elem-d 2))))
 
 (elem-f
-  (info (type natural))
-  (specs (lab-bits u8 4) (lab-work work 31) (lab-energy energy 5))
+  (info (tier 1) (type natural))
+  (specs (lab-bits u8 13) (lab-work work 31) (lab-energy energy 5))
   (tape (work 12) (energy 8) (host item-condenser)
     (in (item-elem-e 1)
         (item-elem-d 1))
@@ -311,8 +311,8 @@
       (23 elem-f 1))))
 
 (duerlex
-  (info (type passive))
-  (specs (lab-bits u8 7) (lab-work work 40) (lab-energy energy 2))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 12) (lab-work work 40) (lab-energy energy 2))
   (tape (work 10) (energy 9) (host item-printer)
     (in (item-elem-e 6)
         (item-elem-d 12)
@@ -339,8 +339,8 @@
       (14 elem-e 32))))
 
 (duodylitil
-  (info (type passive))
-  (specs (lab-bits u8 6) (lab-work work 21) (lab-energy energy 3))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 1) (lab-work work 21) (lab-energy energy 3))
   (tape (work 6) (energy 8) (host item-printer)
     (in (item-elem-b 29)
         (item-elem-d 32)
@@ -358,8 +358,8 @@
       (10 elem-d 32))))
 
 (duerltor
-  (info (type passive))
-  (specs (lab-bits u8 9) (lab-work work 42) (lab-energy energy 5))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 6) (lab-work work 42) (lab-energy energy 5))
   (tape (work 12) (energy 6) (host item-printer)
     (in (item-monobarols 1)
         (item-elem-e 3)
@@ -384,8 +384,8 @@
       (14 elem-e 21))))
 
 (duerlry
-  (info (type passive))
-  (specs (lab-bits u8 10) (lab-work work 42) (lab-energy energy 5))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 13) (lab-work work 42) (lab-energy energy 5))
   (tape (work 11) (energy 8) (host item-printer)
     (in (item-monocharkoid 2)
         (item-monobarex 2)
@@ -412,8 +412,8 @@
       (14 elem-e 21))))
 
 (duerldylon-monochols
-  (info (type passive))
-  (specs (lab-bits u8 4) (lab-work work 23) (lab-energy energy 5))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 7) (lab-work work 23) (lab-energy energy 5))
   (tape (work 9) (energy 9) (host item-printer)
     (in (item-monocharkoid 7)
         (item-monobarols 1)
@@ -441,8 +441,8 @@
       (14 elem-e 21))))
 
 (duochium
-  (info (type passive))
-  (specs (lab-bits u8 9) (lab-work work 33) (lab-energy energy 2))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 2) (lab-work work 33) (lab-energy energy 2))
   (tape (work 4) (energy 7) (host item-assembly)
     (in (item-monocharkoid 1)
         (item-monobarex 3)
@@ -463,8 +463,8 @@
       (03 elem-c 25))))
 
 (tridylarkitil
-  (info (type passive))
-  (specs (lab-bits u8 16) (lab-work work 66) (lab-energy energy 4))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 2) (lab-work work 66) (lab-energy energy 4))
   (tape (work 6) (energy 10) (host item-assembly)
     (in (item-monocharkoid 1)
         (item-duodylium 5)
@@ -484,8 +484,8 @@
       (10 elem-d 10))))
 
 (deploy
-  (info (type active) (list factory))
-  (specs (lab-bits u8 13) (lab-work work 57) (lab-energy energy 10))
+  (info (tier 0) (type active) (list factory))
+  (specs (lab-bits u8 3) (lab-work work 57) (lab-energy energy 10))
   (tape (work 8) (energy 11) (host item-assembly)
     (in (item-monocharkoid 3)
         (item-duodylium 1))
@@ -504,8 +504,8 @@
       (10 elem-d 2))))
 
 (rod
-  (info (type logistics))
-  (specs (lab-bits u8 10) (lab-work work 48) (lab-energy energy 4))
+  (info (tier 0) (type logistics))
+  (specs (lab-bits u8 2) (lab-work work 48) (lab-energy energy 4))
   (tape (work 7) (energy 12) (host item-assembly)
     (in (item-duodylium 3)
         (item-extract 1)
@@ -527,8 +527,8 @@
       (10 elem-d 16))))
 
 (tridylate
-  (info (type passive))
-  (specs (lab-bits u8 7) (lab-work work 44) (lab-energy energy 6))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 15) (lab-work work 44) (lab-energy energy 6))
   (tape (work 6) (energy 9) (host item-printer)
     (in (item-elem-d 17))
     (out (item-tridylate 1)))
@@ -543,8 +543,8 @@
       (10 elem-d 17))))
 
 (trifimate
-  (info (type passive))
-  (specs (lab-bits u8 9) (lab-work work 56) (lab-energy energy 11))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 15) (lab-work work 56) (lab-energy energy 11))
   (tape (work 16) (energy 11) (host item-printer)
     (in (item-elem-f 11)
         (item-elem-c 6)
@@ -572,8 +572,8 @@
       (23 elem-f 32))))
 
 (trifimbarsh
-  (info (type passive))
-  (specs (lab-bits u8 11) (lab-work work 57) (lab-energy energy 11))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 7) (lab-work work 57) (lab-energy energy 11))
   (tape (work 17) (energy 10) (host item-printer)
     (in (item-duodylium 1)
         (item-duerldylon-monochols 1)
@@ -600,7 +600,7 @@
       (23 elem-f 32))))
 
 (trerlchury-duobargen
-  (info (type passive))
+  (info (tier 1) (type passive))
   (specs (lab-bits u8 10) (lab-work work 69) (lab-energy energy 8))
   (tape (work 15) (energy 10) (host item-assembly)
     (in (item-duerldylon-monochols 1)
@@ -621,8 +621,8 @@
       (14 elem-e 42))))
 
 (trichubarium
-  (info (type passive))
-  (specs (lab-bits u8 17) (lab-work work 24) (lab-energy energy 9))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 3) (lab-work work 24) (lab-energy energy 9))
   (tape (work 6) (energy 8) (host item-assembly)
     (in (item-duochium 1)
         (item-monocharkoid 8)
@@ -642,8 +642,8 @@
       (03 elem-c 65))))
 
 (assembly
-  (info (type active) (config printer) (list factory))
-  (specs (lab-bits u8 13) (lab-work work 89) (lab-energy energy 14))
+  (info (tier 0) (type active) (config printer) (list factory))
+  (specs (lab-bits u8 3) (lab-work work 89) (lab-energy energy 14))
   (tape (work 8) (energy 12) (host item-assembly)
     (in (item-monobararkon 1)
         (item-monobarex 2)
@@ -667,13 +667,13 @@
       (10 elem-d 30))))
 
 (fusion
-  (info (type active) (list factory))
+  (info (tier 0) (type active) (list factory))
   (specs
-    (lab-bits u8 13) (lab-work work 70) (lab-energy energy 9)
+    (lab-bits u8 3) (lab-work work 70) (lab-energy energy 9)
     (input-item item !item-rod)
 	(energy-output energy 20)
-	(energy-rod energy 1024)
-	(energy-cap energy 16384))
+	(energy-rod energy 4096)
+	(energy-cap energy 65536))
   (tape (work 7) (energy 13) (host item-assembly)
     (in (item-duodylium 1)
         (item-tridylarkitil 1)
@@ -697,8 +697,8 @@
       (10 elem-d 24))))
 
 (worker
-  (info (type logistics))
-  (specs (lab-bits u8 19) (lab-work work 59) (lab-energy energy 8))
+  (info (tier 0) (type logistics))
+  (specs (lab-bits u8 5) (lab-work work 59) (lab-energy energy 8))
   (tape (work 8) (energy 13) (host item-assembly)
     (in (item-printer 2)
         (item-monobarex 3)
@@ -720,8 +720,8 @@
       (10 elem-d 20))))
 
 (memory
-  (info (type active) (list control))
-  (specs (lab-bits u8 16) (lab-work work 36) (lab-energy energy 15))
+  (info (tier 0) (type active) (list control))
+  (specs (lab-bits u8 2) (lab-work work 36) (lab-energy energy 15))
   (tape (work 8) (energy 12) (host item-assembly)
     (in (item-monarkols 3)
         (item-monocharkoid 1)
@@ -744,9 +744,9 @@
       (03 elem-c 75))))
 
 (storage
-  (info (type active) (list factory))
+  (info (tier 1) (type active) (list factory))
   (specs
-    (lab-bits u8 8) (lab-work work 77) (lab-energy energy 20)
+    (lab-bits u8 6) (lab-work work 77) (lab-energy energy 20)
     (max u16 4096))
   (tape (work 16) (energy 15) (host item-assembly)
     (in (item-trerlchury-duobargen 1)
@@ -775,9 +775,9 @@
       (14 elem-e 42))))
 
 (solar
-  (info (type logistics))
+  (info (tier 1) (type logistics))
   (specs
-    (lab-bits u8 12) (lab-work work 85) (lab-energy energy 23)
+    (lab-bits u8 10) (lab-work work 85) (lab-energy energy 23)
     (energy-div energy 4096) (energy fn))
   (tape (work 18) (energy 11) (host item-assembly)
     (in (item-monobarex 4)
@@ -806,8 +806,8 @@
       (23 elem-f 32))))
 
 (elem-l
-  (info (type synth))
-  (specs (lab-bits u8 20) (lab-work work 64) (lab-energy energy 19))
+  (info (tier 2) (type synth))
+  (specs (lab-bits u8 18) (lab-work work 64) (lab-energy energy 19))
   (tape (work 20) (energy 50) (host item-collider)
     (in (item-elem-d 6)
         (item-elem-e 5)
@@ -816,7 +816,8 @@
         (item-elem-d 6)
         (item-elem-e 5)
         (item-elem-d 6))
-    (out (item-elem-l 1)))
+    (out (item-elem-o 5)
+         (item-elem-l 5)))
   (dbg
     (info (id 46) (layer 4))
     (work (min 20) (total 20))
@@ -833,8 +834,8 @@
       (46 elem-l 1))))
 
 (elem-m
-  (info (type synth))
-  (specs (lab-bits u8 20) (lab-work work 35) (lab-energy energy 18))
+  (info (tier 2) (type synth))
+  (specs (lab-bits u8 18) (lab-work work 35) (lab-energy energy 18))
   (tape (work 36) (energy 50) (host item-collider)
     (in (item-elem-e 4)
         (item-elem-f 3)
@@ -843,7 +844,8 @@
         (item-elem-e 2)
         (item-elem-f 4)
         (item-elem-e 7))
-    (out (item-elem-m 1)))
+    (out (item-elem-o 5)
+         (item-elem-m 5)))
   (dbg
     (info (id 47) (layer 4))
     (work (min 36) (total 36))
@@ -861,8 +863,8 @@
       (47 elem-m 1))))
 
 (tetradylchols-tribarsh
-  (info (type passive))
-  (specs (lab-bits u8 13) (lab-work work 53) (lab-energy energy 17))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 3) (lab-work work 53) (lab-energy energy 17))
   (tape (work 8) (energy 14) (host item-assembly)
     (in (item-tridylate 1)
         (item-monobararkon 1)
@@ -892,8 +894,8 @@
       (10 elem-d 19))))
 
 (tetrafimalt
-  (info (type passive))
-  (specs (lab-bits u8 17) (lab-work work 33) (lab-energy energy 16))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 11) (lab-work work 33) (lab-energy energy 16))
   (tape (work 22) (energy 12) (host item-assembly)
     (in (item-tridylate 2)
         (item-trifimate 1)
@@ -916,8 +918,8 @@
       (23 elem-f 32))))
 
 (tetrafimry
-  (info (type passive))
-  (specs (lab-bits u8 9) (lab-work work 89) (lab-energy energy 8))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 7) (lab-work work 89) (lab-energy energy 8))
   (tape (work 24) (energy 17) (host item-assembly)
     (in (item-trifimate 1)
         (item-monochate 2))
@@ -938,8 +940,8 @@
       (23 elem-f 32))))
 
 (tetrerlbargen
-  (info (type passive))
-  (specs (lab-bits u8 18) (lab-work work 89) (lab-energy energy 14))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 16) (lab-work work 89) (lab-energy energy 14))
   (tape (work 19) (energy 11) (host item-assembly)
     (in (item-tridylarkitil 1)
         (item-trerlchury-duobargen 1)
@@ -963,8 +965,8 @@
       (14 elem-e 42))))
 
 (tetradylchitil-duobarate
-  (info (type passive))
-  (specs (lab-bits u8 22) (lab-work work 32) (lab-energy energy 9))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 8) (lab-work work 32) (lab-energy energy 9))
   (tape (work 8) (energy 15) (host item-assembly)
     (in (item-duodylium 2)
         (item-monobarols 7)
@@ -992,8 +994,8 @@
       (10 elem-d 36))))
 
 (brain
-  (info (type active) (list control))
-  (specs (lab-bits u8 13) (lab-work work 108) (lab-energy energy 39))
+  (info (tier 0) (type active) (list control))
+  (specs (lab-bits u8 6) (lab-work work 108) (lab-energy energy 39))
   (tape (work 11) (energy 13) (host item-assembly)
     (in (item-tridylarkitil 1)
         (item-memory 1)
@@ -1023,9 +1025,9 @@
       (10 elem-d 56))))
 
 (prober
-  (info (type active) (list control))
+  (info (tier 0) (type active) (list control))
   (specs
-    (lab-bits u8 25) (lab-work work 115) (lab-energy energy 44)
+    (lab-bits u8 6) (lab-work work 115) (lab-energy energy 44)
     (work-energy energy 8) (work-cap fn))
   (tape (work 10) (energy 16) (host item-assembly)
     (in (item-tridylarkitil 1)
@@ -1057,9 +1059,9 @@
       (10 elem-d 96))))
 
 (battery
-  (info (type logistics))
+  (info (tier 1) (type logistics))
   (specs
-    (lab-bits u8 12) (lab-work work 108) (lab-energy energy 41)
+    (lab-bits u8 13) (lab-work work 108) (lab-energy energy 41)
     (storage-cap energy 8))
   (tape (work 23) (energy 23) (host item-assembly)
     (in (item-monochury 2)
@@ -1090,9 +1092,9 @@
       (23 elem-f 32))))
 
 (receive
-  (info (type active) (list control))
+  (info (tier 1) (type active) (list control))
   (specs
-    (lab-bits u8 14) (lab-work work 41) (lab-energy energy 19)
+    (lab-bits u8 11) (lab-work work 41) (lab-energy energy 19)
     (buffer-max enum 1))
   (tape (work 16) (energy 13) (host item-assembly)
     (in (item-memory 2)
@@ -1121,15 +1123,16 @@
       (14 elem-e 84))))
 
 (elem-n
-  (info (type synth))
-  (specs (lab-bits u8 17) (lab-work work 110) (lab-energy energy 30))
+  (info (tier 2) (type synth))
+  (specs (lab-bits u8 18) (lab-work work 110) (lab-energy energy 30))
   (tape (work 42) (energy 50) (host item-collider)
     (in (item-elem-m 2)
         (item-elem-l 4)
         (item-elem-m 1)
         (item-elem-l 6)
         (item-elem-m 2))
-    (out (item-elem-n 1)))
+    (out (item-elem-o 5)
+         (item-elem-n 5)))
   (dbg
     (info (id 54) (layer 5))
     (work (min 42) (total 42))
@@ -1149,8 +1152,8 @@
       (54 elem-n 1))))
 
 (pentamoxate
-  (info (type passive))
-  (specs (lab-bits u8 15) (lab-work work 87) (lab-energy energy 28))
+  (info (tier 2) (type passive))
+  (specs (lab-bits u8 16) (lab-work work 87) (lab-energy energy 28))
   (tape (work 47) (energy 59) (host item-printer)
     (in (item-tridylate 1)
         (item-duodylium 1)
@@ -1184,8 +1187,8 @@
       (47 elem-m 15))))
 
 (pentadylchutor
-  (info (type passive))
-  (specs (lab-bits u8 24) (lab-work work 79) (lab-energy energy 18))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 5) (lab-work work 79) (lab-energy energy 18))
   (tape (work 9) (energy 15) (host item-assembly)
     (in (item-tetradylchols-tribarsh 2)
         (item-duodylium 3))
@@ -1204,8 +1207,8 @@
       (10 elem-d 44))))
 
 (pentalofchols
-  (info (type passive))
-  (specs (lab-bits u8 25) (lab-work work 45) (lab-energy energy 33))
+  (info (tier 2) (type passive))
+  (specs (lab-bits u8 26) (lab-work work 45) (lab-energy energy 33))
   (tape (work 24) (energy 56) (host item-printer)
     (in (item-tridylate 2)
         (item-monobarols 13)
@@ -1234,8 +1237,8 @@
       (46 elem-l 20))))
 
 (pentafimchex-monobarsh
-  (info (type passive))
-  (specs (lab-bits u8 20) (lab-work work 65) (lab-energy energy 18))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 13) (lab-work work 65) (lab-energy energy 18))
   (tape (work 24) (energy 16) (host item-assembly)
     (in (item-tetrafimalt 1)
         (item-monarkols 2)
@@ -1258,8 +1261,8 @@
       (23 elem-f 32))))
 
 (penterltor
-  (info (type passive))
-  (specs (lab-bits u8 26) (lab-work work 67) (lab-energy energy 30))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 7) (lab-work work 67) (lab-energy energy 30))
   (tape (work 27) (energy 13) (host item-assembly)
     (in (item-monobarex 2)
         (item-monarkols 1)
@@ -1286,8 +1289,8 @@
       (14 elem-e 42))))
 
 (pentadylchate
-  (info (type passive))
-  (specs (lab-bits u8 26) (lab-work work 51) (lab-energy energy 36))
+  (info (tier 1) (type passive))
+  (specs (lab-bits u8 15) (lab-work work 51) (lab-energy energy 36))
   (tape (work 10) (energy 19) (host item-assembly)
     (in (item-monobarex 6)
         (item-monobarols 5)
@@ -1316,8 +1319,8 @@
       (10 elem-d 36))))
 
 (lab
-  (info (type active) (list factory))
-  (specs (lab-bits u8 26) (lab-work work 85) (lab-energy energy 92))
+  (info (tier 0) (type active) (list factory))
+  (specs (lab-bits u8 5) (lab-work work 85) (lab-energy energy 92))
   (tape (work 14) (energy 20) (host item-assembly)
     (in (item-duodylitil 1)
         (item-extract 1)
@@ -1348,9 +1351,9 @@
       (10 elem-d 334))))
 
 (scanner
-  (info (type active) (list control))
+  (info (tier 0) (type active) (list control))
   (specs
-    (lab-bits u8 27) (lab-work work 49) (lab-energy energy 38)
+    (lab-bits u8 6) (lab-work work 49) (lab-energy energy 38)
     (work-energy energy 8) (work-cap fn))
   (tape (work 13) (energy 21) (host item-assembly)
     (in (item-rod 1)
@@ -1381,8 +1384,8 @@
       (10 elem-d 298))))
 
 (condenser
-  (info (type active) (config extract) (list factory))
-  (specs (lab-bits u8 14) (lab-work work 94) (lab-energy energy 42))
+  (info (tier 1) (type active) (config extract) (list factory))
+  (specs (lab-bits u8 7) (lab-work work 94) (lab-energy energy 42))
   (tape (work 11) (energy 24) (host item-assembly)
     (in (item-monocharkoid 23)
         (item-monarkols 3)
@@ -1416,8 +1419,8 @@
       (10 elem-d 36))))
 
 (pill
-  (info (type logistics))
-  (specs (lab-bits u8 14) (lab-work work 53) (lab-energy energy 37))
+  (info (tier 1) (type logistics))
+  (specs (lab-bits u8 13) (lab-work work 53) (lab-energy energy 37))
   (tape (work 40) (energy 19) (host item-assembly)
     (in (item-monocharkoid 6)
         (item-storage 1)
@@ -1443,9 +1446,9 @@
       (14 elem-e 84))))
 
 (transmit
-  (info (type active) (list control))
+  (info (tier 1) (type active) (list control))
   (specs
-    (lab-bits u8 17) (lab-work work 141) (lab-energy energy 87)
+    (lab-bits u8 18) (lab-work work 141) (lab-energy energy 87)
     (launch-energy energy 32)
 	(launch-speed u16 500))
   (tape (work 35) (energy 18) (host item-assembly)
@@ -1474,9 +1477,9 @@
       (23 elem-f 32))))
 
 (port
-  (info (type active) (list factory))
+  (info (tier 1) (type active) (list factory))
   (specs
-    (lab-bits u8 27) (lab-work work 121) (lab-energy energy 70)
+    (lab-bits u8 20) (lab-work work 121) (lab-energy energy 70)
     (dock-energy energy 64)
 	   (launch-energy energy 128)
 	   (launch-speed u16 100))
@@ -1507,8 +1510,8 @@
       (23 elem-f 64))))
 
 (accelerator
-  (info (type logistics))
-  (specs (lab-bits u8 30) (lab-work work 132) (lab-energy energy 48))
+  (info (tier 2) (type logistics))
+  (specs (lab-bits u8 27) (lab-work work 132) (lab-energy energy 48))
   (tape (work 31) (energy 24) (host item-assembly)
     (in (item-battery 1)
         (item-tridylate 9)
@@ -1539,9 +1542,9 @@
       (23 elem-f 32))))
 
 (burner
-  (info (type active) (list factory))
+  (info (tier 2) (type active) (list factory))
   (specs
-    (lab-bits u8 27) (lab-work work 91) (lab-energy energy 37)
+    (lab-bits u8 32) (lab-work work 91) (lab-energy energy 37)
     (energy fn) (work-cap fn))
   (tape (work 36) (energy 77) (host item-assembly)
     (in (item-duodylium 1)
@@ -1569,8 +1572,8 @@
       (46 elem-l 20))))
 
 (hexamoxchoid-monobary
-  (info (type passive))
-  (specs (lab-bits u8 22) (lab-work work 120) (lab-energy energy 80))
+  (info (tier 2) (type passive))
+  (specs (lab-bits u8 25) (lab-work work 120) (lab-energy energy 80))
   (tape (work 50) (energy 87) (host item-assembly)
     (in (item-duerldylon-monochols 1)
         (item-duodylium 2)
@@ -1597,8 +1600,8 @@
       (47 elem-m 15))))
 
 (hexadylchate-pentabaron
-  (info (type passive))
-  (specs (lab-bits u8 34) (lab-work work 80) (lab-energy energy 73))
+  (info (tier 0) (type passive))
+  (specs (lab-bits u8 7) (lab-work work 80) (lab-energy energy 73))
   (tape (work 13) (energy 21) (host item-assembly)
     (in (item-monobarols 6)
         (item-pentadylchutor 2))
@@ -1617,9 +1620,9 @@
       (10 elem-d 88))))
 
 (legion
-  (info (type active) (list control))
+  (info (tier 0) (type active) (list control))
   (specs
-    (lab-bits u8 20) (lab-work work 99) (lab-energy energy 144)
+    (lab-bits u8 6) (lab-work work 99) (lab-energy energy 144)
     (travel-speed u16 100))
   (tape (work 14) (energy 30) (host item-assembly)
     (in (item-memory 1)
@@ -1670,11 +1673,11 @@
       (10 elem-d 412))))
 
 (collider
-  (info (type active) (list factory))
+  (info (tier 2) (type active) (list factory))
   (specs
-    (lab-bits u8 26) (lab-work work 145) (lab-energy energy 149)
+    (lab-bits u8 22) (lab-work work 145) (lab-energy energy 149)
     (grow-max u8 64)
-	(grow-item item !item_accelerator)
+	(grow-item item !item-accelerator)
 	(junk-item item !item-elem-o)
 	(output-rate fn))
   (tape (work 42) (energy 33) (host item-assembly)
@@ -1711,8 +1714,8 @@
       (23 elem-f 192))))
 
 (packer
-  (info (type active) (list factory))
-  (specs (lab-bits u8 35) (lab-work work 63) (lab-energy energy 72))
+  (info (tier 2) (type active) (list factory))
+  (specs (lab-bits u8 31) (lab-work work 63) (lab-energy energy 72))
   (tape (work 68) (energy 130) (host item-assembly)
     (in (item-rod 1)
         (item-printer 1)
@@ -1740,9 +1743,9 @@
       (47 elem-m 15))))
 
 (nomad
-  (info (type active) (list factory))
+  (info (tier 2) (type active) (list factory))
   (specs
-    (lab-bits u8 36) (lab-work work 168) (lab-energy energy 361)
+    (lab-bits u8 32) (lab-work work 168) (lab-energy energy 361)
     (travel-speed u16 100)
 	(memory-len enum 3)
 	(cargo-len enum 12)
@@ -1775,21 +1778,217 @@
       (23 elem-f 610)
       (47 elem-m 45))))
 
+(elem-i
+  (info (tier 4) (type natural))
+  (specs (lab-bits u8 41) (lab-work work 60) (lab-energy energy 14877))
+  (tape (work 4) (energy 4) (host item-extract)
+    (out (item-elem-i 1)))
+  (dbg
+    (info (id e0) (layer 14))
+    (work (min 4) (total 4))
+    (energy 16)
+    (children 0)
+    (needs 1
+      (e0 elem-i 1))))
+
+(elem-j
+  (info (tier 5) (type natural))
+  (specs (lab-bits u8 27) (lab-work work 134) (lab-energy energy 15747))
+  (tape (work 4) (energy 4) (host item-condenser)
+    (out (item-elem-j 1)))
+  (dbg
+    (info (id e1) (layer 14))
+    (work (min 4) (total 4))
+    (energy 16)
+    (children 0)
+    (needs 1
+      (e1 elem-j 1))))
+
+(elem-k
+  (info (tier 3) (type natural))
+  (specs (lab-bits u8 34) (lab-work work 238) (lab-energy energy 13902))
+  (tape (work 4) (energy 4) (host item-extract)
+    (out (item-elem-k 1)))
+  (dbg
+    (info (id e2) (layer 14))
+    (work (min 4) (total 4))
+    (energy 16)
+    (children 0)
+    (needs 1
+      (e2 elem-k 1))))
+
+(elem-p
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 9) (lab-work work 228) (lab-energy energy 11353))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-p 1)))
+  (dbg
+    (info (id e3) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e3 elem-p 1))))
+
+(elem-q
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 20) (lab-work work 154) (lab-energy energy 17158))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-q 1)))
+  (dbg
+    (info (id e4) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e4 elem-q 1))))
+
+(elem-r
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 19) (lab-work work 162) (lab-energy energy 11267))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-r 1)))
+  (dbg
+    (info (id e5) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e5 elem-r 1))))
+
+(elem-s
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 12) (lab-work work 64) (lab-energy energy 20687))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-s 1)))
+  (dbg
+    (info (id e6) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e6 elem-s 1))))
+
+(elem-t
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 15) (lab-work work 246) (lab-energy energy 14348))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-t 1)))
+  (dbg
+    (info (id e7) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e7 elem-t 1))))
+
+(elem-u
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 14) (lab-work work 129) (lab-energy energy 20631))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-u 1)))
+  (dbg
+    (info (id e8) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e8 elem-u 1))))
+
+(elem-v
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 11) (lab-work work 3) (lab-energy energy 14470))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-v 1)))
+  (dbg
+    (info (id e9) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (e9 elem-v 1))))
+
+(elem-w
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 9) (lab-work work 215) (lab-energy energy 14334))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-w 1)))
+  (dbg
+    (info (id ea) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (ea elem-w 1))))
+
+(elem-x
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 14) (lab-work work 63) (lab-energy energy 19311))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-x 1)))
+  (dbg
+    (info (id eb) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (eb elem-x 1))))
+
+(elem-y
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 12) (lab-work work 251) (lab-energy energy 20007))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-y 1)))
+  (dbg
+    (info (id ec) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (ec elem-y 1))))
+
+(elem-z
+  (info (tier 0) (type synth))
+  (specs (lab-bits u8 12) (lab-work work 230) (lab-energy energy 15077))
+  (tape (work 1) (energy 1) (host item-extract)
+    (out (item-elem-z 1)))
+  (dbg
+    (info (id ed) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 1
+      (ed elem-z 1))))
+
+(kwheel
+  (info (tier 3) (type logistics))
+  (specs
+    (lab-bits u8 40) (lab-work work 59) (lab-energy energy 17823)
+    (energy-div energy 100))
+  (tape (work 1) (energy 1) (host item-assembly)
+    (out (item-kwheel 1)))
+  (dbg
+    (info (id ee) (layer 14))
+    (work (min 1) (total 1))
+    (energy 1)
+    (children 0)
+    (needs 0)))
+
 (user
-  (info (type sys)))
+  (info (tier 0) (type sys)))
 
 (data
-  (info (type sys)))
+  (info (tier 0) (type sys)))
 
 (dummy
-  (info (type sys)))
+  (info (tier 0) (type sys)))
 
 (energy
-  (info (type sys)))
+  (info (tier 0) (type sys)))
 
 (test
-  (info (type active))
-  (specs (lab-bits u8 42) (lab-work work 125) (lab-energy energy 35810))
+  (info (tier 0) (type active))
+  (specs (lab-bits u8 16) (lab-work work 125) (lab-energy energy 35810))
   (tape (work 1) (energy 1) (host item-assembly)
     (out (item-test 1)))
   (dbg

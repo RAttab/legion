@@ -40,8 +40,8 @@
       (if (< (count star !item-elem-b) min-solid) 0
 	(if (< (count star !item-elem-c) min-solid) 0
 	  (if (< (count star !item-elem-d) min-solid) 0
-	    (if (< (count star !item-elem-g) min-gas) 0
-	      (if (< (count star !item-elem-h) min-gas) 0
+	    (if (< (count star !item-elem-e) min-gas) 0
+	      (if (< (count star !item-elem-f) min-gas) 0
 		(if (< (count star !item-energy) min-energy) 0
 		  1)))))))))
 

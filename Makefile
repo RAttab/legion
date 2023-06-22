@@ -67,7 +67,7 @@ src/db/gen/tech.lisp: res/tech.lisp $(PREFIX)/gen
 	@cat $(PREFIX)/tech.dot | dot -Tsvg > $(PREFIX)/tech.svg
 
 GEN_DB_FILES := $(wildcard src/db/gen/*.h)
-$(GEN_DB_FILES) &: res/io.lisp $(wildcard res/items/*.lisp) $(PREFIX)/gen
+$(GEN_DB_FILES) &: res/io.lisp src/db/gen/tech.lisp $(PREFIX)/gen
 	@echo -e "\e[32m[gen]\e[0m db"
 	@$(PREFIX)/gen --db res --src src/db/gen
 

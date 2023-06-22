@@ -20,9 +20,9 @@ enum im_type
 
     im_type_natural,
     im_type_synthetic,
-    im_type_passive,
-    im_type_active,
     im_type_logistics,
+    im_type_active,
+    im_type_passive,
     im_type_sys,
 
     im_type_max,

@@ -47,22 +47,22 @@ static void db_parse_atoms(struct db_state *state, const char *path)
             }
 
             else if (hash == symbol_hash_c("list")) {
-                struct symbol list = reader_symbol(in);
-                uint64_t hash = symbol_hash(&list);
-                if (hash == symbol_hash_c("nil"))   info->list = list_nil;
-                else if (hash == symbol_hash_c("control")) info->list = list_control;
-                else if (hash == symbol_hash_c("factory"))  info->list = list_factory;
-                else reader_err(in, "unkown info list: %s", list.c);
+                static struct reader_table types[] = {
+                    { .str = "nil",     .value = list_nil },
+                    { .str = "control", .value = list_control },
+                    { .str = "factory", .value = list_factory },
+                };
+                info->list = reader_symbol_table(in, types, array_len(types));
                 reader_close(in);
             }
 
             else if (hash == symbol_hash_c("order")) {
-                struct symbol order = reader_symbol(in);
-                uint64_t hash = symbol_hash(&order);
-                if (hash == symbol_hash_c("nil"))   info->order = order_nil;
-                else if (hash == symbol_hash_c("first")) info->order = order_first;
-                else if (hash == symbol_hash_c("last"))  info->order = order_last;
-                else reader_err(in, "unkown info order: %s", order.c);
+                static struct reader_table types[] = {
+                    { .str = "nil",   .value = order_nil },
+                    { .str = "first", .value = order_first },
+                    { .str = "last",  .value = order_last },
+                };
+                info->order = reader_symbol_table(in, types, array_len(types));
                 reader_close(in);
             }
 
