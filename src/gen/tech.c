@@ -23,7 +23,7 @@ enum
 {
     layer_cap = 16,
     index_cap = 16,
-    name_cap = symbol_cap - 8,
+    name_cap = symbol_cap - 5,
 
     threshold_div = 5,
     check_mult = 8,

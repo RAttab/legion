@@ -10,7 +10,7 @@
 struct parse_info
 {
     enum im_type type;
-    struct symbol syllable, config;
+    struct symbol syllable, config, list;
     struct { size_t len; char *data; } specs;
 };
 
@@ -46,6 +46,11 @@ static void parse_info(struct reader *in, struct parse_info *info)
             info->config = reader_symbol(in);
             reader_close(in);
             continue;
+        }
+
+        else if (hash == symbol_hash_c("list")) {
+            info->list = reader_symbol(in);
+            reader_close(in);
         }
 
         else {
@@ -197,6 +202,7 @@ static void tech_parse(struct tree *tree, const char *path)
                 node->type = info.type;
                 node->syllable = info.syllable;
                 node->config = info.config;
+                node->list = info.list;
                 node->specs.len = info.specs.len;
                 node->specs.data = info.specs.data;
             }

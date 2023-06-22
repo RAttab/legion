@@ -96,7 +96,7 @@ struct legion_packed node
     enum im_type type;
     bool generated, done;
 
-    struct symbol name, syllable, config;
+    struct symbol name, syllable, config, list;
 
     struct { uint32_t node, total; } energy;
     struct { uint32_t node, min, total; } work;

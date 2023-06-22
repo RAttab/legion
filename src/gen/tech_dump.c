@@ -87,6 +87,8 @@ static void dump_lisp_node(
         mfile_writef(out, "  (info (type %s)", im_type_str(node->type));
         if (node->config.len)
             mfile_writef(out, " (config %s)", node->config.c);
+        if (node->list.len)
+            mfile_writef(out, " (list %s)", node->list.c);
 
         if (node->type != im_type_sys)
             mfile_write(out, ")\n");
@@ -118,7 +120,7 @@ static void dump_lisp_node(
         struct node *n = tree_node(tree, node->host.id);
         if (n) host = &n->name;
 
-        mfile_writef(out, " (work %u) (energy %u) (host %s)\n",
+        mfile_writef(out, " (work %u) (energy %u) (host item-%s)\n",
                 node->work.node, node->energy.node, host->c);
         dump_tape(out, tree, node);
         mfile_writef(out, "    (out (item-%s 1)))\n", node->name.c);

@@ -28,8 +28,10 @@ static void gen_node_name(struct gen *gen)
     struct symbol name = {0};
     struct node *node = gen->node;
 
-    void append(const char *src)
+    bool append(const char *src)
     {
+        if (name.len + strnlen(src, 10) > name_cap) return false;
+
         char *dst = name.c + name.len;
 
         if (str_is_vowel(*src) && str_is_vowel(*(dst - 1))) {
@@ -42,22 +44,40 @@ static void gen_node_name(struct gen *gen)
 
         for (; *src && name.len < name_cap; ++dst, ++src, ++name.len)
             *dst = *src;
+
+        return true;
     }
 
-    void append_syllable(size_t ix) {
+    bool append_syllable(size_t ix) {
         assert(ix < edges_len(node->needs.edges));
         const struct node *elem = tree_node(gen->tree, node->needs.edges->vals[ix].id);
         assert(elem);
         const struct symbol *syllable = &elem->syllable;
-        append(syllable->c);
+        return append(syllable->c);
     }
 
-    void append_tail(void) {
-        append(tails[rng_uni(&gen->rng, 0, array_len(tails))]);
+    bool append_tail(void) {
+        return append(tails[rng_uni(&gen->rng, 0, array_len(tails))]);
     }
 
     size_t rng_next(size_t max) {
         return max ? rng_uni(&gen->rng, 0, max) : 0;
+    }
+
+    bool append_sep(size_t *head) {
+        size_t saved = name.len;
+
+        if (!append_tail()) goto fail;
+
+        if (name.len == name_cap) goto fail;
+        *(name.c + name.len) = '-'; name.len++;
+
+        if (!append(heads[*head = rng_next(*head)])) goto fail;
+        return true;
+
+      fail:
+        name.len = saved;
+        return false;
     }
 
     for (size_t attempt = 0; attempt < 10; ++attempt) {
@@ -69,13 +89,8 @@ static void gen_node_name(struct gen *gen)
         size_t syllables = rng_uni(&gen->rng, 2, 3);
         size_t ix = edges_len(node->needs.edges) - 1;
         do {
-            if (syllables-- == 0) {
-                append_tail();
-                *(name.c + name.len) = '-'; name.len++;
-                append(heads[head = rng_next(head)]);
+            if (syllables-- == 0 && append_sep(&head))
                 syllables = rng_uni(&gen->rng, 1, 2);
-            }
-
             append_syllable(ix);
             ix = rng_next(ix);
         } while (ix && name.len + 3 + 4 < name_cap);
