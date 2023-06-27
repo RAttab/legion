@@ -16,12 +16,11 @@
 void tapes_populate(void);
 const struct tape *tapes_get(enum item id);
 
-struct tape_info
+struct legion_packed tape_info
 {
-    size_t rank;
-    struct { size_t peak, total; } work, energy;
+    uint8_t rank;
     struct tape_set reqs;
-    uint16_t elems[items_natural_len];
+    uint32_t elems[items_natural_last];
 };
 const struct tape_info *tapes_info(enum item id);
 

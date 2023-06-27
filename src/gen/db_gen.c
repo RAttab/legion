@@ -211,6 +211,84 @@ static void db_gen_specs(
 
 
 // -----------------------------------------------------------------------------
+// tape-info
+// -----------------------------------------------------------------------------
+
+static void db_gen_tape_info(
+        struct db_state *state, struct reader *in, const struct symbol *item)
+{
+    uint8_t rank = 0;
+    uint16_t elems[12] = {0};
+
+    static struct bits reqs = {0};
+    bits_clear(&reqs);
+
+    while (!reader_peek_close(in)) {
+        reader_open(in);
+
+        struct symbol key = reader_symbol(in);
+        hash_val hash = symbol_hash(&key);
+
+        if (hash == symbol_hash_c("rank")) {
+            rank = reader_word(in);
+            reader_close(in);
+            continue;
+        }
+
+        else if (hash == symbol_hash_c("elems")) {
+            while (!reader_peek_close(in)) {
+                reader_open(in);
+                struct symbol elem = reader_symbol(in);
+                uint64_t count = reader_word(in);
+
+                uint64_t atom = state_atoms_value(state, &elem);
+                if (atom < array_len(elems)) elems[atom] = count;
+
+                reader_close(in);
+            }
+            reader_close(in);
+        }
+
+        else if (hash == symbol_hash_c("reqs")) {
+            while (!reader_peek_close(in)) {
+                reader_open(in);
+                struct symbol item = reader_symbol(in);
+                (void) reader_word(in); // count
+
+                uint64_t atom = state_atoms_value(state, &item);
+                assert(atom > 0 && atom < UINT8_MAX);
+                bits_put(&reqs, atom);
+
+                reader_close(in);
+            }
+            reader_close(in);
+        }
+    }
+
+    db_file_writef(&state->files.tapes_info,
+            "\ntape_info_register_begin(item_%s) { .rank = %u };\n",
+            item->c, rank);
+
+    for (size_t value = bits_next(&reqs, 0);
+         value < reqs.len; value = bits_next(&reqs, value + 1))
+    {
+        db_file_writef(&state->files.tapes_info,
+                "  tape_info_register_reqs(%s);\n",
+                symbol_to_enum(state_atoms_name(state, value)).c);
+    }
+
+    for (size_t i = 1; i < array_len(elems); ++i) {
+        if (!elems[i]) continue;
+        db_file_writef(&state->files.tapes_info,
+                "  tape_info_register_elems(%s, %u);\n",
+                symbol_to_enum(state_atoms_name(state, i)).c, elems[i]);
+    }
+
+    db_file_write(&state->files.tapes_info, "tape_info_register_end()\n");
+}
+
+
+// -----------------------------------------------------------------------------
 // tape
 // -----------------------------------------------------------------------------
 
@@ -252,9 +330,15 @@ static void db_gen_tape(
 
         else if (hash == symbol_hash_c("host")) {
             struct symbol value = reader_symbol(in);
-            if (!state_atoms_get(state, &value))
+            if (!state_atoms_value(state, &value))
                 reader_err(in, "unknown host atom '%s'", value.c);
             host = symbol_to_enum(value);
+            reader_close(in);
+            continue;
+        }
+
+        else if (hash == symbol_hash_c("info")) {
+            db_gen_tape_info(state, in, &item_enum);
             reader_close(in);
             continue;
         }
@@ -280,7 +364,7 @@ static void db_gen_tape(
                 reader_close(in);
             }
 
-            if (!state_atoms_get(state, &item))
+            if (!state_atoms_value(state, &item))
                 reader_err(in, "unknown atom '%s'", item.c);
 
             if (count < 1 || count > UINT8_MAX) {

@@ -7,8 +7,9 @@
 #include "items/im_type.h"
 #include "utils/err.h"
 #include "utils/fs.h"
-#include "utils/config.h"
+#include "utils/bits.h"
 #include "utils/htable.h"
+#include "utils/config.h"
 
 
 // -----------------------------------------------------------------------------
@@ -61,6 +62,7 @@ bool db_run(const char *res, const char *src)
         db_file_open(&state.files.specs_value, state.path.out, "specs_value");
 
         db_file_open(&state.files.tapes, state.path.out, "tapes");
+        db_file_open(&state.files.tapes_info, state.path.out, "tapes_info");
 
         db_file_open(&state.files.io_enum, state.path.out, "io_enum");
         db_file_open(&state.files.ioe_enum, state.path.out, "ioe_enum");
@@ -87,6 +89,7 @@ bool db_run(const char *res, const char *src)
         db_file_close(&state.files.specs_register);
 
         db_file_close(&state.files.tapes);
+        db_file_close(&state.files.tapes_info);
 
         db_file_close(&state.files.io_enum);
         db_file_close(&state.files.ioe_enum);
@@ -94,7 +97,7 @@ bool db_run(const char *res, const char *src)
 
     }
 
-    htable_reset(&state.atoms);
+    htable_reset(&state.atoms.name);
     free(state.info);
     return true;
 }

@@ -110,26 +110,35 @@ struct db_state
         char out[PATH_MAX];
     } path;
 
-    struct htable atoms;
+    struct { struct htable name; struct symbol value[UINT8_MAX]; } atoms;
     struct vec_info *info;
 
     struct {
         struct db_file im_enum, im_register, im_includes;
         struct db_file im_control, im_factory;
         struct db_file specs_enum, specs_value, specs_register;
-        struct db_file tapes;
+        struct db_file tapes, tapes_info;
         struct db_file io_enum, ioe_enum, io_register;
     } files;
 };
 
-bool state_atoms_set(struct db_state *state, struct symbol *name, int64_t value) {
+bool state_atoms_set(struct db_state *state, struct symbol *name, uint64_t value) {
     hash_val key = symbol_hash(name);
-    struct htable_ret ret = htable_put(&state->atoms, key, value);
-    return ret.ok;
+    struct htable_ret ret = htable_put(&state->atoms.name, key, value);
+    if (!ret.ok) return false;
+
+    assert(value < array_len(state->atoms.value));
+    state->atoms.value[value] = *name;
+    return true;
 }
 
-int64_t state_atoms_get(struct db_state *state, struct symbol *name) {
+uint64_t state_atoms_value(struct db_state *state, struct symbol *name) {
     hash_val key = symbol_hash(name);
-    struct htable_ret ret = htable_get(&state->atoms, key);
+    struct htable_ret ret = htable_get(&state->atoms.name, key);
     return ret.ok ? ret.value : 0;
+}
+
+struct symbol state_atoms_name(struct db_state *state, uint64_t value) {
+    assert(value < array_len(state->atoms.value));
+    return state->atoms.value[value];
 }

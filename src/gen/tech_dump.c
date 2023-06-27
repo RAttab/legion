@@ -92,13 +92,42 @@ static void dump_tape(
         else {
             for (size_t i = 0; i < edges_len(node->out); ++i) {
                 struct edge *edge = node->out->vals + i;
-                struct node *child = tree_node(tree, edge->id);
                 mfile_writef(out, "%s(item-%s %u)",
-                        i ? "\n         " : "", child->name.c, edge->count);
+                        i ? "\n         " : "",
+                        tree_name(tree, edge->id).c, edge->count);
             }
         }
-        mfile_write(out, "))\n");
+        mfile_write(out, ")\n");
     }
+
+    mfile_writef(out, "    (info (rank %u)", node_id_layer(node->id));
+
+    // Reqs
+    if (edges_len(node->children.edges)) {
+        mfile_write(out, "\n          (reqs ");
+        for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+            struct edge *edge = node->children.edges->vals + i;
+            mfile_writef(out, "%s(item-%s %u)",
+                    i ? "\n                " : "",
+                    tree_name(tree, edge->id).c, edge->count);
+        }
+        mfile_write(out, ")");
+    }
+
+    // Elems
+    edges_dec(node->needs.edges, node->id, 1);
+    if (edges_len(node->needs.edges)) {
+        mfile_write(out, "\n          (elems ");
+        for (size_t i = 0; i < edges_len(node->needs.edges); ++i) {
+            struct edge *edge = node->needs.edges->vals + i;
+            mfile_writef(out, "%s(item-%s %u)",
+                    i ? "\n                 " : "",
+                    tree_name(tree, edge->id).c, edge->count);
+        }
+        mfile_write(out, ")");
+    }
+
+    mfile_write(out, "))\n");
 }
 
 static void dump_lisp_node(
@@ -151,24 +180,6 @@ static void dump_lisp_node(
                 node->work.min, node->work.total);
 
         mfile_writef(out, "    (energy %u)\n", node->energy.total);
-
-        mfile_writef(out, "    (children %zu", edges_len(node->children.edges));
-        for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
-            struct edge *edge = node->children.edges->vals + i;
-            struct node *child = tree_node(tree, edge->id);
-            mfile_writef(out, "\n      (%02x %s %u)",
-                    child->id, child->name.c, edge->count);
-        }
-        mfile_write(out, ")\n");
-
-        mfile_writef(out, "    (needs %zu", edges_len(node->needs.edges));
-        for (size_t i = 0; i < edges_len(node->needs.edges); ++i) {
-            struct edge *edge = node->needs.edges->vals + i;
-            struct node *child = tree_node(tree, edge->id);
-            mfile_writef(out, "\n      (%02x %s %u)",
-                    child->id, child->name.c, edge->count);
-        }
-        mfile_write(out, ")");
 
         mfile_write(out, ")");
     }

@@ -39,7 +39,7 @@ void check_learn_item(struct tech *tech, enum item item)
     for (enum item it = tape_set_next(&info->reqs, 0); it;
          it = tape_set_next(&info->reqs, it))
     {
-        if (!tech_known(tech, it))
+        if (!tech_learned(tech, it))
             assert(!tech_known(tech, item));
         check_learn_bits(tech, it);
     }
