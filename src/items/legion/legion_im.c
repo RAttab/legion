@@ -38,6 +38,7 @@ const enum item *im_legion_cargo(enum item type)
             item_assembly,
             item_prober,
             item_memory,
+            item_library,
             item_brain,
             item_nil,
         };

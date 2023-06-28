@@ -65,7 +65,10 @@ size_t tape_len(const struct tape *);
 enum item tape_host(const struct tape *);
 im_energy tape_energy(const struct tape *);
 im_work tape_work_cap(const struct tape *);
+
 struct tape_ret tape_at(const struct tape *, tape_it index);
+enum item tape_input_at(const struct tape *tape, tape_it it);
+enum item tape_output_at(const struct tape *tape, tape_it it);
 
 
 // -----------------------------------------------------------------------------
@@ -127,6 +130,7 @@ void tape_set_put(struct tape_set *, enum item);
 
 struct tape_set tape_set_invert(struct tape_set *);
 enum item tape_set_next(const struct tape_set *, enum item);
+enum item tape_set_at(const struct tape_set *, size_t index);
 
 bool tape_set_eq(const struct tape_set *, const struct tape_set *);
 void tape_set_union(struct tape_set *, const struct tape_set *);

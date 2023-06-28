@@ -39,6 +39,14 @@
     io-set
     io-cas
 
+    ;; library
+    io-tape-in
+    io-tape-out
+    io-tape-req
+    io-tape-host
+    io-tape-work
+    io-tape-energy
+
     ;; lab
     io-tape-at
     io-tape-known

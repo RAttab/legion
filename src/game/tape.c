@@ -25,6 +25,16 @@ size_t tape_len(const struct tape *tape)
     return tape->inputs + tape->work + tape->outputs;
 }
 
+enum item tape_input_at(const struct tape *tape, tape_it it)
+{
+    return it < tape->inputs ? tape->tape[it] : item_nil;
+}
+
+enum item tape_output_at(const struct tape *tape, tape_it it)
+{
+    return it < tape->outputs ? tape->tape[tape->inputs + it] : item_nil;
+}
+
 struct tape_ret tape_at(const struct tape *tape, tape_it it)
 {
     tape_it bound = tape->inputs;
@@ -105,6 +115,15 @@ enum item tape_set_next(const struct tape_set *set, enum item first)
         uint64_t x = set->s[i] & ~mask;
         if (x) return u64_ctz(x) + i * 64;
         mask = 0;
+    }
+    return item_nil;
+}
+
+enum item tape_set_at(const struct tape_set *set, size_t index)
+{
+    for (enum item item = tape_set_next(set, 0);
+         item != item_nil; item = tape_set_next(set, item), --index) {
+        if (!index) return item;
     }
     return item_nil;
 }

@@ -13,6 +13,7 @@
 #include "items/lab/lab.c"
 #include "items/legion/legion.c"
 #include "items/memory/memory.c"
+#include "items/library/library.c"
 #include "items/port/port.c"
 #include "items/printer/printer.c"
 #include "items/receive/receive.c"

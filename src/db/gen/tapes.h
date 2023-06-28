@@ -155,6 +155,20 @@ tape_register_begin(item_elem_e, 5) {
   tape_register_ix(  4, item_elem_e);
 tape_register_end()
 
+tape_register_begin(item_monochubaride, 4) {
+    .id = item_monochubaride,
+    .host = item_printer,
+    .work = 3,
+    .energy = 5,
+    .inputs = 3,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_elem_b);
+  tape_register_ix(  1, item_elem_c);
+  tape_register_ix(  2, item_elem_a);
+  tape_register_ix(  3, item_monochubaride);
+tape_register_end()
+
 tape_register_begin(item_monochate, 33) {
     .id = item_monochate,
     .host = item_printer,
@@ -347,6 +361,32 @@ tape_register_begin(item_elem_f, 3) {
   tape_register_ix(  0, item_elem_e);
   tape_register_ix(  1, item_elem_d);
   tape_register_ix(  2, item_elem_f);
+tape_register_end()
+
+tape_register_begin(item_duodylchalt_monobarols, 3) {
+    .id = item_duodylchalt_monobarols,
+    .host = item_printer,
+    .work = 5,
+    .energy = 9,
+    .inputs = 2,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_monochubaride);
+  tape_register_ix(  1, item_elem_d);
+  tape_register_ix(  2, item_duodylchalt_monobarols);
+tape_register_end()
+
+tape_register_begin(item_duarksh, 3) {
+    .id = item_duarksh,
+    .host = item_printer,
+    .work = 2,
+    .energy = 2,
+    .inputs = 2,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_elem_a);
+  tape_register_ix(  1, item_elem_a);
+  tape_register_ix(  2, item_duarksh);
 tape_register_end()
 
 tape_register_begin(item_duerlex, 65) {
@@ -711,6 +751,62 @@ tape_register_begin(item_rod, 11) {
   tape_register_ix(  8, item_duodylium);
   tape_register_ix(  9, item_duodylium);
   tape_register_ix( 10, item_rod);
+tape_register_end()
+
+tape_register_begin(item_trifimium, 33) {
+    .id = item_trifimium,
+    .host = item_printer,
+    .work = 18,
+    .energy = 12,
+    .inputs = 32,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_elem_f);
+  tape_register_ix(  1, item_elem_f);
+  tape_register_ix(  2, item_elem_f);
+  tape_register_ix(  3, item_elem_f);
+  tape_register_ix(  4, item_elem_f);
+  tape_register_ix(  5, item_elem_f);
+  tape_register_ix(  6, item_elem_f);
+  tape_register_ix(  7, item_elem_f);
+  tape_register_ix(  8, item_elem_f);
+  tape_register_ix(  9, item_elem_f);
+  tape_register_ix( 10, item_elem_f);
+  tape_register_ix( 11, item_elem_f);
+  tape_register_ix( 12, item_elem_f);
+  tape_register_ix( 13, item_elem_f);
+  tape_register_ix( 14, item_elem_f);
+  tape_register_ix( 15, item_elem_f);
+  tape_register_ix( 16, item_elem_f);
+  tape_register_ix( 17, item_elem_f);
+  tape_register_ix( 18, item_elem_f);
+  tape_register_ix( 19, item_elem_f);
+  tape_register_ix( 20, item_elem_f);
+  tape_register_ix( 21, item_elem_f);
+  tape_register_ix( 22, item_elem_f);
+  tape_register_ix( 23, item_elem_f);
+  tape_register_ix( 24, item_elem_f);
+  tape_register_ix( 25, item_elem_f);
+  tape_register_ix( 26, item_elem_f);
+  tape_register_ix( 27, item_elem_f);
+  tape_register_ix( 28, item_elem_f);
+  tape_register_ix( 29, item_elem_f);
+  tape_register_ix( 30, item_elem_f);
+  tape_register_ix( 31, item_elem_f);
+  tape_register_ix( 32, item_trifimium);
+tape_register_end()
+
+tape_register_begin(item_tridylgen, 3) {
+    .id = item_tridylgen,
+    .host = item_assembly,
+    .work = 8,
+    .energy = 13,
+    .inputs = 2,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_duodylchalt_monobarols);
+  tape_register_ix(  1, item_duodylchalt_monobarols);
+  tape_register_ix(  2, item_tridylgen);
 tape_register_end()
 
 tape_register_begin(item_tridylate, 18) {
@@ -1151,25 +1247,49 @@ tape_register_begin(item_elem_m, 35) {
   tape_register_ix( 34, item_elem_m);
 tape_register_end()
 
-tape_register_begin(item_tetradylchols_tribarsh, 11) {
-    .id = item_tetradylchols_tribarsh,
+tape_register_begin(item_tetrafimalm, 20) {
+    .id = item_tetrafimalm,
     .host = item_assembly,
-    .work = 8,
-    .energy = 14,
-    .inputs = 10,
+    .work = 21,
+    .energy = 17,
+    .inputs = 19,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_tridylate);
-  tape_register_ix(  1, item_monobararkon);
-  tape_register_ix(  2, item_monobarex);
+  tape_register_ix(  0, item_trifimium);
+  tape_register_ix(  1, item_monobarols);
+  tape_register_ix(  2, item_monobarols);
   tape_register_ix(  3, item_monobarols);
-  tape_register_ix(  4, item_monocharkoid);
-  tape_register_ix(  5, item_monobarex);
-  tape_register_ix(  6, item_monobarex);
-  tape_register_ix(  7, item_monocharkoid);
-  tape_register_ix(  8, item_duodylium);
-  tape_register_ix(  9, item_monobarex);
-  tape_register_ix( 10, item_tetradylchols_tribarsh);
+  tape_register_ix(  4, item_monobarols);
+  tape_register_ix(  5, item_monobarols);
+  tape_register_ix(  6, item_monobarols);
+  tape_register_ix(  7, item_monobarols);
+  tape_register_ix(  8, item_monobarols);
+  tape_register_ix(  9, item_monobarols);
+  tape_register_ix( 10, item_monobarols);
+  tape_register_ix( 11, item_monobarols);
+  tape_register_ix( 12, item_trifimium);
+  tape_register_ix( 13, item_monobarols);
+  tape_register_ix( 14, item_monobarols);
+  tape_register_ix( 15, item_monobarols);
+  tape_register_ix( 16, item_monobarols);
+  tape_register_ix( 17, item_monobarols);
+  tape_register_ix( 18, item_monobarols);
+  tape_register_ix( 19, item_tetrafimalm);
+tape_register_end()
+
+tape_register_begin(item_tetradylgen, 5) {
+    .id = item_tetradylgen,
+    .host = item_assembly,
+    .work = 10,
+    .energy = 17,
+    .inputs = 4,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_tridylgen);
+  tape_register_ix(  1, item_duarksh);
+  tape_register_ix(  2, item_duarksh);
+  tape_register_ix(  3, item_tridylgen);
+  tape_register_ix(  4, item_tetradylgen);
 tape_register_end()
 
 tape_register_begin(item_tetrafimalt, 5) {
@@ -1263,8 +1383,8 @@ tape_register_begin(item_tetradylchitil_duobarate, 36) {
   tape_register_ix( 35, item_tetradylchitil_duobarate);
 tape_register_end()
 
-tape_register_begin(item_brain, 20) {
-    .id = item_brain,
+tape_register_begin(item_library, 20) {
+    .id = item_library,
     .host = item_assembly,
     .work = 11,
     .energy = 13,
@@ -1290,35 +1410,65 @@ tape_register_begin(item_brain, 20) {
   tape_register_ix( 16, item_monobarols);
   tape_register_ix( 17, item_tridylarkitil);
   tape_register_ix( 18, item_rod);
+  tape_register_ix( 19, item_library);
+tape_register_end()
+
+tape_register_begin(item_brain, 20) {
+    .id = item_brain,
+    .host = item_assembly,
+    .work = 11,
+    .energy = 15,
+    .inputs = 19,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_duodylium);
+  tape_register_ix(  1, item_duodylium);
+  tape_register_ix(  2, item_monobarols);
+  tape_register_ix(  3, item_monobarols);
+  tape_register_ix(  4, item_monobarols);
+  tape_register_ix(  5, item_rod);
+  tape_register_ix(  6, item_tridylarkitil);
+  tape_register_ix(  7, item_memory);
+  tape_register_ix(  8, item_monobarols);
+  tape_register_ix(  9, item_monobarols);
+  tape_register_ix( 10, item_tridylarkitil);
+  tape_register_ix( 11, item_monobarols);
+  tape_register_ix( 12, item_monobarols);
+  tape_register_ix( 13, item_monobarols);
+  tape_register_ix( 14, item_monobarols);
+  tape_register_ix( 15, item_tridylarkitil);
+  tape_register_ix( 16, item_duodylium);
+  tape_register_ix( 17, item_duodylium);
+  tape_register_ix( 18, item_duodylium);
   tape_register_ix( 19, item_brain);
 tape_register_end()
 
 tape_register_begin(item_prober, 11) {
     .id = item_prober,
     .host = item_assembly,
-    .work = 10,
+    .work = 12,
     .energy = 16,
     .inputs = 10,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_tridylarkitil);
-  tape_register_ix(  1, item_duodylitil);
-  tape_register_ix(  2, item_tridylarkitil);
-  tape_register_ix(  3, item_rod);
+  tape_register_ix(  0, item_extract);
+  tape_register_ix(  1, item_rod);
+  tape_register_ix(  2, item_duodylitil);
+  tape_register_ix(  3, item_tridylarkitil);
   tape_register_ix(  4, item_memory);
   tape_register_ix(  5, item_duodylium);
-  tape_register_ix(  6, item_memory);
-  tape_register_ix(  7, item_rod);
-  tape_register_ix(  8, item_extract);
-  tape_register_ix(  9, item_tridylarkitil);
+  tape_register_ix(  6, item_tridylarkitil);
+  tape_register_ix(  7, item_tridylarkitil);
+  tape_register_ix(  8, item_memory);
+  tape_register_ix(  9, item_rod);
   tape_register_ix( 10, item_prober);
 tape_register_end()
 
 tape_register_begin(item_battery, 11) {
     .id = item_battery,
     .host = item_assembly,
-    .work = 23,
-    .energy = 23,
+    .work = 22,
+    .energy = 22,
     .inputs = 10,
     .outputs = 1,
   };
@@ -1326,35 +1476,35 @@ tape_register_begin(item_battery, 11) {
   tape_register_ix(  1, item_monochury);
   tape_register_ix(  2, item_tridylarkitil);
   tape_register_ix(  3, item_deploy);
-  tape_register_ix(  4, item_trifimbarsh);
-  tape_register_ix(  5, item_storage);
-  tape_register_ix(  6, item_deploy);
-  tape_register_ix(  7, item_tridylarkitil);
-  tape_register_ix(  8, item_monochury);
-  tape_register_ix(  9, item_monochury);
+  tape_register_ix(  4, item_deploy);
+  tape_register_ix(  5, item_monochury);
+  tape_register_ix(  6, item_monochury);
+  tape_register_ix(  7, item_trifimbarsh);
+  tape_register_ix(  8, item_tridylarkitil);
+  tape_register_ix(  9, item_storage);
   tape_register_ix( 10, item_battery);
 tape_register_end()
 
 tape_register_begin(item_receive, 14) {
     .id = item_receive,
     .host = item_assembly,
-    .work = 16,
-    .energy = 13,
+    .work = 17,
+    .energy = 16,
     .inputs = 13,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_memory);
-  tape_register_ix(  1, item_memory);
-  tape_register_ix(  2, item_duerltor);
-  tape_register_ix(  3, item_duodylitil);
-  tape_register_ix(  4, item_duodylitil);
+  tape_register_ix(  0, item_duerltor);
+  tape_register_ix(  1, item_duerltor);
+  tape_register_ix(  2, item_duodylium);
+  tape_register_ix(  3, item_memory);
+  tape_register_ix(  4, item_memory);
   tape_register_ix(  5, item_duodylium);
   tape_register_ix(  6, item_duodylium);
-  tape_register_ix(  7, item_duodylium);
+  tape_register_ix(  7, item_duerldylon_monochols);
   tape_register_ix(  8, item_duodylitil);
   tape_register_ix(  9, item_duodylitil);
-  tape_register_ix( 10, item_duerldylon_monochols);
-  tape_register_ix( 11, item_duerltor);
+  tape_register_ix( 10, item_duodylitil);
+  tape_register_ix( 11, item_duodylitil);
   tape_register_ix( 12, item_duerltor);
   tape_register_ix( 13, item_receive);
 tape_register_end()
@@ -1367,12 +1517,12 @@ tape_register_begin(item_elem_n, 25) {
     .inputs = 15,
     .outputs = 10,
   };
-  tape_register_ix(  0, item_elem_m);
-  tape_register_ix(  1, item_elem_m);
-  tape_register_ix(  2, item_elem_l);
-  tape_register_ix(  3, item_elem_l);
-  tape_register_ix(  4, item_elem_l);
-  tape_register_ix(  5, item_elem_l);
+  tape_register_ix(  0, item_elem_l);
+  tape_register_ix(  1, item_elem_l);
+  tape_register_ix(  2, item_elem_m);
+  tape_register_ix(  3, item_elem_m);
+  tape_register_ix(  4, item_elem_m);
+  tape_register_ix(  5, item_elem_m);
   tape_register_ix(  6, item_elem_m);
   tape_register_ix(  7, item_elem_l);
   tape_register_ix(  8, item_elem_l);
@@ -1380,8 +1530,8 @@ tape_register_begin(item_elem_n, 25) {
   tape_register_ix( 10, item_elem_l);
   tape_register_ix( 11, item_elem_l);
   tape_register_ix( 12, item_elem_l);
-  tape_register_ix( 13, item_elem_m);
-  tape_register_ix( 14, item_elem_m);
+  tape_register_ix( 13, item_elem_l);
+  tape_register_ix( 14, item_elem_l);
   tape_register_ix( 15, item_elem_o);
   tape_register_ix( 16, item_elem_o);
   tape_register_ix( 17, item_elem_o);
@@ -1394,53 +1544,79 @@ tape_register_begin(item_elem_n, 25) {
   tape_register_ix( 24, item_elem_n);
 tape_register_end()
 
-tape_register_begin(item_pentamoxate, 23) {
+tape_register_begin(item_pentafimry, 5) {
+    .id = item_pentafimry,
+    .host = item_assembly,
+    .work = 22,
+    .energy = 22,
+    .inputs = 4,
+    .outputs = 1,
+  };
+  tape_register_ix(  0, item_trifimium);
+  tape_register_ix(  1, item_trifimium);
+  tape_register_ix(  2, item_trifimium);
+  tape_register_ix(  3, item_tetrafimalm);
+  tape_register_ix(  4, item_pentafimry);
+tape_register_end()
+
+tape_register_begin(item_pentamoxate, 36) {
     .id = item_pentamoxate,
     .host = item_printer,
     .work = 47,
     .energy = 59,
-    .inputs = 22,
+    .inputs = 35,
     .outputs = 1,
   };
   tape_register_ix(  0, item_tridylate);
-  tape_register_ix(  1, item_duodylium);
-  tape_register_ix(  2, item_elem_m);
-  tape_register_ix(  3, item_elem_m);
+  tape_register_ix(  1, item_duodylchalt_monobarols);
+  tape_register_ix(  2, item_duodylchalt_monobarols);
+  tape_register_ix(  3, item_duarksh);
   tape_register_ix(  4, item_elem_m);
   tape_register_ix(  5, item_elem_m);
-  tape_register_ix(  6, item_elem_m);
-  tape_register_ix(  7, item_elem_m);
-  tape_register_ix(  8, item_elem_m);
-  tape_register_ix(  9, item_elem_m);
-  tape_register_ix( 10, item_elem_m);
+  tape_register_ix(  6, item_duarksh);
+  tape_register_ix(  7, item_duerltor);
+  tape_register_ix(  8, item_duarksh);
+  tape_register_ix(  9, item_duarksh);
+  tape_register_ix( 10, item_duodylchalt_monobarols);
   tape_register_ix( 11, item_elem_m);
   tape_register_ix( 12, item_elem_m);
-  tape_register_ix( 13, item_elem_m);
+  tape_register_ix( 13, item_duerldylon_monochols);
   tape_register_ix( 14, item_elem_m);
-  tape_register_ix( 15, item_duodylitil);
-  tape_register_ix( 16, item_duerltor);
-  tape_register_ix( 17, item_duerldylon_monochols);
-  tape_register_ix( 18, item_elem_m);
-  tape_register_ix( 19, item_elem_m);
-  tape_register_ix( 20, item_duerldylon_monochols);
-  tape_register_ix( 21, item_duerlry);
-  tape_register_ix( 22, item_pentamoxate);
+  tape_register_ix( 15, item_duerldylon_monochols);
+  tape_register_ix( 16, item_elem_m);
+  tape_register_ix( 17, item_elem_m);
+  tape_register_ix( 18, item_duodylchalt_monobarols);
+  tape_register_ix( 19, item_duodylchalt_monobarols);
+  tape_register_ix( 20, item_duodylchalt_monobarols);
+  tape_register_ix( 21, item_duodylchalt_monobarols);
+  tape_register_ix( 22, item_duarksh);
+  tape_register_ix( 23, item_elem_m);
+  tape_register_ix( 24, item_elem_m);
+  tape_register_ix( 25, item_elem_m);
+  tape_register_ix( 26, item_elem_m);
+  tape_register_ix( 27, item_elem_m);
+  tape_register_ix( 28, item_elem_m);
+  tape_register_ix( 29, item_elem_m);
+  tape_register_ix( 30, item_elem_m);
+  tape_register_ix( 31, item_duodylchalt_monobarols);
+  tape_register_ix( 32, item_duodylchalt_monobarols);
+  tape_register_ix( 33, item_tridylate);
+  tape_register_ix( 34, item_duerlry);
+  tape_register_ix( 35, item_pentamoxate);
 tape_register_end()
 
-tape_register_begin(item_pentadylchutor, 6) {
+tape_register_begin(item_pentadylchutor, 4) {
     .id = item_pentadylchutor,
     .host = item_assembly,
-    .work = 9,
-    .energy = 15,
-    .inputs = 5,
+    .work = 13,
+    .energy = 26,
+    .inputs = 3,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_tetradylchols_tribarsh);
-  tape_register_ix(  1, item_tetradylchols_tribarsh);
+  tape_register_ix(  0, item_tetradylgen);
+  tape_register_ix(  1, item_tetradylgen);
   tape_register_ix(  2, item_duodylium);
-  tape_register_ix(  3, item_duodylium);
-  tape_register_ix(  4, item_duodylium);
-  tape_register_ix(  5, item_pentadylchutor);
+  tape_register_ix(  3, item_pentadylchutor);
 tape_register_end()
 
 tape_register_begin(item_pentalofchols, 39) {
@@ -1597,7 +1773,7 @@ tape_register_begin(item_lab, 36) {
     .id = item_lab,
     .host = item_assembly,
     .work = 14,
-    .energy = 20,
+    .energy = 23,
     .inputs = 35,
     .outputs = 1,
   };
@@ -1642,7 +1818,7 @@ tape_register_end()
 tape_register_begin(item_scanner, 13) {
     .id = item_scanner,
     .host = item_assembly,
-    .work = 13,
+    .work = 14,
     .energy = 21,
     .inputs = 12,
     .outputs = 1,
@@ -1820,8 +1996,8 @@ tape_register_end()
 tape_register_begin(item_accelerator, 27) {
     .id = item_accelerator,
     .host = item_assembly,
-    .work = 31,
-    .energy = 24,
+    .work = 32,
+    .energy = 23,
     .inputs = 26,
     .outputs = 1,
   };
@@ -1878,184 +2054,212 @@ tape_register_begin(item_burner, 14) {
   tape_register_ix( 13, item_burner);
 tape_register_end()
 
-tape_register_begin(item_hexamoxchoid_monobary, 8) {
+tape_register_begin(item_hexamoxchoid_monobary, 13) {
     .id = item_hexamoxchoid_monobary,
     .host = item_assembly,
     .work = 50,
     .energy = 87,
-    .inputs = 7,
+    .inputs = 12,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_duerldylon_monochols);
-  tape_register_ix(  1, item_duodylium);
-  tape_register_ix(  2, item_duodylium);
-  tape_register_ix(  3, item_duerldylon_monochols);
-  tape_register_ix(  4, item_duodylium);
-  tape_register_ix(  5, item_pentamoxate);
-  tape_register_ix(  6, item_duerldylon_monochols);
-  tape_register_ix(  7, item_hexamoxchoid_monobary);
+  tape_register_ix(  0, item_pentamoxate);
+  tape_register_ix(  1, item_duodylchalt_monobarols);
+  tape_register_ix(  2, item_duodylchalt_monobarols);
+  tape_register_ix(  3, item_duodylchalt_monobarols);
+  tape_register_ix(  4, item_duodylchalt_monobarols);
+  tape_register_ix(  5, item_duodylchalt_monobarols);
+  tape_register_ix(  6, item_duodylchalt_monobarols);
+  tape_register_ix(  7, item_duodylchalt_monobarols);
+  tape_register_ix(  8, item_duarksh);
+  tape_register_ix(  9, item_duerldylon_monochols);
+  tape_register_ix( 10, item_duerldylon_monochols);
+  tape_register_ix( 11, item_duerldylon_monochols);
+  tape_register_ix( 12, item_hexamoxchoid_monobary);
 tape_register_end()
 
-tape_register_begin(item_hexadylchate_pentabaron, 9) {
+tape_register_begin(item_hexadylchate_pentabaron, 3) {
     .id = item_hexadylchate_pentabaron,
     .host = item_assembly,
-    .work = 13,
-    .energy = 21,
-    .inputs = 8,
+    .work = 20,
+    .energy = 34,
+    .inputs = 2,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_monobarols);
-  tape_register_ix(  1, item_monobarols);
-  tape_register_ix(  2, item_monobarols);
-  tape_register_ix(  3, item_monobarols);
-  tape_register_ix(  4, item_monobarols);
-  tape_register_ix(  5, item_monobarols);
-  tape_register_ix(  6, item_pentadylchutor);
-  tape_register_ix(  7, item_pentadylchutor);
-  tape_register_ix(  8, item_hexadylchate_pentabaron);
+  tape_register_ix(  0, item_pentadylchutor);
+  tape_register_ix(  1, item_pentadylchutor);
+  tape_register_ix(  2, item_hexadylchate_pentabaron);
 tape_register_end()
 
-tape_register_begin(item_legion, 36) {
+tape_register_begin(item_legion, 33) {
     .id = item_legion,
     .host = item_assembly,
-    .work = 14,
-    .energy = 30,
-    .inputs = 35,
+    .work = 30,
+    .energy = 49,
+    .inputs = 32,
     .outputs = 1,
   };
   tape_register_ix(  0, item_memory);
-  tape_register_ix(  1, item_brain);
-  tape_register_ix(  2, item_duodylium);
-  tape_register_ix(  3, item_duodylium);
-  tape_register_ix(  4, item_duodylium);
-  tape_register_ix(  5, item_duodylium);
-  tape_register_ix(  6, item_duodylium);
-  tape_register_ix(  7, item_duodylium);
-  tape_register_ix(  8, item_duodylium);
-  tape_register_ix(  9, item_assembly);
-  tape_register_ix( 10, item_printer);
-  tape_register_ix( 11, item_prober);
-  tape_register_ix( 12, item_worker);
-  tape_register_ix( 13, item_worker);
-  tape_register_ix( 14, item_monochate);
-  tape_register_ix( 15, item_fusion);
-  tape_register_ix( 16, item_monochate);
-  tape_register_ix( 17, item_rod);
-  tape_register_ix( 18, item_assembly);
-  tape_register_ix( 19, item_extract);
+  tape_register_ix(  1, item_monobarex);
+  tape_register_ix(  2, item_monobarex);
+  tape_register_ix(  3, item_monobarex);
+  tape_register_ix(  4, item_monobarex);
+  tape_register_ix(  5, item_deploy);
+  tape_register_ix(  6, item_worker);
+  tape_register_ix(  7, item_tridylarkitil);
+  tape_register_ix(  8, item_prober);
+  tape_register_ix(  9, item_monobarols);
+  tape_register_ix( 10, item_fusion);
+  tape_register_ix( 11, item_printer);
+  tape_register_ix( 12, item_extract);
+  tape_register_ix( 13, item_monobarols);
+  tape_register_ix( 14, item_assembly);
+  tape_register_ix( 15, item_worker);
+  tape_register_ix( 16, item_monobarex);
+  tape_register_ix( 17, item_monobarex);
+  tape_register_ix( 18, item_monobarex);
+  tape_register_ix( 19, item_assembly);
   tape_register_ix( 20, item_extract);
-  tape_register_ix( 21, item_monocharkoid);
-  tape_register_ix( 22, item_monobarols);
-  tape_register_ix( 23, item_hexadylchate_pentabaron);
+  tape_register_ix( 21, item_monobarex);
+  tape_register_ix( 22, item_library);
+  tape_register_ix( 23, item_printer);
   tape_register_ix( 24, item_monobarols);
-  tape_register_ix( 25, item_deploy);
-  tape_register_ix( 26, item_deploy);
-  tape_register_ix( 27, item_printer);
-  tape_register_ix( 28, item_duodylium);
-  tape_register_ix( 29, item_duodylium);
-  tape_register_ix( 30, item_duodylium);
-  tape_register_ix( 31, item_duodylium);
-  tape_register_ix( 32, item_duodylium);
-  tape_register_ix( 33, item_duodylium);
-  tape_register_ix( 34, item_duodylium);
-  tape_register_ix( 35, item_legion);
+  tape_register_ix( 25, item_hexadylchate_pentabaron);
+  tape_register_ix( 26, item_brain);
+  tape_register_ix( 27, item_deploy);
+  tape_register_ix( 28, item_monobarex);
+  tape_register_ix( 29, item_monobarex);
+  tape_register_ix( 30, item_monobarex);
+  tape_register_ix( 31, item_monobarex);
+  tape_register_ix( 32, item_legion);
 tape_register_end()
 
-tape_register_begin(item_collider, 20) {
+tape_register_begin(item_collider, 24) {
     .id = item_collider,
     .host = item_assembly,
-    .work = 42,
-    .energy = 33,
-    .inputs = 19,
+    .work = 43,
+    .energy = 32,
+    .inputs = 23,
     .outputs = 1,
   };
   tape_register_ix(  0, item_trifimbarsh);
   tape_register_ix(  1, item_trifimbarsh);
   tape_register_ix(  2, item_trifimbarsh);
   tape_register_ix(  3, item_trifimbarsh);
-  tape_register_ix(  4, item_tridylarkitil);
-  tape_register_ix(  5, item_trerlchury_duobargen);
+  tape_register_ix(  4, item_tridylgen);
+  tape_register_ix(  5, item_trichubarium);
   tape_register_ix(  6, item_trichubarium);
   tape_register_ix(  7, item_accelerator);
-  tape_register_ix(  8, item_trichubarium);
+  tape_register_ix(  8, item_accelerator);
   tape_register_ix(  9, item_trichubarium);
   tape_register_ix( 10, item_trerlchury_duobargen);
-  tape_register_ix( 11, item_accelerator);
+  tape_register_ix( 11, item_trerlchury_duobargen);
   tape_register_ix( 12, item_trichubarium);
-  tape_register_ix( 13, item_trerlchury_duobargen);
+  tape_register_ix( 13, item_rod);
   tape_register_ix( 14, item_trerlchury_duobargen);
   tape_register_ix( 15, item_trerlchury_duobargen);
   tape_register_ix( 16, item_trerlchury_duobargen);
-  tape_register_ix( 17, item_rod);
-  tape_register_ix( 18, item_trichubarium);
-  tape_register_ix( 19, item_collider);
+  tape_register_ix( 17, item_trerlchury_duobargen);
+  tape_register_ix( 18, item_tridylgen);
+  tape_register_ix( 19, item_tridylgen);
+  tape_register_ix( 20, item_tridylgen);
+  tape_register_ix( 21, item_tridylgen);
+  tape_register_ix( 22, item_trichubarium);
+  tape_register_ix( 23, item_collider);
 tape_register_end()
 
-tape_register_begin(item_packer, 7) {
+tape_register_begin(item_packer, 67) {
     .id = item_packer,
     .host = item_assembly,
     .work = 68,
     .energy = 130,
-    .inputs = 6,
+    .inputs = 66,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_rod);
-  tape_register_ix(  1, item_printer);
-  tape_register_ix(  2, item_deploy);
-  tape_register_ix(  3, item_printer);
-  tape_register_ix(  4, item_hexamoxchoid_monobary);
-  tape_register_ix(  5, item_rod);
-  tape_register_ix(  6, item_packer);
+  tape_register_ix(  0, item_tridylgen);
+  tape_register_ix(  1, item_duodylchalt_monobarols);
+  tape_register_ix(  2, item_duodylchalt_monobarols);
+  tape_register_ix(  3, item_duodylchalt_monobarols);
+  tape_register_ix(  4, item_duodylchalt_monobarols);
+  tape_register_ix(  5, item_duodylchalt_monobarols);
+  tape_register_ix(  6, item_duodylchalt_monobarols);
+  tape_register_ix(  7, item_duodylchalt_monobarols);
+  tape_register_ix(  8, item_duodylchalt_monobarols);
+  tape_register_ix(  9, item_duodylchalt_monobarols);
+  tape_register_ix( 10, item_duodylchalt_monobarols);
+  tape_register_ix( 11, item_duodylchalt_monobarols);
+  tape_register_ix( 12, item_duodylchalt_monobarols);
+  tape_register_ix( 13, item_duodylchalt_monobarols);
+  tape_register_ix( 14, item_duarksh);
+  tape_register_ix( 15, item_duodylchalt_monobarols);
+  tape_register_ix( 16, item_duodylchalt_monobarols);
+  tape_register_ix( 17, item_duodylchalt_monobarols);
+  tape_register_ix( 18, item_duodylchalt_monobarols);
+  tape_register_ix( 19, item_duodylchalt_monobarols);
+  tape_register_ix( 20, item_duodylchalt_monobarols);
+  tape_register_ix( 21, item_duarksh);
+  tape_register_ix( 22, item_duarksh);
+  tape_register_ix( 23, item_duarksh);
+  tape_register_ix( 24, item_duarksh);
+  tape_register_ix( 25, item_duarksh);
+  tape_register_ix( 26, item_duarksh);
+  tape_register_ix( 27, item_duarksh);
+  tape_register_ix( 28, item_duarksh);
+  tape_register_ix( 29, item_duarksh);
+  tape_register_ix( 30, item_duarksh);
+  tape_register_ix( 31, item_duarksh);
+  tape_register_ix( 32, item_duarksh);
+  tape_register_ix( 33, item_duarksh);
+  tape_register_ix( 34, item_duarksh);
+  tape_register_ix( 35, item_duarksh);
+  tape_register_ix( 36, item_duarksh);
+  tape_register_ix( 37, item_duarksh);
+  tape_register_ix( 38, item_duarksh);
+  tape_register_ix( 39, item_duarksh);
+  tape_register_ix( 40, item_duarksh);
+  tape_register_ix( 41, item_duarksh);
+  tape_register_ix( 42, item_duarksh);
+  tape_register_ix( 43, item_duarksh);
+  tape_register_ix( 44, item_duarksh);
+  tape_register_ix( 45, item_duarksh);
+  tape_register_ix( 46, item_duarksh);
+  tape_register_ix( 47, item_duarksh);
+  tape_register_ix( 48, item_duarksh);
+  tape_register_ix( 49, item_duarksh);
+  tape_register_ix( 50, item_duarksh);
+  tape_register_ix( 51, item_duarksh);
+  tape_register_ix( 52, item_duodylchalt_monobarols);
+  tape_register_ix( 53, item_duodylchalt_monobarols);
+  tape_register_ix( 54, item_duodylchalt_monobarols);
+  tape_register_ix( 55, item_duodylchalt_monobarols);
+  tape_register_ix( 56, item_duodylchalt_monobarols);
+  tape_register_ix( 57, item_duodylchalt_monobarols);
+  tape_register_ix( 58, item_duodylchalt_monobarols);
+  tape_register_ix( 59, item_duodylchalt_monobarols);
+  tape_register_ix( 60, item_duodylchalt_monobarols);
+  tape_register_ix( 61, item_duodylchalt_monobarols);
+  tape_register_ix( 62, item_duodylchalt_monobarols);
+  tape_register_ix( 63, item_duodylchalt_monobarols);
+  tape_register_ix( 64, item_duodylchalt_monobarols);
+  tape_register_ix( 65, item_hexamoxchoid_monobary);
+  tape_register_ix( 66, item_packer);
 tape_register_end()
 
-tape_register_begin(item_nomad, 40) {
+tape_register_begin(item_nomad, 8) {
     .id = item_nomad,
     .host = item_assembly,
-    .work = 100,
-    .energy = 135,
-    .inputs = 39,
+    .work = 72,
+    .energy = 174,
+    .inputs = 7,
     .outputs = 1,
   };
-  tape_register_ix(  0, item_monobarols);
-  tape_register_ix(  1, item_monobarols);
-  tape_register_ix(  2, item_monobarols);
-  tape_register_ix(  3, item_monobarols);
-  tape_register_ix(  4, item_monobarols);
-  tape_register_ix(  5, item_monobarols);
-  tape_register_ix(  6, item_monobarols);
-  tape_register_ix(  7, item_monobarols);
-  tape_register_ix(  8, item_monobarols);
-  tape_register_ix(  9, item_monobarols);
-  tape_register_ix( 10, item_trifimate);
-  tape_register_ix( 11, item_trifimate);
-  tape_register_ix( 12, item_trifimate);
-  tape_register_ix( 13, item_trifimate);
-  tape_register_ix( 14, item_monobarols);
-  tape_register_ix( 15, item_monobarols);
-  tape_register_ix( 16, item_trifimate);
-  tape_register_ix( 17, item_monobarols);
-  tape_register_ix( 18, item_monobarols);
-  tape_register_ix( 19, item_monobarols);
-  tape_register_ix( 20, item_monobarols);
-  tape_register_ix( 21, item_packer);
-  tape_register_ix( 22, item_pentamoxate);
-  tape_register_ix( 23, item_monobarols);
-  tape_register_ix( 24, item_monobarols);
-  tape_register_ix( 25, item_monobarols);
-  tape_register_ix( 26, item_monobarols);
-  tape_register_ix( 27, item_monobarols);
-  tape_register_ix( 28, item_monobarols);
-  tape_register_ix( 29, item_monobarols);
-  tape_register_ix( 30, item_monobarols);
-  tape_register_ix( 31, item_monobarols);
-  tape_register_ix( 32, item_monobarols);
-  tape_register_ix( 33, item_monobarols);
-  tape_register_ix( 34, item_monobarols);
-  tape_register_ix( 35, item_monobarols);
-  tape_register_ix( 36, item_monobarols);
-  tape_register_ix( 37, item_monobarols);
-  tape_register_ix( 38, item_monobarols);
-  tape_register_ix( 39, item_nomad);
+  tape_register_ix(  0, item_pentafimry);
+  tape_register_ix(  1, item_pentamoxate);
+  tape_register_ix(  2, item_pentamoxate);
+  tape_register_ix(  3, item_packer);
+  tape_register_ix(  4, item_pentadylchutor);
+  tape_register_ix(  5, item_pentadylchutor);
+  tape_register_ix(  6, item_pentadylchutor);
+  tape_register_ix(  7, item_nomad);
 tape_register_end()
 
 tape_register_begin(item_elem_i, 1) {

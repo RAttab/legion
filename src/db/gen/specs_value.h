@@ -45,6 +45,10 @@ static const uint8_t im_elem_e_lab_bits = 0x6;
 static const im_work im_elem_e_lab_work = 0xa;
 static const im_energy im_elem_e_lab_energy = 0x1;
 
+static const uint8_t im_monochubaride_lab_bits = 0x1;
+static const im_work im_monochubaride_lab_work = 0x12;
+static const im_energy im_monochubaride_lab_energy = 0x2;
+
 static const uint8_t im_monochate_lab_bits = 0xc;
 static const im_work im_monochate_lab_work = 0x10;
 static const im_energy im_monochate_lab_energy = 0x2;
@@ -76,6 +80,14 @@ static const im_energy im_duodylium_lab_energy = 0x2;
 static const uint8_t im_elem_f_lab_bits = 0xd;
 static const im_work im_elem_f_lab_work = 0x1f;
 static const im_energy im_elem_f_lab_energy = 0x5;
+
+static const uint8_t im_duodylchalt_monobarols_lab_bits = 0x2;
+static const im_work im_duodylchalt_monobarols_lab_work = 0x16;
+static const im_energy im_duodylchalt_monobarols_lab_energy = 0x5;
+
+static const uint8_t im_duarksh_lab_bits = 0x2;
+static const im_work im_duarksh_lab_work = 0x23;
+static const im_energy im_duarksh_lab_energy = 0x5;
 
 static const uint8_t im_duerlex_lab_bits = 0xc;
 static const im_work im_duerlex_lab_work = 0x28;
@@ -112,6 +124,14 @@ static const im_energy im_deploy_lab_energy = 0xa;
 static const uint8_t im_rod_lab_bits = 0x2;
 static const im_work im_rod_lab_work = 0x30;
 static const im_energy im_rod_lab_energy = 0x4;
+
+static const uint8_t im_trifimium_lab_bits = 0x12;
+static const im_work im_trifimium_lab_work = 0x2a;
+static const im_energy im_trifimium_lab_energy = 0x9;
+
+static const uint8_t im_tridylgen_lab_bits = 0x3;
+static const im_work im_tridylgen_lab_work = 0x36;
+static const im_energy im_tridylgen_lab_energy = 0x5;
 
 static const uint8_t im_tridylate_lab_bits = 0xf;
 static const im_work im_tridylate_lab_work = 0x2c;
@@ -171,9 +191,13 @@ static const uint8_t im_elem_m_lab_bits = 0x12;
 static const im_work im_elem_m_lab_work = 0x23;
 static const im_energy im_elem_m_lab_energy = 0x12;
 
-static const uint8_t im_tetradylchols_tribarsh_lab_bits = 0x3;
-static const im_work im_tetradylchols_tribarsh_lab_work = 0x35;
-static const im_energy im_tetradylchols_tribarsh_lab_energy = 0x11;
+static const uint8_t im_tetrafimalm_lab_bits = 0x19;
+static const im_work im_tetrafimalm_lab_work = 0x4e;
+static const im_energy im_tetrafimalm_lab_energy = 0x9;
+
+static const uint8_t im_tetradylgen_lab_bits = 0x4;
+static const im_work im_tetradylgen_lab_work = 0x3f;
+static const im_energy im_tetradylgen_lab_energy = 0xa;
 
 static const uint8_t im_tetrafimalt_lab_bits = 0xb;
 static const im_work im_tetrafimalt_lab_work = 0x21;
@@ -191,28 +215,36 @@ static const uint8_t im_tetradylchitil_duobarate_lab_bits = 0x8;
 static const im_work im_tetradylchitil_duobarate_lab_work = 0x20;
 static const im_energy im_tetradylchitil_duobarate_lab_energy = 0x9;
 
-static const uint8_t im_brain_lab_bits = 0x6;
-static const im_work im_brain_lab_work = 0x6c;
-static const im_energy im_brain_lab_energy = 0x27;
+static const uint8_t im_library_lab_bits = 0x6;
+static const im_work im_library_lab_work = 0x6c;
+static const im_energy im_library_lab_energy = 0x27;
 
-static const uint8_t im_prober_lab_bits = 0x6;
-static const im_work im_prober_lab_work = 0x73;
-static const im_energy im_prober_lab_energy = 0x2c;
+static const uint8_t im_brain_lab_bits = 0x4;
+static const im_work im_brain_lab_work = 0x2f;
+static const im_energy im_brain_lab_energy = 0x22;
+
+static const uint8_t im_prober_lab_bits = 0x4;
+static const im_work im_prober_lab_work = 0x54;
+static const im_energy im_prober_lab_energy = 0x27;
 static const im_energy im_prober_work_energy = 0x8;
 
 static const uint8_t im_battery_lab_bits = 0xd;
-static const im_work im_battery_lab_work = 0x6c;
-static const im_energy im_battery_lab_energy = 0x29;
+static const im_work im_battery_lab_work = 0x3f;
+static const im_energy im_battery_lab_energy = 0x2e;
 static const im_energy im_battery_storage_cap = 0x8;
 
-static const uint8_t im_receive_lab_bits = 0xb;
-static const im_work im_receive_lab_work = 0x29;
-static const im_energy im_receive_lab_energy = 0x13;
+static const uint8_t im_receive_lab_bits = 0xe;
+static const im_work im_receive_lab_work = 0x6e;
+static const im_energy im_receive_lab_energy = 0x1e;
 enum { im_receive_buffer_max = 0x1 };
 
-static const uint8_t im_elem_n_lab_bits = 0x12;
-static const im_work im_elem_n_lab_work = 0x6e;
-static const im_energy im_elem_n_lab_energy = 0x1e;
+static const uint8_t im_elem_n_lab_bits = 0xb;
+static const im_work im_elem_n_lab_work = 0x39;
+static const im_energy im_elem_n_lab_energy = 0x12;
+
+static const uint8_t im_pentafimry_lab_bits = 0x19;
+static const im_work im_pentafimry_lab_work = 0x2c;
+static const im_energy im_pentafimry_lab_energy = 0x15;
 
 static const uint8_t im_pentamoxate_lab_bits = 0x10;
 static const im_work im_pentamoxate_lab_work = 0x57;
@@ -300,9 +332,9 @@ static const uint8_t im_packer_lab_bits = 0x1f;
 static const im_work im_packer_lab_work = 0x3f;
 static const im_energy im_packer_lab_energy = 0x48;
 
-static const uint8_t im_nomad_lab_bits = 0x20;
-static const im_work im_nomad_lab_work = 0xa8;
-static const im_energy im_nomad_lab_energy = 0x169;
+static const uint8_t im_nomad_lab_bits = 0x1e;
+static const im_work im_nomad_lab_work = 0x6a;
+static const im_energy im_nomad_lab_energy = 0xea;
 static const uint16_t im_nomad_travel_speed = 0x64;
 enum { im_nomad_memory_len = 0x3 };
 enum { im_nomad_cargo_len = 0xc };

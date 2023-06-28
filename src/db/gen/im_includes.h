@@ -9,6 +9,7 @@
 #include "items/fusion/fusion.h"
 #include "items/lab/lab.h"
 #include "items/legion/legion.h"
+#include "items/library/library.h"
 #include "items/memory/memory.h"
 #include "items/nomad/nomad.h"
 #include "items/packer/packer.h"

@@ -53,6 +53,15 @@ tape_info_register_begin(item_elem_e) { .rank = 1 };
   tape_info_register_elems(item_elem_c, 1);
 tape_info_register_end()
 
+tape_info_register_begin(item_monochubaride) { .rank = 1 };
+  tape_info_register_reqs(item_elem_a);
+  tape_info_register_reqs(item_elem_b);
+  tape_info_register_reqs(item_elem_c);
+  tape_info_register_elems(item_elem_a, 1);
+  tape_info_register_elems(item_elem_b, 1);
+  tape_info_register_elems(item_elem_c, 1);
+tape_info_register_end()
+
 tape_info_register_begin(item_monochate) { .rank = 1 };
   tape_info_register_reqs(item_elem_c);
   tape_info_register_elems(item_elem_c, 32);
@@ -104,6 +113,20 @@ tape_info_register_begin(item_elem_f) { .rank = 2 };
   tape_info_register_elems(item_elem_c, 1);
   tape_info_register_elems(item_elem_d, 1);
   tape_info_register_elems(item_elem_e, 1);
+tape_info_register_end()
+
+tape_info_register_begin(item_duodylchalt_monobarols) { .rank = 2 };
+  tape_info_register_reqs(item_elem_d);
+  tape_info_register_reqs(item_monochubaride);
+  tape_info_register_elems(item_elem_a, 1);
+  tape_info_register_elems(item_elem_b, 3);
+  tape_info_register_elems(item_elem_c, 1);
+  tape_info_register_elems(item_elem_d, 1);
+tape_info_register_end()
+
+tape_info_register_begin(item_duarksh) { .rank = 2 };
+  tape_info_register_reqs(item_elem_a);
+  tape_info_register_elems(item_elem_a, 2);
 tape_info_register_end()
 
 tape_info_register_begin(item_duerlex) { .rank = 2 };
@@ -193,6 +216,24 @@ tape_info_register_begin(item_rod) { .rank = 3 };
   tape_info_register_elems(item_elem_b, 45);
   tape_info_register_elems(item_elem_c, 40);
   tape_info_register_elems(item_elem_d, 16);
+tape_info_register_end()
+
+tape_info_register_begin(item_trifimium) { .rank = 3 };
+  tape_info_register_reqs(item_elem_f);
+  tape_info_register_elems(item_elem_a, 96);
+  tape_info_register_elems(item_elem_b, 64);
+  tape_info_register_elems(item_elem_c, 32);
+  tape_info_register_elems(item_elem_d, 32);
+  tape_info_register_elems(item_elem_e, 32);
+  tape_info_register_elems(item_elem_f, 32);
+tape_info_register_end()
+
+tape_info_register_begin(item_tridylgen) { .rank = 3 };
+  tape_info_register_reqs(item_duodylchalt_monobarols);
+  tape_info_register_elems(item_elem_a, 2);
+  tape_info_register_elems(item_elem_b, 6);
+  tape_info_register_elems(item_elem_c, 2);
+  tape_info_register_elems(item_elem_d, 2);
 tape_info_register_end()
 
 tape_info_register_begin(item_tridylate) { .rank = 3 };
@@ -329,17 +370,24 @@ tape_info_register_begin(item_elem_m) { .rank = 4 };
   tape_info_register_elems(item_elem_f, 10);
 tape_info_register_end()
 
-tape_info_register_begin(item_tetradylchols_tribarsh) { .rank = 4 };
-  tape_info_register_reqs(item_duodylium);
-  tape_info_register_reqs(item_monobararkon);
-  tape_info_register_reqs(item_monobarex);
+tape_info_register_begin(item_tetrafimalm) { .rank = 4 };
   tape_info_register_reqs(item_monobarols);
-  tape_info_register_reqs(item_monocharkoid);
-  tape_info_register_reqs(item_tridylate);
-  tape_info_register_elems(item_elem_a, 27);
-  tape_info_register_elems(item_elem_b, 59);
-  tape_info_register_elems(item_elem_c, 15);
-  tape_info_register_elems(item_elem_d, 19);
+  tape_info_register_reqs(item_trifimium);
+  tape_info_register_elems(item_elem_a, 192);
+  tape_info_register_elems(item_elem_b, 247);
+  tape_info_register_elems(item_elem_c, 64);
+  tape_info_register_elems(item_elem_d, 64);
+  tape_info_register_elems(item_elem_e, 64);
+  tape_info_register_elems(item_elem_f, 64);
+tape_info_register_end()
+
+tape_info_register_begin(item_tetradylgen) { .rank = 4 };
+  tape_info_register_reqs(item_duarksh);
+  tape_info_register_reqs(item_tridylgen);
+  tape_info_register_elems(item_elem_a, 8);
+  tape_info_register_elems(item_elem_b, 12);
+  tape_info_register_elems(item_elem_c, 4);
+  tape_info_register_elems(item_elem_d, 4);
 tape_info_register_end()
 
 tape_info_register_begin(item_tetrafimalt) { .rank = 4 };
@@ -386,6 +434,18 @@ tape_info_register_begin(item_tetradylchitil_duobarate) { .rank = 4 };
   tape_info_register_elems(item_elem_b, 175);
   tape_info_register_elems(item_elem_c, 120);
   tape_info_register_elems(item_elem_d, 36);
+tape_info_register_end()
+
+tape_info_register_begin(item_library) { .rank = 5 };
+  tape_info_register_reqs(item_rod);
+  tape_info_register_reqs(item_memory);
+  tape_info_register_reqs(item_duodylium);
+  tape_info_register_reqs(item_monobarols);
+  tape_info_register_reqs(item_tridylarkitil);
+  tape_info_register_elems(item_elem_a, 231);
+  tape_info_register_elems(item_elem_b, 201);
+  tape_info_register_elems(item_elem_c, 245);
+  tape_info_register_elems(item_elem_d, 56);
 tape_info_register_end()
 
 tape_info_register_begin(item_brain) { .rank = 5 };
@@ -451,29 +511,40 @@ tape_info_register_begin(item_elem_n) { .rank = 5 };
   tape_info_register_elems(item_elem_f, 50);
 tape_info_register_end()
 
+tape_info_register_begin(item_pentafimry) { .rank = 5 };
+  tape_info_register_reqs(item_tetrafimalm);
+  tape_info_register_reqs(item_trifimium);
+  tape_info_register_elems(item_elem_a, 480);
+  tape_info_register_elems(item_elem_b, 439);
+  tape_info_register_elems(item_elem_c, 160);
+  tape_info_register_elems(item_elem_d, 160);
+  tape_info_register_elems(item_elem_e, 160);
+  tape_info_register_elems(item_elem_f, 160);
+tape_info_register_end()
+
 tape_info_register_begin(item_pentamoxate) { .rank = 5 };
   tape_info_register_reqs(item_elem_m);
+  tape_info_register_reqs(item_duarksh);
   tape_info_register_reqs(item_duerldylon_monochols);
   tape_info_register_reqs(item_duerlry);
   tape_info_register_reqs(item_duerltor);
-  tape_info_register_reqs(item_duodylitil);
-  tape_info_register_reqs(item_duodylium);
+  tape_info_register_reqs(item_duodylchalt_monobarols);
   tape_info_register_reqs(item_tridylate);
-  tape_info_register_elems(item_elem_a, 1456);
-  tape_info_register_elems(item_elem_b, 581);
-  tape_info_register_elems(item_elem_c, 554);
-  tape_info_register_elems(item_elem_d, 241);
+  tape_info_register_elems(item_elem_a, 1475);
+  tape_info_register_elems(item_elem_b, 542);
+  tape_info_register_elems(item_elem_c, 558);
+  tape_info_register_elems(item_elem_d, 233);
   tape_info_register_elems(item_elem_e, 459);
   tape_info_register_elems(item_elem_f, 150);
 tape_info_register_end()
 
 tape_info_register_begin(item_pentadylchutor) { .rank = 5 };
   tape_info_register_reqs(item_duodylium);
-  tape_info_register_reqs(item_tetradylchols_tribarsh);
-  tape_info_register_elems(item_elem_a, 54);
-  tape_info_register_elems(item_elem_b, 130);
-  tape_info_register_elems(item_elem_c, 45);
-  tape_info_register_elems(item_elem_d, 44);
+  tape_info_register_reqs(item_tetradylgen);
+  tape_info_register_elems(item_elem_a, 16);
+  tape_info_register_elems(item_elem_b, 28);
+  tape_info_register_elems(item_elem_c, 13);
+  tape_info_register_elems(item_elem_d, 10);
 tape_info_register_end()
 
 tape_info_register_begin(item_pentalofchols) { .rank = 5 };
@@ -633,46 +704,45 @@ tape_info_register_begin(item_burner) { .rank = 6 };
 tape_info_register_end()
 
 tape_info_register_begin(item_hexamoxchoid_monobary) { .rank = 6 };
+  tape_info_register_reqs(item_duarksh);
   tape_info_register_reqs(item_duerldylon_monochols);
-  tape_info_register_reqs(item_duodylium);
+  tape_info_register_reqs(item_duodylchalt_monobarols);
   tape_info_register_reqs(item_pentamoxate);
-  tape_info_register_elems(item_elem_a, 1702);
-  tape_info_register_elems(item_elem_b, 758);
-  tape_info_register_elems(item_elem_c, 737);
-  tape_info_register_elems(item_elem_d, 307);
+  tape_info_register_elems(item_elem_a, 1730);
+  tape_info_register_elems(item_elem_b, 728);
+  tape_info_register_elems(item_elem_c, 733);
+  tape_info_register_elems(item_elem_d, 300);
   tape_info_register_elems(item_elem_e, 522);
   tape_info_register_elems(item_elem_f, 150);
 tape_info_register_end()
 
 tape_info_register_begin(item_hexadylchate_pentabaron) { .rank = 6 };
-  tape_info_register_reqs(item_monobarols);
   tape_info_register_reqs(item_pentadylchutor);
-  tape_info_register_elems(item_elem_a, 108);
-  tape_info_register_elems(item_elem_b, 302);
-  tape_info_register_elems(item_elem_c, 90);
-  tape_info_register_elems(item_elem_d, 88);
+  tape_info_register_elems(item_elem_a, 32);
+  tape_info_register_elems(item_elem_b, 56);
+  tape_info_register_elems(item_elem_c, 26);
+  tape_info_register_elems(item_elem_d, 20);
 tape_info_register_end()
 
 tape_info_register_begin(item_legion) { .rank = 7 };
-  tape_info_register_reqs(item_rod);
   tape_info_register_reqs(item_worker);
   tape_info_register_reqs(item_assembly);
   tape_info_register_reqs(item_brain);
   tape_info_register_reqs(item_deploy);
   tape_info_register_reqs(item_extract);
   tape_info_register_reqs(item_fusion);
+  tape_info_register_reqs(item_library);
   tape_info_register_reqs(item_memory);
   tape_info_register_reqs(item_printer);
   tape_info_register_reqs(item_prober);
-  tape_info_register_reqs(item_duodylium);
   tape_info_register_reqs(item_hexadylchate_pentabaron);
+  tape_info_register_reqs(item_monobarex);
   tape_info_register_reqs(item_monobarols);
-  tape_info_register_reqs(item_monocharkoid);
-  tape_info_register_reqs(item_monochate);
-  tape_info_register_elems(item_elem_a, 1470);
-  tape_info_register_elems(item_elem_b, 1434);
-  tape_info_register_elems(item_elem_c, 1479);
-  tape_info_register_elems(item_elem_d, 412);
+  tape_info_register_reqs(item_tridylarkitil);
+  tape_info_register_elems(item_elem_a, 1652);
+  tape_info_register_elems(item_elem_b, 1327);
+  tape_info_register_elems(item_elem_c, 1516);
+  tape_info_register_elems(item_elem_d, 366);
 tape_info_register_end()
 
 tape_info_register_begin(item_collider) { .rank = 7 };
@@ -680,38 +750,38 @@ tape_info_register_begin(item_collider) { .rank = 7 };
   tape_info_register_reqs(item_rod);
   tape_info_register_reqs(item_trerlchury_duobargen);
   tape_info_register_reqs(item_trichubarium);
-  tape_info_register_reqs(item_tridylarkitil);
+  tape_info_register_reqs(item_tridylgen);
   tape_info_register_reqs(item_trifimbarsh);
-  tape_info_register_elems(item_elem_a, 3858);
-  tape_info_register_elems(item_elem_b, 3366);
-  tape_info_register_elems(item_elem_c, 3296);
+  tape_info_register_elems(item_elem_a, 3864);
+  tape_info_register_elems(item_elem_b, 3376);
+  tape_info_register_elems(item_elem_c, 3271);
   tape_info_register_elems(item_elem_d, 1336);
   tape_info_register_elems(item_elem_e, 780);
   tape_info_register_elems(item_elem_f, 192);
 tape_info_register_end()
 
 tape_info_register_begin(item_packer) { .rank = 7 };
-  tape_info_register_reqs(item_rod);
-  tape_info_register_reqs(item_deploy);
-  tape_info_register_reqs(item_printer);
+  tape_info_register_reqs(item_duarksh);
+  tape_info_register_reqs(item_duodylchalt_monobarols);
   tape_info_register_reqs(item_hexamoxchoid_monobary);
-  tape_info_register_elems(item_elem_a, 1816);
-  tape_info_register_elems(item_elem_b, 858);
-  tape_info_register_elems(item_elem_c, 857);
-  tape_info_register_elems(item_elem_d, 341);
+  tape_info_register_reqs(item_tridylgen);
+  tape_info_register_elems(item_elem_a, 1828);
+  tape_info_register_elems(item_elem_b, 830);
+  tape_info_register_elems(item_elem_c, 767);
+  tape_info_register_elems(item_elem_d, 334);
   tape_info_register_elems(item_elem_e, 522);
   tape_info_register_elems(item_elem_f, 150);
 tape_info_register_end()
 
 tape_info_register_begin(item_nomad) { .rank = 8 };
   tape_info_register_reqs(item_packer);
-  tape_info_register_reqs(item_monobarols);
+  tape_info_register_reqs(item_pentadylchutor);
+  tape_info_register_reqs(item_pentafimry);
   tape_info_register_reqs(item_pentamoxate);
-  tape_info_register_reqs(item_trifimate);
-  tape_info_register_elems(item_elem_a, 5208);
-  tape_info_register_elems(item_elem_b, 2564);
-  tape_info_register_elems(item_elem_c, 2285);
-  tape_info_register_elems(item_elem_d, 983);
+  tape_info_register_elems(item_elem_a, 5306);
+  tape_info_register_elems(item_elem_b, 2437);
+  tape_info_register_elems(item_elem_c, 2082);
+  tape_info_register_elems(item_elem_d, 990);
   tape_info_register_elems(item_elem_e, 1600);
   tape_info_register_elems(item_elem_f, 610);
 tape_info_register_end()

@@ -3,6 +3,7 @@
 
 item_brain,
 item_legion,
+item_library,
 item_memory,
 item_prober,
 item_receive,

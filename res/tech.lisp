@@ -189,6 +189,15 @@
 ;; layer 5
 ;; -----------------------------------------------------------------------------
 
+(library
+ (info (tier 0) (type active) (list control))
+ (tape (layer 5)
+       (in (memory 1))
+       (needs (elem-a 250)
+	      (elem-b 300)
+	      (elem-c 250)
+	      (elem-d 100))))
+
 (brain
  (info (tier 0) (type active) (list control))
  (tape (layer 5)
@@ -353,9 +362,10 @@
 	   (assembly 2)
 	   (deploy 2)
 	   (memory 1)
+	   (library 1)
 	   (brain 1)
 	   (prober 1))
-       (needs (elem-a 1550)
+       (needs (elem-a 1750)
 	      (elem-b 1900)
 	      (elem-c 1550)
 	      (elem-d 500))))
