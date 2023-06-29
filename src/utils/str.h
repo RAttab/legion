@@ -14,6 +14,9 @@
 // str
 // -----------------------------------------------------------------------------
 
+bool str_starts_with(const char *str, const char *prefix);
+bool str_ends_with(const char *str, const char *prefix);
+
 size_t str_utoa(uint64_t val, char *dst, size_t len);
 size_t str_utox(uint64_t val, char *dst, size_t len);
 

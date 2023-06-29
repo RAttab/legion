@@ -10,6 +10,27 @@
 // str
 // -----------------------------------------------------------------------------
 
+bool str_starts_with(const char *str, const char *prefix)
+{
+    for (; *str && *prefix; ++str, ++prefix)
+        if (*str != *prefix)
+            return false;
+    return !*prefix;
+}
+
+bool str_ends_with(const char *str, const char *prefix)
+{
+    size_t str_len = strlen(str);
+    size_t prefix_len = strlen(prefix);
+    if (str_len < prefix_len) return false;
+
+    for (size_t i = 1; i <= prefix_len; ++i)
+        if (str[str_len - i] != prefix[prefix_len - i])
+            return false;
+    return true;
+}
+
+
 size_t str_utoa(uint64_t val, char *dst, size_t len)
 {
     size_t i = 0;

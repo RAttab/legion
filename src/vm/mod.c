@@ -609,6 +609,8 @@ static struct symbol mods_file_symbol(const char *path)
 
 static void mods_file_register(struct mods *mods, const char *path)
 {
+    if (!str_ends_with(path, ".lisp")) return;
+
     struct symbol name = mods_file_symbol(path);
     mod_maj maj = mods_register(mods, user_admin, &name);
     assert(maj);
@@ -617,6 +619,8 @@ static void mods_file_register(struct mods *mods, const char *path)
 static void mods_file_compile(
         struct mods *mods, struct atoms *atoms, const char *path)
 {
+    if (!str_ends_with(path, ".lisp")) return;
+
     struct symbol name = mods_file_symbol(path);
     mod_maj maj = mods_find(mods, &name);
     assert(maj);
