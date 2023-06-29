@@ -441,6 +441,9 @@ static vm_ip lisp_jmp(struct lisp *lisp, const struct token *token)
         ret = htable_xchg(&lisp->symb.req, key, (uintptr_t) new);
     assert(ret.ok);
 
+    // If we're jumping to a function that doesn't exist we need to symbol to
+    // print a proper error message.
+    lisp_pub_symbol(lisp, symbol);
     return 0;
 }
 
@@ -475,17 +478,16 @@ static void lisp_label(struct lisp *lisp, const struct symbol *symbol)
 
 static void lisp_label_unknown(struct lisp *lisp)
 {
-
     for (const struct htable_bucket *it = htable_next(&lisp->symb.req, NULL);
          it; it = htable_next(&lisp->symb.req, it))
     {
         uint64_t key = it->key;
         struct lisp_req *req = (void *) it->value;
 
-        while (req) {
-            struct htable_ret ret = htable_get(&lisp->pub.symb, key);
-            assert(ret.ok);
+        struct htable_ret ret = htable_get(&lisp->pub.symb, key);
+        assert(ret.ok);
 
+        while (req) {
             struct symbol *symbol = (void *) ret.value;
             lisp_err_at(lisp, req->row, req->col, req->len,
                     "unknown function or label: %s (%lx)", symbol->c, it->value);
