@@ -31,7 +31,7 @@ static void *ui_library_alloc(void)
 
     *ui = (struct ui_library) {
         .op = ui_label_new(ui_str_c("op:    ")),
-        .op_val = ui_label_new(ui_str_v(12)),
+        .op_val = ui_label_new(ui_str_v(8)),
 
         .tape = ui_label_new(ui_str_c("tape:  ")),
         .tape_val = ui_link_new(ui_str_v(item_str_len)),
@@ -97,8 +97,8 @@ static void ui_library_update(void *_ui, struct chunk *chunk, im_id id)
         ui->op_val.s.fg = ui_st.rgba.out;
         break;
     }
-    case im_library_req: {
-        ui_str_setc(ui_set(&ui->op_val), "requirements");
+    case im_library_tech: {
+        ui_str_setc(ui_set(&ui->op_val), "tech");
         ui->op_val.s.fg = ui_st.rgba.work;
         break;
     }

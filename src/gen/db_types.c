@@ -24,6 +24,7 @@ enum db_list
 
 struct db_info
 {
+    int8_t layer; // signed to make sorting arithmetics easier in db_gen_items
     enum im_type type;
     enum db_order order;
     enum db_list list;

@@ -32,7 +32,12 @@ static void db_parse_atoms(struct db_state *state, const char *path)
             struct symbol field = reader_symbol(in);
             uint64_t hash = symbol_hash(&field);
 
-            if (hash == symbol_hash_c("type")) {
+            if (hash == symbol_hash_c("layer")) {
+                info->layer = reader_word(in);
+                reader_close(in);
+            }
+
+            else if (hash == symbol_hash_c("type")) {
                 static struct reader_table types[] = {
                     { .str = "nil",       .value = im_type_nil },
                     { .str = "natural",   .value = im_type_natural },

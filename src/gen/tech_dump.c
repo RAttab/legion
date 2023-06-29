@@ -7,8 +7,7 @@
 // lisp
 // -----------------------------------------------------------------------------
 
-static void dump_tape(
-        struct mfile_writer *out, struct tree *tree, struct node *node)
+static struct edges *dump_tape_inputs(struct node *node, struct edges *out)
 {
     struct rng rng = rng_make(node->id);
     struct edges *ins = edges_copy(node->children.edges);
@@ -62,6 +61,29 @@ static void dump_tape(
 
     edges_free(legion_xchg(&ins, NULL));
 
+    if (out) out->len = 0;
+    for (size_t i = 0; true; i++) {
+        if (i == front) i = back;
+        if (i == array_len(tape)) break;
+        out = edges_append(out, tape[i]);
+    }
+    return out;
+}
+
+static void dump_tape_tech(
+        struct tree *tree, struct node *node, struct bits *set)
+{
+    for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
+        struct edge *edge = node->children.edges->vals + i;
+        dump_tape_tech(tree, tree_node(tree, edge->id), set);
+        bits_put(set, edge->id);
+    }
+}
+
+static void dump_tape(
+        struct mfile_writer *out, struct tree *tree, struct node *node)
+{
+
     mfile_write(out, "  (tape");
     struct symbol *host = &node->host.name;
     struct node *n = tree_node(tree, node->host.id);
@@ -71,12 +93,12 @@ static void dump_tape(
 
     // Inputs
     if (edges_len(node->children.edges)) {
-        mfile_write(out, "    (in ");
-        for (size_t i = 0; true; i++) {
-            if (i == front) i = back;
-            if (i == array_len(tape)) break;
+        static struct edges *tape = NULL;
+        tape = dump_tape_inputs(node, tape);
 
-            struct edge *edge = tape + i;
+        mfile_write(out, "    (in ");
+        for (size_t i = 0; i < tape->len; ++i) {
+            struct edge *edge = tape->vals + i;
             struct node *child = tree_node(tree, edge->id);
             mfile_writef(out, "%s(item-%s %u)",
                     i ? "\n        " : "", child->name.c, edge->count);
@@ -102,14 +124,18 @@ static void dump_tape(
 
     mfile_writef(out, "    (info (rank %u)", node_id_layer(node->id));
 
-    // Reqs
+    // Tech
     if (edges_len(node->children.edges)) {
-        mfile_write(out, "\n          (reqs ");
-        for (size_t i = 0; i < edges_len(node->children.edges); ++i) {
-            struct edge *edge = node->children.edges->vals + i;
-            mfile_writef(out, "%s(item-%s %u)",
-                    i ? "\n                " : "",
-                    tree_name(tree, edge->id).c, edge->count);
+        static struct bits tech = {0};
+        bits_clear(&tech);
+        dump_tape_tech(tree, node, &tech);
+
+        mfile_write(out, "\n          (tech ");
+        for (size_t i = 0, id = bits_next(&tech, 0);
+             id < tech.len; ++i, id = bits_next(&tech, id + 1))
+        {
+            mfile_writef(out, "%s(item-%s)",
+                    i ? "\n                " : "", tree_name(tree, id).c);
         }
         mfile_write(out, ")");
     }
@@ -136,8 +162,8 @@ static void dump_lisp_node(
     mfile_writef(out, "(%s\n", node->name.c);
 
     { // info
-        mfile_writef(out, "  (info (tier %u) (type %s)",
-                node->tier, im_type_str(node->type));
+        mfile_writef(out, "  (info (tier %u) (layer %u) (type %s)",
+                node->tier, node_id_layer(node->id), im_type_str(node->type));
 
         if (node->config.len)
             mfile_writef(out, " (config %s)", node->config.c);

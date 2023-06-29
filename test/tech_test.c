@@ -36,8 +36,8 @@ void check_learn_item(struct tech *tech, enum item item)
     const struct tape_info *info = tapes_info(item);
     if (!info) return;
 
-    for (enum item it = tape_set_next(&info->reqs, 0); it;
-         it = tape_set_next(&info->reqs, it))
+    for (enum item it = tape_set_next(&info->tech, 0); it;
+         it = tape_set_next(&info->tech, it))
     {
         if (!tech_learned(tech, it))
             assert(!tech_known(tech, item));

@@ -16,6 +16,8 @@ static void db_gen_items(struct db_state *state)
 
         if (lhs->type != rhs->type) return lhs->type - rhs->type;
         if (lhs->order != rhs->order) return lhs->order - rhs->order;
+        if (!im_type_elem(lhs->type) && lhs->layer != rhs->layer)
+            return lhs->layer - rhs->layer;
         return symbol_cmp(&lhs->name, &rhs->name);
     }
     vec_info_sort_fn(state->info, cmp);
@@ -220,8 +222,8 @@ static void db_gen_tape_info(
     uint8_t rank = 0;
     uint16_t elems[12] = {0};
 
-    static struct bits reqs = {0};
-    bits_clear(&reqs);
+    static struct bits tech = {0};
+    bits_clear(&tech);
 
     while (!reader_peek_close(in)) {
         reader_open(in);
@@ -249,15 +251,14 @@ static void db_gen_tape_info(
             reader_close(in);
         }
 
-        else if (hash == symbol_hash_c("reqs")) {
+        else if (hash == symbol_hash_c("tech")) {
             while (!reader_peek_close(in)) {
                 reader_open(in);
                 struct symbol item = reader_symbol(in);
-                (void) reader_word(in); // count
 
                 uint64_t atom = state_atoms_value(state, &item);
                 assert(atom > 0 && atom < UINT8_MAX);
-                bits_put(&reqs, atom);
+                bits_put(&tech, atom);
 
                 reader_close(in);
             }
@@ -269,11 +270,11 @@ static void db_gen_tape_info(
             "\ntape_info_register_begin(item_%s) { .rank = %u };\n",
             item->c, rank);
 
-    for (size_t value = bits_next(&reqs, 0);
-         value < reqs.len; value = bits_next(&reqs, value + 1))
+    for (size_t value = bits_next(&tech, 0);
+         value < tech.len; value = bits_next(&tech, value + 1))
     {
         db_file_writef(&state->files.tapes_info,
-                "  tape_info_register_reqs(%s);\n",
+                "  tape_info_register_tech(%s);\n",
                 symbol_to_enum(state_atoms_name(state, value)).c);
     }
 

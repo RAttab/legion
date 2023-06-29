@@ -42,7 +42,7 @@
     ;; library
     io-tape-in
     io-tape-out
-    io-tape-req
+    io-tape-tech
     io-tape-host
     io-tape-work
     io-tape-energy
@@ -61,6 +61,7 @@
     ;; scanner / probe
     io-scan
     io-probe
+    io-count
 
     ;; packer nomad
     io-pack

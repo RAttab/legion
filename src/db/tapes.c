@@ -73,8 +73,8 @@ static void populate_tapes_info(void)
         assert(it <= end);                                      \
         *info = (struct tape_info)
 
-#define tape_info_register_reqs(_req) \
-    tape_set_put(&info->reqs, _req)
+#define tape_info_register_tech(_req) \
+    tape_set_put(&info->tech, _req)
 
 #define tape_info_register_elems(_elem, _count) \
     info->elems[_elem] = _count

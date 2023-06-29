@@ -82,6 +82,30 @@ static void im_prober_io_state(
     chunk_io(chunk, io_return, prober->id, src, &value, 1);
 }
 
+static void im_prober_io_count(
+        struct im_prober *prober, struct chunk *chunk, im_id src,
+        const vm_word *args, size_t len)
+{
+    if (!im_check_args(chunk, prober->id, io_count, len, 1)) goto fail;
+
+    enum item item = args[0];
+    if (!item_validate(item)) {
+        chunk_log(chunk, prober->id, io_count, ioe_a0_invalid);
+        goto fail;
+    }
+
+    vm_word ret = legion_max(0, chunk_scan(chunk, prober->item));
+    chunk_io(chunk, io_return, prober->id, src, &ret, 1);
+    return;
+
+  fail:
+    {
+        vm_word fail = 0;
+        chunk_io(chunk, io_return, prober->id, src, &fail, 1);
+    }
+    return;
+}
+
 static void im_prober_io_probe(
         struct im_prober *prober, struct chunk *chunk,
         const vm_word *args, size_t len)
@@ -90,7 +114,7 @@ static void im_prober_io_probe(
 
     enum item item = args[0];
     if (!item_validate(item))
-        return chunk_log(chunk, prober->id, io_scan, ioe_a0_invalid);
+        return chunk_log(chunk, prober->id, io_probe, ioe_a0_invalid);
 
     struct coord coord = coord_nil();
     if (len >= 2) coord = coord_from_u64(args[1]);
@@ -104,7 +128,7 @@ static void im_prober_io_probe(
     uint8_t work = im_prober_work_cap(origin, coord);
     if (work == UINT8_MAX) {
         im_prober_reset(prober);
-        return chunk_log(chunk, prober->id, io_scan, ioe_out_of_range);
+        return chunk_log(chunk, prober->id, io_probe, ioe_out_of_range);
     }
 
     prober->work.cap = prober->work.left = work;
@@ -132,6 +156,7 @@ static void im_prober_io(
     case io_ping: { chunk_io(chunk, io_pong, prober->id, src, NULL, 0); return; }
     case io_state: { im_prober_io_state(prober, chunk, src, args, len); return; }
 
+    case io_count: { im_prober_io_count(prober, chunk, src, args, len); return; }
     case io_probe: { im_prober_io_probe(prober, chunk, args, len); return; }
     case io_value: { im_prober_io_value(prober, chunk, src); return; }
     case io_reset: { im_prober_reset(prober); return; }
@@ -146,6 +171,7 @@ static const struct io_cmd im_prober_io_list[] =
     { io_state, 1, { { "state", true } }},
     { io_reset, 0, {} },
 
+    { io_count, 1, { { "item", true } }},
     { io_probe, 2, { { "item", true },
                      { "coord", false } }},
     { io_value, 0, {} },

@@ -59,8 +59,8 @@ void tech_learn(struct tech *tech, enum item item)
         const struct tape_info *info = tapes_info(it);
         if (!info) continue;
 
-        size_t intersect = tape_set_intersect(&tech->learned, &info->reqs);
-        if (intersect == tape_set_len(&info->reqs)) {
+        size_t intersect = tape_set_intersect(&tech->learned, &info->tech);
+        if (intersect == tape_set_len(&info->tech)) {
             tape_set_put(&tech->known, it);
 
             // We want to unlock elem-o whenever we unlock elem-m. Problem is
@@ -129,8 +129,8 @@ void tech_populate(struct tech *tech)
     tape_set_put(&tech->known, item_rod);
 
     tape_set_put(&tech->known, item_legion);
-    tape_set_union(&tech->known, &tapes_info(item_legion)->reqs);
+    tape_set_union(&tech->known, &tapes_info(item_legion)->tech);
 
     tape_set_put(&tech->known, item_lab);
-    tape_set_union(&tech->known, &tapes_info(item_lab)->reqs);
+    tape_set_union(&tech->known, &tapes_info(item_lab)->tech);
 }

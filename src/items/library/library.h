@@ -21,7 +21,7 @@ enum legion_packed im_library_op
     im_library_nil = 0,
     im_library_in,
     im_library_out,
-    im_library_req,
+    im_library_tech,
 };
 
 struct legion_packed im_library
