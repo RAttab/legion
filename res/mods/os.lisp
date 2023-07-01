@@ -5,20 +5,20 @@
 ;; -----------------------------------------------------------------------------
 
 
-(defconst net-id (id !item-memory 1))
+(defconst net-id (id !item-memory 2))
 (defconst net-parent 0)
 (defconst net-len 1)
 (defconst net-child 2)
 (defconst net-child-cap (- 7 net-child))
 (assert (= (io !io-ping net-id) !io-ok))
 
-(defconst state-id (id !item-memory 2))
+(defconst state-id (id !item-memory 3))
 (defconst state-home 0)
 (defconst state-depth 1)
 (defconst state-exec 2)
 (assert (= (io !io-ping state-id) !io-ok))
 
-(defconst packet-id (id !item-memory 3))
+(defconst packet-id (id !item-memory 4))
 (defconst packet-src 0)
 (defconst packet-len 1)
 (defconst packet-data 2)

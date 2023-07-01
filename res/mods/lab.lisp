@@ -1,113 +1,75 @@
-;; Research all the T0 items.
-;;
-;; Number of active lab is received through the message queue. While
-;; there are easier ways to get it, we need to test that functionality
-;; somewhere and this seems as good a time as any.
+;; Goal of this mod is to research all the tech required by boot. It's
+;; executed in its own brain as research takes a while and so it's
+;; best to run it in parallel with boot.
+
+
+;; -----------------------------------------------------------------------------
+;; Setup
+;; -----------------------------------------------------------------------------
 
 (io !io-recv (self))
 (assert (= (head) 2))
-(assert (= (head) ?lab-count))
-(let ((n (head)))
+(assert (= (head) ?lab-boot))
+(let ((library-id (head)))
 
-  ;; In-order list of all the deploy-tape function calls in boot.lisp
-  ;; plus a few tweaks here and there.
 
-  ;; Extract
-  (lab n !item-elem-a)
-  (lab n !item-elem-b)
-  (lab n !item-elem-c)
-  (lab n !item-elem-d)
+;; -----------------------------------------------------------------------------
+;; Research
+;; -----------------------------------------------------------------------------
 
-  ;; Printers
-  (lab n !item-monobarex)
-  (lab n !item-monarkols)
-  (lab n !item-monobarols)
-  (lab n !item-monochate)
-  (lab n !item-monocharkoid)
-  (lab n !item-monobararkon)
-  (lab n !item-duodylium)
-  (lab n !item-duodylitil)
+  ;; Setup
+  (research !item-extract library-id)
+  (research !item-printer library-id)
+  (research !item-assembly library-id)
+  (research !item-deploy library-id)
+  (research !item-rod library-id)
+  (research !item-fusion library-id)
+  (research !item-worker library-id)
 
-  ;; Workers
-  (lab n !item-printer)
+  ;; Research
+  (research !item-brain library-id)
+  (research !item-memory library-id)
+  (research !item-lab library-id)
+  (research !item-library library-id)
 
-  ;; Assembly
-  (lab n !item-tridylarkitil)
-  (lab n !item-extract)
-  (lab n !item-rod)
-  (lab n !item-duochium)
-  (lab n !item-tridylate)
-  (lab n !item-trichubarium)
-  (lab n !item-tetradylchols-tribarsh)
-  (lab n !item-pentadylchutor)
-  (lab n !item-hexadylchate-pentabaron)
-  (lab n !item-memory)
-  (lab n !item-deploy)
-
-  ;; Condenser
-  (lab n !item-tetradylchitil-duobarate)
-  (lab n !item-pentadylchate)
-  (lab n !item-elem-e)
-  (lab n !item-elem-f)
-
-  ;; Solar
-  (lab n !item-duerltor)
-  (lab n !item-duerldylon-monochols)
-  (lab n !item-trifimbarsh)
-  (lab n !item-solar)
-
-  ;; OS
-  (lab n !item-receive)
-  (lab n !item-trifimate)
-  (lab n !item-tetrafimry)
-  (lab n !item-transmit)
-
-  ;; Legion
-  (lab n !item-fusion)
-  (lab n !item-assembly)
-  (lab n !item-worker)
-  (lab n !item-prober)
-  (lab n !item-legion)
-  (lab n !item-brain)
-  (lab n !item-prober)
-
-  ;; Battery
-  (lab n !item-duerldylon-monochols)
-  (lab n !item-monochury)
-  (lab n !item-trifimbarsh)
-  (lab n !item-duerlry)
-  (lab n !item-trerlchury-duobargen)
-  (lab n !item-storage)
-  (lab n !item-battery)
+  ;; OS & Legion
+  (research !item-condenser library-id)
+  (research !item-solar library-id)
+  (research !item-receive library-id)
+  (research !item-transmit library-id)
+  (research !item-prober library-id)
+  (research !item-scanner library-id)
+  (research !item-legion library-id)
 
   ;; Port
-  (lab n !item-duerlex)
-  (lab n !item-tetrafimalt)
-  (lab n !item-pentafimchex-monobarsh)
-  (lab n !item-tetrerlbargen)
-  (lab n !item-penterltor)
+  (research !item-storage library-id)
+  (research !item-battery library-id)
+  (research !item-port library-id)
+  (research !item-pill library-id)
 
   ;; Collider
-  (lab n !item-accelerator)
-  (lab n !item-elem-m)
-  (lab n !item-elem-n)
-  (lab n !item-elem-l)
-  (lab n !item-pentalofchols)
-  (lab n !item-pill)
+  (research !item-accelerator library-id)
+  (research !item-collider library-id)
+  (research !item-elem-l library-id)
+  (research !item-elem-m library-id)
+  (research !item-elem-n library-id)
+  (research !item-elem-o library-id)
+  (research !item-burner library-id)
 
   ;; Nomad
-  (lab n !item-pentamoxate)
-  (lab n !item-hexamoxchoid-monobary)
-  (lab n !item-packer)
-  (lab n !item-condenser)
-  (lab n !item-transmit)
-  (lab n !item-prober)
-  (lab n !item-port)
-  (lab n !item-elem-g)
-  (lab n !item-elem-h))
+  (research !item-packer library-id)
+  (research !item-nomad library-id))
 
 
-(defun lab (n item)
-  (assert (= (io !io-ping (id !item-lab 1)) !io-ok))
-  (for (id 1) (<= id n) (+ id 1) (io !io-item (id !item-lab id) item))
-  (for (known 0) (not known) (ior !io-item-known (id !item-lab 1) item)))
+;; -----------------------------------------------------------------------------
+;; Utils
+;; -----------------------------------------------------------------------------
+
+(defconst prober-id (id !item-prober 1))
+(defun research (item library-id)
+  (for (req (ior !io-tape-tech library-id item)) req (ior !io-tape-tech library-id item)
+       (when (not (ior !io-tape-learned library-id req))
+	 (io !io-log (self) ?lab-research (pack item req))
+	 (for (id (ior !io-count prober-id !item-lab)) (> id 0) (- id 1)
+	      (io !io-item (id !item-lab id) req))
+	 (while (not (ior !io-tape-learned library-id req))))))
