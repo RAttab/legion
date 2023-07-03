@@ -126,75 +126,6 @@ static void im_lab_io_item(
     lab->work.cap = specs_var_assert(make_spec(item, spec_lab_work));
 }
 
-static void im_lab_io_tape_at(
-        struct im_lab *lab, struct chunk *chunk,
-        im_id src,
-        const vm_word *args, size_t len)
-{
-    if (!im_check_args(chunk, lab->id, io_tape_at, len, 2)) goto fail;
-
-    enum item item = args[0];
-    if (!item_validate(args[0])) {
-        chunk_log(chunk, lab->id, io_tape_at, ioe_a0_invalid);
-        goto fail;
-    }
-
-    if (!im_check_known(chunk, lab->id, io_tape_at, item)) goto fail;
-
-    const struct tape *tape = tapes_get(item);
-    if (!tape) {
-        chunk_log(chunk, lab->id, io_tape_at, ioe_a0_unknown);
-        goto fail;
-    }
-
-    tape_it index = args[1];
-    if (!tape_it_validate(args[1])) {
-        chunk_log(chunk, lab->id, io_tape_at, ioe_a1_invalid);
-        goto fail;
-    }
-
-    vm_word result = 0;
-    struct tape_ret ret = tape_at(tape, index);
-    if (ret.state == tape_input || ret.state == tape_output)
-        result = vm_pack(ret.item, ret.state);
-
-    chunk_io(chunk, io_return, lab->id, src, &result, 1);
-    return;
-
-  fail:
-    {
-        vm_word fail = 0;
-        chunk_io(chunk, io_return, lab->id, src, &fail, 1);
-    }
-    return;
-}
-
-static void im_lab_io_tape_known(
-        struct im_lab *lab, struct chunk *chunk,
-        im_id src,
-        const vm_word *args, size_t len)
-{
-    if (!im_check_args(chunk, lab->id, io_tape_known, len, 1)) goto fail;
-
-    enum item item = args[0];
-    if (!item_validate(args[0])) {
-        chunk_log(chunk, lab->id, io_tape_known, ioe_a0_invalid);
-        goto fail;
-    }
-
-    struct tech *tech = chunk_tech(chunk);
-    vm_word known = tech_known(tech, item) ? 1 : 0;
-    chunk_io(chunk, io_return, lab->id, src, &known, 1);
-    return;
-
-  fail:
-    {
-        vm_word fail = 0;
-        chunk_io(chunk, io_return, lab->id, src, &fail, 1);
-    }
-    return;
-}
-
 static void im_lab_io_item_bits(
         struct im_lab *lab, struct chunk *chunk,
         im_id src,
@@ -258,12 +189,9 @@ static void im_lab_io(
     {
     case io_ping: { chunk_io(chunk, io_pong, lab->id, src, NULL, 0); return; }
     case io_state: { im_lab_io_state(lab, chunk, src, args, len); return; }
-
-    case io_item: { im_lab_io_item(lab, chunk, args, len); return; }
     case io_reset: { im_lab_reset(lab, chunk); return; }
 
-    case io_tape_at: { im_lab_io_tape_at(lab, chunk, src, args, len); return; }
-    case io_tape_known: { im_lab_io_tape_known(lab, chunk, src, args, len); return; }
+    case io_item: { im_lab_io_item(lab, chunk, args, len); return; }
     case io_item_bits: { im_lab_io_item_bits(lab, chunk, src, args, len); return; }
     case io_item_known: { im_lab_io_item_known(lab, chunk, src, args, len); return; }
 
@@ -278,11 +206,6 @@ static const struct io_cmd im_lab_io_list[] =
     { io_reset,      0, {} },
 
     { io_item,       1, { { "item", true } }},
-
-    { io_tape_at,    2, { { "item", true },
-                          { "index", true } }},
-    { io_tape_known, 1, { { "item", true } }},
-
     { io_item_bits,  1, { { "item", true } }},
     { io_item_known, 1, { { "item", true } }},
 };

@@ -46,10 +46,10 @@
     io-tape-host
     io-tape-work
     io-tape-energy
+    io-tape-known
+    io-tape-learned
 
     ;; lab
-    io-tape-at
-    io-tape-known
     io-item-bits
     io-item-known
 

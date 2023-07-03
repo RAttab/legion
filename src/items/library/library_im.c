@@ -300,6 +300,32 @@ static void im_library_io_tape_known(
     return;
 }
 
+static void im_library_io_tape_learned(
+        struct im_library *library, struct chunk *chunk,
+        im_id src,
+        const vm_word *args, size_t len)
+{
+    if (!im_check_args(chunk, library->id, io_tape_learned, len, 1)) goto fail;
+
+    enum item item = args[0];
+    if (!item_validate(args[0])) {
+        chunk_log(chunk, library->id, io_tape_learned, ioe_a0_invalid);
+        goto fail;
+    }
+
+    struct tech *tech = chunk_tech(chunk);
+    vm_word learned = tech_learned(tech, item) ? 1 : 0;
+    chunk_io(chunk, io_return, library->id, src, &learned, 1);
+    return;
+
+  fail:
+    {
+        vm_word fail = 0;
+        chunk_io(chunk, io_return, library->id, src, &fail, 1);
+    }
+    return;
+}
+
 
 // -----------------------------------------------------------------------------
 // IO - Setup
@@ -325,6 +351,7 @@ static void im_library_io(
     case io_tape_work: { im_library_io_tape_work(library, chunk, src, args, len); return; }
     case io_tape_energy: { im_library_io_tape_energy(library, chunk, src, args, len); return; }
     case io_tape_known: { im_library_io_tape_known(library, chunk, src, args, len); return; }
+    case io_tape_learned: { im_library_io_tape_learned(library, chunk, src, args, len); return; }
 
     default: { return; }
     }
@@ -336,11 +363,12 @@ static const struct io_cmd im_library_io_list[] =
     { io_state, 1, { { "state", true } }},
     { io_reset, 0, {} },
 
-    { io_tape_in,   1,   { { "tape", true } }},
-    { io_tape_out,  1,   { { "tape", true } }},
-    { io_tape_tech,  1,  { { "tape", true } }},
-    { io_tape_host, 1,   { { "tape", true } }},
-    { io_tape_work, 1,   { { "tape", true } }},
-    { io_tape_energy, 1, { { "tape", true } }},
-    { io_tape_known, 1,  { { "tape", true } }},
+    { io_tape_in,   1,    { { "tape", true } }},
+    { io_tape_out,  1,    { { "tape", true } }},
+    { io_tape_tech,  1,   { { "tape", true } }},
+    { io_tape_host, 1,    { { "tape", true } }},
+    { io_tape_work, 1,    { { "tape", true } }},
+    { io_tape_energy, 1,  { { "tape", true } }},
+    { io_tape_known, 1,   { { "tape", true } }},
+    { io_tape_learned, 1, { { "tape", true } }},
 };
