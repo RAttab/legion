@@ -19,7 +19,7 @@ const struct tape *tapes_get(enum item id);
 struct legion_packed tape_info
 {
     uint8_t rank;
-    struct tape_set tech;
+    struct tape_set tech, inputs;
     uint32_t elems[items_natural_last];
 };
 const struct tape_info *tapes_info(enum item id);

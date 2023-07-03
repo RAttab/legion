@@ -73,6 +73,9 @@ static void populate_tapes_info(void)
         assert(it <= end);                                      \
         *info = (struct tape_info)
 
+#define tape_info_register_inputs(_req) \
+    tape_set_put(&info->inputs, _req)
+
 #define tape_info_register_tech(_req) \
     tape_set_put(&info->tech, _req)
 

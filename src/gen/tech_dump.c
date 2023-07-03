@@ -153,6 +153,19 @@ static void dump_tape(
         mfile_write(out, ")");
     }
 
+    // Inputs
+    if (edges_len(node->children.edges)) {
+        mfile_write(out, "\n          (inputs ");
+        struct bits *inputs = &node->children.set;
+        for (size_t i = 0, id = bits_next(inputs, 0);
+             id < inputs->len; ++i, id = bits_next(inputs, id + 1))
+        {
+            mfile_writef(out, "%s(item-%s)",
+                    i ? "\n                  " : "", tree_name(tree, id).c);
+        }
+        mfile_write(out, ")");
+    }
+
     mfile_write(out, "))\n");
 }
 

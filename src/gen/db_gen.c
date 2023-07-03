@@ -224,6 +224,8 @@ static void db_gen_tape_info(
 
     static struct bits tech = {0};
     bits_clear(&tech);
+    static struct bits inputs = {0};
+    bits_clear(&inputs);
 
     while (!reader_peek_close(in)) {
         reader_open(in);
@@ -264,6 +266,20 @@ static void db_gen_tape_info(
             }
             reader_close(in);
         }
+
+        else if (hash == symbol_hash_c("inputs")) {
+            while (!reader_peek_close(in)) {
+                reader_open(in);
+                struct symbol item = reader_symbol(in);
+
+                uint64_t atom = state_atoms_value(state, &item);
+                assert(atom > 0 && atom < UINT8_MAX);
+                bits_put(&inputs, atom);
+
+                reader_close(in);
+            }
+            reader_close(in);
+        }
     }
 
     db_file_writef(&state->files.tapes_info,
@@ -283,6 +299,14 @@ static void db_gen_tape_info(
         db_file_writef(&state->files.tapes_info,
                 "  tape_info_register_elems(%s, %u);\n",
                 symbol_to_enum(state_atoms_name(state, i)).c, elems[i]);
+    }
+
+    for (size_t value = bits_next(&inputs, 0);
+         value < tech.len; value = bits_next(&inputs, value + 1))
+    {
+        db_file_writef(&state->files.tapes_info,
+                "  tape_info_register_inputs(%s);\n",
+                symbol_to_enum(state_atoms_name(state, value)).c);
     }
 
     db_file_write(&state->files.tapes_info, "tape_info_register_end()\n");

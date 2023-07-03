@@ -131,7 +131,7 @@ static void ui_tapes_update_cat(
         if (!config) continue;
 
         const struct tape_info *info = tapes_info(it);
-        if (!info) continue;
+        if (!info || info->rank >= 14) continue;
 
         const struct tape *tape = tapes_get(it);
         if (!tape) continue;
@@ -139,9 +139,9 @@ static void ui_tapes_update_cat(
         if (!tech_known(tech, tape_host(tape))) continue;
 
         if (!tech_known(tech, it)) {
-            struct tape_set reqs = info->tech;
+            struct tape_set inputs = info->inputs;
             struct tape_set known = tech_known_list(tech);
-            if (tape_set_intersect(&known, &reqs) != tape_set_len(&reqs))
+            if (tape_set_intersect(&known, &inputs) != tape_set_len(&inputs))
                 continue;
         }
 
