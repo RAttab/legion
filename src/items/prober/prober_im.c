@@ -94,7 +94,7 @@ static void im_prober_io_count(
         goto fail;
     }
 
-    vm_word ret = legion_max(0, chunk_scan(chunk, prober->item));
+    vm_word ret = legion_max(0, chunk_scan(chunk, item));
     chunk_io(chunk, io_return, prober->id, src, &ret, 1);
     return;
 
