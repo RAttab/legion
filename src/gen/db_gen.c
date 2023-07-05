@@ -302,7 +302,7 @@ static void db_gen_tape_info(
     }
 
     for (size_t value = bits_next(&inputs, 0);
-         value < tech.len; value = bits_next(&inputs, value + 1))
+         value < inputs.len; value = bits_next(&inputs, value + 1))
     {
         db_file_writef(&state->files.tapes_info,
                 "  tape_info_register_inputs(%s);\n",

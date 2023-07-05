@@ -130,12 +130,14 @@ static void dump_tape(
         bits_clear(&tech);
         dump_tape_tech(tree, node, &tech);
 
-        mfile_write(out, "\n          (tech ");
+        mfile_writef(out, "\n          (tech (item-%s)",
+                tree_name(tree, node->host.id).c);
+
         for (size_t i = 0, id = bits_next(&tech, 0);
              id < tech.len; ++i, id = bits_next(&tech, id + 1))
         {
-            mfile_writef(out, "%s(item-%s)",
-                    i ? "\n                " : "", tree_name(tree, id).c);
+            mfile_writef(out, "\n                (item-%s)",
+                    tree_name(tree, id).c);
         }
         mfile_write(out, ")");
     }

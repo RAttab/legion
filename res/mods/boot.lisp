@@ -93,12 +93,9 @@
 
 ;; OS
 (progn
-  ;; Condenser
+  ;; Condenser - Required to be able to unlock e & f
   (deploy-requirements !item-condenser)
-  (deploy-requirements !item-elem-e)
-  (deploy-tape !item-elem-e 2)
-  (deploy-requirements !item-elem-f)
-  (deploy-tape !item-elem-f 2)
+  (deploy-tape !item-condenser 2)
 
   ;; Energy - Solar
   (let ((energy-per (specs !spec-solar-energy (ior !io-count prober-id !item-energy))))
