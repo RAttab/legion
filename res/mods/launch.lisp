@@ -31,18 +31,15 @@
 	 (os.net-child star))))))
 
 
-(defconst min-energy 2000)
-(defconst min-solid 15000)
-(defconst min-gas 2000)
 (defun check-star (star)
   (if (> (count star !item-brain) 0) 0
-    (if (< (count star !item-elem-a) min-solid) 0
-      (if (< (count star !item-elem-b) min-solid) 0
-	(if (< (count star !item-elem-c) min-solid) 0
-	  (if (< (count star !item-elem-d) min-solid) 0
-	    (if (< (count star !item-elem-e) min-gas) 0
-	      (if (< (count star !item-elem-f) min-gas) 0
-		(if (< (count star !item-energy) min-energy) 0
+    (if (< (count star !item-elem-a) 40000) 0
+      (if (< (count star !item-elem-b) 40000) 0
+	(if (< (count star !item-elem-c) 40000) 0
+	  (if (< (count star !item-elem-d) 30000) 0
+	    (if (< (count star !item-elem-e) 20000) 0
+	      (if (< (count star !item-elem-f) 20000) 0
+		(if (< (count star !item-energy) 10000) 0
 		  1)))))))))
 
 

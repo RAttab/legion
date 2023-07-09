@@ -114,11 +114,16 @@
 (when (<= (os.depth) max-depth)
   (deploy-item !item-brain 1)
 
+  ;; We do it the hard way to avoid race conditions with lab.lisp
+  (deploy-requirements !item-prober)
+  (deploy-tape !item-prober)
   (deploy-item !item-prober 1)
   (assert (= (ior !io-count prober-id !item-prober) 2))
 
+  (deploy-requirements !item-scanner)
+  (deploy-tape !item-scanner)
   (deploy-item !item-scanner 1)
-  (assert (= (ior !io-count prober-id !item-scanner) 2))
+  (assert (= (ior !io-count prober-id !item-scanner) 1))
 
   (io !io-mod (last-id !item-brain) (mod launch.2))
 

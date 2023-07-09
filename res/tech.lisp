@@ -56,7 +56,7 @@
 (elem-e
  (info (tier 1) (type natural) (syllable erl))
  (tape (layer 1) (host condenser) (work 8) (energy 4)
-       (in (elem-a 3) (elem-c 1))))
+       (in (elem-a 2) (elem-c 1))))
 
 ;; -----------------------------------------------------------------------------
 ;; layer 2
@@ -107,10 +107,10 @@
 (rod
  (info (tier 0) (type logistics))
  (tape (layer 3)
-       (needs (elem-a 50)
-	      (elem-b 60)
-	      (elem-c 40)
-	      (elem-d 20))))
+       (needs (elem-a 25)
+	      (elem-b 30)
+	      (elem-c 20)
+	      (elem-d 10))))
 
 ;; -----------------------------------------------------------------------------
 ;; layer 4
@@ -130,48 +130,48 @@
 	(energy-rod energy 4096)
 	(energy-cap energy 65536))
  (tape (layer 4)
-       (needs (elem-a 80)
-	      (elem-b 160)
-	      (elem-c 80)
-	      (elem-d 50))))
+       (needs (elem-a 40)
+	      (elem-b 80)
+	      (elem-c 40)
+	      (elem-d 25))))
 
 (worker
  (info (tier 0) (type logistics))
  (tape (layer 4)
-       (needs (elem-a 80)
-	      (elem-b 80)
-	      (elem-c 100)
-	      (elem-d 20))))
+       (needs (elem-a 40)
+	      (elem-b 40)
+	      (elem-c 50)
+	      (elem-d 10))))
 
 (memory
  (info (tier 0) (type active) (list control))
  (tape (layer 4)
-       (needs (elem-a 200)
-	      (elem-b 20)
-	      (elem-c 80))))
+       (needs (elem-a 100)
+	      (elem-b 50)
+	      (elem-c 40))))
 
 (storage
  (info (tier 1) (type active) (list factory))
  (specs (max u16 4096))
  (tape (layer 4)
        (needs
-	(elem-a 300)
-	(elem-b 100)
-	(elem-c 200)
-	(elem-d 20)
-	(elem-e 50))))
+	(elem-a 150)
+	(elem-b 50)
+	(elem-c 100)
+	(elem-d 10)
+	(elem-e 25))))
 
 (solar
  (info (tier 1) (type logistics))
  (specs (energy-div energy 4096) (energy fn))
  (tape (layer 4)
        (needs
-	(elem-a 600)
-	(elem-b 400)
-	(elem-c 200)
-	(elem-d 90)
-	(elem-e 100)
-	(elem-f 50))))
+	(elem-a 300)
+	(elem-b 200)
+	(elem-c 100)
+	(elem-d 45)
+	(elem-e 50)
+	(elem-f 25))))
 
 (elem-l
  (info (tier 2) (type synth) (syllable lof))
@@ -193,29 +193,29 @@
  (info (tier 0) (type active) (list control))
  (tape (layer 5)
        (in (memory 1))
-       (needs (elem-a 250)
-	      (elem-b 300)
-	      (elem-c 250)
-	      (elem-d 100))))
+       (needs (elem-a 125)
+	      (elem-b 150)
+	      (elem-c 125)
+	      (elem-d 50))))
 
 (brain
  (info (tier 0) (type active) (list control))
  (tape (layer 5)
        (in (memory 1))
-       (needs (elem-a 250)
-	      (elem-b 300)
-	      (elem-c 250)
-	      (elem-d 100))))
+       (needs (elem-a 125)
+	      (elem-b 150)
+	      (elem-c 125)
+	      (elem-d 50))))
 
 (prober
  (info (tier 0) (type active) (list control))
  (specs (work-energy energy 8) (work-cap fn))
  (tape (layer 5)
        (in (memory 2))
-       (needs (elem-a 500)
-	      (elem-b 450)
-	      (elem-c 350)
-	      (elem-d 150))))
+       (needs (elem-a 250)
+	      (elem-b 300)
+	      (elem-c 175)
+	      (elem-d 75))))
 
 (battery
  (info (tier 1) (type logistics))
@@ -223,12 +223,12 @@
  (tape (layer 5)
        (in (storage 1))
        (needs
-	(elem-a 1000)
-	(elem-b 580)
-	(elem-c 700)
-	(elem-d 150)
-	(elem-e 180)
-	(elem-f 80))))
+	(elem-a 500)
+	(elem-b 290)
+	(elem-c 350)
+	(elem-d 75)
+	(elem-e 90)
+	(elem-f 40))))
 
 (receive
  (info (tier 1) (type active) (list control))
@@ -236,11 +236,11 @@
  (tape (layer 5)
        (in (memory 2))
        (needs
-	(elem-a 800)
-	(elem-b 600)
-	(elem-c 300)
-	(elem-d 180)
-	(elem-e 90))))
+	(elem-a 400)
+	(elem-b 300)
+	(elem-c 250)
+	(elem-d 90)
+	(elem-e 45))))
 
 (elem-n
  (info (tier 2) (type synth) (syllable nuk))
@@ -256,10 +256,10 @@
  (info (tier 0) (type active) (list factory))
  (tape (layer 6)
        (in (brain 1))
-       (needs (elem-a 1000)
-	      (elem-b 1500)
-	      (elem-c 800)
-	      (elem-d 400))))
+       (needs (elem-a 500)
+	      (elem-b 750)
+	      (elem-c 400)
+	      (elem-d 200))))
 
 (scanner
  (info (tier 0) (type active) (list control))
@@ -267,30 +267,30 @@
  (tape (layer 6)
        (in (prober 2)
 	   (brain 1))
-       (needs (elem-a 1400)
-	      (elem-b 1350)
-	      (elem-c 1100)
-	      (elem-d 450))))
+       (needs (elem-a 700)
+	      (elem-b 900)
+	      (elem-c 550)
+	      (elem-d 225))))
 
 (condenser
  (info (tier 1) (type active) (list factory) (config extract))
  (tape (layer 6)
        (in (extract 10))
-       (needs (elem-a 800)
-	      (elem-b 500)
-	      (elem-c 500)
-	      (elem-d 50))))
+       (needs (elem-a 400)
+	      (elem-b 250)
+	      (elem-c 250)
+	      (elem-d 25))))
 
 (pill
  (info (tier 1) (type logistics))
  (tape (layer 6)
        (in (storage 1))
        (needs
-	(elem-a 700)
-	(elem-b 550)
-	(elem-c 400)
-	(elem-d 100)
-	(elem-e 100))))
+	(elem-a 350)
+	(elem-b 275)
+	(elem-c 200)
+	(elem-d 50)
+	(elem-e 50))))
 
 (transmit
  (info (tier 1) (type active) (list control))
@@ -299,12 +299,12 @@
  (tape (layer 6)
        (in (receive 1))
        (needs
-	(elem-a 1200)
-	(elem-b 900)
-	(elem-c 700)
-	(elem-d 250)
-	(elem-e 150)
-	(elem-f 50))))
+	(elem-a 600)
+	(elem-b 450)
+	(elem-c 350)
+	(elem-d 125)
+	(elem-e 75)
+	(elem-f 25))))
 
 (port
  (info (tier 1) (type active) (list factory))
@@ -316,12 +316,12 @@
 	(worker 2)
 	(storage 2))
        (needs
-	(elem-a 1760)
-	(elem-b 1140)
-	(elem-c 1000)
-	(elem-d 320)
-	(elem-e 300)
-	(elem-f 100))))
+	(elem-a 880)
+	(elem-b 570)
+	(elem-c 500)
+	(elem-d 160)
+	(elem-e 150)
+	(elem-f 50))))
 
 (accelerator
  (info (tier 2) (type logistics))
@@ -365,10 +365,10 @@
 	   (library 1)
 	   (brain 1)
 	   (prober 1))
-       (needs (elem-a 1750)
-	      (elem-b 1900)
-	      (elem-c 1550)
-	      (elem-d 500))))
+       (needs (elem-a 1100)
+	      (elem-b 1350)
+	      (elem-c 1050)
+	      (elem-d 250))))
 
 (collider
  (info (tier 2) (type active) (list factory))

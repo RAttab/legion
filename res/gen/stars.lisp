@@ -12,8 +12,8 @@
  (rolls
   (one !item-energy 30000)
   (one !item-elem-k 100)
-  (all-of !item-elem-a !item-elem-d 60000)
-  (all-of !item-elem-e !item-elem-f 30000)))
+  (all-of !item-elem-a !item-elem-c 60000)
+  (all-of !item-elem-d !item-elem-f 30000)))
 
 (nomad-elem-common
  (hue 180)
