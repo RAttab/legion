@@ -47,7 +47,7 @@ static void cursor_init(void)
     };
 
     char path[PATH_MAX];
-    sys_path_res("cursor.bmp", path, sizeof(path));
+    sys_path_res("img/cursor.bmp", path, sizeof(path));
 
     SDL_Surface *surface = sdl_ptr(SDL_LoadBMP(path));
     render.cursor.tex = sdl_ptr(SDL_CreateTextureFromSurface(render.renderer, surface));

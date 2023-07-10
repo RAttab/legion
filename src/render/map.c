@@ -65,7 +65,7 @@ struct map *map_new(void)
     };
 
     char path[PATH_MAX];
-    sys_path_res("map.bmp", path, sizeof(path));
+    sys_path_res("img/map.bmp", path, sizeof(path));
 
     SDL_Surface *bmp = sdl_ptr(SDL_LoadBMP(path));
     map->tex = sdl_ptr(SDL_CreateTextureFromSurface(render.renderer, bmp));

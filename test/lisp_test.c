@@ -304,19 +304,6 @@ bool check_file(const char *path)
     return ok;
 }
 
-bool check_dir(const char *path)
-{
-    struct dir_it *it = dir_it(path);
-
-    bool ok = true;
-    while (dir_it_next(it))
-        ok = check_file(dir_it_path(it)) && ok;
-
-    dir_it_free(it);
-
-    return ok;
-}
-
 
 // -----------------------------------------------------------------------------
 // main
@@ -324,9 +311,15 @@ bool check_dir(const char *path)
 
 int main(int argc, char **argv)
 {
-    sys_populate_tests();
+    (void) argc, (void) argv;
 
-    char path[PATH_MAX];
-    snprintf(path, sizeof(path), "%s/test/lisp", argc > 1 ? argv[1] : ".");
-    return check_dir(path) ? 0 : 1;
+    sys_populate_tests();
+    struct dir_it *it = dir_it("./test/lisp");
+
+    bool ok = true;
+    while (dir_it_next(it))
+        ok = check_file(dir_it_path(it)) && ok;
+
+    dir_it_free(it);
+    return ok ? 0 : 1;
 }

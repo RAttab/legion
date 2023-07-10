@@ -10,8 +10,16 @@
 
 PREFIX ?= build
 
-RES := man mods font gen cursor.bmp map.bmp
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
+
+RES := font/*.otf gen/*.lisp img/*.bmp mods/*.lisp
+RES := $(RES) man/*.lm
+RES := $(RES) man/asm/*.lm
+RES := $(RES) man/concepts/*.lm
+RES := $(RES) man/guides/*.lm
+RES := $(RES) man/items/*.lm
+RES := $(RES) man/lisp/*.lm
+RES := $(RES) man/sys/*.lm
 
 OBJECTS_LEGION = common items ui render game vm utils db
 OBJECTS_GEN = gen common utils
@@ -87,6 +95,19 @@ gen: $(PREFIX)/gen gen-tech gen-db
 
 
 # -----------------------------------------------------------------------------
+# res
+# -----------------------------------------------------------------------------
+
+$(PREFIX)/res/%: res/%
+	@echo -e "\e[32m[res]\e[0m $@"
+	@mkdir -p $(dir $@)
+	@cp -r $< $@
+
+.PHONY: res
+res: $(foreach res,$(RES),$(foreach path,$(wildcard res/$(res)),$(PREFIX)/$(path)))
+
+
+# -----------------------------------------------------------------------------
 # legion
 # -----------------------------------------------------------------------------
 
@@ -100,7 +121,7 @@ $(PREFIX)/legion: $(PREFIX)/obj/legion-main.o $(PREFIX)/obj/legion.o $(PREFIX)/l
 
 legion: $(PREFIX)/legion
 
-run: $(PREFIX)/legion
+run: $(PREFIX)/legion res
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
 
@@ -120,14 +141,14 @@ $(PREFIX)/test/%: $(PREFIX)/obj/test-%.o $(PREFIX)/liblegion.a
 	@echo -e "\e[32m[build]\e[0m $@"
 	@$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
-test-%: $(PREFIX)/test/%
+test-%: $(PREFIX)/test/% res
 	@echo -e "\e[32m[test]\e[0m $@"
-	@$^
+	@$< $(PREFIX)
 
 .PHONY: test
 test: $(foreach test,$(TEST),test-$(test))
 
-valgrind-%: $(PREFIX)/test/%
+valgrind-%: $(PREFIX)/test/% res
 	@echo -e "\e[32m[test]\e[0m $@"
 	@valgrind \
 	        --quiet \
@@ -136,21 +157,7 @@ valgrind-%: $(PREFIX)/test/%
 	        --trace-children=yes \
 	        --error-exitcode=1 \
 	        --suppressions=legion.supp \
-		$^
+		$<
 
 .PHONY: valgrind
 valgrind: $(foreach test,$(TEST),valgrind-$(test))
-
-
-# -----------------------------------------------------------------------------
-# res
-# -----------------------------------------------------------------------------
-
-$(shell mkdir -p $(PREFIX)/res/)
-
-$(PREFIX)/res/%: res/%
-	@echo -e "\e[32m[res]\e[0m $@"
-	@cp -r $< $@
-
-.PHONY: res
-res: $(foreach res,$(RES),$(PREFIX)/res/$(res))
