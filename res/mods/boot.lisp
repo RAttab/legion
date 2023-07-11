@@ -44,9 +44,10 @@
   (io !io-tape (id !item-extract 2) !item-elem-b)
   (io !io-tape (id !item-printer 1) !item-monobarex)
   (io !io-tape (id !item-printer 2) !item-monobararkon)
-  (deploy-tape !item-elem-b 2)
-  (deploy-tape !item-elem-c 2)
-  (deploy-tape !item-elem-d 2)
+  (deploy-tape !item-elem-a 2)
+  (deploy-tape !item-elem-b 4)
+  (deploy-tape !item-elem-c 4)
+  (deploy-tape !item-elem-d 4)
   (io !io-tape (id !item-extract 2) !item-elem-a)
 
   ;; Passives
@@ -116,12 +117,12 @@
 
   ;; We do it the hard way to avoid race conditions with lab.lisp
   (deploy-requirements !item-prober)
-  (deploy-tape !item-prober)
+  (deploy-tape !item-prober 2)
   (deploy-item !item-prober 1)
   (assert (= (ior !io-count prober-id !item-prober) 2))
 
   (deploy-requirements !item-scanner)
-  (deploy-tape !item-scanner)
+  (deploy-tape !item-scanner 2)
   (deploy-item !item-scanner 1)
   (assert (= (ior !io-count prober-id !item-scanner) 1))
 
@@ -268,6 +269,7 @@
 	     (io !io-set tech-memory-id tech-index value))))))
 
 (defun deploy-item (item n)
+  (assert n)
   (deploy-requirements item)
 
   (while (not (ior !io-tape-known library-id item)))
@@ -279,6 +281,7 @@
 
 
 (defun deploy-tape (item n)
+  (assert n)
   (while (not (ior !io-tape-known library-id item)))
 
   (let ((host (ior !io-tape-host library-id item)))

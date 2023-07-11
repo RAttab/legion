@@ -36,9 +36,9 @@
     (if (< (count star !item-elem-a) 40000) 0
       (if (< (count star !item-elem-b) 40000) 0
 	(if (< (count star !item-elem-c) 40000) 0
-	  (if (< (count star !item-elem-d) 30000) 0
-	    (if (< (count star !item-elem-e) 20000) 0
-	      (if (< (count star !item-elem-f) 20000) 0
+	  (if (< (count star !item-elem-d) 15000) 0
+	    (if (< (count star !item-elem-e) 15000) 0
+	      (if (< (count star !item-elem-f) 15000) 0
 		(if (< (count star !item-energy) 10000) 0
 		  1)))))))))
 
