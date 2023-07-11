@@ -261,7 +261,8 @@ static const struct io_cmd im_collider_io_list[] =
     { io_reset, 0, {} },
 
     { io_grow, 0, {} },
-    { io_tape, 1, { { "tape", true } }},
+    { io_tape, 2, { { "tape", true },
+                    { "loops", false } }},
 };
 
 

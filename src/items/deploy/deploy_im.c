@@ -125,7 +125,8 @@ static const struct io_cmd im_deploy_io_list[] =
     { io_ping,  0, {} },
     { io_state, 1, { { "state", true } }},
     { io_reset, 0, {} },
-    { io_item,  1, { { "item", true } }},
+    { io_item,  2, { { "item", true },
+                     { "loops", false } }},
 };
 
 

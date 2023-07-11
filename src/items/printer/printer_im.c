@@ -178,7 +178,8 @@ static const struct io_cmd im_printer_io_list[] =
     { io_ping,  0, {} },
     { io_state, 1, { { "state", true } }},
     { io_reset, 0, {} },
-    { io_tape,  1, { { "tape", true } }},
+    { io_tape,  2, { { "tape", true },
+                     { "loops", false } }},
 };
 
 
