@@ -203,14 +203,9 @@ static void active_grow(struct active *active)
         return;
     }
 
-    active->cap *= 2;
-    active->arena = reallocarray(active->arena, active->cap, active->size);
-    active->ports = reallocarray(active->ports, active->cap, sizeof(active->ports[0]));
-
-    size_t added = active->cap - active->len;
-    memset(active->arena + (active->len * active->size), 0, added * active->size);
-    memset(active->ports + active->len, 0, added * sizeof(active->ports[0]));
-
+    active->cap = u8_saturate_add(active->cap, active->cap);
+    active->arena = realloc_zero(active->arena, active->len, active->cap, active->size);
+    active->ports = realloc_zero(active->ports, active->len, active->cap, sizeof(active->ports[0]));
     bits_grow(&active->free, active->cap);
 }
 

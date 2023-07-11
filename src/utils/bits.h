@@ -52,6 +52,12 @@ inline size_t align_cache(size_t sz)
     return sz ? ((((sz - 1) >> 6) + 1) << 6) : 0;
 }
 
+inline uint8_t u8_saturate_add(uint64_t val, uint64_t add)
+{
+    val += add;
+    return val > UINT8_MAX ? UINT8_MAX : val;
+}
+
 inline uint16_t u16_saturate_add(uint64_t val, uint64_t add)
 {
     val += add;
