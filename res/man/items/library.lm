@@ -1,0 +1,28 @@
+{@ITEMS/LIBRARY}
+{!item-library}
+
+{=SYNOPSIS}
+
+{=SPECS}
+
+{>atom} {_!item-library}
+
+{>id} {$!item-library}
+
+{<}
+
+{=IO}
+{-io-ping}
+{-io-state}
+{-io-reset}
+{-io-tape-in}
+{-io-tape-out}
+{-io-tape-tech}
+{-io-tape-host}
+{-io-tape-work}
+{-io-tape-energy}
+{-io-tape-known}
+{-io-tape-learned}
+
+{=RELATED}
+{n}{\tape\item-library}

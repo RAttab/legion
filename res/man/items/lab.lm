@@ -14,10 +14,8 @@
 {=IO}
 {-io-ping}
 {-io-state}
-{-io-item}
 {-io-reset}
-{-io-tape-at}
-{-io-tape-known}
+{-io-item}
 {-io-item-bits}
 {-io-item-known}
 
