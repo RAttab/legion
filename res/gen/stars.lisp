@@ -22,7 +22,7 @@
   (one !item-energy 10000)
   (one !item-elem-k 100)
   (rng !item-elem-a !item-elem-j 1000)
-  (one-of !item-elem-g !item-elem-h 65000)))
+  (one-of !item-elem-g !item-elem-h 60000)))
 
 (nomad-elem-rare
  (hue 120)
@@ -37,5 +37,5 @@
  (hue 60)
  (weight 150)
  (rolls
-  (one !item-elem-k 65000)
-  (one !item-energy 65000)))
+  (one !item-elem-k 60000)
+  (one !item-energy 60000)))

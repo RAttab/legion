@@ -63,7 +63,7 @@
   ;; Logistics
   (deploy-requirements !item-rod)
   (deploy-tape !item-rod 2)
-  (deploy-item !item-fusion 2)
+  (deploy-item !item-fusion 5)
   (deploy-item !item-worker 18))
 
 
@@ -89,7 +89,12 @@
 
   (let ((lab-brain-id (last-id !item-brain)))
     (io !io-send lab-brain-id ?lab-boot (last-id !item-library))
-    (io !io-mod lab-brain-id (mod lab.2))))
+    (io !io-mod lab-brain-id (mod lab.2)))
+
+  ;; Host tapes
+  (deploy-tape !item-extract 2)
+  (deploy-tape !item-printer 2)
+  (deploy-tape !item-assembly 2))
 
 
 ;; OS
@@ -101,6 +106,10 @@
   ;; Energy - Solar
   (let ((energy-per (specs !spec-solar-energy (ior !io-count prober-id !item-energy))))
     (deploy-item !item-solar (+ (/ energy-target energy-per) 1)))
+
+  ;; Will be needed to research transmit so having a dedicated tape
+  ;; avoids a race-condition between lab and deploy-item.
+  (deploy-tape !item-receive 1)
 
   ;; Parent network - won't be used in homeworld but still needed to
   ;; make the ids align.
@@ -140,6 +149,9 @@
 (progn
   (deploy-requirements !item-storage)
   (deploy-tape !item-storage 2)
+  (deploy-requirements !item-battery)
+  (deploy-tape !item-battery 2)
+
   (deploy-item !item-battery 8)
   (deploy-item !item-port port-elem-count)
 

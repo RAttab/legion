@@ -45,17 +45,25 @@ spec_register_var(spec_elem_e_lab_bits, "spec-elem-e-lab-bits", im_elem_e_lab_bi
 spec_register_var(spec_elem_e_lab_work, "spec-elem-e-lab-work", im_elem_e_lab_work);
 spec_register_var(spec_elem_e_lab_energy, "spec-elem-e-lab-energy", im_elem_e_lab_energy);
 
+spec_register_var(spec_monarkoid_lab_bits, "spec-monarkoid-lab-bits", im_monarkoid_lab_bits);
+spec_register_var(spec_monarkoid_lab_work, "spec-monarkoid-lab-work", im_monarkoid_lab_work);
+spec_register_var(spec_monarkoid_lab_energy, "spec-monarkoid-lab-energy", im_monarkoid_lab_energy);
+
+spec_register_var(spec_monochubaride_lab_bits, "spec-monochubaride-lab-bits", im_monochubaride_lab_bits);
+spec_register_var(spec_monochubaride_lab_work, "spec-monochubaride-lab-work", im_monochubaride_lab_work);
+spec_register_var(spec_monochubaride_lab_energy, "spec-monochubaride-lab-energy", im_monochubaride_lab_energy);
+
+spec_register_var(spec_monarkate_lab_bits, "spec-monarkate-lab-bits", im_monarkate_lab_bits);
+spec_register_var(spec_monarkate_lab_work, "spec-monarkate-lab-work", im_monarkate_lab_work);
+spec_register_var(spec_monarkate_lab_energy, "spec-monarkate-lab-energy", im_monarkate_lab_energy);
+
 spec_register_var(spec_monarkry_lab_bits, "spec-monarkry-lab-bits", im_monarkry_lab_bits);
 spec_register_var(spec_monarkry_lab_work, "spec-monarkry-lab-work", im_monarkry_lab_work);
 spec_register_var(spec_monarkry_lab_energy, "spec-monarkry-lab-energy", im_monarkry_lab_energy);
 
-spec_register_var(spec_monobaron_lab_bits, "spec-monobaron-lab-bits", im_monobaron_lab_bits);
-spec_register_var(spec_monobaron_lab_work, "spec-monobaron-lab-work", im_monobaron_lab_work);
-spec_register_var(spec_monobaron_lab_energy, "spec-monobaron-lab-energy", im_monobaron_lab_energy);
-
-spec_register_var(spec_monarkols_lab_bits, "spec-monarkols-lab-bits", im_monarkols_lab_bits);
-spec_register_var(spec_monarkols_lab_work, "spec-monarkols-lab-work", im_monarkols_lab_work);
-spec_register_var(spec_monarkols_lab_energy, "spec-monarkols-lab-energy", im_monarkols_lab_energy);
+spec_register_var(spec_monobaroid_lab_bits, "spec-monobaroid-lab-bits", im_monobaroid_lab_bits);
+spec_register_var(spec_monobaroid_lab_work, "spec-monobaroid-lab-work", im_monobaroid_lab_work);
+spec_register_var(spec_monobaroid_lab_energy, "spec-monobaroid-lab-energy", im_monobaroid_lab_energy);
 
 spec_register_var(spec_monobarols_lab_bits, "spec-monobarols-lab-bits", im_monobarols_lab_bits);
 spec_register_var(spec_monobarols_lab_work, "spec-monobarols-lab-work", im_monobarols_lab_work);
@@ -77,33 +85,29 @@ spec_register_var(spec_elem_f_lab_bits, "spec-elem-f-lab-bits", im_elem_f_lab_bi
 spec_register_var(spec_elem_f_lab_work, "spec-elem-f-lab-work", im_elem_f_lab_work);
 spec_register_var(spec_elem_f_lab_energy, "spec-elem-f-lab-energy", im_elem_f_lab_energy);
 
-spec_register_var(spec_duodylbaralt_lab_bits, "spec-duodylbaralt-lab-bits", im_duodylbaralt_lab_bits);
-spec_register_var(spec_duodylbaralt_lab_work, "spec-duodylbaralt-lab-work", im_duodylbaralt_lab_work);
-spec_register_var(spec_duodylbaralt_lab_energy, "spec-duodylbaralt-lab-energy", im_duodylbaralt_lab_energy);
+spec_register_var(spec_duerltor_lab_bits, "spec-duerltor-lab-bits", im_duerltor_lab_bits);
+spec_register_var(spec_duerltor_lab_work, "spec-duerltor-lab-work", im_duerltor_lab_work);
+spec_register_var(spec_duerltor_lab_energy, "spec-duerltor-lab-energy", im_duerltor_lab_energy);
 
-spec_register_var(spec_duarkium_lab_bits, "spec-duarkium-lab-bits", im_duarkium_lab_bits);
-spec_register_var(spec_duarkium_lab_work, "spec-duarkium-lab-work", im_duarkium_lab_work);
-spec_register_var(spec_duarkium_lab_energy, "spec-duarkium-lab-energy", im_duarkium_lab_energy);
-
-spec_register_var(spec_duodyloid_lab_bits, "spec-duodyloid-lab-bits", im_duodyloid_lab_bits);
-spec_register_var(spec_duodyloid_lab_work, "spec-duodyloid-lab-work", im_duodyloid_lab_work);
-spec_register_var(spec_duodyloid_lab_energy, "spec-duodyloid-lab-energy", im_duodyloid_lab_energy);
+spec_register_var(spec_duodylchols_monobaralt_lab_bits, "spec-duodylchols-monobaralt-lab-bits", im_duodylchols_monobaralt_lab_bits);
+spec_register_var(spec_duodylchols_monobaralt_lab_work, "spec-duodylchols-monobaralt-lab-work", im_duodylchols_monobaralt_lab_work);
+spec_register_var(spec_duodylchols_monobaralt_lab_energy, "spec-duodylchols-monobaralt-lab-energy", im_duodylchols_monobaralt_lab_energy);
 
 spec_register_var(spec_duodyltor_lab_bits, "spec-duodyltor-lab-bits", im_duodyltor_lab_bits);
 spec_register_var(spec_duodyltor_lab_work, "spec-duodyltor-lab-work", im_duodyltor_lab_work);
 spec_register_var(spec_duodyltor_lab_energy, "spec-duodyltor-lab-energy", im_duodyltor_lab_energy);
 
-spec_register_var(spec_duodylide_lab_bits, "spec-duodylide-lab-bits", im_duodylide_lab_bits);
-spec_register_var(spec_duodylide_lab_work, "spec-duodylide-lab-work", im_duodylide_lab_work);
-spec_register_var(spec_duodylide_lab_energy, "spec-duodylide-lab-energy", im_duodylide_lab_energy);
+spec_register_var(spec_duerldylols_monobarate_lab_bits, "spec-duerldylols-monobarate-lab-bits", im_duerldylols_monobarate_lab_bits);
+spec_register_var(spec_duerldylols_monobarate_lab_work, "spec-duerldylols-monobarate-lab-work", im_duerldylols_monobarate_lab_work);
+spec_register_var(spec_duerldylols_monobarate_lab_energy, "spec-duerldylols-monobarate-lab-energy", im_duerldylols_monobarate_lab_energy);
 
-spec_register_var(spec_duerldylon_monochols_lab_bits, "spec-duerldylon-monochols-lab-bits", im_duerldylon_monochols_lab_bits);
-spec_register_var(spec_duerldylon_monochols_lab_work, "spec-duerldylon-monochols-lab-work", im_duerldylon_monochols_lab_work);
-spec_register_var(spec_duerldylon_monochols_lab_energy, "spec-duerldylon-monochols-lab-energy", im_duerldylon_monochols_lab_energy);
+spec_register_var(spec_duochubarols_lab_bits, "spec-duochubarols-lab-bits", im_duochubarols_lab_bits);
+spec_register_var(spec_duochubarols_lab_work, "spec-duochubarols-lab-work", im_duochubarols_lab_work);
+spec_register_var(spec_duochubarols_lab_energy, "spec-duochubarols-lab-energy", im_duochubarols_lab_energy);
 
-spec_register_var(spec_duochubaralt_lab_bits, "spec-duochubaralt-lab-bits", im_duochubaralt_lab_bits);
-spec_register_var(spec_duochubaralt_lab_work, "spec-duochubaralt-lab-work", im_duochubaralt_lab_work);
-spec_register_var(spec_duochubaralt_lab_energy, "spec-duochubaralt-lab-energy", im_duochubaralt_lab_energy);
+spec_register_var(spec_duodylbaralt_lab_bits, "spec-duodylbaralt-lab-bits", im_duodylbaralt_lab_bits);
+spec_register_var(spec_duodylbaralt_lab_work, "spec-duodylbaralt-lab-work", im_duodylbaralt_lab_work);
+spec_register_var(spec_duodylbaralt_lab_energy, "spec-duodylbaralt-lab-energy", im_duodylbaralt_lab_energy);
 
 spec_register_var(spec_tridylarkitil_lab_bits, "spec-tridylarkitil-lab-bits", im_tridylarkitil_lab_bits);
 spec_register_var(spec_tridylarkitil_lab_work, "spec-tridylarkitil-lab-work", im_tridylarkitil_lab_work);
@@ -117,9 +121,13 @@ spec_register_var(spec_rod_lab_bits, "spec-rod-lab-bits", im_rod_lab_bits);
 spec_register_var(spec_rod_lab_work, "spec-rod-lab-work", im_rod_lab_work);
 spec_register_var(spec_rod_lab_energy, "spec-rod-lab-energy", im_rod_lab_energy);
 
-spec_register_var(spec_tridylbarsh_lab_bits, "spec-tridylbarsh-lab-bits", im_tridylbarsh_lab_bits);
-spec_register_var(spec_tridylbarsh_lab_work, "spec-tridylbarsh-lab-work", im_tridylbarsh_lab_work);
-spec_register_var(spec_tridylbarsh_lab_energy, "spec-tridylbarsh-lab-energy", im_tridylbarsh_lab_energy);
+spec_register_var(spec_tridylium_lab_bits, "spec-tridylium-lab-bits", im_tridylium_lab_bits);
+spec_register_var(spec_tridylium_lab_work, "spec-tridylium-lab-work", im_tridylium_lab_work);
+spec_register_var(spec_tridylium_lab_energy, "spec-tridylium-lab-energy", im_tridylium_lab_energy);
+
+spec_register_var(spec_trifimsh_lab_bits, "spec-trifimsh-lab-bits", im_trifimsh_lab_bits);
+spec_register_var(spec_trifimsh_lab_work, "spec-trifimsh-lab-work", im_trifimsh_lab_work);
+spec_register_var(spec_trifimsh_lab_energy, "spec-trifimsh-lab-energy", im_trifimsh_lab_energy);
 
 spec_register_var(spec_trifimex_lab_bits, "spec-trifimex-lab-bits", im_trifimex_lab_bits);
 spec_register_var(spec_trifimex_lab_work, "spec-trifimex-lab-work", im_trifimex_lab_work);
@@ -180,21 +188,17 @@ spec_register_var(spec_elem_m_lab_bits, "spec-elem-m-lab-bits", im_elem_m_lab_bi
 spec_register_var(spec_elem_m_lab_work, "spec-elem-m-lab-work", im_elem_m_lab_work);
 spec_register_var(spec_elem_m_lab_energy, "spec-elem-m-lab-energy", im_elem_m_lab_energy);
 
-spec_register_var(spec_tetradylitil_lab_bits, "spec-tetradylitil-lab-bits", im_tetradylitil_lab_bits);
-spec_register_var(spec_tetradylitil_lab_work, "spec-tetradylitil-lab-work", im_tetradylitil_lab_work);
-spec_register_var(spec_tetradylitil_lab_energy, "spec-tetradylitil-lab-energy", im_tetradylitil_lab_energy);
+spec_register_var(spec_tetradylbary_lab_bits, "spec-tetradylbary-lab-bits", im_tetradylbary_lab_bits);
+spec_register_var(spec_tetradylbary_lab_work, "spec-tetradylbary-lab-work", im_tetradylbary_lab_work);
+spec_register_var(spec_tetradylbary_lab_energy, "spec-tetradylbary-lab-energy", im_tetradylbary_lab_energy);
 
-spec_register_var(spec_tetrafimols_lab_bits, "spec-tetrafimols-lab-bits", im_tetrafimols_lab_bits);
-spec_register_var(spec_tetrafimols_lab_work, "spec-tetrafimols-lab-work", im_tetrafimols_lab_work);
-spec_register_var(spec_tetrafimols_lab_energy, "spec-tetrafimols-lab-energy", im_tetrafimols_lab_energy);
+spec_register_var(spec_tetrafimry_lab_bits, "spec-tetrafimry-lab-bits", im_tetrafimry_lab_bits);
+spec_register_var(spec_tetrafimry_lab_work, "spec-tetrafimry-lab-work", im_tetrafimry_lab_work);
+spec_register_var(spec_tetrafimry_lab_energy, "spec-tetrafimry-lab-energy", im_tetrafimry_lab_energy);
 
-spec_register_var(spec_tetrerloid_lab_bits, "spec-tetrerloid-lab-bits", im_tetrerloid_lab_bits);
-spec_register_var(spec_tetrerloid_lab_work, "spec-tetrerloid-lab-work", im_tetrerloid_lab_work);
-spec_register_var(spec_tetrerloid_lab_energy, "spec-tetrerloid-lab-energy", im_tetrerloid_lab_energy);
-
-spec_register_var(spec_tetradylchitil_duobarate_lab_bits, "spec-tetradylchitil-duobarate-lab-bits", im_tetradylchitil_duobarate_lab_bits);
-spec_register_var(spec_tetradylchitil_duobarate_lab_work, "spec-tetradylchitil-duobarate-lab-work", im_tetradylchitil_duobarate_lab_work);
-spec_register_var(spec_tetradylchitil_duobarate_lab_energy, "spec-tetradylchitil-duobarate-lab-energy", im_tetradylchitil_duobarate_lab_energy);
+spec_register_var(spec_tetrerlry_lab_bits, "spec-tetrerlry-lab-bits", im_tetrerlry_lab_bits);
+spec_register_var(spec_tetrerlry_lab_work, "spec-tetrerlry-lab-work", im_tetrerlry_lab_work);
+spec_register_var(spec_tetrerlry_lab_energy, "spec-tetrerlry-lab-energy", im_tetrerlry_lab_energy);
 
 spec_register_var(spec_library_lab_bits, "spec-library-lab-bits", im_library_lab_bits);
 spec_register_var(spec_library_lab_work, "spec-library-lab-work", im_library_lab_work);
@@ -224,29 +228,25 @@ spec_register_var(spec_elem_n_lab_bits, "spec-elem-n-lab-bits", im_elem_n_lab_bi
 spec_register_var(spec_elem_n_lab_work, "spec-elem-n-lab-work", im_elem_n_lab_work);
 spec_register_var(spec_elem_n_lab_energy, "spec-elem-n-lab-energy", im_elem_n_lab_energy);
 
-spec_register_var(spec_pentamoxate_lab_bits, "spec-pentamoxate-lab-bits", im_pentamoxate_lab_bits);
-spec_register_var(spec_pentamoxate_lab_work, "spec-pentamoxate-lab-work", im_pentamoxate_lab_work);
-spec_register_var(spec_pentamoxate_lab_energy, "spec-pentamoxate-lab-energy", im_pentamoxate_lab_energy);
+spec_register_var(spec_pentamoxchate_lab_bits, "spec-pentamoxchate-lab-bits", im_pentamoxchate_lab_bits);
+spec_register_var(spec_pentamoxchate_lab_work, "spec-pentamoxchate-lab-work", im_pentamoxchate_lab_work);
+spec_register_var(spec_pentamoxchate_lab_energy, "spec-pentamoxchate-lab-energy", im_pentamoxchate_lab_energy);
 
-spec_register_var(spec_pentadylchutor_lab_bits, "spec-pentadylchutor-lab-bits", im_pentadylchutor_lab_bits);
-spec_register_var(spec_pentadylchutor_lab_work, "spec-pentadylchutor-lab-work", im_pentadylchutor_lab_work);
-spec_register_var(spec_pentadylchutor_lab_energy, "spec-pentadylchutor-lab-energy", im_pentadylchutor_lab_energy);
+spec_register_var(spec_pentadylbarate_lab_bits, "spec-pentadylbarate-lab-bits", im_pentadylbarate_lab_bits);
+spec_register_var(spec_pentadylbarate_lab_work, "spec-pentadylbarate-lab-work", im_pentadylbarate_lab_work);
+spec_register_var(spec_pentadylbarate_lab_energy, "spec-pentadylbarate-lab-energy", im_pentadylbarate_lab_energy);
 
-spec_register_var(spec_pentalofchols_lab_bits, "spec-pentalofchols-lab-bits", im_pentalofchols_lab_bits);
-spec_register_var(spec_pentalofchols_lab_work, "spec-pentalofchols-lab-work", im_pentalofchols_lab_work);
-spec_register_var(spec_pentalofchols_lab_energy, "spec-pentalofchols-lab-energy", im_pentalofchols_lab_energy);
+spec_register_var(spec_pentalofbaralm_lab_bits, "spec-pentalofbaralm-lab-bits", im_pentalofbaralm_lab_bits);
+spec_register_var(spec_pentalofbaralm_lab_work, "spec-pentalofbaralm-lab-work", im_pentalofbaralm_lab_work);
+spec_register_var(spec_pentalofbaralm_lab_energy, "spec-pentalofbaralm-lab-energy", im_pentalofbaralm_lab_energy);
 
-spec_register_var(spec_pentafimdylalm_tetrachu_lab_bits, "spec-pentafimdylalm-tetrachu-lab-bits", im_pentafimdylalm_tetrachu_lab_bits);
-spec_register_var(spec_pentafimdylalm_tetrachu_lab_work, "spec-pentafimdylalm-tetrachu-lab-work", im_pentafimdylalm_tetrachu_lab_work);
-spec_register_var(spec_pentafimdylalm_tetrachu_lab_energy, "spec-pentafimdylalm-tetrachu-lab-energy", im_pentafimdylalm_tetrachu_lab_energy);
+spec_register_var(spec_pentafimerlalm_duobarols_lab_bits, "spec-pentafimerlalm-duobarols-lab-bits", im_pentafimerlalm_duobarols_lab_bits);
+spec_register_var(spec_pentafimerlalm_duobarols_lab_work, "spec-pentafimerlalm-duobarols-lab-work", im_pentafimerlalm_duobarols_lab_work);
+spec_register_var(spec_pentafimerlalm_duobarols_lab_energy, "spec-pentafimerlalm-duobarols-lab-energy", im_pentafimerlalm_duobarols_lab_energy);
 
-spec_register_var(spec_penterltor_lab_bits, "spec-penterltor-lab-bits", im_penterltor_lab_bits);
-spec_register_var(spec_penterltor_lab_work, "spec-penterltor-lab-work", im_penterltor_lab_work);
-spec_register_var(spec_penterltor_lab_energy, "spec-penterltor-lab-energy", im_penterltor_lab_energy);
-
-spec_register_var(spec_pentadylchate_lab_bits, "spec-pentadylchate-lab-bits", im_pentadylchate_lab_bits);
-spec_register_var(spec_pentadylchate_lab_work, "spec-pentadylchate-lab-work", im_pentadylchate_lab_work);
-spec_register_var(spec_pentadylchate_lab_energy, "spec-pentadylchate-lab-energy", im_pentadylchate_lab_energy);
+spec_register_var(spec_penterlols_lab_bits, "spec-penterlols-lab-bits", im_penterlols_lab_bits);
+spec_register_var(spec_penterlols_lab_work, "spec-penterlols-lab-work", im_penterlols_lab_work);
+spec_register_var(spec_penterlols_lab_energy, "spec-penterlols-lab-energy", im_penterlols_lab_energy);
 
 spec_register_var(spec_lab_lab_bits, "spec-lab-lab-bits", im_lab_lab_bits);
 spec_register_var(spec_lab_lab_work, "spec-lab-lab-work", im_lab_lab_work);
@@ -289,9 +289,9 @@ spec_register_var(spec_burner_lab_energy, "spec-burner-lab-energy", im_burner_la
 spec_register_fn(spec_burner_energy, "spec-burner-energy", spec_burner_energy_fn);
 spec_register_fn(spec_burner_work_cap, "spec-burner-work-cap", spec_burner_work_cap_fn);
 
-spec_register_var(spec_hexamoxchoid_monobary_lab_bits, "spec-hexamoxchoid-monobary-lab-bits", im_hexamoxchoid_monobary_lab_bits);
-spec_register_var(spec_hexamoxchoid_monobary_lab_work, "spec-hexamoxchoid-monobary-lab-work", im_hexamoxchoid_monobary_lab_work);
-spec_register_var(spec_hexamoxchoid_monobary_lab_energy, "spec-hexamoxchoid-monobary-lab-energy", im_hexamoxchoid_monobary_lab_energy);
+spec_register_var(spec_hexamoxex_lab_bits, "spec-hexamoxex-lab-bits", im_hexamoxex_lab_bits);
+spec_register_var(spec_hexamoxex_lab_work, "spec-hexamoxex-lab-work", im_hexamoxex_lab_work);
+spec_register_var(spec_hexamoxex_lab_energy, "spec-hexamoxex-lab-energy", im_hexamoxex_lab_energy);
 
 spec_register_var(spec_hexadylchate_pentabaron_lab_bits, "spec-hexadylchate-pentabaron-lab-bits", im_hexadylchate_pentabaron_lab_bits);
 spec_register_var(spec_hexadylchate_pentabaron_lab_work, "spec-hexadylchate-pentabaron-lab-work", im_hexadylchate_pentabaron_lab_work);

@@ -33,13 +33,13 @@
 
 (defun check-star (star)
   (if (> (count star !item-brain) 0) 0
-    (if (< (count star !item-elem-a) 40000) 0
-      (if (< (count star !item-elem-b) 40000) 0
-	(if (< (count star !item-elem-c) 40000) 0
-	  (if (< (count star !item-elem-d) 15000) 0
-	    (if (< (count star !item-elem-e) 15000) 0
-	      (if (< (count star !item-elem-f) 15000) 0
-		(if (< (count star !item-energy) 10000) 0
+    (if (< (count star !item-elem-a) 20000) 0
+      (if (< (count star !item-elem-b) 20000) 0
+	(if (< (count star !item-elem-c) 20000) 0
+	  (if (< (count star !item-elem-d) 5000) 0
+	    (if (< (count star !item-elem-e) 5000) 0
+	      (if (< (count star !item-elem-f) 5000) 0
+		(if (< (count star !item-energy) 8000) 0
 		  1)))))))))
 
 
