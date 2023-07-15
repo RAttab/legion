@@ -9,7 +9,7 @@
 (defconst scanner-id (id !item-scanner 1))
 (assert (= (io !io-ping scanner-id) !io-ok))
 
-(defconst prober-id (id !item-prober 2))
+(defconst prober-id (id !item-prober 3))
 (assert (= (io !io-ping prober-id) !io-ok))
 
 

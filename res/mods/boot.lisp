@@ -61,7 +61,7 @@
   (deploy-tape !item-tridylarkitil 1)
 
   ;; Logistics
-  (deploy-requirements !item-rod)
+  (deploy-reqs !item-rod)
   (deploy-tape !item-rod 2)
   (deploy-item !item-fusion 5)
   (deploy-item !item-worker 18))
@@ -87,11 +87,14 @@
   (deploy-item !item-brain 1)
   (deploy-item !item-library 1)
 
+  (deploy-item !item-prober 1)
+  (assert (= (ior !io-count prober-id !item-prober) 2))
+
   (let ((lab-brain-id (last-id !item-brain)))
     (io !io-send lab-brain-id ?lab-boot (last-id !item-library))
     (io !io-mod lab-brain-id (mod lab.2)))
 
-  ;; Host tapes
+  ;; Research tape hosts
   (deploy-tape !item-extract 2)
   (deploy-tape !item-printer 2)
   (deploy-tape !item-assembly 2))
@@ -100,20 +103,17 @@
 ;; OS
 (progn
   ;; Condenser - Required to be able to unlock e & f
-  (deploy-requirements !item-condenser)
+  (deploy-reqs !item-condenser)
   (deploy-tape !item-condenser 2)
 
   ;; Energy - Solar
   (let ((energy-per (specs !spec-solar-energy (ior !io-count prober-id !item-energy))))
     (deploy-item !item-solar (+ (/ energy-target energy-per) 1)))
 
-  ;; Will be needed to research transmit so having a dedicated tape
-  ;; avoids a race-condition between lab and deploy-item.
-  (deploy-tape !item-receive 1)
-
   ;; Parent network - won't be used in homeworld but still needed to
   ;; make the ids align.
   (deploy-item !item-receive 1)
+  (deploy-tape !item-receive 1) ;; required to unlock transmit
   (deploy-item !item-transmit 1)
 
   ;; Boot
@@ -124,14 +124,10 @@
 (when (<= (os.depth) max-depth)
   (deploy-item !item-brain 1)
 
-  ;; We do it the hard way to avoid race conditions with lab.lisp
-  (deploy-requirements !item-prober)
-  (deploy-tape !item-prober 2)
   (deploy-item !item-prober 1)
-  (assert (= (ior !io-count prober-id !item-prober) 2))
+  (assert (= (ior !io-count prober-id !item-prober) 3))
 
-  (deploy-requirements !item-scanner)
-  (deploy-tape !item-scanner 2)
+  (deploy-tape !item-prober 1)
   (deploy-item !item-scanner 1)
   (assert (= (ior !io-count prober-id !item-scanner) 1))
 
@@ -147,10 +143,8 @@
 ;; Requires the spanning tree to figure out where home is.
 (defconst port-elem-count 11)
 (progn
-  (deploy-requirements !item-storage)
-  (deploy-tape !item-storage 2)
-  (deploy-requirements !item-battery)
-  (deploy-tape !item-battery 2)
+  (deploy-reqs !item-storage)
+  (deploy-tape !item-storage 2) ;; needed to unlock battery
 
   (deploy-item !item-battery 8)
   (deploy-item !item-port port-elem-count)
@@ -179,7 +173,8 @@
   (deploy-item !item-storage collider-elem-count)
   (deploy-item !item-battery 8)
   (deploy-item !item-solar (ior !io-count prober-id !item-solar))
-  (deploy-requirements !item-accelerator)
+
+  (deploy-reqs !item-accelerator)
   (deploy-tape !item-accelerator 2)
   (deploy-item !item-collider collider-elem-count)
 
@@ -212,7 +207,7 @@
 (defconst nomad-ix-prober 1)
 (defconst nomad-ix-scanner 2)
 (progn
-  (deploy-requirements !item-packer)
+  (deploy-reqs !item-packer)
   (deploy-tape !item-packer 1)
   (deploy-item !item-nomad 2)
   (io !io-set (id !item-nomad 1) nomad-ix-elem !item-elem-g)
@@ -260,7 +255,7 @@
   (band (ior !io-get tech-memory-id (+ (/ item 64) tech-memory-ix))
 			(bsl 1 (rem item 64))))
 
-(defun deploy-requirements (item)
+(defun deploy-reqs (item)
   (for (req (ior !io-tape-tech library-id item)) req (ior !io-tape-tech library-id item)
        (let ((tech-index (+ (/ req 64) tech-memory-ix)))
 	 (when (not (band (ior !io-get tech-memory-id tech-index)
@@ -282,7 +277,7 @@
 
 (defun deploy-item (item n)
   (assert n)
-  (deploy-requirements item)
+  (deploy-reqs item)
 
   (while (not (ior !io-tape-known library-id item)))
   (assert (= (ior !io-tape-host library-id item) !item-assembly))
