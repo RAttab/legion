@@ -15,10 +15,15 @@ void test_port(void)
     const user_id user = 0;
     const struct sector *sector = world_sector(world, coord_center());
 
-    struct coord src = sector->stars[0].coord;
-    struct chunk *src_chunk = world_chunk_alloc(world, src, user);
+    struct coord src = {0}, dst = {0};
+    for (size_t i = 0; i < sector->stars_len; ++i) {
+        const struct star *star = sector->stars + i;
+        if (star->energy < 1000) continue;
+        if (coord_is_nil(src)) { src = star->coord; continue; }
+        if (coord_is_nil(dst)) { dst = star->coord; break; }
+    }
 
-    struct coord dst = sector->stars[1].coord;
+    struct chunk *src_chunk = world_chunk_alloc(world, src, user);
     struct chunk *dst_chunk = world_chunk_alloc(world, dst, user);
 
     chunk_create(src_chunk, item_port);
@@ -35,6 +40,10 @@ void test_port(void)
 
     chunk_create(src_chunk, item_worker);
     chunk_create(dst_chunk, item_worker);
+    for (size_t i = 0; i < 200; ++i) {
+        chunk_create(src_chunk, item_solar);
+        chunk_create(dst_chunk, item_solar);
+    }
 
     const im_id sys_id = 0;
     const vm_word im_elem_a = item_elem_a;

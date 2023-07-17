@@ -8,7 +8,7 @@
 ;; Config
 ;; -----------------------------------------------------------------------------
 
-(defconst max-depth 4)
+(defconst max-depth 5)
 (defconst energy-target 64)
 (defconst port-item-count 255)
 
@@ -149,6 +149,9 @@
   (deploy-item !item-battery 8)
   (deploy-item !item-port port-elem-count)
 
+  (deploy-reqs !item-pill)
+  (deploy-tape !item-pill 2)
+
   (when (os.is-home)
     (deploy-item !item-storage port-elem-count)
     (for (i 0) (< i port-elem-count) (+ i 1)
@@ -168,15 +171,23 @@
 ;; Collider
 (defconst burner-count 2)
 (defconst collider-size 16)
-(defconst collider-elem-count 11)
+(defconst collider-elem-count 3)
 (progn
-  (deploy-item !item-storage collider-elem-count)
+
   (deploy-item !item-battery 8)
   (deploy-item !item-solar (ior !io-count prober-id !item-solar))
 
   (deploy-reqs !item-accelerator)
   (deploy-tape !item-accelerator 2)
+
+  (deploy-reqs !item-collider)
+  (deploy-tape !item-collider 1) ;; needed to unlock elems l m n o
   (deploy-item !item-collider collider-elem-count)
+
+  (deploy-item !item-storage collider-elem-count)
+  (for (i 0) (< i 4) (+ i 1)
+       (deploy-item !item-storage 1)
+       (io !io-item (last-id !item-storage) !item-elem-o))
 
   (for (i 0) (< i collider-elem-count) (+ i 1)
        (let ((elem-id (+ !item-elem-l i))
@@ -187,7 +198,9 @@
 
 	 (while (not (ior !io-tape-known library-id elem-id)))
 	 (io !io-tape collider-id elem-id)
-	 (io !io-item (last-id-offset !item-storage i) elem-id)))
+	 (io !io-item (last-id-offset !item-storage i) elem-id)
+	 (flag-tape !item-elem-o)
+	 (flag-tape elem-id)))
 
   ;; Until we have a burner we need to store the garbage o elements
   (deploy-item !item-storage 2)
@@ -287,6 +300,11 @@
   (while (ior !io-state deploy-id !io-item)))
 
 
+(defun flag-tape (item)
+  (io !io-set tech-memory-id (+ (/ item 64) tech-memory-ix)
+      (bor (ior !io-get tech-memory-id (+ (/ item 64) tech-memory-ix))
+	   (bsl 1 (rem item 64)))))
+
 (defun deploy-tape (item n)
   (assert n)
   (while (not (ior !io-tape-known library-id item)))
@@ -300,11 +318,7 @@
 
     (for (i 0) (< i n) (+ i 1)
 	 (io !io-tape (last-id-offset host i) item)))
-
-  (io !io-set tech-memory-id
-      (+ (/ item 64) tech-memory-ix)
-      (bor (ior !io-get tech-memory-id (+ (/ item 64) tech-memory-ix))
-	   (bsl 1 (rem item 64)))))
+  (flag-tape item))
 
 (defun last-id (item)
   (id item (ior !io-count prober-id item)))

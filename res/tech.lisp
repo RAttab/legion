@@ -309,8 +309,8 @@
 (port
  (info (tier 1) (type active) (list factory))
  (specs (dock-energy energy 64)
-	   (launch-energy energy 128)
-	   (launch-speed u16 100))
+	(launch-energy energy 128)
+	(launch-speed u16 100))
  (tape (layer 6)
        (in
 	(worker 2)

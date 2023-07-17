@@ -150,7 +150,8 @@ static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)
         ui_str_set_u64(ui_set(&ui->has.count), port->has.count);
     }
 
-    ui_str_set_coord_name(&ui->has.origin_val.str, port->origin);
+    if (coord_is_nil(port->origin)) ui_set_nil(&ui->has.origin_val);
+    else ui_str_set_coord_name(ui_set(&ui->has.origin_val), port->origin);
 }
 
 static void ui_port_render(

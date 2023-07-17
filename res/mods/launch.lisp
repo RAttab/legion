@@ -33,8 +33,8 @@
 
 (defun check-star (star)
   (if (> (count star !item-brain) 0) 0
-    (if (< (count star !item-elem-a) 20000) 0
-      (if (< (count star !item-elem-b) 20000) 0
+    (if (< (count star !item-elem-a) 30000) 0
+      (if (< (count star !item-elem-b) 30000) 0
 	(if (< (count star !item-elem-c) 20000) 0
 	  (if (< (count star !item-elem-d) 5000) 0
 	    (if (< (count star !item-elem-e) 5000) 0

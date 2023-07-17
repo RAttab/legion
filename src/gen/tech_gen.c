@@ -383,8 +383,7 @@ static void gen_lab(struct gen *gen)
     }
 
     uint8_t layer = node_id_layer(node->id);
-    const uint8_t bits_mult = layer_cap / 3;
-    node->lab.bits = legion_min(64U, fuzz(node->tier * bits_mult + layer));
+    node->lab.bits = 4;
     node->lab.work = fuzz((layer * UINT8_MAX) / layer_cap);
     node->lab.energy = fuzz(1ULL << layer);
 }

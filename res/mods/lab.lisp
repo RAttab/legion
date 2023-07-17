@@ -57,11 +57,14 @@
 
   ;; Collider
   (learn-reqs !item-accelerator library-id)
+  (learn-reqs !item-collider library-id)
   (learn-item !item-collider library-id)
+  (learn-item !item-elem-o library-id)
   (learn-reqs !item-elem-l library-id)
+  (learn-item !item-elem-l library-id)
   (learn-reqs !item-elem-m library-id)
-  (learn-reqs !item-elem-n library-id)
-  (learn-reqs !item-elem-o library-id)
+  (learn-item !item-elem-m library-id)
+  (learn-item !item-elem-n library-id)
   (learn-reqs !item-burner library-id)
 
   ;; Nomad

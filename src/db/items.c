@@ -44,7 +44,7 @@ void im_populate(void)
 {
     for (size_t i = 1; i < items_max; ++i) {
         struct im_config *config = im_configs + i;
-        assert(config->str_len < item_str_len);
+        assert(config->str_len <= item_str_len);
         if (config->init) config->init(config);
     }
 }

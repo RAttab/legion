@@ -591,6 +591,7 @@ bool chunk_create_from(
 
 bool chunk_delete(struct chunk *chunk, im_id id)
 {
+    chunk_ports_reset(chunk, id);
     return active_delete(active_index_assert(chunk, im_id_item(id)), id);
 }
 
