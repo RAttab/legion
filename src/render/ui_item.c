@@ -17,37 +17,56 @@ struct ui_item
 {
     im_id id;
     struct coord star;
-    bool loading;
+    bool loading, io_visible;
 
     struct ui_panel *panel;
-    struct ui_button io;
+    struct ui_button io_toggle;
     struct ui_button help;
     struct ui_label id_lbl;
     struct ui_link id_val;
+    struct ui_io *io;
 
     void *states[items_active_len];
 };
 
+static struct dim ui_item_dim(struct ui_item *ui)
+{
+    int16_t height = render.rect.h - ui_topbar_height() - ui_status_height();
+
+    int16_t width = 42 * ui_st.font.dim.w;
+    if (ui && ui->io_visible)
+        width += ui_st.font.dim.w + ui_io_width();
+
+    return make_dim(width, height);
+}
+
+static struct pos ui_item_pos(struct ui_item *ui)
+{
+    struct dim dim = ui_item_dim(ui);
+    return make_pos(
+            render.rect.w - dim.w - ui_star_width(render.ui.star),
+            ui_topbar_height());
+}
+
 struct ui_item *ui_item_new(void)
 {
-    size_t width = 42 * ui_st.font.dim.w;
-    struct pos pos = make_pos(
-            render.rect.w - width - ui_star_width(render.ui.star),
-            ui_topbar_height());
-    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
-
     struct ui_item *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_item) {
         .id = 0,
-        .panel = ui_panel_title(pos, dim, ui_str_c("item")),
-        .io = ui_button_new(ui_str_c("<< io")),
+        .star = {0},
+        .loading = false,
+        .io_visible = false,
+
+        .panel = ui_panel_title(ui_item_pos(ui), ui_item_dim(ui), ui_str_c("item")),
+        .io_toggle = ui_button_new(ui_str_c("<< io")),
         .help = ui_button_new(ui_str_c("?")),
         .id_lbl = ui_label_new(ui_str_c("id: ")),
         .id_val = ui_link_new(ui_str_v(im_id_str_len)),
+        .io = ui_io_new(),
     };
 
     ui_panel_hide(ui->panel);
-    ui->io.w.dim.w = ui_layout_inf;
+    ui->io_toggle.w.dim.w = ui_layout_inf;
 
     for (size_t i = 0; i < items_active_len; ++i) {
         const struct im_config *config = im_config(items_active_first + i);
@@ -60,10 +79,11 @@ struct ui_item *ui_item_new(void)
 void ui_item_free(struct ui_item *ui)
 {
     ui_panel_free(ui->panel);
-    ui_button_free(&ui->io);
+    ui_button_free(&ui->io_toggle);
     ui_button_free(&ui->help);
     ui_label_free(&ui->id_lbl);
     ui_link_free(&ui->id_val);
+    ui_io_free(ui->io);
 
     for (size_t i = 0; i < items_active_len; ++i) {
         const struct im_config *config = im_config(items_active_first + i);
@@ -99,10 +119,8 @@ static void ui_item_update(struct ui_item *ui)
         return;
     }
 
-    void *state = ui_item_state(ui, ui->id);
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
-
-    config->ui.update(state, chunk, ui->id);
+    config->ui.update(ui_item_state(ui, ui->id), chunk, ui->id);
 }
 
 static void ui_item_event_io(struct ui_item *ui, uintptr_t a1, uintptr_t a2)
@@ -147,15 +165,28 @@ static void ui_item_event_io(struct ui_item *ui, uintptr_t a1, uintptr_t a2)
     proxy_io(render.proxy, io, ui->id, &arg, 1);
 }
 
+static void ui_item_reset(struct ui_item *ui)
+{
+    ui->id = 0;
+    ui->star = coord_nil();
+    ui_io_clear(ui->io);
+    ui_panel_hide(ui->panel);
+}
+
 static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
 
-    case EV_STATE_LOAD: {
-        ui_panel_hide(ui->panel);
-        ui->id = 0;
-        ui->star = coord_nil();
+    case EV_STATE_LOAD:
+    case EV_MAN_GOTO:
+    case EV_MAN_TOGGLE:
+    case EV_PILLS_TOGGLE:
+    case EV_WORKER_TOGGLE:
+    case EV_ENERGY_TOGGLE:
+    case EV_STAR_CLEAR:
+    case EV_ITEM_CLEAR: {
+        ui_item_reset(ui);
         return false;
     }
 
@@ -167,21 +198,8 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
 
     case EV_STAR_SELECT: {
         struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
-        if (!coord_eq(ui->star, new)) {
-            ui_panel_hide(ui->panel);
-            ui->id = 0;
-        }
-        return false;
-    }
-
-    case EV_MAN_GOTO:
-    case EV_MAN_TOGGLE:
-    case EV_PILLS_TOGGLE:
-    case EV_WORKER_TOGGLE:
-    case EV_ENERGY_TOGGLE:
-    case EV_STAR_CLEAR: {
-        ui_panel_hide(ui->panel);
-        ui->id = 0;
+        if (!coord_eq(ui->star, new))
+            ui_item_reset(ui);
         return false;
     }
 
@@ -189,13 +207,8 @@ static bool ui_item_event_user(struct ui_item *ui, SDL_Event *ev)
         ui->id = (uintptr_t) ev->user.data1;
         ui->star = coord_from_u64((uintptr_t) ev->user.data2);
         ui_item_update(ui);
+        ui_io_select(ui->io, ui->star, ui->id);
         ui_panel_show(ui->panel);
-        return false;
-    }
-
-    case EV_ITEM_CLEAR: {
-        ui->id = 0;
-        ui_panel_hide(ui->panel);
         return false;
     }
 
@@ -238,9 +251,11 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
 
     if (ui->loading) return ui_panel_event_consume(ui->panel, ev);
 
-    if ((ret = ui_button_event(&ui->io, ev))) {
+    if ((ret = ui_button_event(&ui->io_toggle, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_IO_TOGGLE, ui->id, coord_to_u64(ui->star));
+        ui->io_visible = !ui->io_visible;
+        ui_panel_resize(ui->panel, ui_item_dim(ui));
+        ui_panel_move(ui->panel, ui_item_pos(ui));
         return true;
     }
 
@@ -260,6 +275,8 @@ bool ui_item_event(struct ui_item *ui, SDL_Event *ev)
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
     if (config->ui.event && config->ui.event(state, ev)) return true;
 
+    if (ui->io_visible && (ret = ui_io_event(ui->io, ev))) return ret;
+
     return ui_panel_event_consume(ui->panel, ev);
 }
 
@@ -269,11 +286,16 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
     if (ui_layout_is_nil(&layout)) return;
     if (ui->loading) return;
 
+    if (ui->io_visible) {
+        struct ui_layout inner = ui_layout_split_x(&layout, ui_io_width());
+        ui_io_render(ui->io, &inner, renderer);
+        ui_layout_split_x(&layout, ui_st.font.dim.w);
+    }
+
     ui_layout_dir(&layout, ui_layout_left);
     ui_button_render(&ui->help, &layout, renderer);
     ui_layout_dir(&layout, ui_layout_right);
-
-    ui_button_render(&ui->io, &layout, renderer);
+    ui_button_render(&ui->io_toggle, &layout, renderer);
     ui_layout_next_row(&layout);
 
     ui_layout_sep_row(&layout);
@@ -284,7 +306,6 @@ void ui_item_render(struct ui_item *ui, SDL_Renderer *renderer)
 
     ui_layout_sep_row(&layout);
 
-    void *state = ui_item_state(ui, ui->id);
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
-    config->ui.render(state, &layout, renderer);
+    config->ui.render(ui_item_state(ui, ui->id), &layout, renderer);
 }

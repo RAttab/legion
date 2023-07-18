@@ -121,7 +121,6 @@ static void ui_init(void)
     render.ui.stars = ui_stars_new();
     render.ui.star = ui_star_new();
     render.ui.item = ui_item_new();
-    render.ui.io = ui_io_new();
     render.ui.pills = ui_pills_new();
     render.ui.worker = ui_worker_new();
     render.ui.energy = ui_energy_new();
@@ -138,7 +137,6 @@ static void ui_close(void)
     ui_stars_free(render.ui.stars);
     ui_star_free(render.ui.star);
     ui_item_free(render.ui.item);
-    ui_io_free(render.ui.io);
     ui_pills_free(render.ui.pills);
     ui_worker_free(render.ui.worker);
     ui_energy_free(render.ui.energy);
@@ -169,7 +167,6 @@ static void ui_event(SDL_Event *event)
     if (ui_stars_event(render.ui.stars, event)) return;
     if (ui_star_event(render.ui.star, event)) return;
     if (ui_item_event(render.ui.item, event)) return;
-    if (ui_io_event(render.ui.io, event)) return;
     if (ui_pills_event(render.ui.pills, event)) return;
     if (ui_worker_event(render.ui.worker, event)) return;
     if (ui_energy_event(render.ui.energy, event)) return;
@@ -190,7 +187,6 @@ static void ui_render(SDL_Renderer *renderer)
     ui_stars_render(render.ui.stars, renderer);
     ui_star_render(render.ui.star, renderer);
     ui_item_render(render.ui.item, renderer);
-    ui_io_render(render.ui.io, renderer);
     ui_pills_render(render.ui.pills, renderer);
     ui_worker_render(render.ui.worker, renderer);
     ui_energy_render(render.ui.energy, renderer);

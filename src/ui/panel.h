@@ -55,6 +55,7 @@ struct ui_panel *ui_panel_title(struct pos, struct dim, struct ui_str);
 void ui_panel_free(struct ui_panel *);
 
 void ui_panel_resize(struct ui_panel *, struct dim);
+void ui_panel_move(struct ui_panel *, struct pos);
 void ui_panel_focus(struct ui_panel *);
 void ui_panel_show(struct ui_panel *);
 void ui_panel_hide(struct ui_panel *);

@@ -40,6 +40,16 @@ void ui_panel_style_default(struct ui_style *s)
 static struct ui_panel *ui_panel_curr = NULL;
 struct ui_panel *ui_panel_current(void) { return ui_panel_curr; }
 
+static void ui_panel_layout_update(struct ui_panel *panel)
+{
+    ui_layout_resize(&panel->layout,
+            make_pos(
+                    panel->w.pos.x + panel->s.margin.w,
+                    panel->w.pos.y + panel->s.margin.h),
+            make_dim(
+                    panel->w.dim.w - (panel->s.margin.w * 2),
+                    panel->w.dim.h - (panel->s.margin.h * 2)));
+}
 
 static struct ui_panel *ui_panel_new(struct pos pos, struct dim dim)
 {
@@ -49,17 +59,10 @@ static struct ui_panel *ui_panel_new(struct pos pos, struct dim dim)
     *panel = (struct ui_panel) {
         .w = (struct ui_widget) { .pos = pos, .dim = dim },
         .s = *s,
-
         .state = ui_panel_visible,
-        .layout = ui_layout_new(
-                make_pos(
-                        pos.x + s->margin.w,
-                        pos.y + s->margin.h),
-                make_dim(
-                        dim.w - (s->margin.w * 2),
-                        dim.h - (s->margin.h * 2))),
     };
 
+    ui_panel_layout_update(panel);
     ui_panel_curr = panel;
     return panel;
 }
@@ -91,9 +94,13 @@ void ui_panel_free(struct ui_panel *panel)
 void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 {
     panel->w.dim = dim;
-    ui_layout_resize(&panel->layout, panel->layout.base.pos, make_dim(
-                    dim.w - (panel->s.margin.w * 2),
-                    dim.h - (panel->s.margin.h * 2)));
+    ui_panel_layout_update(panel);
+}
+
+void ui_panel_move(struct ui_panel *panel, struct pos pos)
+{
+    panel->w.pos = pos;
+    ui_panel_layout_update(panel);
 }
 
 void ui_panel_show(struct ui_panel *panel)

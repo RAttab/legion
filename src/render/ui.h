@@ -130,10 +130,12 @@ int16_t ui_item_width(struct ui_item *);
 
 struct ui_io;
 struct ui_io *ui_io_new(void);
+int16_t ui_io_width(void);
 void ui_io_free(struct ui_io *);
 bool ui_io_event(struct ui_io *, SDL_Event *);
-void ui_io_render(struct ui_io *, SDL_Renderer *);
-
+void ui_io_render(struct ui_io *, struct ui_layout *, SDL_Renderer *);
+void ui_io_select(struct ui_io *, struct coord, im_id);
+void ui_io_clear(struct ui_io *);
 
 // -----------------------------------------------------------------------------
 // pills
