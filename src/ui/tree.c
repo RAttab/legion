@@ -92,7 +92,7 @@ ui_node ui_tree_user(struct ui_tree *tree, uint64_t user)
 void ui_tree_clear(struct ui_tree *tree)
 {
     hset_clear(tree->path);
-    tree->selected = ui_node_nil;
+    tree->selected = 0;
 }
 
 ui_node ui_tree_select(struct ui_tree *tree, uint64_t user)
@@ -157,6 +157,7 @@ struct ui_str *ui_tree_add(
         node->depth = parent_node->depth + 1;
     }
 
+    hset_clear(tree->path);
     return &node->str;
 }
 
