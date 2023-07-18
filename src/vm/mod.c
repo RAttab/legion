@@ -505,7 +505,7 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
 
         uint64_t value = 0;
         (void) str_atou(start, it - start, &value);
-        if (value > UINT16_MAX) return false;
+        if (value > UINT16_MAX) return NULL;
 
         ver = value;
     }
