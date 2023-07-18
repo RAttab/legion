@@ -21,8 +21,11 @@ RES := $(RES) man/items/*.lm
 RES := $(RES) man/lisp/*.lm
 RES := $(RES) man/sys/*.lm
 
-OBJECTS_LEGION = common items ui render game vm utils db
+GEN_DB_INPUTS := res/io.lisp src/db/gen/tech.lisp
+GEN_DB_OUTPUTS := $(wildcard src/db/gen/*.h)
+
 OBJECTS_GEN = gen common utils
+OBJECTS_LEGION = common items ui render game vm utils db
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc
@@ -74,15 +77,14 @@ src/db/gen/tech.lisp: res/tech.lisp $(PREFIX)/gen
 	@$(PREFIX)/gen --tech $< --src src/db/gen --output $(PREFIX) > $(PREFIX)/tech.log
 	@cat $(PREFIX)/tech.dot | dot -Tsvg > $(PREFIX)/tech.svg
 
-GEN_DB_FILES := $(wildcard src/db/gen/*.h)
-$(GEN_DB_FILES) &: res/io.lisp src/db/gen/tech.lisp $(PREFIX)/gen
+$(GEN_DB_OUTPUTS) &: $(GEN_DB_INPUTS) $(PREFIX)/gen
 	@echo -e "\e[32m[gen]\e[0m db"
 	@$(PREFIX)/gen --db res --src src/db/gen
 
 .PHONY: gen-tech gen-db
 ifneq ($(SKIP_GEN),1)
 gen-tech: src/db/gen/tech.lisp
-gen-db: $(GEN_DB_FILES)
+gen-db: $(GEN_DB_OUTPUTS)
 else
 gen-tech:
 	@echo -e "\e[32m[gen]\e[0m skip $@"
