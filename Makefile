@@ -52,6 +52,13 @@ LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
 .PHONY: all
 all: gen legion test res
 
+.PHONY: clean
+clean:
+	@echo -e "\e[32m[clean]\e[0m"
+	@rm -rf --preserve-root -- $(PREFIX)
+	@mkdir -p $(PREFIX)/obj/
+	@mkdir -p $(PREFIX)/test/
+
 $(shell mkdir -p $(PREFIX)/obj/)
 -include $(wildcard $(PREFIX)/obj/*.d)
 
