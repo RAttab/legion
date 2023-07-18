@@ -122,7 +122,7 @@ static void man_err(struct man_parser *parser, const char *fmt, ...)
 // token
 // -----------------------------------------------------------------------------
 
-enum legion_packed man_token_type
+enum man_token_type : uint8_t
 {
     man_token_nil = 0,
     man_token_eof,

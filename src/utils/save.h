@@ -16,7 +16,7 @@ struct symbol;
 // magic
 // -----------------------------------------------------------------------------
 
-enum legion_packed save_magic
+enum save_magic : uint8_t
 {
     save_magic_vec32  = 0x01,
     save_magic_vec64  = 0x02,

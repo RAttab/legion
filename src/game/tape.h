@@ -26,7 +26,7 @@ inline bool tape_it_validate(vm_word word)
 }
 
 
-enum legion_packed tape_state
+enum tape_state : uint8_t
 {
     tape_eof = 0,
     tape_input,

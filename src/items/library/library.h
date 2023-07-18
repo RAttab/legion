@@ -16,7 +16,7 @@ struct im_config;
 // library
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_library_op
+enum im_library_op : uint8_t
 {
     im_library_nil = 0,
     im_library_in,

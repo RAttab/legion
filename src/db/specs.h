@@ -31,7 +31,7 @@ enum
 
 #define make_spec(item, type) ((item << 4) | type)
 
-enum legion_packed spec
+enum spec : uint16_t
 {
     spec_nil = 0,
 

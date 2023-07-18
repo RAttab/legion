@@ -20,7 +20,7 @@ struct energy;
 // ports
 // -----------------------------------------------------------------------------
 
-enum legion_packed ports_state
+enum ports_state : uint8_t
 {
     ports_nil = 0,
     ports_requested,

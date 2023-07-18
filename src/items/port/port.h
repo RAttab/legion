@@ -16,7 +16,7 @@ struct im_config;
 // port
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_port_state
+enum im_port_state : uint8_t
 {
     im_port_idle = 0,
     im_port_docking,

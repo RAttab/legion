@@ -18,7 +18,7 @@ struct im_config;
 // collider
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_collider_op
+enum im_collider_op : uint8_t
 {
     im_collider_nil = 0,
     im_collider_grow,

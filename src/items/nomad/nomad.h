@@ -17,7 +17,7 @@ struct im_config;
 // nomad
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_nomad_op
+enum im_nomad_op : uint8_t
 {
     im_nomad_nil = 0,
     im_nomad_pack,

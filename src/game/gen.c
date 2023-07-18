@@ -43,7 +43,7 @@ static_assert(gen_square_total > 0);
 static_assert(gen_prefix_cap + gen_suffix_cap + 1 == symbol_cap);
 
 
-enum legion_packed roll_type
+enum roll_type : uint8_t
 {
     roll_end = 0,
     roll_one,

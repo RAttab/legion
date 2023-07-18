@@ -49,7 +49,7 @@ bool db_run(const char *res, const char *src)
     {
         db_file_open(&state.files.im_enum, state.path.out, "item");
         db_file_write(&state.files.im_enum,
-                "enum legion_packed item\n{\n  item_nil = atom_nil,\n");
+                "enum item : uint8_t\n{\n  item_nil = atom_nil,\n");
 
         db_file_open(&state.files.im_register, state.path.out, "im_register");
 

@@ -18,7 +18,7 @@ struct im_config;
 // lab
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_lab_state
+enum im_lab_state : uint8_t
 {
     im_lab_idle = 0,
     im_lab_waiting = 1,

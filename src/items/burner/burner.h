@@ -17,7 +17,7 @@ struct im_config;
 // burner
 // -----------------------------------------------------------------------------
 
-enum legion_packed im_burner_op
+enum im_burner_op : uint8_t
 {
     im_burner_nil = 0,
     im_burner_in,

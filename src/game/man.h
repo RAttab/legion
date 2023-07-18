@@ -58,7 +58,7 @@ inline struct link link_from_u64(uint64_t value)
 // markup
 // -----------------------------------------------------------------------------
 
-enum legion_packed markup_type
+enum markup_type : uint8_t
 {
     markup_nil = 0,
     markup_eol,

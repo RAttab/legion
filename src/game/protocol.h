@@ -25,7 +25,7 @@ struct save;
 // speed
 // -----------------------------------------------------------------------------
 
-enum legion_packed speed
+enum speed : uint8_t
 {
     speed_pause = 0,
     speed_slow,
@@ -41,10 +41,10 @@ static_assert(sizeof(enum speed) == 1);
 // header
 // -----------------------------------------------------------------------------
 
-enum legion_packed { header_magic = 0xF0FCCF0FU };
+enum : uint32_t { header_magic = 0xF0FCCF0FU };
 static_assert(sizeof(header_magic) == 4);
 
-enum legion_packed header_type
+enum header_type : uint8_t
 {
     header_nil = 0,
     header_cmd = 1,
@@ -81,7 +81,7 @@ inline struct header make_header(enum header_type type, size_t len)
 // status
 // -----------------------------------------------------------------------------
 
-enum legion_packed status_type
+enum status_type : uint8_t
 {
     st_info = 0,
     st_warn = 1,

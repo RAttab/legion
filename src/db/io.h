@@ -14,7 +14,7 @@ struct atoms;
 // io
 // -----------------------------------------------------------------------------
 
-enum legion_packed io
+enum io : uint32_t
 {
     io_min = atom_ns_io,
 
@@ -25,7 +25,7 @@ enum legion_packed io
 };
 static_assert(sizeof(enum io) == 4);
 
-enum legion_packed ioe
+enum ioe : uint32_t
 {
     ioe_min = atom_ns_ioe,
 
