@@ -12,7 +12,7 @@ PREFIX ?= build
 
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
 
-RES := font/*.otf gen/*.lisp img/*.bmp mods/*.lisp
+RES := font/*.otf img/*.bmp mods/*.lisp
 RES := $(RES) man/*.lm
 RES := $(RES) man/asm/*.lm
 RES := $(RES) man/concepts/*.lm
@@ -21,7 +21,7 @@ RES := $(RES) man/items/*.lm
 RES := $(RES) man/lisp/*.lm
 RES := $(RES) man/sys/*.lm
 
-GEN_DB_INPUTS := res/io.lisp src/db/gen/tech.lisp
+GEN_DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
 GEN_DB_OUTPUTS := $(wildcard src/db/gen/*.h)
 
 OBJECTS_GEN = gen common utils
@@ -38,6 +38,7 @@ CFLAGS := $(CFLAGS) -Wwrite-strings
 CFLAGS := $(CFLAGS) -Wunreachable-code
 CFLAGS := $(CFLAGS) -Wformat=2
 CFLAGS := $(CFLAGS) -Winit-self
+CFLAGS := $(CFLAGS) -Wno-format-truncation
 CFLAGS := $(CFLAGS) -Wno-implicit-fallthrough
 CFLAGS := $(CFLAGS) -Wno-address-of-packed-member
 
