@@ -106,6 +106,7 @@ void db_file_close(struct db_file *file)
 struct db_state
 {
     struct {
+        char stars[PATH_MAX];
         char in[PATH_MAX];
         char io[PATH_MAX];
         char out[PATH_MAX];
@@ -120,6 +121,7 @@ struct db_state
         struct db_file specs_enum, specs_value, specs_register;
         struct db_file tapes, tapes_info;
         struct db_file io_enum, ioe_enum, io_register;
+        struct db_file stars_prefix, stars_suffix, stars_rolls;
     } files;
 };
 

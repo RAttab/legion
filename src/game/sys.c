@@ -11,6 +11,7 @@
 #include "db/specs.h"
 #include "db/items.h"
 #include "db/tapes.h"
+#include "db/stars.h"
 #include "items/config.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
@@ -33,6 +34,7 @@ static void sys_populate_impl(void)
     mod_compiler_init();
     specs_populate();
     tapes_populate();
+    stars_populate();
 
     {
         struct atoms *atoms = atoms_new();

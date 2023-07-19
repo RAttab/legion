@@ -30,6 +30,7 @@ struct symbol symbol_to_enum(struct symbol sym)
 
 #include "db_types.c"
 #include "db_parse.c"
+#include "db_stars.c"
 #include "db_gen.c"
 
 
@@ -40,6 +41,7 @@ struct symbol symbol_to_enum(struct symbol sym)
 bool db_run(const char *res, const char *src)
 {
     struct db_state state = {0};
+    snprintf(state.path.stars, sizeof(state.path.stars), "%s/stars", res);
     snprintf(state.path.in, sizeof(state.path.in), "%s/tech.lisp", src);
     snprintf(state.path.io, sizeof(state.path.io), "%s/io.lisp", res);
     snprintf(state.path.out, sizeof(state.path.out), "%s", src);
@@ -67,12 +69,17 @@ bool db_run(const char *res, const char *src)
         db_file_open(&state.files.io_enum, state.path.out, "io_enum");
         db_file_open(&state.files.ioe_enum, state.path.out, "ioe_enum");
         db_file_open(&state.files.io_register, state.path.out, "io_register");
+
+        db_file_open(&state.files.stars_prefix, state.path.out, "stars_prefix");
+        db_file_open(&state.files.stars_suffix, state.path.out, "stars_suffix");
+        db_file_open(&state.files.stars_rolls, state.path.out, "stars_rolls");
     }
 
     db_parse_atoms(&state, state.path.in);
     db_gen_items(&state);
     db_gen_specs_tapes(&state, state.path.in);
     db_gen_io(&state, state.path.io);
+    db_gen_stars(&state);
 
     {
         db_file_write(&state.files.im_enum, "};\n");
@@ -95,6 +102,9 @@ bool db_run(const char *res, const char *src)
         db_file_close(&state.files.ioe_enum);
         db_file_close(&state.files.io_register);
 
+        db_file_close(&state.files.stars_prefix);
+        db_file_close(&state.files.stars_suffix);
+        db_file_close(&state.files.stars_rolls);
     }
 
     htable_reset(&state.atoms.name);
