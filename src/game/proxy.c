@@ -641,7 +641,7 @@ struct sector *proxy_sector(struct proxy *proxy, struct coord sector)
     struct htable_ret ret = htable_get(&proxy->sectors, id);
     if (ret.ok) return (struct sector *) ret.value;
 
-    struct sector *value = gen_sector(coord, proxy->state->seed);
+    struct sector *value = sector_gen(coord, proxy->state->seed);
     ret = htable_put(&proxy->sectors, id, (uintptr_t) value);
     assert(ret.ok);
 
@@ -664,7 +664,7 @@ vm_word proxy_star_name(struct proxy *proxy, struct coord coord)
     struct htable_ret ret = htable_get(&proxy->state->names, coord_to_u64(coord));
     if (ret.ok) return (vm_word) ret.value;
 
-    return gen_name_star(coord, proxy->state->seed, proxy->state->atoms);
+    return star_name(coord, proxy->state->seed, proxy->state->atoms);
 }
 
 const struct star *proxy_star_in(struct proxy *proxy, struct rect rect)

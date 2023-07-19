@@ -33,6 +33,9 @@ struct legion_packed star
 };
 static_assert(sizeof(struct star) == 5 * 8);
 
+vm_word star_name(struct coord, world_seed, struct atoms *);
+struct sector *sector_gen(struct coord, world_seed);
+
 bool star_load(struct star *, struct save *);
 void star_save(const struct star *, struct save *);
 
@@ -58,7 +61,9 @@ struct sector
     struct star stars[];
 };
 
+struct symbol sector_name(struct coord, world_seed);
 struct sector *sector_gen(struct coord, world_seed);
+
 struct sector *sector_new(size_t stars);
 void sector_free(struct sector *);
 

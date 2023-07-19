@@ -6,7 +6,6 @@
 #include "common.h"
 #include "game/sys.h"
 #include "game/tape.h"
-#include "game/gen.h"
 #include "game/man.h"
 #include "db/specs.h"
 #include "db/items.h"
@@ -41,7 +40,6 @@ static void sys_populate_impl(void)
 
         im_populate_atoms(atoms);
         io_populate_atoms(atoms);
-        gen_populate(atoms);
         man_populate(atoms);
 
         atoms_free(atoms);

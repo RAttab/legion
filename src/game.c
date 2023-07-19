@@ -7,7 +7,6 @@
 #include "game/id.c"
 #include "game/coord.c"
 #include "game/log.c"
-#include "game/gen.c"
 #include "game/lanes.c"
 #include "game/sector.c"
 #include "game/world.c"

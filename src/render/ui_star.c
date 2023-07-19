@@ -345,7 +345,7 @@ static void ui_star_update(struct ui_star *ui)
             struct atoms *atoms = proxy_atoms(render.proxy);
 
             struct symbol sym = {0};
-            vm_word name = gen_name_star(ui->id, seed, atoms);
+            vm_word name = star_name(ui->id, seed, atoms);
             bool ok = atoms_str(atoms, name, &sym);
             ui_str_set_symbol(&ui->name_val.str, &sym);
             assert(ok);

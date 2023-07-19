@@ -9,7 +9,6 @@
 #include "game/sys.h"
 #include "game/tape.h"
 #include "game/coord.h"
-#include "game/gen.h"
 #include "game/tape.h"
 #include "game/proxy.h"
 #include "items/config.h"

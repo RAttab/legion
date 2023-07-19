@@ -6,7 +6,6 @@
 #include "game/world.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
-#include "game/gen.h"
 #include "game/log.h"
 #include "game/tech.h"
 #include "game/tape.h"
@@ -280,7 +279,7 @@ struct chunk *world_chunk_alloc(
     const struct star *star = sector_star_at(sector, coord);
     assert(star);
 
-    vm_word name = gen_name_star(coord, world->seed, world->atoms);
+    vm_word name = star_name(coord, world->seed, world->atoms);
     chunk = chunk_alloc(world, star, user, name);
 
     uint64_t key = coord_to_u64(coord);
@@ -308,7 +307,7 @@ const struct sector *world_sector(struct world *world, struct coord sector)
     struct htable_ret ret = htable_get(&world->sectors, id);
     if (ret.ok) return (struct sector *) ret.value;
 
-    struct sector *value = gen_sector(coord, world->seed);
+    struct sector *value = sector_gen(coord, world->seed);
     ret = htable_put(&world->sectors, id, (uintptr_t) value);
     assert(ret.ok);
 
@@ -320,7 +319,7 @@ vm_word world_star_name(struct world *world, struct coord coord)
     struct chunk *chunk = world_chunk(world, coord);
     if (chunk) return chunk_name(chunk);
 
-    return gen_name_star(coord, world->seed, world->atoms);
+    return star_name(coord, world->seed, world->atoms);
 }
 
 bool world_user_access(struct world *world, user_set access, struct coord coord)
@@ -508,7 +507,7 @@ void world_populate_user(struct world *world, user_id id)
     while (true) {
         if (sector) sector_free(sector);
 
-        sector = gen_sector(coord_from_u64(rng_step(&rng)), world->seed);
+        sector = sector_gen(coord_from_u64(rng_step(&rng)), world->seed);
         if (sector->stars_len < 100) continue;
 
         user->home = world_populate_home(sector);
