@@ -13,12 +13,11 @@
 \name\()_data:
 	.incbin "\file"
 \name\()_data_end:
-	.size \name\()_data, \name\()_data_end - \name\()_data
 
 	.global \name\()_len
 	.type \name\()_len, STT_OBJECT
 	.balign 8
 \name\()_len:
-	.long \name\()_data_end - \name\()_data
+	.4byte \name\()_data_end - \name\()_data
 
 	.endm

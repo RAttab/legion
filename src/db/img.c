@@ -23,13 +23,13 @@ static SDL_Texture *img_load_bmp(
 SDL_Texture *img_cursor(SDL_Renderer *renderer)
 {
     extern const uint8_t db_img_cursor_data[];
-    extern const unsigned db_img_cursor_len;
+    extern const uint32_t db_img_cursor_len;
     return img_load_bmp(renderer, db_img_cursor_data, db_img_cursor_len);
 }
 
 SDL_Texture *img_map(SDL_Renderer *renderer)
 {
     extern const uint8_t db_img_map_data[];
-    extern const unsigned db_img_map_len;
+    extern const uint32_t db_img_map_len;
     return img_load_bmp(renderer, db_img_map_data, db_img_map_len);
 }
