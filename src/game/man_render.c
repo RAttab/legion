@@ -381,14 +381,13 @@ static struct man *man_page_render(
 
         .in = {
             .page = page,
-            .it = page->file.ptr,
-            .end = page->file.ptr + page->file.len,
-            .line = 0,
-            .col = 0,
+            .it = page->data,
+            .end = page->data + page->data_len,
+            .line = 0, .col = 0,
         },
 
         .out = {
-            .man = man_new(page->file.len * 2),
+            .man = man_new(page->data_len * 2),
             .lisp = lisp,
             .col = { .it = 0, .cap = cols },
             .indent = 0,

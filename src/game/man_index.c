@@ -17,8 +17,8 @@ static bool man_page_index(
         .ok = true,
         .in = {
             .page = page,
-            .it = page->file.ptr,
-            .end = page->file.ptr + page->file.len,
+            .it = page->data,
+            .end = page->data + page->data_len,
             .line = 0, .col = 0,
         },
     };

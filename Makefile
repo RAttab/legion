@@ -13,21 +13,20 @@ PREFIX ?= build
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
 
 RES := font/*.otf mods/*.lisp
-RES := $(RES) man/*.lm
-RES := $(RES) man/asm/*.lm
-RES := $(RES) man/concepts/*.lm
-RES := $(RES) man/guides/*.lm
-RES := $(RES) man/items/*.lm
-RES := $(RES) man/lisp/*.lm
-RES := $(RES) man/sys/*.lm
 
-GEN_DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
-GEN_DB_OUTPUTS := $(wildcard src/db/gen/*.h)
+DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
+DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/asm/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/concepts/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/guides/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/items/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/lisp/*.lm)
 
 OBJECTS_GEN := gen common utils
 OBJECTS_LEGION := common items ui render game vm utils db
 
-ASM := $(wildcard src/db/*.S) $(wildcard src/db/gen/*.S)
+ASM := src/db/img.S src/db/gen/man.S
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc
@@ -87,14 +86,14 @@ src/db/gen/tech.lisp: res/tech.lisp $(PREFIX)/gen
 	@$(PREFIX)/gen --tech $< --src src/db/gen --output $(PREFIX) > $(PREFIX)/tech.log
 	@cat $(PREFIX)/tech.dot | dot -Tsvg > $(PREFIX)/tech.svg
 
-$(GEN_DB_OUTPUTS) &: $(GEN_DB_INPUTS) $(PREFIX)/gen
+$(DB_OUTPUTS) &: $(DB_INPUTS) $(PREFIX)/gen
 	@echo -e "\e[32m[gen]\e[0m db"
 	@$(PREFIX)/gen --db res --src src/db/gen
 
 .PHONY: gen-tech gen-db
 ifneq ($(SKIP_GEN),1)
 gen-tech: src/db/gen/tech.lisp
-gen-db: $(GEN_DB_OUTPUTS)
+gen-db: $(DB_OUTPUTS)
 else
 gen-tech:
 	@echo -e "\e[32m[gen]\e[0m skip $@"

@@ -3,8 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
 #include "game/man.h"
+#include "db/man.h"
 #include "utils/vec.h"
 #include "utils/hash.h"
 
@@ -375,8 +375,10 @@ struct man_page
 {
     man_page page;
     enum item item;
-    struct mfile file;
-    char path[PATH_MAX+1];
+    const char *path;
+
+    size_t data_len;
+    const char *data;
 };
 
 static struct man *man_page_render(const struct man_page *, uint8_t cols, struct lisp *);
@@ -448,40 +450,33 @@ static void man_index_path(const char *path, size_t len, struct link link)
     assert(ret.ok);
 }
 
-static bool man_populate_it(const char *base, struct atoms *atoms)
+static bool man_populate_db(struct atoms *atoms)
 {
     bool ok = true;
-    struct dir_it *it = dir_it(base);
+    struct man_db_it it = {0};
 
-    while (dir_it_next(it)) {
-        const char *path = dir_it_path(it);
-
-        if (path_is_dir(path))
-            ok = man_populate_it(path, atoms) && ok;
-
-        else if (path_is_file(path)) {
-            if (mans.pages.len == mans.pages.cap) {
-                size_t cap = mans.pages.cap ? mans.pages.cap * 2 : 8;
-                mans.pages.list = realloc_zero(
-                        mans.pages.list,
-                        mans.pages.cap, cap,
-                        sizeof(*mans.pages.list));
-                mans.pages.cap = cap;
-            }
-
-            size_t index = mans.pages.len;
-            mans.pages.len++;
-
-            struct man_page *page = mans.pages.list + index;
-            page->page = index + 1;
-            page->file = mfile_open(path);
-            strncpy(page->path, path, sizeof(page->path) - 1);
-
-            ok = man_page_index(page, &mans.toc, atoms) && ok;
+    while (man_db_next(&it)) {
+        if (mans.pages.len == mans.pages.cap) {
+            size_t cap = mans.pages.cap ? mans.pages.cap * 2 : 8;
+            mans.pages.list = realloc_zero(
+                    mans.pages.list,
+                    mans.pages.cap, cap,
+                    sizeof(*mans.pages.list));
+            mans.pages.cap = cap;
         }
+
+        size_t index = mans.pages.len;
+        mans.pages.len++;
+
+        struct man_page *page = mans.pages.list + index;
+        page->page = index + 1;
+        page->path = it.path;
+        page->data = it.data;
+        page->data_len = it.data_len;
+
+        ok = man_page_index(page, &mans.toc, atoms) && ok;
     }
 
-    dir_it_free(it);
     return ok;
 }
 
@@ -507,9 +502,7 @@ void man_populate(struct atoms *atoms)
     (void) toc_path(root, make_man_path("/lisp"));
     (void) toc_path(root, make_man_path("/asm"));
 
-    char path[PATH_MAX] = {0};
-    sys_path_res("man", path, sizeof(path));
-    if (!man_populate_it(path, atoms))
+    if (!man_populate_db(atoms))
         fail("unable to index man pages");
 
     // Sort the toc nodes to enfore sane ordering on the reference pages.
