@@ -69,6 +69,7 @@ size_t path_concat(char *dst, size_t len, const char *base, const char *sub)
 struct dir_it
 {
     DIR *dir;
+    struct dirent *entry;
 
     char *it, *end;
     char file[PATH_MAX];
@@ -99,20 +100,26 @@ void dir_it_free(struct dir_it *it)
 
 bool dir_it_next(struct dir_it *it)
 {
-    struct dirent *entry = NULL;
-    do { entry = readdir(it->dir); } while (entry && entry->d_name[0] == '.');
-    if (!entry) return false;
+    it->entry = NULL;
+    do {
+        it->entry = readdir(it->dir);
+    } while (it->entry && it->entry->d_name[0] == '.');
+    if (!it->entry) return false;
 
-    size_t len = strlen(entry->d_name); // the dirent struct enforces a 256 limit
+    size_t len = strlen(it->entry->d_name); // the dirent struct enforces a 256 limit
     if (it->it + len >= it->end) {
         failf_errno("overly long path: %zu + %zu > %d",
                 it->it - it->file, len, PATH_MAX);
     }
-
-    memcpy(it->it, entry->d_name, len);
+    memcpy(it->it, it->entry->d_name, len);
     it->it[len] = 0;
 
     return true;
+}
+
+const char *dir_it_name(struct dir_it *it)
+{
+    return it->entry->d_name;
 }
 
 const char *dir_it_path(struct dir_it *it)

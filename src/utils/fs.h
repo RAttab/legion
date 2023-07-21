@@ -27,6 +27,7 @@ struct dir_it *dir_it(const char *path);
 void dir_it_free(struct dir_it *);
 
 bool dir_it_next(struct dir_it *);
+const char *dir_it_name(struct dir_it *);
 const char *dir_it_path(struct dir_it *);
 
 
