@@ -16,6 +16,7 @@
 #include "vm/atoms.h"
 #include "utils/err.h"
 #include "utils/time.h"
+#include "db/img.h"
 
 #include <pthread.h>
 
@@ -45,13 +46,7 @@ static void cursor_init(void)
         .y = render.rect.h / 2
     };
 
-    char path[PATH_MAX];
-    sys_path_res("img/cursor.bmp", path, sizeof(path));
-
-    SDL_Surface *surface = sdl_ptr(SDL_LoadBMP(path));
-    render.cursor.tex = sdl_ptr(SDL_CreateTextureFromSurface(render.renderer, surface));
-    SDL_FreeSurface(surface);
-
+    render.cursor.tex = img_cursor(render.renderer);
     sdl_err(SDL_SetTextureBlendMode(render.cursor.tex, SDL_BLENDMODE_ADD));
     sdl_err(SDL_SetTextureColorMod(render.cursor.tex, 0xFF, 0xFF, 0xFF));
 

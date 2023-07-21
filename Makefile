@@ -12,7 +12,7 @@ PREFIX ?= build
 
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
 
-RES := font/*.otf img/*.bmp mods/*.lisp
+RES := font/*.otf mods/*.lisp
 RES := $(RES) man/*.lm
 RES := $(RES) man/asm/*.lm
 RES := $(RES) man/concepts/*.lm
@@ -24,8 +24,10 @@ RES := $(RES) man/sys/*.lm
 GEN_DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
 GEN_DB_OUTPUTS := $(wildcard src/db/gen/*.h)
 
-OBJECTS_GEN = gen common utils
-OBJECTS_LEGION = common items ui render game vm utils db
+OBJECTS_GEN := gen common utils
+OBJECTS_LEGION := common items ui render game vm utils db
+
+ASM := $(wildcard src/db/*.S) $(wildcard src/db/gen/*.S)
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc
@@ -125,7 +127,7 @@ $(PREFIX)/liblegion.a: $(foreach obj,$(OBJECTS_LEGION),$(PREFIX)/obj/$(obj).o)
 	@echo -e "\e[32m[ar]\e[0m $@"
 	@ar rcs $@ $^
 
-$(PREFIX)/legion: $(PREFIX)/obj/legion-main.o $(PREFIX)/obj/legion.o $(PREFIX)/liblegion.a
+$(PREFIX)/legion: $(PREFIX)/obj/legion-main.o $(PREFIX)/obj/legion.o $(PREFIX)/liblegion.a $(ASM)
 	@echo -e "\e[32m[build]\e[0m $@"
 	@$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
@@ -147,7 +149,7 @@ $(PREFIX)/obj/test-%.o: test/%_test.c
 	@$(CC) -MMD -MP -c -o $@ $< $(CFLAGS)
 
 .PRECIOUS: $(foreach test,$(TEST),$(PREFIX)/test/$(test))
-$(PREFIX)/test/%: $(PREFIX)/obj/test-%.o $(PREFIX)/liblegion.a
+$(PREFIX)/test/%: $(PREFIX)/obj/test-%.o $(PREFIX)/liblegion.a $(ASM)
 	@echo -e "\e[32m[build]\e[0m $@"
 	@$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 

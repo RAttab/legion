@@ -4,6 +4,7 @@
 */
 
 #include "db/io.c"
+#include "db/img.c"
 #include "db/items.c"
 #include "db/tapes.c"
 #include "db/specs.c"
