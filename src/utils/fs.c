@@ -139,6 +139,14 @@ size_t file_len(int fd)
     return val.st_size;
 }
 
+
+size_t file_len_p(const char *path)
+{
+    struct stat val = {0};
+    if (stat(path, &val) < 0) failf_errno("failed to stat fd '%s'", path);
+    return val.st_size;
+}
+
 bool file_exists(const char *path)
 {
     struct stat val = {0};
