@@ -12,7 +12,7 @@ PREFIX ?= build
 
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
 
-RES := font/*.otf mods/*.lisp
+RES := font/*.otf
 
 DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
 DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
