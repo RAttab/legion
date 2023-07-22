@@ -12,22 +12,6 @@ PREFIX ?= build
 
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
 
-RES := font/*.otf
-
-DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
-DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
-DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/*.lm)
-DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/asm/*.lm)
-DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/concepts/*.lm)
-DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/guides/*.lm)
-DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/items/*.lm)
-DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/lisp/*.lm)
-
-OBJECTS_GEN := gen common utils
-OBJECTS_LEGION := common items ui render game vm utils db
-
-ASM := src/db/img.S src/db/gen/man.S
-
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc
 CFLAGS := $(CFLAGS) $(shell sdl2-config --cflags)
@@ -45,6 +29,22 @@ CFLAGS := $(CFLAGS) -Wno-address-of-packed-member
 
 LIBS := $(LIBS) $(shell sdl2-config --libs)
 LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
+
+ASM := src/db/img.S src/db/gen/man.S
+
+OBJECTS_GEN := gen common utils
+OBJECTS_LEGION := common items ui render game vm utils db
+
+DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
+DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/asm/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/concepts/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/guides/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/items/*.lm)
+DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/lisp/*.lm)
+
+RES := font/*.otf
 
 
 # -----------------------------------------------------------------------------
