@@ -68,9 +68,14 @@ inline hash_val hash_str(const char *str, size_t len)
     return hash_bytes(hash_init(), str, len);
 }
 
-#define hash_value(hash, value)                         \
-    ({                                                  \
-        hash_val __hash = (hash);                       \
-        typeof(value) __value = (value);                \
-        hash_bytes(__hash, &__value, sizeof(__value));  \
+// In GCC 13.1.1 using --std=gnu2x, we get an unitialized variable warning if we
+// don't use GCC's approved type-puning method: unions.
+#define hash_value(hash, value)                 \
+    ({                                          \
+        hash_val __hash = (hash);               \
+        union {                                 \
+            typeof_unqual(value) v;             \
+            uint8_t r[sizeof(value)];           \
+        } t = { .v = (value) };                 \
+        hash_bytes(__hash, t.r, sizeof(t.r));  \
     })

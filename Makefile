@@ -12,7 +12,7 @@ PREFIX ?= build
 
 TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
 
-CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu11 -D_GNU_SOURCE -lm -pthread
+CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu2x -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc
 CFLAGS := $(CFLAGS) $(shell sdl2-config --cflags)
 CFLAGS := $(CFLAGS) $(shell pkg-config --cflags freetype2)
