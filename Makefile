@@ -30,7 +30,7 @@ CFLAGS := $(CFLAGS) -Wno-address-of-packed-member
 LIBS := $(LIBS) $(shell sdl2-config --libs)
 LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
 
-ASM := src/db/img.S src/db/gen/man.S
+ASM := src/db/res.S
 
 OBJECTS_GEN := gen common utils
 OBJECTS_LEGION := common items ui render game vm utils db
@@ -43,8 +43,6 @@ DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/concepts/*.lm)
 DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/guides/*.lm)
 DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/items/*.lm)
 DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/lisp/*.lm)
-
-RES := font/*.otf
 
 
 # -----------------------------------------------------------------------------
@@ -109,13 +107,11 @@ gen: $(PREFIX)/gen gen-tech gen-db
 # res
 # -----------------------------------------------------------------------------
 
-$(PREFIX)/res/%: res/%
+src/db/res.S: src/db/gen/man.S
+src/db/res.S: $(wildcard res/img/*.bmp)
+src/db/res.S: $(wildcard res/font/*.otf)
 	@echo -e "\e[32m[res]\e[0m $@"
-	@mkdir -p $(dir $@)
-	@cp -r $< $@
-
-.PHONY: res
-res: $(foreach res,$(RES),$(foreach path,$(wildcard res/$(res)),$(PREFIX)/$(path)))
+	@touch $@
 
 
 # -----------------------------------------------------------------------------
@@ -135,6 +131,7 @@ legion: $(PREFIX)/legion
 run: $(PREFIX)/legion res
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
+
 
 # -----------------------------------------------------------------------------
 # test

@@ -6,7 +6,7 @@
 #include "render/ui.h"
 #include "render/render.h"
 #include "game/world.h"
-#include "db/img.h"
+#include "db/res.h"
 #include "utils/color.h"
 #include "utils/hset.h"
 
@@ -65,7 +65,7 @@ struct map *map_new(void)
         .panned = false,
     };
 
-    map->tex = img_map(render.renderer);
+    map->tex = db_img_map(render.renderer);
     map->tex_star = (SDL_Rect) { .x = 0, .y = 0, .w = 100, .h = 100 };
     map->tex_active = (SDL_Rect) { .x = 100, .y = 0, .w = 100, .h = 100 };
 

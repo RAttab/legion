@@ -36,9 +36,6 @@ static void db_man_path(struct db_state *state, const char *dir)
 static void db_gen_man(struct db_state *state)
 {
     db_file_write(&state->files.man,
-            "\t.section .rodata\n\n");
-
-    db_file_write(&state->files.man,
             "\t.global db_man_list\n"
             "\t.type db_man_list, STT_OBJECT\n"
             "\t.balign 64\n"

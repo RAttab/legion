@@ -4,7 +4,7 @@
 */
 
 #include "game/man.h"
-#include "db/man.h"
+#include "db/res.h"
 #include "utils/vec.h"
 #include "utils/hash.h"
 
@@ -453,9 +453,9 @@ static void man_index_path(const char *path, size_t len, struct link link)
 static bool man_populate_db(struct atoms *atoms)
 {
     bool ok = true;
-    struct man_db_it it = {0};
+    struct db_man_it it = {0};
 
-    while (man_db_next(&it)) {
+    while (db_man_next(&it)) {
         if (mans.pages.len == mans.pages.cap) {
             size_t cap = mans.pages.cap ? mans.pages.cap * 2 : 8;
             mans.pages.list = realloc_zero(

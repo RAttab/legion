@@ -4,6 +4,7 @@
 */
 
 #include "font.h"
+#include "db/res.h"
 #include "game/sys.h"
 #include "utils/bits.h"
 
@@ -54,15 +55,21 @@ const struct font *make_font(enum font_size size, enum font_style style)
 
 FT_Library ft_library;
 
-static struct font *font_open(SDL_Renderer *renderer, const char *ttf, size_t pt)
+static struct font *font_open(SDL_Renderer *renderer, struct db_font db, size_t pt)
 {
     struct font *font = calloc(1, sizeof(*font));
 
     float hdpi = 0, vdpi = 0;
     sdl_err(SDL_GetDisplayDPI(0, NULL, &hdpi, &vdpi));
 
+    FT_Open_Args args = {
+        .flags = FT_OPEN_MEMORY,
+        .memory_base = db.ptr,
+        .memory_size = db.len,
+    };
+
     FT_Face face;
-    ft_err(FT_New_Face(ft_library, ttf, 0, &face));
+    ft_err(FT_Open_Face(ft_library, &args, 0, &face));
     ft_err(FT_Set_Char_Size(face, 0, pt << 6, hdpi, vdpi));
     assert(FT_IS_SCALABLE(face));
 
@@ -143,17 +150,10 @@ void fonts_populate(SDL_Renderer *renderer)
 
     void load_size(size_t index, uint8_t pt)
     {
-        char path[PATH_MAX] = {0};
         struct font_repo *repo = fonts + index;
-
-        sys_path_res("font/IbmPlexMonoRegular.otf", path, sizeof(path));
-        repo->styles[font_nil] = font_open(renderer, path, pt);
-
-        sys_path_res("font/IbmPlexMonoBold.otf", path, sizeof(path));
-        repo->styles[font_bold] = font_open(renderer, path, pt);
-
-        sys_path_res("font/IbmPlexMonoItalic.otf", path, sizeof(path));
-        repo->styles[font_italic] = font_open(renderer, path, pt);
+        repo->styles[font_nil] = font_open(renderer, db_font_regular(), pt);
+        repo->styles[font_bold] = font_open(renderer, db_font_bold(), pt);
+        repo->styles[font_italic] = font_open(renderer, db_font_italic(), pt);
 
         assert(repo->styles[font_nil]->glyph_h == repo->styles[font_bold]->glyph_h);
         assert(repo->styles[font_nil]->glyph_w == repo->styles[font_bold]->glyph_w);
