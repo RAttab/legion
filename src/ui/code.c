@@ -5,6 +5,8 @@
 
 #include "code.h"
 #include "vm/mod.h"
+#include "render/render.h"
+#include "render/ui.h"
 #include "utils/str.h"
 
 static struct line *ui_code_view_update(struct ui_code *code);
@@ -70,7 +72,7 @@ void ui_code_free(struct ui_code *code)
 
 void ui_code_focus(struct ui_code *code)
 {
-    render_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
+    render_push_event(ev_focus_input, (uintptr_t) code, 0);
 }
 
 void ui_code_clear(struct ui_code *code)
@@ -238,8 +240,11 @@ void ui_code_breakpoint(struct ui_code *code, size_t row)
         }
     }
 
-    render_push_event(
-            EV_IO, vm_pack(io_dbg_break, item_brain), code->breakpoint.ip);
+    vm_word args = code->breakpoint.ip;
+    if (!ui_item_io(io_dbg_break, item_brain, &args, 1)) {
+        code->breakpoint.ip = 0;
+        code->breakpoint.row = 0;
+    }
 }
 
 void ui_code_breakpoint_ip(struct ui_code *code, vm_ip ip)
@@ -613,7 +618,7 @@ static enum ui_ret ui_code_event_click(struct ui_code *code)
 
     ui_code_view_carret_at(code, row, col);
 
-    render_push_event(EV_FOCUS_INPUT, (uintptr_t) code, 0);
+    render_push_event(ev_focus_input, (uintptr_t) code, 0);
     return ui_consume;
 }
 
@@ -724,13 +729,13 @@ static enum ui_ret ui_code_event_user(struct ui_code *code, const SDL_Event *ev)
     switch (ev->user.code)
     {
 
-    case EV_TICK: {
+    case ev_frame: {
         uint64_t ticks = (uintptr_t) ev->user.data1;
         code->carret.blink = (ticks / 20) % 2;
         return ui_nil;
     }
 
-    case EV_FOCUS_INPUT: {
+    case ev_focus_input: {
         void *target = ev->user.data1;
         code->focused = target == code;
         return ui_nil;

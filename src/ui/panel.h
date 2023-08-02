@@ -39,7 +39,6 @@ struct ui_panel
 {
     struct ui_widget w;
     struct ui_panel_style s;
-    struct ui_layout layout;
 
     struct ui_label title;
     struct ui_button close;
@@ -50,12 +49,11 @@ struct ui_panel
 
 struct ui_panel *ui_panel_current(void);
 
-struct ui_panel *ui_panel_menu(struct pos, struct dim);
-struct ui_panel *ui_panel_title(struct pos, struct dim, struct ui_str);
+struct ui_panel *ui_panel_menu(struct dim);
+struct ui_panel *ui_panel_title(struct dim, struct ui_str);
 void ui_panel_free(struct ui_panel *);
 
 void ui_panel_resize(struct ui_panel *, struct dim);
-void ui_panel_move(struct ui_panel *, struct pos);
 void ui_panel_focus(struct ui_panel *);
 void ui_panel_show(struct ui_panel *);
 void ui_panel_hide(struct ui_panel *);
@@ -63,4 +61,5 @@ bool ui_panel_is_visible(struct ui_panel *);
 
 enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
 enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);
-struct ui_layout ui_panel_render(struct ui_panel *, SDL_Renderer *);
+struct ui_layout ui_panel_render(
+        struct ui_panel *, struct ui_layout *, SDL_Renderer *);

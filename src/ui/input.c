@@ -61,7 +61,7 @@ void ui_input_free(struct ui_input *input)
 
 void ui_input_focus(struct ui_input *input)
 {
-    render_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
+    render_push_event(ev_focus_input, (uintptr_t) input, 0);
 }
 
 static void ui_input_view_update(struct ui_input *input)
@@ -174,7 +174,7 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     size_t col = (cursor.x - input->w.pos.x) / input->s.font->glyph_w;
     input->carret.col = legion_min(col, input->buf.len);
 
-    render_push_event(EV_FOCUS_INPUT, (uintptr_t) input, 0);
+    render_push_event(ev_focus_input, (uintptr_t) input, 0);
     return ui_consume;
 }
 
@@ -209,13 +209,13 @@ static enum ui_ret ui_input_event_ins(struct ui_input *input, char key, uint16_t
 
 static enum ui_ret ui_input_event_copy(struct ui_input *input)
 {
-    ui_clipboard_copy(&render.ui.board, input->buf.len, input->buf.c);
+    ui_clipboard_copy(&render.clipboard, input->buf.len, input->buf.c);
     return ui_consume;
 }
 
 static enum ui_ret ui_input_event_paste(struct ui_input *input)
 {
-    input->buf.len = ui_clipboard_paste(&render.ui.board, ui_input_cap, input->buf.c);
+    input->buf.len = ui_clipboard_paste(&render.clipboard, ui_input_cap, input->buf.c);
     input->carret.col = input->buf.len;
     ui_input_view_update(input);
     return ui_consume;
@@ -253,13 +253,13 @@ static enum ui_ret ui_input_event_user(struct ui_input *input, const SDL_Event *
     switch (ev->user.code)
     {
 
-    case EV_TICK: {
+    case ev_frame: {
         uint64_t ticks = (uintptr_t) ev->user.data1;
         input->carret.blink = (ticks / 20) % 2;
         return ui_nil;
     }
 
-    case EV_FOCUS_INPUT: {
+    case ev_focus_input: {
         void *target = ev->user.data1;
         input->focused = target == input;
         return ui_nil;

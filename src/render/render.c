@@ -103,43 +103,14 @@ static void cursor_update(void)
 static void ui_init(void)
 {
     ui_style_default();
-    ui_clipboard_init(&render.ui.board);
-
-    render.ui.map = map_new();
-    render.ui.factory = factory_new();
-    render.ui.topbar = ui_topbar_new();
-    render.ui.status = ui_status_new();
-    render.ui.tapes = ui_tapes_new();
-    render.ui.mods = ui_mods_new();
-    render.ui.log = ui_log_new();
-    render.ui.stars = ui_stars_new();
-    render.ui.star = ui_star_new();
-    render.ui.item = ui_item_new();
-    render.ui.pills = ui_pills_new();
-    render.ui.worker = ui_worker_new();
-    render.ui.energy = ui_energy_new();
-    render.ui.man = ui_man_new();
+    ui_clipboard_init(&render.clipboard);
+    render.ui = ui_alloc();
 }
 
 static void ui_close(void)
 {
-    ui_topbar_free(render.ui.topbar);
-    ui_status_free(render.ui.status);
-    ui_tapes_free(render.ui.tapes);
-    ui_mods_free(render.ui.mods);
-    ui_log_free(render.ui.log);
-    ui_stars_free(render.ui.stars);
-    ui_star_free(render.ui.star);
-    ui_item_free(render.ui.item);
-    ui_pills_free(render.ui.pills);
-    ui_worker_free(render.ui.worker);
-    ui_energy_free(render.ui.energy);
-    ui_man_free(render.ui.man);
-
-    factory_free(render.ui.factory);
-    map_free(render.ui.map);
-
-    ui_clipboard_free(&render.ui.board);
+    ui_free(render.ui);
+    ui_clipboard_free(&render.clipboard);
 }
 
 void render_update_state(void)
@@ -147,44 +118,8 @@ void render_update_state(void)
     // We don't want to execute this when running in tests.
     if (!render.init) return;
 
-    ui_worker_update_state(render.ui.worker);
-    ui_energy_update_state(render.ui.energy);
-}
-
-static void ui_event(SDL_Event *event)
-{
-    if (ui_topbar_event(render.ui.topbar, event)) return;
-    if (ui_status_event(render.ui.status, event)) return;
-    if (ui_tapes_event(render.ui.tapes, event)) return;
-    if (ui_mods_event(render.ui.mods, event)) return;
-    if (ui_log_event(render.ui.log, event)) return;
-    if (ui_stars_event(render.ui.stars, event)) return;
-    if (ui_star_event(render.ui.star, event)) return;
-    if (ui_item_event(render.ui.item, event)) return;
-    if (ui_pills_event(render.ui.pills, event)) return;
-    if (ui_worker_event(render.ui.worker, event)) return;
-    if (ui_energy_event(render.ui.energy, event)) return;
-    if (ui_man_event(render.ui.man, event)) return;
-    if (factory_event(render.ui.factory, event)) return;
-    if (map_event(render.ui.map, event)) return;
-}
-
-static void ui_render(SDL_Renderer *renderer)
-{
-    map_render(render.ui.map, renderer);
-    factory_render(render.ui.factory, renderer);
-    ui_topbar_render(render.ui.topbar, renderer);
-    ui_status_render(render.ui.status, renderer);
-    ui_tapes_render(render.ui.tapes, renderer);
-    ui_mods_render(render.ui.mods, renderer);
-    ui_log_render(render.ui.log, renderer);
-    ui_stars_render(render.ui.stars, renderer);
-    ui_star_render(render.ui.star, renderer);
-    ui_item_render(render.ui.item, renderer);
-    ui_pills_render(render.ui.pills, renderer);
-    ui_worker_render(render.ui.worker, renderer);
-    ui_energy_render(render.ui.energy, renderer);
-    ui_man_render(render.ui.man, renderer);
+    // worker & energy
+    ui_update_state(render.ui, render.proxy);
 }
 
 
@@ -241,10 +176,14 @@ static bool render_step(void)
 
     cursor_update();
 
-    switch (proxy_update(render.proxy)) {
+    switch (proxy_update(render.proxy))
+    {
     case proxy_nil: { break; }
-    case proxy_loaded: { render_push_event(EV_STATE_LOAD, 0, 0); } // fallthrough
-    case proxy_updated: { render_push_event(EV_STATE_UPDATE, 0, 0); break; }
+    case proxy_loaded: {
+        ui_reset(render.ui);
+        render_push_event(ev_state_load, 0, 0);
+    } // fallthrough
+    case proxy_updated: { ui_update_frame(render.ui, render.proxy); break; }
     default: { assert(false); }
     }
 
@@ -252,13 +191,13 @@ static bool render_step(void)
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) return false;
         cursor_event(&event);
-        ui_event(&event);
+        ui_event(render.ui, &event);
     }
 
     {
         sdl_err(SDL_RenderClear(render.renderer));
 
-        ui_render(render.renderer);
+        ui_render(render.ui, render.renderer);
         cursor_render(render.renderer);
 
         SDL_RenderPresent(render.renderer);
@@ -276,8 +215,8 @@ void render_loop(void)
     while (render_step()) {
         ts = ts_sleep_until(ts + sleep);
 
-        render.ticks++;
-        render_push_event(EV_TICK, render.ticks, 0);
+        render.frames++;
+        render_push_event(ev_frame, render.frames, 0);
     }
 
     atomic_store_explicit(&render.join, true, memory_order_relaxed);
@@ -323,7 +262,7 @@ void render_push_event(enum event code, uint64_t d0, uint64_t d1)
     assert(ret > 0);
 }
 
-void render_push_quit(void)
+void render_quit(void)
 {
     // Prevents log spam as we're exiting.
     proxy_set_speed(render.proxy, speed_pause);
@@ -347,7 +286,7 @@ void render_log_msg(enum status_type type, const char *msg, size_t len)
     }
 
     if (render.init) {
-        ui_status_set(render.ui.status, type, msg, len);
+        ui_status_set(type, msg, len);
         fprintf(stderr, "<%s> %s\n", prefix, msg);
     }
 }

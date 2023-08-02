@@ -14,19 +14,7 @@
 
 
 struct proxy;
-struct map;
-struct factory;
-struct ui_topbar;
-struct ui_status;
-struct ui_tapes;
-struct ui_mods;
-struct ui_log;
-struct ui_stars;
-struct ui_star;
-struct ui_item;
-struct ui_pills;
-struct ui_worker;
-struct ui_energy;
+struct ui;
 
 
 // -----------------------------------------------------------------------------
@@ -35,48 +23,20 @@ struct ui_energy;
 
 enum event
 {
-    EV_NIL = 0,
+    ev_nil = 0,
 
-    EV_TICK,
-    EV_STATE_UPDATE,
-    EV_STATE_LOAD,
+    ev_state_load,
 
-    EV_FOCUS_PANEL,
-    EV_FOCUS_INPUT,
+    ev_frame,
+    ev_focus_panel,
+    ev_focus_input,
 
-    EV_MAP_GOTO,
+    ev_star_select,
+    ev_item_select,
+    ev_tape_select,
+    ev_mod_select,
 
-    EV_FACTORY_SELECT,
-    EV_FACTORY_CLOSE,
-
-    EV_TAPES_TOGGLE,
-    EV_TAPE_SELECT,
-
-    EV_MODS_TOGGLE,
-    EV_MOD_SELECT,
-    EV_MOD_CLEAR,
-    EV_MOD_BREAKPOINT,
-
-    EV_STARS_TOGGLE,
-    EV_STAR_SELECT,
-    EV_STAR_CLEAR,
-
-    EV_LOG_TOGGLE,
-    EV_LOG_SELECT,
-
-    EV_ITEM_SELECT,
-    EV_ITEM_CLEAR,
-
-    EV_PILLS_TOGGLE,
-    EV_WORKER_TOGGLE,
-    EV_ENERGY_TOGGLE,
-
-    EV_MAN_TOGGLE,
-    EV_MAN_GOTO,
-
-    EV_IO,
-
-    EV_MAX,
+    ev_max,
 };
 
 
@@ -96,7 +56,7 @@ struct render
     atomic_bool join;
 
     uint32_t event;
-    uint64_t ticks;
+    uint64_t frames;
     bool focus;
 
     struct proxy *proxy;
@@ -109,25 +69,8 @@ struct render
         size_t size;
     } cursor;
 
-    struct
-    {
-        struct ui_clipboard board;
-
-        struct map *map;
-        struct factory *factory;
-        struct ui_topbar *topbar;
-        struct ui_status *status;
-        struct ui_tapes *tapes;
-        struct ui_mods *mods;
-        struct ui_log *log;
-        struct ui_stars *stars;
-        struct ui_star *star;
-        struct ui_item *item;
-        struct ui_pills *pills;
-        struct ui_worker *worker;
-        struct ui_energy *energy;
-        struct ui_man *man;
-    } ui;
+    struct ui *ui;
+    struct ui_clipboard clipboard;
 };
 
 extern struct render render;
@@ -148,7 +91,7 @@ void render_join(void);
 void render_update_state(void);
 
 void render_push_event(enum event, uint64_t d0, uint64_t d1);
-void render_push_quit(void);
+void render_quit(void);
 
 
 // -----------------------------------------------------------------------------

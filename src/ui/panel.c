@@ -13,7 +13,7 @@
 void ui_panel_style_default(struct ui_style *s)
 {
     s->panel = (struct ui_panel_style) {
-        .margin = make_dim(2, 2),
+        .margin = make_dim(4, 4),
 
         .bg = rgba_gray_a(0x11, 0x88),
         .border = s->rgba.box.border,
@@ -40,43 +40,36 @@ void ui_panel_style_default(struct ui_style *s)
 static struct ui_panel *ui_panel_curr = NULL;
 struct ui_panel *ui_panel_current(void) { return ui_panel_curr; }
 
-static void ui_panel_layout_update(struct ui_panel *panel)
-{
-    ui_layout_resize(&panel->layout,
-            make_pos(
-                    panel->w.pos.x + panel->s.margin.w,
-                    panel->w.pos.y + panel->s.margin.h),
-            make_dim(
-                    panel->w.dim.w - (panel->s.margin.w * 2),
-                    panel->w.dim.h - (panel->s.margin.h * 2)));
-}
-
-static struct ui_panel *ui_panel_new(struct pos pos, struct dim dim)
+static struct ui_panel *ui_panel_new(struct dim dim)
 {
     struct ui_panel_style *s = &ui_st.panel;
 
     struct ui_panel *panel = calloc(1, sizeof(*panel));
     *panel = (struct ui_panel) {
-        .w = (struct ui_widget) { .pos = pos, .dim = dim },
+        .w = (struct ui_widget) { .pos = {0}, .dim = dim },
         .s = *s,
         .state = ui_panel_visible,
     };
 
-    ui_panel_layout_update(panel);
+    if (panel->w.dim.w != ui_layout_inf)
+        panel->w.dim.w += panel->s.margin.w * 2;
+    if (panel->w.dim.h != ui_layout_inf)
+        panel->w.dim.h += panel->s.margin.h * 2;
+
     ui_panel_curr = panel;
     return panel;
 }
 
-struct ui_panel *ui_panel_menu(struct pos pos, struct dim dim)
+struct ui_panel *ui_panel_menu(struct dim dim)
 {
-    struct ui_panel *panel = ui_panel_new(pos, dim);
+    struct ui_panel *panel = ui_panel_new(dim);
     panel->menu = true;
     return panel;
 }
 
-struct ui_panel *ui_panel_title(struct pos pos, struct dim dim, struct ui_str str)
+struct ui_panel *ui_panel_title(struct dim dim, struct ui_str str)
 {
-    struct ui_panel *panel = ui_panel_new(pos, dim);
+    struct ui_panel *panel = ui_panel_new(dim);
     panel->title = ui_label_new(str);
     panel->close = ui_button_new(ui_str_c("X"));
     return panel;
@@ -93,24 +86,23 @@ void ui_panel_free(struct ui_panel *panel)
 
 void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 {
-    panel->w.dim = dim;
-    ui_panel_layout_update(panel);
+    if (dim.w != ui_layout_inf)
+        panel->w.dim.w = dim.w + (panel->s.margin.w * 2);
+    if (dim.h != ui_layout_inf)
+        panel->w.dim.h = dim.h + (panel->s.margin.h * 2);
 }
 
-void ui_panel_move(struct ui_panel *panel, struct pos pos)
-{
-    panel->w.pos = pos;
-    ui_panel_layout_update(panel);
-}
 
 void ui_panel_show(struct ui_panel *panel)
 {
     panel->state = ui_panel_focused;
-    render_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
+    render_push_event(ev_focus_panel, (uintptr_t) panel, 0);
 }
 
 void ui_panel_hide(struct ui_panel *panel)
 {
+    if (panel->state == ui_panel_focused)
+        render_push_event(ev_focus_panel, (uintptr_t) 0, 0);
     panel->state = ui_panel_hidden;
 }
 
@@ -139,7 +131,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 
         if (panel->state == ui_panel_visible) {
             panel->state = ui_panel_focused;
-            render_push_event(EV_FOCUS_PANEL, (uintptr_t) panel, 0);
+            render_push_event(ev_focus_panel, (uintptr_t) panel, 0);
         }
 
         break;
@@ -156,7 +148,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
     }
 
     if (ev->type == render.event) {
-        if (ev->user.code == EV_FOCUS_PANEL) {
+        if (ev->user.code == ev_focus_panel) {
             struct ui_panel *target = (void *) ev->user.data1;
             panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
         }
@@ -164,7 +156,7 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 
     enum ui_ret ret = 0;
     if (!panel->menu && (ret = ui_button_event(&panel->close, ev))) {
-        if (ret == ui_action) panel->state = ui_panel_hidden;
+        if (ret == ui_action) ui_panel_hide(panel);
         return ret;
     }
 
@@ -192,10 +184,12 @@ enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
     }
 }
 
-struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
+struct ui_layout ui_panel_render(
+        struct ui_panel *panel, struct ui_layout *layout, SDL_Renderer *renderer)
 {
     if (panel->state == ui_panel_hidden) return (struct ui_layout) {0};
 
+    ui_layout_add(layout, &panel->w);
     struct SDL_Rect rect = ui_widget_rect(&panel->w);
 
     rgba_render(panel->s.bg, renderer);
@@ -215,7 +209,13 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
         sdl_err(SDL_RenderDrawRect(renderer, &rect));
     }
 
-    struct ui_layout layout = panel->layout;
+    struct ui_layout inner = ui_layout_new(
+            make_pos(
+                    panel->w.pos.x + panel->s.margin.w,
+                    panel->w.pos.y + panel->s.margin.h),
+            make_dim(
+                    panel->w.dim.w - (panel->s.margin.w * 2),
+                    panel->w.dim.h - (panel->s.margin.h * 2)));
 
     if (!panel->menu) {
         if (panel->state == ui_panel_focused) {
@@ -226,15 +226,15 @@ struct ui_layout ui_panel_render(struct ui_panel *panel, SDL_Renderer *renderer)
             panel->title.s.font = panel->s.head.font;
             panel->title.s.fg = panel->s.head.fg;
         }
-        ui_label_render(&panel->title, &layout, renderer);
+        ui_label_render(&panel->title, &inner, renderer);
 
-        ui_layout_dir(&layout, ui_layout_left);
-        ui_button_render(&panel->close, &layout, renderer);
+        ui_layout_dir(&inner, ui_layout_right_left);
+        ui_button_render(&panel->close, &inner, renderer);
 
-        ui_layout_next_row(&layout);
-        ui_layout_sep_y(&layout, 4);
-        ui_layout_dir(&layout, ui_layout_right);
+        ui_layout_next_row(&inner);
+        ui_layout_sep_y(&inner, 4);
+        ui_layout_dir(&inner, ui_layout_left_right);
     }
 
-    return layout;
+    return inner;
 }

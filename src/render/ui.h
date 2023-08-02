@@ -8,186 +8,191 @@
 #include "common.h"
 #include "ui/ui.h"
 #include "game/coord.h"
+#include "game/protocol.h"
+#include "game/proxy.h"
+
 #include "SDL.h"
 
 
 // -----------------------------------------------------------------------------
-// map
+// ui
 // -----------------------------------------------------------------------------
 
-struct map;
+enum ui_slot : uint8_t
+{
+    ui_slot_nil = 0U,
 
-struct map *map_new(void);
-void map_free(struct map *);
-void map_render(struct map *, SDL_Renderer *);
-bool map_event(struct map *, SDL_Event *);
+    ui_slot_back      = 1U << 0,
+    ui_slot_right     = 1U << 1,
+    ui_slot_right_sub = 1U << 2,
+    ui_slot_left      = 1U << 3,
 
-bool map_active(struct map *);
-coord_scale map_scale(struct map *);
-struct coord map_coord(struct map *);
+    ui_slot_len = 4U,
+};
+
+const char *ui_slot_str(enum ui_slot);
+
+enum ui_view : uint8_t
+{
+    ui_view_nil = 0,
+
+    ui_view_topbar,
+    ui_view_status,
+
+    ui_view_map,
+    ui_view_factory,
+
+    ui_view_tapes,
+    ui_view_stars,
+    ui_view_mods,
+    ui_view_log,
+
+    ui_view_star,
+    ui_view_item,
+    ui_view_pills,
+    ui_view_energy,
+    ui_view_workers,
+
+    ui_view_man,
+
+    ui_view_len,
+};
+
+const char *ui_view_str(enum ui_view);
+
+
+typedef void (*ui_state_fn) (void *);
+typedef void (*ui_update_fn) (void *, struct proxy *);
+typedef bool (*ui_event_fn) (void *, SDL_Event *);
+typedef void (*ui_render_fn) (void *, struct ui_layout *, SDL_Renderer *);
+
+struct ui_view_state
+{
+    void *state;
+    enum ui_view view, parent;
+    enum ui_slot slots;
+    struct ui_panel *panel;
+
+    struct
+    {
+        ui_state_fn free, show, hide;
+        ui_update_fn update_state;
+        ui_update_fn update_frame;
+        ui_event_fn event;
+        ui_render_fn render;
+    } fn;
+};
+
+struct ui;
+
+struct ui *ui_alloc(void);
+void ui_free(struct ui *);
+
+void *ui_state(struct ui *, enum ui_view);
+enum ui_view ui_slot(struct ui *, enum ui_slot);
+
+void ui_update_state(struct ui *, struct proxy *);
+void ui_update_frame(struct ui *, struct proxy *);
+void ui_event(struct ui *, SDL_Event *);
+void ui_render(struct ui *, SDL_Renderer *);
+
+void ui_reset(struct ui *);
+void ui_show(struct ui *, enum ui_view);
+void ui_show_slot(struct ui *, enum ui_view, enum ui_slot);
+void ui_hide(struct ui *, enum ui_view);
+void ui_toggle(struct ui *, enum ui_view);
 
 
 // -----------------------------------------------------------------------------
-// factory
+// back
 // -----------------------------------------------------------------------------
 
-struct factory;
-struct factory *factory_new(void);
-void factory_free(struct factory *);
-void factory_render(struct factory *, SDL_Renderer *);
-bool factory_event(struct factory *, SDL_Event *);
+struct ui_map;
+void ui_map_alloc(struct ui_view_state *);
+void ui_map_show(struct coord);
+void ui_map_goto(struct coord);
+coord_scale ui_map_scale(void);
+struct coord ui_map_coord(void);
 
-bool factory_active(struct factory *);
-coord_scale factory_scale(struct factory *);
-struct coord factory_coord(struct factory *);
+struct ui_factory;
+void ui_factory_alloc(struct ui_view_state *);
+void ui_factory_show(struct coord, im_id);
+coord_scale ui_factory_scale(void);
+struct coord ui_factory_coord(void);
 
 
 // -----------------------------------------------------------------------------
-// topbar
+// top/bottom
 // -----------------------------------------------------------------------------
 
 struct ui_topbar;
-struct ui_topbar *ui_topbar_new(void);
-void ui_topbar_free(struct ui_topbar *);
-int16_t ui_topbar_height(void);
-bool ui_topbar_event(struct ui_topbar *, SDL_Event *);
-void ui_topbar_render(struct ui_topbar *, SDL_Renderer *);
-
-
-// -----------------------------------------------------------------------------
-// status
-// -----------------------------------------------------------------------------
+void ui_topbar_alloc(struct ui_view_state *);
 
 struct ui_status;
-struct ui_status *ui_status_new(void);
-void ui_status_free(struct ui_status *);
-int16_t ui_status_height(void);
-bool ui_status_event(struct ui_status *, SDL_Event *);
-void ui_status_render(struct ui_status *, SDL_Renderer *);
-
-void ui_status_set(struct ui_status *, enum status_type, const char *msg, size_t len);
+void ui_status_alloc(struct ui_view_state *);
+void ui_status_set(enum status_type, const char *msg, size_t len);
 
 
 // -----------------------------------------------------------------------------
-// tapes
+// left
 // -----------------------------------------------------------------------------
 
 struct ui_tapes;
-struct ui_tapes *ui_tapes_new(void);
-void ui_tapes_free(struct ui_tapes *);
-bool ui_tapes_event(struct ui_tapes *, SDL_Event *);
-void ui_tapes_render(struct ui_tapes *, SDL_Renderer *);
-
-
-// -----------------------------------------------------------------------------
-// mods
-// -----------------------------------------------------------------------------
+void ui_tapes_alloc(struct ui_view_state *);
+void ui_tapes_show(enum item);
 
 struct ui_mods;
-struct ui_mods *ui_mods_new(void);
-void ui_mods_free(struct ui_mods *);
-bool ui_mods_event(struct ui_mods *, SDL_Event *);
-void ui_mods_render(struct ui_mods *, SDL_Renderer *);
-
-
-// -----------------------------------------------------------------------------
-// stars
-// -----------------------------------------------------------------------------
+void ui_mods_alloc(struct ui_view_state *);
+void ui_mods_show(mod_id, vm_ip);
+void ui_mods_breakpoint(mod_id, vm_ip);
 
 struct ui_stars;
-struct ui_stars *ui_stars_new(void);
-void ui_stars_free(struct ui_stars *);
-bool ui_stars_event(struct ui_stars *, SDL_Event *);
-void ui_stars_render(struct ui_stars *, SDL_Renderer *);
+void ui_stars_alloc(struct ui_view_state *);
+
+struct ui_log;
+void ui_log_alloc(struct ui_view_state *);
+void ui_log_show(struct coord);
+
 
 // -----------------------------------------------------------------------------
-// star
+// right
 // -----------------------------------------------------------------------------
 
 struct ui_star;
-struct ui_star *ui_star_new(void);
-void ui_star_free(struct ui_star *);
-bool ui_star_event(struct ui_star *, SDL_Event *);
-void ui_star_render(struct ui_star *, SDL_Renderer *);
-int16_t ui_star_width(const struct ui_star *);
-
-
-// -----------------------------------------------------------------------------
-// item
-// -----------------------------------------------------------------------------
+void ui_star_alloc(struct ui_view_state *);
+void ui_star_show(struct coord);
 
 struct ui_item;
-struct ui_item *ui_item_new(void);
-void ui_item_free(struct ui_item *);
-bool ui_item_event(struct ui_item *, SDL_Event *);
-void ui_item_render(struct ui_item *, SDL_Renderer *);
-int16_t ui_item_width(struct ui_item *);
-
-
-// -----------------------------------------------------------------------------
-// io
-// -----------------------------------------------------------------------------
+void ui_item_alloc(struct ui_view_state *);
+void ui_item_show(im_id id, struct coord star);
+bool ui_item_io(enum io, enum item, const vm_word *, size_t);
 
 struct ui_io;
-struct ui_io *ui_io_new(void);
+struct ui_io *ui_io_alloc(void);
 int16_t ui_io_width(void);
+void ui_io_show(struct ui_io *, struct coord, im_id);
 void ui_io_free(struct ui_io *);
 bool ui_io_event(struct ui_io *, SDL_Event *);
 void ui_io_render(struct ui_io *, struct ui_layout *, SDL_Renderer *);
-void ui_io_select(struct ui_io *, struct coord, im_id);
-void ui_io_clear(struct ui_io *);
-
-// -----------------------------------------------------------------------------
-// pills
-// -----------------------------------------------------------------------------
 
 struct ui_pills;
-struct ui_pills *ui_pills_new(void);
-void ui_pills_free(struct ui_pills *);
-bool ui_pills_event(struct ui_pills *, SDL_Event *);
-void ui_pills_render(struct ui_pills *, SDL_Renderer *);
+void ui_pills_alloc(struct ui_view_state *);
+void ui_pills_show(struct coord);
 
-
-// -----------------------------------------------------------------------------
-// worker
-// -----------------------------------------------------------------------------
-
-struct ui_worker;
-struct ui_worker *ui_worker_new(void);
-void ui_worker_free(struct ui_worker *);
-void ui_worker_update_state(struct ui_worker *);
-bool ui_worker_event(struct ui_worker *, SDL_Event *);
-void ui_worker_render(struct ui_worker *, SDL_Renderer *);
-
-
-// -----------------------------------------------------------------------------
-// energy
-// -----------------------------------------------------------------------------
+struct ui_workers;
+void ui_workers_alloc(struct ui_view_state *);
+void ui_workers_show(struct coord);
 
 struct ui_energy;
-struct ui_energy *ui_energy_new(void);
-void ui_energy_free(struct ui_energy *);
-void ui_energy_update_state(struct ui_energy *);
-bool ui_energy_event(struct ui_energy *, SDL_Event *);
-void ui_energy_render(struct ui_energy *, SDL_Renderer *);
+void ui_energy_alloc(struct ui_view_state *);
+void ui_energy_show(struct coord);
 
 
 // -----------------------------------------------------------------------------
-// log
+// float
 // -----------------------------------------------------------------------------
 
-struct ui_log;
-struct ui_log *ui_log_new(void);
-void ui_log_free(struct ui_log *);
-bool ui_log_event(struct ui_log *, SDL_Event *);
-void ui_log_render(struct ui_log *, SDL_Renderer *);
-
-
-// -----------------------------------------------------------------------------
-// man
-// -----------------------------------------------------------------------------
 struct ui_man;
-struct ui_man *ui_man_new(void);
-void ui_man_free(struct ui_man *);
-bool ui_man_event(struct ui_man *, SDL_Event *);
-void ui_man_render(struct ui_man *, SDL_Renderer *);
+void ui_man_alloc(struct ui_view_state *);
+void ui_man_show(struct link);
+void ui_man_show_slot(struct link, enum ui_slot);

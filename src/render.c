@@ -5,8 +5,9 @@
 
 #include "render/render.c"
 #include "render/font.c"
-#include "render/map.c"
-#include "render/factory.c"
+#include "render/ui.c"
+#include "render/ui_map.c"
+#include "render/ui_factory.c"
 #include "render/ui_topbar.c"
 #include "render/ui_status.c"
 #include "render/ui_tapes.c"
@@ -17,7 +18,7 @@
 #include "render/ui_item.c"
 #include "render/ui_io.c"
 #include "render/ui_pills.c"
-#include "render/ui_worker.c"
 #include "render/ui_energy.c"
+#include "render/ui_workers.c"
 #include "render/ui_man.c"
 
