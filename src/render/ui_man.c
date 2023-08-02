@@ -7,12 +7,17 @@
 #include "ui/ui.h"
 #include "game/man.h"
 
+static void ui_man_free(void *);
+static void ui_man_update(void *, struct proxy *);
+static bool ui_man_event(void *, SDL_Event *);
+static void ui_man_render(void *, struct ui_layout *, SDL_Renderer *);
+
 
 // -----------------------------------------------------------------------------
 // man
 // -----------------------------------------------------------------------------
 
-enum { ui_man_cols = 90, ui_man_depth = 4 };
+enum { ui_man_cols = 80, ui_man_depth = 4 };
 
 struct ui_man
 {
@@ -43,17 +48,15 @@ static void ui_man_toc(
     }
 }
 
-struct ui_man *ui_man_new(void)
+void ui_man_alloc(struct ui_view_state *state)
 {
     size_t tree_width = (man_toc_max + 2*ui_man_depth + 1) * ui_st.font.dim.w;
     size_t doc_width = (ui_man_cols + 1) * ui_st.font.dim.w;
     size_t width = tree_width + doc_width + ui_st.font.dim.w;
-    struct pos pos = make_pos(render.rect.w - width, ui_topbar_height());
-    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
     struct ui_man *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_man) {
-        .panel = ui_panel_title(pos, dim, ui_str_c("man")),
+        .panel = ui_panel_title(make_dim(width, ui_layout_inf), ui_str_c("man")),
         .toc = ui_tree_new(make_dim(tree_width, ui_layout_inf), man_toc_max),
         .doc = ui_doc_new(make_dim(doc_width, ui_layout_inf)),
         .page = link_home(),
@@ -62,19 +65,57 @@ struct ui_man *ui_man_new(void)
     ui_man_toc(ui, man_toc(), ui_node_nil);
     ui_doc_open(&ui->doc, link_home(), proxy_lisp(render.proxy));
 
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_man,
+        .slots = ui_slot_right | ui_slot_left,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_man_free,
+            .update_frame = ui_man_update,
+            .event = ui_man_event,
+            .render = ui_man_render,
+        },
+    };
 }
 
-void ui_man_free(struct ui_man *ui)
+static void ui_man_free(void *state)
 {
+    struct ui_man *ui = state;
     ui_panel_free(ui->panel);
     ui_tree_free(&ui->toc);
     ui_doc_free(&ui->doc);
 }
 
-static void ui_man_update(struct ui_man *ui)
+void ui_man_show_slot(struct link link, enum ui_slot slot)
 {
-    const struct tech *tech = proxy_tech(render.proxy);
+    struct ui_man *ui = ui_state(render.ui, ui_view_man);
+    if (link_is_nil(link)) { ui_hide(render.ui, ui_view_man); return; }
+
+    ui_man_update(ui, render.proxy);
+    ui_show_slot(render.ui, ui_view_man, slot);
+
+    enum item item = man_item(link.page);
+    if (!item || tech_known(proxy_tech(render.proxy), item))
+        ui_tree_select(&ui->toc, link_to_u64(link));
+    else {
+        ui_tree_clear(&ui->toc);
+        link = man_sys_locked();
+    }
+
+    ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
+}
+
+void ui_man_show(struct link link)
+{
+    ui_man_show_slot(link, ui_slot_nil);
+}
+
+static void ui_man_update(void *state, struct proxy *proxy)
+{
+    struct ui_man *ui = state;
+
+    const struct tech *tech = proxy_tech(proxy);
     if (tape_set_eq(&tech->known, &ui->known)) return;
     ui->known = tech->known;
 
@@ -82,65 +123,13 @@ static void ui_man_update(struct ui_man *ui)
     ui_man_toc(ui, man_toc(), ui_node_nil);
 }
 
-
-static bool ui_man_event_user(struct ui_man *ui, SDL_Event *ev)
+static bool ui_man_event(void *state, SDL_Event *ev)
 {
-    switch (ev->user.code)
-    {
+    struct ui_man *ui = state;
 
-    case EV_STATE_LOAD: {
-        ui_panel_hide(ui->panel);
-        return false;
-    }
-
-    case EV_STATE_UPDATE: {
-        if (ui_panel_is_visible(ui->panel))
-            ui_man_update(ui);
-        return false;
-    }
-
-    case EV_MAN_TOGGLE: {
-        if (ui_panel_is_visible(ui->panel))
-            ui_panel_hide(ui->panel);
-        else ui_panel_show(ui->panel);
-        return false;
-    }
-
-    case EV_MAN_GOTO: {
-        uint64_t user = (uintptr_t) ev->user.data1;
-        struct link link = link_from_u64(user);
-        enum item item = man_item(link.page);
-
-        if (!item || tech_known(proxy_tech(render.proxy), item))
-            ui_tree_select(&ui->toc, user);
-        else {
-            ui_tree_clear(&ui->toc);
-            link = man_sys_locked();
-        }
-
-        ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
-        ui_panel_show(ui->panel);
-        return false;
-    }
-
-    case EV_STAR_SELECT: {
-        ui_panel_hide(ui->panel);
-        return false;
-    }
-
-    default: { return false; }
-    }
-}
-
-bool ui_man_event(struct ui_man *ui, SDL_Event *ev)
-{
-    if (ev->type == render.event) return ui_man_event_user(ui, ev);
+    if (ui_doc_event(&ui->doc, ev)) return true;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
-
-    if ((ret = ui_doc_event(&ui->doc, ev))) return true;
-
     if ((ret = ui_tree_event(&ui->toc, ev))) {
         if (ret != ui_action) return true;
         struct link link = link_from_u64(ui->toc.selected);
@@ -148,14 +137,13 @@ bool ui_man_event(struct ui_man *ui, SDL_Event *ev)
         return true;
     }
 
-    return ui_panel_event_consume(ui->panel, ev);
+    return false;
 }
 
-void ui_man_render(struct ui_man *ui, SDL_Renderer *renderer)
+static void ui_man_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
-
-    ui_tree_render(&ui->toc, &layout, renderer);
-    ui_doc_render(&ui->doc, &layout, renderer);
+    struct ui_man *ui = state;
+    ui_tree_render(&ui->toc, layout, renderer);
+    ui_doc_render(&ui->doc, layout, renderer);
 }

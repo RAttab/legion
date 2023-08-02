@@ -33,10 +33,10 @@ static void *ui_prober_alloc(void)
 {
     struct ui_prober *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_prober) {
-        .coord = ui_label_new(ui_str_c("coord:    ")),
+        .coord = ui_label_new(ui_str_c("coord: ")),
         .coord_val = ui_link_new(ui_str_v(symbol_cap)),
 
-        .item = ui_label_new(ui_str_c("item:     ")),
+        .item = ui_label_new(ui_str_c("item:  ")),
         .item_val = ui_label_new(ui_str_v(item_str_len)),
 
         .status = ui_label_new(ui_str_c("state:    ")),
@@ -47,7 +47,7 @@ static void *ui_prober_alloc(void)
         .work_left = ui_label_new(ui_str_v(3)),
         .work_cap = ui_label_new(ui_str_v(3)),
 
-        .result = ui_label_new(ui_str_c("result:   ")),
+        .result = ui_label_new(ui_str_c("result: ")),
         .result_val = ui_label_new(ui_str_v(16)),
     };
 
@@ -123,7 +123,7 @@ static bool ui_prober_event(void *_ui, const SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
         if (ret != ui_action) return true;
-        ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(ui->state.coord));
+        ui_clipboard_copy_hex(&render.clipboard, coord_to_u64(ui->state.coord));
         return true;
     }
 

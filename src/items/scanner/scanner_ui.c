@@ -36,10 +36,10 @@ static void *ui_scanner_alloc(void)
         .work_left = ui_label_new(ui_str_v(3)),
         .work_cap = ui_label_new(ui_str_v(3)),
 
-        .sector = ui_label_new(ui_str_c("sector:   ")),
+        .sector = ui_label_new(ui_str_c("sector: ")),
         .sector_val = ui_link_new(ui_str_v(symbol_cap)),
 
-        .result = ui_label_new(ui_str_c("result:   ")),
+        .result = ui_label_new(ui_str_c("result: ")),
         .result_val = ui_label_new(ui_str_v(16)),
     };
 
@@ -112,7 +112,7 @@ static bool ui_scanner_event(void *_ui, const SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->sector_val, ev))) {
         if (ret != ui_action) return true;
-        ui_clipboard_copy_hex(&render.ui.board, coord_to_u64(ui->state.coord));
+        ui_clipboard_copy_hex(&render.clipboard, coord_to_u64(ui->state.coord));
         return true;
     }
 
@@ -136,6 +136,8 @@ static void ui_scanner_render(
     }
     ui_label_render(&ui->work_cap, layout, renderer);
     ui_layout_next_row(layout);
+
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->sector, layout, renderer);
     ui_link_render(&ui->sector_val, layout, renderer);

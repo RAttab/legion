@@ -32,6 +32,7 @@ void im_port_config(struct im_config *config)
     config->ui.alloc = ui_port_alloc;
     config->ui.free = ui_port_free;
     config->ui.update = ui_port_update;
+    config->ui.event = ui_port_event;
     config->ui.render = ui_port_render;
 
     config->io.list = im_port_io_list;

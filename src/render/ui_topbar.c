@@ -8,6 +8,11 @@
 #include "ui/ui.h"
 #include "utils/str.h"
 
+static void ui_topbar_free(void *);
+static void ui_topbar_update(void *, struct proxy *);
+static bool ui_topbar_event(void *, SDL_Event *);
+static void ui_topbar_render(void *, struct ui_layout *, SDL_Renderer *);
+
 
 // -----------------------------------------------------------------------------
 // topbar
@@ -24,20 +29,18 @@ struct ui_topbar
     struct ui_button close;
 };
 
-enum
+enum : uint64_t
 {
     topbar_ticks_len = 8,
     topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + scale_str_len+1,
 };
 
-
-struct ui_topbar *ui_topbar_new(void)
+void ui_topbar_alloc(struct ui_view_state *state)
 {
     struct ui_topbar *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_topbar) {
         .panel = ui_panel_menu(
-                make_pos(0, 0),
-                make_dim(render.rect.w, ui_st.font.base->glyph_h + 8)),
+                make_dim(ui_layout_inf, ui_st.button.base.height)),
 
         .save = ui_button_new(ui_str_c("save")),
         .load = ui_button_new(ui_str_c("load")),
@@ -60,10 +63,22 @@ struct ui_topbar *ui_topbar_new(void)
         .close = ui_button_new(ui_str_c("x")),
     };
 
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_topbar,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_topbar_free,
+            .update_frame = ui_topbar_update,
+            .event = ui_topbar_event,
+            .render = ui_topbar_render,
+        },
+    };
 }
 
-void ui_topbar_free(struct ui_topbar *ui) {
+static void ui_topbar_free(void *state) {
+    struct ui_topbar *ui = state;
+
     ui_panel_free(ui->panel);
 
     ui_button_free(&ui->save);
@@ -89,20 +104,17 @@ void ui_topbar_free(struct ui_topbar *ui) {
     free(ui);
 }
 
-int16_t ui_topbar_height(void)
+static void ui_topbar_update(void *state, struct proxy *proxy)
 {
-    return render.ui.topbar->panel->w.dim.h;
-}
+    struct ui_topbar *ui = state;
 
-static void ui_topbar_update_speed(struct ui_topbar *ui)
-{
     ui->pause.disabled = false;
     ui->slow.disabled = false;
     ui->fast.disabled = false;
     ui->faster.disabled = false;
     ui->fastest.disabled = false;
 
-    switch (proxy_speed(render.proxy))
+    switch (proxy_speed(proxy))
     {
     case speed_pause: { ui->pause.disabled = true; break; }
     case speed_slow: { ui->slow.disabled = true; break; }
@@ -113,62 +125,11 @@ static void ui_topbar_update_speed(struct ui_topbar *ui)
     }
 }
 
-bool ui_topbar_event_user(struct ui_topbar *ui, SDL_Event *ev)
+static bool ui_topbar_event(void *state, SDL_Event *ev)
 {
-    switch (ev->user.code)
-    {
-
-    case EV_STATE_LOAD:
-    case EV_STATE_UPDATE: {
-        ui_topbar_update_speed(ui);
-        return false;
-    }
-
-    default: { return false; }
-    }
-}
-
-bool ui_topbar_event_shortcuts(struct ui_topbar *ui, SDL_Event *ev)
-{
-    (void) ui;
-    if (!(ev->key.keysym.mod & KMOD_CTRL)) return false;
-
-    switch (ev->key.keysym.sym)
-    {
-
-    case SDLK_s: { proxy_save(render.proxy); return true; }
-    case SDLK_o: { proxy_load(render.proxy); return true; }
-
-    case SDLK_1: { proxy_set_speed(render.proxy, speed_slow); return true; }
-    case SDLK_2: { proxy_set_speed(render.proxy, speed_fast); return true; }
-    case SDLK_3: { proxy_set_speed(render.proxy, speed_faster); return true; }
-    case SDLK_4: { proxy_set_speed(render.proxy, speed_fastest); return true; }
-    case SDLK_SPACE: {
-        if (proxy_speed(render.proxy) == speed_pause)
-            proxy_set_speed(render.proxy, speed_slow);
-        else proxy_set_speed(render.proxy, speed_pause);
-        return true;
-    }
-
-    case SDLK_m: { render_push_event(EV_MODS_TOGGLE, 0, 0); return true; }
-    case SDLK_a: { render_push_event(EV_STARS_TOGGLE, 0, 0); return true; }
-    case SDLK_t: { render_push_event(EV_TAPES_TOGGLE, 0, 0); return true; }
-    case SDLK_l: { render_push_event(EV_LOG_TOGGLE, 0, 0); return true; }
-    case SDLK_h: { render_push_event(EV_MAN_TOGGLE, 0, 0); return true; }
-    case SDLK_q: { render_push_quit(); return true; }
-
-    default: { return false; }
-    }
-}
-
-bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
-{
-    if (ev->type == render.event) return ui_topbar_event_user(ui, ev);
-    if (ev->type == SDL_KEYDOWN) return ui_topbar_event_shortcuts(ui, ev);
+    struct ui_topbar *ui = state;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
-
     if ((ret = ui_button_event(&ui->save, ev))) {
         if (ret != ui_action) return true;
         proxy_save(render.proxy);
@@ -213,37 +174,37 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->home, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_MAP_GOTO, coord_to_u64(proxy_home(render.proxy)), 0);
+        ui_map_show(proxy_home(render.proxy));
         return true;
     }
 
     if ((ret = ui_button_event(&ui->stars, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_STARS_TOGGLE, 0, 0);
+        ui_toggle(render.ui, ui_view_stars);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->tapes, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_TAPES_TOGGLE, 0, 0);
+        ui_toggle(render.ui, ui_view_tapes);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->mods, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_MODS_TOGGLE, 0, 0);
+        ui_toggle(render.ui, ui_view_mods);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->log, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_LOG_TOGGLE, 0, 0);
+        ui_toggle(render.ui, ui_view_log);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->man, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_MAN_TOGGLE, 0, 0);
+        ui_toggle(render.ui, ui_view_man);
         return true;
     }
 
@@ -253,7 +214,7 @@ bool ui_topbar_event(struct ui_topbar *ui, SDL_Event *ev)
         return true;
     }
 
-    return ui_panel_event_consume(ui->panel, ev);
+    return false;
 }
 
 static void topbar_render_coord(
@@ -269,13 +230,18 @@ static void topbar_render_coord(
 
     coord_scale scale = 0;
     struct coord coord = {0};
-    if (map_active(render.ui.map)) {
-        scale = map_scale(render.ui.map);
-        coord = map_coord(render.ui.map);
+    switch (ui_slot(render.ui, ui_slot_back)) {
+    case ui_view_map: {
+        scale = ui_map_scale();
+        coord = ui_map_coord();
+        break;
     }
-    else if (factory_active(render.ui.factory)) {
-        scale = factory_scale(render.ui.factory);
-        coord = factory_coord(render.ui.factory);
+    case ui_view_factory: {
+        scale = ui_factory_scale();
+        coord = ui_factory_coord();
+        break;
+    }
+    default: { assert(false); }
     }
 
     it += coord_str(coord, it, end - it);
@@ -288,34 +254,35 @@ static void topbar_render_coord(
     ui_label_render(&ui->coord, layout, renderer);
 }
 
-void ui_topbar_render(struct ui_topbar *ui, SDL_Renderer *renderer)
+static void ui_topbar_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
+    struct ui_topbar *ui = state;
 
-    ui_button_render(&ui->save, &layout, renderer);
-    ui_button_render(&ui->load, &layout, renderer);
-    ui_layout_sep_x(&layout, 10);
+    ui_button_render(&ui->save, layout, renderer);
+    ui_button_render(&ui->load, layout, renderer);
+    ui_layout_sep_x(layout, 10);
 
-    ui_button_render(&ui->pause, &layout, renderer);
-    ui_button_render(&ui->slow, &layout, renderer);
-    ui_button_render(&ui->fast, &layout, renderer);
-    ui_button_render(&ui->faster, &layout, renderer);
-    ui_button_render(&ui->fastest, &layout, renderer);
-    ui_layout_sep_x(&layout, 10);
+    ui_button_render(&ui->pause, layout, renderer);
+    ui_button_render(&ui->slow, layout, renderer);
+    ui_button_render(&ui->fast, layout, renderer);
+    ui_button_render(&ui->faster, layout, renderer);
+    ui_button_render(&ui->fastest, layout, renderer);
+    ui_layout_sep_x(layout, 10);
 
-    ui_button_render(&ui->home, &layout, renderer);
-    ui_layout_sep_x(&layout, 10);
-    ui_button_render(&ui->stars, &layout, renderer);
-    ui_button_render(&ui->tapes, &layout, renderer);
-    ui_button_render(&ui->mods, &layout, renderer);
-    ui_button_render(&ui->log, &layout, renderer);
+    ui_button_render(&ui->home, layout, renderer);
+    ui_layout_sep_x(layout, 10);
+    ui_button_render(&ui->stars, layout, renderer);
+    ui_button_render(&ui->tapes, layout, renderer);
+    ui_button_render(&ui->mods, layout, renderer);
+    ui_button_render(&ui->log, layout, renderer);
 
-    ui_layout_dir(&layout, ui_layout_left);
-    ui_button_render(&ui->close, &layout, renderer);
-    ui_layout_sep_x(&layout, 10);
-    ui_button_render(&ui->man, &layout, renderer);
+    ui_layout_dir(layout, ui_layout_right_left);
+    ui_button_render(&ui->close, layout, renderer);
+    ui_layout_sep_x(layout, 10);
+    ui_button_render(&ui->man, layout, renderer);
+    ui_layout_dir(layout, ui_layout_left_right);
 
-    ui_layout_mid(&layout, ui->coord.w.dim.w);
-    topbar_render_coord(ui, &layout, renderer);
+    ui_layout_mid(layout, ui->coord.w.dim.w);
+    topbar_render_coord(ui, layout, renderer);
 }

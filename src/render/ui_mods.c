@@ -3,12 +3,16 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-
 #include "common.h"
 #include "render/ui.h"
 #include "ui/ui.h"
 #include "vm/mod.h"
 #include "utils/fs.h"
+
+static void ui_mods_free(void *);
+static void ui_mods_update(void *, struct proxy *);
+static bool ui_mods_event(void *, SDL_Event *);
+static void ui_mods_render(void *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -28,7 +32,7 @@ struct ui_mods
     } state;
 
     struct ui_panel *panel;
-    int16_t height, list_w, code_w, pad_w;
+    int16_t list_w, code_w, pad_w;
 
     struct ui_button new;
     struct ui_input new_val;
@@ -42,10 +46,8 @@ struct ui_mods
     struct ui_code code;
 };
 
-struct ui_mods *ui_mods_new(void)
+void ui_mods_alloc(struct ui_view_state *state)
 {
-    struct pos pos = make_pos(0, ui_topbar_height());
-    int16_t height = render.rect.h - pos.y - ui_status_height();
     int16_t list_w = (symbol_cap + 4) * ui_st.font.dim.w;
     int16_t code_w = (ui_code_num_len+1 + ui_mods_cols + 2) * ui_st.font.dim.w;
     int16_t pad_w = ui_st.font.dim.w;
@@ -53,8 +55,8 @@ struct ui_mods *ui_mods_new(void)
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {
         .panel = ui_panel_title(
-                pos, make_dim(list_w + pad_w, height), ui_str_c("mods")),
-        .height = height,
+                make_dim(list_w + pad_w, ui_layout_inf),
+                ui_str_c("mods")),
         .list_w = list_w,
         .code_w = code_w,
         .pad_w = pad_w,
@@ -75,16 +77,27 @@ struct ui_mods *ui_mods_new(void)
         .code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf))
     };
 
-    ui_panel_hide(ui->panel);
-
     ui->state.disassembly = false;
     ui_str_setv(&ui->mode.str, "asm", 3);
 
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_mods,
+        .slots = ui_slot_left,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_mods_free,
+            .update_frame = ui_mods_update,
+            .event = ui_mods_event,
+            .render = ui_mods_render,
+        },
+    };
 }
 
-void ui_mods_free(struct ui_mods *ui)
+static void ui_mods_free(void *state)
 {
+    struct ui_mods *ui = state;
+
     ui_panel_free(ui->panel);
 
     ui_button_free(&ui->new);
@@ -105,6 +118,35 @@ void ui_mods_free(struct ui_mods *ui)
     mod_free(ui->state.mod);
 
     free(ui);
+}
+
+void ui_mods_show(mod_id id, vm_ip ip)
+{
+    struct ui_mods *ui = ui_state(render.ui, ui_view_mods);
+
+    mod_id old = ui->state.id;
+    ui->state.id = mod_version(id) ?
+        id : proxy_mod_latest(render.proxy, mod_major(id));
+    ui->state.ip = ip;
+
+    if (id != old) {
+        proxy_mod_select(render.proxy, ui->state.id);
+        ui_code_clear(&ui->code);
+    }
+    else ui_mods_update(ui, render.proxy);
+
+    ui_code_focus(&ui->code);
+    ui_show(render.ui, ui_view_mods);
+    render_push_event(ev_mod_select, id, ip);
+}
+
+void ui_mods_breakpoint(mod_id id, vm_ip ip)
+{
+    struct ui_mods *ui = ui_state(render.ui, ui_view_mods);
+    if (!ui_panel_is_visible(ui->panel)) return;
+    if (id != ui->state.id) return;
+
+    ui_code_breakpoint_ip(&ui->code, ip);
 }
 
 static void ui_mods_mode_swap(struct ui_mods *ui)
@@ -131,26 +173,28 @@ static void ui_mods_mode_swap(struct ui_mods *ui)
     }
 }
 
-static void ui_mods_update(struct ui_mods *ui)
+static void ui_mods_update(void *state, struct proxy *proxy)
 {
+    struct ui_mods *ui = state;
     ui_list_reset(&ui->list);
 
-    const struct mods_list *list = proxy_mods(render.proxy);
+    const struct mods_list *list = proxy_mods(proxy);
     for (size_t i = 0; i < list->len; ++i) {
         const struct mods_item *mod = list->items + i;
         ui_str_set_symbol(ui_list_add(&ui->list, mod->maj), &mod->str);
     }
 
-
-    const struct mod *mod = proxy_mod(render.proxy);
+    const struct mod *mod = proxy_mod(proxy);
     if (!mod) return;
+
     if (!ui->state.new && mod_major(mod->id) != mod_major(ui->state.id)) {
-        mod_free(mod);
+        ui_panel_resize(ui->panel, make_dim(ui->list_w, ui_layout_inf));
+        if (mod) mod_free(mod);
         return;
     }
 
     ui_panel_resize(ui->panel,
-            make_dim(ui->list_w + ui->code_w + ui->pad_w, ui->height));
+            make_dim(ui->list_w + ui->pad_w + ui->code_w, ui_layout_inf));
 
     mod_free(legion_xchg(&ui->state.mod, mod));
     ui->state.id = mod->id;
@@ -181,9 +225,9 @@ static void ui_mods_update(struct ui_mods *ui)
     }
 
     struct symbol name = {0};
-    bool ok = proxy_mod_name(render.proxy, mod_major(ui->state.id), &name);
+    bool ok = proxy_mod_name(proxy, mod_major(ui->state.id), &name);
     assert(ok);
-    
+
     if (!mod_version(ui->state.mod->id)) {
         ui_str_setf(&ui->mod_val.str, "%s", name.c);
         ui->mod_val.s.fg = ui_st.rgba.working;
@@ -194,22 +238,6 @@ static void ui_mods_update(struct ui_mods *ui)
     }
 }
 
-static void ui_mods_select(struct ui_mods *ui, mod_id id, vm_ip ip)
-{
-    if (ui->state.mod && id == ui->state.mod->id) {
-        ui_code_goto(&ui->code, ip);
-        return;
-    }
-
-    ui->state.id = mod_version(id) ?
-        id : proxy_mod_latest(render.proxy, mod_major(id));
-    ui->state.ip = ip;
-
-    proxy_mod_select(render.proxy, ui->state.id);
-    ui_code_clear(&ui->code);
-    ui_panel_show(ui->panel);
-    ui_code_focus(&ui->code);
-}
 
 static void ui_mods_import(struct ui_mods *ui)
 {
@@ -250,75 +278,23 @@ static void ui_mods_export(struct ui_mods *ui)
     render_log(st_info, "mod '%s' exported to '%s'", name.c, path);
 }
 
-static void ui_mods_clear(struct ui_mods *ui)
-{
-    mod_free(ui->state.mod);
-    ui->state.mod = NULL;
-    ui->state.id = 0;
-    ui->state.ip = 0;
-
-    ui_list_clear(&ui->list);
-    ui_code_clear(&ui->code);
-
-    ui_panel_hide(ui->panel);
-    ui_panel_resize(ui->panel, make_dim(ui->list_w + ui->pad_w, ui->height));
-}
-
-static bool ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
+static void ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
 
-    case EV_STATE_LOAD: {
-        ui_mods_clear(ui);
-        return false;
+    case ev_state_load: {
+        mod_free(ui->state.mod);
+        ui->state.mod = NULL;
+        ui->state.id = 0;
+        ui->state.ip = 0;
+
+        ui_list_clear(&ui->list);
+        ui_code_clear(&ui->code);
+        return;
     }
 
-    case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(ui->panel)) return false;
-        ui_mods_update(ui);
-        return false;
-    }
-
-    case EV_MODS_TOGGLE: {
-        if (ui_panel_is_visible(ui->panel)) {
-            ui_mods_clear(ui);
-            return false;
-        }
-
-        ui_mods_update(ui);
-        ui_panel_show(ui->panel);
-        return false;
-    }
-
-    case EV_MOD_SELECT: {
-        mod_id id = (uintptr_t) ev->user.data1;
-        vm_ip ip = (uintptr_t) ev->user.data2;
-        ui_list_select(&ui->list, mod_major(id));
-        ui_mods_select(ui, id, ip);
-        return false;
-    }
-
-    case EV_MOD_BREAKPOINT: {
-        vm_ip ip = (uintptr_t) ev->user.data1;
-        mod_id mod = (uintptr_t) ev->user.data2;
-        if (mod != ui->state.id) return true;
-
-        ui_code_breakpoint_ip(&ui->code, ip);
-        return true;
-    }
-
-    case EV_TAPES_TOGGLE:
-    case EV_TAPE_SELECT:
-    case EV_STARS_TOGGLE:
-    case EV_MOD_CLEAR:
-    case EV_LOG_TOGGLE:
-    case EV_LOG_SELECT: {
-        ui_mods_clear(ui);
-        return false;
-    }
-
-    default: { return false; }
+    default: { return; }
     }
 }
 
@@ -334,18 +310,14 @@ static void ui_mods_event_new(struct ui_mods *ui)
     ui->state.new = true;
 }
 
-bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
+static bool ui_mods_event(void *state, SDL_Event *ev)
 {
-    if (ev->type == render.event && ui_mods_event_user(ui, ev)) return true;
+    struct ui_mods *ui = state;
+
+    if (ev->type == render.event)
+        ui_mods_event_user(ui, ev);
 
     enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_panel_event(ui->panel, ev))) {
-        if (ret == ui_action)
-            render_push_event(EV_MOD_CLEAR, 0, 0);
-        return ret != ui_skip;
-    }
-
     if ((ret = ui_input_event(&ui->new_val, ev))) {
         if (ret == ui_action) ui_mods_event_new(ui);
         return true;
@@ -359,11 +331,11 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
     if ((ret = ui_list_event(&ui->list, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_MOD_SELECT, make_mod(ui->list.selected, 0), 0);
+        ui_mods_show(make_mod(ui->list.selected, 0), 0);
         return true;
     }
 
-    if (!ui->state.mod) return ui_panel_event_consume(ui->panel, ev);
+    if (!ui->state.mod) return false;
 
     if ((ret = ui_button_event(&ui->compile, ev))) {
         if (ret != ui_action) return true;
@@ -418,15 +390,15 @@ bool ui_mods_event(struct ui_mods *ui, SDL_Event *ev)
 
     if ((ret = ui_code_event(&ui->code, ev))) return true;
 
-    return ui_panel_event_consume(ui->panel, ev);
+    return false;
 }
 
-void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
+static void ui_mods_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
+    struct ui_mods *ui = state;
 
-    struct ui_layout inner = ui_layout_split_x(&layout, ui->list_w);
+    struct ui_layout inner = ui_layout_split_x(layout, ui->list_w);
     {
         ui_input_render(&ui->new_val, &inner, renderer);
         ui_button_render(&ui->new, &inner, renderer);
@@ -439,29 +411,29 @@ void ui_mods_render(struct ui_mods *ui, SDL_Renderer *renderer)
 
     if (!ui->state.mod) return;
 
-    ui_label_render(&ui->mod_val, &layout, renderer);
-    ui_layout_next_row(&layout);
-    ui_layout_sep_y(&layout, 2);
+    ui_label_render(&ui->mod_val, layout, renderer);
+    ui_layout_next_row(layout);
+    ui_layout_sep_y(layout, 2);
 
-    ui_button_render(&ui->compile, &layout, renderer);
-    ui_button_render(&ui->publish, &layout, renderer);
+    ui_button_render(&ui->compile, layout, renderer);
+    ui_button_render(&ui->publish, layout, renderer);
 
-    ui_layout_sep_col(&layout);
+    ui_layout_sep_col(layout);
 
-    ui_button_render(&ui->mode, &layout, renderer);
-    ui_button_render(&ui->indent, &layout, renderer);
+    ui_button_render(&ui->mode, layout, renderer);
+    ui_button_render(&ui->indent, layout, renderer);
 
-    ui_layout_sep_col(&layout);
+    ui_layout_sep_col(layout);
 
-    ui_button_render(&ui->import, &layout, renderer);
-    ui_button_render(&ui->export, &layout, renderer);
+    ui_button_render(&ui->import, layout, renderer);
+    ui_button_render(&ui->export, layout, renderer);
 
-    ui_layout_dir(&layout, ui_layout_left);
-    ui_button_render(&ui->reset, &layout, renderer);
+    ui_layout_dir(layout, ui_layout_right_left);
+    ui_button_render(&ui->reset, layout, renderer);
 
-    ui_layout_dir(&layout, ui_layout_right);
-    ui_layout_next_row(&layout);
-    ui_layout_sep_row(&layout);
+    ui_layout_dir(layout, ui_layout_left_right);
+    ui_layout_next_row(layout);
+    ui_layout_sep_row(layout);
 
-    ui_code_render(&ui->code, &layout, renderer);
+    ui_code_render(&ui->code, layout, renderer);
 }

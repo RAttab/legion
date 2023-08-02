@@ -9,6 +9,11 @@
 #include "game/chunk.h"
 #include "game/pills.h"
 
+static void ui_pills_free(void *);
+static void ui_pills_update(void *, struct proxy *);
+static bool ui_pills_event(void *, SDL_Event *);
+static void ui_pills_render(void *, struct ui_layout *, SDL_Renderer *);
+
 
 // -----------------------------------------------------------------------------
 // pills
@@ -49,13 +54,9 @@ struct ui_pills
 };
 
 
-struct ui_pills *ui_pills_new(void)
+void ui_pills_alloc(struct ui_view_state *state)
 {
     size_t width = (symbol_cap + item_str_len + 1 + 3 + 2) * ui_st.font.dim.w;
-    struct pos pos = make_pos(
-            render.rect.w - width - ui_star_width(render.ui.star),
-            ui_topbar_height());
-    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
 
     struct ui_pills *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_pills) {
@@ -63,7 +64,7 @@ struct ui_pills *ui_pills_new(void)
         .len = 0,
         .sort = ui_pills_sort_nil,
 
-        .panel = ui_panel_title(pos, dim, ui_str_c("pills")),
+        .panel = ui_panel_title(make_dim(width, ui_layout_inf), ui_str_c("pills")),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
         .source_title = ui_button_new_s(&ui_st.button.list.close, ui_str_c("source")),
         .cargo_title = ui_button_new_s(&ui_st.button.list.close, ui_str_c("cargo")),
@@ -83,12 +84,25 @@ struct ui_pills *ui_pills_new(void)
         };
     }
 
-    ui_panel_hide(ui->panel);
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_pills,
+        .parent = ui_view_star,
+        .slots = ui_slot_right_sub,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_pills_free,
+            .update_frame = ui_pills_update,
+            .event = ui_pills_event,
+            .render = ui_pills_render,
+        },
+    };
 }
 
-void ui_pills_free(struct ui_pills *ui)
+static void ui_pills_free(void *state)
 {
+    struct ui_pills *ui = state;
+
     ui_panel_free(ui->panel);
     ui_scroll_free(&ui->scroll);
     ui_button_free(&ui->source_title);
@@ -106,10 +120,15 @@ void ui_pills_free(struct ui_pills *ui)
     free(ui);
 }
 
-static void ui_pills_clear(struct ui_pills *ui)
+void ui_pills_show(struct coord star)
 {
-    ui->star = coord_nil();
-    ui_panel_hide(ui->panel);
+    struct ui_pills *ui = ui_state(render.ui, ui_view_pills);
+
+    ui->star = star;
+    if (coord_is_nil(ui->star)) { ui_hide(render.ui, ui_view_pills); return; }
+
+    ui_pills_update(ui, render.proxy);
+    ui_show(render.ui, ui_view_pills);
 }
 
 static void ui_pills_sort(struct ui_pills *ui)
@@ -141,10 +160,12 @@ static void ui_pills_sort(struct ui_pills *ui)
     }
 }
 
-static void ui_pills_update(struct ui_pills *ui)
+static void ui_pills_update(void *state, struct proxy *proxy)
 {
-    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
-    if (!chunk) { ui_pills_clear(ui); return; }
+    struct ui_pills *ui = state;
+
+    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    if (!chunk) { ui_pills_show(coord_nil()); return; }
 
     struct pills *pills = chunk_pills(chunk);
 
@@ -164,53 +185,11 @@ static void ui_pills_update(struct ui_pills *ui)
     ui_pills_sort(ui);
 }
 
-static bool ui_pills_event_user(struct ui_pills *ui, SDL_Event *ev)
+static bool ui_pills_event(void *state, SDL_Event *ev)
 {
-    switch (ev->user.code)
-    {
-
-    case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(ui->panel)) return false;
-        ui_pills_update(ui);
-        return false;
-    }
-
-    case EV_PILLS_TOGGLE: {
-        if (ui_panel_is_visible(ui->panel)) {
-            ui_pills_clear(ui);
-            return false;
-        }
-
-        ui->star = coord_from_u64((uintptr_t) ev->user.data1);
-        assert(!coord_is_nil(ui->star));
-        ui_pills_update(ui);
-        ui_panel_show(ui->panel);
-        return false;
-    }
-
-    case EV_STATE_LOAD:
-    case EV_MAN_GOTO:
-    case EV_MAN_TOGGLE:
-    case EV_WORKER_TOGGLE:
-    case EV_STAR_CLEAR:
-    case EV_ITEM_SELECT: { ui_pills_clear(ui); return false; }
-
-    default: { return false; }
-    }
-
-}
-
-bool ui_pills_event(struct ui_pills *ui, SDL_Event *ev)
-{
-    if (ev->type == render.event && ui_pills_event_user(ui, ev)) return true;
+    struct ui_pills *ui = state;
 
     enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(ui->panel, ev))) {
-        if (ret == ui_consume && !ui_panel_is_visible(ui->panel))
-            ui_pills_clear(ui);
-        return ret != ui_skip;
-    }
-
     if ((ret = ui_button_event(&ui->source_title, ev))) {
         if (ret != ui_action) return true;
 
@@ -250,24 +229,24 @@ bool ui_pills_event(struct ui_pills *ui, SDL_Event *ev)
     for (size_t i = first; i < last; ++i) {
         if ((ret = ui_link_event(&ui->rows[i].source_link, ev))) {
             if (ret != ui_action) return true;
-            render_push_event(EV_STAR_SELECT, coord_to_u64(ui->data[i].source), 0);
+            ui_star_show(ui->data[i].source);
             return true;
         }
     }
 
-    return ui_panel_event_consume(ui->panel, ev);
+    return false;
 }
 
-void ui_pills_render(struct ui_pills *ui, SDL_Renderer *renderer)
+static void ui_pills_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
+    struct ui_pills *ui = state;
 
-    ui_button_render(&ui->source_title, &layout, renderer);
-    ui_button_render(&ui->cargo_title, &layout, renderer);
-    ui_layout_next_row(&layout);
+    ui_button_render(&ui->source_title, layout, renderer);
+    ui_button_render(&ui->cargo_title, layout, renderer);
+    ui_layout_next_row(layout);
 
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, &layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     size_t first = ui_scroll_first(&ui->scroll);
     size_t last = ui_scroll_last(&ui->scroll);
 

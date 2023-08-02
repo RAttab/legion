@@ -19,22 +19,27 @@ struct ui_port
     struct {
         struct ui_label head;
         struct ui_label item;
-        struct ui_label coord, coord_val;
+        struct ui_label coord;
+        struct ui_link coord_val;
     } input;
 
     struct {
         struct ui_label head;
         struct ui_label item, count;
-        struct ui_label target, target_val;
+        struct ui_label target;
+        struct ui_link target_val;
     } want;
 
     struct {
         struct ui_label head;
         struct ui_label item, count;
-        struct ui_label origin, origin_val;
+        struct ui_label origin;
+        struct ui_link origin_val;
     } has;
 
     struct ui_label item, count;
+
+    struct { struct coord coord, target, origin; } state;
 };
 
 static void *ui_port_alloc(void)
@@ -56,7 +61,7 @@ static void *ui_port_alloc(void)
             .head = ui_label_new(ui_str_c("input:")),
             .item = ui_label_new_s(&ui_st.label.work, ui_str_v(item_str_len)),
             .coord = ui_label_new(ui_str_c("  coord:  ")),
-            .coord_val = ui_label_new(ui_str_v(symbol_cap)),
+            .coord_val = ui_link_new(ui_str_v(symbol_cap)),
         },
 
         .want = {
@@ -64,7 +69,7 @@ static void *ui_port_alloc(void)
             .item = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
             .count = ui_label_new(ui_str_v(3)),
             .target = ui_label_new(ui_str_c("  target: ")),
-            .target_val = ui_label_new(ui_str_v(symbol_cap)),
+            .target_val = ui_link_new(ui_str_v(symbol_cap)),
         },
 
         .has = {
@@ -72,7 +77,7 @@ static void *ui_port_alloc(void)
             .item = ui_label_new_s(&ui_st.label.out, ui_str_v(item_str_len)),
             .count = ui_label_new(ui_str_v(3)),
             .origin = ui_label_new(ui_str_c("  origin: ")),
-            .origin_val = ui_label_new(ui_str_v(symbol_cap)),
+            .origin_val = ui_link_new(ui_str_v(symbol_cap)),
         },
 
         .item = ui_label_new(ui_str_c("  item:   ")),
@@ -93,19 +98,19 @@ static void ui_port_free(void *_ui)
     ui_label_free(&ui->input.head);
     ui_label_free(&ui->input.item);
     ui_label_free(&ui->input.coord);
-    ui_label_free(&ui->input.coord_val);
+    ui_link_free(&ui->input.coord_val);
 
     ui_label_free(&ui->want.head);
     ui_label_free(&ui->want.item);
     ui_label_free(&ui->want.count);
     ui_label_free(&ui->want.target);
-    ui_label_free(&ui->want.target_val);
+    ui_link_free(&ui->want.target_val);
 
     ui_label_free(&ui->has.head);
     ui_label_free(&ui->has.item);
     ui_label_free(&ui->has.count);
     ui_label_free(&ui->has.origin);
-    ui_label_free(&ui->has.origin_val);
+    ui_link_free(&ui->has.origin_val);
 
     ui_label_free(&ui->item);
     ui_label_free(&ui->count);
@@ -119,6 +124,10 @@ static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)
 
     const struct im_port *port = chunk_get(chunk, id);
     assert(port);
+
+    ui->state.coord = port->input.coord;
+    ui->state.target = port->target;
+    ui->state.origin = port->origin;
 
     ui_values_set(&ui->status_values, &ui->status_val, port->state);
 
@@ -154,6 +163,38 @@ static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)
     else ui_str_set_coord_name(ui_set(&ui->has.origin_val), port->origin);
 }
 
+static bool ui_port_event(void *_ui, const SDL_Event *ev)
+{
+    struct ui_port *ui = _ui;
+
+    enum ui_ret ret = ui_nil;
+    if ((ret = ui_link_event(&ui->input.coord_val, ev))) {
+        if (ret == ui_action && !coord_is_nil(ui->state.coord)) {
+            ui_star_show(ui->state.coord);
+            ui_map_show(ui->state.coord);
+        }
+        return true;
+    }
+
+    if ((ret = ui_link_event(&ui->want.target_val, ev))) {
+        if (ret == ui_action && !coord_is_nil(ui->state.target)) {
+            ui_star_show(ui->state.target);
+            ui_map_show(ui->state.target);
+        }
+        return true;
+    }
+
+    if ((ret = ui_link_event(&ui->has.origin_val, ev))) {
+        if (ret == ui_action && !coord_is_nil(ui->state.origin)) {
+            ui_star_show(ui->state.origin);
+            ui_map_show(ui->state.origin);
+        }
+        return true;
+    }
+
+    return false;
+}
+
 static void ui_port_render(
         void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
 {
@@ -174,7 +215,7 @@ static void ui_port_render(
         ui_layout_next_row(layout);
 
         ui_label_render(&ui->input.coord, layout, renderer);
-        ui_label_render(&ui->input.coord_val, layout, renderer);
+        ui_link_render(&ui->input.coord_val, layout, renderer);
         ui_layout_next_row(layout);
     }
 
@@ -193,7 +234,7 @@ static void ui_port_render(
         ui_layout_next_row(layout);
 
         ui_label_render(&ui->want.target, layout, renderer);
-        ui_label_render(&ui->want.target_val, layout, renderer);
+        ui_link_render(&ui->want.target_val, layout, renderer);
         ui_layout_next_row(layout);
     }
 
@@ -212,7 +253,7 @@ static void ui_port_render(
         ui_layout_next_row(layout);
 
         ui_label_render(&ui->has.origin, layout, renderer);
-        ui_label_render(&ui->has.origin_val, layout, renderer);
+        ui_link_render(&ui->has.origin_val, layout, renderer);
         ui_layout_next_row(layout);
     }
 }

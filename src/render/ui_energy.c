@@ -9,6 +9,12 @@
 #include "game/chunk.h"
 #include "game/energy.h"
 
+static void ui_energy_free(void *);
+static void ui_energy_update_state(void *, struct proxy *);
+static void ui_energy_update_frame(void *, struct proxy *);
+static bool ui_energy_event(void *, SDL_Event *);
+static void ui_energy_render(void *, struct ui_layout *, SDL_Renderer *);
+
 
 // -----------------------------------------------------------------------------
 // energy
@@ -36,14 +42,8 @@ struct ui_energy
 };
 
 
-struct ui_energy *ui_energy_new(void)
+void ui_energy_alloc(struct ui_view_state *state)
 {
-    size_t width = 80 * ui_st.font.dim.w;
-    struct pos pos = make_pos(
-            render.rect.w - width - ui_star_width(render.ui.star),
-            ui_topbar_height());
-    struct dim dim = make_dim(width, render.rect.h - pos.y - ui_status_height());
-
     struct ui_histo_series series[] = {
         [ui_energy_stored] =   { 0, "stored", ui_st.rgba.energy.stored, true },
         [ui_energy_fusion] =   { 0, "fusion", ui_st.rgba.energy.fusion, true },
@@ -59,38 +59,59 @@ struct ui_energy *ui_energy_new(void)
     struct ui_energy *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_energy) {
         .star = coord_nil(),
-        .panel = ui_panel_title(pos, dim, ui_str_c("energy")),
+
+        .panel = ui_panel_title(
+                make_dim(77 * ui_st.font.dim.w, ui_layout_inf),
+                ui_str_c("energy")),
+
         .histo = ui_histo_new(
                 make_dim(ui_layout_inf, ui_layout_inf),
                 series, array_len(series)),
     };
 
-    ui_panel_hide(ui->panel);
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_energy,
+        .parent = ui_view_star,
+        .slots = ui_slot_right_sub,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_energy_free,
+            .update_state = ui_energy_update_state,
+            .update_frame = ui_energy_update_frame,
+            .event = ui_energy_event,
+            .render = ui_energy_render,
+        },
+    };
 }
 
-void ui_energy_free(struct ui_energy *ui)
+static void ui_energy_free(void *state)
 {
+    struct ui_energy *ui = state;
     ui_panel_free(ui->panel);
     ui_histo_free(&ui->histo);
     free(ui);
 }
 
-static void ui_energy_clear(struct ui_energy *ui)
+void ui_energy_show(struct coord star)
 {
-    ui->star = coord_nil();
-    ui_histo_clear(&ui->histo);
-    ui_panel_hide(ui->panel);
+    struct ui_energy *ui = ui_state(render.ui, ui_view_energy);
+
+    ui->star = star;
+    if (coord_is_nil(ui->star)) { ui_hide(render.ui, ui_view_energy); return; }
+
+    ui_energy_update_frame(ui, render.proxy);
+    ui_show(render.ui, ui_view_energy);
 }
 
-void ui_energy_update_state(struct ui_energy *ui)
+static void ui_energy_update_state(void *state, struct proxy *proxy)
 {
-    if (!ui_panel_is_visible(ui->panel)) return;
+    struct ui_energy *ui = state;
 
-    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(proxy, ui->star);
     if (!chunk) return;
 
-    world_ts t = proxy_time(render.proxy);
+    world_ts t = proxy_time(proxy);
     if (ui->last_t == t) return;
     ui->last_t = t;
 
@@ -107,12 +128,14 @@ void ui_energy_update_state(struct ui_energy *ui)
     ui_histo_push(&ui->histo, ui_energy_kwheel, energy_prod_kwheel(energy, star));
 }
 
-static void ui_energy_update(struct ui_energy *ui)
+static void ui_energy_update_frame(void *state, struct proxy *proxy)
 {
-    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
-    if (!chunk) { ui_energy_clear(ui); return; }
+    struct ui_energy *ui = state;
 
-    const struct tech *tech = proxy_tech(render.proxy);
+    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    if (!chunk) { ui_energy_show(coord_nil()); return; }
+
+    const struct tech *tech = proxy_tech(proxy);
     ui_histo_series(&ui->histo, ui_energy_solar)->visible = tech_known(tech, item_solar);
     ui_histo_series(&ui->histo, ui_energy_burner)->visible = tech_known(tech, item_burner);
     ui_histo_series(&ui->histo, ui_energy_kwheel)->visible = tech_known(tech, item_kwheel);
@@ -120,63 +143,32 @@ static void ui_energy_update(struct ui_energy *ui)
     ui_histo_update_legend(&ui->histo);
 }
 
-static bool ui_energy_event_user(struct ui_energy *ui, SDL_Event *ev)
+static void ui_energy_event_user(struct ui_energy *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
 
-    case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(ui->panel)) return false;
-        ui_energy_update(ui);
-        return false;
+    case ev_star_select: {
+        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
+        if (!coord_eq(ui->star, new)) ui_energy_show(new);
+        return;
     }
 
-    case EV_ENERGY_TOGGLE: {
-        if (ui_panel_is_visible(ui->panel)) {
-            ui_energy_clear(ui);
-            return false;
-        }
-
-        ui->star = coord_from_u64((uintptr_t) ev->user.data1);
-        assert(!coord_is_nil(ui->star));
-        ui_energy_update(ui);
-        ui_panel_show(ui->panel);
-        return false;
+    default: { return; }
     }
-
-    case EV_STATE_LOAD:
-    case EV_MAN_GOTO:
-    case EV_MAN_TOGGLE:
-    case EV_PILLS_TOGGLE:
-    case EV_WORKER_TOGGLE:
-    case EV_STAR_CLEAR:
-    case EV_ITEM_SELECT: { ui_energy_clear(ui); return false; }
-
-    default: { return false; }
-    }
-
 }
 
-bool ui_energy_event(struct ui_energy *ui, SDL_Event *ev)
+static bool ui_energy_event(void *state, SDL_Event *ev)
 {
-    if (ev->type == render.event && ui_energy_event_user(ui, ev)) return true;
-
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(ui->panel, ev))) {
-        if (ret == ui_consume && !ui_panel_is_visible(ui->panel))
-            ui_energy_clear(ui);
-        return ret != ui_skip;
-    }
-
-    if ((ret = ui_histo_event(&ui->histo, ev))) return true;
-
-    return ui_panel_event_consume(ui->panel, ev);
+    struct ui_energy *ui = state;
+    if (ev->type == render.event) ui_energy_event_user(ui, ev);
+    if (ui_histo_event(&ui->histo, ev)) return true;
+    return false;
 }
 
-void ui_energy_render(struct ui_energy *ui, SDL_Renderer *renderer)
+static void ui_energy_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
-
-    ui_histo_render(&ui->histo, &layout, renderer);
+    struct ui_energy *ui = state;
+    ui_histo_render(&ui->histo, layout, renderer);
 }

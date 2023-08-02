@@ -54,7 +54,7 @@ static void ui_legion_update(void *_ui, struct chunk *chunk, im_id id)
     struct ui_legion *ui = _ui;
 
     const struct im_legion *state = chunk_get(chunk, id);
-    if (!state) { render_push_event(EV_ITEM_CLEAR, 0, 0); return; }
+    assert(state);
 
     ui->type = im_id_item(state->id);
 

@@ -3,11 +3,13 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-
 #include "common.h"
 #include "render/ui.h"
 #include "ui/ui.h"
 #include "utils/str.h"
+
+static void ui_status_free(void *);
+static void ui_status_render(void *, struct ui_layout *, SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -27,37 +29,38 @@ struct ui_status
 };
 
 
-struct ui_status *ui_status_new(void)
+void ui_status_alloc(struct ui_view_state *state)
 {
-    struct dim dim = { .w = render.rect.w, .h = ui_st.font.base->glyph_h + 8 };
-    struct pos pos = { .x = 0, .y = render.rect.h - dim.h };
-
     struct ui_status *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_status) {
-        .panel = ui_panel_menu(pos, dim),
+        .panel = ui_panel_menu(make_dim(
+                        ui_layout_inf,
+                        ui_st.font.base->glyph_h + 8)),
         .status = ui_label_new(ui_str_v(ui_status_cap)),
     };
 
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_status,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_status_free,
+            .render = ui_status_render,
+        },
+    };
 }
 
-void ui_status_free(struct ui_status *ui) {
+static void ui_status_free(void *state) {
+    struct ui_status *ui = state;
     ui_panel_free(ui->panel);
     ui_label_free(&ui->status);
     free(ui);
 }
 
-int16_t ui_status_height(void)
+void ui_status_set(enum status_type type, const char *msg, size_t len)
 {
-    return render.ui.status->panel->w.dim.h;
-}
+    struct ui_status *ui = ui_state(render.ui, ui_view_status);
 
-void ui_status_set(
-        struct ui_status *ui,
-        enum status_type type,
-        const char *msg,
-        size_t len)
-{
     ui->ts = ts_now();
 
     switch (type)
@@ -71,18 +74,10 @@ void ui_status_set(
     ui_str_setv(&ui->status.str, msg, len);
 }
 
-
-bool ui_status_event(struct ui_status *ui, SDL_Event *ev)
+static void ui_status_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
-    return ui_panel_event_consume(ui->panel, ev);
-}
-
-void ui_status_render(struct ui_status *ui, SDL_Renderer *renderer)
-{
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
+    struct ui_status *ui = state;
 
     time_sys delta = ts_now() - ui->ts;
     if (delta > ui_status_duration + ui_status_fade) ui->ts = 0;
@@ -94,5 +89,5 @@ void ui_status_render(struct ui_status *ui, SDL_Renderer *renderer)
     }
     else ui->status.s.fg.a = 0xFF;
 
-    ui_label_render(&ui->status, &layout, renderer);
+    ui_label_render(&ui->status, layout, renderer);
 }

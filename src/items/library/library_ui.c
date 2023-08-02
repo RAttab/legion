@@ -122,13 +122,13 @@ static bool ui_library_event(void *_ui, const SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->tape_val, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_TAPE_SELECT, ui->state.item, 0);
+        ui_tapes_show(ui->state.item);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->value_val, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_TAPE_SELECT, ui->state.value, 0);
+        ui_tapes_show(ui->state.value);
         return true;
     }
 

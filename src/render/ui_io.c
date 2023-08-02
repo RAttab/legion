@@ -56,10 +56,10 @@ struct ui_io
 
 int16_t ui_io_width(void)
 {
-    return 38 * ui_st.font.dim.w;
+    return 36 * ui_st.font.dim.w;
 }
 
-struct ui_io *ui_io_new(void)
+struct ui_io *ui_io_alloc(void)
 {
     struct ui_io *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_io) {
@@ -108,7 +108,7 @@ void ui_io_free(struct ui_io *ui)
     free(ui);
 }
 
-void ui_io_select(struct ui_io *ui, struct coord star, im_id id)
+void ui_io_show(struct ui_io *ui, struct coord star, im_id id)
 {
     ui->id = id;
     ui->star = star;
@@ -141,13 +141,6 @@ void ui_io_select(struct ui_io *ui, struct coord star, im_id id)
     }
 }
 
-void ui_io_clear(struct ui_io *ui)
-{
-    ui->id = 0;
-    ui->star = coord_nil();
-    ui->len = 0;
-}
-
 static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
     char path[man_path_max] = {0};
@@ -162,7 +155,7 @@ static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
         return;
     }
 
-    render_push_event(EV_MAN_GOTO, link_to_u64(link), 0);
+    ui_man_show_slot(link, ui_slot_left);
 }
 
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
@@ -247,7 +240,7 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 
             struct ui_io_arg *next = arg + 1;
             if (next == cmd->args + cmd->len) ui_io_exec(ui, cmd);
-            else render_push_event(EV_FOCUS_INPUT, (uintptr_t) &next->val, 0);
+            else render_push_event(ev_focus_input, (uintptr_t) &next->val, 0);
 
             return true;
         }
@@ -268,10 +261,10 @@ void ui_io_render(
     for (size_t i = 0; i < ui->len; ++i) {
         struct ui_io_cmd *cmd = ui->cmds + i;
 
-        ui_layout_dir(layout, ui_layout_left);
+        ui_layout_dir(layout, ui_layout_right_left);
         ui_button_render(&cmd->help, layout, renderer);
 
-        ui_layout_dir(layout, ui_layout_right);
+        ui_layout_dir(layout, ui_layout_left_right);
         ui_button_render(&cmd->name, layout, renderer);
 
         ui_layout_next_row(layout);

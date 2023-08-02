@@ -10,6 +10,12 @@
 #include "game/chunk.h"
 #include "game/world.h"
 
+static void ui_log_free(void *);
+static void ui_log_hide(void *);
+static void ui_log_update(void *, struct proxy *);
+static bool ui_log_event(void *, SDL_Event *);
+static void ui_log_render(void *, struct ui_layout *, SDL_Renderer *);
+
 
 // -----------------------------------------------------------------------------
 // ui_log
@@ -34,16 +40,19 @@ struct ui_logi
 struct ui_log
 {
     struct coord coord;
-    size_t len;
+    int16_t row_h;
 
     struct ui_panel *panel;
+    struct ui_scroll scroll;
+
+    size_t len;
     struct ui_logi items[world_log_cap];
 };
 
-struct ui_logi ui_logi_new(void)
+struct ui_logi ui_logi_alloc(void)
 {
     struct ui_logi ui = {
-        .time = ui_label_new_s(&ui_st.label.index, ui_str_v(10)),
+        .time = ui_label_new(ui_str_v(10)),
         .star = ui_link_new(ui_str_v(symbol_cap)),
         .id = ui_link_new(ui_str_v(im_id_str_len)),
         .key = ui_label_new(ui_str_v(symbol_cap)),
@@ -53,27 +62,39 @@ struct ui_logi ui_logi_new(void)
     return ui;
 }
 
-struct ui_log *ui_log_new(void)
+void ui_log_alloc(struct ui_view_state *state)
 {
-    struct pos pos = make_pos(0, ui_topbar_height());
+    int16_t row_h = ui_st.font.dim.h * 2;
     struct dim dim = make_dim(
-            (10 + symbol_cap * 3 + im_id_str_len + 3) * ui_st.font.dim.w,
-            render.rect.h - pos.y - ui_status_height());
+            (10 + (symbol_cap * 2) + 4) * ui_st.font.dim.w,
+            ui_layout_inf);
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_log) {
-        .panel = ui_panel_title(pos, dim, ui_str_c("log")),
+        .row_h = row_h,
+        .panel = ui_panel_title(dim, ui_str_c("log")),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), row_h),
     };
 
-    ui_panel_hide(ui->panel);
     for (size_t i = 0; i < array_len(ui->items); ++i)
-        ui->items[i] = ui_logi_new();
+        ui->items[i] = ui_logi_alloc();
 
-    return ui;
+    *state = (struct ui_view_state) {
+        .state = ui,
+        .view = ui_view_log,
+        .slots = ui_slot_left,
+        .panel = ui->panel,
+        .fn = {
+            .free = ui_log_free,
+            .hide = ui_log_hide,
+            .update_frame = ui_log_update,
+            .event = ui_log_event,
+            .render = ui_log_render,
+        },
+    };
 }
 
-
-void ui_logi_free(struct ui_logi *ui)
+static void ui_logi_free(struct ui_logi *ui)
 {
     ui_label_free(&ui->time);
     ui_link_free(&ui->star);
@@ -82,12 +103,32 @@ void ui_logi_free(struct ui_logi *ui)
     ui_label_free(&ui->value);
 }
 
-void ui_log_free(struct ui_log *ui)
+static void ui_log_free(void *state)
 {
+    struct ui_log *ui = state;
+
     ui_panel_free(ui->panel);
+    ui_scroll_free(&ui->scroll);
     for (size_t i = 0; i < array_len(ui->items); ++i)
         ui_logi_free(ui->items + i);
+
     free(ui);
+}
+
+void ui_log_show(struct coord star)
+{
+    struct ui_log *ui = ui_state(render.ui, ui_view_log);
+
+    ui->coord = star;
+
+    ui_log_update(ui, render.proxy);
+    ui_show(render.ui, ui_view_log);
+}
+
+static void ui_log_hide(void *state)
+{
+    struct ui_log *ui = state;
+    ui->coord = coord_nil();
 }
 
 
@@ -105,12 +146,13 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
     ui_str_set_atom(&ui->value.str, it->value);
 }
 
-static void ui_log_update(struct ui_log *ui)
+static void ui_log_update(void *state, struct proxy *proxy)
 {
-    const struct log *logs = proxy_logs(render.proxy);
+    struct ui_log *ui = state;
+    const struct log *logs = proxy_logs(proxy);
 
     if (!coord_is_nil(ui->coord)) {
-        struct chunk *chunk = proxy_chunk(render.proxy, ui->coord);
+        struct chunk *chunk = proxy_chunk(proxy, ui->coord);
         if (!chunk) { ui->len = 0; return; }
         logs = chunk_logs(chunk);
     }
@@ -125,130 +167,128 @@ static void ui_log_update(struct ui_log *ui)
 
     assert(index <= array_len(ui->items));
     ui->len = index;
+
+    ui_scroll_update(&ui->scroll, ui->len);
 }
 
 
-static bool ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
+static void ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
 {
     switch (ev->user.code)
     {
 
-    case EV_STATE_LOAD: {
-        ui_panel_hide(ui->panel);
-        return false;
+    case ev_star_select: {
+        if (!coord_is_nil(ui->coord))
+            ui_log_show(coord_from_u64((uintptr_t) ev->user.data1));
+        return;
     }
 
-    case EV_STATE_UPDATE: {
-        if (!ui_panel_is_visible(ui->panel)) return false;
-        ui_log_update(ui);
-        return false;
-    }
-
-    case EV_LOG_TOGGLE: {
-        if (!ui_panel_is_visible(ui->panel) || !coord_is_nil(ui->coord)) {
-            ui->coord = coord_nil();
-            ui_log_update(ui);
-            ui_panel_show(ui->panel);
-        }
-        else ui_panel_hide(ui->panel);
-        return false;
-    }
-
-    case EV_LOG_SELECT: {
-        ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
-        ui_log_update(ui);
-        ui_panel_show(ui->panel);
-        return false;
-    }
-
-    case EV_STAR_SELECT: {
-        if (!ui_panel_is_visible(ui->panel)) return false;
-        if (coord_is_nil(ui->coord)) return false;
-        ui->coord = coord_from_u64((uintptr_t) ev->user.data1);
-        ui_log_update(ui);
-        return false;
-    }
-
-    case EV_ITEM_SELECT: {
-        if (!ui_panel_is_visible(ui->panel)) return false;
-        if (coord_is_nil(ui->coord)) return false;
-        ui->coord = coord_from_u64((uintptr_t) ev->user.data2);
-        ui_log_update(ui);
-        return false;
-    }
-
-    case EV_TAPES_TOGGLE:
-    case EV_TAPE_SELECT:
-    case EV_MODS_TOGGLE:
-    case EV_MOD_SELECT:
-    case EV_STARS_TOGGLE: {
-        ui_panel_hide(ui->panel);
-        return false;
-    }
-
-    default: { return false; }
+    default: { return; }
     }
 }
 
-bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
+static bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
 
     if (coord_is_nil(star) && (ret = ui_link_event(&ui->star, ev))) {
         if (ret != ui_action) return true;
-        render_push_event(EV_STAR_SELECT, coord_to_u64(ui->state.star), 0);
+        ui_star_show(ui->state.star);
+        ui_map_show(ui->state.star);
         return true;
     }
 
     if ((ret = ui_link_event(&ui->id, ev))) {
         if (ret != ui_action) return true;
         struct coord coord = coord_is_nil(star) ? ui->state.star : star;
-        render_push_event(EV_ITEM_SELECT, ui->state.id, coord_to_u64(coord));
+        ui_item_show(ui->state.id, coord);
+        ui_map_goto(coord);
         return true;
     }
 
     return false;
 }
 
-bool ui_log_event(struct ui_log *ui, SDL_Event *ev)
+static bool ui_log_event(void *state, SDL_Event *ev)
 {
-    if (ev->type == render.event && ui_log_event_user(ui, ev)) return true;
+    struct ui_log *ui = state;
 
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_panel_event(ui->panel, ev))) return ret != ui_skip;
+    if (ev->type == render.event)
+        ui_log_event_user(ui, ev);
 
-    for (size_t i = 0; i < ui->len; ++i) {
-        if (ui_logi_event(ui->items + i, ui->coord, ev)) return true;
-    }
+    if (ui_scroll_event(&ui->scroll, ev)) return true;
 
-    return ui_panel_event_consume(ui->panel, ev);
+    size_t first = ui_scroll_first(&ui->scroll);
+    size_t last = ui_scroll_last(&ui->scroll);
+    for (size_t i = first; i < last; ++i)
+        if (ui_logi_event(ui->items + i, ui->coord, ev))
+            return true;
+
+    return false;
 }
 
 
-void ui_logi_render(
-        struct ui_logi *ui,
+static void ui_logi_render(
+        struct ui_log *ui,
+        size_t row,
         struct ui_layout *layout,
         SDL_Renderer *renderer)
 {
-    ui_label_render(&ui->time, layout, renderer);
-    ui_layout_sep_col(layout);
+    struct ui_logi *entry = ui->items + row;
 
-    if (!coord_is_nil(ui->state.star))
-        ui_link_render(&ui->star, layout, renderer);
+    {
+        SDL_Rect rect = {
+            .x = layout->row.pos.x, .y = layout->row.pos.y,
+            .w = layout->row.dim.w, .h = ui->row_h,
+        };
 
-    ui_link_render(&ui->id, layout, renderer);
-    ui_label_render(&ui->key, layout, renderer);
-    ui_layout_sep_col(layout);
-    ui_label_render(&ui->value, layout, renderer);
+        struct rgba rgba = ui_st.rgba.bg;
+
+        if (SDL_PointInRect(&render.cursor.point, &rect))
+            rgba = ui_st.rgba.list.hover;
+        else if (row % 2 == 1)
+            rgba = ui_st.rgba.list.selected;
+
+        rgba_render(rgba, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
+    }
+
+    {
+        ui_label_render(&entry->time, layout, renderer);
+        ui_layout_sep_col(layout);
+
+        if (!coord_is_nil(entry->state.star))
+            ui_link_render(&entry->star, layout, renderer);
+        else ui_layout_sep_x(layout, entry->star.w.dim.w);
+        ui_layout_sep_col(layout);
+
+        ui_link_render(&entry->id, layout, renderer);
+        ui_layout_next_row(layout);
+    }
+
+    {
+        ui_layout_sep_x(layout, entry->time.w.dim.w);
+        ui_layout_sep_col(layout);
+
+        ui_label_render(&entry->key, layout, renderer);
+        ui_layout_sep_col(layout);
+
+        ui_label_render(&entry->value, layout, renderer);
+        ui_layout_next_row(layout);
+    }
 }
 
-void ui_log_render(struct ui_log *ui, SDL_Renderer *renderer)
+static void ui_log_render(
+        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_panel_render(ui->panel, renderer);
-    if (ui_layout_is_nil(&layout)) return;
+    struct ui_log *ui = state;
 
-    for (size_t i = 0; i < ui->len; ++i) {
-        ui_logi_render(ui->items + i, &layout, renderer);
-        ui_layout_next_row(&layout);
-    }
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    if (ui_layout_is_nil(&inner)) return;
+
+    size_t first = ui_scroll_first(&ui->scroll);
+    size_t last = ui_scroll_last(&ui->scroll);
+
+    for (size_t row = first; row < last; ++row)
+        ui_logi_render(ui, row, &inner, renderer);
 }

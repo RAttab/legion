@@ -4,6 +4,7 @@
 */
 
 #include "ui/ui.h"
+#include "render/ui.h"
 #include "game/proxy.h"
 #include "render/render.h"
 
@@ -177,7 +178,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     if (state->debug) {
         ui_str_setc(ui_set(&ui->debug_val), "attached");
         if (state->mod_id && (!old_debug || old_ip != state->vm.ip))
-            render_push_event(EV_MOD_SELECT, state->mod_id, state->vm.ip);
+            ui_mods_show(state->mod_id, state->vm.ip);
     }
     else {
         ui_str_setc(&ui->debug_val.str, "detached");
@@ -186,7 +187,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
 
     if (state->breakpoint == IP_NIL) ui_set_nil(&ui->breakpoint_val);
     else ui_str_set_hex(ui_set(&ui->breakpoint_val), state->breakpoint);
-    render_push_event(EV_MOD_BREAKPOINT, state->breakpoint, state->mod_id);
+    ui_mods_breakpoint(state->mod_id, state->breakpoint);
 
     if (!state->msg.len) ui_set_nil(&ui->msg_len);
     else ui_str_set_u64(ui_set(&ui->msg_len), state->msg.len);
@@ -216,15 +217,14 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
         }
 
         if (state->breakpoint != IP_NIL)
-            render_push_event(EV_MOD_SELECT, state->mod_id, state->breakpoint);
+            ui_mods_show(state->mod_id, state->breakpoint);
 
         return true;
     }
 
     if ((ret = ui_link_event(&ui->mod_val, ev))) {
         if (ret != ui_action) return true;
-        if (state->mod_id)
-            render_push_event(EV_MOD_SELECT, state->mod_id, 0);
+        if (state->mod_id) ui_mods_show(state->mod_id, 0);
         return true;
     }
 
@@ -237,7 +237,7 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
             return true;
         }
 
-        render_push_event(EV_MOD_SELECT, state->mod_id, state->vm.ip);
+        ui_mods_show(state->mod_id, state->vm.ip);
         return true;
     }
 
