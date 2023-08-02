@@ -180,6 +180,8 @@ struct mod_index mod_index(const struct mod *mod, vm_ip ip)
 
 vm_ip mod_byte(const struct mod *mod, size_t row, size_t col)
 {
+    if (!mod->index_len) return 0;
+
     const struct mod_index *it = mod->index;
     const struct mod_index *end = it + mod->index_len;
 
