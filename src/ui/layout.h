@@ -12,7 +12,18 @@
 // layout
 // -----------------------------------------------------------------------------
 
-enum ui_layout_dir { ui_layout_right, ui_layout_left };
+enum ui_layout_dir : uint8_t
+{
+    ui_layout_hori = 0U,
+    ui_layout_hori_mask = 1U << ui_layout_hori,
+    ui_layout_left_right = 0U << ui_layout_hori,
+    ui_layout_right_left = 1U << ui_layout_hori,
+
+    ui_layout_vert = 1U,
+    ui_layout_vert_mask = 1U << ui_layout_vert,
+    ui_layout_up_down = 0U << ui_layout_vert,
+    ui_layout_down_up = 1U << ui_layout_vert,
+};
 
 struct ui_layout
 {
@@ -28,7 +39,7 @@ struct ui_layout
 enum { ui_layout_inf = -1 };
 
 struct ui_layout ui_layout_new(struct pos, struct dim);
-void ui_layout_resize(struct ui_layout *, struct pos, struct dim);
+void ui_layout_resize(struct ui_layout *, struct dim);
 void ui_layout_add(struct ui_layout *, struct ui_widget *);
 
 struct ui_layout ui_layout_inner(struct ui_layout *);
@@ -45,6 +56,8 @@ void ui_layout_sep_row(struct ui_layout *);
 void ui_layout_next_row(struct ui_layout *);
 
 void ui_layout_dir(struct ui_layout *, enum ui_layout_dir);
+void ui_layout_dir_hori(struct ui_layout *, enum ui_layout_dir);
+void ui_layout_dir_vert(struct ui_layout *, enum ui_layout_dir);
 
 inline bool ui_layout_is_nil(struct ui_layout *layout)
 {
