@@ -23,6 +23,7 @@ enum ui_button_state
 
 struct ui_button_style
 {
+    int16_t height;
     struct dim margin;
 
     struct

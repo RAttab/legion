@@ -34,11 +34,13 @@ void ui_button_style_default(struct ui_style *s)
             .bg = rgba_gray(0x22)
         },
 
+        .height = s->font.dim.h + (s->pad.box.h * 2),
         .margin = s->pad.box,
     };
 
     s->button.line = s->button.base;
     s->button.line.margin.h = 0;
+    s->button.line.height = s->font.dim.h;
 
     s->button.list.close = s->button.base;
     s->button.list.close.idle.bg = ui_st.rgba.bg;
