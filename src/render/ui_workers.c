@@ -125,27 +125,14 @@ static void ui_workers_update_frame(void *state)
     ui_histo_update_legend(&ui->histo);
 }
 
-static void ui_workers_event_user(struct ui_workers *ui, SDL_Event *ev)
-{
-    switch (ev->user.code)
-    {
-
-    case ev_star_select: {
-        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
-        if (!coord_eq(ui->star, new)) ui_workers_show(new);
-        return;
-    }
-
-    default: { return; }
-    }
-}
-
 static bool ui_workers_event(void *state, SDL_Event *ev)
 {
     struct ui_workers *ui = state;
 
-    if (render_user_event(ev))
-        ui_workers_event_user(ui, ev);
+    if (render_user_event_is(ev, ev_star_select)) {
+        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
+        if (!coord_eq(ui->star, new)) ui_workers_show(new);
+    }
     
     enum ui_ret ret = ui_nil;
     if ((ret = ui_histo_event(&ui->histo, ev))) return true;

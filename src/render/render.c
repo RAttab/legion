@@ -93,6 +93,11 @@ bool render_user_event(const SDL_Event *ev)
     return ev->type == render.event;
 }
 
+bool render_user_event_is(const SDL_Event *ev, enum event type)
+{
+    return render_user_event(ev) && ev->user.code == type;
+}
+
 SDL_Renderer *render_renderer(void)
 {
     return render.renderer;

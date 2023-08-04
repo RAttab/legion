@@ -172,21 +172,6 @@ static void ui_log_update(void *state)
 }
 
 
-static void ui_log_event_user(struct ui_log *ui, SDL_Event *ev)
-{
-    switch (ev->user.code)
-    {
-
-    case ev_star_select: {
-        if (!coord_is_nil(ui->coord))
-            ui_log_show(coord_from_u64((uintptr_t) ev->user.data1));
-        return;
-    }
-
-    default: { return; }
-    }
-}
-
 static bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
 {
     enum ui_ret ret = ui_nil;
@@ -213,8 +198,10 @@ static bool ui_log_event(void *state, SDL_Event *ev)
 {
     struct ui_log *ui = state;
 
-    if (render_user_event(ev))
-        ui_log_event_user(ui, ev);
+    if (render_user_event_is(ev, ev_star_select)) {
+        if (!coord_is_nil(ui->coord))
+            ui_log_show(coord_from_u64((uintptr_t) ev->user.data1));
+    }
 
     if (ui_scroll_event(&ui->scroll, ev)) return true;
 

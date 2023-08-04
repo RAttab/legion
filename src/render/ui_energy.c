@@ -143,25 +143,15 @@ static void ui_energy_update_frame(void *state)
     ui_histo_update_legend(&ui->histo);
 }
 
-static void ui_energy_event_user(struct ui_energy *ui, SDL_Event *ev)
-{
-    switch (ev->user.code)
-    {
-
-    case ev_star_select: {
-        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
-        if (!coord_eq(ui->star, new)) ui_energy_show(new);
-        return;
-    }
-
-    default: { return; }
-    }
-}
-
 static bool ui_energy_event(void *state, SDL_Event *ev)
 {
     struct ui_energy *ui = state;
-    if (render_user_event(ev)) ui_energy_event_user(ui, ev);
+
+    if (render_user_event_is(ev, ev_star_select)) {
+        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
+        if (!coord_eq(ui->star, new)) ui_energy_show(new);
+    }
+
     if (ui_histo_event(&ui->histo, ev)) return true;
     return false;
 }

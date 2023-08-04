@@ -17,7 +17,9 @@
 // events
 // -----------------------------------------------------------------------------
 
-enum event
+// int is required to cleanly compare against the signed value in the SDL_Event
+// object.
+enum event : int
 {
     ev_nil = 0,
 
@@ -44,9 +46,12 @@ void render_init(void);
 void render_close(void);
 
 bool render_initialized(void);
+
 SDL_Rect render_rect(void);
 struct dim render_dim(void);
+
 bool render_user_event(const SDL_Event *);
+bool render_user_event_is(const SDL_Event *, enum event);
 SDL_Renderer *render_renderer(void);
 
 void render_loop(void);
