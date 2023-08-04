@@ -192,21 +192,6 @@ static void ui_item_update(void *state)
     config->ui.update(ui_item_state(ui, ui->id), chunk, ui->id);
 }
 
-static void ui_item_event_help(struct ui_item *ui)
-{
-    char path[man_path_max] = {0};
-    size_t len = snprintf(path, sizeof(path),
-            "/items/%s", item_str_c(im_id_item(ui->id)));
-
-    struct link link = man_link(path, len);
-    if (link_is_nil(link)) {
-        ui_log(st_error, "unable to open link to '%s'", path);
-        return;
-    }
-
-    ui_man_show_slot(link, ui_slot_left);
-}
-
 static bool ui_item_event(void *state, SDL_Event *ev)
 {
     struct ui_item *ui = state;
@@ -230,7 +215,8 @@ static bool ui_item_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->help, ev))) {
         if (ret != ui_action) return true;
-        ui_item_event_help(ui);
+        ui_man_show_slot_path(ui_slot_left,
+                "/items/%s", item_str_c(im_id_item(ui->id)));
         return true;
     }
 

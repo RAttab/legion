@@ -141,23 +141,6 @@ void ui_io_show(struct ui_io *ui, struct coord star, im_id id)
     }
 }
 
-static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
-{
-    char path[man_path_max] = {0};
-    size_t len = snprintf(path, sizeof(path),
-            "/items/%s/io/%.*s",
-            item_str_c(im_id_item(ui->id)),
-            (unsigned) cmd->name.str.len, cmd->name.str.str);
-
-    struct link link = man_link(path, len);
-    if (link_is_nil(link)) {
-        ui_log(st_error, "unable to open link to '%s'", path);
-        return;
-    }
-
-    ui_man_show_slot(link, ui_slot_left);
-}
-
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
     struct chunk *chunk = proxy_chunk(ui->star);
@@ -226,7 +209,11 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 
         if ((ret = ui_button_event(&cmd->help, ev))) {
             if (ret != ui_action) return true;
-            ui_io_help(ui, cmd);
+            ui_man_show_slot_path(ui_slot_left,
+                    "/items/%s/io/%.*s",
+                    item_str_c(im_id_item(ui->id)),
+                    (unsigned) cmd->name.str.len,
+                    cmd->name.str.str);
             return true;
         }
 

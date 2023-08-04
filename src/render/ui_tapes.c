@@ -215,23 +215,6 @@ static void ui_tapes_update(void *state)
     ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
 }
 
-static void ui_tapes_event_help(struct ui_tapes *ui)
-{
-    enum item item = ui->tree.selected;
-
-    char path[man_path_max] = {0};
-    size_t len = snprintf(path, sizeof(path),
-            "/items/%s", item_str_c(item));
-
-    struct link link = man_link(path, len);
-    if (link_is_nil(link)) {
-        ui_log(st_error, "unable to open link to '%s'", path);
-        return;
-    }
-
-    ui_man_show_slot(link, ui_slot_right);
-}
-
 static bool ui_tapes_show_help(struct ui_tapes *ui)
 {
     return
@@ -253,7 +236,8 @@ static bool ui_tapes_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->help, ev))) {
         if (ret != ui_action) return true;
-        ui_tapes_event_help(ui);
+        ui_man_show_slot_path(ui_slot_right,
+                "/items/%s", item_str_c(ui->tree.selected));
         return true;
     }
 

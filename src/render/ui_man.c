@@ -87,7 +87,7 @@ static void ui_man_free(void *state)
     ui_doc_free(&ui->doc);
 }
 
-void ui_man_show_slot(struct link link, enum ui_slot slot)
+void ui_man_show_slot(enum ui_slot slot, struct link link)
 {
     struct ui_man *ui = ui_state(ui_view_man);
     if (link_is_nil(link)) { ui_hide(ui_view_man); return; }
@@ -108,7 +108,40 @@ void ui_man_show_slot(struct link link, enum ui_slot slot)
 
 void ui_man_show(struct link link)
 {
-    ui_man_show_slot(link, ui_slot_nil);
+    ui_man_show_slot(ui_slot_nil, link);
+}
+
+static struct link ui_man_path_link(const char *fmt, va_list args)
+{
+    char path[man_path_max] = {0};
+    ssize_t len = vsnprintf(path, sizeof(path), fmt, args);
+    assert(len >= 0);
+
+    struct link link = man_link(path, len);
+    if (link_is_nil(link))
+        ui_log(st_error, "unable to open man page '%s'", path);
+
+    return link;
+}
+
+void ui_man_show_path(const char *path, ...)
+{
+    va_list args = {0};
+    va_start(args, fmt);
+    struct link link = ui_man_path_link(path, args);
+    va_end(args);
+
+    if (!link_is_nil(link)) ui_man_show(link);
+}
+
+void ui_man_show_slot_path(enum ui_slot slot, const char *path, ...)
+{
+    va_list args = {0};
+    va_start(args, fmt);
+    struct link link = ui_man_path_link(path, args);
+    va_end(args);
+
+    if (!link_is_nil(link)) ui_man_show_slot(slot, link);
 }
 
 static void ui_man_update(void *state)

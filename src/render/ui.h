@@ -211,5 +211,9 @@ void ui_energy_show(struct coord);
 
 struct ui_man;
 void ui_man_alloc(struct ui_view_state *);
+
 void ui_man_show(struct link);
-void ui_man_show_slot(struct link, enum ui_slot);
+void ui_man_show_slot(enum ui_slot, struct link);
+
+void ui_man_show_path(const char *path, ...);
+void ui_man_show_slot_path(enum ui_slot, const char *path, ...);
