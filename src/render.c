@@ -6,6 +6,7 @@
 #include "render/render.c"
 #include "render/font.c"
 #include "render/ui.c"
+#include "render/ui_cursor.c"
 #include "render/ui_map.c"
 #include "render/ui_factory.c"
 #include "render/ui_topbar.c"

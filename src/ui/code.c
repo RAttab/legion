@@ -374,7 +374,7 @@ static void ui_code_view_carret_at(struct ui_code *code, size_t row, size_t col)
 
 static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
 {
-    SDL_Point cursor = render.cursor.point;
+    SDL_Point cursor = ui_cursor_point();
     SDL_Rect rect = ui_widget_rect(&code->w);
     if (!SDL_PointInRect(&cursor, &rect)) return false;
 
@@ -475,7 +475,7 @@ void ui_code_render(
                 .h = font->glyph_h
             };
 
-            bool is_highlight = SDL_PointInRect(&render.cursor.point, &rect);
+            bool is_highlight = ui_cursor_in(&rect);
             bool is_breakpoint =
                 code->breakpoint.ip &&
                 (code->disassembly ?
@@ -603,7 +603,7 @@ void ui_code_render(
 
 static enum ui_ret ui_code_event_click(struct ui_code *code)
 {
-    SDL_Point cursor = render.cursor.point;
+    SDL_Point cursor = ui_cursor_point();
     SDL_Rect rect = ui_widget_rect(&code->w);
 
     code->focused = SDL_PointInRect(&cursor, &rect);

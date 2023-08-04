@@ -67,6 +67,8 @@ struct ui *ui_alloc(void)
 {
     struct ui *ui = calloc(1, sizeof(*ui));
 
+    ui_cursor_init();
+
     ui_topbar_alloc(ui->views + ui_view_topbar);
     ui_status_alloc(ui->views + ui_view_status);
 
@@ -96,6 +98,8 @@ void ui_free(struct ui *ui)
         struct ui_view_state *state = ui->views + view;
         if (state->fn.free) state->fn.free(state->state);
     }
+
+    ui_cursor_free();
     free(ui);
 }
 
@@ -136,6 +140,9 @@ void ui_update_frame(struct ui *ui, struct proxy *proxy)
         if (state->fn.update_frame)
             state->fn.update_frame(state->state, proxy);
     }
+
+    // ui_cursor_update is handled in render.c because it should not depend on
+    // whether we've received a new state from proxy.
 
     update_view(ui_view_topbar);
     update_view(ui_view_status);
@@ -204,6 +211,7 @@ void ui_event(struct ui *ui, SDL_Event *ev)
         return event_view(ui->slots[u64_ctz(slot)]);
     }
 
+    ui_cursor_event(ev);
     if (ui_event_shortcuts(ui, ev)) return;
     if (event_view(ui_view_topbar)) return;
     if (event_view(ui_view_status)) return;
@@ -248,6 +256,8 @@ void ui_render(struct ui *ui, SDL_Renderer *renderer)
     ui_layout_dir(&layout, ui_layout_right_left | ui_layout_up_down);
     render_slot(ui_slot_right);
     render_slot(ui_slot_right_sub);
+
+    ui_cursor_render(renderer);
 }
 
 void ui_reset(struct ui *ui)

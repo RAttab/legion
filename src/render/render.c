@@ -29,74 +29,6 @@ struct render render = {0};
 
 
 // -----------------------------------------------------------------------------
-// cursor
-// -----------------------------------------------------------------------------
-
-static bool cursor_focus(void)
-{
-    uint32_t flags = SDL_GetWindowFlags(render.window);
-    return flags & SDL_WINDOW_INPUT_FOCUS;
-}
-
-static void cursor_init(void)
-{
-    render.cursor.size = 20;
-    render.cursor.point = (SDL_Point){
-        .x = render.rect.w / 2,
-        .y = render.rect.h / 2
-    };
-
-    render.cursor.tex = db_img_cursor(render.renderer);
-    sdl_err(SDL_SetTextureBlendMode(render.cursor.tex, SDL_BLENDMODE_ADD));
-    sdl_err(SDL_SetTextureColorMod(render.cursor.tex, 0xFF, 0xFF, 0xFF));
-
-    render.focus = cursor_focus();
-    sdl_err(SDL_SetRelativeMouseMode(render.focus));
-}
-
-static void cursor_close(void)
-{
-    SDL_DestroyTexture(render.cursor.tex);
-}
-
-static void cursor_event(SDL_Event *event)
-{
-    switch (event->type)
-    {
-    case SDL_MOUSEMOTION: {
-        render.cursor.point.x += event->motion.xrel;
-        render.cursor.point.x = legion_max(0, legion_min(render.rect.w, render.cursor.point.x));
-
-        render.cursor.point.y += event->motion.yrel;
-        render.cursor.point.y = legion_max(0, legion_min(render.rect.h, render.cursor.point.y));
-        break;
-    }
-    }
-}
-
-static void cursor_render(SDL_Renderer *renderer)
-{
-    if (!render.focus) return;
-    sdl_err(SDL_RenderCopy(renderer, render.cursor.tex,
-                    &(SDL_Rect){ .x = 0, .y = 0, .w = 50, .h = 50 },
-                    &(SDL_Rect){
-                        .x = render.cursor.point.x,
-                        .y = render.cursor.point.y,
-                        .w = render.cursor.size,
-                        .h = render.cursor.size }));
-}
-
-static void cursor_update(void)
-{
-    bool focus = cursor_focus();
-    if (focus == render.focus) return;
-
-    sdl_err(SDL_SetRelativeMouseMode(focus));
-    render.focus = focus;
-}
-
-
-// -----------------------------------------------------------------------------
 // ui
 // -----------------------------------------------------------------------------
 
@@ -146,18 +78,14 @@ void render_init(struct proxy *proxy)
     render.event = SDL_RegisterEvents(1);
     if (render.event == (uint32_t) -1) sdl_fail();
 
-    render.focus = true;
     fonts_populate(render.renderer);
-
-    cursor_init();
     ui_init();
 }
 
 void render_close(void)
 {
-    ui_close();
-    cursor_close();
     fonts_close();
+    ui_close();
 
     SDL_DestroyRenderer(render.renderer);
     SDL_DestroyWindow(render.window);
@@ -174,7 +102,8 @@ static bool render_step(void)
     if (atomic_load_explicit(&render.join, memory_order_relaxed))
         return false;
 
-    cursor_update();
+    // Should not depend on whether proxy has an update or not.
+    ui_cursor_update();
 
     switch (proxy_update(render.proxy))
     {
@@ -190,18 +119,12 @@ static bool render_step(void)
     SDL_Event event = {0};
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) return false;
-        cursor_event(&event);
         ui_event(render.ui, &event);
     }
 
-    {
-        sdl_err(SDL_RenderClear(render.renderer));
-
-        ui_render(render.ui, render.renderer);
-        cursor_render(render.renderer);
-
-        SDL_RenderPresent(render.renderer);
-    }
+    sdl_err(SDL_RenderClear(render.renderer));
+    ui_render(render.ui, render.renderer);
+    SDL_RenderPresent(render.renderer);
 
     return true;
 }

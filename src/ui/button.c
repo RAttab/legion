@@ -88,8 +88,7 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point point = render.cursor.point;
-        if (!SDL_PointInRect(&point, &rect)) {
+        if (!ui_cursor_in(&rect)) {
             button->state = ui_button_idle;
             return ui_nil;
         }
@@ -98,15 +97,13 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point point = render.cursor.point;
-        if (!SDL_PointInRect(&point, &rect )) return ui_nil;
+        if (!ui_cursor_in(&rect)) return ui_nil;
         if (!button->disabled) button->state = ui_button_pressed;
         return ui_consume;
     }
 
     case SDL_MOUSEBUTTONUP: {
-        SDL_Point point = render.cursor.point;
-        if (!SDL_PointInRect(&point, &rect)) {
+        if (!ui_cursor_in(&rect)) {
             button->state = ui_button_idle;
             return ui_nil;
         }

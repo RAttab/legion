@@ -296,7 +296,7 @@ enum ui_ret ui_histo_event(struct ui_histo *histo, const SDL_Event *ev)
     case SDL_MOUSEMOTION: {
         if (!histo->series.data) return ui_nil;
 
-        SDL_Point cursor = render.cursor.point;
+        SDL_Point cursor = ui_cursor_point();
         struct SDL_Rect inner = {
             .x = histo->inner.x,
             .y = histo->inner.y,
@@ -314,6 +314,7 @@ enum ui_ret ui_histo_event(struct ui_histo *histo, const SDL_Event *ev)
         histo->hover.t = ui_histo_row_t(histo, histo->hover.row);
         histo->hover.v =
             ((cursor.x - histo->inner.x) * histo->v.bound) / histo->row.w;
+        histo->hover.x = cursor.x;
 
         ui_histo_update_legend(histo);
         break;
@@ -503,7 +504,7 @@ void ui_histo_render(
 
     // Hover - fg
     if (histo->hover.active) {
-        int16_t x = render.cursor.point.x;
+        int16_t x = histo->hover.x;
         rgba_render(histo->s.hover.fg, renderer);
         sdl_err(SDL_RenderDrawLine(renderer, x, up, x, down));
 

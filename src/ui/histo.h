@@ -56,7 +56,7 @@ struct ui_histo
     struct { ui_histo_data bound; } v;
     struct { ui_histo_data scale; } t;
     struct { ui_histo_data t; size_t row; } edge;
-    struct { ui_histo_data t, v; size_t row; bool active; } hover;
+    struct { ui_histo_data t, v; size_t row; int16_t x; bool active; } hover;
     struct {
         size_t len, cols, rows;
         ui_histo_data *data;

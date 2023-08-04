@@ -4,6 +4,7 @@
 */
 
 #include "link.h"
+#include "render/ui.h"
 
 
 // -----------------------------------------------------------------------------
@@ -54,21 +55,18 @@ enum ui_ret ui_link_event(struct ui_link *link, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point point = render.cursor.point;
-        link->state = SDL_PointInRect(&point, &rect) ? ui_link_hover : ui_link_idle;
+        link->state = ui_cursor_in(&rect) ? ui_link_hover : ui_link_idle;
         return ui_nil;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point point = render.cursor.point;
-        if (!SDL_PointInRect(&point, &rect)) return ui_nil;
+        if (!ui_cursor_in(&rect)) return ui_nil;
         link->state = ui_link_pressed;
         return ui_consume;
     }
 
     case SDL_MOUSEBUTTONUP: {
-        SDL_Point point = render.cursor.point;
-        if (!SDL_PointInRect(&point, &rect)) {
+        if (!ui_cursor_in(&rect)) {
             link->state = ui_link_idle;
             return ui_nil;
         }

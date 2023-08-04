@@ -104,6 +104,23 @@ void ui_toggle(struct ui *, enum ui_view);
 
 
 // -----------------------------------------------------------------------------
+// cursor
+// -----------------------------------------------------------------------------
+
+void ui_cursor_init(void);
+void ui_cursor_free(void);
+
+size_t ui_cursor_size(void);
+struct pos ui_cursor_pos(void);
+SDL_Point ui_cursor_point(void);
+bool ui_cursor_in(const SDL_Rect* rect);
+
+void ui_cursor_update(void);
+void ui_cursor_event(SDL_Event *);
+void ui_cursor_render(SDL_Renderer *);
+
+
+// -----------------------------------------------------------------------------
 // back
 // -----------------------------------------------------------------------------
 

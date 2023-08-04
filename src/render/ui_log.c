@@ -244,7 +244,7 @@ static void ui_logi_render(
 
         struct rgba rgba = ui_st.rgba.bg;
 
-        if (SDL_PointInRect(&render.cursor.point, &rect))
+        if (ui_cursor_in(&rect))
             rgba = ui_st.rgba.list.hover;
         else if (row % 2 == 1)
             rgba = ui_st.rgba.list.selected;

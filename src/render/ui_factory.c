@@ -391,7 +391,7 @@ static void ui_factory_event_user(struct ui_factory *, SDL_Event *ev)
 
 static struct flow *ui_factory_cursor_flow(struct ui_factory *ui)
 {
-    struct flow_pos pos = ui_factory_project_flow_pos(ui, render.cursor.point);
+    struct flow_pos pos = ui_factory_project_flow_pos(ui, ui_cursor_point());
 
     ssize_t row = ui_factory_row(ui, pos);
     ssize_t col = ui_factory_col(ui, pos);

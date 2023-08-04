@@ -125,7 +125,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
     case SDL_MOUSEMOTION: {
         list->hover = 0;
 
-        SDL_Point point = render.cursor.point;
+        SDL_Point point = ui_cursor_point();
         if (!SDL_PointInRect(&point, &rect)) return ui_nil;
 
         size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
@@ -137,7 +137,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
     }
 
     case SDL_MOUSEBUTTONUP: {
-        SDL_Point point = render.cursor.point;
+        SDL_Point point = ui_cursor_point();
         if (!SDL_PointInRect(&point, &rect)) return ui_nil;
 
         size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;

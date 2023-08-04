@@ -55,8 +55,8 @@ enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
     switch (ev->type) {
 
     case SDL_MOUSEMOTION: {
-        SDL_Point cursor = render.cursor.point;
-        tooltip->w.pos = make_pos(cursor.x + render.cursor.size, cursor.y);
+        SDL_Point cursor = ui_cursor_point();
+        tooltip->w.pos = make_pos(cursor.x + ui_cursor_size(), cursor.y);
 
         if (!tooltip->rect.w && !tooltip->rect.h)
             tooltip->disabled = !SDL_PointInRect(&cursor, &tooltip->rect);

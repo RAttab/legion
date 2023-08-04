@@ -174,7 +174,7 @@ static SDL_Point ui_map_project_sdl(struct ui_map *ui, struct coord coord)
 struct coord ui_map_coord(void)
 {
     struct ui_map *ui = ui_state(render.ui, ui_view_map);
-    return ui_map_project_coord(ui, render.cursor.point);
+    return ui_map_project_coord(ui, ui_cursor_point());
 }
 
 
@@ -238,7 +238,7 @@ static bool ui_map_event(void *state, SDL_Event *event)
         if (ui->panned) { ui->panned = false; break; }
         if (ui->scale >= ui_map_thresh_stars) break;
 
-        SDL_Point point = render.cursor.point;
+        SDL_Point point = ui_cursor_point();
         size_t px = scale_div(ui->scale, ui_map_star_px);
         struct rect rect = ui_map_project_coord_rect(ui, &(SDL_Rect) {
                     .x = point.x - px / 2,
@@ -348,7 +348,7 @@ static void ui_map_render_stars(struct ui_map *ui, SDL_Renderer *renderer)
         struct hsv hsv = {
             .h = ((double) star->hue) / 360,
             .s = 1.0 - (((double) star->energy) / UINT16_MAX),
-            .v = SDL_PointInRect(&render.cursor.point, &dst) ? 0.8 : 0.5,
+            .v = ui_cursor_in(&dst) ? 0.8 : 0.5,
         };
         struct rgba rgb = hsv_to_rgb(hsv);
 

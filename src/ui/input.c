@@ -165,7 +165,7 @@ void ui_input_render(
 
 static enum ui_ret ui_input_event_click(struct ui_input *input)
 {
-    SDL_Point cursor = render.cursor.point;
+    SDL_Point cursor = ui_cursor_point();
     SDL_Rect rect = ui_widget_rect(&input->w);
 
     input->focused = SDL_PointInRect(&cursor, &rect);

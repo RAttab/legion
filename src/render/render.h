@@ -57,17 +57,9 @@ struct render
 
     uint32_t event;
     uint64_t frames;
-    bool focus;
 
     struct proxy *proxy;
     struct proxy_pipe *pipe;
-
-    struct
-    {
-        SDL_Point point;
-        SDL_Texture *tex;
-        size_t size;
-    } cursor;
 
     struct ui *ui;
     struct ui_clipboard clipboard;

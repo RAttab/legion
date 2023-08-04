@@ -4,6 +4,7 @@
 */
 
 #include "scroll.h"
+#include "render/ui.h"
 
 
 // -----------------------------------------------------------------------------
@@ -79,19 +80,19 @@ enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
 
     case SDL_MOUSEWHEEL: {
         SDL_Rect widget = ui_widget_rect(&scroll->w);
-        if (!SDL_PointInRect(&render.cursor.point, &widget))
-            return ui_nil;
+        if (!ui_cursor_in(&widget)) return ui_nil;
 
         ui_scroll_move(scroll, -ev->wheel.y);
         return ui_consume;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
+        SDL_Point cursor = ui_cursor_point();
         SDL_Rect bar = ui_scroll_rect(scroll);
-        if (!SDL_PointInRect(&render.cursor.point, &bar))
+        if (!SDL_PointInRect(&cursor, &bar))
             return ui_nil;
 
-        scroll->drag.start = render.cursor.point.y;
+        scroll->drag.start = cursor.y;
         scroll->drag.bar = bar.y;
         return ui_consume;
     }
@@ -105,7 +106,7 @@ enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
     case SDL_MOUSEMOTION: {
         if (!scroll->drag.start) return ui_nil;
 
-        int16_t delta = render.cursor.point.y - scroll->drag.start;
+        int16_t delta = ui_cursor_point().y - scroll->drag.start;
         int16_t bar = scroll->drag.bar + delta;
         if (bar < scroll->w.pos.y) scroll->first = 0;
         else {
