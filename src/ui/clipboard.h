@@ -11,16 +11,10 @@
 // clipboard
 // -----------------------------------------------------------------------------
 
-struct ui_clipboard
-{
-    size_t len, cap;
-    char *str;
-};
+void ui_clipboard_init(void);
+void ui_clipboard_free(void);
 
-void ui_clipboard_init(struct ui_clipboard *);
-void ui_clipboard_free(struct ui_clipboard *);
+size_t ui_clipboard_paste(size_t len, char *dst);
 
-size_t ui_clipboard_paste(struct ui_clipboard *, size_t len, char *dst);
-
-void ui_clipboard_copy(struct ui_clipboard *, size_t len, const char *src);
-void ui_clipboard_copy_hex(struct ui_clipboard *, uint64_t val);
+void ui_clipboard_copy(size_t len, const char *src);
+void ui_clipboard_copy_hex(uint64_t val);

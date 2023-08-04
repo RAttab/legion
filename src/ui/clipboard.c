@@ -10,45 +10,52 @@
 // clipboard
 // -----------------------------------------------------------------------------
 
-void ui_clipboard_init(struct ui_clipboard *board)
+struct
 {
-    board->len = 0;
-    board->cap = 128;
-    board->str = calloc(board->cap, sizeof(*board->str));
+    size_t len, cap;
+    char *str;
+} ui_clipboard;
+
+
+void ui_clipboard_init(void)
+{
+    ui_clipboard.len = 0;
+    ui_clipboard.cap = 128;
+    ui_clipboard.str = calloc(ui_clipboard.cap, sizeof(*ui_clipboard.str));
 }
 
-void ui_clipboard_free(struct ui_clipboard *board)
+void ui_clipboard_free(void)
 {
-    free(board->str);
+    free(ui_clipboard.str);
 }
 
-size_t ui_clipboard_paste(struct ui_clipboard *board, size_t len, char *dst)
+size_t ui_clipboard_paste(size_t len, char *dst)
 {
-    len = legion_min(len, board->len);
-    memcpy(dst, board->str, len);
+    len = legion_min(len, ui_clipboard.len);
+    memcpy(dst, ui_clipboard.str, len);
     return len;
 }
 
-static void ui_clipboard_grow(struct ui_clipboard *board, size_t len)
+static void ui_clipboard_grow(size_t len)
 {
-    if (likely(len <= board->cap)) return;
-    board->str = realloc(board->str, len);
-    board->cap = len;
+    if (likely(len <= ui_clipboard.cap)) return;
+    ui_clipboard.str = realloc(ui_clipboard.str, len);
+    ui_clipboard.cap = len;
 }
 
-void ui_clipboard_copy(struct ui_clipboard *board, size_t len, const char *src)
+void ui_clipboard_copy(size_t len, const char *src)
 {
-    ui_clipboard_grow(board, len);
-    memcpy(board->str, src, len);
-    board->len = len;
+    ui_clipboard_grow(len);
+    memcpy(ui_clipboard.str, src, len);
+    ui_clipboard.len = len;
 }
 
-void ui_clipboard_copy_hex(struct ui_clipboard *board, uint64_t val)
+void ui_clipboard_copy_hex(uint64_t val)
 {
-    board->len = u64_ceil_div(u64_log2(val), 4) + 2;
-    ui_clipboard_grow(board, board->len);
+    ui_clipboard.len = u64_ceil_div(u64_log2(val), 4) + 2;
+    ui_clipboard_grow(ui_clipboard.len);
 
-    board->str[0] = '0';
-    board->str[1] = 'x';
-    str_utox(val, board->str + 2, board->len-2);
+    ui_clipboard.str[0] = '0';
+    ui_clipboard.str[1] = 'x';
+    str_utox(val, ui_clipboard.str + 2, ui_clipboard.len-2);
 }

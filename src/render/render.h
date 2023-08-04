@@ -62,7 +62,6 @@ struct render
     struct proxy_pipe *pipe;
 
     struct ui *ui;
-    struct ui_clipboard clipboard;
 };
 
 extern struct render render;

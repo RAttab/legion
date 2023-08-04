@@ -510,7 +510,7 @@ static bool ui_star_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
         if (ret != ui_action) return true;
-        ui_clipboard_copy_hex(&render.clipboard, coord_to_u64(ui->star.coord));
+        ui_clipboard_copy_hex(coord_to_u64(ui->star.coord));
         return true;
     }
 

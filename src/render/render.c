@@ -35,14 +35,14 @@ struct render render = {0};
 static void ui_init(void)
 {
     ui_style_default();
-    ui_clipboard_init(&render.clipboard);
+    ui_clipboard_init();
     render.ui = ui_alloc();
 }
 
 static void ui_close(void)
 {
     ui_free(render.ui);
-    ui_clipboard_free(&render.clipboard);
+    ui_clipboard_free();
 }
 
 void render_update_state(void)

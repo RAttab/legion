@@ -123,7 +123,7 @@ static bool ui_prober_event(void *_ui, const SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->coord_val, ev))) {
         if (ret != ui_action) return true;
-        ui_clipboard_copy_hex(&render.clipboard, coord_to_u64(ui->state.coord));
+        ui_clipboard_copy_hex(coord_to_u64(ui->state.coord));
         return true;
     }
 

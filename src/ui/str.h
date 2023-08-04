@@ -33,8 +33,8 @@ struct ui_str ui_str_v(size_t len);
 struct ui_str ui_str_clone(const struct ui_str *);
 void ui_str_free(struct ui_str *);
 
-void ui_str_copy(struct ui_str *, struct ui_clipboard *);
-void ui_str_paste(struct ui_str *, struct ui_clipboard *);
+void ui_str_copy(struct ui_str *);
+void ui_str_paste(struct ui_str *);
 
 void ui_str_setc(struct ui_str *, const char *str);
 void ui_str_setv(struct ui_str *, const char *str, size_t len);

@@ -47,15 +47,15 @@ void ui_str_free(struct ui_str *str)
 }
 
 
-void ui_str_copy(struct ui_str *str, struct ui_clipboard *board)
+void ui_str_copy(struct ui_str *str)
 {
-    ui_clipboard_copy(board, str->len, str->str);
+    ui_clipboard_copy(str->len, str->str);
 }
 
-void ui_str_paste(struct ui_str *str, struct ui_clipboard *board)
+void ui_str_paste(struct ui_str *str)
 {
     assert(str->cap);
-    str->len = ui_clipboard_paste(board, str->cap, (char *) str->str);
+    str->len = ui_clipboard_paste(str->cap, (char *) str->str);
 }
 
 

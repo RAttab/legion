@@ -236,7 +236,7 @@ static bool ui_item_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_link_event(&ui->id_val, ev))) {
         if (ret != ui_action) return true;
-        ui_clipboard_copy_hex(&render.clipboard, ui->id);
+        ui_clipboard_copy_hex(ui->id);
         return true;
     }
 
