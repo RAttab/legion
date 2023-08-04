@@ -12,7 +12,7 @@
 
 static void ui_log_free(void *);
 static void ui_log_hide(void *);
-static void ui_log_update(void *, struct proxy *);
+static void ui_log_update(void *);
 static bool ui_log_event(void *, SDL_Event *);
 static void ui_log_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -121,7 +121,7 @@ void ui_log_show(struct coord star)
 
     ui->coord = star;
 
-    ui_log_update(ui, render.proxy);
+    ui_log_update(ui);
     ui_show(ui_view_log);
 }
 
@@ -146,13 +146,13 @@ static void ui_logi_update(struct ui_logi *ui, const struct logi *it)
     ui_str_set_atom(&ui->value.str, it->value);
 }
 
-static void ui_log_update(void *state, struct proxy *proxy)
+static void ui_log_update(void *state)
 {
     struct ui_log *ui = state;
-    const struct log *logs = proxy_logs(proxy);
+    const struct log *logs = proxy_logs();
 
     if (!coord_is_nil(ui->coord)) {
-        struct chunk *chunk = proxy_chunk(proxy, ui->coord);
+        struct chunk *chunk = proxy_chunk(ui->coord);
         if (!chunk) { ui->len = 0; return; }
         logs = chunk_logs(chunk);
     }

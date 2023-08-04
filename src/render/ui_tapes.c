@@ -11,7 +11,7 @@
 #include "db/tapes.h"
 
 static void ui_tapes_free(void *);
-static void ui_tapes_update(void *, struct proxy *);
+static void ui_tapes_update(void *);
 static bool ui_tapes_event(void *, SDL_Event *);
 static void ui_tapes_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -135,7 +135,7 @@ void ui_tapes_show(enum item tape)
 
     if (!tape) { ui_hide(ui_view_tapes); return; }
 
-    ui_tapes_update(ui, render.proxy);
+    ui_tapes_update(ui);
     ui_show(ui_view_tapes);
     render_push_event(ev_tape_select, tape, 0);
 }
@@ -146,11 +146,9 @@ static bool ui_tapes_selected(struct ui_tapes *ui)
 }
 
 static void ui_tapes_update_cat(
-        struct ui_tapes *ui,
-        struct proxy *proxy,
-        const char *name, enum item first, enum item last)
+        struct ui_tapes *ui, const char *name, enum item first, enum item last)
 {
-    const struct tech *tech = proxy_tech(proxy);
+    const struct tech *tech = proxy_tech();
 
     ui_node parent = ui_tree_index(&ui->tree);
     ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + items_max), name);
@@ -178,16 +176,16 @@ static void ui_tapes_update_cat(
     }
 }
 
-static void ui_tapes_update(void *state, struct proxy *proxy)
+static void ui_tapes_update(void *state)
 {
     struct ui_tapes *ui = state;
 
     ui_tree_reset(&ui->tree);
-    ui_tapes_update_cat(ui, proxy, "Natural", items_natural_first, items_natural_last);
-    ui_tapes_update_cat(ui, proxy, "Synthesized", items_synth_first, items_synth_last);
-    ui_tapes_update_cat(ui, proxy, "Passive", items_passive_first, items_passive_last);
-    ui_tapes_update_cat(ui, proxy, "Active", items_active_first, items_active_last);
-    ui_tapes_update_cat(ui, proxy, "Logistics", items_logistics_first, items_logistics_last);
+    ui_tapes_update_cat(ui, "Natural", items_natural_first, items_natural_last);
+    ui_tapes_update_cat(ui, "Synthesized", items_synth_first, items_synth_last);
+    ui_tapes_update_cat(ui, "Passive", items_passive_first, items_passive_last);
+    ui_tapes_update_cat(ui, "Active", items_active_first, items_active_last);
+    ui_tapes_update_cat(ui, "Logistics", items_logistics_first, items_logistics_last);
 
     if (!ui_tapes_selected(ui)) {
         ui_panel_resize(ui->panel,
@@ -203,7 +201,7 @@ static void ui_tapes_update(void *state, struct proxy *proxy)
                     ui_layout_inf));
 
     enum item item = ui->tree.selected;
-    const struct tech *tech = proxy_tech(proxy);
+    const struct tech *tech = proxy_tech();
     const struct tape *tape = tapes_get(item);
     assert(tape);
 
@@ -247,7 +245,7 @@ static bool ui_tapes_event(void *state, SDL_Event *ev)
 
     enum ui_ret ret = ui_nil;
     if ((ret = ui_tree_event(&ui->tree, ev))) {
-        if (ret == ui_action) ui_tapes_update(ui, render.proxy);
+        if (ret == ui_action) ui_tapes_update(ui);
         return true;
     }
 
@@ -282,7 +280,7 @@ static void ui_tapes_render_tape(
     if (ui_layout_is_nil(&inner)) return;
 
     const struct font *font = ui_st.font.base;
-    const struct tech *tech = proxy_tech(render.proxy);
+    const struct tech *tech = proxy_tech();
     const struct tape *tape = tapes_get(ui->tree.selected);
 
     size_t first = ui_scroll_first(&ui->scroll);

@@ -10,8 +10,8 @@
 #include "game/energy.h"
 
 static void ui_energy_free(void *);
-static void ui_energy_update_state(void *, struct proxy *);
-static void ui_energy_update_frame(void *, struct proxy *);
+static void ui_energy_update_state(void *);
+static void ui_energy_update_frame(void *);
 static bool ui_energy_event(void *, SDL_Event *);
 static void ui_energy_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -100,18 +100,18 @@ void ui_energy_show(struct coord star)
     ui->star = star;
     if (coord_is_nil(ui->star)) { ui_hide(ui_view_energy); return; }
 
-    ui_energy_update_frame(ui, render.proxy);
+    ui_energy_update_frame(ui);
     ui_show(ui_view_energy);
 }
 
-static void ui_energy_update_state(void *state, struct proxy *proxy)
+static void ui_energy_update_state(void *state)
 {
     struct ui_energy *ui = state;
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     if (!chunk) return;
 
-    world_ts t = proxy_time(proxy);
+    world_ts t = proxy_time();
     if (ui->last_t == t) return;
     ui->last_t = t;
 
@@ -128,14 +128,14 @@ static void ui_energy_update_state(void *state, struct proxy *proxy)
     ui_histo_push(&ui->histo, ui_energy_kwheel, energy_prod_kwheel(energy, star));
 }
 
-static void ui_energy_update_frame(void *state, struct proxy *proxy)
+static void ui_energy_update_frame(void *state)
 {
     struct ui_energy *ui = state;
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     if (!chunk) { ui_energy_show(coord_nil()); return; }
 
-    const struct tech *tech = proxy_tech(proxy);
+    const struct tech *tech = proxy_tech();
     ui_histo_series(&ui->histo, ui_energy_solar)->visible = tech_known(tech, item_solar);
     ui_histo_series(&ui->histo, ui_energy_burner)->visible = tech_known(tech, item_burner);
     ui_histo_series(&ui->histo, ui_energy_kwheel)->visible = tech_known(tech, item_kwheel);

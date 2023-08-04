@@ -9,7 +9,7 @@
 #include "ui/ui.h"
 
 static void ui_stars_free(void *);
-static void ui_stars_update(void *, struct proxy *);
+static void ui_stars_update(void *);
 static bool ui_stars_event(void *, SDL_Event *);
 static void ui_stars_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -56,14 +56,14 @@ static void ui_stars_free(void *state)
     free(ui);
 }
 
-static void ui_stars_update(void *state, struct proxy *proxy)
+static void ui_stars_update(void *state)
 {
     struct ui_stars *ui = state;
     ui_tree_reset(&ui->tree);
 
     ui_node parent = ui_node_nil;
     struct coord sector = coord_nil();
-    const struct vec64 *list = proxy_chunks(proxy);
+    const struct vec64 *list = proxy_chunks();
 
     size_t count = 0;
     for (size_t i = 0; i < list->len; ++i) {
@@ -72,14 +72,14 @@ static void ui_stars_update(void *state, struct proxy *proxy)
             sector = coord_sector(star);
             parent = ui_tree_index(&ui->tree);
 
-            struct symbol name = sector_name(sector, proxy_seed(proxy));
+            struct symbol name = sector_name(sector, proxy_seed());
             ui_str_set_symbol(
                     ui_tree_add(&ui->tree, ui_node_nil, coord_to_u64(sector)), &name);
         }
 
         ui_str_set_atom(
                 ui_tree_add(&ui->tree, parent, coord_to_u64(star)),
-                proxy_star_name(proxy, star));
+                proxy_star_name(star));
         count++;
     }
 

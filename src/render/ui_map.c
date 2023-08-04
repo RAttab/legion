@@ -11,7 +11,7 @@
 #include "utils/hset.h"
 
 static void ui_map_free(void *);
-static void ui_map_update(void *, struct proxy *);
+static void ui_map_update(void *);
 static bool ui_map_event(void *, SDL_Event *);
 static void ui_map_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -63,7 +63,7 @@ void ui_map_alloc(struct ui_view_state *state)
 {
     struct ui_map *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_map) {
-        .pos = proxy_home(render.proxy),
+        .pos = proxy_home(),
         .scale = ui_map_scale_default,
         .tex = NULL,
         .panning = false,
@@ -98,7 +98,7 @@ void ui_map_show(struct coord coord)
     struct ui_map *ui = ui_state(ui_view_map);
 
     if (!coord_is_nil(coord)) ui->pos = coord;
-    if (coord_is_nil(ui->pos)) ui->pos = proxy_home(render.proxy);
+    if (coord_is_nil(ui->pos)) ui->pos = proxy_home();
     ui->scale = ui_map_scale_default;
 
     ui_show(ui_view_map);
@@ -110,10 +110,10 @@ void ui_map_goto(struct coord coord)
         ui_map_show(coord);
 }
 
-static void ui_map_update(void *state, struct proxy *proxy)
+static void ui_map_update(void *state)
 {
     struct ui_map *ui = state;
-    if (coord_is_nil(ui->pos)) ui->pos = proxy_home(proxy);
+    if (coord_is_nil(ui->pos)) ui->pos = proxy_home();
 }
 
 coord_scale ui_map_scale(void)
@@ -188,7 +188,7 @@ static void ui_map_event_user(struct ui_map *ui, SDL_Event *ev)
     {
 
     case ev_state_load: {
-        ui->pos = proxy_home(render.proxy);
+        ui->pos = proxy_home();
         return;
     }
 
@@ -246,7 +246,7 @@ static bool ui_map_event(void *state, SDL_Event *event)
                     .h = px, .w = px,
                 });
 
-        const struct star *star = proxy_star_in(render.proxy, rect);
+        const struct star *star = proxy_star_in(rect);
         if (star) ui_star_show(star->coord);
 
         break;
@@ -301,7 +301,7 @@ static void ui_map_render_sectors(struct ui_map *ui, SDL_Renderer *renderer)
             .h = bot.y - top.y,
         };
 
-        if (proxy_active_sector(render.proxy, it)) {
+        if (proxy_active_sector(it)) {
             uint8_t alpha = 0xFF;
             if (ui->scale < ui_map_thresh_stars)
                 alpha = alpha * u64_log2(ui->scale) / u64_log2(ui_map_thresh_sector_low);
@@ -317,7 +317,7 @@ static void ui_map_render_sectors(struct ui_map *ui, SDL_Renderer *renderer)
 static void ui_map_render_lanes(
         struct ui_map *ui, SDL_Renderer *renderer, struct coord star)
 {
-    const struct hset *lanes = proxy_lanes_for(render.proxy, star);
+    const struct hset *lanes = proxy_lanes_for(star);
     if (!lanes || !lanes->len) return;
 
     SDL_Point src = ui_map_project_sdl(ui, star);
@@ -332,10 +332,10 @@ static void ui_map_render_lanes(
 static void ui_map_render_stars(struct ui_map *ui, SDL_Renderer *renderer)
 {
     struct rect rect = ui_map_project_coord_rect(ui, &render.rect);
-    struct proxy_render_it it = proxy_render_it(render.proxy, rect);
+    struct proxy_render_it it = proxy_render_it(rect);
 
     const struct star *star = NULL;
-    while ((star = proxy_render_next(render.proxy, &it))) {
+    while ((star = proxy_render_next(&it))) {
         SDL_Point pos = ui_map_project_sdl(ui, star->coord);
 
         size_t px = scale_div(ui->scale, ui_map_star_px);
@@ -357,7 +357,7 @@ static void ui_map_render_stars(struct ui_map *ui, SDL_Renderer *renderer)
         sdl_err(SDL_SetTextureColorMod(ui->tex, rgb.r, rgb.g, rgb.b));
         sdl_err(SDL_RenderCopy(renderer, ui->tex, &ui->tex_star, &dst));
 
-        if (proxy_active_star(render.proxy, star->coord)) {
+        if (proxy_active_star(star->coord)) {
             ui_map_render_lanes(ui, renderer, star->coord);
 
             dst = (SDL_Rect) {

@@ -10,7 +10,7 @@
 #include "utils/fs.h"
 
 static void ui_mods_free(void *);
-static void ui_mods_update(void *, struct proxy *);
+static void ui_mods_update(void *);
 static bool ui_mods_event(void *, SDL_Event *);
 static void ui_mods_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -126,14 +126,14 @@ void ui_mods_show(mod_id id, vm_ip ip)
 
     mod_id old = ui->state.id;
     ui->state.id = mod_version(id) ?
-        id : proxy_mod_latest(render.proxy, mod_major(id));
+        id : proxy_mod_latest(mod_major(id));
     ui->state.ip = ip;
 
     if (id != old) {
-        proxy_mod_select(render.proxy, ui->state.id);
+        proxy_mod_select(ui->state.id);
         ui_code_clear(&ui->code);
     }
-    else ui_mods_update(ui, render.proxy);
+    else ui_mods_update(ui);
 
     ui_code_focus(&ui->code);
     ui_show(ui_view_mods);
@@ -173,18 +173,18 @@ static void ui_mods_mode_swap(struct ui_mods *ui)
     }
 }
 
-static void ui_mods_update(void *state, struct proxy *proxy)
+static void ui_mods_update(void *state)
 {
     struct ui_mods *ui = state;
     ui_list_reset(&ui->list);
 
-    const struct mods_list *list = proxy_mods(proxy);
+    const struct mods_list *list = proxy_mods();
     for (size_t i = 0; i < list->len; ++i) {
         const struct mods_item *mod = list->items + i;
         ui_str_set_symbol(ui_list_add(&ui->list, mod->maj), &mod->str);
     }
 
-    const struct mod *mod = proxy_mod(proxy);
+    const struct mod *mod = proxy_mod();
     if (!mod) return;
 
     if (!ui->state.new && mod_major(mod->id) != mod_major(ui->state.id)) {
@@ -225,7 +225,7 @@ static void ui_mods_update(void *state, struct proxy *proxy)
     }
 
     struct symbol name = {0};
-    bool ok = proxy_mod_name(proxy, mod_major(ui->state.id), &name);
+    bool ok = proxy_mod_name(mod_major(ui->state.id), &name);
     assert(ok);
 
     if (!mod_version(ui->state.mod->id)) {
@@ -242,7 +242,7 @@ static void ui_mods_update(void *state, struct proxy *proxy)
 static void ui_mods_import(struct ui_mods *ui)
 {
     struct symbol name = {0};
-    bool ok = proxy_mod_name(render.proxy, mod_major(ui->state.id), &name);
+    bool ok = proxy_mod_name(mod_major(ui->state.id), &name);
     assert(ok);
 
     char path[PATH_MAX] = {0};
@@ -263,7 +263,7 @@ static void ui_mods_import(struct ui_mods *ui)
 static void ui_mods_export(struct ui_mods *ui)
 {
     struct symbol name = {0};
-    bool ok = proxy_mod_name(render.proxy, mod_major(ui->state.id), &name);
+    bool ok = proxy_mod_name(mod_major(ui->state.id), &name);
     assert(ok);
 
     char path[PATH_MAX] = {0};
@@ -306,7 +306,7 @@ static void ui_mods_event_new(struct ui_mods *ui)
         return;
     }
 
-    proxy_mod_register(render.proxy, name);
+    proxy_mod_register(name);
     ui->state.new = true;
 }
 
@@ -344,7 +344,7 @@ static bool ui_mods_event(void *state, SDL_Event *ev)
         char *buffer = calloc(len, sizeof(*buffer));
         text_to_str(&ui->code.text, buffer, len);
 
-        proxy_mod_compile(render.proxy, mod_major(ui->state.id), buffer, len);
+        proxy_mod_compile(mod_major(ui->state.id), buffer, len);
 
         free(buffer);
         return true;
@@ -353,7 +353,7 @@ static bool ui_mods_event(void *state, SDL_Event *ev)
     if ((ret = ui_button_event(&ui->publish, ev))) {
         if (ret != ui_action) return true;
         assert(ui->state.mod->errs_len == 0);
-        proxy_mod_publish(render.proxy, mod_major(ui->state.id));
+        proxy_mod_publish(mod_major(ui->state.id));
         ui->publish.disabled = true;
         return true;
     }
@@ -384,7 +384,7 @@ static bool ui_mods_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->reset, ev))) {
         if (ret != ui_action) return true;
-        proxy_mod_select(render.proxy, ui->state.id);
+        proxy_mod_select(ui->state.id);
         return true;
     }
 

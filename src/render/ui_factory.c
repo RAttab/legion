@@ -13,7 +13,7 @@
 #include "utils/htable.h"
 
 static void ui_factory_free(void *);
-static void ui_factory_update(void *, struct proxy *);
+static void ui_factory_update(void *);
 static bool ui_factory_event(void *, SDL_Event *);
 static void ui_factory_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -175,7 +175,7 @@ static bool ui_factory_make_flow(
     return true;
 }
 
-static void ui_factory_update(void *state, struct proxy *proxy)
+static void ui_factory_update(void *state)
 {
     struct ui_factory *ui = state;
     assert(!coord_is_nil(ui->star));
@@ -185,7 +185,7 @@ static void ui_factory_update(void *state, struct proxy *proxy)
         if (row) row->len = 0;
     }
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     if (!chunk) {
         if (ui->flows) ui->flows->len = 0;
         if (ui->workers.ops) ui->workers.ops->len = 0;
@@ -220,7 +220,7 @@ void ui_factory_show(struct coord star, im_id id)
 
     ui->star = star;
     ui->scale = scale_init();
-    ui_factory_update(ui, render.proxy);
+    ui_factory_update(ui);
 
     ui->pos = (struct flow_pos) {0};
     if (id) { /* TODO: set ui->pos to id's position. */ }

@@ -97,7 +97,7 @@ static void ui_scanner_update(void *_ui, struct chunk *chunk, im_id id)
         ui_set_nil(&ui->result_val);
     }
 
-    struct symbol name = sector_name(scanner->it.coord, proxy_seed(render.proxy));
+    struct symbol name = sector_name(scanner->it.coord, proxy_seed());
     ui_str_set_symbol(ui_set(&ui->sector_val), &name);
 
     ui_str_set_u64(&ui->work_left.str, scanner->work.left);

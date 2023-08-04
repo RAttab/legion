@@ -166,7 +166,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     }
     else {
         struct symbol mod = {0};
-        proxy_mod_name(render.proxy, mod_major(state->mod_id), &mod);
+        proxy_mod_name(mod_major(state->mod_id), &mod);
         ui_str_set_symbol(ui_set(&ui->mod_val), &mod);
 
         ui_str_set_hex(ui_set(&ui->mod_ver_val), mod_version(state->mod_id));

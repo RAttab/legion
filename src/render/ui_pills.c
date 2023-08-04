@@ -10,7 +10,7 @@
 #include "game/pills.h"
 
 static void ui_pills_free(void *);
-static void ui_pills_update(void *, struct proxy *);
+static void ui_pills_update(void *);
 static bool ui_pills_event(void *, SDL_Event *);
 static void ui_pills_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -127,7 +127,7 @@ void ui_pills_show(struct coord star)
     ui->star = star;
     if (coord_is_nil(ui->star)) { ui_hide(ui_view_pills); return; }
 
-    ui_pills_update(ui, render.proxy);
+    ui_pills_update(ui);
     ui_show(ui_view_pills);
 }
 
@@ -160,11 +160,11 @@ static void ui_pills_sort(struct ui_pills *ui)
     }
 }
 
-static void ui_pills_update(void *state, struct proxy *proxy)
+static void ui_pills_update(void *state)
 {
     struct ui_pills *ui = state;
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     if (!chunk) { ui_pills_show(coord_nil()); return; }
 
     struct pills *pills = chunk_pills(chunk);

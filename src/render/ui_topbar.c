@@ -9,7 +9,7 @@
 #include "utils/str.h"
 
 static void ui_topbar_free(void *);
-static void ui_topbar_update(void *, struct proxy *);
+static void ui_topbar_update(void *);
 static bool ui_topbar_event(void *, SDL_Event *);
 static void ui_topbar_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -104,7 +104,7 @@ static void ui_topbar_free(void *state) {
     free(ui);
 }
 
-static void ui_topbar_update(void *state, struct proxy *proxy)
+static void ui_topbar_update(void *state)
 {
     struct ui_topbar *ui = state;
 
@@ -114,7 +114,7 @@ static void ui_topbar_update(void *state, struct proxy *proxy)
     ui->faster.disabled = false;
     ui->fastest.disabled = false;
 
-    switch (proxy_speed(proxy))
+    switch (proxy_speed())
     {
     case speed_pause: { ui->pause.disabled = true; break; }
     case speed_slow: { ui->slow.disabled = true; break; }
@@ -132,49 +132,49 @@ static bool ui_topbar_event(void *state, SDL_Event *ev)
     enum ui_ret ret = ui_nil;
     if ((ret = ui_button_event(&ui->save, ev))) {
         if (ret != ui_action) return true;
-        proxy_save(render.proxy);
+        proxy_save();
         return true;
     }
 
     if ((ret = ui_button_event(&ui->load, ev))) {
         if (ret != ui_action) return true;
-        proxy_load(render.proxy);
+        proxy_load();
         return true;
     }
 
     if ((ret = ui_button_event(&ui->pause, ev))) {
         if (ret != ui_action) return true;
-        proxy_set_speed(render.proxy, speed_pause);
+        proxy_set_speed(speed_pause);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->slow, ev))) {
         if (ret != ui_action) return true;
-        proxy_set_speed(render.proxy, speed_slow);
+        proxy_set_speed(speed_slow);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fast, ev))) {
         if (ret != ui_action) return true;
-        proxy_set_speed(render.proxy, speed_fast);
+        proxy_set_speed(speed_fast);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->faster, ev))) {
         if (ret != ui_action) return true;
-        proxy_set_speed(render.proxy, speed_faster);
+        proxy_set_speed(speed_faster);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->fastest, ev))) {
         if (ret != ui_action) return true;
-        proxy_set_speed(render.proxy, speed_fastest);
+        proxy_set_speed(speed_fastest);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->home, ev))) {
         if (ret != ui_action) return true;
-        ui_map_show(proxy_home(render.proxy));
+        ui_map_show(proxy_home());
         return true;
     }
 
@@ -225,7 +225,7 @@ static void topbar_render_coord(
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
-    it += str_utoa(proxy_time(render.proxy), it, topbar_ticks_len);
+    it += str_utoa(proxy_time(), it, topbar_ticks_len);
     *it = ' '; it++; assert(it < end);
 
     coord_scale scale = 0;

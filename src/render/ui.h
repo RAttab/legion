@@ -62,7 +62,6 @@ const char *ui_view_str(enum ui_view);
 
 
 typedef void (*ui_state_fn) (void *);
-typedef void (*ui_update_fn) (void *, struct proxy *);
 typedef bool (*ui_event_fn) (void *, SDL_Event *);
 typedef void (*ui_render_fn) (void *, struct ui_layout *, SDL_Renderer *);
 
@@ -76,8 +75,7 @@ struct ui_view_state
     struct
     {
         ui_state_fn free, show, hide;
-        ui_update_fn update_state;
-        ui_update_fn update_frame;
+        ui_state_fn update_state, update_frame;
         ui_event_fn event;
         ui_render_fn render;
     } fn;
@@ -89,8 +87,8 @@ void ui_free(void);
 void *ui_state(enum ui_view);
 enum ui_view ui_slot(enum ui_slot);
 
-void ui_update_state(struct proxy *);
-void ui_update_frame(struct proxy *);
+void ui_update_state(void);
+void ui_update_frame(void);
 void ui_event(SDL_Event *);
 void ui_render(SDL_Renderer *);
 

@@ -27,10 +27,9 @@
 
 struct render render = {0};
 
-void render_init(struct proxy *proxy)
+void render_init(void)
 {
     render.init = true;
-    render.proxy = proxy;
 
     sdl_err(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS));
 
@@ -73,14 +72,14 @@ static bool render_step(void)
     // Should not depend on whether proxy has an update or not.
     ui_cursor_update();
 
-    switch (proxy_update(render.proxy))
+    switch (proxy_update())
     {
     case proxy_nil: { break; }
     case proxy_loaded: {
         ui_reset();
         render_push_event(ev_state_load, 0, 0);
     } // fallthrough
-    case proxy_updated: { ui_update_frame(render.proxy); break; }
+    case proxy_updated: { ui_update_frame(); break; }
     default: { assert(false); }
     }
 
@@ -156,7 +155,7 @@ void render_push_event(enum event code, uint64_t d0, uint64_t d1)
 void render_quit(void)
 {
     // Prevents log spam as we're exiting.
-    proxy_set_speed(render.proxy, speed_pause);
+    proxy_set_speed(speed_pause);
 
     sdl_err(SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT }));
 }

@@ -19,15 +19,15 @@ bool local_run(const char *file, world_seed seed)
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
     sim_fork(sim);
 
-    struct proxy *proxy = proxy_new();
-    struct proxy_pipe *proxy_pipe = proxy_pipe_new(proxy, sim_pipe);
+    proxy_init();
+    struct proxy_pipe *proxy_pipe = proxy_pipe_new(sim_pipe);
 
-    render_init(proxy);
+    render_init();
     render_loop();
     render_close();
 
     proxy_pipe_close(proxy_pipe);
-    proxy_free(proxy);
+    proxy_free();
 
     sim_pipe_close(sim_pipe);
     sim_join(sim);

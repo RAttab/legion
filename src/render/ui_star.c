@@ -13,7 +13,7 @@
 #include "utils/vec.h"
 
 static void ui_star_free(void *);
-static void ui_star_update(void *, struct proxy *);
+static void ui_star_update(void *);
 static bool ui_star_event(void *, SDL_Event *);
 static void ui_star_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -323,7 +323,7 @@ void ui_star_show(struct coord star)
     struct coord old = legion_xchg(&ui->id, star);
     if (coord_is_nil(ui->id)) { ui_hide(ui_view_star); return; }
 
-    ui_star_update(ui, render.proxy);
+    ui_star_update(ui);
     ui_show(ui_view_star);
     if (!coord_eq(old, star))
         render_push_event(ev_star_select, coord_to_u64(star), 0);
@@ -353,21 +353,21 @@ static void ui_star_update_list(
     vec16_free(ids);
 }
 
-static void ui_star_update(void *state, struct proxy *proxy)
+static void ui_star_update(void *state)
 {
     struct ui_star *ui = state;
 
     ui_str_set_coord(&ui->coord_val.str, ui->id);
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->id);
+    struct chunk *chunk = proxy_chunk(ui->id);
     if (!chunk) {
-        const struct star *star = proxy_star_at(proxy, ui->id);
+        const struct star *star = proxy_star_at(ui->id);
         assert(star);
         ui->star = *star;
 
         {
-            world_seed seed = proxy_seed(proxy);
-            struct atoms *atoms = proxy_atoms(proxy);
+            world_seed seed = proxy_seed();
+            struct atoms *atoms = proxy_atoms();
 
             struct symbol sym = {0};
             vm_word name = star_name(ui->id, seed, atoms);
@@ -404,7 +404,7 @@ static void ui_star_update(void *state, struct proxy *proxy)
     {
         struct symbol sym = {0};
         vm_word name = chunk_name(chunk);
-        if (atoms_str(proxy_atoms(proxy), name, &sym))
+        if (atoms_str(proxy_atoms(), name, &sym))
             ui_str_set_symbol(&ui->name_val.str, &sym);
         else ui_str_set_hex(&ui->name_val.str, name);
     }
@@ -425,7 +425,7 @@ static void ui_star_update(void *state, struct proxy *proxy)
     }
 
     {
-        const struct tech *tech = proxy_tech(proxy);
+        const struct tech *tech = proxy_tech();
         struct energy energy = *chunk_energy(chunk);
 
         ui_str_set_scaled(&ui->need_val.str, energy.need);

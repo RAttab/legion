@@ -252,7 +252,7 @@ void ui_histo_update_legend(struct ui_histo *histo)
 
     ui_histo_data t = histo->hover.t;
     ui_histo_data scale = histo->hover.row == histo->edge.row ?
-        proxy_time(render.proxy) - t : histo->t.scale;
+        proxy_time() - t : histo->t.scale;
     if (!scale) scale = 1;
 
     ui_str_setf(ui_set(&histo->legend.time_val), "%lu", t);

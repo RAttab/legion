@@ -29,11 +29,6 @@ struct server
     struct save_ring *in, *out;
 };
 
-static struct
-{
-    struct proxy *proxy;
-} client;
-
 
 static void client_free(int poll, struct server *server)
 {
@@ -57,14 +52,14 @@ static void client_free(int poll, struct server *server)
 static struct server *client_connect(
         int poll, const char *node, const char *service)
 {
-    if (!proxy_pipe_ready(client.proxy)) return NULL;
+    if (!proxy_pipe_ready()) return NULL;
 
     int socket = socket_connect(node, service);
     if (socket == -1) return NULL;
 
     struct server *server = calloc(1, sizeof(*server));
     server->socket = socket;
-    server->pipe = proxy_pipe_new(client.proxy, NULL);
+    server->pipe = proxy_pipe_new(NULL);
     server->in = proxy_pipe_in(server->pipe);
     server->out = proxy_pipe_out(server->pipe);
 
@@ -144,12 +139,12 @@ static bool client_events(int poll, struct server *server, int events)
 
 bool client_run(const char *node, const char *service, const char *config)
 {
-    client.proxy = proxy_new();
-    proxy_auth(client.proxy, config);
+    proxy_init();
+    proxy_auth(config);
 
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
-    render_init(client.proxy);
+    render_init();
     render_fork();
 
     int poll = epoll_create1(EPOLL_CLOEXEC);

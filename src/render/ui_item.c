@@ -10,7 +10,7 @@
 #include "items/config.h"
 
 static void ui_item_free(void *);
-static void ui_item_update(void *, struct proxy *);
+static void ui_item_update(void *);
 static bool ui_item_event(void *, SDL_Event *);
 static void ui_item_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -112,7 +112,7 @@ void ui_item_show(im_id id, struct coord star)
 
     if (!id) { ui_hide(ui_view_item); return; }
 
-    ui_item_update(ui, render.proxy);
+    ui_item_update(ui);
     ui_io_show(ui->io, ui->star, ui->id);
 
     ui_star_show(star);
@@ -138,7 +138,7 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
 
     if (!ui_panel_is_visible(ui->panel)) {
         struct symbol io_sym = {0};
-        bool ok = atoms_str(proxy_atoms(render.proxy), io, &io_sym);
+        bool ok = atoms_str(proxy_atoms(), io, &io_sym);
         assert(ok);
 
         render_log(st_error,
@@ -149,11 +149,11 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
 
     if (item != im_id_item(ui->id)) {
         struct symbol io_sym = {0};
-        bool ok = atoms_str(proxy_atoms(render.proxy), io, &io_sym);
+        bool ok = atoms_str(proxy_atoms(), io, &io_sym);
         assert(ok);
 
         struct symbol item_sym = {0};
-        ok = atoms_str(proxy_atoms(render.proxy), item, &item_sym);
+        ok = atoms_str(proxy_atoms(), item, &item_sym);
         assert(ok);
 
         render_log(st_error,
@@ -162,7 +162,7 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
         return false;
     }
 
-    proxy_io(render.proxy, io, ui->id, args, len);
+    proxy_io(io, ui->id, args, len);
     return true;
 }
 
@@ -173,14 +173,14 @@ static void *ui_item_state(struct ui_item *ui, im_id id)
     return state;
 }
 
-static void ui_item_update(void *state, struct proxy *proxy)
+static void ui_item_update(void *state)
 {
     struct ui_item *ui = state;
     if (!ui->id || coord_is_nil(ui->star)) return;
 
     ui_str_set_id(&ui->id_val.str, ui->id);
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     if ((ui->loading = !chunk)) return;
 
     if (!chunk_get(chunk, ui->id)) {

@@ -26,52 +26,52 @@ void check_basics(void)
     struct sim *sim = sim_new(123, "./proxy.save");
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
 
-    struct proxy *proxy = proxy_new();
-    struct proxy_pipe *proxy_pipe = proxy_pipe_new(proxy, sim_pipe);
+    proxy_init();
+    struct proxy_pipe *proxy_pipe = proxy_pipe_new(sim_pipe);
 
     sim_step(sim);
-    assert(proxy_update(proxy));
+    assert(proxy_update());
 
     {
         const char eval[] = "(mod boot)";
-        struct lisp_ret ret = proxy_eval(proxy, eval, sizeof(eval));
+        struct lisp_ret ret = proxy_eval(eval, sizeof(eval));
         assert(ret.ok);
 
-        proxy_io(proxy, io_mod, make_im_id(item_brain, 1), &ret.value, 1);
+        proxy_io(io_mod, make_im_id(item_brain, 1), &ret.value, 1);
     }
 
-    proxy_set_speed(proxy, speed_fast);
+    proxy_set_speed(speed_fast);
 
-    struct coord home = proxy_home(proxy);
+    struct coord home = proxy_home();
     assert(!coord_is_nil(home));
 
     for (size_t i = 0; i < 1000; ++i) {
-        assert(proxy_seed(proxy) == seed);
-        assert(coord_eq(proxy_home(proxy), home));
+        assert(proxy_seed() == seed);
+        assert(coord_eq(proxy_home(), home));
 
-        assert(proxy_tech(proxy));
-        assert(proxy_mods(proxy)->len > 0);
-        assert(proxy_chunks(proxy)->len == 1);
-        assert(proxy_lanes(proxy)->len == 0);
+        assert(proxy_tech());
+        assert(proxy_mods()->len > 0);
+        assert(proxy_chunks()->len == 1);
+        assert(proxy_lanes()->len == 0);
 
         {
-            struct vec64 *atoms = atoms_list(proxy_atoms(proxy));
+            struct vec64 *atoms = atoms_list(proxy_atoms());
             assert(atoms->len > 0);
             free(atoms);
         }
 
         {
-            struct chunk *chunk = proxy_chunk(proxy, home);
+            struct chunk *chunk = proxy_chunk(home);
             assert(chunk);
             assert(coord_eq(chunk_star(chunk)->coord, home));
         }
 
         sim_step(sim);
-        while (!proxy_update(proxy));
+        while (!proxy_update());
     }
 
     proxy_pipe_close(proxy_pipe);
-    proxy_free(proxy);
+    proxy_free();
 
     sim_pipe_close(sim_pipe);
     sim_free(sim);

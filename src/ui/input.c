@@ -110,7 +110,7 @@ bool ui_input_eval(struct ui_input *input, vm_word *ret)
     if (!input->buf.len) return false;
 
     struct lisp_ret eval =
-        proxy_eval(render.proxy, input->buf.c, input->buf.len);
+        proxy_eval(input->buf.c, input->buf.len);
     *ret = eval.value;
 
     if (!eval.ok)

@@ -139,7 +139,7 @@ void ui_str_set_coord_name(struct ui_str *str, struct coord val)
 {
     assert(str->cap);
     if (coord_is_nil(val)) ui_str_setc(str, "nil");
-    else ui_str_set_atom(str, proxy_star_name(render.proxy, val));
+    else ui_str_set_atom(str, proxy_star_name(val));
 }
 
 void ui_str_set_symbol(struct ui_str *str, const struct symbol *val)
@@ -152,7 +152,7 @@ void ui_str_set_symbol(struct ui_str *str, const struct symbol *val)
 void ui_str_set_atom(struct ui_str *str, vm_word word)
 {
     struct symbol sym = {0};
-    if (atoms_str(proxy_atoms(render.proxy), word, &sym))
+    if (atoms_str(proxy_atoms(), word, &sym))
         ui_str_set_symbol(str, &sym);
     else ui_str_set_hex(str, word);
 }

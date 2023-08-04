@@ -26,18 +26,16 @@ struct hset;
 // proxy
 // -----------------------------------------------------------------------------
 
-struct proxy;
+void proxy_init(void);
+void proxy_free(void);
 
-struct proxy *proxy_new(void);
-void proxy_free(struct proxy *);
-
-void proxy_auth(struct proxy *, const char *config);
+void proxy_auth(const char *config);
 
 enum proxy_ret { proxy_nil = 0, proxy_updated, proxy_loaded };
-enum proxy_ret proxy_update(struct proxy *);
+enum proxy_ret proxy_update(void);
 
-struct lisp *proxy_lisp(struct proxy *);
-struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);
+struct lisp *proxy_lisp(void);
+struct lisp_ret proxy_eval(const char *src, size_t len);
 
 
 // -----------------------------------------------------------------------------
@@ -45,8 +43,8 @@ struct lisp_ret proxy_eval(struct proxy *, const char *src, size_t len);
 // -----------------------------------------------------------------------------
 
 struct proxy_pipe;
-struct proxy_pipe *proxy_pipe_new(struct proxy *, struct sim_pipe *);
-bool proxy_pipe_ready(struct proxy *);
+struct proxy_pipe *proxy_pipe_new(struct sim_pipe *);
+bool proxy_pipe_ready(void);
 void proxy_pipe_close(struct proxy_pipe *);
 struct save_ring *proxy_pipe_in(struct proxy_pipe *);
 struct save_ring *proxy_pipe_out(struct proxy_pipe *);
@@ -56,45 +54,45 @@ struct save_ring *proxy_pipe_out(struct proxy_pipe *);
 // state
 // -----------------------------------------------------------------------------
 
-world_seed proxy_seed(struct proxy *);
-world_ts proxy_time(struct proxy *);
-enum speed proxy_speed(struct proxy *);
-struct coord proxy_home(struct proxy *);
+world_seed proxy_seed(void);
+world_ts proxy_time(void);
+enum speed proxy_speed(void);
+struct coord proxy_home(void);
 
-const struct tech *proxy_tech(struct proxy *);
-struct atoms *proxy_atoms(struct proxy *);
-const struct mods_list *proxy_mods(struct proxy *);
-const struct vec64 *proxy_chunks(struct proxy *);
-const struct htable *proxy_lanes(struct proxy *);
-const struct hset *proxy_lanes_for(struct proxy *, struct coord star);
-const struct log *proxy_logs(struct proxy *);
+const struct tech *proxy_tech(void);
+struct atoms *proxy_atoms(void);
+const struct mods_list *proxy_mods(void);
+const struct vec64 *proxy_chunks(void);
+const struct htable *proxy_lanes(void);
+const struct hset *proxy_lanes_for(struct coord star);
+const struct log *proxy_logs(void);
 
 
 // -----------------------------------------------------------------------------
 // cmd
 // -----------------------------------------------------------------------------
 
-void proxy_quit(struct proxy *);
-void proxy_save(struct proxy *);
-void proxy_load(struct proxy *);
-void proxy_set_speed(struct proxy *, enum speed);
-struct chunk *proxy_chunk(struct proxy *, struct coord);
-void proxy_io(struct proxy *, enum io, im_id dst, const vm_word *args, uint8_t len);
+void proxy_quit(void);
+void proxy_save(void);
+void proxy_load(void);
+void proxy_set_speed(enum speed);
+struct chunk *proxy_chunk(struct coord);
+void proxy_io(enum io, im_id dst, const vm_word *args, uint8_t len);
 
 
 // -----------------------------------------------------------------------------
 // mod
 // -----------------------------------------------------------------------------
 
-const struct mod *proxy_mod(struct proxy *);
-void proxy_mod_select(struct proxy *, mod_id);
-void proxy_mod_register(struct proxy *, struct symbol name);
-void proxy_mod_publish(struct proxy *, mod_maj);
-mod_id proxy_mod_latest(struct proxy *, mod_maj);
-bool proxy_mod_name(struct proxy *, mod_maj, struct symbol *dst);
+const struct mod *proxy_mod(void);
+void proxy_mod_select(mod_id);
+void proxy_mod_register(struct symbol name);
+void proxy_mod_publish(mod_maj);
+mod_id proxy_mod_latest(mod_maj);
+bool proxy_mod_name(mod_maj, struct symbol *dst);
 
 // transfer ownership of code to proxy.
-void proxy_mod_compile(struct proxy *, mod_maj, const char *code, size_t len);
+void proxy_mod_compile(mod_maj, const char *code, size_t len);
 
 
 // -----------------------------------------------------------------------------
@@ -108,13 +106,13 @@ struct proxy_render_it
     size_t index;
 };
 
-struct proxy_render_it proxy_render_it(struct proxy *, struct rect viewport);
-const struct star *proxy_render_next(struct proxy *, struct proxy_render_it *);
+struct proxy_render_it proxy_render_it(struct rect viewport);
+const struct star *proxy_render_next(struct proxy_render_it *);
 
-bool proxy_active_star(struct proxy *, struct coord);
-bool proxy_active_sector(struct proxy *, struct coord);
-struct sector *proxy_sector(struct proxy *, struct coord);
+bool proxy_active_star(struct coord);
+bool proxy_active_sector(struct coord);
+struct sector *proxy_sector(struct coord);
 
-vm_word proxy_star_name(struct proxy *, struct coord);
-const struct star *proxy_star_in(struct proxy *, struct rect);
-const struct star *proxy_star_at(struct proxy *, struct coord);
+vm_word proxy_star_name(struct coord);
+const struct star *proxy_star_in(struct rect);
+const struct star *proxy_star_at(struct coord);

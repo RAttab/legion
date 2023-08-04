@@ -121,7 +121,7 @@ enum ui_view ui_slot(enum ui_slot slot)
 }
 
 
-void ui_update_state(struct proxy *proxy)
+void ui_update_state(void)
 {
     // We don't want to run this in tests where we have no ui.
     if (!ui.init) return;
@@ -130,7 +130,7 @@ void ui_update_state(struct proxy *proxy)
     {
         struct ui_view_state *state = ui.views + view;
         if (state->fn.update_state)
-            state->fn.update_state(state->state, proxy);
+            state->fn.update_state(state->state);
     }
 
     update_view(ui_view_topbar);
@@ -139,13 +139,13 @@ void ui_update_state(struct proxy *proxy)
         update_view(ui.slots[i]);
 }
 
-void ui_update_frame(struct proxy *proxy)
+void ui_update_frame(void)
 {
     void update_view(enum ui_view view)
     {
         struct ui_view_state *state = ui.views + view;
         if (state->fn.update_frame)
-            state->fn.update_frame(state->state, proxy);
+            state->fn.update_frame(state->state);
     }
 
     // ui_cursor_update is handled in render.c because it should not depend on
@@ -161,22 +161,21 @@ static bool ui_event_shortcuts(SDL_Event *ev)
 {
     if (ev->type != SDL_KEYDOWN) return false;
     if (!(ev->key.keysym.mod & KMOD_CTRL)) return false;
-    struct proxy *proxy = render.proxy;
 
     switch (ev->key.keysym.sym)
     {
 
-    case SDLK_s: { proxy_save(proxy); return true; }
-    case SDLK_o: { proxy_load(proxy); return true; }
+    case SDLK_s: { proxy_save(); return true; }
+    case SDLK_o: { proxy_load(); return true; }
 
-    case SDLK_1: { proxy_set_speed(proxy, speed_slow); return true; }
-    case SDLK_2: { proxy_set_speed(proxy, speed_fast); return true; }
-    case SDLK_3: { proxy_set_speed(proxy, speed_faster); return true; }
-    case SDLK_4: { proxy_set_speed(proxy, speed_fastest); return true; }
+    case SDLK_1: { proxy_set_speed(speed_slow); return true; }
+    case SDLK_2: { proxy_set_speed(speed_fast); return true; }
+    case SDLK_3: { proxy_set_speed(speed_faster); return true; }
+    case SDLK_4: { proxy_set_speed(speed_fastest); return true; }
     case SDLK_SPACE: {
-        if (proxy_speed(proxy) == speed_pause)
-            proxy_set_speed(proxy, speed_slow);
-        else proxy_set_speed(proxy, speed_pause);
+        if (proxy_speed() == speed_pause)
+            proxy_set_speed(speed_slow);
+        else proxy_set_speed(speed_pause);
         return true;
     }
 

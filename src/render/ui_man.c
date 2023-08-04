@@ -8,7 +8,7 @@
 #include "game/man.h"
 
 static void ui_man_free(void *);
-static void ui_man_update(void *, struct proxy *);
+static void ui_man_update(void *);
 static bool ui_man_event(void *, SDL_Event *);
 static void ui_man_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -36,7 +36,7 @@ static void ui_man_toc(
     for (size_t i = 0; i < toc->len; ++i) {
         const struct toc *child = toc->nodes + i;
 
-        if (child->item && !tech_known(proxy_tech(render.proxy), child->item))
+        if (child->item && !tech_known(proxy_tech(), child->item))
             continue;
 
         uint64_t user = link_to_u64(child->link);
@@ -63,7 +63,7 @@ void ui_man_alloc(struct ui_view_state *state)
     };
 
     ui_man_toc(ui, man_toc(), ui_node_nil);
-    ui_doc_open(&ui->doc, link_home(), proxy_lisp(render.proxy));
+    ui_doc_open(&ui->doc, link_home(), proxy_lisp());
 
     *state = (struct ui_view_state) {
         .state = ui,
@@ -92,18 +92,18 @@ void ui_man_show_slot(struct link link, enum ui_slot slot)
     struct ui_man *ui = ui_state(ui_view_man);
     if (link_is_nil(link)) { ui_hide(ui_view_man); return; }
 
-    ui_man_update(ui, render.proxy);
+    ui_man_update(ui);
     ui_show_slot(ui_view_man, slot);
 
     enum item item = man_item(link.page);
-    if (!item || tech_known(proxy_tech(render.proxy), item))
+    if (!item || tech_known(proxy_tech(), item))
         ui_tree_select(&ui->toc, link_to_u64(link));
     else {
         ui_tree_clear(&ui->toc);
         link = man_sys_locked();
     }
 
-    ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
+    ui_doc_open(&ui->doc, link, proxy_lisp());
 }
 
 void ui_man_show(struct link link)
@@ -111,11 +111,11 @@ void ui_man_show(struct link link)
     ui_man_show_slot(link, ui_slot_nil);
 }
 
-static void ui_man_update(void *state, struct proxy *proxy)
+static void ui_man_update(void *state)
 {
     struct ui_man *ui = state;
 
-    const struct tech *tech = proxy_tech(proxy);
+    const struct tech *tech = proxy_tech();
     if (tape_set_eq(&tech->known, &ui->known)) return;
     ui->known = tech->known;
 
@@ -133,7 +133,7 @@ static bool ui_man_event(void *state, SDL_Event *ev)
     if ((ret = ui_tree_event(&ui->toc, ev))) {
         if (ret != ui_action) return true;
         struct link link = link_from_u64(ui->toc.selected);
-        ui_doc_open(&ui->doc, link, proxy_lisp(render.proxy));
+        ui_doc_open(&ui->doc, link, proxy_lisp());
         return true;
     }
 

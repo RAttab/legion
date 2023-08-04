@@ -61,7 +61,7 @@ static void ui_legion_update(void *_ui, struct chunk *chunk, im_id id)
     if (!state->mod) ui_set_nil(&ui->mod_val);
     else {
         struct symbol mod = {0};
-        proxy_mod_name(render.proxy, mod_major(state->mod), &mod);
+        proxy_mod_name(mod_major(state->mod), &mod);
         ui_str_set_symbol(ui_set(&ui->mod_val), &mod);
     }
 

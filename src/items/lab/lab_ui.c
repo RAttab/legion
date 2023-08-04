@@ -71,7 +71,7 @@ static void ui_lab_update(void *_ui, struct chunk *chunk, im_id id)
     const struct im_lab *state = chunk_get(chunk, id);
     assert(state);
 
-    ui_lab_bits_update(&ui->bits, proxy_tech(render.proxy), state->item);
+    ui_lab_bits_update(&ui->bits, proxy_tech(), state->item);
 
     if (!state->item) ui_set_nil(&ui->item_val);
     else ui_str_set_item(ui_set(&ui->item_val), state->item);

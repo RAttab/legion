@@ -160,7 +160,7 @@ static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
 
 static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 {
-    struct chunk *chunk = proxy_chunk(render.proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     assert(chunk);
 
     vm_word args[ui_io_args_max];
@@ -187,7 +187,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
         it++; len--;
     }
 
-    proxy_io(render.proxy, cmd->io, dst, it, len);
+    proxy_io(cmd->io, dst, it, len);
 }
 
 static void ui_io_toggle(struct ui_io *ui, struct ui_io_cmd *cmd)

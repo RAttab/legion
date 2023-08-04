@@ -9,8 +9,8 @@
 #include "game/chunk.h"
 
 static void ui_workers_free(void *);
-static void ui_workers_update_state(void *, struct proxy *);
-static void ui_workers_update_frame(void *, struct proxy *);
+static void ui_workers_update_state(void *);
+static void ui_workers_update_frame(void *);
 static bool ui_workers_event(void *, SDL_Event *);
 static void ui_workers_render(void *, struct ui_layout *, SDL_Renderer *);
 
@@ -92,18 +92,18 @@ void ui_workers_show(struct coord star)
     ui->star = star;
     if (coord_is_nil(ui->star)) { ui_hide(ui_view_workers); return; }
 
-    ui_workers_update_frame(ui, render.proxy);
+    ui_workers_update_frame(ui);
     ui_show(ui_view_workers);
 }
 
-static void ui_workers_update_state(void *state, struct proxy *proxy)
+static void ui_workers_update_state(void *state)
 {
     struct ui_workers *ui = state;
 
-    struct chunk *chunk = proxy_chunk(proxy, ui->star);
+    struct chunk *chunk = proxy_chunk(ui->star);
     if (!chunk) return;
 
-    world_ts t = proxy_time(proxy);
+    world_ts t = proxy_time();
     if (ui->last_t == t) return;
     ui->last_t = t;
 
@@ -118,7 +118,7 @@ static void ui_workers_update_state(void *state, struct proxy *proxy)
     ui_histo_push(&ui->histo, ui_workers_idle, workers.idle);
 }
 
-static void ui_workers_update_frame(void *state, struct proxy *)
+static void ui_workers_update_frame(void *state)
 {
     struct ui_workers *ui = state;
 

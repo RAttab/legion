@@ -13,10 +13,6 @@
 #include <stdatomic.h>
 
 
-struct proxy;
-struct ui;
-
-
 // -----------------------------------------------------------------------------
 // events
 // -----------------------------------------------------------------------------
@@ -57,14 +53,11 @@ struct render
 
     uint32_t event;
     uint64_t frames;
-
-    struct proxy *proxy;
-    struct proxy_pipe *pipe;
 };
 
 extern struct render render;
 
-void render_init(struct proxy *);
+void render_init(void);
 void render_close(void);
 
 void render_loop(void);
