@@ -83,24 +83,22 @@ struct ui_view_state
     } fn;
 };
 
-struct ui;
+void ui_init(void);
+void ui_free(void);
 
-struct ui *ui_alloc(void);
-void ui_free(struct ui *);
+void *ui_state(enum ui_view);
+enum ui_view ui_slot(enum ui_slot);
 
-void *ui_state(struct ui *, enum ui_view);
-enum ui_view ui_slot(struct ui *, enum ui_slot);
+void ui_update_state(struct proxy *);
+void ui_update_frame(struct proxy *);
+void ui_event(SDL_Event *);
+void ui_render(SDL_Renderer *);
 
-void ui_update_state(struct ui *, struct proxy *);
-void ui_update_frame(struct ui *, struct proxy *);
-void ui_event(struct ui *, SDL_Event *);
-void ui_render(struct ui *, SDL_Renderer *);
-
-void ui_reset(struct ui *);
-void ui_show(struct ui *, enum ui_view);
-void ui_show_slot(struct ui *, enum ui_view, enum ui_slot);
-void ui_hide(struct ui *, enum ui_view);
-void ui_toggle(struct ui *, enum ui_view);
+void ui_reset(void);
+void ui_show(enum ui_view);
+void ui_show_slot(enum ui_view, enum ui_slot);
+void ui_hide(enum ui_view);
+void ui_toggle(enum ui_view);
 
 
 // -----------------------------------------------------------------------------

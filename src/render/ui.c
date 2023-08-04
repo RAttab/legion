@@ -57,71 +57,78 @@ const char *ui_view_str(enum ui_view view)
 // ui
 // -----------------------------------------------------------------------------
 
-struct ui
+struct
 {
+    bool init;
     enum ui_view slots[ui_slot_len];
     struct ui_view_state views[ui_view_len];
-};
+} ui = { .init = false };
 
-struct ui *ui_alloc(void)
+
+void ui_init(void)
 {
-    struct ui *ui = calloc(1, sizeof(*ui));
+    ui.init = true;
+
+    ui_style_default();
 
     ui_cursor_init();
+    ui_clipboard_init();
 
-    ui_topbar_alloc(ui->views + ui_view_topbar);
-    ui_status_alloc(ui->views + ui_view_status);
+    ui_topbar_alloc(ui.views + ui_view_topbar);
+    ui_status_alloc(ui.views + ui_view_status);
 
-    ui_map_alloc(ui->views + ui_view_map);
-    ui_factory_alloc(ui->views + ui_view_factory);
+    ui_map_alloc(ui.views + ui_view_map);
+    ui_factory_alloc(ui.views + ui_view_factory);
 
-    ui_tapes_alloc(ui->views + ui_view_tapes);
-    ui_stars_alloc(ui->views + ui_view_stars);
-    ui_mods_alloc(ui->views + ui_view_mods);
-    ui_log_alloc(ui->views + ui_view_log);
+    ui_tapes_alloc(ui.views + ui_view_tapes);
+    ui_stars_alloc(ui.views + ui_view_stars);
+    ui_mods_alloc(ui.views + ui_view_mods);
+    ui_log_alloc(ui.views + ui_view_log);
 
-    ui_star_alloc(ui->views + ui_view_star);
-    ui_item_alloc(ui->views + ui_view_item);
-    ui_pills_alloc(ui->views + ui_view_pills);
-    ui_energy_alloc(ui->views + ui_view_energy);
-    ui_workers_alloc(ui->views + ui_view_workers);
+    ui_star_alloc(ui.views + ui_view_star);
+    ui_item_alloc(ui.views + ui_view_item);
+    ui_pills_alloc(ui.views + ui_view_pills);
+    ui_energy_alloc(ui.views + ui_view_energy);
+    ui_workers_alloc(ui.views + ui_view_workers);
 
-    ui_man_alloc(ui->views + ui_view_man);
+    ui_man_alloc(ui.views + ui_view_man);
 
-    ui_reset(ui);
-    return ui;
+    ui_reset();
 }
 
-void ui_free(struct ui *ui)
+void ui_free()
 {
     for (enum ui_view view = 0; view < ui_view_len; ++view) {
-        struct ui_view_state *state = ui->views + view;
+        struct ui_view_state *state = ui.views + view;
         if (state->fn.free) state->fn.free(state->state);
     }
 
     ui_cursor_free();
-    free(ui);
+    ui_clipboard_free();
 }
 
-void *ui_state(struct ui *ui, enum ui_view view)
+void *ui_state(enum ui_view view)
 {
     assert(view > 0 && view < ui_view_len);
-    return ui->views[view].state;
+    return ui.views[view].state;
 }
 
-enum ui_view ui_slot(struct ui *ui, enum ui_slot slot)
+enum ui_view ui_slot(enum ui_slot slot)
 {
     size_t ix = u64_ctz(slot);
     assert(u64_pop(slot) == 1 && ix < ui_slot_len);
-    return ui->slots[ix];
+    return ui.slots[ix];
 }
 
 
-void ui_update_state(struct ui *ui, struct proxy *proxy)
+void ui_update_state(struct proxy *proxy)
 {
+    // We don't want to run this in tests where we have no ui.
+    if (!ui.init) return;
+
     void update_view(enum ui_view view)
     {
-        struct ui_view_state *state = ui->views + view;
+        struct ui_view_state *state = ui.views + view;
         if (state->fn.update_state)
             state->fn.update_state(state->state, proxy);
     }
@@ -129,14 +136,14 @@ void ui_update_state(struct ui *ui, struct proxy *proxy)
     update_view(ui_view_topbar);
     update_view(ui_view_status);
     for (size_t i = 0; i < ui_slot_len; ++i)
-        update_view(ui->slots[i]);
+        update_view(ui.slots[i]);
 }
 
-void ui_update_frame(struct ui *ui, struct proxy *proxy)
+void ui_update_frame(struct proxy *proxy)
 {
     void update_view(enum ui_view view)
     {
-        struct ui_view_state *state = ui->views + view;
+        struct ui_view_state *state = ui.views + view;
         if (state->fn.update_frame)
             state->fn.update_frame(state->state, proxy);
     }
@@ -147,10 +154,10 @@ void ui_update_frame(struct ui *ui, struct proxy *proxy)
     update_view(ui_view_topbar);
     update_view(ui_view_status);
     for (size_t i = 0; i < ui_slot_len; ++i)
-        update_view(ui->slots[i]);
+        update_view(ui.slots[i]);
 }
 
-static bool ui_event_shortcuts(struct ui *ui, SDL_Event *ev)
+static bool ui_event_shortcuts(SDL_Event *ev)
 {
     if (ev->type != SDL_KEYDOWN) return false;
     if (!(ev->key.keysym.mod & KMOD_CTRL)) return false;
@@ -173,27 +180,27 @@ static bool ui_event_shortcuts(struct ui *ui, SDL_Event *ev)
         return true;
     }
 
-    case SDLK_t: { ui_toggle(ui, ui_view_tapes); return true; }
-    case SDLK_a: { ui_toggle(ui, ui_view_stars); return true; }
-    case SDLK_m: { ui_toggle(ui, ui_view_mods); return true; }
-    case SDLK_l: { ui_toggle(ui, ui_view_log); return true; }
-    case SDLK_h: { ui_toggle(ui, ui_view_man); return true; }
+    case SDLK_t: { ui_toggle(ui_view_tapes); return true; }
+    case SDLK_a: { ui_toggle(ui_view_stars); return true; }
+    case SDLK_m: { ui_toggle(ui_view_mods); return true; }
+    case SDLK_l: { ui_toggle(ui_view_log); return true; }
+    case SDLK_h: { ui_toggle(ui_view_man); return true; }
     case SDLK_q: { render_quit(); return true; }
 
     default: { return false; }
     }
 }
 
-void ui_event(struct ui *ui, SDL_Event *ev)
+void ui_event(SDL_Event *ev)
 {
     bool event_view(enum ui_view view)
     {
-        struct ui_view_state *state = ui->views + view;
+        struct ui_view_state *state = ui.views + view;
 
         if (state->panel) {
             enum ui_ret ret = ui_panel_event(state->panel, ev);
             if (ret == ui_action && !ui_panel_is_visible(state->panel))
-                ui_hide(ui, view);
+                ui_hide(view);
             if (ret) return ret != ui_skip;
         }
 
@@ -208,11 +215,11 @@ void ui_event(struct ui *ui, SDL_Event *ev)
 
     bool event_slot(enum ui_slot slot)
     {
-        return event_view(ui->slots[u64_ctz(slot)]);
+        return event_view(ui.slots[u64_ctz(slot)]);
     }
 
     ui_cursor_event(ev);
-    if (ui_event_shortcuts(ui, ev)) return;
+    if (ui_event_shortcuts(ev)) return;
     if (event_view(ui_view_topbar)) return;
     if (event_view(ui_view_status)) return;
     if (event_slot(ui_slot_left)) return;
@@ -221,7 +228,7 @@ void ui_event(struct ui *ui, SDL_Event *ev)
     if (event_slot(ui_slot_back)) return;
 }
 
-void ui_render(struct ui *ui, SDL_Renderer *renderer)
+void ui_render(SDL_Renderer *renderer)
 {
     struct ui_layout layout = ui_layout_new(
             make_pos(0, 0),
@@ -230,14 +237,14 @@ void ui_render(struct ui *ui, SDL_Renderer *renderer)
     void render_view(enum ui_view view)
     {
         struct ui_layout inner = layout;
-        struct ui_view_state *state = ui->views + view;
+        struct ui_view_state *state = ui.views + view;
         if (state->panel) inner = ui_panel_render(state->panel, &layout, renderer);
         if (state->fn.render) state->fn.render(state->state, &inner, renderer);
     }
 
     void render_slot(enum ui_slot slot)
     {
-        render_view(ui->slots[u64_ctz(slot)]);
+        render_view(ui.slots[u64_ctz(slot)]);
     }
 
     render_slot(ui_slot_back);
@@ -260,24 +267,24 @@ void ui_render(struct ui *ui, SDL_Renderer *renderer)
     ui_cursor_render(renderer);
 }
 
-void ui_reset(struct ui *ui)
+void ui_reset(void)
 {
     for (size_t i = 0; i < ui_slot_len; ++i) {
-        enum ui_view *slot = ui->slots + i;
-        if (*slot) ui_hide(ui, *slot);
+        enum ui_view *slot = ui.slots + i;
+        if (*slot) ui_hide(*slot);
     }
 
-    ui_show(ui, ui_view_map);
-    ui_show(ui, ui_view_man);
+    ui_show(ui_view_map);
+    ui_show(ui_view_man);
 }
 
-static void ui_update_sub(struct ui *ui)
+static void ui_update_sub(void)
 {
-    enum ui_view *sub = ui->slots + u64_ctz(ui_slot_right_sub);
-    struct ui_view_state *state = ui->views + *sub;
+    enum ui_view *sub = ui.slots + u64_ctz(ui_slot_right_sub);
+    struct ui_view_state *state = ui.views + *sub;
     if (!state->parent) return;
 
-    enum ui_view *right = ui->slots + u64_ctz(ui_slot_right);
+    enum ui_view *right = ui.slots + u64_ctz(ui_slot_right);
     if (*right == state->parent) return;
 
     if (state->fn.hide) state->fn.hide(state->state);
@@ -285,97 +292,97 @@ static void ui_update_sub(struct ui *ui)
     *sub = ui_view_nil;
 }
 
-void ui_show(struct ui *ui, enum ui_view view)
+void ui_show(enum ui_view view)
 {
     assert(view > 0 && view < ui_view_len);
 
-    struct ui_view_state *state = ui->views + view;
+    struct ui_view_state *state = ui.views + view;
     assert(state->view == view);
 
     for (enum ui_slot slots = state->slots; slots; slots &= slots - 1)
-        if (ui->slots[u64_ctz(slots)] == view)
+        if (ui.slots[u64_ctz(slots)] == view)
             return;
 
     if (state->panel) ui_panel_show(state->panel);
     if (state->fn.show) state->fn.show(state->state);
 
     for (enum ui_slot slots = state->slots; slots; slots &= slots - 1) {
-        enum ui_view *slot = ui->slots + u64_ctz(slots);
+        enum ui_view *slot = ui.slots + u64_ctz(slots);
         if (!*slot) { *slot = view; return; }
     }
 
-    enum ui_view *slot = ui->slots + u64_ctz(state->slots);
-    struct ui_view_state *old = ui->views + *slot;
+    enum ui_view *slot = ui.slots + u64_ctz(state->slots);
+    struct ui_view_state *old = ui.views + *slot;
 
     if (old->panel) ui_panel_hide(old->panel);
     *slot = view;
-    ui_update_sub(ui);
+    ui_update_sub();
 }
 
-void ui_show_slot(struct ui *ui, enum ui_view view, enum ui_slot slot)
+void ui_show_slot(enum ui_view view, enum ui_slot slot)
 {
     assert(view > 0 && view < ui_view_len);
 
-    if (!slot) ui_show(ui, view);
+    if (!slot) ui_show(view);
     assert(u64_pop(slot) == 1);
 
-    struct ui_view_state *state = ui->views + view;
+    struct ui_view_state *state = ui.views + view;
     assert(state->view == view);
     assert((state->slots & slot) == slot);
 
     for (enum ui_slot slots = state->slots; slots; slots &= slots - 1) {
-        enum ui_view *entry = ui->slots + u64_ctz(slots);
+        enum ui_view *entry = ui.slots + u64_ctz(slots);
         if (*entry != view) continue;
         if (u64_ctz(slots) == u64_ctz(slot)) return;
         *entry = ui_view_nil;
     }
 
-    enum ui_view *entry = ui->slots  + u64_ctz(slot);
-    if (*entry) ui_hide(ui, *entry);
+    enum ui_view *entry = ui.slots  + u64_ctz(slot);
+    if (*entry) ui_hide(*entry);
 
     if (state->panel) ui_panel_show(state->panel);
     if (state->fn.show) state->fn.show(state->state);
     *entry = view;
 }
 
-void ui_hide(struct ui *ui, enum ui_view view)
+void ui_hide(enum ui_view view)
 {
     assert(view > 0 && view < ui_view_len);
 
-    struct ui_view_state *state = ui->views + view;
+    struct ui_view_state *state = ui.views + view;
     assert(state->view == view);
 
     for (enum ui_slot slots = state->slots; slots; slots &= slots - 1) {
-        enum ui_view *slot = ui->slots + u64_ctz(slots);
+        enum ui_view *slot = ui.slots + u64_ctz(slots);
         if (*slot != view) continue;
 
         if (state->fn.hide) state->fn.hide(state->state);
         if (state->panel) ui_panel_hide(state->panel);
         *slot = ui_view_nil;
-        ui_update_sub(ui);
+        ui_update_sub();
         return;
     }
 
     assert(false);
 }
 
-void ui_toggle(struct ui *ui, enum ui_view view)
+void ui_toggle(enum ui_view view)
 {
     assert(view > 0 && view < ui_view_len);
 
-    struct ui_view_state *state = ui->views + view;
+    struct ui_view_state *state = ui.views + view;
     assert(state->view == view);
 
     for (enum ui_slot slots = state->slots; slots; slots &= slots - 1) {
-        enum ui_view *slot = ui->slots + u64_ctz(slots);
+        enum ui_view *slot = ui.slots + u64_ctz(slots);
         if (*slot != view) continue;
 
         if (state->fn.hide) state->fn.hide(state->state);
         if (state->panel) ui_panel_hide(state->panel);
         *slot = ui_view_nil;
-        ui_update_sub(ui);
+        ui_update_sub();
         return;
     }
 
-    ui_show(ui, view);
+    ui_show(view);
 }

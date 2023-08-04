@@ -122,13 +122,13 @@ static void ui_pills_free(void *state)
 
 void ui_pills_show(struct coord star)
 {
-    struct ui_pills *ui = ui_state(render.ui, ui_view_pills);
+    struct ui_pills *ui = ui_state(ui_view_pills);
 
     ui->star = star;
-    if (coord_is_nil(ui->star)) { ui_hide(render.ui, ui_view_pills); return; }
+    if (coord_is_nil(ui->star)) { ui_hide(ui_view_pills); return; }
 
     ui_pills_update(ui, render.proxy);
-    ui_show(render.ui, ui_view_pills);
+    ui_show(ui_view_pills);
 }
 
 static void ui_pills_sort(struct ui_pills *ui)

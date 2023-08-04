@@ -215,7 +215,7 @@ static void ui_factory_update(void *state, struct proxy *proxy)
 
 void ui_factory_show(struct coord star, im_id id)
 {
-    struct ui_factory *ui = ui_state(render.ui, ui_view_factory);
+    struct ui_factory *ui = ui_state(ui_view_factory);
     assert(!coord_is_nil(star));
 
     ui->star = star;
@@ -225,18 +225,18 @@ void ui_factory_show(struct coord star, im_id id)
     ui->pos = (struct flow_pos) {0};
     if (id) { /* TODO: set ui->pos to id's position. */ }
 
-    ui_show(render.ui, ui_view_factory);
+    ui_show(ui_view_factory);
 }
 
 coord_scale ui_factory_scale(void)
 {
-    struct ui_factory *ui = ui_state(render.ui, ui_view_factory);
+    struct ui_factory *ui = ui_state(ui_view_factory);
     return ui->scale;
 }
 
 struct coord ui_factory_coord(void)
 {
-    struct ui_factory *ui = ui_state(render.ui, ui_view_factory);
+    struct ui_factory *ui = ui_state(ui_view_factory);
     return ui->star;
 }
 

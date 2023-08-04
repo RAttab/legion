@@ -27,38 +27,6 @@
 
 struct render render = {0};
 
-
-// -----------------------------------------------------------------------------
-// ui
-// -----------------------------------------------------------------------------
-
-static void ui_init(void)
-{
-    ui_style_default();
-    ui_clipboard_init();
-    render.ui = ui_alloc();
-}
-
-static void ui_close(void)
-{
-    ui_free(render.ui);
-    ui_clipboard_free();
-}
-
-void render_update_state(void)
-{
-    // We don't want to execute this when running in tests.
-    if (!render.init) return;
-
-    // worker & energy
-    ui_update_state(render.ui, render.proxy);
-}
-
-
-// -----------------------------------------------------------------------------
-// render
-// -----------------------------------------------------------------------------
-
 void render_init(struct proxy *proxy)
 {
     render.init = true;
@@ -85,7 +53,7 @@ void render_init(struct proxy *proxy)
 void render_close(void)
 {
     fonts_close();
-    ui_close();
+    ui_free();
 
     SDL_DestroyRenderer(render.renderer);
     SDL_DestroyWindow(render.window);
@@ -109,21 +77,21 @@ static bool render_step(void)
     {
     case proxy_nil: { break; }
     case proxy_loaded: {
-        ui_reset(render.ui);
+        ui_reset();
         render_push_event(ev_state_load, 0, 0);
     } // fallthrough
-    case proxy_updated: { ui_update_frame(render.ui, render.proxy); break; }
+    case proxy_updated: { ui_update_frame(render.proxy); break; }
     default: { assert(false); }
     }
 
     SDL_Event event = {0};
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) return false;
-        ui_event(render.ui, &event);
+        ui_event(&event);
     }
 
     sdl_err(SDL_RenderClear(render.renderer));
-    ui_render(render.ui, render.renderer);
+    ui_render(render.renderer);
     SDL_RenderPresent(render.renderer);
 
     return true;

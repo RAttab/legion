@@ -95,13 +95,13 @@ static void ui_energy_free(void *state)
 
 void ui_energy_show(struct coord star)
 {
-    struct ui_energy *ui = ui_state(render.ui, ui_view_energy);
+    struct ui_energy *ui = ui_state(ui_view_energy);
 
     ui->star = star;
-    if (coord_is_nil(ui->star)) { ui_hide(render.ui, ui_view_energy); return; }
+    if (coord_is_nil(ui->star)) { ui_hide(ui_view_energy); return; }
 
     ui_energy_update_frame(ui, render.proxy);
-    ui_show(render.ui, ui_view_energy);
+    ui_show(ui_view_energy);
 }
 
 static void ui_energy_update_state(void *state, struct proxy *proxy)

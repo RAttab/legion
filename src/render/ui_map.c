@@ -95,18 +95,18 @@ static void ui_map_free(void *state)
 
 void ui_map_show(struct coord coord)
 {
-    struct ui_map *ui = ui_state(render.ui, ui_view_map);
+    struct ui_map *ui = ui_state(ui_view_map);
 
     if (!coord_is_nil(coord)) ui->pos = coord;
     if (coord_is_nil(ui->pos)) ui->pos = proxy_home(render.proxy);
     ui->scale = ui_map_scale_default;
 
-    ui_show(render.ui, ui_view_map);
+    ui_show(ui_view_map);
 }
 
 void ui_map_goto(struct coord coord)
 {
-    if (ui_slot(render.ui, ui_slot_back) == ui_view_map)
+    if (ui_slot(ui_slot_back) == ui_view_map)
         ui_map_show(coord);
 }
 
@@ -118,7 +118,7 @@ static void ui_map_update(void *state, struct proxy *proxy)
 
 coord_scale ui_map_scale(void)
 {
-    struct ui_map *ui = ui_state(render.ui, ui_view_map);
+    struct ui_map *ui = ui_state(ui_view_map);
     return ui->scale;
 }
 
@@ -173,7 +173,7 @@ static SDL_Point ui_map_project_sdl(struct ui_map *ui, struct coord coord)
 
 struct coord ui_map_coord(void)
 {
-    struct ui_map *ui = ui_state(render.ui, ui_view_map);
+    struct ui_map *ui = ui_state(ui_view_map);
     return ui_map_project_coord(ui, ui_cursor_point());
 }
 

@@ -87,13 +87,13 @@ static void ui_workers_free(void *state)
 
 void ui_workers_show(struct coord star)
 {
-    struct ui_workers *ui = ui_state(render.ui, ui_view_workers);
+    struct ui_workers *ui = ui_state(ui_view_workers);
 
     ui->star = star;
-    if (coord_is_nil(ui->star)) { ui_hide(render.ui, ui_view_workers); return; }
+    if (coord_is_nil(ui->star)) { ui_hide(ui_view_workers); return; }
 
     ui_workers_update_frame(ui, render.proxy);
-    ui_show(render.ui, ui_view_workers);
+    ui_show(ui_view_workers);
 }
 
 static void ui_workers_update_state(void *state, struct proxy *proxy)

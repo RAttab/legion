@@ -89,11 +89,11 @@ static void ui_man_free(void *state)
 
 void ui_man_show_slot(struct link link, enum ui_slot slot)
 {
-    struct ui_man *ui = ui_state(render.ui, ui_view_man);
-    if (link_is_nil(link)) { ui_hide(render.ui, ui_view_man); return; }
+    struct ui_man *ui = ui_state(ui_view_man);
+    if (link_is_nil(link)) { ui_hide(ui_view_man); return; }
 
     ui_man_update(ui, render.proxy);
-    ui_show_slot(render.ui, ui_view_man, slot);
+    ui_show_slot(ui_view_man, slot);
 
     enum item item = man_item(link.page);
     if (!item || tech_known(proxy_tech(render.proxy), item))

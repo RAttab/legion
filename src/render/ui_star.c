@@ -318,13 +318,13 @@ static void ui_star_free(void *state)
 
 void ui_star_show(struct coord star)
 {
-    struct ui_star *ui = ui_state(render.ui, ui_view_star);
+    struct ui_star *ui = ui_state(ui_view_star);
 
     struct coord old = legion_xchg(&ui->id, star);
-    if (coord_is_nil(ui->id)) { ui_hide(render.ui, ui_view_star); return; }
+    if (coord_is_nil(ui->id)) { ui_hide(ui_view_star); return; }
 
     ui_star_update(ui, render.proxy);
-    ui_show(render.ui, ui_view_star);
+    ui_show(ui_view_star);
     if (!coord_eq(old, star))
         render_push_event(ev_star_select, coord_to_u64(star), 0);
 }

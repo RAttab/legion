@@ -105,24 +105,24 @@ void ui_item_free(void *state)
 
 void ui_item_show(im_id id, struct coord star)
 {
-    struct ui_item *ui = ui_state(render.ui, ui_view_item);
+    struct ui_item *ui = ui_state(ui_view_item);
 
     ui->id = id;
     ui->star = star;
 
-    if (!id) { ui_hide(render.ui, ui_view_item); return; }
+    if (!id) { ui_hide(ui_view_item); return; }
 
     ui_item_update(ui, render.proxy);
     ui_io_show(ui->io, ui->star, ui->id);
 
     ui_star_show(star);
-    ui_show(render.ui, ui_view_item);
+    ui_show(ui_view_item);
     render_push_event(ev_item_select, id, coord_to_u64(star));
 }
 
 bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
 {
-    struct ui_item *ui = ui_state(render.ui, ui_view_item);
+    struct ui_item *ui = ui_state(ui_view_item);
 
     if (io <= io_min || io >= io_max) {
         render_log(st_error,
@@ -184,7 +184,7 @@ static void ui_item_update(void *state, struct proxy *proxy)
     if ((ui->loading = !chunk)) return;
 
     if (!chunk_get(chunk, ui->id)) {
-        ui_hide(render.ui, ui_view_item);
+        ui_hide(ui_view_item);
         return;
     }
 
@@ -214,7 +214,7 @@ static bool ui_item_event(void *state, SDL_Event *ev)
     if (ev->type == render.event && ev->user.code == ev_star_select) {
         struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
         if (!coord_eq(ui->star, new))
-            ui_hide(render.ui, ui_view_item);
+            ui_hide(ui_view_item);
         return false;
     }
 

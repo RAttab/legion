@@ -117,12 +117,12 @@ static void ui_log_free(void *state)
 
 void ui_log_show(struct coord star)
 {
-    struct ui_log *ui = ui_state(render.ui, ui_view_log);
+    struct ui_log *ui = ui_state(ui_view_log);
 
     ui->coord = star;
 
     ui_log_update(ui, render.proxy);
-    ui_show(render.ui, ui_view_log);
+    ui_show(ui_view_log);
 }
 
 static void ui_log_hide(void *state)

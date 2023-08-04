@@ -59,7 +59,7 @@ static void ui_status_free(void *state) {
 
 void ui_status_set(enum status_type type, const char *msg, size_t len)
 {
-    struct ui_status *ui = ui_state(render.ui, ui_view_status);
+    struct ui_status *ui = ui_state(ui_view_status);
 
     ui->ts = ts_now();
 

@@ -128,15 +128,15 @@ static void ui_tapes_free(void *state)
 
 void ui_tapes_show(enum item tape)
 {
-    struct ui_tapes *ui = ui_state(render.ui, ui_view_tapes);
+    struct ui_tapes *ui = ui_state(ui_view_tapes);
 
     if (tape) ui_tree_select(&ui->tree, tape);
     else ui_tree_clear(&ui->tree);
 
-    if (!tape) { ui_hide(render.ui, ui_view_tapes); return; }
+    if (!tape) { ui_hide(ui_view_tapes); return; }
 
     ui_tapes_update(ui, render.proxy);
-    ui_show(render.ui, ui_view_tapes);
+    ui_show(ui_view_tapes);
     render_push_event(ev_tape_select, tape, 0);
 }
 

@@ -180,31 +180,31 @@ static bool ui_topbar_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_button_event(&ui->stars, ev))) {
         if (ret != ui_action) return true;
-        ui_toggle(render.ui, ui_view_stars);
+        ui_toggle(ui_view_stars);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->tapes, ev))) {
         if (ret != ui_action) return true;
-        ui_toggle(render.ui, ui_view_tapes);
+        ui_toggle(ui_view_tapes);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->mods, ev))) {
         if (ret != ui_action) return true;
-        ui_toggle(render.ui, ui_view_mods);
+        ui_toggle(ui_view_mods);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->log, ev))) {
         if (ret != ui_action) return true;
-        ui_toggle(render.ui, ui_view_log);
+        ui_toggle(ui_view_log);
         return true;
     }
 
     if ((ret = ui_button_event(&ui->man, ev))) {
         if (ret != ui_action) return true;
-        ui_toggle(render.ui, ui_view_man);
+        ui_toggle(ui_view_man);
         return true;
     }
 
@@ -230,7 +230,7 @@ static void topbar_render_coord(
 
     coord_scale scale = 0;
     struct coord coord = {0};
-    switch (ui_slot(render.ui, ui_slot_back)) {
+    switch (ui_slot(ui_slot_back)) {
     case ui_view_map: {
         scale = ui_map_scale();
         coord = ui_map_coord();

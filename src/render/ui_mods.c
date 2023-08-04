@@ -122,7 +122,7 @@ static void ui_mods_free(void *state)
 
 void ui_mods_show(mod_id id, vm_ip ip)
 {
-    struct ui_mods *ui = ui_state(render.ui, ui_view_mods);
+    struct ui_mods *ui = ui_state(ui_view_mods);
 
     mod_id old = ui->state.id;
     ui->state.id = mod_version(id) ?
@@ -136,13 +136,13 @@ void ui_mods_show(mod_id id, vm_ip ip)
     else ui_mods_update(ui, render.proxy);
 
     ui_code_focus(&ui->code);
-    ui_show(render.ui, ui_view_mods);
+    ui_show(ui_view_mods);
     render_push_event(ev_mod_select, id, ip);
 }
 
 void ui_mods_breakpoint(mod_id id, vm_ip ip)
 {
-    struct ui_mods *ui = ui_state(render.ui, ui_view_mods);
+    struct ui_mods *ui = ui_state(ui_view_mods);
     if (!ui_panel_is_visible(ui->panel)) return;
     if (id != ui->state.id) return;
 

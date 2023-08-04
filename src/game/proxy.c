@@ -361,7 +361,7 @@ enum proxy_ret proxy_update(struct proxy *proxy)
         if (result != proxy_loaded && ret != proxy_nil) result = ret;
         save_ring_commit(pipe->in, save);
 
-        if (result != proxy_loaded) render_update_state();
+        if (result != proxy_loaded) ui_update_state();
     }
 
     // if the pipe was reset make sure to restore our subscriptions

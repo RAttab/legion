@@ -60,8 +60,6 @@ struct render
 
     struct proxy *proxy;
     struct proxy_pipe *pipe;
-
-    struct ui *ui;
 };
 
 extern struct render render;
@@ -73,13 +71,6 @@ void render_loop(void);
 bool render_done(void);
 void render_fork(void);
 void render_join(void);
-
-// Unlike EV_UPDATE_STATE which is called once per frame, this will be called
-// for every single state update received by the proxy which can be anywhere
-// from 1 to 100+ times per frame. As such, it should be limited to things that
-// need to see all the intermediary steps and can't just live with whatever is
-// current state.
-void render_update_state(void);
 
 void render_push_event(enum event, uint64_t d0, uint64_t d1);
 void render_quit(void);
