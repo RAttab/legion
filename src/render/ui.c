@@ -229,9 +229,7 @@ void ui_event(SDL_Event *ev)
 
 void ui_render(SDL_Renderer *renderer)
 {
-    struct ui_layout layout = ui_layout_new(
-            make_pos(0, 0),
-            make_dim(render.rect.w, render.rect.h));
+    struct ui_layout layout = ui_layout_new(make_pos(0, 0), render_dim());
 
     void render_view(enum ui_view view)
     {

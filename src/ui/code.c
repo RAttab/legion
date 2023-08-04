@@ -773,7 +773,7 @@ static enum ui_ret ui_code_event_motion(struct ui_code *code)
 
 enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
 {
-    if (ev->type == render.event) return ui_code_event_user(code, ev);
+    if (render_user_event(ev)) return ui_code_event_user(code, ev);
 
     enum ui_ret ret = ui_nil;
 

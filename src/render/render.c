@@ -25,7 +25,21 @@
 // render
 // -----------------------------------------------------------------------------
 
-struct render render = {0};
+struct
+{
+    bool init;
+
+    SDL_Rect rect;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+
+    pthread_t thread;
+    atomic_bool join;
+
+    uint32_t event;
+    uint64_t frames;
+} render;
+
 
 void render_init(void)
 {
@@ -57,6 +71,31 @@ void render_close(void)
     SDL_DestroyRenderer(render.renderer);
     SDL_DestroyWindow(render.window);
     SDL_Quit();
+}
+
+bool render_initialized(void)
+{
+    return render.init;
+}
+
+SDL_Rect render_rect(void)
+{
+    return render.rect;
+}
+
+struct dim render_dim(void)
+{
+    return make_dim(render.rect.w, render.rect.h);
+}
+
+bool render_user_event(const SDL_Event *ev)
+{
+    return ev->type == render.event;
+}
+
+SDL_Renderer *render_renderer(void)
+{
+    return render.renderer;
 }
 
 

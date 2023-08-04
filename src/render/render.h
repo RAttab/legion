@@ -40,25 +40,14 @@ enum event
 // render
 // -----------------------------------------------------------------------------
 
-struct render
-{
-    bool init;
-
-    SDL_Rect rect;
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-
-    pthread_t thread;
-    atomic_bool join;
-
-    uint32_t event;
-    uint64_t frames;
-};
-
-extern struct render render;
-
 void render_init(void);
 void render_close(void);
+
+bool render_initialized(void);
+SDL_Rect render_rect(void);
+struct dim render_dim(void);
+bool render_user_event(const SDL_Event *);
+SDL_Renderer *render_renderer(void);
 
 void render_loop(void);
 bool render_done(void);

@@ -213,7 +213,7 @@ static bool ui_log_event(void *state, SDL_Event *ev)
 {
     struct ui_log *ui = state;
 
-    if (ev->type == render.event)
+    if (render_user_event(ev))
         ui_log_event_user(ui, ev);
 
     if (ui_scroll_event(&ui->scroll, ev)) return true;

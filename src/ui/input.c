@@ -271,7 +271,7 @@ static enum ui_ret ui_input_event_user(struct ui_input *input, const SDL_Event *
 
 enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
 {
-    if (ev->type == render.event) return ui_input_event_user(input, ev);
+    if (render_user_event(ev)) return ui_input_event_user(input, ev);
 
     switch (ev->type) {
 

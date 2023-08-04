@@ -290,7 +290,7 @@ static ssize_t ui_factory_col(struct ui_factory *ui, struct flow_pos pos)
 static SDL_Point ui_factory_project_sdl_point(
         struct ui_factory *ui, struct flow_pos origin)
 {
-    SDL_Rect rect = render.rect;
+    SDL_Rect rect = render_rect();
     int64_t x = origin.x, y = origin.y;
 
     int64_t rel_x = scale_div(ui->scale, x - ui->pos.x);
@@ -324,7 +324,7 @@ static SDL_Rect ui_factory_project_sdl_rect(
 static struct flow_pos ui_factory_project_flow_pos(
         struct ui_factory *ui, SDL_Point origin)
 {
-    SDL_Rect rect = render.rect;
+    SDL_Rect rect = render_rect();
     int64_t x = origin.x, y = origin.y;
 
     int64_t rel_x = scale_mult(ui->scale, x - rect.x - rect.w / 2);
@@ -414,7 +414,7 @@ static bool ui_factory_event(void *state, SDL_Event *ev)
 {
     struct ui_factory *ui = state;
 
-    if (ev->type == render.event)
+    if (render_user_event(ev))
         ui_factory_event_user(ui, ev);
 
     switch (ev->type)
@@ -579,11 +579,12 @@ static void ui_factory_render(
 {
     struct ui_factory *ui = state;
 
+    SDL_Rect rect = render_rect();
     rgba_render(rgba_black(), renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &render.rect));
+    sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     struct flow *cursor = ui_factory_cursor_flow(ui);
-    struct flow_rect view = ui_factory_project_flow_rect(ui, render.rect);
+    struct flow_rect view = ui_factory_project_flow_rect(ui, rect);
 
     for (size_t i = 0; i < vec64_len(ui->grid); ++i) {
         struct vec16 *vec = (void *) ui->grid->vals[i];

@@ -144,7 +144,7 @@ static bool ui_workers_event(void *state, SDL_Event *ev)
 {
     struct ui_workers *ui = state;
 
-    if (ev->type == render.event)
+    if (render_user_event(ev))
         ui_workers_event_user(ui, ev);
     
     enum ui_ret ret = ui_nil;
