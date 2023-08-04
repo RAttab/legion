@@ -230,7 +230,7 @@ static void proxy_update_status(struct save *save)
     struct status status = {0};
     if (!status_load(&status, save)) return;
 
-    render_log_msg(status.type, status.msg, status.len);
+    ui_log_msg(status.type, status.msg, status.len);
 }
 
 static void proxy_update_state_io(struct world_io *io)
@@ -245,7 +245,7 @@ static void proxy_update_state_io(struct world_io *io)
     assert(ok);
 
     if (!io->len) {
-        render_log(st_info, "received IO command '%s' from '%s'",
+        ui_log(st_info, "received IO command '%s' from '%s'",
                 io_str.c, id_str);
         return;
     }
@@ -263,7 +263,7 @@ static void proxy_update_state_io(struct world_io *io)
     *it = '\0';
     assert((uintptr_t)(it - arg_str) <= sizeof(arg_str));
 
-    render_log(st_info, "received IO command '%s' from '%s' with [ %s]",
+    ui_log(st_info, "received IO command '%s' from '%s' with [ %s]",
             io_str.c, id_str, arg_str);
 }
 
@@ -341,7 +341,7 @@ enum proxy_ret proxy_update(void)
         if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
 
         if (head.magic != header_magic) {
-            render_log(st_warn, "invalid head magic: %x != %x",
+            ui_log(st_warn, "invalid head magic: %x != %x",
                     head.magic, header_magic);
             break;
         }
@@ -453,7 +453,7 @@ static void proxy_cmd(const struct cmd *cmd)
 {
     struct proxy_pipe *pipe = proxy_pipe();
     if (!pipe) {
-        render_log(st_error,
+        ui_log(st_error,
                 "unable to send command '%x' while not connected to a server",
                 cmd->type);
         return;
@@ -463,7 +463,7 @@ static void proxy_cmd(const struct cmd *cmd)
 
     struct header *head = save_bytes(save);
     if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
-        render_log(st_error, "unable to send command '%x' due to overflow",
+        ui_log(st_error, "unable to send command '%x' due to overflow",
                 cmd->type);
         return;
     }
@@ -471,7 +471,7 @@ static void proxy_cmd(const struct cmd *cmd)
     cmd_save(cmd, save);
 
     if (save_eof(save)) {
-        render_log(st_error, "unable to send command '%x' due to overflow",
+        ui_log(st_error, "unable to send command '%x' due to overflow",
                 cmd->type);
         return;
     }

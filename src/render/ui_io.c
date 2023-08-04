@@ -151,7 +151,7 @@ static void ui_io_help(struct ui_io *ui, struct ui_io_cmd *cmd)
 
     struct link link = man_link(path, len);
     if (link_is_nil(link)) {
-        render_log(st_error, "unable to open link to '%s'", path);
+        ui_log(st_error, "unable to open link to '%s'", path);
         return;
     }
 
@@ -172,7 +172,7 @@ static void ui_io_exec(struct ui_io *ui, struct ui_io_cmd *cmd)
 
         if (!arg->val.buf.len) {
             if (!arg->required) break;
-            render_log(st_error, "missing value for required argument '%.*s'",
+            ui_log(st_error, "missing value for required argument '%.*s'",
                     (unsigned) arg->name.str.len, arg->name.str.str);
             return;
         }

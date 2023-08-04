@@ -61,12 +61,3 @@ void render_join(void);
 
 void render_push_event(enum event, uint64_t d0, uint64_t d1);
 void render_quit(void);
-
-
-// -----------------------------------------------------------------------------
-// log
-// -----------------------------------------------------------------------------
-
-void render_log_msg(enum status_type, const char *msg, size_t len);
-void render_logv(enum status_type, const char *fmt, va_list);
-void render_log(enum status_type, const char *fmt, ...) legion_printf(2, 3);

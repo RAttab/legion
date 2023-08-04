@@ -225,7 +225,7 @@ static void ui_tapes_event_help(struct ui_tapes *ui)
 
     struct link link = man_link(path, len);
     if (link_is_nil(link)) {
-        render_log(st_error, "unable to open link to '%s'", path);
+        ui_log(st_error, "unable to open link to '%s'", path);
         return;
     }
 

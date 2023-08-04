@@ -98,6 +98,10 @@ void ui_show_slot(enum ui_view, enum ui_slot);
 void ui_hide(enum ui_view);
 void ui_toggle(enum ui_view);
 
+void ui_log_msg(enum status_type, const char *msg, size_t len);
+void ui_logv(enum status_type, const char *fmt, va_list);
+void ui_log(enum status_type, const char *fmt, ...) legion_printf(2, 3);
+
 
 // -----------------------------------------------------------------------------
 // cursor

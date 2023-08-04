@@ -271,7 +271,7 @@ static void ui_histo_scale_set(struct ui_histo *histo)
     if (ui_input_get_u64(&histo->legend.scale.val, &scale) && scale)
         ui_histo_scale_t(histo, scale);
 
-    else render_log(st_error, "unable to set the scale to '%.*s'",
+    else ui_log(st_error, "unable to set the scale to '%.*s'",
             (unsigned) histo->legend.scale.val.buf.len,
             histo->legend.scale.val.buf.c);
 }

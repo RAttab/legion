@@ -249,7 +249,7 @@ static void ui_mods_import(struct ui_mods *ui)
     sys_path_mod(name.c, path, sizeof(path));
 
     if (!file_exists(path)) {
-        render_log(st_error,
+        ui_log(st_error,
                 "unable to import mod '%s': '%s' doesn't exist", name.c, path);
     }
 
@@ -257,7 +257,7 @@ static void ui_mods_import(struct ui_mods *ui)
     ui_code_set_text(&ui->code, file.ptr, file.len);
     mfile_close(&file);
 
-    render_log(st_info, "mod '%s' imported from '%s'", name.c, path);
+    ui_log(st_info, "mod '%s' imported from '%s'", name.c, path);
 }
 
 static void ui_mods_export(struct ui_mods *ui)
@@ -275,7 +275,7 @@ static void ui_mods_export(struct ui_mods *ui)
 
     file_tmp_swap(path);
 
-    render_log(st_info, "mod '%s' exported to '%s'", name.c, path);
+    ui_log(st_info, "mod '%s' exported to '%s'", name.c, path);
 }
 
 static void ui_mods_event_user(struct ui_mods *ui, SDL_Event *ev)
@@ -302,7 +302,7 @@ static void ui_mods_event_new(struct ui_mods *ui)
 {
     struct symbol name = {0};
     if (!ui_input_get_symbol(&ui->new_val, &name)) {
-        render_log(st_error, "Invalid module name: '%s'", name.c);
+        ui_log(st_error, "Invalid module name: '%s'", name.c);
         return;
     }
 

@@ -211,7 +211,7 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
         if (ret != ui_action) return true;
 
         if (!state->mod_id) {
-            render_log(st_error, "unable to jump to breakpoint '%x' while no mods are loaded",
+            ui_log(st_error, "unable to jump to breakpoint '%x' while no mods are loaded",
                 state->breakpoint);
             return true;
         }
@@ -232,7 +232,7 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
         if (ret != ui_action) return true;
 
         if (!state->mod_id) {
-            render_log(st_error, "unable to jump to ip '%x' while no mods are loaded",
+            ui_log(st_error, "unable to jump to ip '%x' while no mods are loaded",
                 state->vm.ip);
             return true;
         }

@@ -125,13 +125,13 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
     struct ui_item *ui = ui_state(ui_view_item);
 
     if (io <= io_min || io >= io_max) {
-        render_log(st_error,
+        ui_log(st_error,
                 "invalid IO command: unknown IO value '%x'", io);
         return false;
     }
 
     if (!item || item >= items_max) {
-        render_log(st_error,
+        ui_log(st_error,
                 "invalid IO command: unknown item value '%x'", item);
         return false;
     }
@@ -141,7 +141,7 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
         bool ok = atoms_str(proxy_atoms(), io, &io_sym);
         assert(ok);
 
-        render_log(st_error,
+        ui_log(st_error,
                 "unable to execute IO command '%s': no item selected",
                 io_sym.c);
         return false;
@@ -156,7 +156,7 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
         ok = atoms_str(proxy_atoms(), item, &item_sym);
         assert(ok);
 
-        render_log(st_error,
+        ui_log(st_error,
                 "unable to execute IO command '%s': item selected is not of type '%s'",
                 io_sym.c, item_sym.c);
         return false;
@@ -200,7 +200,7 @@ static void ui_item_event_help(struct ui_item *ui)
 
     struct link link = man_link(path, len);
     if (link_is_nil(link)) {
-        render_log(st_error, "unable to open link to '%s'", path);
+        ui_log(st_error, "unable to open link to '%s'", path);
         return;
     }
 

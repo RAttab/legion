@@ -121,6 +121,10 @@ enum ui_view ui_slot(enum ui_slot slot)
 }
 
 
+// -----------------------------------------------------------------------------
+// callbacks
+// -----------------------------------------------------------------------------
+
 void ui_update_state(void)
 {
     // We don't want to run this in tests where we have no ui.
@@ -264,6 +268,11 @@ void ui_render(SDL_Renderer *renderer)
     ui_cursor_render(renderer);
 }
 
+
+// -----------------------------------------------------------------------------
+// visibility
+// -----------------------------------------------------------------------------
+
 void ui_reset(void)
 {
     for (size_t i = 0; i < ui_slot_len; ++i) {
@@ -382,4 +391,41 @@ void ui_toggle(enum ui_view view)
     }
 
     ui_show(view);
+}
+
+
+// -----------------------------------------------------------------------------
+// log
+// -----------------------------------------------------------------------------
+
+void ui_log_msg(enum status_type type, const char *msg, size_t len)
+{
+    if (!ui.init) return;
+
+    const char *prefix = NULL;
+    switch (type) {
+    case st_info: { prefix = "inf"; break; }
+    case st_warn: { prefix = "wrn"; break; }
+    case st_error: { prefix = "err"; break; }
+    default: { assert(false); }
+    }
+
+    ui_status_set(type, msg, len);
+    fprintf(stderr, "<%s> %s\n", prefix, msg);
+}
+
+void ui_logv(enum status_type type, const char *fmt, va_list args)
+{
+    static char msg[256] = {0};
+    ssize_t len = vsnprintf(msg, sizeof(msg), fmt, args);
+    assert(len >= 0);
+    ui_log_msg(type, msg, len);
+}
+
+void ui_log(enum status_type type, const char *fmt, ...)
+{
+    va_list args = {0};
+    va_start(args, fmt);
+    ui_logv(type, fmt, args);
+    va_end(args);
 }

@@ -74,7 +74,7 @@ void ui_doc_free(struct ui_doc *doc)
 void ui_doc_open(struct ui_doc *doc, struct link link, struct lisp *lisp)
 {
     struct man *man = man_open(link.page, doc->cols, lisp);
-    if (!man) { render_log(st_error, "unknown man link"); return; }
+    if (!man) { ui_log(st_error, "unknown man link"); return; }
 
     if (doc->man) man_free(doc->man);
     doc->man = man;
