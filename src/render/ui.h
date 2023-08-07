@@ -215,5 +215,5 @@ void ui_man_alloc(struct ui_view_state *);
 void ui_man_show(struct link);
 void ui_man_show_slot(enum ui_slot, struct link);
 
-void ui_man_show_path(const char *path, ...);
-void ui_man_show_slot_path(enum ui_slot, const char *path, ...);
+void ui_man_show_path(const char *path, ...) legion_printf(1, 2);
+void ui_man_show_slot_path(enum ui_slot, const char *path, ...) legion_printf(2, 3);
