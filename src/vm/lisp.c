@@ -300,6 +300,7 @@ static void lisp_index_at(struct lisp *lisp, const struct token *token)
         lisp->index.len++;
     }
 
+    index->pos = token->pos;
     index->row = token->row;
     index->col = token->col;
     index->len = token->len;

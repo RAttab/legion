@@ -23,6 +23,7 @@ const char *token_type_str(enum token_type type)
     case token_number: { return "number"; }
     case token_reg: { return "register"; }
     case token_sep: { return "separator"; }
+    case token_comment: { return "comment"; }
     default: { assert(false); }
     }
 }
@@ -47,9 +48,16 @@ void token_init(
         .it = src,
         .end = src + len,
 
+        .comments = false,
+
         .err_fn = fn,
         .err_ctx = ctx,
     };
+}
+
+void token_comments(struct tokenizer *tok, bool enable)
+{
+    tok->comments = enable;
 }
 
 bool token_eof(const struct tokenizer *tok)
@@ -78,7 +86,7 @@ static void token_skip_spaces(struct tokenizer *tok)
             continue;
         }
 
-        if (*tok->it == ';') {
+        if (*tok->it == ';' && !tok->comments) {
             while (!token_eof(tok) && *tok->it != '\n')
                 token_inc(tok);
             continue;
@@ -107,16 +115,18 @@ void token_goto_close(struct tokenizer *tok)
 struct token *token_next(struct tokenizer *tok, struct token *token)
 {
     token_skip_spaces(tok);
+    token->row = tok->row;
+    token->col = tok->col;
+    token->pos = tok->it - tok->base;
+
     if (token_eof(tok)) {
         token->type = token_nil;
         token->len = 0;
         return token;
     }
 
-    token->row = tok->row;
-    token->col = tok->col;
-
     switch (*tok->it) {
+    case ';': { token->type = token_comment; break; }
     case '(': { token->type = token_open; break; }
     case ')': { token->type = token_close; break; }
     case '!': { token->type = token_atom; break; }
@@ -149,6 +159,18 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     switch (token->type)
     {
 
+    case token_comment:
+    {
+        assert(tok->comments);
+        const char *first = tok->it;
+
+        while (!token_eof(tok) && *tok->it != '\n')
+            token_inc(tok);
+
+        token->len = tok->it - first;
+        break;
+    }
+
     case token_open:
     case token_close:
     case token_sep: { token->len = 1; token_inc(tok); break; }
@@ -166,7 +188,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
         if (unlikely(token->len > symbol_cap))
             token_err(tok, "symbol is too long: %u > %u", token->len, symbol_cap);
 
-        token->value.s = make_symbol_len(first, token->len);
+        token->value.s = make_symbol_len(first, legion_min(token->len, symbol_cap));
 
         // This suck but without it index is undershot by one due to the ! that
         // we skip at the start...
@@ -222,9 +244,9 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     default: { break; }
     }
 
-    /* dbgf("tok: type=%u:%s, pos=%u:%u, len=%u, val={w:%lx, s:%s}", */
+    /* dbgf("tok: type=%u:%s, pos=%u, rc=%u:%u, len=%u, val={w:%lx, s:%s}", */
     /*         token->type, token_type_str(token->type), */
-    /*         token->row, token->col, token->len, */
+    /*         token->pos, token->row, token->col, token->len, */
     /*         token->value.w, token->value.s.c); */
 
     return token;

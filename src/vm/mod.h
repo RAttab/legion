@@ -53,11 +53,11 @@ static_assert(sizeof(struct mod_err) == s_cache_line);
 
 struct legion_packed mod_index
 {
-    uint32_t row, col, len;
+    uint32_t pos, row, col, len;
     vm_ip ip;
 };
 
-static_assert(sizeof(struct mod_index) == 16);
+static_assert(sizeof(struct mod_index) == 20);
 
 
 struct legion_packed mod_pub

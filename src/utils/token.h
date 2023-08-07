@@ -24,6 +24,7 @@ enum token_type
     token_number,
     token_reg,
     token_sep,
+    token_comment,
 };
 
 const char *token_type_str(enum token_type type);
@@ -36,7 +37,7 @@ const char *token_type_str(enum token_type type);
 struct token
 {
     enum token_type type;
-    uint32_t row, col, len;
+    uint32_t pos, row, col, len;
     union { struct symbol s; int64_t w; } value;
 };
 
@@ -52,6 +53,8 @@ struct tokenizer
     size_t row, col;
     const char *base, *it, *end;
 
+    bool comments;
+
     void *err_ctx;
     token_err_fn err_fn;
 };
@@ -60,6 +63,8 @@ void token_init(
         struct tokenizer *,
         const char *src, size_t len,
         token_err_fn fn, void *ctx);
+
+void token_comments(struct tokenizer *, bool enable);
 
 bool token_eof(const struct tokenizer *);
 char token_inc(struct tokenizer *);
