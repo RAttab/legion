@@ -8,3 +8,4 @@
 #include "vm/mod.c"
 #include "vm/lisp.c"
 #include "vm/atoms.c"
+#include "vm/ast.c"

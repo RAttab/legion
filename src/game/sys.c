@@ -14,6 +14,7 @@
 #include "items/config.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
+#include "vm/ast.h"
 #include "utils/err.h"
 #include "utils/fs.h"
 
@@ -34,6 +35,7 @@ static void sys_populate_impl(void)
     specs_populate();
     tapes_populate();
     stars_populate();
+    ast_populate();
 
     {
         struct atoms *atoms = atoms_new();

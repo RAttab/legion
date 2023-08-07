@@ -969,6 +969,10 @@ static void lisp_fn_register(void)
         lisp_register_fn(symbol_hash(&symbol), lisp_fn_ ## fn);         \
     } while (false)
 
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // When adding new keywords => update ast_populate()
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     register_fn(defun);
     register_fn(load);
     register_fn(mod);
