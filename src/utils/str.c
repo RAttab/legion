@@ -89,6 +89,36 @@ size_t str_atou(const char *src, size_t len, uint64_t *dst)
     return i;
 }
 
+struct rowcol rowcol(const char *str, size_t len)
+{
+    size_t ix = len - 1;
+    struct rowcol rc = {0};
+
+    for (; ix < len; --ix, ++rc.col)
+        if (unlikely(str[ix] == '\n')) break;
+
+    for (; ix < len; --ix)
+        if (unlikely(str[ix] == '\n')) rc.row++;
+
+    return rc;
+}
+
+struct rowcol rowcol_add(struct rowcol lhs, struct rowcol rhs)
+{
+    return (struct rowcol) {
+        .row = lhs.row + rhs.row,
+        .col = rhs.row ? rhs.col : lhs.col + rhs.col,
+    };
+}
+
+uint32_t rowcol_col(const char *str, size_t len, size_t pos)
+{
+    size_t col = 0;
+    assert(pos <= len);
+    for (const char *it = str + pos; it >= str && *it != '\n'; --it, ++col);
+    return col;
+}
+
 size_t str_scaled(uint64_t val, char *dst, size_t len)
 {
     assert(len >= str_scaled_len);

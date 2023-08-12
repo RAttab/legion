@@ -24,6 +24,11 @@ size_t str_atod(const char *src, size_t len, int64_t *dst);
 size_t str_atou(const char *src, size_t len, uint64_t *dst);
 size_t str_atox(const char *src, size_t len, uint64_t *dst);
 
+struct rowcol { uint16_t row, col; };
+struct rowcol rowcol(const char *str, size_t len);
+struct rowcol rowcol_add(struct rowcol, struct rowcol);
+uint32_t rowcol_col(const char *str, size_t len, size_t pos);
+
 enum { str_scaled_len = 4 };
 size_t str_scaled(uint64_t val, char *dst, size_t len);
 
