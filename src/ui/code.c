@@ -50,7 +50,7 @@ struct ui_code ui_code_new(struct dim dim)
         .s = *s,
         .p = ui_panel_current(),
 
-        .scroll = ui_scroll_new(dim, s->font->glyph_h),
+        .scroll = ui_scroll_new(dim, make_dim(s->font->glyph_w, s->font->glyph_h)),
         .tooltip = ui_tooltip_new(ui_str_v(mod_err_cap), (SDL_Rect) {0}),
 
         .focused = false,
@@ -132,7 +132,7 @@ static void ui_code_set(struct ui_code *code, vm_ip ip)
     assert(code->mod);
     assert(code->text.first);
 
-    ui_scroll_update(&code->scroll, code->text.lines);
+    ui_scroll_update_rows(&code->scroll, code->text.lines);
 
     code->carret.line = code->text.first;
     code->carret.row = code->carret.col = 0;
@@ -273,13 +273,13 @@ void ui_code_breakpoint_ip(struct ui_code *code, vm_ip ip)
 
 static struct line *ui_code_view_update(struct ui_code *code)
 {
-    code->scroll.first = code->view.top;
-    ui_scroll_update(&code->scroll, code->text.lines);
+    code->scroll.rows.first = code->view.top;
+    ui_scroll_update_rows(&code->scroll, code->text.lines);
 
     code->view.cols = 0;
     code->view.bot = code->view.top;
 
-    size_t visible = code->scroll.visible;
+    size_t visible = code->scroll.rows.visible;
     struct line *line = code->view.line;
 
     while (visible) {
@@ -381,7 +381,7 @@ static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
     size_t rel_col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
     size_t rel_row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
     rel_col = rel_col < (ui_code_num_len+1) ? 0 : rel_col - (ui_code_num_len+1);
-    assert(rel_row < code->scroll.visible);
+    assert(rel_row < code->scroll.rows.visible);
     assert(rel_col < code->cols);
 
     *row = code->view.top;
@@ -429,15 +429,15 @@ void ui_code_render(
 
     // We need both code->cols and code->scroll.visible to initialize the view.
     if (unlikely(code->view.init)) {
-        assert(code->scroll.visible);
+        assert(code->scroll.rows.visible);
         ui_code_view_update(code);
         code->view.init = false;
     }
 
-    size_t first = ui_scroll_first(&code->scroll);
-    size_t last = first + code->scroll.visible;
+    size_t first = ui_scroll_first_row(&code->scroll);
+    size_t last = ui_scroll_last_row(&code->scroll);
 
-    assert(code->view.top == code->scroll.first);
+    assert(code->view.top == code->scroll.rows.first);
     struct line *line = code->view.line;
     size_t row = code->view.top;
     size_t col = 0;
@@ -780,10 +780,10 @@ enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
     {
         ret = ui_scroll_event(&code->scroll, ev);
 
-        if (code->scroll.first != code->view.top)
-            ui_code_view_move(code, code->scroll.first, true);
+        if (code->scroll.rows.first != code->view.top)
+            ui_code_view_move(code, code->scroll.rows.first, true);
 
-        assert(code->scroll.first == code->view.top);
+        assert(code->scroll.rows.first == code->view.top);
         if (ret) return ret;
     }
 

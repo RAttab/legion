@@ -29,7 +29,7 @@ static void *ui_memory_alloc(void)
         .size = ui_label_new(ui_str_c("size: ")),
         .size_val = ui_label_new(ui_str_v(2)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
         .data_index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .data_val = ui_label_new(ui_str_v(16)),
 
@@ -62,7 +62,7 @@ static void ui_memory_update(void *_ui, struct chunk *chunk, im_id id)
     assert(ok);
 
     ui_str_set_u64(&ui->size_val.str, state->len);
-    ui_scroll_update(&ui->scroll, state->len);
+    ui_scroll_update_rows(&ui->scroll, state->len);
 }
 
 static bool ui_memory_event(void *_ui, const SDL_Event *ev)
@@ -90,8 +90,8 @@ static void ui_memory_render(
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->data_index.str, i);

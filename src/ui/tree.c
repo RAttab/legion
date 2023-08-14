@@ -47,7 +47,9 @@ struct ui_tree ui_tree_new(struct dim dim, size_t chars)
         .w = ui_widget_new(dim.w, dim.h),
         .s = *s,
 
-        .scroll = ui_scroll_new(dim, s->idle.font->glyph_h),
+        .scroll = ui_scroll_new(dim, make_dim(
+                        s->idle.font->glyph_w,
+                        s->idle.font->glyph_h)),
         .str = ui_str_v(chars),
 
         .len = 0,
@@ -204,7 +206,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         if (!SDL_PointInRect(&point, &rect)) tree->hover = 0;
         else {
             size_t row = (point.y - rect.y) / tree->s.idle.font->glyph_h;
-            row += ui_scroll_first(&tree->scroll);
+            row += ui_scroll_first_row(&tree->scroll);
 
             ui_node index = ui_tree_row(tree, row);
             if (index == ui_node_nil) tree->hover = 0;
@@ -221,7 +223,7 @@ enum ui_ret ui_tree_event(struct ui_tree *tree, const SDL_Event *ev)
         if (!SDL_PointInRect(&point, &rect)) return ui_nil;
 
         size_t row = (point.y - rect.y) / tree->s.idle.font->glyph_h;
-        row += ui_scroll_first(&tree->scroll);
+        row += ui_scroll_first_row(&tree->scroll);
 
         ui_node index = ui_tree_row(tree, row);
         if (index == ui_node_nil) return ui_consume;
@@ -268,12 +270,12 @@ static void ui_tree_update_path(struct ui_tree *tree)
 void ui_tree_render(
         struct ui_tree *tree, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    if (!tree->len) ui_scroll_update(&tree->scroll, 0);
+    if (!tree->len) ui_scroll_update_rows(&tree->scroll, 0);
     else {
         size_t n = 1;
         ui_node index = 0;
         while ((index = ui_tree_next(tree, index)) < tree->len) n++;
-        ui_scroll_update(&tree->scroll, n);
+        ui_scroll_update_rows(&tree->scroll, n);
     }
 
     struct ui_layout inner = ui_scroll_render(&tree->scroll, layout, renderer);
@@ -281,8 +283,8 @@ void ui_tree_render(
     tree->w = tree->scroll.w;
 
     struct pos pos = inner.base.pos;
-    size_t last = ui_scroll_last(&tree->scroll);
-    size_t first = ui_scroll_first(&tree->scroll);
+    size_t last = ui_scroll_last_row(&tree->scroll);
+    size_t first = ui_scroll_first_row(&tree->scroll);
     ui_node index = ui_tree_row(tree, first);
     ui_tree_update_path(tree);
 

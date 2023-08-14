@@ -40,7 +40,7 @@ struct ui_logi
 struct ui_log
 {
     struct coord coord;
-    int16_t row_h;
+    struct dim cell;
 
     struct ui_panel *panel;
     struct ui_scroll scroll;
@@ -64,16 +64,18 @@ struct ui_logi ui_logi_alloc(void)
 
 void ui_log_alloc(struct ui_view_state *state)
 {
-    int16_t row_h = ui_st.font.dim.h * 2;
-    struct dim dim = make_dim(
-            (10 + (symbol_cap * 2) + 4) * ui_st.font.dim.w,
-            ui_layout_inf);
+    struct dim cell = ui_st.font.dim;
+    cell.h *= 2;
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_log) {
-        .row_h = row_h,
-        .panel = ui_panel_title(dim, ui_str_c("log")),
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), row_h),
+        .cell = cell,
+
+        .panel = ui_panel_title(
+                make_dim((10 + (symbol_cap * 2) + 4) * cell.w, ui_layout_inf),
+                ui_str_c("log")),
+
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), cell),
     };
 
     for (size_t i = 0; i < array_len(ui->items); ++i)
@@ -168,7 +170,7 @@ static void ui_log_update(void *state)
     assert(index <= array_len(ui->items));
     ui->len = index;
 
-    ui_scroll_update(&ui->scroll, ui->len);
+    ui_scroll_update_rows(&ui->scroll, ui->len);
 }
 
 
@@ -205,8 +207,8 @@ static bool ui_log_event(void *state, SDL_Event *ev)
 
     if (ui_scroll_event(&ui->scroll, ev)) return true;
 
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
     for (size_t i = first; i < last; ++i)
         if (ui_logi_event(ui->items + i, ui->coord, ev))
             return true;
@@ -226,7 +228,7 @@ static void ui_logi_render(
     {
         SDL_Rect rect = {
             .x = layout->row.pos.x, .y = layout->row.pos.y,
-            .w = layout->row.dim.w, .h = ui->row_h,
+            .w = layout->row.dim.w, .h = ui->cell.h,
         };
 
         struct rgba rgba = ui_st.rgba.bg;
@@ -273,8 +275,8 @@ static void ui_log_render(
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
 
     for (size_t row = first; row < last; ++row)
         ui_logi_render(ui, row, &inner, renderer);

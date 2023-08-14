@@ -47,9 +47,9 @@ struct ui_tapes
 
 void ui_tapes_alloc(struct ui_view_state *state)
 {
-    const struct font *font = ui_st.font.base;
-    int tree_w = (item_str_len + 3) * font->glyph_w;
-    int tape_w = (item_str_len + 8 + 1) * font->glyph_w;
+    struct dim cell = ui_st.font.dim;
+    int tree_w = (item_str_len + 3) * cell.w;
+    int tape_w = (item_str_len + 8 + 1) * cell.w;
 
     struct ui_tapes *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_tapes) {
@@ -57,7 +57,7 @@ void ui_tapes_alloc(struct ui_view_state *state)
         .tape_w = tape_w,
 
         .panel = ui_panel_title(
-                make_dim(tree_w + font->glyph_w, ui_layout_inf),
+                make_dim(tree_w + cell.w, ui_layout_inf),
                 ui_str_c("tapes")),
 
         .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), symbol_cap),
@@ -75,7 +75,7 @@ void ui_tapes_alloc(struct ui_view_state *state)
         .host_val = ui_link_new(ui_str_v(item_str_len)),
 
         .tape = ui_label_new(ui_str_c("tape: ")),
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), font->glyph_h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), cell),
         .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
         .work = ui_label_new_s(&ui_st.label.work, ui_str_c("work")),
@@ -212,7 +212,7 @@ static void ui_tapes_update(void *state)
 
     ui_str_set_item(&ui->host_val.str, tape_host(tape));
 
-    ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
+    ui_scroll_update_rows(&ui->scroll, tape ? tape_len(tape) : 0);
 }
 
 static bool ui_tapes_show_help(struct ui_tapes *ui)
@@ -267,8 +267,8 @@ static void ui_tapes_render_tape(
     const struct tech *tech = proxy_tech();
     const struct tape *tape = tapes_get(ui->tree.selected);
 
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);

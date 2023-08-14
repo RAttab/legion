@@ -65,7 +65,7 @@ void ui_pills_alloc(struct ui_view_state *state)
         .sort = ui_pills_sort_nil,
 
         .panel = ui_panel_title(make_dim(width, ui_layout_inf), ui_str_c("pills")),
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
         .source_title = ui_button_new_s(&ui_st.button.list.close, ui_str_c("source")),
         .cargo_title = ui_button_new_s(&ui_st.button.list.close, ui_str_c("cargo")),
     };
@@ -181,7 +181,7 @@ static void ui_pills_update(void *state)
         index++;
     }
 
-    ui_scroll_update(&ui->scroll, ui->len);
+    ui_scroll_update_rows(&ui->scroll, ui->len);
     ui_pills_sort(ui);
 }
 
@@ -224,8 +224,8 @@ static bool ui_pills_event(void *state, SDL_Event *ev)
 
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
 
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
     for (size_t i = first; i < last; ++i) {
         if ((ret = ui_link_event(&ui->rows[i].source_link, ev))) {
             if (ret != ui_action) return true;
@@ -247,8 +247,8 @@ static void ui_pills_render(
     ui_layout_next_row(layout);
 
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
 
     for (size_t i = first; i < last; ++i) {
         struct ui_pills_row *row = ui->rows + i;

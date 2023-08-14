@@ -88,7 +88,7 @@ static void *ui_brain_alloc(void)
         .regs_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
         .regs_val = ui_label_new(ui_str_v(u64_len)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
         .stack = ui_label_new(ui_str_c("stack: ")),
         .stack_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
         .stack_val = ui_label_new(ui_str_v(u64_len)),
@@ -197,7 +197,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     ui_str_set_hex(&ui->io_val.str, state->vm.io);
     ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
     ui_str_set_hex(&ui->ip_val.str, state->vm.ip);
-    ui_scroll_update(&ui->scroll, state->vm.sp);
+    ui_scroll_update_rows(&ui->scroll, state->vm.sp);
 }
 
 static bool ui_brain_event(void *_ui, const SDL_Event *ev)
@@ -365,8 +365,8 @@ static void ui_brain_render(
         struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
         if (ui_layout_is_nil(&inner)) return;
 
-        size_t first = ui_scroll_first(&ui->scroll);
-        size_t last = ui_scroll_last(&ui->scroll);
+        size_t first = ui_scroll_first_row(&ui->scroll);
+        size_t last = ui_scroll_last_row(&ui->scroll);
 
         for (size_t i = first; i < last; ++i) {
             ui_str_set_u64(&ui->stack_index.str, i);

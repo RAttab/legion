@@ -20,7 +20,7 @@ void ui_tape_init(struct ui_tape *ui)
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim.h),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
         .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
         .work = ui_label_new_s(&ui_st.label.work, ui_str_c("work")),
@@ -53,7 +53,7 @@ void ui_tape_update(struct ui_tape *ui, tape_packed state)
     if (!tape) ui_set_nil(&ui->energy_val);
     else ui_str_set_scaled(ui_set(&ui->energy_val), tape_energy(tape));
 
-    ui_scroll_update(&ui->scroll, tape ? tape_len(tape) : 0);
+    ui_scroll_update_rows(&ui->scroll, tape ? tape_len(tape) : 0);
 }
 
 bool ui_tape_event(struct ui_tape *ui, tape_packed state, const SDL_Event *ev)
@@ -81,8 +81,8 @@ void ui_tape_render(
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
 
-    size_t first = ui_scroll_first(&ui->scroll);
-    size_t last = ui_scroll_last(&ui->scroll);
+    size_t first = ui_scroll_first_row(&ui->scroll);
+    size_t last = ui_scroll_last_row(&ui->scroll);
     const struct tape *tape = tapes_get(tape_packed_id(state));
 
     for (size_t i = first; i < last; ++i) {

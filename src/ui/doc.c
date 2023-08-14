@@ -57,7 +57,7 @@ struct ui_doc ui_doc_new(struct dim dim)
     struct ui_doc ui = {
         .w = ui_widget_new(dim.w, dim.h),
         .s = *s,
-        .scroll = ui_scroll_new(dim, font->glyph_h),
+        .scroll = ui_scroll_new(dim, make_dim(font->glyph_w, font->glyph_h)),
         .cols = (dim.w / font->glyph_w) - 2,
     };
 
@@ -79,8 +79,8 @@ void ui_doc_open(struct ui_doc *doc, struct link link, struct lisp *lisp)
     if (doc->man) man_free(doc->man);
     doc->man = man;
 
-    ui_scroll_update(&doc->scroll, man_lines(doc->man));
-    doc->scroll.first = man_section_line(doc->man, link.section);
+    ui_scroll_update_rows(&doc->scroll, man_lines(doc->man));
+    doc->scroll.rows.first = man_section_line(doc->man, link.section);
 }
 
 enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
@@ -110,7 +110,7 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         const struct font *font = doc->s.text.font;
         uint8_t col = (cursor.x - doc->w.pos.x) / font->glyph_w;
         man_line line = (cursor.y - doc->w.pos.y) / font->glyph_h;
-        line += doc->scroll.first;
+        line += ui_scroll_first_row(&doc->scroll);
 
         struct link link = man_click(doc->man, line, col);
         if (link_is_nil(link)) return ui_nil;
@@ -125,20 +125,23 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
     case SDL_KEYDOWN: {
         switch (ev->key.keysym.sym)
         {
-        case SDLK_UP: { ui_scroll_move(&doc->scroll, -1); return ui_consume; }
-        case SDLK_DOWN: { ui_scroll_move(&doc->scroll, 1); return ui_consume;  }
+        case SDLK_UP: { ui_scroll_move_rows(&doc->scroll, -1); return ui_consume; }
+        case SDLK_DOWN: { ui_scroll_move_rows(&doc->scroll, 1); return ui_consume; }
 
         case SDLK_PAGEUP: {
-            ui_scroll_move(&doc->scroll, -doc->scroll.visible);
+            ui_scroll_move_rows(&doc->scroll, -doc->scroll.rows.visible);
             return true;
         }
         case SDLK_PAGEDOWN: {
-            ui_scroll_move(&doc->scroll, doc->scroll.visible);
+            ui_scroll_move_rows(&doc->scroll, doc->scroll.rows.visible);
             return true;
         }
 
-        case SDLK_HOME: { doc->scroll.first = 0; return ui_consume; }
-        case SDLK_END: { doc->scroll.first = doc->scroll.total - 1; return ui_consume; }
+        case SDLK_HOME: { doc->scroll.rows.first = 0; return ui_consume; }
+        case SDLK_END: {
+            doc->scroll.rows.first = doc->scroll.rows.total - 1;
+            return ui_consume;
+        }
 
         default: { return ui_nil; }
         }
@@ -159,8 +162,8 @@ void ui_doc_render(
     doc->w = doc->scroll.w;
 
     struct pos pos = inner.base.pos;
-    man_line line = doc->scroll.first;
-    const man_line end = line + doc->scroll.visible;
+    man_line line = ui_scroll_first_row(&doc->scroll);
+    const man_line end = ui_scroll_last_row(&doc->scroll);
     const struct markup *it = man_line_markup(doc->man, line);
 
     while (it && line < end) {

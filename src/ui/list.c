@@ -46,7 +46,9 @@ struct ui_list ui_list_new(struct dim dim, size_t chars)
         .w = ui_widget_new(dim.w, dim.h),
         .s = *s,
 
-        .scroll = ui_scroll_new(dim, s->idle.font->glyph_h),
+        .scroll = ui_scroll_new(dim, make_dim(
+                        s->idle.font->glyph_w,
+                        s->idle.font->glyph_h)),
         .str = ui_str_v(chars),
 
         .len = 0,
@@ -129,7 +131,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
         if (!SDL_PointInRect(&point, &rect)) return ui_nil;
 
         size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
-        row += ui_scroll_first(&list->scroll);
+        row += ui_scroll_first_row(&list->scroll);
         if (row >= list->len) return ui_nil;
 
         list->hover = list->entries[row].user;
@@ -141,7 +143,7 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
         if (!SDL_PointInRect(&point, &rect)) return ui_nil;
 
         size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
-        row += ui_scroll_first(&list->scroll);
+        row += ui_scroll_first_row(&list->scroll);
         if (row >= list->len) return ui_consume;
 
         list->selected = list->entries[row].user;
@@ -155,15 +157,15 @@ enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
 void ui_list_render(
         struct ui_list *list, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    ui_scroll_update(&list->scroll, list->len);
+    ui_scroll_update_rows(&list->scroll, list->len);
 
     struct ui_layout inner = ui_scroll_render(&list->scroll, layout, renderer);
     if (ui_layout_is_nil(&inner)) return;
     list->w = list->scroll.w;
 
     struct pos pos = inner.base.pos;
-    size_t last = ui_scroll_last(&list->scroll);
-    size_t first = ui_scroll_first(&list->scroll);
+    size_t last = ui_scroll_last_row(&list->scroll);
+    size_t first = ui_scroll_first_row(&list->scroll);
 
     for (size_t i = first; i < last; ++i) {
         const struct ui_entry *entry = list->entries + i;
