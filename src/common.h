@@ -130,10 +130,9 @@ static const size_t page_len = s_page_len;
 // alloc
 // -----------------------------------------------------------------------------
 
-inline void *alloc_cache(size_t n)
+inline void *alloc_cache(size_t len)
 {
-    assert(n % s_cache_line == 0);
-    return memset(aligned_alloc(n, n), 0, n);
+    return memset(aligned_alloc(s_cache_line, len), 0, len);
 }
 
 inline void *realloc_zero(void *ptr, size_t old, size_t new, size_t size)
