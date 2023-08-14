@@ -27,6 +27,13 @@ CFLAGS := $(CFLAGS) -Wno-format-truncation
 CFLAGS := $(CFLAGS) -Wno-implicit-fallthrough
 CFLAGS := $(CFLAGS) -Wno-address-of-packed-member
 
+VALGRIND_FLAGS := $(VALGRIND_FLAGS) --quiet
+VALGRIND_FLAGS := $(VALGRIND_FLAGS) --leak-check=full
+VALGRIND_FLAGS := $(VALGRIND_FLAGS) --track-origins=yes
+VALGRIND_FLAGS := $(VALGRIND_FLAGS) --trace-children=yes
+VALGRIND_FLAGS := $(VALGRIND_FLAGS) --error-exitcode=1
+VALGRIND_FLAGS := $(VALGRIND_FLAGS) --suppressions=legion.supp
+
 LIBS := $(LIBS) $(shell sdl2-config --libs)
 LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
 
@@ -128,7 +135,7 @@ $(PREFIX)/legion: $(PREFIX)/obj/legion-main.o $(PREFIX)/obj/legion.o $(PREFIX)/l
 
 legion: $(PREFIX)/legion
 
-run: $(PREFIX)/legion res
+run: $(PREFIX)/legion
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
 
@@ -149,23 +156,20 @@ $(PREFIX)/test/%: $(PREFIX)/obj/test-%.o $(PREFIX)/liblegion.a $(ASM)
 	@echo -e "\e[32m[build]\e[0m $@"
 	@$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
-test-%: $(PREFIX)/test/% res
+test-%: $(PREFIX)/test/%
 	@echo -e "\e[32m[test]\e[0m $@"
 	@$< $(PREFIX)
 
 .PHONY: test
 test: $(foreach test,$(TEST),test-$(test))
 
-valgrind-%: $(PREFIX)/test/% res
+valgrind-%: $(PREFIX)/test/%
 	@echo -e "\e[32m[test]\e[0m $@"
-	@valgrind \
-	        --quiet \
-	        --leak-check=full \
-	        --track-origins=yes \
-	        --trace-children=yes \
-	        --error-exitcode=1 \
-	        --suppressions=legion.supp \
-		$<
+	@valgrind $(VALGRIND_FLAGS) $<
+
+valgrind-run: $(PREFIX)/legion
+	@echo -e "\e[32m[run]\e[0m $@"
+	@valgrind $(VALGRIND_FLAGS) $(PREFIX)/legion
 
 .PHONY: valgrind
 valgrind: $(foreach test,$(TEST),valgrind-$(test))
