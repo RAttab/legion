@@ -171,7 +171,7 @@ static void db_gen_specs(
             is_enum = true;
 
         else {
-            reader_err(in, "unknown type '%s'", type.c);
+            reader_errf(in, "unknown type '%s'", type.c);
             reader_goto_close(in);
             continue;
         }
@@ -193,7 +193,7 @@ static void db_gen_specs(
             break;
         }
         default: {
-            reader_err(in, "unexpected token type: %s", token_type_str(token));
+            reader_errf(in, "unexpected token type: %s", token_type_str(token));
             reader_goto_close(in);
             continue;
         }
@@ -338,7 +338,7 @@ static void db_gen_tape(
         if (hash == symbol_hash_c("work")) {
             int64_t value = reader_word(in);
             if (value < 0 || value > UINT8_MAX)
-                reader_err(in, "invalid work value '%lx'", value);
+                reader_errf(in, "invalid work value '%lx'", value);
             work = value;
             reader_close(in);
             continue;
@@ -347,7 +347,7 @@ static void db_gen_tape(
         else if (hash == symbol_hash_c("energy")) {
             int64_t value = reader_word(in);
             if (value < 0 || value > UINT32_MAX)
-                reader_err(in, "invalid energy value '%lx'", value);
+                reader_errf(in, "invalid energy value '%lx'", value);
             energy = value;
             reader_close(in);
             continue;
@@ -356,7 +356,7 @@ static void db_gen_tape(
         else if (hash == symbol_hash_c("host")) {
             struct symbol value = reader_symbol(in);
             if (!state_atoms_value(state, &value))
-                reader_err(in, "unknown host atom '%s'", value.c);
+                reader_errf(in, "unknown host atom '%s'", value.c);
             host = symbol_to_enum(value);
             reader_close(in);
             continue;
@@ -371,7 +371,7 @@ static void db_gen_tape(
         bool is_input = hash == symbol_hash_c("in");
         bool is_output = hash == symbol_hash_c("out");
         if (!is_input && !is_output) {
-            reader_err(in, "unknown field '%s'", key.c);
+            reader_errf(in, "unknown field '%s'", key.c);
             reader_goto_close(in);
             continue;
         }
@@ -390,15 +390,15 @@ static void db_gen_tape(
             }
 
             if (!state_atoms_value(state, &item))
-                reader_err(in, "unknown atom '%s'", item.c);
+                reader_errf(in, "unknown atom '%s'", item.c);
 
             if (count < 1 || count > UINT8_MAX) {
-                reader_err(in, "invalid count '%lx'", count);
+                reader_errf(in, "invalid count '%lx'", count);
                 count = 0;
             }
 
             if (count + input + output > UINT8_MAX) {
-                reader_err(in, "tape overflow: %zu + %zu + %zu", count, input, output);
+                reader_errf(in, "tape overflow: %zu + %zu + %zu", count, input, output);
                 count = 0;
             }
 
@@ -466,7 +466,7 @@ static void db_gen_specs_tapes(struct db_state *state, const char *file)
                 reader_goto_close(in);
 
             else {
-                reader_err(in, "unknown section: %s", section.c);
+                reader_errf(in, "unknown section: %s", section.c);
                 reader_goto_close(in);
             }
 
@@ -526,7 +526,7 @@ static void db_gen_io(struct db_state *state, const char *file)
         }
 
         else {
-            reader_err(in, "unknown type io '%s'", type.c);
+            reader_errf(in, "unknown type io '%s'", type.c);
             reader_goto_close(in);
             continue;
         }

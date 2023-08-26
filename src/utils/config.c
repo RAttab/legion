@@ -134,7 +134,7 @@ uint64_t reader_symbol_table(
         if (hash == table[i].hash)
             return table[i].value;
 
-    token_err(&reader->tok, "synmbol '%s' not in table", sym.c);
+    token_errf(&reader->tok, "synmbol '%s' not in table", sym.c);
     return 0;
 }
 
@@ -143,7 +143,7 @@ void reader_expect(struct reader *reader, hash_val hash)
     struct symbol key = reader_symbol(reader);
     if (likely(hash == symbol_hash(&key))) return;
 
-    token_err(&reader->tok, "unexpected field key '%s'", key.c);
+    token_errf(&reader->tok, "unexpected field key '%s'", key.c);
 }
 
 

@@ -221,13 +221,13 @@ void users_read(struct users *users, struct reader *in)
         reader_close(in);
 
         if (user_set_test(users->avail, user->id))
-            reader_err(in, "duplicate user id '%u'", user->id);
+            reader_errf(in, "duplicate user id '%u'", user->id);
         if (!user->name.len)
-            reader_err(in, "invalid name for '%u'", user->id);
+            reader_errf(in, "invalid name for '%u'", user->id);
         if (!user->private)
-            reader_err(in, "invalid field 'private' for '%u'", user->id);
+            reader_errf(in, "invalid field 'private' for '%u'", user->id);
         if (!user->access)
-            reader_err(in, "invalid field 'access' for '%u'", user->id);
+            reader_errf(in, "invalid field 'access' for '%u'", user->id);
 
         users_insert(users, user);
     }

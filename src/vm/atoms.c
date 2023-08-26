@@ -320,13 +320,13 @@ int64_t reader_atom(struct reader *reader, struct atoms *atoms)
     case token_atom: { ret = atoms_get(atoms, &token.value.s); break; }
     case token_atom_make: { ret = atoms_make(atoms, &token.value.s); break; }
     default: {
-        token_err(&reader->tok, "unexpected token '%s' != 'atom'",
+        token_errf(&reader->tok, "unexpected token '%s' != 'atom'",
                 token_type_str(token.type));
         break;
     }
     }
 
-    if (!ret) token_err(&reader->tok, "unknown atom '%s'", token.value.s.c);
+    if (!ret) token_errf(&reader->tok, "unknown atom '%s'", token.value.s.c);
     return ret;
 }
 

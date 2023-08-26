@@ -164,7 +164,7 @@ static void db_gen_rolls(struct db_state *state)
                 reader_close(in);
             }
             else {
-                reader_err(in, "unknown roll key '%s'", key.c);
+                reader_errf(in, "unknown roll key '%s'", key.c);
                 reader_goto_close(in);
             }
         }

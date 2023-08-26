@@ -48,8 +48,11 @@ void reader_expect(struct reader *reader, hash_val);
 #define reader_symbol_str(_reader, _str) \
     do { reader_expect((_reader), symbol_hash_c(_str)); } while (false)
 
-#define reader_err(_reader, _fmt, ...)            \
-    do { token_err(&((_reader)->tok), _fmt, __VA_ARGS__); } while (false)
+#define reader_err(_reader, _msg)                               \
+    do { token_err(&((_reader)->tok), _msg); } while (false)
+
+#define reader_errf(_reader, _fmt, ...)                                 \
+    do { token_errf(&((_reader)->tok), _fmt, __VA_ARGS__); } while (false)
 
 // This might be a little overboard for a macro...
 #define reader_field(_reader, _key, type)                               \
@@ -59,7 +62,7 @@ void reader_expect(struct reader *reader, hash_val);
                                                                         \
         struct symbol _sym = reader_symbol(_in);                        \
         if (symbol_hash(&_sym) != symbol_hash_c(_key))                  \
-            reader_err(_in, "unexpected field key '%s'", _sym.c);       \
+            reader_errf(_in, "unexpected field key '%s'", _sym.c);      \
                                                                         \
         typeof(reader_ ## type(_in)) _ret = reader_ ## type(_in);       \
         reader_close(_in);                                              \
@@ -73,7 +76,7 @@ void reader_expect(struct reader *reader, hash_val);
                                                                         \
         struct symbol _sym = reader_symbol(_in);                        \
         if (symbol_hash(&_sym) != symbol_hash_c(_key))                  \
-            reader_err(_in, "unexpected field key '%s'", _sym.c);       \
+            reader_errf(_in, "unexpected field key '%s'", _sym.c);      \
                                                                         \
         word _ret = reader_atom (_in, _atoms);                          \
         reader_close(_in);                                              \

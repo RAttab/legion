@@ -87,7 +87,7 @@ static struct node *parse_tape(
 
         if (hash == symbol_hash_c("layer")) {
             if (node) {
-                reader_err(in, "duplicate layer field in '%s'", item->c);
+                reader_errf(in, "duplicate layer field in '%s'", item->c);
                 reader_goto_close(in);
                 continue;
             }
@@ -100,7 +100,7 @@ static struct node *parse_tape(
         }
 
         if (!node) {
-            reader_err(in, "missing layer field before '%s' in '%s'", field.c, item->c);
+            reader_errf(in, "missing layer field before '%s' in '%s'", field.c, item->c);
             reader_goto_close(in);
             continue;
         }
@@ -136,7 +136,7 @@ static struct node *parse_tape(
             struct symbol sym = reader_symbol(in);
             struct node *child = tree_symbol(tree, &sym);
             if (!child) {
-                reader_err(in, "unknown tape entry '%s' in '%s'", sym.c, item->c);
+                reader_errf(in, "unknown tape entry '%s' in '%s'", sym.c, item->c);
                 reader_goto_close(in);
                 continue;
             }
@@ -198,7 +198,9 @@ static void tech_parse(struct tree *tree, const char *path)
 
             else if (hash == symbol_hash_c("tape")) {
                 if (info.type == im_type_nil) {
-                    reader_err(in, "missing 'info.type' field before 'tape' field for '%s'",
+                    reader_errf(
+                            in,
+                            "missing 'info.type' field before 'tape' field for '%s'",
                             item.c);
                     assert(reader_goto_close(in));
                     continue;

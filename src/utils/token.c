@@ -147,7 +147,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
 
     default: {
         if (unlikely(!symbol_char(*tok->it))) {
-            token_err(tok, "invalid character for symbol: %c", *tok->it);
+            token_errf(tok, "invalid character for symbol: %c", *tok->it);
             token_goto_space(tok);
             token->type = token_nil;
             return token;
@@ -186,7 +186,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
 
         token->len = tok->it - first;
         if (unlikely(token->len > symbol_cap))
-            token_err(tok, "symbol is too long: %u > %u", token->len, symbol_cap);
+            token_errf(tok, "symbol is too long: %u > %u", token->len, symbol_cap);
 
         token->value.s = make_symbol_len(first, legion_min(token->len, symbol_cap));
 
@@ -212,7 +212,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
         else read = str_atod(first, token->len, &token->value.w);
 
         if (unlikely(read != token->len))
-            token_err(tok, "number was truncated: %u != %zu", token->len, read);
+            token_errf(tok, "number was truncated: %u != %zu", token->len, read);
 
         break;
     }
@@ -220,7 +220,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
     case token_reg:
     {
         if (unlikely(token_eof(tok))) {
-            token_err(tok, "invalid register value: %s", "eof");
+            token_errf(tok, "invalid register value: %s", "eof");
             token->type = token_nil;
             token->len = 1;
             break;
@@ -232,7 +232,7 @@ struct token *token_next(struct tokenizer *tok, struct token *token)
         token_inc(tok);
 
         if (unlikely(c < '0' || c > '3')) {
-            token_err(tok, "invalid register value: %c", c);
+            token_errf(tok, "invalid register value: %c", c);
             c = '0';
         }
 
@@ -263,7 +263,7 @@ struct token *token_assert(
 {
     if (likely(token->type == exp)) return token;
 
-    token_err(tok, "unexpected token: %s != %s",
+    token_errf(tok, "unexpected token: %s != %s",
             token_type_str(token->type), token_type_str(exp));
     return NULL;
 }
