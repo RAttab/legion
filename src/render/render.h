@@ -32,7 +32,6 @@ enum event : int
     ev_star_select,
     ev_item_select,
     ev_tape_select,
-    ev_mod_select,
 
     ev_max,
 };

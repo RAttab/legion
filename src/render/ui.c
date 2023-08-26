@@ -164,7 +164,7 @@ void ui_update_frame(void)
 static bool ui_event_shortcuts(SDL_Event *ev)
 {
     if (ev->type != SDL_KEYDOWN) return false;
-    if (!(ev->key.keysym.mod & KMOD_CTRL)) return false;
+    if (!(ev->key.keysym.mod & KMOD_ALT)) return false;
 
     switch (ev->key.keysym.sym)
     {
