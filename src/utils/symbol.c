@@ -64,7 +64,7 @@ ssize_t symbol_parse(const char *base, size_t len, struct symbol *value)
 
     const char *first = it;
     while (it < end && symbol_char(*it)) it++;
-    if (it - first > symbol_cap) return -1;
+    if ((uint64_t) (it - first) > symbol_cap) return -1;
 
     *value = make_symbol_len(first, it - first);
     return it - base;

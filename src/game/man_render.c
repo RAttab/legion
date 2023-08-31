@@ -224,7 +224,7 @@ static void man_render_link_ui(struct man_parser *parser)
     }
 
     const char *start = it + 1;
-    if (end - start > symbol_cap) {
+    if ((uint64_t) (end - start) > symbol_cap) {
         man_err(parser, "ui link suffix too long to be an atom: %.*s",
                 (unsigned) (end - start), start);
         return;

@@ -16,7 +16,7 @@ struct save;
 // symbol
 // -----------------------------------------------------------------------------
 
-enum { symbol_cap = 30 };
+constexpr size_t symbol_cap = 30;
 
 struct legion_packed symbol
 {

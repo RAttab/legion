@@ -141,7 +141,7 @@ static struct symbol name_gen_symbol(
         const struct symbol *prefix,
         const struct symbol *suffix)
 {
-    assert(prefix->len + suffix->len + 1 < symbol_cap);
+    assert(prefix->len + suffix->len + 1U < symbol_cap);
 
     struct symbol name = *prefix;
     name.c[name.len] = '-';
