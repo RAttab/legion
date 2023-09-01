@@ -103,8 +103,9 @@ static void token_goto_space(struct tokenizer *tok)
 }
 
 
-void token_goto_close(struct tokenizer *tok)
+void token_goto_close(struct tokenizer *tok, const struct token *token)
 {
+    if (token && token->type == token_close) return;
     for (size_t depth = 1; depth && !token_eof(tok); token_inc(tok)) {
         token_skip_spaces(tok);
         if (*tok->it == '(') depth++;

@@ -38,10 +38,7 @@ static bool lisp_stmt(struct lisp *lisp)
         lisp->depth++;
 
         struct token *token = lisp_expect(lisp, token_symbol);
-        if (!token) {
-            lisp_goto_close(lisp);
-            return false;
-        }
+        if (!token) { lisp_goto_close(lisp, true); return false; }
 
         lisp_index_at(lisp, token);
 
@@ -147,7 +144,7 @@ static void lisp_call(struct lisp *lisp, struct token *token)
 {
     struct token sym = *token;
     struct lisp_fun_ret fun = lisp_parse_fun(lisp, &sym);
-    if (!fun.ok) { lisp_goto_close(lisp); return; }
+    if (!fun.ok) { lisp_goto_close(lisp, true); return; }
 
     vm_reg args = 0;
     while (lisp_stmt(lisp)) ++args;
@@ -203,16 +200,16 @@ static void lisp_fn_defun(struct lisp *lisp)
 
     {
         struct token *token = lisp_expect(lisp, token_symbol);
-        if (!token) { lisp_goto_close(lisp); return; }
+        if (!token) { lisp_goto_close(lisp, true); return; }
         lisp_label(lisp, &token->value.s);
     }
 
-    if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp); return; }
+    if (!lisp_expect(lisp, token_open)) { lisp_goto_close(lisp, true); return; }
 
     struct token *token = NULL;
     for (vm_reg reg = 0; (token = lisp_next(lisp))->type != token_close; ++reg) {
         if (!lisp_assert_token(lisp, token, token_symbol)) {
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
             break;
         }
 
@@ -269,7 +266,7 @@ static void lisp_fn_mod(struct lisp *lisp)
         id = make_mod(lisp->mod_maj, mod_version(mod->id) + 1);
     }
 
-    if (!id) { lisp_goto_close(lisp); return; }
+    if (!id) { lisp_goto_close(lisp, false); return; }
 
     lisp_write_op(lisp, OP_PUSH);
     lisp_write_value(lisp, (vm_word) id);
@@ -309,7 +306,7 @@ static void lisp_fn_defconst(struct lisp *lisp)
 {
     if (lisp->depth > 1) lisp_err(lisp, "nested defconst");
 
-    if (!lisp_expect(lisp, token_symbol)) { lisp_goto_close(lisp); return; }
+    if (!lisp_expect(lisp, token_symbol)) { lisp_goto_close(lisp, true); return; }
     struct token token = lisp->token;
 
     vm_word value = lisp_eval(lisp);
@@ -338,7 +335,7 @@ static void lisp_fn_let(struct lisp *lisp)
         if (token->type != token_open) {
             lisp_err(lisp, "unexpected token in argument list: %s != %s",
                     token_type_str(token->type), token_type_str(token_open));
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
             break;
         }
         struct token index_reg = *token;
@@ -358,7 +355,7 @@ static void lisp_fn_let(struct lisp *lisp)
         regs[reg] = key;
 
         if (!lisp_expect(lisp, token_close))
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, false);
     }
 
     lisp_stmts(lisp);
@@ -405,12 +402,12 @@ static void lisp_fn_case(struct lisp *lisp)
 {
     if (!lisp_stmt(lisp)) {
         lisp_err(lisp, "missing value-clause");
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, true);
         return;
     }
 
     if (!lisp_expect(lisp, token_open)) {
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, true);
         return;
     }
 
@@ -421,14 +418,14 @@ static void lisp_fn_case(struct lisp *lisp)
     while ((token = lisp_next(lisp))->type != token_close) {
         if (len == array_len(jmp)) {
             lisp_err(lisp, "too many case clauses: %zu >= %zu", len, array_len(jmp));
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
+            lisp_goto_close(lisp, false);
             return;
         }
 
         if (!lisp_assert_token(lisp, token, token_open)) {
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
+            lisp_goto_close(lisp, false);
             return;
         }
         lisp->depth++;
@@ -437,8 +434,8 @@ static void lisp_fn_case(struct lisp *lisp)
 
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing value for case-clause");
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
+            lisp_goto_close(lisp, false);
             return;
         }
 
@@ -462,15 +459,15 @@ static void lisp_fn_case(struct lisp *lisp)
     // return value is the case value.
     if (!lisp_peek_close(lisp)) {
         if (!lisp_expect(lisp, token_open)) {
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
             return;
         }
         lisp->depth++;
 
         token = lisp_expect(lisp, token_symbol);
         if (!token) {
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
+            lisp_goto_close(lisp, false);
             return;
         }
 
@@ -589,14 +586,14 @@ static void lisp_fn_for(struct lisp *lisp)
     {
         if (!lisp_expect(lisp, token_open)) {
             lisp_err(lisp, "missing init-clause");
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
             return;
         }
 
         struct token *token = lisp_expect(lisp, token_symbol);
         if (!token) {
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
+            lisp_goto_close(lisp, false);
             return;
         }
 
@@ -605,8 +602,8 @@ static void lisp_fn_for(struct lisp *lisp)
 
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing init-clause initializer statement");
-            lisp_goto_close(lisp);
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
+            lisp_goto_close(lisp, false);
             return;
         }
 
@@ -614,7 +611,7 @@ static void lisp_fn_for(struct lisp *lisp)
         lisp_write_value(lisp, reg);
 
         if (!lisp_expect(lisp, token_close))
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, false);
 
         // used to ensure that we always return one value on the stack
         lisp_write_op(lisp, OP_PUSH);
@@ -628,7 +625,7 @@ static void lisp_fn_for(struct lisp *lisp)
     {
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing predicate-clause");
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
             return;
         }
 
@@ -644,7 +641,7 @@ static void lisp_fn_for(struct lisp *lisp)
     {
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing increment-clause");
-            lisp_goto_close(lisp);
+            lisp_goto_close(lisp, true);
             return;
         }
 
@@ -678,7 +675,7 @@ static void lisp_fn_set(struct lisp *lisp)
     struct token index = lisp->token;
 
     struct token *token = lisp_expect(lisp, token_symbol);
-    if (!token) { lisp_goto_close(lisp); return; }
+    if (!token) { lisp_goto_close(lisp, true); return; }
     vm_reg reg = lisp_reg(lisp, &token->value.s);
 
     if (!lisp_stmt(lisp)) {

@@ -68,7 +68,7 @@ void token_comments(struct tokenizer *, bool enable);
 
 bool token_eof(const struct tokenizer *);
 char token_inc(struct tokenizer *);
-void token_goto_close(struct tokenizer *);
+void token_goto_close(struct tokenizer *, const struct token *);
 
 struct token *token_next(struct tokenizer *, struct token *);
 struct token *token_peek(struct tokenizer *, struct token *);

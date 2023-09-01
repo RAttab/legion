@@ -166,9 +166,9 @@ static bool lisp_eof(struct lisp *lisp)
     return token_eof(&lisp->in);
 }
 
-static void lisp_goto_close(struct lisp *lisp)
+static void lisp_goto_close(struct lisp *lisp, bool check_token)
 {
-    token_goto_close(&lisp->in);
+    token_goto_close(&lisp->in, check_token ? &lisp->token : nullptr);
 }
 
 static struct token *lisp_next(struct lisp *lisp)
@@ -195,7 +195,7 @@ static struct token *lisp_expect(struct lisp *lisp, enum token_type exp)
 static void lisp_assert_close(struct lisp *lisp, struct token *token)
 {
     if (!lisp_assert_token(lisp, token, token_close))
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, false);
     lisp->depth--;
 }
 

@@ -160,7 +160,7 @@ const struct mod *read_mod(
         struct mods *mods, struct atoms *atoms)
 {
     const char *first = tok->it;
-    token_goto_close(tok);
+    token_goto_close(tok, nullptr);
     assert(!token_eof(tok));
     size_t len = (tok->it - first) - 1;
 

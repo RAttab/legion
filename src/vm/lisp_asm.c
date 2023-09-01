@@ -20,7 +20,6 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
 {
     struct token *token = lisp_next(lisp);
 
-
     vm_word val = 0;
     switch (token->type)
     {
@@ -46,7 +45,7 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
                 token_type_str(token->type),
                 token_type_str(token_number),
                 token_type_str(token_atom));
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, true);
         return;
     }
     }
@@ -70,7 +69,7 @@ static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
                 token_type_str(token->type),
                 token_type_str(token_reg),
                 token_type_str(token_symbol));
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, true);
         return;
     }
     }
@@ -88,7 +87,7 @@ static void lisp_asm_len(struct lisp *lisp, enum op_code op)
 
     if (token->value.w > 0x7F) {
         lisp_err(lisp, "invalid length argument: %zu > %u", token->value.w, 0x7F);
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, true);
         return;
     }
 
@@ -114,7 +113,7 @@ static void lisp_asm_off(struct lisp *lisp, enum op_code op)
                 token_type_str(token->type),
                 token_type_str(token_number),
                 token_type_str(token_symbol));
-        lisp_goto_close(lisp);
+        lisp_goto_close(lisp, true);
         return;
     }
     }
@@ -129,7 +128,7 @@ static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 
     struct token sym = *lisp_next(lisp);
     struct lisp_fun_ret fun = lisp_parse_fun(lisp, &sym);
-    if (!fun.ok) { lisp_goto_close(lisp); return; }
+    if (!fun.ok) { lisp_goto_close(lisp, true); return; }
 
     if (!fun.local) lisp_write_value(lisp, fun.jmp);
     else if (lisp->token.type == token_symbol) {
@@ -149,7 +148,7 @@ static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
 static void lisp_asm_label(struct lisp *lisp)
 {
     struct token *token = lisp_expect(lisp, token_symbol);
-    if (!token) { lisp_goto_close(lisp); return; }
+    if (!token) { lisp_goto_close(lisp, true); return; }
 
     lisp_label(lisp, &token->value.s);
 
