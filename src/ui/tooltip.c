@@ -72,7 +72,12 @@ void ui_tooltip_render(struct ui_tooltip *tooltip, SDL_Renderer *renderer)
 {
     if (tooltip->disabled) return;
 
-    SDL_Rect rect = ui_widget_rect(&tooltip->w);
+    SDL_Rect rect = {
+        .x = tooltip->w.pos.x,
+        .y = tooltip->w.pos.y,
+        .w = tooltip->s.font->glyph_w * tooltip->str.len + tooltip->s.pad.w * 2,
+        .h = tooltip->s.font->glyph_h                    + tooltip->s.pad.h * 2,
+    };
 
     rgba_render(tooltip->s.bg, renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
