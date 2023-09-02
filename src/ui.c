@@ -16,6 +16,7 @@
 #include "ui/scroll.c"
 #include "ui/input.c"
 #include "ui/code.c"
+#include "ui/asm.c"
 #include "ui/doc.c"
 #include "ui/tabs.c"
 #include "ui/list.c"

@@ -19,6 +19,7 @@
 #include "tooltip.h"
 
 #include "input.h"
+#include "asm.h"
 #include "code.h"
 #include "doc.h"
 

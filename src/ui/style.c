@@ -100,6 +100,7 @@ void ui_style_default(void)
     ui_tooltip_style_default(s);
     ui_scroll_style_default(s);
     ui_input_style_default(s);
+    ui_asm_style_default(s);
     ui_code_style_default(s);
     ui_doc_style_default(s);
     ui_tabs_style_default(s);
