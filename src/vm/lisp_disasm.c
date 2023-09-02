@@ -134,14 +134,14 @@ static bool lisp_disasm_mod(struct disasm *disasm, const char *op)
     return true;
 }
 
-static bool lisp_disasm_op(struct disasm *disasm, enum op_code op)
+static bool lisp_disasm_op(struct disasm *disasm, enum vm_op op)
 {
     switch (op)
     {
 
-#define op_fn(op, arg) \
-    case OP_ ## op: { return lisp_disasm_ ## arg (disasm, #op); }
-#include "vm/op_xmacro.h"
+#define vm_op_fn(op, str, arg) \
+    case op: { return lisp_disasm_ ## arg (disasm, #str); }
+#include "vm/opx.h"
 
     default: { return false; }
     }
@@ -161,7 +161,7 @@ struct text mod_disasm(const struct mod *mod)
     lisp_disasm_outc(&disasm, "(asm");
 
     while (disasm.in.it < disasm.in.end) {
-        enum op_code op = 0;
+        enum vm_op op = 0;
         if (!lisp_disasm_read_into(&disasm, &op)) goto fail;
         if (!lisp_disasm_op(&disasm, op)) goto fail;
     }

@@ -235,7 +235,7 @@ static void lisp_write(struct lisp *lisp, const void *data, size_t len)
 }
 
 // `sizeof(enum op_code) != sizeof(OP_XXX)` so gotta do it manually.
-static void lisp_write_op(struct lisp *lisp, enum op_code op)
+static void lisp_write_op(struct lisp *lisp, enum vm_op op)
 {
     lisp_write(lisp, &op, sizeof(op));
 }
@@ -700,7 +700,7 @@ struct mod *mod_compile(
         lisp_stmts(&lisp);
 
         lisp_index(&lisp);
-        lisp_write_op(&lisp, OP_RESET);
+        lisp_write_op(&lisp, vm_op_reset);
         lisp_index(&lisp);
     }
 

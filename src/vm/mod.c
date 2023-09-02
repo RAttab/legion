@@ -204,7 +204,7 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
     void dump_op(const char *op)
     {
         size_t n = snprintf(dst, len, "[%02lx] %s ", in - mod->code, op);
-        dst += n; len -= n; in += sizeof(enum op_code);
+        dst += n; len -= n; in += sizeof(enum vm_op);
     }
 
     void dump_nil(void)
@@ -246,8 +246,9 @@ size_t mod_dump(const struct mod *mod, char *dst, size_t len)
     while (in < end) {
         switch (*in)
         {
-#define op_fn(op, arg) case OP_ ## op: { dump_op(#op); dump_ ## arg(); break; }
-    #include "vm/op_xmacro.h"
+#define vm_op_fn(op, str, arg) \
+    case op: { dump_op(#str); dump_ ## arg(); break; }
+#include "vm/opx.h"
 
         default: {
             dbgf("mod.dump.err: %x", *in);

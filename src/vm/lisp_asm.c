@@ -10,13 +10,13 @@
 // templates
 // -----------------------------------------------------------------------------
 
-static void lisp_asm_nil(struct lisp *lisp, enum op_code op)
+static void lisp_asm_nil(struct lisp *lisp, enum vm_op op)
 {
     lisp_write_value(lisp, op);
     lisp_expect_close(lisp);
 }
 
-static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
+static void lisp_asm_lit(struct lisp *lisp, enum vm_op op)
 {
     struct token *token = lisp_next(lisp);
 
@@ -56,7 +56,7 @@ static void lisp_asm_lit(struct lisp *lisp, enum op_code op)
     lisp_expect_close(lisp);
 }
 
-static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
+static void lisp_asm_reg(struct lisp *lisp, enum vm_op op)
 {
     struct token *token = lisp_next(lisp);
 
@@ -80,7 +80,7 @@ static void lisp_asm_reg(struct lisp *lisp, enum op_code op)
     lisp_expect_close(lisp);
 }
 
-static void lisp_asm_len(struct lisp *lisp, enum op_code op)
+static void lisp_asm_len(struct lisp *lisp, enum vm_op op)
 {
     struct token *token = lisp_expect(lisp, token_number);
     if (!token) return;
@@ -98,7 +98,7 @@ static void lisp_asm_len(struct lisp *lisp, enum op_code op)
     lisp_expect_close(lisp);
 }
 
-static void lisp_asm_off(struct lisp *lisp, enum op_code op)
+static void lisp_asm_off(struct lisp *lisp, enum vm_op op)
 {
     lisp_write_value(lisp, op);
 
@@ -122,7 +122,7 @@ static void lisp_asm_off(struct lisp *lisp, enum op_code op)
     lisp_expect_close(lisp);
 }
 
-static void lisp_asm_mod(struct lisp *lisp, enum op_code op)
+static void lisp_asm_mod(struct lisp *lisp, enum vm_op op)
 {
     lisp_write_value(lisp, op);
 
@@ -155,12 +155,12 @@ static void lisp_asm_label(struct lisp *lisp)
     lisp_expect_close(lisp);
 }
 
-#define op_fn(op, arg)                                  \
-    static void lisp_asm_ ## op(struct lisp *lisp)      \
+#define vm_op_fn(op, str, arg)                          \
+    static void lisp_asm_ ## str(struct lisp *lisp)     \
     {                                                   \
-        lisp_asm_ ## arg(lisp, OP_ ## op);              \
+        lisp_asm_ ## arg(lisp, op);                     \
     }
-#include "vm/op_xmacro.h"
+#include "vm/opx.h"
 
 static void lisp_asm_register(void)
 {
@@ -169,12 +169,11 @@ static void lisp_asm_register(void)
         lisp_register_fn(symbol_hash(&symbol), lisp_asm_label);
     }
 
-#define op_fn(op, arg)                                                  \
+#define vm_op_fn(op, str, arg)                                          \
     do {                                                                \
-        struct symbol symbol = make_symbol_len(#op, sizeof(#op));       \
-        lisp_register_fn(symbol_hash(&symbol), lisp_asm_ ## op);        \
+        struct symbol symbol = make_symbol_len(#str, sizeof(#str));     \
+        lisp_register_fn(symbol_hash(&symbol), lisp_asm_ ## str);       \
     } while (false);
-
-#include "vm/op_xmacro.h"
+#include "vm/opx.h"
 
 }
