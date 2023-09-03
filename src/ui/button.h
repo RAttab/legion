@@ -32,6 +32,7 @@ struct ui_button_style
         struct rgba fg, bg;
     } idle, hover, pressed, disabled;
 
+    enum ui_align align;
 };
 
 void ui_button_style_default(struct ui_style *);

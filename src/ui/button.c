@@ -36,6 +36,7 @@ void ui_button_style_default(struct ui_style *s)
 
         .height = s->font.dim.h + (s->pad.box.h * 2),
         .margin = s->pad.box,
+        .align = ui_align_left,
     };
 
     s->button.line = s->button.base;
@@ -158,8 +159,33 @@ void ui_button_render(
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
     SDL_Point point = {
-        .x = button->w.pos.x + button->s.margin.w,
+        .x = button->w.pos.x,
         .y = button->w.pos.y + button->s.margin.h
     };
+
+    switch (button->s.align)
+    {
+
+    case ui_align_left: {
+        point.x += button->s.margin.w;
+        break;
+    }
+
+    case ui_align_center: {
+        point.x += (button->w.dim.w / 2);
+        point.x -= (button->str.len * font->glyph_w) / 2;
+        break;
+    }
+
+    case ui_align_right: {
+        point.x += button->w.dim.w;
+        point.x -= button->s.margin.w;
+        point.x -= button->str.len * font->glyph_w;
+        break;
+    }
+
+    default: { assert(false); }
+    }
+
     font_render(font, renderer, point, fg, button->str.str, button->str.len);
 }

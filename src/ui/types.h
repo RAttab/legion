@@ -96,3 +96,15 @@ inline struct SDL_Rect ui_widget_rect(const struct ui_widget *widget)
         .w = widget->dim.w, .h = widget->dim.h,
     };
 }
+
+
+// -----------------------------------------------------------------------------
+// align
+// -----------------------------------------------------------------------------
+
+enum ui_align
+{
+    ui_align_left = 0,
+    ui_align_center,
+    ui_align_right,
+};
