@@ -18,6 +18,7 @@ extern inline bool symbol_eq(const struct symbol *lhs, const struct symbol *rhs)
 
 static void symbol_normalize(struct symbol *symbol)
 {
+    if (!symbol->len) return;
     while (!symbol->c[symbol->len-1]) symbol->len--;
     memset(symbol->c + symbol->len, 0, symbol_cap - symbol->len);
 }
