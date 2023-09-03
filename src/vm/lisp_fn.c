@@ -260,6 +260,12 @@ static void lisp_fn_mod(struct lisp *lisp)
 
     else { // self-reference
         const struct mod *mod = mods_latest(lisp->mods, lisp->mod_maj);
+        if (!mod) {
+            lisp_err(lisp, "unregistered self-referenced mod");
+            lisp_goto_close(lisp, nullptr);
+            return;
+        }
+
         id = make_mod(lisp->mod_maj, mod_version(mod->id) + 1);
     }
 
