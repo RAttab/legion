@@ -338,9 +338,9 @@ static void lisp_fn_let(struct lisp *lisp)
             lisp_goto_close(lisp, true);
             break;
         }
-        struct token index_reg = *token;
 
         uint64_t key = symbol_hash(&lisp_expect(lisp, token_symbol)->value.s);
+        struct token index_reg = *token;
 
         if (!lisp_stmt(lisp)) {
             lisp_err(lisp, "missing statement");
