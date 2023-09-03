@@ -23,3 +23,8 @@
 #include "ui/game.c"
 #include "ui/panel.c"
 #include "ui/style.c"
+
+// The compiler sometimes doesn't feel like inlining it and we can't shove this
+// in utils as not all objects link against sdl... This is kinda aweful but
+// whatever...
+extern inline void rgba_render(struct rgba, SDL_Renderer *);
