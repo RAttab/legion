@@ -23,7 +23,7 @@ static void im_brain_init(void *state, struct chunk *chunk, im_id id)
     (void) chunk;
 
     brain->id = id;
-    brain->breakpoint = IP_NIL;
+    brain->breakpoint = vm_ip_nil;
 
     switch (im_id_item(id))
     {
@@ -80,7 +80,7 @@ static void im_brain_reset(struct im_brain *brain)
     brain->mod_id = 0;
 
     brain->debug = 0;
-    brain->breakpoint = IP_NIL;
+    brain->breakpoint = vm_ip_nil;
 
     brain->msg = (struct im_packet) {0};
     vm_reset(&brain->vm);
@@ -288,8 +288,8 @@ static void im_brain_io_dbg_break(
     if (!ip_validate(args[0]))
         return chunk_log(chunk, brain->id, io_dbg_break, ioe_a0_invalid);
 
-    brain->breakpoint = ip ? ip : IP_NIL;
-    brain->vm.specs.speed = brain->breakpoint != IP_NIL ? 1 : im_brain_speed(brain);
+    brain->breakpoint = ip ? ip : vm_ip_nil;
+    brain->vm.specs.speed = brain->breakpoint != vm_ip_nil ? 1 : im_brain_speed(brain);
 }
 
 static void im_brain_io_dbg_step(struct im_brain *brain, struct chunk *chunk)

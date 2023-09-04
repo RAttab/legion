@@ -185,7 +185,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
         ui->debug_val.disabled = true;
     }
 
-    if (state->breakpoint == IP_NIL) ui_set_nil(&ui->breakpoint_val);
+    if (state->breakpoint == vm_ip_nil) ui_set_nil(&ui->breakpoint_val);
     else ui_str_set_hex(ui_set(&ui->breakpoint_val), state->breakpoint);
     ui_mods_breakpoint(state->mod_id, state->breakpoint);
 
@@ -216,7 +216,7 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
             return true;
         }
 
-        if (state->breakpoint != IP_NIL)
+        if (state->breakpoint != vm_ip_nil)
             ui_mods_show(state->mod_id, state->breakpoint);
 
         return true;
