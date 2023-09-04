@@ -17,6 +17,7 @@
 #include "ui/input.c"
 #include "ui/code.c"
 #include "ui/doc.c"
+#include "ui/tabs.c"
 #include "ui/list.c"
 #include "ui/tree.c"
 #include "ui/histo.c"

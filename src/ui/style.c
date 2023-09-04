@@ -85,6 +85,7 @@ void ui_style_default(void)
     ui_input_style_default(s);
     ui_code_style_default(s);
     ui_doc_style_default(s);
+    ui_tabs_style_default(s);
     ui_list_style_default(s);
     ui_tree_style_default(s);
     ui_histo_style_default(s);

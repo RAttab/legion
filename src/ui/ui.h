@@ -22,6 +22,7 @@
 #include "code.h"
 #include "doc.h"
 
+#include "tabs.h"
 #include "list.h"
 #include "tree.h"
 #include "histo.h"

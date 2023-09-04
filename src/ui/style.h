@@ -72,6 +72,7 @@ extern struct ui_style
     struct ui_list_style list;
     struct ui_tree_style tree;
     struct ui_histo_style histo;
+    struct ui_tabs_style tabs;
     struct ui_panel_style panel;
 
 } ui_st;
