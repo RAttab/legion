@@ -54,6 +54,7 @@ struct mod *mod_alloc(
     memcpy(mod->index, index, index_bytes);
     mod->index_len = index_len;
 
+    mod->src_hash = hash_str(mod->src, mod->src_len);
     return mod;
 }
 
@@ -83,6 +84,8 @@ struct mod *mod_load(struct save *save)
 
     uint32_t index_len = save_read_type(save, typeof(index_len));
     size_t index_bytes = index_len * sizeof(*mod->index);
+
+    hash_val src_hash = save_read_type(save, typeof(mod->src_hash));
 
     size_t total_bytes = sizeof(*mod)
         + code_bytes
@@ -121,6 +124,8 @@ struct mod *mod_load(struct save *save)
 
     assert(it == ((void *) mod) + total_bytes);
 
+    mod->src_hash = src_hash;
+
     if (!save_read_magic(save, save_magic_mod)) { free(mod); return NULL; }
     return mod;
 }
@@ -134,6 +139,7 @@ void mod_save(const struct mod *mod, struct save *save)
     save_write_value(save, mod->pub_len);
     save_write_value(save, mod->errs_len);
     save_write_value(save, mod->index_len);
+    save_write_value(save, mod->src_hash);
     save_write(save, mod->code, mod->len * sizeof(*mod->code));
     save_write(save, mod->src, mod->src_len * sizeof(*mod->src));
     save_write(save, mod->pub, mod->pub_len * sizeof(*mod->pub));

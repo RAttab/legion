@@ -8,6 +8,7 @@
 #include "common.h"
 #include "vm/vm.h"
 #include "utils/symbol.h"
+#include "utils/hash.h"
 #include "game/user.h"
 
 
@@ -79,8 +80,7 @@ struct legion_packed mod
     uint32_t pub_len;
     uint32_t errs_len;
     uint32_t index_len;
-
-    legion_pad(8);
+    uint64_t src_hash;
 
     char *src;
     struct mod_pub *pub;
