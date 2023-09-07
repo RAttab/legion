@@ -73,6 +73,7 @@ void ui_tree_free(struct ui_tree *tree)
 
     free(tree->nodes);
     hset_free(tree->open);
+    hset_free(tree->path);
 }
 
 

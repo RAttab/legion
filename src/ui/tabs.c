@@ -46,8 +46,12 @@ struct ui_tabs ui_tabs_new(size_t chars, bool close)
 
 void ui_tabs_free(struct ui_tabs *ui)
 {
-    for (size_t i = 0; i < ui->cap; ++i)
-        ui_str_free(&ui->list[i].str);
+    for (size_t i = 0; i < ui->cap; ++i) {
+        struct ui_tab *tab = ui->list + i;
+        if (tab->str.cap) ui_str_free(&tab->str);
+    }
+
+    ui_str_free(&ui->str);
     free(ui->list);
 }
 
@@ -233,7 +237,7 @@ enum ui_ret ui_tabs_event(struct ui_tabs *ui, const SDL_Event *ev)
         }
 
         ui->close.user = tab->user;
-        memmove(tab, tab + 1, ((i + 1) - ui->len) * sizeof(*tab));
+        memmove(tab, tab + 1, (ui->len - (i + 1)) * sizeof(*tab));
         ui->len--;
 
         if (ui->close.user == ui->select.user) {

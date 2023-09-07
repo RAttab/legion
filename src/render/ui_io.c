@@ -98,7 +98,7 @@ void ui_io_free(struct ui_io *ui)
         ui_button_free(&cmd->help);
         ui_button_free(&cmd->exec);
 
-        for (size_t j = 0; j < cmd->len; ++j) {
+        for (size_t j = 0; j < ui_io_args_max; ++j) {
             struct ui_io_arg *arg = cmd->args + j;
             ui_label_free(&arg->name);
             ui_input_free(&arg->val);

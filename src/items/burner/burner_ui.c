@@ -72,6 +72,7 @@ static void ui_burner_free(void *_ui)
 
     ui_label_free(&ui->op);
     ui_label_free(&ui->op_val);
+    ui_values_free(&ui->op_values);
 
     ui_label_free(&ui->waiting);
     ui_label_free(&ui->waiting_val);

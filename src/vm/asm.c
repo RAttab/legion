@@ -238,6 +238,8 @@ void asm_parse(struct assembly *as, const struct mod *mod)
             jmp->layer = legion_max(jmp->layer, it->layer + 1);
         }
     }
+
+    free(delta);
 }
 
 // -----------------------------------------------------------------------------

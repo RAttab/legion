@@ -128,7 +128,6 @@ static void ui_mods_free(void *state)
     ui_button_free(&ui->export);
     ui_button_free(&ui->reset);
 
-    ui_tabs_free(&ui->tabs.ui);
 
     for (size_t i = 0; i < ui->tabs.cap; ++i) {
         struct ui_mods_tab *tab = ui->tabs.list + i;
@@ -138,6 +137,8 @@ static void ui_mods_free(void *state)
         mod_free(tab->mod);
     }
     free(ui->tabs.list);
+    free(ui->tabs.order);
+    ui_tabs_free(&ui->tabs.ui);
 
     free(ui);
 }
