@@ -54,7 +54,10 @@ struct mod *mod_alloc(
     memcpy(mod->index, index, index_bytes);
     mod->index_len = index_len;
 
-    mod->src_hash = hash_str(mod->src, mod->src_len);
+    size_t len = mod->src_len;
+    while (len && !mod->src[len - 1]) len--;
+    mod->src_hash = hash_str(mod->src, len);
+
     return mod;
 }
 

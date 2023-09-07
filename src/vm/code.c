@@ -257,7 +257,7 @@ void code_reset(struct code *code)
 void code_set(struct code *code, const char *str, size_t len)
 {
     code_reset(code);
-    while (!str[len-1]) len--;
+    while (len && !str[len-1]) len--;
 
     struct code_str *it = code_prefix(code, NULL);
     if (!len) return;
