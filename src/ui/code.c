@@ -302,7 +302,7 @@ void ui_code_render(
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
             .x = inner.base.pos.x,
             .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
-            .w = inner.base.dim.w - (ui_code_line_col * cell.w),
+            .w = inner.base.dim.w,
             .h = cell.h,
         }));
     }
@@ -311,7 +311,7 @@ void ui_code_render(
         SDL_Rect rect = {
             .x = inner.base.pos.x,
             .y = inner.base.pos.y + ((ui->carret.row - row_first) * cell.h),
-            .w = layout->base.dim.w - (ui_code_line_col * cell.w),
+            .w = layout->base.dim.w,
             .h = cell.h,
         };
         rgba_render(ui->s.current, renderer);
