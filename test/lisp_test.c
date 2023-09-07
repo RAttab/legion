@@ -175,7 +175,8 @@ const struct mod *read_mod(
 
     for (size_t i = 0; i < mod->errs_len; ++i) {
         const struct mod_err *err = mod->errs + i;
-        dbgf("%s:%u:%u:%u: %s", name->c, err->row, err->col, err->len, err->str);
+        struct rowcol rc = rowcol(mod->src, err->pos);
+        dbgf("%s:%u:%u:%u: %s", name->c, rc.row+1, rc.col+1, err->len, err->str);
     }
 
     return NULL;

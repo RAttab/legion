@@ -39,13 +39,11 @@ inline bool mod_validate(vm_word word) { return word > 0 && word <= UINT32_MAX; 
 // mod
 // -----------------------------------------------------------------------------
 
-enum { mod_err_cap = s_cache_line - 8 };
+enum { mod_err_cap = s_cache_line - 6 };
 struct legion_packed mod_err
 {
-    uint32_t row;
-    uint16_t col;
+    uint32_t pos;
     uint16_t len;
-
     char str[mod_err_cap];
 };
 
@@ -54,11 +52,11 @@ static_assert(sizeof(struct mod_err) == s_cache_line);
 
 struct legion_packed mod_index
 {
-    uint32_t pos, row, col, len;
+    uint32_t pos, len;
     vm_ip ip;
 };
 
-static_assert(sizeof(struct mod_index) == 20);
+static_assert(sizeof(struct mod_index) == 12);
 
 
 struct legion_packed mod_pub
@@ -125,7 +123,7 @@ static const vm_ip MOD_PUB_UNKNOWN = -1;
 vm_ip mod_pub(const struct mod *, uint64_t key);
 
 struct mod_index mod_index(const struct mod *, vm_ip ip);
-vm_ip mod_byte(const struct mod *, size_t row, size_t col);
+vm_ip mod_byte(const struct mod *, uint32_t pos);
 
 
 // -----------------------------------------------------------------------------

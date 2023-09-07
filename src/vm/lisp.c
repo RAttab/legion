@@ -23,9 +23,9 @@
 struct lisp_req
 {
     struct lisp_req *next;
-    vm_ip ip;
 
-    uint16_t row, col, len;
+    uint32_t pos, len;
+    vm_ip ip;
 };
 
 struct lisp
@@ -84,7 +84,7 @@ struct lisp
 
 static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
 {
-    /* dbgf("err: %u:%u:%u %s", err->row, err->col, err->len, err->str); */
+    /* dbgf("err: %u:%u %s", err->pos, err->len, err->str); */
 
     if (unlikely(lisp->err.len == lisp->err.cap)) {
         lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
@@ -96,9 +96,7 @@ static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
     struct mod_err *it = &lisp->err.list[lisp->err.len-1];
     while (it > start) {
         struct mod_err *prev = it - 1;
-        if (prev->row < err->row || (prev->row == err->row && prev->col < err->col))
-            break;
-
+        if (prev->pos < err->pos) break;
         *it = *prev;
         it = prev;
     }
@@ -106,11 +104,11 @@ static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
     *it = *err;
 }
 
-legion_printf(5, 6)
+legion_printf(4, 5)
 static void lisp_err_at(
-        struct lisp *lisp, size_t row, size_t col, size_t len, const char *fmt, ...)
+        struct lisp *lisp, uint32_t pos, size_t len, const char *fmt, ...)
 {
-    struct mod_err err = { .row = row, .col = col, .len = len };
+    struct mod_err err = { .pos = pos, .len = len };
 
     va_list args;
     va_start(args, fmt);
@@ -124,8 +122,7 @@ legion_printf(2, 3)
 static void lisp_err(struct lisp *lisp, const char *fmt, ...)
 {
     struct mod_err err = {
-        .row = lisp->token.row,
-        .col = lisp->token.col,
+        .pos = lisp->token.pos,
         .len = lisp->token.len,
     };
 
@@ -143,8 +140,7 @@ static void lisp_err_token(void *ctx, const char *fmt, ...)
     struct lisp *lisp = ctx;
 
     struct mod_err err = {
-        .row = lisp->token.row,
-        .col = lisp->token.col,
+        .pos = lisp->token.pos,
         .len = lisp->token.len,
     };
 
@@ -301,8 +297,6 @@ static void lisp_index_at(struct lisp *lisp, const struct token *token)
     }
 
     index->pos = token->pos;
-    index->row = token->row;
-    index->col = token->col;
     index->len = token->len;
     index->ip = lisp_ip(lisp);
 }
@@ -431,8 +425,7 @@ static vm_ip lisp_jmp(struct lisp *lisp, const struct token *token)
     *new = (struct lisp_req) {
         .next = old,
         .ip = lisp_ip(lisp),
-        .row = token->row,
-        .col = token->col,
+        .pos = token->pos,
         .len = token->len,
     };
 
@@ -490,7 +483,7 @@ static void lisp_label_unknown(struct lisp *lisp)
 
         while (req) {
             struct symbol *symbol = (void *) ret.value;
-            lisp_err_at(lisp, req->row, req->col, req->len,
+            lisp_err_at(lisp, req->pos, req->len,
                     "unknown function or label: %s (%lx)", symbol->c, it->value);
 
             struct lisp_req *next = req->next;
@@ -762,7 +755,7 @@ struct lisp_ret lisp_eval_const(struct lisp *lisp, const char *src, size_t len)
     vm_word result = lisp_eval(lisp);
     for (size_t i = 0; i < lisp->err.len; ++i) {
         struct mod_err *err = lisp->err.list + i;
-        dbgf("eval:%u:%u: %s", err->row, err->col, err->str);
+        dbgf("eval:%u: %s", err->pos, err->str);
     }
 
     return (struct lisp_ret) {

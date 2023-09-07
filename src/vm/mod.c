@@ -184,7 +184,7 @@ struct mod_index mod_index(const struct mod *mod, vm_ip ip)
     return mod->index[mod->index_len-1];
 }
 
-vm_ip mod_byte(const struct mod *mod, size_t row, size_t col)
+vm_ip mod_byte(const struct mod *mod, uint32_t pos)
 {
     if (!mod->index_len) return 0;
 
@@ -192,9 +192,9 @@ vm_ip mod_byte(const struct mod *mod, size_t row, size_t col)
     const struct mod_index *end = it + mod->index_len;
 
     for (; it < end; it++) {
-        if (row > it->row) continue;
-        if (row < it->row) return it->ip;
-        if (col < it->col + it->len) return it->ip;
+        const struct mod_index *next = it + 1;
+        if (next < end && pos >= next->pos) continue;
+        return it->pos;
     }
 
     return mod->index[mod->index_len-1].ip;
@@ -641,7 +641,8 @@ static void mods_file_compile(
     if (mod->errs_len) {
         for (size_t i = 0; i < mod->errs_len; ++i) {
             struct mod_err *err = &mod->errs[i];
-            dbgf("%s:%u:%u: %s", path, err->row+1, err->col+1, err->str);
+            struct rowcol rc = rowcol(mod->src, err->pos);
+            dbgf("%s:%u:%u: %s", path, rc.row+1, rc.col+1, err->str);
         }
     }
 
