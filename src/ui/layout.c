@@ -65,16 +65,44 @@ struct ui_layout ui_layout_inner(struct ui_layout *layout)
 struct ui_layout ui_layout_split_x(struct ui_layout *layout, int16_t width)
 {
     assert(width <= layout->row.dim.w);
-
     int16_t height = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
-    struct ui_layout inner = ui_layout_new(layout->row.pos, make_dim(width,  height));
 
-    layout->base.pos.x = layout->row.pos.x + width;
-    layout->row.pos.x = layout->base.pos.x;
+    struct ui_layout inner =
+        ui_layout_new(layout->row.pos, make_dim(width,  height));
+
+    if ((layout->dir & ui_layout_hori_mask) == ui_layout_left_right) {
+        layout->row.pos.x += width;
+        layout->base.pos.x = layout->row.pos.x;
+    }
+    else {
+        inner.row.pos.x += width;
+        inner.base.pos.x = inner.row.pos.x;
+    }
 
     layout->base.dim.w = layout->row.dim.w - width;
     layout->row.dim.w = layout->base.dim.w;
 
+    return inner;
+}
+
+struct ui_layout ui_layout_split_y(struct ui_layout *layout, int16_t height)
+{
+    assert(height <= layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y));
+    int16_t width = layout->base.dim.w;
+
+    struct ui_layout inner =
+        ui_layout_new(layout->row.pos, make_dim(width,  height));
+
+    if ((layout->dir & ui_layout_vert_mask) == ui_layout_up_down) {
+        layout->row.pos.y += height;
+        layout->base.pos.y = layout->row.pos.y;
+    }
+    else {
+        inner.base.pos.y = layout->base.pos.y + (layout->base.dim.h - height);
+        inner.row.pos.y = inner.base.pos.y;
+    }
+
+    layout->base.dim.h -= height;
     return inner;
 }
 

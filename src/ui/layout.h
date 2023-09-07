@@ -46,6 +46,7 @@ void ui_layout_add(struct ui_layout *, struct ui_widget *);
 
 struct ui_layout ui_layout_inner(struct ui_layout *);
 struct ui_layout ui_layout_split_x(struct ui_layout *, int16_t w);
+struct ui_layout ui_layout_split_y(struct ui_layout *, int16_t h);
 
 void ui_layout_sep_x(struct ui_layout *, int16_t px);
 void ui_layout_sep_col(struct ui_layout *);
