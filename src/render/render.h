@@ -50,7 +50,7 @@ bool render_initialized(void);
 SDL_Rect render_rect(void);
 struct dim render_dim(void);
 
-bool render_user_event(const SDL_Event *);
+enum event render_user_event(const SDL_Event *);
 bool render_user_event_is(const SDL_Event *, enum event);
 SDL_Renderer *render_renderer(void);
 

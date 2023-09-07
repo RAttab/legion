@@ -7,6 +7,8 @@
 
 #include "common.h"
 #include "utils/color.h"
+#include "utils/time.h"
+#include "utils/str.h"
 
 #include "SDL.h"
 

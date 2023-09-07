@@ -26,8 +26,8 @@ void ui_label_style_default(struct ui_style *s)
     };
 
     s->label.index = s->label.base;
-    s->label.index.fg = rgba_gray(0x88);
-    s->label.index.bg = rgba_gray_a(0x44, 0x88);
+    s->label.index.fg = s->rgba.index.fg;
+    s->label.index.bg = s->rgba.index.bg;
 
     s->label.bold = s->label.base;
     s->label.bold.font = s->font.bold;

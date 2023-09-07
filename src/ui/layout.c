@@ -27,6 +27,13 @@ struct ui_layout ui_layout_new(struct pos pos, struct dim dim)
     return layout;
 }
 
+struct dim ui_layout_remaining(struct ui_layout *layout)
+{
+    return make_dim(
+            layout->row.dim.w,
+            layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y));
+}
+
 void ui_layout_add(struct ui_layout *layout, struct ui_widget *widget)
 {
     if (widget->dim.w == ui_layout_inf)

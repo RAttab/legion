@@ -40,6 +40,8 @@ enum { ui_layout_inf = -1 };
 
 struct ui_layout ui_layout_new(struct pos, struct dim);
 void ui_layout_resize(struct ui_layout *, struct dim);
+
+struct dim  ui_layout_remaining(struct ui_layout *);
 void ui_layout_add(struct ui_layout *, struct ui_widget *);
 
 struct ui_layout ui_layout_inner(struct ui_layout *);

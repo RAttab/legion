@@ -1,15 +1,12 @@
 /* code.c
-   Rémi Attab (remi.attab@gmail.com), 17 Jun 2021
+   Rémi Attab (remi.attab@gmail.com), 16 Aug 2023
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "code.h"
-#include "vm/mod.h"
-#include "render/render.h"
-#include "render/ui.h"
-#include "utils/str.h"
-
-static struct line *ui_code_view_update(struct ui_code *code);
+#include "ui/code.h"
+#include "vm/ast.h"
+#include "vm/code.h"
+#include "utils/time.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,22 +17,31 @@ void ui_code_style_default(struct ui_style *s)
 {
     s->code = (struct ui_code_style) {
         .font = s->font.base,
-        .line = { .fg = s->label.index.fg, .bg = s->label.index.bg },
-        .code = { .fg = s->rgba.fg, .bg = s->rgba.bg },
-        .mark = make_rgba(0x00, 0xFF, 0x00, 0x66),
-        .error = make_rgba(0xFF, 0x00, 0x00, 0x66),
+        .bold = s->font.bold,
 
-        .breakpoint = {
-            .fg = rgba_red(),
-            .bg = make_rgba(0xFF, 0xFF, 0x00, 0x33),
-            .hover = make_rgba(0xFF, 0xFF, 0x00, 0x88),
-            .margin = 1,
+        .row = { .fg = s->rgba.index.fg, .bg = s->rgba.index.bg },
+        .bp = { .fg = s->rgba.code.bp.fg, .bg = s->rgba.code.bp.bg },
+        .carret = { .fg = s->rgba.carret, .blink = s->carret.blink },
+
+        .hl = {
+            .bg = s->rgba.code.highlight,
+            .opaque = 1 * ts_sec, .fade = 300 * ts_msec,
         },
 
-        .carret = s->rgba.carret,
+        .errors = {
+            .fg = make_rgba(0xB2, 0x22, 0x22, 0xFF), // FireBrick
+            .bg = make_rgba(0xB2, 0x22, 0x22, 0xAA), // FireBrick
+        },
+
+        .fg = s->rgba.fg,
+        .comment = s->rgba.code.comment,
+        .keyword = s->rgba.code.keyword,
+        .atom = make_rgba(0xFF, 0xDE, 0xAD, 0xFF), // NavajoWhite
+
+        .current = s->rgba.code.current,
+        .box = s->rgba.box.border,
     };
 }
-
 
 // -----------------------------------------------------------------------------
 // code
@@ -45,361 +51,174 @@ struct ui_code ui_code_new(struct dim dim)
 {
     const struct ui_code_style *s = &ui_st.code;
 
-    struct ui_code code = {
+    const int16_t errors_h = s->font->glyph_h * 8;
+
+    struct ui_code ui = {
         .w = ui_widget_new(dim.w, dim.h),
         .s = *s,
         .p = ui_panel_current(),
 
-        .scroll = ui_scroll_new(dim, make_dim(s->font->glyph_w, s->font->glyph_h)),
-        .tooltip = ui_tooltip_new(ui_str_v(mod_err_cap), (SDL_Rect) {0}),
-
         .focused = false,
-        .cols = 1,
-        .disassembly = false,
+        .writable = true,
+        .scroll = ui_scroll_new(dim, ui_st.font.dim),
+        .tooltip = ui_tooltip_new(ui_str_v(ast_log_cap), (SDL_Rect) {0}),
+        .errors = ui_list_new(make_dim(ui_layout_inf, errors_h), mod_err_cap + 10),
+
+        .code = code_alloc(),
+
+        .bp = { .ip = vm_ip_nil },
     };
 
-    text_init(&code.text);
-    return code;
+    ui.errors.s.idle.fg = ui.errors.s.hover.fg = ui.errors.s.selected.fg =
+        s->errors.fg;
+
+    return ui;
 }
 
 
-void ui_code_free(struct ui_code *code)
+void ui_code_free(struct ui_code *ui)
 {
-    ui_scroll_free(&code->scroll);
-    ui_tooltip_free(&code->tooltip);
-    text_clear(&code->text);
+    ui_scroll_free(&ui->scroll);
+    ui_tooltip_free(&ui->tooltip);
+    ui_list_free(&ui->errors);
+    code_free(ui->code);
 }
 
-void ui_code_focus(struct ui_code *code)
+void ui_code_reset(struct ui_code *ui)
 {
-    render_push_event(ev_focus_input, (uintptr_t) code, 0);
+    code_reset(ui->code);
+    ui->mod = nullptr;
+
+    memset(&ui->carret, 0, sizeof(ui->carret));
+
+    ui_scroll_update_rows(&ui->scroll, 0);
+    ui_scroll_update_cols(&ui->scroll, 0);
+    ui_tooltip_hide(&ui->tooltip);
 }
 
-void ui_code_clear(struct ui_code *code)
+enum ui_code_update_flag : uint8_t
 {
-    code->mod = NULL;
-    text_clear(&code->text);
-}
+    ui_code_update_nil = 0,
+    ui_code_update_rows = 0x1,
+    ui_code_update_edit = 0x2,
+    ui_code_update_all = ui_code_update_rows | ui_code_update_edit,
+};
 
-vm_ip ui_code_ip(struct ui_code *code)
+static void ui_code_update(struct ui_code *ui, enum ui_code_update_flag flag)
 {
-    if (code->disassembly) return code->carret.line->user;
-    return mod_byte(code->mod, code->carret.row, code->carret.col);
-}
+    if (flag & ui_code_update_edit) {
+        ui->edit = ts_now();
+        memset(&ui->hl, 0, sizeof(ui->hl));
+    }
+    else ui->edit = 0;
 
-void ui_code_goto(struct ui_code *code, vm_ip ip)
-{
-    if (code->disassembly) {
-        code->carret.row = code->carret.col = 0;
-        code->carret.line = code->text.first;
-
-        while (code->carret.line->next && code->carret.line->next->user <= ip) {
-            code->carret.line = code->carret.line->next;
-            code->carret.row++;
-        }
-
-        code->mark.row = code->carret.row;
-        code->mark.col = 0;
-        code->mark.len = code->carret.line->len;
+    if (flag & ui_code_update_rows) {
+        struct rowcol rc = code_rowcol(ui->code);
+        ui_scroll_update_rows(&ui->scroll, rc.row);
+        ui_scroll_update_cols(&ui->scroll, rc.col + 1);
     }
 
-    else {
-        struct mod_index index = mod_index(code->mod, ip);
-
-        code->carret.line = code->text.first;
-        for (size_t i = 0; i < index.row && code->carret.line->next; ++i)
-            code->carret.line = code->carret.line->next;
-
-        code->carret.row = index.row;
-        code->carret.col = index.col;
-
-        code->mark.row = index.row;
-        code->mark.col = index.col;
-        code->mark.len = index.len;
-    }
-
-    code->view.top = code->carret.row;
-    code->view.line = code->carret.line;
-    for (size_t i = 0; i < 5 && code->view.line->prev; ++i) {
-        code->view.line = code->view.line->prev;
-        code->view.top--;
-    }
-    ui_code_view_update(code);
-}
-
-static void ui_code_set(struct ui_code *code, vm_ip ip)
-{
-    assert(code->mod);
-    assert(code->text.first);
-
-    ui_scroll_update_rows(&code->scroll, code->text.lines);
-
-    code->carret.line = code->text.first;
-    code->carret.row = code->carret.col = 0;
-
-    code->view.line = code->text.first;
-    code->view.init = true;
-
-    if (ip) ui_code_goto(code, ip);
-    else {
-        code->carret.row = code->carret.col = 0;
-        code->carret.line = code->text.first;
-
-        code->view.top = code->carret.row;
-        code->view.line = code->carret.line;
-        ui_code_view_update(code);
-
-        code->mark.row = 0;
-        code->mark.col = 0;
-        code->mark.len = 0;
-
-        code->breakpoint.ip = 0;
-        code->breakpoint.row = 0;
+    {
+        struct rowcol rc = code_rowcol_for(ui->code, ui->carret.pos);
+        ui_scroll_visible(&ui->scroll, rc.row, rc.col);
+        ui->carret.row = rc.row;
+        ui->carret.col = rc.col;
     }
 }
 
-void ui_code_set_code(struct ui_code *code, const struct mod *mod, vm_ip ip)
+void ui_code_set_mod(struct ui_code *ui, const struct mod *mod)
 {
-    code->mod = mod;
-    code->disassembly = false;
+    ui->mod = mod;
+    ui_code_set_text(ui, mod->src, mod->src_len);
 
-    text_from_str(&code->text, mod->src, mod->src_len);
+    ui_list_reset(&ui->errors);
+    for (size_t i = 0; i < mod->errs_len; ++i) {
+        const struct mod_err *err = mod->errs + i;
 
-    ui_code_set(code, ip);
-}
-
-void ui_code_set_disassembly(struct ui_code *code, const struct mod *mod, vm_ip ip)
-{
-    code->mod = mod;
-    code->disassembly = true;
-
-    text_clear(&code->text);
-    code->text = mod_disasm(code->mod);
-
-    ui_code_set(code, ip);
-}
-
-void ui_code_set_text(struct ui_code *code, const char *text, size_t len)
-{
-    assert(code->mod);
-    code->disassembly = false;
-
-    text_from_str(&code->text, text, len);
-
-    ui_code_set(code, 0);
-}
-
-void ui_code_indent(struct ui_code *code)
-{
-    text_indent(&code->text);
-    ui_code_view_update(code);
-
-    code->carret.line = code->view.line;
-    for (size_t row = code->view.top; row < code->carret.row; ++row)
-        code->carret.line = code->carret.line->next;
-    code->carret.col = legion_min(code->carret.col, code->carret.line->len);
-}
-
-void ui_code_breakpoint(struct ui_code *code, size_t row)
-{
-    if (!code->mod) return;
-
-    const struct mod_index *it = code->mod->index;
-    const struct mod_index *end = it + code->mod->index_len;
-
-    if (!code->disassembly) {
-        while (it < end && it->row < row) it++;
-        if (it == end) return;
-
-        if (code->breakpoint.row == it->row) {
-            code->breakpoint.ip = 0;
-            code->breakpoint.row = 0;
-        }
-        else {
-            code->breakpoint.ip = it->ip;
-            code->breakpoint.row = it->row;
-        }
-    }
-
-    else {
-        struct line *line = text_goto(&code->text, row);
-        if (!line) return;
-
-        vm_ip ip = line->user;
-        if (code->breakpoint.ip == ip) {
-            code->breakpoint.ip = 0;
-            code->breakpoint.row = 0;
-        }
-        else {
-            for (const struct mod_index *next = it + 1;
-                 next < end && next->ip < ip;
-                 it++, next++);
-
-            code->breakpoint.ip = ip;
-            code->breakpoint.row = it->row;
-        }
-    }
-
-    vm_word args = code->breakpoint.ip;
-    if (!ui_item_io(io_dbg_break, item_brain, &args, 1)) {
-        code->breakpoint.ip = 0;
-        code->breakpoint.row = 0;
+        struct rowcol rc = code_rowcol_for(ui->code, err->pos);
+        ui_str_setf(ui_list_add(&ui->errors, i + 1),
+                "%04u:%04u: %s", rc.row+1, rc.col+1, err->str);
     }
 }
 
-void ui_code_breakpoint_ip(struct ui_code *code, vm_ip ip)
+void ui_code_set_text(struct ui_code *ui, const char *str, size_t len)
 {
-    if (!code->mod || code->breakpoint.ip == ip) return;
+    code_set(ui->code, str, len);
+    ui_code_update(ui, ui_code_update_rows);
+}
 
-    if (!ip) {
-        code->breakpoint.ip = 0;
-        code->breakpoint.row = 0;
+void ui_code_focus(struct ui_code *ui)
+{
+    render_push_event(ev_focus_input, (uintptr_t) ui, 0);
+}
+
+bool ui_code_modified(struct ui_code *ui)
+{
+    return ui->mod->src_hash != code_hash(ui->code);
+}
+
+vm_ip ui_code_ip(struct ui_code *ui)
+{
+    if (!ui->mod) return 0;
+    return mod_byte(ui->mod, ui->carret.pos);
+}
+
+static void ui_code_highlight(struct ui_code *ui, uint32_t pos, uint32_t len)
+{
+    ui->carret.pos = pos;
+
+    struct rowcol rc = code_rowcol_for(ui->code, pos);
+    ui->hl.len = len;
+    ui->hl.row = rc.row;
+    ui->hl.col = rc.col;
+    ui->hl.ts = ts_now();
+
+    ui_code_update(ui, ui_code_update_nil);
+    ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
+}
+
+void ui_code_goto(struct ui_code *ui, vm_ip ip)
+{
+    if (!ui->mod || ip == vm_ip_nil) return;
+
+    struct mod_index index = mod_index(ui->mod, ip);
+    ui_code_highlight(ui, index.pos, index.len);
+}
+
+void ui_code_breakpoint(struct ui_code *ui, vm_ip ip)
+{
+    if (ip == ui->bp.ip) return;
+
+    if (ip == vm_ip_nil) {
+        memset(&ui->bp, 0, sizeof(ui->bp));
+        ui->bp.ip = ip;
         return;
     }
 
-    const struct mod_index *it = code->mod->index;
-    const struct mod_index *end = it + code->mod->index_len;
+    struct mod_index index = mod_index(ui->mod, ip);
+    struct rowcol rc = code_rowcol_for(ui->code, index.pos);
 
-    while (it < end && it->ip < ip) it++;
-
-    code->breakpoint.ip = ip;
-    code->breakpoint.row = it < end ? it->row : code->text.lines;
+    ui->bp.ip = ip;
+    ui->bp.pos = index.pos;
+    ui->bp.row = rc.row;
+    ui->bp.col = rc.col;
 }
 
-
-// -----------------------------------------------------------------------------
-// view
-// -----------------------------------------------------------------------------
-
-static struct line *ui_code_view_update(struct ui_code *code)
+static void ui_code_breakpoint_at(struct ui_code *ui, uint32_t pos)
 {
-    code->scroll.rows.first = code->view.top;
-    ui_scroll_update_rows(&code->scroll, code->text.lines);
+    vm_ip ip = vm_ip_nil;
+    if (ui->bp.ip == vm_ip_nil || ui->bp.pos != pos)
+        ip = mod_byte(ui->mod, pos);
 
-    code->view.cols = 0;
-    code->view.bot = code->view.top;
+    vm_word args = ip != vm_ip_nil ? ip : 0;
+    if (!ui_item_io(io_dbg_break, item_brain, &args, 1)) return;
 
-    size_t visible = code->scroll.rows.visible;
-    struct line *line = code->view.line;
+    struct rowcol rc = code_rowcol_for(ui->code, pos);
 
-    while (visible) {
-        size_t rows = u64_ceil_div(line->len, code->cols);
-        if (rows >= visible) {
-            code->view.cols = legion_min(line->len, visible * code->cols);
-            break;
-        }
-
-        if (!line->next) {
-            code->view.cols = line->len;
-            break;
-        }
-
-        visible -= rows;
-        code->view.bot++;
-        line = line->next;
-    }
-
-    return line;
-}
-
-static void ui_code_view_move(struct ui_code *code, size_t row, bool update_carret)
-{
-    while (row < code->view.top) {
-        assert(code->view.line->prev);
-        code->view.line = code->view.line->prev;
-        code->view.top--;
-    }
-
-    while (row > code->view.top) {
-        if (!code->view.line->next) break;
-        code->view.line = code->view.line->next;
-        code->view.top++;
-    }
-
-    struct line *bot = ui_code_view_update(code);
-
-    if (update_carret) {
-        if (code->carret.row < code->view.top) {
-            code->carret.col = 0;
-            code->carret.row = code->view.top;
-            code->carret.line = code->view.line;
-        }
-
-        if (code->carret.row > code->view.bot ||
-                (code->carret.row == code->view.bot && code->carret.col > code->view.cols))
-        {
-            code->carret.col = code->view.cols;
-            code->carret.row = code->view.bot;
-            code->carret.line = bot;
-        }
-    }
-}
-
-static void ui_code_view_to_carret(struct ui_code *code)
-{
-    ui_code_view_update(code);
-
-    if (code->carret.row < code->view.top)
-        ui_code_view_move(code, code->carret.row, false);
-
-    while (code->carret.row > code->view.bot ||
-            (code->carret.row == code->view.bot && code->carret.col > code->view.cols))
-    {
-        ui_code_view_move(code, code->view.top+1, false);
-    }
-}
-
-static void ui_code_view_carret_at(struct ui_code *code, size_t row, size_t col)
-{
-    code->carret.row = code->view.top;
-    code->carret.line = code->view.line;
-
-    while (true) {
-        size_t rows = u64_ceil_div(code->carret.line->len, code->cols);
-        if (rows > row) {
-            code->carret.col = legion_min(row * code->cols + col, code->carret.line->len);
-            break;
-        }
-
-        if (!row || !code->carret.line->next) {
-            code->carret.col = code->carret.line->len;
-            break;
-        }
-
-        code->carret.line = code->carret.line->next;
-        code->carret.row++;
-        row -= rows;
-    }
-}
-
-static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
-{
-    SDL_Point cursor = ui_cursor_point();
-    SDL_Rect rect = ui_widget_rect(&code->w);
-    if (!SDL_PointInRect(&cursor, &rect)) return false;
-
-    size_t rel_col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
-    size_t rel_row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
-    rel_col = rel_col < (ui_code_num_len+1) ? 0 : rel_col - (ui_code_num_len+1);
-    assert(rel_row < code->scroll.rows.visible);
-    assert(rel_col < code->cols);
-
-    *row = code->view.top;
-    struct line *line = code->view.line;
-
-    while (true) {
-        size_t rows = u64_ceil_div(line->len, code->cols);
-        if (rows > rel_row) {
-            *col = rel_row * code->cols + rel_col;
-            return *col < line->len;
-        }
-
-        if (!rel_row || !line->next) return false;
-
-        line = line->next;
-        rel_row -= rows;
-        (*row)++;
-    }
+    ui->bp.ip = ip;
+    ui->bp.pos = pos;
+    ui->bp.row = rc.row;
+    ui->bp.col = rc.col;
 }
 
 
@@ -407,420 +226,358 @@ static bool ui_code_view_cursor(struct ui_code *code, size_t *row, size_t *col)
 // render
 // -----------------------------------------------------------------------------
 
+constexpr uint32_t ui_code_row_cols = 4;
+constexpr uint32_t ui_code_margin_cols = 1;
+constexpr uint32_t ui_code_line_col = ui_code_row_cols + ui_code_margin_cols;
+
 void ui_code_render(
-        struct ui_code *code, struct ui_layout *layout, SDL_Renderer *renderer)
+        struct ui_code *ui, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    if (!code->mod) return;
+    ui->w.pos = layout->row.pos;
+    ui->w.dim = ui_layout_remaining(layout);
+    struct dim cell = make_dim(ui->s.font->glyph_w, ui->s.font->glyph_h);
 
-    struct ui_layout inner = ui_scroll_render(&code->scroll, layout, renderer);
-    if (ui_layout_is_nil(&inner)) return;
+    rgba_render(ui->s.box, renderer);
+    sdl_err(SDL_RenderDrawLine(renderer,
+                    ui->w.pos.x, ui->w.pos.y,
+                    ui->w.pos.x,
+                    ui->w.pos.y + ui->w.dim.h));
 
-    if (!rgba_is_nil(code->s.code.bg)) {
-        rgba_render(code->s.code.bg, renderer);
+    if (ui->mod->errs_len) {
+        ui_layout_dir_vert(layout, ui_layout_down_up);
+        struct ui_layout bot = ui_layout_split_y(layout, ui->errors.w.dim.h);
+        ui_layout_dir_vert(layout, ui_layout_up_down);
+
+        rgba_render(ui->s.box, renderer);
+        sdl_err(SDL_RenderDrawLine(renderer,
+                        bot.base.pos.x, bot.base.pos.y,
+                        bot.base.pos.x + bot.base.dim.w,
+                        bot.base.pos.y));
+        ui_list_render(&ui->errors, &bot, renderer);
+    }
+
+    struct ui_layout margin = ui_layout_split_x(layout, ui_code_line_col * cell.w);
+
+    ui->scroll.w.dim.h = ui_layout_inf;
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    if (code_empty(ui->code) || ui_layout_is_nil(&inner)) return;
+
+    ui_tooltip_hide(&ui->tooltip);
+
+    const uint32_t row_first = ui_scroll_first_row(&ui->scroll);
+    const uint32_t row_last = ui_scroll_last_row(&ui->scroll);
+
+    const uint32_t col_first = ui_scroll_first_col(&ui->scroll);
+    const uint32_t col_last = ui_scroll_last_col(&ui->scroll);
+
+    for (size_t i = 0; i < row_last - row_first; ++i) {
+        SDL_Rect rect = {
+            .x = margin.base.pos.x,
+            .y = margin.base.pos.y + (i * cell.h),
+            .w = cell.w * ui_code_row_cols,
+            .h = cell.h
+        };
+        rgba_render(ui->s.row.bg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
+
+        char str[ui_code_row_cols] = {0};
+        str_utoa(row_first + i + 1, str, sizeof(str));
+        rgba_render(ui->s.row.fg, renderer);
+        font_render(
+                ui->s.font, renderer,
+                (SDL_Point) { .x = rect.x, .y = rect.y },
+                ui->s.row.fg,
+                str, sizeof(str));
+    }
+
+    if (ui->bp.ip != vm_ip_nil && ui->bp.row >= row_first && ui->bp.row < row_last) {
+        rgba_render(ui->s.bp.fg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-            .x = inner.base.pos.x, .y = inner.base.pos.y,
-            .w = inner.base.dim.w, .h = inner.base.dim.h,
+            .x = margin.base.pos.x + (ui_code_row_cols * cell.w),
+            .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
+            .w = cell.w, .h = cell.h,
+        }));
+
+        rgba_render(ui->s.bp.bg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+            .x = inner.base.pos.x,
+            .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
+            .w = inner.base.dim.w - (ui_code_line_col * cell.w),
+            .h = cell.h,
         }));
     }
 
-    const struct font *font = code->s.font;
-    code->w = code->scroll.w;
-    code->cols = (inner.base.dim.w / font->glyph_w) - 5;
-
-    // We need both code->cols and code->scroll.visible to initialize the view.
-    if (unlikely(code->view.init)) {
-        assert(code->scroll.rows.visible);
-        ui_code_view_update(code);
-        code->view.init = false;
+    if (ui->carret.row >= row_first && ui->carret.row < row_last) {
+        SDL_Rect rect = {
+            .x = inner.base.pos.x,
+            .y = inner.base.pos.y + ((ui->carret.row - row_first) * cell.h),
+            .w = layout->base.dim.w - (ui_code_line_col * cell.w),
+            .h = cell.h,
+        };
+        rgba_render(ui->s.current, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
     }
 
-    size_t first = ui_scroll_first_row(&code->scroll);
-    size_t last = ui_scroll_last_row(&code->scroll);
+    if (ui->hl.ts && ui->hl.row >= row_first && ui->hl.row < row_last) {
+        struct rgba bg = ui->s.hl.bg;
+        time_sys delta = ts_now() - ui->hl.ts;
 
-    assert(code->view.top == code->scroll.rows.first);
-    struct line *line = code->view.line;
-    size_t row = code->view.top;
-    size_t col = 0;
-
-    struct mod_err *err = code->mod->errs;
-    struct mod_err *err_end = err + code->mod->errs_len;
-
-    for (size_t i = first; i < last && line; ++i) {
-
-        // line number
-        {
-            struct ui_widget w = ui_widget_new(font->glyph_w * 4, font->glyph_h);
-            ui_layout_add(&inner, &w);
-
-            SDL_Rect rect = ui_widget_rect(&w);
-            rgba_render(code->s.line.bg, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &rect));
-
-            if (!col) {
-                char str[4] = {0};
-                if (!code->disassembly) str_utoa(row, str, sizeof(str));
-                else str_utox(line->user, str, sizeof(str));
-
-                SDL_Point pos = pos_as_point(w.pos);
-                font_render(font, renderer, pos, code->s.line.fg, str, sizeof(str));
-            }
+        if (delta > ui->s.hl.opaque) {
+            delta -= ui->s.hl.opaque;
+            if (delta > ui->s.hl.fade)
+                memset(&ui->hl, 0, sizeof(ui->hl));
+            else bg.a = 0xFF - ((bg.a * delta) / ui->s.hl.fade);
         }
 
-        // breakpoint
-        {
+        if (ui->hl.ts) {
+            rgba_render(bg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                .x = inner.base.pos.x + ((ui->hl.col - col_first) * cell.w),
+                .y = inner.base.pos.y + ((ui->hl.row - row_first) * cell.h),
+                .w = legion_min(ui->hl.len, col_last - ui->hl.col) * cell.w,
+                .h = cell.h,
+            }));
+        }
+    }
+
+    struct code_it it = code_begin(ui->code, row_first);
+    while (code_step(ui->code, &it) && it.row < row_last) {
+        if (it.col + it.len <= col_first || it.col >= col_last) continue;
+
+        const ast_it node = code_it_ast_node(&it);
+        const ast_log_it log = code_it_ast_log(&it);
+
+        const uint32_t col = legion_max(it.col, col_first);
+        const uint32_t first =  col - it.col;
+        const uint32_t len = legion_min(it.len, col_last - it.col) - first;
+        assert(len <= it.len);
+
+        SDL_Point pos = {
+            .x = inner.base.pos.x + ((col - col_first) * cell.w),
+            .y = inner.base.pos.y + ((it.row - row_first) * cell.h),
+        };
+
+        if (log) {
             SDL_Rect rect = {
-                .x = code->w.pos.x,
-                .y = inner.row.pos.y,
-                .w = font->glyph_w * (ui_code_num_len + 1),
-                .h = font->glyph_h
+                .x = pos.x, .y = pos.y,
+                .w = len * cell.w, .h = cell.h,
             };
 
-            bool is_highlight = ui_cursor_in(&rect);
-            bool is_breakpoint =
-                code->breakpoint.ip &&
-                (code->disassembly ?
-                        code->breakpoint.ip == line->user :
-                        code->breakpoint.row == row);
+            rgba_render(ui->s.errors.bg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-            if (is_highlight || is_breakpoint) {
-                if (is_highlight)
-                    rgba_render(code->s.breakpoint.hover, renderer);
-                else rgba_render(code->s.breakpoint.bg, renderer);
-
-                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                    .x = inner.row.pos.x,
-                                    .y = inner.row.pos.y,
-                                    .w = inner.row.dim.w,
-                                    .h = font->glyph_h,
-                                }));
-            }
-
-            if (is_breakpoint) {
-                rgba_render(code->s.breakpoint.bg, renderer);
-
-                uint8_t margin = code->s.breakpoint.margin;
-                size_t size = font->glyph_w - margin * 2;
-                size_t mid_h = (font->glyph_h / 2) - (size / 2);
-
-                rgba_render(code->s.breakpoint.fg, renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                    .x = inner.row.pos.x + margin,
-                                    .y = inner.row.pos.y + mid_h,
-                                    .w = size, .h = size,
-                                }));
-            }
-
-            ui_layout_sep_col(&inner);
-        }
-
-        // code line
-        struct ui_widget w = ui_widget_new(font->glyph_w * code->cols, font->glyph_h);
-        ui_layout_add(&inner, &w);
-
-        size_t len = legion_min(line->len - col, code->cols);
-
-        // mark
-        if (code->mark.row == row) {
-            size_t start = 0, end = 0;
-
-            if (!code->disassembly) {
-                start = legion_bound(code->mark.col, col, col + len);
-                end = legion_bound(code->mark.col + code->mark.len, col, col + len);
-            }
-            else {
-                start = line_first_char(line);
-                end = line->len;
-            }
-
-            if (start != end) {
-                rgba_render(code->s.mark, renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                    .x = w.pos.x + (start * font->glyph_w),
-                                    .y = w.pos.y,
-                                    .w = (end - start) * font->glyph_w,
-                                    .h = font->glyph_h,
-                                }));
+            if (ui_cursor_in(&rect)) {
+                ui_tooltip_show(&ui->tooltip);
+                ui_str_setc(&ui->tooltip.str, log->msg);
             }
         }
 
-        // code text
         {
-            SDL_Point pos = pos_as_point(w.pos);
-            font_render(font, renderer, pos, code->s.code.fg, line->c + col, len);
+            enum ast_type type = node ? node->type : ast_nil;
+            struct rgba fg =
+                type == ast_comment ? ui->s.comment :
+                type == ast_keyword ? ui->s.keyword :
+                type == ast_atom ? ui->s.atom :
+                ui->s.fg;
+
+            font_render(ui->s.font, renderer, pos, fg, it.str + first, len);
         }
-
-        // err
-        while (err < err_end) {
-            if (err->row < row) { err++; continue; }
-            if (err->row > row) break;
-
-            if (err->col + err->len < col) { err++; continue; }
-            if (err->col > col + len) break;
-
-            size_t start = legion_max(err->col, col);
-            size_t end = legion_min((size_t) err->col + err->len, col + len);
-
-            rgba_render(code->s.error, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = w.pos.x + (start * font->glyph_w),
-                                .y = w.pos.y,
-                                .w = (end - start) * font->glyph_w,
-                                .h = font->glyph_h,
-                            }));
-            err++;
-        }
-
-        // carret
-        if (    code->carret.blink &&
-                code->focused &&
-                code->p->state == ui_panel_focused &&
-                code->carret.row == row &&
-                (       code->carret.col >= col &&
-                        code->carret.col <= col + len))
-        {
-            rgba_render(code->s.carret, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = w.pos.x + ((code->carret.col - col) * font->glyph_w),
-                                .y = w.pos.y,
-                                .w = font->glyph_w,
-                                .h = font->glyph_h,
-                            }));
-        }
-
-        // advance
-        if (col + len < line->len) col += len;
-        else { row++; col = 0; line = line->next; }
-        ui_layout_next_row(&inner);
     }
 
-    ui_tooltip_render(&code->tooltip, renderer);
+    do {
+        if (!ui->focused) break;
+
+        if (ui->carret.row < row_first || ui->carret.row >= row_last) break;
+        if (ui->carret.col < col_first || ui->carret.col >= col_last) break;
+        if (((ts_now() / ui->s.carret.blink) % 2) == 0) break;
+
+        SDL_Rect rect = {
+            .x = inner.base.pos.x + ((ui->carret.col - col_first) * cell.w),
+            .y = inner.base.pos.y + ((ui->carret.row - row_first) * cell.h),
+            .w = cell.w, .h = cell.h };
+        rgba_render(ui->s.carret.fg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &rect));
+    } while (false);
+
+    ui_tooltip_render(&ui->tooltip, renderer);
 }
 
 
 // -----------------------------------------------------------------------------
-// event
+// events
 // -----------------------------------------------------------------------------
 
-static enum ui_ret ui_code_event_click(struct ui_code *code)
+enum ui_ret ui_code_event_click(struct ui_code *ui)
 {
     SDL_Point cursor = ui_cursor_point();
-    SDL_Rect rect = ui_widget_rect(&code->w);
+    SDL_Rect rect = ui_widget_rect(&ui->w);
 
-    code->focused = SDL_PointInRect(&cursor, &rect);
-    if (!code->focused) return ui_nil;
+    ui->focused = SDL_PointInRect(&cursor, &rect);
+    if (!ui->focused) return ui_nil;
 
-    size_t col = (cursor.x - code->w.pos.x) / code->s.font->glyph_w;
-    size_t row = (cursor.y - code->w.pos.y) / code->s.font->glyph_h;
+    uint32_t row = (cursor.y - rect.y) / ui->s.font->glyph_h;
+    row += ui_scroll_first_row(&ui->scroll);
 
-    if (col <= ui_code_num_len) ui_code_breakpoint(code, row + code->view.top);
+    uint32_t col = (cursor.x - rect.x) / ui->s.font->glyph_w;
+    bool in_margins = col < ui_code_line_col;
 
-    col = col < (ui_code_num_len+1) ? 0 : col - (ui_code_num_len+1);
+    col = in_margins ? 0 : col - ui_code_line_col;
+    col += ui_scroll_first_col(&ui->scroll);
 
-    ui_code_view_carret_at(code, row, col);
+    ui->carret.pos = code_pos_for(ui->code, row, col);
+    if (in_margins) ui_code_breakpoint_at(ui, ui->carret.pos);
 
-    render_push_event(ev_focus_input, (uintptr_t) code, 0);
-    return ui_consume;
-}
-
-static enum ui_ret ui_code_event_move(struct ui_code *code, int hori, int vert)
-{
-    if (hori < 0) {
-        if (code->carret.col) code->carret.col--;
-        else if (code->carret.line->prev) {
-            code->carret.line = code->carret.line->prev;
-            code->carret.col = code->carret.line->len;
-            code->carret.row--;
-        }
-    }
-
-    else if (hori > 0) {
-        if (code->carret.col < code->carret.line->len) code->carret.col++;
-        else if (code->carret.line->next) {
-            code->carret.line = code->carret.line->next;
-            code->carret.col = 0;
-            code->carret.row++;
-        }
-    }
-
-    else if (vert < 0) {
-        if (code->carret.line->prev) {
-            code->carret.line = code->carret.line->prev;
-            code->carret.col = legion_min(code->carret.col, code->carret.line->len);
-            code->carret.row--;
-        }
-    }
-
-    else if (vert > 0) {
-        if (code->carret.line->next) {
-            code->carret.line = code->carret.line->next;
-            code->carret.col = legion_min(code->carret.col, code->carret.line->len);
-            code->carret.row++;
-        }
-    }
-
-    ui_code_view_to_carret(code);
-    return ui_consume;
-}
-
-static enum ui_ret ui_code_event_ins(struct ui_code *code, char key, uint16_t mod)
-{
-    if (code->disassembly) return ui_nil;
-    if (mod & (KMOD_CTRL | KMOD_ALT)) return ui_nil;
-    if (mod & KMOD_SHIFT) key = str_keycode_shift(key);
-
-    struct line_ret ret =
-        line_insert(&code->text, code->carret.line, code->carret.col, key);
-    code->carret.col = ret.index;
-
-    if (code->view.line == code->carret.line)
-        code->view.line = ret.line;
-
-    if (ret.new) {
-        code->carret.line = ret.new;
-        code->carret.row++;
-    }
-    else code->carret.line = ret.line;
-
-    ui_code_view_to_carret(code);
-    return ui_consume;
-}
-
-static enum ui_ret ui_code_event_delete(struct ui_code *code)
-{
-    if (code->disassembly) return ui_nil;
-
-    struct line_ret ret =
-        line_delete(&code->text, code->carret.line, code->carret.col);
-    assert(ret.index == code->carret.col);
-
-    if (code->view.line == code->carret.line)
-        code->view.line = ret.line;
-
-    code->carret.line = ret.line;
-
-    ui_code_view_to_carret(code);
-    return ui_consume;
-}
-
-static enum ui_ret ui_code_event_backspace(struct ui_code *code)
-{
-    if (code->disassembly) return ui_nil;
-
-    struct line_ret ret =
-        line_backspace(&code->text, code->carret.line, code->carret.col);
-    code->carret.col = ret.index;
-
-    if (ret.new) {
-        if (code->view.line == code->carret.line) {
-            code->view.line = ret.new;
-            code->view.top--;
-        }
-
-        code->carret.line = ret.new;
-        code->carret.row--;
-    }
-
-    ui_code_view_to_carret(code);
-    return ui_consume;
-}
-
-static enum ui_ret ui_code_event_user(struct ui_code *code, const SDL_Event *ev)
-{
-    switch (ev->user.code)
-    {
-
-    case ev_frame: {
-        uint64_t ticks = (uintptr_t) ev->user.data1;
-        code->carret.blink = (ticks / 20) % 2;
-        return ui_nil;
-    }
-
-    case ev_focus_input: {
-        void *target = ev->user.data1;
-        code->focused = target == code;
-        return ui_nil;
-    }
-
-    default: { return ui_nil; }
-    }
-}
-
-static enum ui_ret ui_code_event_motion(struct ui_code *code)
-{
-    ui_tooltip_hide(&code->tooltip);
-    if (likely(!code->mod->errs_len)) return ui_nil;
-
-    size_t row = 0, col = 0;
-    if (!ui_code_view_cursor(code, &row, &col)) return ui_nil;
-
-    for (size_t i = 0; i < code->mod->errs_len; ++i) {
-        struct mod_err *err = &code->mod->errs[i];
-        if (row < err->row) continue;
-        if (row > err->row) break;
-
-        if (col < err->col) continue;
-        if (col >= err->col + err->len) break;
-
-        size_t len = strnlen(err->str, mod_err_cap);
-        ui_str_setv(&code->tooltip.str, err->str, len);
-        ui_tooltip_show(&code->tooltip);
-        break;
-    }
-
+    ui_code_update(ui, ui_code_update_nil);
     return ui_nil;
 }
 
-
-enum ui_ret ui_code_event(struct ui_code *code, const SDL_Event *ev)
+enum ui_ret ui_code_event_move(
+        struct ui_code *ui, uint16_t mod, int32_t row, int32_t col)
 {
-    if (render_user_event(ev)) return ui_code_event_user(code, ev);
+    (void) mod;
 
-    enum ui_ret ret = ui_nil;
+    if (row) ui->carret.pos = code_move_row(ui->code, ui->carret.pos, row);
+    if (col) ui->carret.pos = code_move_col(ui->code, ui->carret.pos, col);
 
+    ui_code_update(ui, ui_code_update_nil);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_home(struct ui_code *ui, uint16_t mod)
+{
+    ui->carret.pos = mod & KMOD_CTRL ?
+        0 : code_move_home(ui->code, ui->carret.pos);
+
+    ui_code_update(ui, ui_code_update_nil);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_end(struct ui_code *ui, uint16_t mod)
+{
+    ui->carret.pos = mod & KMOD_CTRL ?
+        code_len(ui->code) : code_move_end(ui->code, ui->carret.pos);
+
+    ui_code_update(ui, ui_code_update_nil);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_put(struct ui_code *ui, char key, uint16_t mod)
+{
+    if (!ui->writable) return ui_nil;
+    if (mod & (KMOD_CTRL | KMOD_ALT)) return ui_nil;
+    if (mod & KMOD_SHIFT) key = str_keycode_shift(key);
+
+    code_insert(ui->code, ui->carret.pos, key);
+    ui->carret.pos++;
+
+    if (key == '(') code_insert(ui->code, ui->carret.pos, ')');
+
+    ui_code_update(ui, ui_code_update_all);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_del(struct ui_code *ui, uint16_t mod, int32_t inc)
+{
+    if (!ui->writable) return ui_nil;
+    if (mod & (KMOD_CTRL | KMOD_ALT | KMOD_SHIFT)) return ui_nil;
+
+    if (inc < 0 && ui->carret.pos) --ui->carret.pos;
+    if (inc > 0 || ui->carret.pos) code_delete(ui->code, ui->carret.pos);
+
+    ui_code_update(ui, ui_code_update_all);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_undo(struct ui_code *ui, uint16_t mod)
+{
+    if (!ui->writable) return ui_nil;
+    if (mod & KMOD_ALT) return ui_nil;
+
+    uint32_t pos = (mod & KMOD_SHIFT) ? code_redo(ui->code) : code_undo(ui->code);
+    if (pos == code_pos_nil) return ui_nil;
+
+    ui->carret.pos = pos;
+    ui_code_update(ui, ui_code_update_all);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
+{
+    switch (render_user_event(ev))
     {
-        ret = ui_scroll_event(&code->scroll, ev);
 
-        if (code->scroll.rows.first != code->view.top)
-            ui_code_view_move(code, code->scroll.rows.first, true);
-
-        assert(code->scroll.rows.first == code->view.top);
-        if (ret) return ret;
+    case ev_focus_input: {
+        ui->focused = (ui == ev->user.data1);
+        break;
     }
 
-    if ((ret = ui_tooltip_event(&code->tooltip, ev))) return ret;
+    case ev_frame: {
+        if (!ui->edit) break;
+        if ((ts_now() - ui->edit) < (500 * ts_msec)) break;
+        code_update(ui->code);
+        ui->edit = 0;
+        break;
+    }
 
-    if (!code->mod) return ui_nil;
+    default: { break; }
+    }
 
-    switch (ev->type) {
+    enum ui_ret ret = ui_nil;
+    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret;
+    if ((ret = ui_tooltip_event(&ui->tooltip, ev))) return ret;
+    if (code_empty(ui->code)) return ui_nil;
 
-    case SDL_MOUSEMOTION: { return ui_code_event_motion(code); }
+    if (ui->mod->errs_len && (ret = ui_list_event(&ui->errors, ev))) {
+        if (ret != ui_action || !ui->errors.selected) return ret;
+        const struct mod_err *err = ui->mod->errs + (ui->errors.selected - 1);
+        ui_code_highlight(ui, err->pos, err->len);
+        return ret;
+    }
 
-    case SDL_MOUSEBUTTONUP: { return ui_code_event_click(code); }
+    switch (ev->type)
+    {
+    case SDL_MOUSEBUTTONUP: { return ui_code_event_click(ui); }
 
     case SDL_KEYDOWN: {
-        if (!code->focused) return ui_nil;
+        if (!ui->focused) return ui_nil;
 
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;
-        switch (keysym) {
 
-        case SDLK_UP: { return ui_code_event_move(code, 0, -1); }
-        case SDLK_DOWN: { return ui_code_event_move(code, 0, 1); }
-        case SDLK_LEFT: { return ui_code_event_move(code, -1, 0); }
-        case SDLK_RIGHT: { return ui_code_event_move(code, 1, 0); }
+        if ((mod & KMOD_CTRL)) {
+            switch (keysym)
+            {
+            case SDLK_UP:    { return ui_code_event_move(ui, mod, -1, 0); }
+            case SDLK_DOWN:  { return ui_code_event_move(ui, mod, +1, 0); }
+            case SDLK_LEFT:  { return ui_code_event_move(ui, mod, 0, -1); }
+            case SDLK_RIGHT: { return ui_code_event_move(ui, mod, 0, +1); }
 
-        // from 32 to 176 on the ascii table. The uppercase letters are not
-        // mapped by SDL so they're just skipped
-        case ' '...'~': { return ui_code_event_ins(code, keysym, mod); }
-        case SDLK_RETURN: { return ui_code_event_ins(code, '\n', mod); }
+            case 'z': { return ui_code_event_undo(ui, mod); }
 
-        case SDLK_DELETE: { return ui_code_event_delete(code); }
-        case SDLK_BACKSPACE: { return ui_code_event_backspace(code); }
+            default: { return ui_nil; }
+            }
+        }
+        else {
+            switch (keysym)
+            {
+            case SDLK_UP:    { return ui_code_event_move(ui, mod, -1, 0); }
+            case SDLK_DOWN:  { return ui_code_event_move(ui, mod, +1, 0); }
+            case SDLK_LEFT:  { return ui_code_event_move(ui, mod, 0, -1); }
+            case SDLK_RIGHT: { return ui_code_event_move(ui, mod, 0, +1); }
 
-        case SDLK_HOME: { code->carret.col = 0; return ui_consume; }
-        case SDLK_END: { code->carret.col = code->carret.line->len; return ui_consume; }
+            case SDLK_HOME: { return ui_code_event_home(ui, mod); }
+            case SDLK_END:  { return ui_code_event_end(ui, mod); }
 
-        default: { return ui_nil; }
+            // from 32 to 176 on the ascii table. The uppercase letters are not
+            // mapped by SDL so they're just skipped
+            case ' '...'~':   { return ui_code_event_put(ui, keysym, mod); }
+            case SDLK_RETURN: { return ui_code_event_put(ui, '\n', mod); }
+
+            case SDLK_DELETE:    { return ui_code_event_del(ui, mod, +1); }
+            case SDLK_BACKSPACE: { return ui_code_event_del(ui, mod, -1); }
+
+            default: { return ui_nil; }
+            }
         }
     }
 

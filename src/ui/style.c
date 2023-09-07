@@ -44,6 +44,9 @@ void ui_style_default(void)
 
         s->rgba.carret = rgba_gray_a(0xCC, 0xCC);
 
+        s->rgba.index.fg = rgba_gray(0x88);
+        s->rgba.index.bg = rgba_gray_a(0x44, 0x88);
+
         s->rgba.box.bg = rgba_black();
         s->rgba.box.border = rgba_gray(0x33);
 
@@ -71,10 +74,24 @@ void ui_style_default(void)
         s->rgba.energy.solar =    make_rgba(0x80, 0x80, 0x00, 0xFF); // Olive
         s->rgba.energy.burner =   make_rgba(0x80, 0x00, 0x80, 0xFF); // Purple
         s->rgba.energy.kwheel =   make_rgba(0x4B, 0x00, 0x82, 0xFF); // Indigo
+
+        s->rgba.code.read = rgba_blue();
+        s->rgba.code.write = rgba_green();
+        s->rgba.code.modified = rgba_yellow();
+        s->rgba.code.comment = make_rgba(0x32, 0xCD, 0x32, 0xFF); // LimeGreen
+        s->rgba.code.keyword = make_rgba(0x40, 0xE0, 0xD0, 0xFF); // Turquoise
+        s->rgba.code.current = rgba_gray_a(0x55, 0x55);
+        s->rgba.code.highlight = make_rgba(0x00, 0x80, 0x00, 0xFF); // Green
+        s->rgba.code.bp.fg = make_rgba(0xB2, 0x22, 0x22, 0xFF); // FireBrick
+        s->rgba.code.bp.bg = make_rgba(0xB2, 0x22, 0x22, 0x55); // FireBrick
     }
 
     { // pad
         s->pad.box = make_dim(6, 2);
+    }
+
+    { // carret
+        s->carret.blink = 300 * ts_msec;
     }
 
     ui_label_style_default(s);

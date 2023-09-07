@@ -28,20 +28,28 @@ extern struct ui_style
         struct rgba waiting, working;
         struct rgba active, disabled;
         struct rgba carret;
+        struct { struct rgba fg, bg; } index;
         struct { struct rgba bg, border; } box;
         struct { struct rgba hover, selected; } list;
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
         struct { struct rgba queue, work, clean, fail, idle; } worker;
+
         struct {
             struct rgba consumed, saved, need;
             struct rgba stored, fusion, solar, burner, kwheel, battery;
         } energy;
+
+        struct {
+            struct rgba read, write, modified;
+            struct rgba comment, keyword;
+            struct rgba current, highlight;
+            struct { struct rgba fg, bg; } bp;
+        } code;
+
     } rgba;
 
-    struct
-    {
-        struct dim box;
-    } pad;
+    struct { struct dim box; } pad;
+    struct { time_sys blink; } carret;
 
     struct
     {

@@ -88,9 +88,9 @@ struct dim render_dim(void)
     return make_dim(render.rect.w, render.rect.h);
 }
 
-bool render_user_event(const SDL_Event *ev)
+enum event render_user_event(const SDL_Event *ev)
 {
-    return ev->type == render.event;
+    return ev->type == render.event ? ev->user.code : ev_nil;
 }
 
 bool render_user_event_is(const SDL_Event *ev, enum event type)
