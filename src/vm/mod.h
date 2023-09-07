@@ -114,7 +114,6 @@ inline size_t mod_len(const struct mod *mod)
 void mod_compiler_init(void);
 struct mod *mod_compile(
         mod_maj, const char *src, size_t len, struct mods *, struct atoms *);
-struct text mod_disasm(const struct mod *);
 
 size_t mod_dump(const struct mod *, char *dst, size_t len);
 size_t mod_hexdump(const struct mod *, char *dst, size_t len);

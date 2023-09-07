@@ -663,7 +663,6 @@ static void lisp_register_fn(uint64_t key, lisp_fn fn)
 #include "vm/lisp_eval.c"
 #include "vm/lisp_fn.c"
 #include "vm/lisp_asm.c"
-#include "vm/lisp_disasm.c"
 
 
 // -----------------------------------------------------------------------------
