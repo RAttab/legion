@@ -16,6 +16,7 @@ struct
     size_t size;
     SDL_Point point;
     SDL_Texture *tex;
+    bool buttons[5];
 } ui_cursor = { 0 };
 
 
@@ -39,6 +40,8 @@ void ui_cursor_init(void)
 
     ui_cursor.focus = ui_cursor_focus();
     sdl_err(SDL_SetRelativeMouseMode(ui_cursor.focus));
+
+    memset(&ui_cursor.buttons, 0, sizeof(ui_cursor.buttons));
 }
 
 void ui_cursor_free(void)
@@ -66,6 +69,24 @@ bool ui_cursor_in(const SDL_Rect* rect)
     return SDL_PointInRect(&ui_cursor.point, rect);
 }
 
+static size_t ui_cursor_button_index(uint8_t button)
+{
+    switch (button)
+    {
+    case SDL_BUTTON_LEFT: { return 0; }
+    case SDL_BUTTON_MIDDLE: { return 1; }
+    case SDL_BUTTON_RIGHT: { return 2; }
+    case SDL_BUTTON_X1: { return 3; }
+    case SDL_BUTTON_X2: { return 4; }
+    default: { assert(false); }
+    }
+}
+
+bool ui_cursor_button_down(uint8_t button)
+{
+    return ui_cursor.buttons[ui_cursor_button_index(button)];
+}
+
 void ui_cursor_update(void)
 {
     bool focus = ui_cursor_focus();
@@ -77,13 +98,30 @@ void ui_cursor_update(void)
 
 void ui_cursor_event(SDL_Event *ev)
 {
-    if (ev->type != SDL_MOUSEMOTION) return;
+    switch (ev->type)
+    {
 
-    ui_cursor.point.x += ev->motion.xrel;
-    ui_cursor.point.x = legion_bound(ui_cursor.point.x, 0, render.rect.w);
+    case SDL_MOUSEMOTION: {
+        ui_cursor.point.x += ev->motion.xrel;
+        ui_cursor.point.x = legion_bound(ui_cursor.point.x, 0, render.rect.w);
 
-    ui_cursor.point.y += ev->motion.yrel;
-    ui_cursor.point.y = legion_bound(ui_cursor.point.y, 0, render.rect.h);
+        ui_cursor.point.y += ev->motion.yrel;
+        ui_cursor.point.y = legion_bound(ui_cursor.point.y, 0, render.rect.h);
+        return;
+    }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        ui_cursor.buttons[ui_cursor_button_index(ev->button.button)] = true;
+        return;
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        ui_cursor.buttons[ui_cursor_button_index(ev->button.button)] = false;
+        return;
+    }
+
+    default: { return; }
+    }
 }
 
 void ui_cursor_render(SDL_Renderer *renderer)

@@ -21,7 +21,7 @@ void ui_tabs_style_default(struct ui_style *s)
         .fg = s->rgba.fg,
         .line = s->rgba.box.border,
         .hover = rgba_gray(0x33),
-        .pressed = rgba_gray(0x11),
+        .pressed = rgba_gray(0x22),
     };
 }
 
@@ -290,7 +290,9 @@ void ui_tabs_render(
 
         SDL_Rect rect = { .x = tab->x, .y = y0, .w = tab->w, .h = h };
         if (ui_cursor_in(&rect)) {
-            rgba_render(ui->s.hover, renderer);
+            struct rgba bg = ui_cursor_button_down(SDL_BUTTON_LEFT) ?
+                ui->s.pressed : ui->s.hover;
+            rgba_render(bg, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &rect));
         }
 
