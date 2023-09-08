@@ -286,6 +286,8 @@ void ui_code_render(
         ui_list_render(&ui->errors, &bot, renderer);
     }
 
+    // We split the rows from the text so that the scroll bar doesn't show up on
+    // the rows.
     struct ui_layout margin = ui_layout_split_x(layout, ui_code_line_col * cell.w);
 
     ui->scroll.w.dim.h = ui_layout_inf;
@@ -300,10 +302,10 @@ void ui_code_render(
     const uint32_t col_first = ui_scroll_first_col(&ui->scroll);
     const uint32_t col_last = ui_scroll_last_col(&ui->scroll);
 
-    for (size_t i = 0; i < row_last - row_first; ++i) {
+    for (uint32_t row = 0; row < row_last - row_first; ++row) {
         SDL_Rect rect = {
             .x = margin.base.pos.x,
-            .y = margin.base.pos.y + (i * cell.h),
+            .y = margin.base.pos.y + (row * cell.h),
             .w = cell.w * ui_code_row_cols,
             .h = cell.h
         };
@@ -311,62 +313,14 @@ void ui_code_render(
         sdl_err(SDL_RenderFillRect(renderer, &rect));
 
         char str[ui_code_row_cols] = {0};
-        str_utoa(row_first + i + 1, str, sizeof(str));
+        str_utoa(row_first + row + 1, str, sizeof(str));
         rgba_render(ui->s.row.fg, renderer);
         font_render(
                 ui->s.font, renderer,
                 (SDL_Point) { .x = rect.x, .y = rect.y },
                 ui->s.row.fg,
                 str, sizeof(str));
-    }
 
-    if (ui->bp.ip != vm_ip_nil && ui->bp.row >= row_first && ui->bp.row < row_last) {
-        rgba_render(ui->s.bp.fg, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-            .x = margin.base.pos.x + (ui_code_row_cols * cell.w),
-            .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
-            .w = cell.w, .h = cell.h,
-        }));
-
-        rgba_render(ui->s.bp.bg, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-            .x = inner.base.pos.x,
-            .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
-            .w = inner.base.dim.w,
-            .h = cell.h,
-        }));
-    }
-
-    if (ui->carret.row >= row_first && ui->carret.row < row_last) {
-        rgba_render(ui->s.current, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-            .x = inner.base.pos.x,
-            .y = inner.base.pos.y + ((ui->carret.row - row_first) * cell.h),
-            .w = layout->base.dim.w,
-            .h = cell.h,
-        }));
-    }
-
-    if (ui->hl.ts && ui->hl.row >= row_first && ui->hl.row < row_last) {
-        struct rgba bg = ui->s.hl.bg;
-        time_sys delta = ts_now() - ui->hl.ts;
-
-        if (delta > ui->s.hl.opaque) {
-            delta -= ui->s.hl.opaque;
-            if (delta > ui->s.hl.fade)
-                memset(&ui->hl, 0, sizeof(ui->hl));
-            else bg.a = 0xFF - ((bg.a * delta) / ui->s.hl.fade);
-        }
-
-        if (ui->hl.ts) {
-            rgba_render(bg, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                .x = inner.base.pos.x + ((ui->hl.col - col_first) * cell.w),
-                .y = inner.base.pos.y + ((ui->hl.row - row_first) * cell.h),
-                .w = legion_min(ui->hl.len, col_last - ui->hl.col) * cell.w,
-                .h = cell.h,
-            }));
-        }
     }
 
     struct { struct rowcol first, last; bool active; } select = {0};
@@ -387,28 +341,71 @@ void ui_code_render(
     uint32_t prev = -1U;
 
     while (code_step(ui->code, &it) && it.row < row_last) {
+        const int16_t line_w = inner.base.dim.w;
         const SDL_Point base = {
             .x = inner.base.pos.x,
             .y = inner.base.pos.y + ((it.row - row_first) * cell.h)
         };
 
-        if (it.row != prev) {
-            prev = it.row;
+        if (it.row == prev) goto tokens;
+        prev = it.row;
 
-            if (select.active && it.row >= select.first.row && it.row <= select.last.row) {
-                size_t from = 0, to = cols;
-                if (it.row == select.first.row) from = select.first.col;
-                if (it.row == select.last.row) to = select.last.col;
-                if (!(to - from)) to++;
+        if (select.active && it.row >= select.first.row && it.row <= select.last.row) {
+            size_t from = 0, to = cols;
+            if (it.row == select.first.row) from = select.first.col;
+            if (it.row == select.last.row) to = select.last.col;
+            if (!(to - from)) to++;
 
-                rgba_render(ui->s.select, renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                    .x = base.x + (from * cell.w), .y = base.y,
-                    .w = (to - from) * cell.w, .h = cell.h }));
-            }
+            rgba_render(ui->s.select, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = base.x + (from * cell.w), .y = base.y,
+                                .w = (to - from) * cell.w, .h = cell.h }));
         }
 
 
+        if (ui->bp.ip != vm_ip_nil && ui->bp.row == it.row) {
+            rgba_render(ui->s.bp.fg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = base.x - cell.w, .y = base.y,
+                                .w = cell.w, .h = cell.h }));
+
+            rgba_render(ui->s.bp.bg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = base.x, .y = base.y,
+                                .w = line_w, .h = cell.h }));
+        }
+
+        if (ui->carret.row == it.row) {
+            rgba_render(ui->s.current, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = base.x, .y = base.y,
+                                .w = line_w, .h = cell.h }));
+        }
+
+        if (ui->hl.ts && ui->hl.row == it.row) {
+            struct rgba bg = ui->s.hl.bg;
+            time_sys delta = ts_now() - ui->hl.ts;
+
+            if (delta > ui->s.hl.opaque) {
+                delta -= ui->s.hl.opaque;
+                if (delta > ui->s.hl.fade)
+                    memset(&ui->hl, 0, sizeof(ui->hl));
+                else bg.a = 0xFF - ((bg.a * delta) / ui->s.hl.fade);
+            }
+
+            if (ui->hl.ts) {
+                SDL_Rect rect = {
+                    .x = base.x + ((ui->hl.col - col_first) * cell.w),
+                    .y = base.y,
+                    .w = legion_min(ui->hl.len, col_last - ui->hl.col) * cell.w,
+                    .h = cell.h,
+                };
+                rgba_render(bg, renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &rect));
+            }
+        }
+
+      tokens:
         if (it.eol) { cols = code_next_cols(ui->code, &it); continue; }
         if (it.col + it.len <= col_first || it.col >= col_last) continue;
 
