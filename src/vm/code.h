@@ -58,6 +58,10 @@ void code_insert(struct code *, uint32_t pos, char);
 void code_delete(struct code *, uint32_t pos);
 void code_update(struct code *);
 
+void code_insert_range(struct code *, uint32_t pos, const char *, size_t);
+void code_delete_range(struct code *, uint32_t first, uint32_t last);
+size_t code_write_range(struct code *, uint32_t first, uint32_t last, char *dst, size_t len);
+
 uint32_t code_undo(struct code *);
 uint32_t code_redo(struct code *);
 

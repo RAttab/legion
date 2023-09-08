@@ -659,6 +659,42 @@ uint32_t code_move_end(struct code *code, uint32_t pos)
 
 
 // -----------------------------------------------------------------------------
+// range
+// -----------------------------------------------------------------------------
+// These functions are intentionally implemented inneficiently to maintain the
+// undo/redo history. Also because it would be somewhat complicated to do
+// anything else.
+
+void code_insert_range(
+        struct code *code, uint32_t pos, const char *src, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+        code_insert(code, pos + i, src[i]);
+}
+
+void code_delete_range(struct code *code, uint32_t first, uint32_t last)
+{
+    // deleting backwards is more efficient then forward deletion.
+    for (size_t i = last; i > first; --i)
+        code_delete(code, i - 1);
+}
+
+size_t code_write_range(
+        struct code *code, uint32_t first, uint32_t last, char *dst, size_t len)
+{
+    assert(first < last);
+    const struct code_str *str = code_inc_str(code);
+
+    last = legion_min(last, str->len);
+    len = legion_min(len, last - first);
+    if (!len || first >= last) return 0;
+
+    memcpy(dst, str->str + first, len);
+    return len;
+}
+
+
+// -----------------------------------------------------------------------------
 // dbg
 // -----------------------------------------------------------------------------
 

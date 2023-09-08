@@ -26,7 +26,7 @@ struct ui_code_style
     struct { struct rgba bg; time_sys opaque, fade; } hl;
     struct { struct rgba fg, bg; } errors;
     struct rgba fg, comment, keyword, atom;
-    struct rgba current, box;
+    struct rgba current, select, box;
 };
 
 void ui_code_style_default(struct ui_style *);
@@ -47,8 +47,14 @@ struct ui_code
 
     time_sys edit;
     struct { uint32_t pos, row, col; } carret;
-    struct { vm_ip ip; uint32_t pos, row, col; } bp;
-    struct { uint32_t row, col, len; time_sys ts; } hl;
+    struct { uint32_t pos, row, col; vm_ip ip; } bp;
+    struct { uint32_t len, row, col; time_sys ts; } hl;
+
+    struct
+    {
+        bool active;
+        struct { uint32_t pos, row, col; } first, last;
+    } select;
 };
 
 struct ui_code ui_code_new(struct dim);

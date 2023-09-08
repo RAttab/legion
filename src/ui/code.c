@@ -39,6 +39,7 @@ void ui_code_style_default(struct ui_style *s)
         .atom = make_rgba(0xFF, 0xDE, 0xAD, 0xFF), // NavajoWhite
 
         .current = s->rgba.code.current,
+        .select = s->rgba.code.select,
         .box = s->rgba.box.border,
     };
 }
@@ -96,6 +97,32 @@ void ui_code_reset(struct ui_code *ui)
     ui_tooltip_hide(&ui->tooltip);
 }
 
+static void ui_code_select_begin(struct ui_code *ui)
+{
+    ui->select.active = true;
+    ui->select.first.pos = ui->select.last.pos = ui->carret.pos;
+    ui->select.first.row = ui->select.last.row = ui->carret.row;
+    ui->select.first.col = ui->select.last.col = ui->carret.col;
+}
+
+static void ui_code_select_move(struct ui_code *ui)
+{
+    if (!ui->select.active) return;
+    ui->select.last.pos = ui->carret.pos;
+    ui->select.last.row = ui->carret.row;
+    ui->select.last.col = ui->carret.col;
+}
+
+static void ui_code_select_end(struct ui_code *ui)
+{
+    ui->select.active = false;
+}
+
+static void ui_code_select_clear(struct ui_code *ui)
+{
+    memset(&ui->select, 0, sizeof(ui->select));
+}
+
 enum ui_code_update_flag : uint8_t
 {
     ui_code_update_nil = 0,
@@ -123,6 +150,8 @@ static void ui_code_update(struct ui_code *ui, enum ui_code_update_flag flag)
         ui_scroll_visible(&ui->scroll, rc.row, rc.col);
         ui->carret.row = rc.row;
         ui->carret.col = rc.col;
+
+        ui_code_select_move(ui);
     }
 }
 
@@ -183,6 +212,7 @@ void ui_code_goto(struct ui_code *ui, vm_ip ip)
 
     struct mod_index index = mod_index(ui->mod, ip);
     ui_code_highlight(ui, index.pos, index.len);
+    ui_code_select_clear(ui);
 }
 
 void ui_code_breakpoint(struct ui_code *ui, vm_ip ip)
@@ -290,6 +320,73 @@ void ui_code_render(
                 str, sizeof(str));
     }
 
+    do {
+        if (ui->select.first.pos == ui->select.last.pos) break;
+
+        struct rowcol it = {0}, end = {0};
+        if (ui->select.first.pos < ui->select.last.pos) {
+            it = make_rowcol(ui->select.first.row, ui->select.first.col);
+            end = make_rowcol(ui->select.last.row, ui->select.last.col);
+        }
+        else {
+            it = make_rowcol(ui->select.last.row, ui->select.last.col);
+            end = make_rowcol(ui->select.first.row, ui->select.first.col);
+        }
+
+        if (it.row >= row_last || end.row < row_first) break;
+        if (it.col >= col_last || end.col < col_first) break;
+
+        if (it.row < row_first) it = make_rowcol(row_first, 0);
+        if (end.row >= row_last) end = make_rowcol(row_last - 1, UINT16_MAX);
+        it.row -= row_first;
+        end.row -= row_first;
+
+        if (it.col > col_last) it.col = col_last;
+        if (end.col > col_last) end.col = col_last;
+        it.col = it.col < col_first ? col_first : it.col - col_first;
+        end.col = end.col < col_first ? col_first : end.col - col_first;
+
+        rgba_render(ui->s.select, renderer);
+
+        if (it.row == end.row) {
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = inner.base.pos.x + (it.col * cell.w),
+                                .y = inner.base.pos.y + (it.row * cell.h),
+                                .w = (end.col - it.col) * cell.w,
+                                .h = cell.h,
+                            }));
+            break;
+        }
+
+        if (it.col) {
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = inner.base.pos.x + (it.col * cell.w),
+                                .y = inner.base.pos.y + (it.row * cell.h),
+                                .w = ((col_last - col_first) - it.col) * cell.w,
+                                .h = cell.h,
+                            }));
+            it.row++;
+        }
+
+        if (end.col) {
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = inner.base.pos.x,
+                                .y = inner.base.pos.y + (end.row * cell.h),
+                                .w = end.col * cell.w,
+                                .h = cell.h,
+                            }));
+        }
+
+        if (it.row < end.row) {
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = inner.base.pos.x,
+                                .y = inner.base.pos.y + (it.row * cell.h),
+                                .w = (col_last - col_first) * cell.w,
+                                .h = (end.row - it.row) * cell.h,
+                            }));
+        }
+    } while (false);
+
     if (ui->bp.ip != vm_ip_nil && ui->bp.row >= row_first && ui->bp.row < row_last) {
         rgba_render(ui->s.bp.fg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -308,14 +405,13 @@ void ui_code_render(
     }
 
     if (ui->carret.row >= row_first && ui->carret.row < row_last) {
-        SDL_Rect rect = {
+        rgba_render(ui->s.current, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
             .x = inner.base.pos.x,
             .y = inner.base.pos.y + ((ui->carret.row - row_first) * cell.h),
             .w = layout->base.dim.w,
             .h = cell.h,
-        };
-        rgba_render(ui->s.current, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
+        }));
     }
 
     if (ui->hl.ts && ui->hl.row >= row_first && ui->hl.row < row_last) {
@@ -427,8 +523,9 @@ enum ui_ret ui_code_event_click(struct ui_code *ui)
     ui->carret.pos = code_pos_for(ui->code, row, col);
     if (in_margins) ui_code_breakpoint_at(ui, ui->carret.pos);
 
+    ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
-    return ui_nil;
+    return ui_consume;
 }
 
 enum ui_ret ui_code_event_move(
@@ -439,6 +536,7 @@ enum ui_ret ui_code_event_move(
     if (row) ui->carret.pos = code_move_row(ui->code, ui->carret.pos, row);
     if (col) ui->carret.pos = code_move_col(ui->code, ui->carret.pos, col);
 
+    ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
     return ui_consume;
 }
@@ -448,6 +546,7 @@ enum ui_ret ui_code_event_home(struct ui_code *ui, uint16_t mod)
     ui->carret.pos = mod & KMOD_CTRL ?
         0 : code_move_home(ui->code, ui->carret.pos);
 
+    ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
     return ui_consume;
 }
@@ -457,6 +556,7 @@ enum ui_ret ui_code_event_end(struct ui_code *ui, uint16_t mod)
     ui->carret.pos = mod & KMOD_CTRL ?
         code_len(ui->code) : code_move_end(ui->code, ui->carret.pos);
 
+    ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
     return ui_consume;
 }
@@ -493,11 +593,62 @@ enum ui_ret ui_code_event_undo(struct ui_code *ui, uint16_t mod)
     if (!ui->writable) return ui_nil;
     if (mod & KMOD_ALT) return ui_nil;
 
-    uint32_t pos = (mod & KMOD_SHIFT) ? code_redo(ui->code) : code_undo(ui->code);
-    if (pos == code_pos_nil) return ui_nil;
+    const bool redo = mod & KMOD_SHIFT;
+    const uint32_t pos = redo ? code_redo(ui->code) : code_undo(ui->code);
+
+    if (pos == code_pos_nil) {
+        ui_log(st_warn, "nothing to %s", redo ? "redo" : "undo");
+        return ui_consume;
+    }
 
     ui->carret.pos = pos;
     ui_code_update(ui, ui_code_update_all);
+    return ui_consume;
+}
+
+static enum ui_ret ui_code_event_copy(struct ui_code *ui, bool del)
+{
+    if (ui->select.first.pos == ui->select.last.pos) {
+        ui_log(st_warn, "nothing selected");
+        return ui_consume;
+    }
+
+    uint32_t first = legion_min(ui->select.first.pos, ui->select.last.pos);
+    uint32_t last = legion_max(ui->select.first.pos, ui->select.last.pos);
+    size_t len = last - first;
+
+    char *buffer = malloc(len);
+
+    size_t written = code_write_range(ui->code, first, last, buffer, len);
+    assert(written == len);
+
+    ui_clipboard_copy(buffer, len);
+    free(buffer);
+
+    ui_code_select_clear(ui);
+
+    if (!del) return ui_consume;
+
+    ui->carret.pos = first;
+    code_delete_range(ui->code, first, last);
+    ui_code_update(ui, ui_code_update_all);
+
+    return ui_consume;
+}
+
+static enum ui_ret ui_code_event_paste(struct ui_code *ui)
+{
+    if (!ui_clipboard_len()) {
+        ui_log(st_warn, "nothing to copy");
+        return ui_consume;
+    }
+
+    size_t len = ui_clipboard_len();
+    code_insert_range(ui->code, ui->carret.pos, ui_clipboard_str(), len);
+
+    ui->carret.pos += len;
+    ui_code_update(ui, ui_code_update_all);
+
     return ui_consume;
 }
 
@@ -536,7 +687,27 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 
     switch (ev->type)
     {
-    case SDL_MOUSEBUTTONUP: { return ui_code_event_click(ui); }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        if (ev->button.button != SDL_BUTTON_LEFT)
+            return ui_nil;
+
+        enum ui_ret ret = ui_code_event_click(ui);
+        if (ret) ui_code_select_begin(ui);
+        return ret;
+    }
+
+    case SDL_MOUSEMOTION: {
+        if (ev->button.button != SDL_BUTTON_LEFT)
+            return ui_nil;
+        return ui_code_event_click(ui);
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        if (ev->button.button == SDL_BUTTON_LEFT)
+            ui_code_select_end(ui);
+        return ui_nil;
+    }
 
     case SDL_KEYDOWN: {
         if (!ui->focused) return ui_nil;
@@ -552,7 +723,16 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
             case SDLK_LEFT:  { return ui_code_event_move(ui, mod, 0, -1); }
             case SDLK_RIGHT: { return ui_code_event_move(ui, mod, 0, +1); }
 
+            case SDLK_SPACE: {
+                ui->select.active ? ui_code_select_clear(ui) : ui_code_select_begin(ui);
+                return ui_consume;
+            }
+
             case 'z': { return ui_code_event_undo(ui, mod); }
+
+            case 'x': { return ui_code_event_copy(ui, true); }
+            case 'c': { return ui_code_event_copy(ui, false); }
+            case 'v': { return ui_code_event_paste(ui); }
 
             default: { return ui_nil; }
             }

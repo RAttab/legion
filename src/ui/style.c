@@ -81,6 +81,7 @@ void ui_style_default(void)
         s->rgba.code.comment = make_rgba(0x32, 0xCD, 0x32, 0xFF); // LimeGreen
         s->rgba.code.keyword = make_rgba(0x40, 0xE0, 0xD0, 0xFF); // Turquoise
         s->rgba.code.current = rgba_gray_a(0x55, 0x55);
+        s->rgba.code.select = rgba_gray_a(0xAA, 0xAA);
         s->rgba.code.highlight = make_rgba(0x00, 0x80, 0x00, 0xFF); // Green
         s->rgba.code.bp.fg = make_rgba(0xB2, 0x22, 0x22, 0xFF); // FireBrick
         s->rgba.code.bp.bg = make_rgba(0xB2, 0x22, 0x22, 0x55); // FireBrick
