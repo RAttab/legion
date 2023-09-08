@@ -209,13 +209,13 @@ static enum ui_ret ui_input_event_ins(struct ui_input *input, char key, uint16_t
 
 static enum ui_ret ui_input_event_copy(struct ui_input *input)
 {
-    ui_clipboard_copy(input->buf.len, input->buf.c);
+    ui_clipboard_copy(input->buf.c, input->buf.len);
     return ui_consume;
 }
 
 static enum ui_ret ui_input_event_paste(struct ui_input *input)
 {
-    input->buf.len = ui_clipboard_paste(ui_input_cap, input->buf.c);
+    input->buf.len = ui_clipboard_paste(input->buf.c, ui_input_cap);
     input->carret.col = input->buf.len;
     ui_input_view_update(input);
     return ui_consume;

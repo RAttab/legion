@@ -20,7 +20,7 @@ struct
 void ui_clipboard_init(void)
 {
     ui_clipboard.len = 0;
-    ui_clipboard.cap = 128;
+    ui_clipboard.cap = 1024;
     ui_clipboard.str = calloc(ui_clipboard.cap, sizeof(*ui_clipboard.str));
 }
 
@@ -29,7 +29,17 @@ void ui_clipboard_free(void)
     free(ui_clipboard.str);
 }
 
-size_t ui_clipboard_paste(size_t len, char *dst)
+size_t ui_clipboard_len(void)
+{
+    return ui_clipboard.len;
+}
+
+const char *ui_clipboard_str(void)
+{
+    return ui_clipboard.str;
+}
+
+size_t ui_clipboard_paste(char *dst, size_t len)
 {
     len = legion_min(len, ui_clipboard.len);
     memcpy(dst, ui_clipboard.str, len);
@@ -43,7 +53,7 @@ static void ui_clipboard_grow(size_t len)
     ui_clipboard.cap = len;
 }
 
-void ui_clipboard_copy(size_t len, const char *src)
+void ui_clipboard_copy(const char *src, size_t len)
 {
     ui_clipboard_grow(len);
     memcpy(ui_clipboard.str, src, len);
@@ -58,4 +68,9 @@ void ui_clipboard_copy_hex(uint64_t val)
     ui_clipboard.str[0] = '0';
     ui_clipboard.str[1] = 'x';
     str_utox(val, ui_clipboard.str + 2, ui_clipboard.len-2);
+}
+
+void ui_clipboard_clear(void)
+{
+    ui_clipboard.len = 0;
 }

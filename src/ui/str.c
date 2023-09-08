@@ -49,13 +49,13 @@ void ui_str_free(struct ui_str *str)
 
 void ui_str_copy(struct ui_str *str)
 {
-    ui_clipboard_copy(str->len, str->str);
+    ui_clipboard_copy(str->str, str->len);
 }
 
 void ui_str_paste(struct ui_str *str)
 {
     assert(str->cap);
-    str->len = ui_clipboard_paste(str->cap, (char *) str->str);
+    str->len = ui_clipboard_paste((char *) str->str, str->cap);
 }
 
 
