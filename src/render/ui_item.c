@@ -103,6 +103,12 @@ void ui_item_free(void *state)
     free(ui);
 }
 
+im_id ui_item_selected(void)
+{
+    struct ui_item *ui = ui_state(ui_view_item);
+    return ui_panel_is_visible(ui->panel) ? ui->id : 0;
+}
+
 void ui_item_show(im_id id, struct coord star)
 {
     struct ui_item *ui = ui_state(ui_view_item);

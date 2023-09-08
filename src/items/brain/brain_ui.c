@@ -187,7 +187,8 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
 
     if (state->breakpoint == vm_ip_nil) ui_set_nil(&ui->breakpoint_val);
     else ui_str_set_hex(ui_set(&ui->breakpoint_val), state->breakpoint);
-    ui_mods_breakpoint(state->mod_id, state->breakpoint);
+
+    ui_mods_debug(state->mod_id, state->debug, state->vm.ip, state->breakpoint);
 
     if (!state->msg.len) ui_set_nil(&ui->msg_len);
     else ui_str_set_u64(ui_set(&ui->msg_len), state->msg.len);

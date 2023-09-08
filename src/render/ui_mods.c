@@ -31,6 +31,8 @@ struct ui_mods_tab
     mod_id id;
     const struct mod *mod;
 
+    struct { bool attached; vm_ip ip; } debug;
+
     enum ui_mods_mode mode;
     struct ui_code code;
     struct ui_asm as;
@@ -48,6 +50,7 @@ struct ui_mods
     struct ui_button mode;
     struct ui_button build, publish;
     struct ui_button import, export;
+    struct ui_button load, attach, step;
     struct ui_button reset;
 
     struct
@@ -62,7 +65,7 @@ struct ui_mods
     struct {
         bool new;
         mod_id id; bool write;
-        vm_ip ip, bp;
+        vm_ip ip;
     } request;
 };
 
@@ -83,19 +86,22 @@ void ui_mods_alloc(struct ui_view_state *state)
         .new_val = ui_input_new(symbol_cap),
         .tree = ui_tree_new(make_dim(tree_w, ui_layout_inf), symbol_cap),
 
-        .mode = ui_button_new(ui_str_c("    ")),
+        .mode = ui_button_new(ui_str_c("code")),
         .build = ui_button_new(ui_str_c("build")),
         .publish = ui_button_new(ui_str_c("publish")),
         .import = ui_button_new(ui_str_c("import")),
         .export = ui_button_new(ui_str_c("export")),
+        .load = ui_button_new(ui_str_c("load")),
+        .attach = ui_button_new(ui_str_c("attach")),
+        .step = ui_button_new(ui_str_c("step")),
         .reset = ui_button_new(ui_str_c("reset")),
 
         .tabs = { .ui = ui_tabs_new(symbol_cap + 4, true) },
-        .request = { .ip = vm_ip_nil, .bp = vm_ip_nil },
+        .request = { .ip = vm_ip_nil },
     };
 
-    ui_str_setc(&ui->mode.str, "asm");
     ui->mode.s.align = ui_align_center;
+    ui->attach.s.align = ui_align_center;
 
     *state = (struct ui_view_state) {
         .state = ui,
@@ -126,8 +132,10 @@ static void ui_mods_free(void *state)
     ui_button_free(&ui->publish);
     ui_button_free(&ui->import);
     ui_button_free(&ui->export);
+    ui_button_free(&ui->load);
+    ui_button_free(&ui->attach);
+    ui_button_free(&ui->step);
     ui_button_free(&ui->reset);
-
 
     for (size_t i = 0; i < ui->tabs.cap; ++i) {
         struct ui_mods_tab *tab = ui->tabs.list + i;
@@ -205,6 +213,8 @@ static struct ui_mods_tab *ui_mods_tabs_alloc(
 
     tab->mode = ui_mods_code;
     tab->mod = nullptr;
+
+    tab->debug.ip = vm_ip_nil;
 
     if (!tab->init) {
         tab->code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf));
@@ -332,15 +342,19 @@ static void ui_mods_mode_goto(
     }
 }
 
-static void ui_mods_mode_breakpoint(
-        struct ui_mods *, struct ui_mods_tab *tab, vm_ip ip)
+static void ui_mods_mode_debug(
+        struct ui_mods *ui, struct ui_mods_tab *tab,
+        bool debug, vm_ip ip, vm_ip bp)
 {
-    switch (tab->mode)
-    {
-    case ui_mods_code: { ui_code_breakpoint(&tab->code, ip); break; }
-    case ui_mods_asm: { ui_asm_breakpoint(&tab->as, ip); break; }
-    default: { assert(false); }
-    }
+    tab->debug.attached = debug;
+    ui_str_setc(&ui->attach.str, debug ? "detach" : "attach");
+
+    ui->step.disabled = debug;
+    if (debug && ip != tab->debug.ip) ui_mods_mode_goto(ui, tab, ip);
+    tab->debug.ip = ip;
+
+    ui_code_breakpoint(&tab->code, bp);
+    ui_asm_breakpoint(&tab->as, bp);
 }
 
 
@@ -354,7 +368,6 @@ static void ui_mods_request_reset(struct ui_mods *ui)
     ui->request.write = false;
     ui->request.new = false;
     ui->request.ip = vm_ip_nil;
-    ui->request.bp = vm_ip_nil;
 }
 
 static struct ui_mods_tab *ui_mods_select(
@@ -394,15 +407,18 @@ void ui_mods_show(mod_id id, vm_ip ip)
     ui_show(ui_view_mods);
 }
 
-void ui_mods_breakpoint(mod_id id, vm_ip ip)
+void ui_mods_debug(mod_id id, bool debug, vm_ip ip, vm_ip bp)
 {
     struct ui_mods *ui = ui_state(ui_view_mods);
     if (!ui_panel_is_visible(ui->panel)) return;
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
-    if (!tab || tab->id != id || tab->write) return;
+    if (!tab || tab->id != id) {
+        ui_str_setc(&ui->attach.str, "attach");
+        return;
+    }
 
-    ui_mods_mode_breakpoint(ui, tab, ip);
+    ui_mods_mode_debug(ui, tab, debug, ip, bp);
 }
 
 
@@ -455,7 +471,6 @@ static void ui_mods_update_mod(struct ui_mods *ui)
     ui_mods_select(ui, tab->id, tab->write);
 
     if (ui->request.ip) ui_mods_mode_goto(ui, tab, ui->request.ip);
-    if (ui->request.bp) ui_mods_mode_breakpoint(ui, tab, ui->request.bp);
 
     ui->reset.disabled = !tab->write;
     ui->build.disabled = !tab->write;
@@ -471,6 +486,12 @@ static void ui_mods_update(void *state)
     ui_mods_update_tree(ui);
     ui_mods_update_mod(ui);
     ui_mods_tabs_update(ui);
+
+    struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
+    bool disabled =
+        im_id_item(ui_item_selected()) != item_brain ||
+        !tab || ui_code_modified(&tab->code);
+    ui->load.disabled = ui->step.disabled = ui->attach.disabled = disabled;
 
     struct dim dim = make_dim(ui->tree_w, ui_layout_inf);
     if (ui_mods_tabs_len(ui)) dim.w += ui->pad_w + ui->code_w;
@@ -611,6 +632,7 @@ static bool ui_mods_shortcuts(struct ui_mods *ui, SDL_Event *ev)
     case 'p': { return ui_mods_publish(ui, tab); }
     case 'i': { return ui_mods_import(ui, tab); }
     case 'e': { return ui_mods_export(ui, tab); }
+    case 's': { ui_item_io(io_dbg_step, item_brain, nullptr, 0); return true; }
     default: { return false; }
     }
 }
@@ -694,6 +716,27 @@ static bool ui_mods_event(void *state, SDL_Event *ev)
         return true;
     }
 
+
+    if ((ret = ui_button_event(&ui->load, ev))) {
+        if (ret != ui_action) return true;
+        vm_word args = tab->id;
+        ui_item_io(io_mod, item_brain, &args, 1);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->attach, ev))) {
+        if (ret != ui_action) return true;
+        enum io io = tab->debug.attached ? io_dbg_detach : io_dbg_attach;
+        ui_item_io(io, item_brain, nullptr, 0);
+        return true;
+    }
+
+    if ((ret = ui_button_event(&ui->step, ev))) {
+        if (ret != ui_action) return true;
+        ui_item_io(io_dbg_step, item_brain, nullptr, 0);
+        return true;
+    }
+
     if ((ret = ui_button_event(&ui->reset, ev))) {
         if (ret != ui_action) return true;
         ui_mods_reset(ui, tab);
@@ -750,6 +793,11 @@ static void ui_mods_render(
 
         ui_button_render(&ui->import, layout, renderer);
         ui_button_render(&ui->export, layout, renderer);
+
+        ui_layout_sep_col(layout);
+        ui_button_render(&ui->load, layout, renderer);
+        ui_button_render(&ui->attach, layout, renderer);
+        ui_button_render(&ui->step, layout, renderer);
 
         ui_layout_dir(layout, ui_layout_right_left);
         ui_button_render(&ui->reset, layout, renderer);

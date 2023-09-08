@@ -163,7 +163,7 @@ void ui_tapes_show(enum item);
 struct ui_mods;
 void ui_mods_alloc(struct ui_view_state *);
 void ui_mods_show(mod_id, vm_ip);
-void ui_mods_breakpoint(mod_id, vm_ip);
+void ui_mods_debug(mod_id, bool debug, vm_ip ip, vm_ip bp);
 
 struct ui_stars;
 void ui_stars_alloc(struct ui_view_state *);
@@ -183,6 +183,7 @@ void ui_star_show(struct coord);
 
 struct ui_item;
 void ui_item_alloc(struct ui_view_state *);
+im_id ui_item_selected(void);
 void ui_item_show(im_id id, struct coord star);
 bool ui_item_io(enum io, enum item, const vm_word *, size_t);
 
