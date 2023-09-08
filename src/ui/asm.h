@@ -24,7 +24,7 @@ struct ui_asm_style
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
     struct rgba fg, keyword, symbol;
-    struct rgba current, highlight;
+    struct rgba current, select, highlight;
 };
 
 void ui_asm_style_default(struct ui_style *);
@@ -44,6 +44,7 @@ struct ui_asm
     struct rowcol carret;
     struct { vm_ip ip; uint32_t row; } bp;
     struct { uint32_t row; time_sys ts; } hl;
+    struct { bool active; struct rowcol first, last; } select;
 };
 
 struct ui_asm ui_asm_new(struct dim);

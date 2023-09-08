@@ -40,6 +40,11 @@ struct asm_line
     vm_word value;
     struct symbol symbol;
 };
+
+struct asm_line_index { struct { size_t pos, len; } open, op, arg, close; size_t len; };
+struct asm_line_index asm_line_str(const struct asm_line *, char *dst, size_t len);
+size_t asm_line_len(const struct asm_line *);
+
 typedef const struct asm_line *asm_it;
 asm_it asm_at(const struct assembly *, uint32_t row);
 

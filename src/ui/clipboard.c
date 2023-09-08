@@ -4,6 +4,7 @@
 */
 
 #include "clipboard.h"
+#include "render/ui.h"
 
 
 // -----------------------------------------------------------------------------
@@ -58,6 +59,8 @@ void ui_clipboard_copy(const char *src, size_t len)
     ui_clipboard_grow(len);
     memcpy(ui_clipboard.str, src, len);
     ui_clipboard.len = len;
+
+    ui_log(st_info, "%zu characters copied", len);
 }
 
 void ui_clipboard_copy_hex(uint64_t val)

@@ -63,6 +63,59 @@ asm_it asm_at(const struct assembly *as, uint32_t row)
     return as->line.list + row;
 }
 
+struct asm_line_index asm_line_str(const struct asm_line *line, char *base, size_t len)
+{
+    char *it = base;
+    char *const end = it + len;
+    struct asm_line_index index = { 0 };
+
+    {
+        index.open.pos = it - base;
+        *it = '('; it++;
+        index.open.len = 1;
+    }
+
+    {
+        index.op.pos = it - base;
+
+        const char *op = vm_op_str(line->op);
+        size_t len = strnlen(op, 6);
+
+        index.op.len = legion_min(len, (uintptr_t) (end - it));
+        memcpy(it, op, index.op.len);
+        it += index.op.len;
+    }
+
+    {
+        char arg[10] = {0};
+        size_t len = vm_op_arg_fmt(line->arg, line->value, arg, sizeof(arg));
+
+        if (len) {
+            *it = ' '; ++it;
+
+            index.arg.pos = it - base;
+            index.arg.len = legion_min(len, (uintptr_t) (end - it));
+            memcpy(it, arg, index.arg.len);
+            it += index.arg.len;
+        }
+    }
+
+    {
+        index.close.pos = it - base;
+        *it = ')'; it++;
+        index.close.len = 1;
+    }
+
+    index.len = it - base;
+    return index;
+}
+
+size_t asm_line_len(const struct asm_line *line)
+{
+    char str[32] = {0};
+    return asm_line_str(line, str, sizeof(str)).len;
+}
+
 struct asm_jmp_it asm_jmp_begin(
         const struct assembly *as, uint32_t min, uint32_t max)
 {

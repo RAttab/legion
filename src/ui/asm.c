@@ -32,6 +32,7 @@ void ui_asm_style_default(struct ui_style *s)
         .symbol = make_rgba(0xFF, 0xDE, 0xAD, 0xFF), // NavajoWhite
 
         .current = s->rgba.code.current,
+        .select = s->rgba.code.select,
         .highlight = s->rgba.code.highlight,
     };
 }
@@ -73,6 +74,30 @@ void ui_asm_reset(struct ui_asm *ui)
 
     memset(&ui->carret, 0, sizeof(ui->carret));
     ui_scroll_update_rows(&ui->scroll, 0);
+}
+
+static void ui_asm_select_begin(struct ui_asm *ui)
+{
+    ui->select.active = true;
+    ui->select.first.row = ui->select.last.row = ui->carret.row;
+    ui->select.first.col = ui->select.last.col = ui->carret.col;
+}
+
+static void ui_asm_select_move(struct ui_asm *ui)
+{
+    if (!ui->select.active) return;
+    ui->select.last.row = ui->carret.row;
+    ui->select.last.col = ui->carret.col;
+}
+
+static void ui_asm_select_end(struct ui_asm *ui)
+{
+    ui->select.active = false;
+}
+
+static void ui_asm_select_clear(struct ui_asm *ui)
+{
+    memset(&ui->select, 0, sizeof(ui->select));
 }
 
 void ui_asm_set_mod(struct ui_asm *ui, const struct mod *mod)
@@ -160,117 +185,128 @@ void ui_asm_render(
     const uint32_t row_first = ui_scroll_first_row(&ui->scroll);
     const uint32_t row_last = ui_scroll_last_row(&ui->scroll);
 
-    if (ui->bp.ip != vm_ip_nil && ui->bp.row >= row_first && ui->bp.row < row_last) {
-        rgba_render(ui->s.bp.fg, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-            .x = inner.base.pos.x + (ui_asm_row_cols * cell.w),
-            .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
-            .w = cell.w, .h = cell.h,
-        }));
 
-        rgba_render(ui->s.bp.bg, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-            .x = inner.base.pos.x + ((ui_asm_row_cols + ui_asm_margin_cols) * cell.w),
-            .y = inner.base.pos.y + ((ui->bp.row - row_first) * cell.h),
-            .w = inner.base.dim.w - ((ui_asm_row_cols + ui_asm_margin_cols) * cell.w),
-            .h = cell.h,
-        }));
+    struct { struct rowcol first, last; } select = {0};
+    {
+        int cmp = rowcol_cmp(ui->select.first, ui->select.last);
+        if (cmp < 0) { select.first = ui->select.first; select.last = ui->select.last; }
+        if (cmp > 0) { select.first = ui->select.last; select.last = ui->select.first; }
     }
 
-    if (ui->carret.row >= row_first && ui->carret.row < row_last) {
-        SDL_Rect rect = {
-            .x = inner.base.pos.x + ((ui_asm_row_cols + ui_asm_margin_cols) * cell.w),
-            .y = inner.base.pos.y + ((ui->carret.row - row_first) * cell.h),
-            .w = inner.base.dim.w - (ui_asm_row_cols * cell.w),
-            .h = cell.h,
+    for (size_t row = row_first; row < row_last; ++row) {
+        asm_it it = asm_at(ui->as, row);
+
+        char line[ui_asm_line_cols] = {0};
+        struct asm_line_index index = asm_line_str(it, line, sizeof(line));
+
+        const SDL_Point base = {
+            .x = inner.base.pos.x,
+            .y = inner.base.pos.y + ((row - row_first) * cell.h)
         };
-        rgba_render(ui->s.current, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
-    }
+        const int16_t x1 = base.x + inner.base.dim.w;
 
-    if (ui->hl.ts && ui->hl.row >= row_first && ui->hl.row < row_last) {
-        struct rgba bg = ui->s.hl.bg;
-        time_sys delta = ts_now() - ui->hl.ts;
-
-        if (delta > ui->s.hl.opaque) {
-            delta -= ui->s.hl.opaque;
-            if (delta > ui->s.hl.fade)
-                memset(&ui->hl, 0, sizeof(ui->hl));
-            else bg.a = 0xFF - ((bg.a * delta) / ui->s.hl.fade);
-        }
-
-        if (ui->hl.ts) {
-            rgba_render(bg, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                .x = inner.base.pos.x + (ui_asm_line_col * cell.w),
-                .y = inner.base.pos.y + ((ui->hl.row - row_first) * cell.h),
-                .w = ui_asm_line_cols * cell.w,
-                .h = cell.h,
-            }));
-        }
-    }
-
-    asm_it end = asm_at(ui->as, row_last);
-    SDL_Point pos = { .x = inner.base.pos.x, .y = inner.base.pos.y };
-    for (asm_it it = asm_at(ui->as, row_first); it < end; ++it) {
+        const int16_t row_x = base.x;
+        const int16_t margin_x = row_x + (ui_asm_row_cols * cell.w);
+        const int16_t jmp_x = margin_x + (ui_asm_margin_cols * cell.w);
+        const int16_t line_x = base.x + (ui_asm_line_col * cell.w);
+        const int16_t symbol_x = line_x + (ui_asm_line_cols * cell.w);
 
         {
             rgba_render(ui->s.row.bg, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                .x = pos.x, .y = pos.y, .w = cell.w * ui_asm_row_cols, .h = cell.h }));
+                .x = row_x, .y = base.y, .h = cell.h,
+                .w = cell.w * ui_asm_row_cols }));
 
             char str[ui_asm_row_cols] = {0};
             str_utox(it->ip, str, sizeof(str));
+
+            SDL_Point pos = { .x = row_x, .y = base.y };
             rgba_render(ui->s.row.fg, renderer);
             font_render(ui->s.font, renderer, pos, ui->s.row.fg, str, sizeof(str));
-
-            pos.x += (ui_asm_row_cols + 1) * cell.w;
         }
 
-        pos.x += ui_asm_jmp_cols * cell.w;
+        do {
+            if (row < select.first.row || row > select.last.row) break;
 
-        {
-            SDL_Point pt = pos;
-            size_t len = 0;
+            size_t from = 0, to = index.len;
+            if (row == select.first.row) from = select.first.col;
+            if (row == select.last.row) to = select.last.col;
 
-            const char *op = vm_op_str(it->op);
-            size_t op_len = strnlen(op, 6);
+            rgba_render(ui->s.select, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                .x = line_x + (from * cell.w), .y = base.y, .h = cell.h,
+                .w = (to - from) * cell.w }));
+        } while (false);
 
-            char arg[10] = {0};
-            size_t arg_len = vm_op_arg_fmt(it->arg, it->value, arg, sizeof(arg));
+        if (ui->bp.ip != vm_ip_nil && ui->bp.row == row) {
+            rgba_render(ui->s.bp.fg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                .x = margin_x, .y = base.y, .w = cell.w, .h = cell.h }));
 
-            rgba_render(ui->s.row.fg, renderer);
-            font_render(ui->s.font, renderer, pt, ui->s.fg, "(", 1);
-            pt.x += cell.w; len++;
+            rgba_render(ui->s.bp.bg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                .x = jmp_x, .y = base.y, .w = x1 - jmp_x, .h = cell.h }));
+        }
 
-            rgba_render(ui->s.keyword, renderer);
-            font_render(ui->s.font, renderer, pt, ui->s.keyword, op, op_len);
-            pt.x += op_len * cell.w; len += op_len;
+        if (ui->carret.row == row) {
+            rgba_render(ui->s.current, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                .x = jmp_x, .y = base.y, .w = x1 - jmp_x, .h = cell.h }));
+        }
 
-            if (arg_len) {
-                pt.x += cell.w; len++;
+        if (ui->hl.ts && ui->hl.row == row) {
+            struct rgba bg = ui->s.hl.bg;
+            time_sys delta = ts_now() - ui->hl.ts;
 
-                rgba_render(ui->s.fg, renderer);
-                font_render(ui->s.font, renderer, pt, ui->s.fg, arg, arg_len);
-                pt.x += arg_len * cell.w; len += arg_len;
+            if (delta > ui->s.hl.opaque) {
+                delta -= ui->s.hl.opaque;
+                if (delta > ui->s.hl.fade)
+                    memset(&ui->hl, 0, sizeof(ui->hl));
+                else bg.a = 0xFF - ((bg.a * delta) / ui->s.hl.fade);
             }
 
-            rgba_render(ui->s.row.fg, renderer);
-            font_render(ui->s.font, renderer, pt, ui->s.fg, ")", 1);
-            len++;
+            if (ui->hl.ts) {
+                rgba_render(bg, renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                    .x = line_x, .y = base.y, .h = cell.h,
+                    .w = ui_asm_line_cols * cell.w }));
+            }
+        }
 
-            pos.x += (ui_asm_line_cols + ui_asm_margin_cols) * cell.w;
+        {
+            SDL_Point pos = { .x = 0, .y = base.y };
+
+            {
+                pos.x = line_x + (index.open.pos * cell.w);
+                font_render(ui->s.font, renderer, pos, ui->s.fg,
+                        line + index.open.pos, index.open.len);
+            }
+
+            {
+                pos.x = line_x + (index.op.pos * cell.w);
+                font_render(ui->s.font, renderer, pos, ui->s.keyword,
+                        line + index.op.pos, index.op.len);
+            }
+
+            if (index.arg.len) {
+                pos.x = line_x + (index.arg.pos * cell.w);
+                font_render(ui->s.font, renderer, pos, ui->s.fg,
+                        line + index.arg.pos, index.arg.len);
+            }
+
+            {
+                pos.x = line_x + (index.close.pos * cell.w);
+                font_render(ui->s.font, renderer, pos, ui->s.fg,
+                        line + index.close.pos, index.close.len);
+            }
         }
 
         if (it->symbol.len) {
-            rgba_render(ui->s.symbol, renderer);
+            SDL_Point pos = { .x = symbol_x, .y = base.y };
             font_render(
                     ui->s.font, renderer, pos, ui->s.symbol,
                     it->symbol.c, it->symbol.len);
         }
-
-        pos.y += cell.h;
-        pos.x = inner.base.pos.x;
     }
 
     struct asm_jmp_it jmp = asm_jmp_begin(ui->as, row_first, row_last);
@@ -350,12 +386,19 @@ enum ui_ret ui_asm_event_click(struct ui_asm *ui)
     ui->carret.col = (cursor.x - rect.x) / ui->s.font->glyph_w;
     if (ui->carret.col >= ui_asm_line_col) {
         ui->carret.col -= ui_asm_line_col;
-        ui->carret.col = legion_max(ui->carret.col, ui_asm_row_cols);
+
+        size_t line_cols = asm_line_len(asm_at(ui->as, ui->carret.row));
+        ui->carret.col = legion_min(ui->carret.col, line_cols);
     }
-    else { ui->carret.col = 0; ui_asm_breakpoint_at(ui, ui->carret.row); }
+    else {
+        if (ui->carret.col < ui_asm_row_cols + ui_asm_margin_cols)
+            ui_asm_breakpoint_at(ui, ui->carret.row);
+        ui->carret.col = 0;
+    }
 
     ui_scroll_visible(&ui->scroll, ui->carret.row, ui->carret.col);
-    return ui_nil;
+    ui_asm_select_move(ui);
+    return ui_consume;
 }
 
 enum ui_ret ui_asm_event_move(
@@ -374,22 +417,27 @@ enum ui_ret ui_asm_event_move(
     }
 
     else {
+        size_t row_cap(void) { return asm_line_len(asm_at(ui->as, ui->carret.row)); }
+
         if (col < 0) {
             if (ui->carret.col) ui->carret.col--;
-            else { row = -1; ui->carret.col = ui_asm_line_cols; }
+            else { row = -1; ui->carret.col = row_cap(); }
         }
 
         if (col > 0) {
-            if (ui->carret.col < ui_asm_line_cols) ui->carret.col++;
+            if (ui->carret.col < row_cap()) ui->carret.col++;
             else { row = +1; ui->carret.col = 0; }
         }
 
         if (row < 0 && ui->carret.row) ui->carret.row--;
         if (row > 0 && ui->carret.row < asm_rows(ui->as) - 1)
             ui->carret.row++;
+
+        if (row) ui->carret.col = legion_min(ui->carret.col, row_cap());
     }
 
     ui_scroll_visible(&ui->scroll, ui->carret.row, ui->carret.col);
+    ui_asm_select_move(ui);
     return ui_consume;
 }
 
@@ -399,6 +447,7 @@ enum ui_ret ui_asm_event_home(struct ui_asm *ui, uint16_t mod)
     if (mod & KMOD_CTRL) ui->carret.row = 0;
 
     ui_scroll_visible(&ui->scroll, ui->carret.row, ui->carret.col);
+    ui_asm_select_move(ui);
     return ui_consume;
 }
 
@@ -409,6 +458,41 @@ enum ui_ret ui_asm_event_end(struct ui_asm *ui, uint16_t mod)
         ui->carret.row = asm_rows(ui->as) - 1;
 
     ui_scroll_visible(&ui->scroll, ui->carret.row, ui->carret.col);
+    ui_asm_select_move(ui);
+    return ui_consume;
+}
+
+static enum ui_ret ui_asm_event_copy(struct ui_asm *ui)
+{
+    struct rowcol first, last;
+    int cmp = rowcol_cmp(ui->select.first, ui->select.last);
+    if (!cmp) { ui_log(st_warn, "nothing selected"); return ui_consume; }
+    else if (cmp < 0) { first = ui->select.first; last = ui->select.last; }
+    else if (cmp > 0) { first = ui->select.last; last = ui->select.first; }
+    ui_asm_select_clear(ui);
+
+    size_t cap = (last.row - first.row) * ui_asm_line_cols + (last.col - first.col);
+    char *buffer = malloc(cap); char *it = buffer;
+
+    for (size_t row = first.row; row <= last.row; ++row) {
+        char line[ui_asm_line_cols] = {0};
+        struct asm_line_index index = asm_line_str(
+                asm_at(ui->as, row), line, sizeof(line));
+
+        size_t from = 0, to = index.len + 1;
+        if (row == first.row) from = first.col;
+        if (row == last.row) to = last.col;
+
+        bool eol = false;
+        if (to == index.len + 1) { eol = true; to--; }
+
+        memcpy(it, line + from, to - from); it += to - from;
+        if (eol) { *it = '\n'; ++it; }
+    }
+
+    ui_clipboard_copy(buffer, it - buffer);
+    free(buffer);
+
     return ui_consume;
 }
 
@@ -423,7 +507,27 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 
     switch (ev->type)
     {
-    case SDL_MOUSEBUTTONUP: { return ui_asm_event_click(ui); }
+
+    case SDL_MOUSEBUTTONDOWN: {
+        if (ev->button.button != SDL_BUTTON_LEFT)
+            return ui_nil;
+
+        enum ui_ret ret = ui_asm_event_click(ui);
+        if (ret) ui_asm_select_begin(ui);
+        return ret;
+    }
+
+    case SDL_MOUSEMOTION: {
+        if (ev->button.button != SDL_BUTTON_LEFT)
+            return ui_nil;
+        return ui_asm_event_click(ui);
+    }
+
+    case SDL_MOUSEBUTTONUP: {
+        if (ev->button.button == SDL_BUTTON_LEFT)
+            ui_asm_select_end(ui);
+        return ui_nil;
+    }
 
     case SDL_KEYDOWN: {
         if (!ui->focused) return ui_nil;
@@ -439,6 +543,17 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 
         case SDLK_HOME: { return ui_asm_event_home(ui, mod); }
         case SDLK_END: { return ui_asm_event_end(ui, mod); }
+
+        case SDLK_SPACE: {
+            if (!(mod & KMOD_CTRL)) return ui_nil;
+            ui->select.active ? ui_asm_select_clear(ui) : ui_asm_select_begin(ui);
+            return ui_consume;
+        }
+
+        case 'c': {
+            if (!(mod & KMOD_CTRL)) return ui_nil;
+            return ui_asm_event_copy(ui);
+        }
 
         default: { return ui_nil; }
         }
