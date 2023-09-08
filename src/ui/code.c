@@ -320,73 +320,6 @@ void ui_code_render(
                 str, sizeof(str));
     }
 
-    do {
-        if (ui->select.first.pos == ui->select.last.pos) break;
-
-        struct rowcol it = {0}, end = {0};
-        if (ui->select.first.pos < ui->select.last.pos) {
-            it = make_rowcol(ui->select.first.row, ui->select.first.col);
-            end = make_rowcol(ui->select.last.row, ui->select.last.col);
-        }
-        else {
-            it = make_rowcol(ui->select.last.row, ui->select.last.col);
-            end = make_rowcol(ui->select.first.row, ui->select.first.col);
-        }
-
-        if (it.row >= row_last || end.row < row_first) break;
-        if (it.col >= col_last || end.col < col_first) break;
-
-        if (it.row < row_first) it = make_rowcol(row_first, 0);
-        if (end.row >= row_last) end = make_rowcol(row_last - 1, UINT16_MAX);
-        it.row -= row_first;
-        end.row -= row_first;
-
-        if (it.col > col_last) it.col = col_last;
-        if (end.col > col_last) end.col = col_last;
-        it.col = it.col < col_first ? col_first : it.col - col_first;
-        end.col = end.col < col_first ? col_first : end.col - col_first;
-
-        rgba_render(ui->s.select, renderer);
-
-        if (it.row == end.row) {
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = inner.base.pos.x + (it.col * cell.w),
-                                .y = inner.base.pos.y + (it.row * cell.h),
-                                .w = (end.col - it.col) * cell.w,
-                                .h = cell.h,
-                            }));
-            break;
-        }
-
-        if (it.col) {
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = inner.base.pos.x + (it.col * cell.w),
-                                .y = inner.base.pos.y + (it.row * cell.h),
-                                .w = ((col_last - col_first) - it.col) * cell.w,
-                                .h = cell.h,
-                            }));
-            it.row++;
-        }
-
-        if (end.col) {
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = inner.base.pos.x,
-                                .y = inner.base.pos.y + (end.row * cell.h),
-                                .w = end.col * cell.w,
-                                .h = cell.h,
-                            }));
-        }
-
-        if (it.row < end.row) {
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = inner.base.pos.x,
-                                .y = inner.base.pos.y + (it.row * cell.h),
-                                .w = (col_last - col_first) * cell.w,
-                                .h = (end.row - it.row) * cell.h,
-                            }));
-        }
-    } while (false);
-
     if (ui->bp.ip != vm_ip_nil && ui->bp.row >= row_first && ui->bp.row < row_last) {
         rgba_render(ui->s.bp.fg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
@@ -436,8 +369,47 @@ void ui_code_render(
         }
     }
 
+    struct { struct rowcol first, last; bool active; } select = {0};
+    {
+        select.active = ui->select.first.pos != ui->select.last.pos;
+        if (ui->select.first.pos < ui->select.last.pos) {
+            select.first = make_rowcol(ui->select.first.row, ui->select.first.col);
+            select.last = make_rowcol(ui->select.last.row, ui->select.last.col);
+        }
+        else {
+            select.first = make_rowcol(ui->select.last.row, ui->select.last.col);
+            select.last = make_rowcol(ui->select.first.row, ui->select.first.col);
+        }
+    }
+
     struct code_it it = code_begin(ui->code, row_first);
+    uint32_t cols = code_next_cols(ui->code, &it);
+    uint32_t prev = -1U;
+
     while (code_step(ui->code, &it) && it.row < row_last) {
+        const SDL_Point base = {
+            .x = inner.base.pos.x,
+            .y = inner.base.pos.y + ((it.row - row_first) * cell.h)
+        };
+
+        if (it.row != prev) {
+            prev = it.row;
+
+            if (select.active && it.row >= select.first.row && it.row <= select.last.row) {
+                size_t from = 0, to = cols;
+                if (it.row == select.first.row) from = select.first.col;
+                if (it.row == select.last.row) to = select.last.col;
+                if (!(to - from)) to++;
+
+                rgba_render(ui->s.select, renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                    .x = base.x + (from * cell.w), .y = base.y,
+                    .w = (to - from) * cell.w, .h = cell.h }));
+            }
+        }
+
+
+        if (it.eol) { cols = code_next_cols(ui->code, &it); continue; }
         if (it.col + it.len <= col_first || it.col >= col_last) continue;
 
         const ast_it node = code_it_ast_node(&it);
@@ -448,10 +420,7 @@ void ui_code_render(
         const uint32_t len = legion_min(it.len, col_last - it.col) - first;
         assert(len <= it.len);
 
-        SDL_Point pos = {
-            .x = inner.base.pos.x + ((col - col_first) * cell.w),
-            .y = inner.base.pos.y + ((it.row - row_first) * cell.h),
-        };
+        SDL_Point pos = {.x = base.x + ((col - col_first) * cell.w), .y = base.y };
 
         if (log) {
             SDL_Rect rect = {

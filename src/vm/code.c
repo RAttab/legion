@@ -430,6 +430,21 @@ done:
     };
 }
 
+size_t code_next_cols(struct code *code, struct code_it *it)
+{
+    size_t cols = 0;
+    size_t pos = it->pos + it->len;
+    struct code_str *str = it->node;
+    struct code_str *str_end = code->str.list + code->str.len;
+
+    for (; str < str_end; ++str, pos = 0) {
+        while (unlikely(pos < str->len) && str->str[pos] != '\n') { pos++; cols++; }
+        if (str->str[pos] == '\n') break;
+    }
+
+    return cols;
+}
+
 bool code_step(struct code *code, struct code_it *it)
 {
     struct code_str *str = it->node;
@@ -438,9 +453,10 @@ bool code_step(struct code *code, struct code_it *it)
     uint32_t old = it->pos;
     if (it->len) it->pos += it->len;
     if (it->ast.node && it->ast.node->pos == old) ++it->ast.node;
+
     it->str = nullptr;
     it->len = 0;
-
+    it->eol = false;
     it->ast.use_node = false;
     it->ast.use_log = false;
 
@@ -454,7 +470,9 @@ bool code_step(struct code *code, struct code_it *it)
 
     for (; str < str_end; ++str) {
 
-        while (unlikely(it->pos < str->len) && str_is_space(str->str[it->pos]))
+        while ( unlikely(it->pos < str->len) &&
+                str_is_space(str->str[it->pos]) &&
+                str->str[it->pos] != '\n')
             it->pos++;
 
         if (unlikely(it->pos == str->len)) {
@@ -463,6 +481,13 @@ bool code_step(struct code *code, struct code_it *it)
             it->ast.node = nullptr;
             it->ast.log = nullptr;
             continue;
+        }
+
+        if (str->str[it->pos] == '\n') {
+            it->eol = true;
+            it->len = 1;
+            update_rc();
+            break;
         }
 
         if (unlikely(!str->ast.node)) {

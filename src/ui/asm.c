@@ -225,9 +225,7 @@ void ui_asm_render(
             font_render(ui->s.font, renderer, pos, ui->s.row.fg, str, sizeof(str));
         }
 
-        do {
-            if (row < select.first.row || row > select.last.row) break;
-
+        if (row >= select.first.row && row <= select.last.row) {
             size_t from = 0, to = index.len;
             if (row == select.first.row) from = select.first.col;
             if (row == select.last.row) to = select.last.col;
@@ -236,7 +234,7 @@ void ui_asm_render(
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                 .x = line_x + (from * cell.w), .y = base.y, .h = cell.h,
                 .w = (to - from) * cell.w }));
-        } while (false);
+        }
 
         if (ui->bp.ip != vm_ip_nil && ui->bp.row == row) {
             rgba_render(ui->s.bp.fg, renderer);

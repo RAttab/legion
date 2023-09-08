@@ -26,6 +26,7 @@ struct code_it
 
     uint32_t len;
     const char *str;
+    bool eol;
 
     struct {
         ast_it node; bool use_node;
@@ -67,6 +68,7 @@ uint32_t code_redo(struct code *);
 
 struct code_it code_begin(struct code *, uint32_t row);
 bool code_step(struct code *, struct code_it *);
+size_t code_next_cols(struct code *, struct code_it *);
 
 struct rowcol code_rowcol(const struct code *);
 struct rowcol code_rowcol_for(const struct code *, uint32_t pos);
