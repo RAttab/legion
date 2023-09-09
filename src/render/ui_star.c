@@ -54,8 +54,7 @@ struct ui_star
 
     struct ui_label energy, energy_val;
     struct ui_label elem, elem_val;
-
-    struct ui_button control, factory, logistic;
+    struct ui_tabs tabs;
 
     struct ui_tree control_list, factory_list;
 
@@ -91,6 +90,8 @@ enum
     ui_star_elems_total_len = ui_star_elems_col_len * 5 + 4,
 };
 
+enum ui_star_tabs { ui_star_control = 1, ui_star_factory, ui_star_logistics, };
+
 void ui_star_alloc(struct ui_view_state *state)
 {
     struct ui_star *ui = calloc(1, sizeof(*ui));
@@ -115,9 +116,7 @@ void ui_star_alloc(struct ui_view_state *state)
         .elem = ui_label_new(ui_str_c(ui_star_elems[0])),
         .elem_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .control = ui_button_new(ui_str_c("control")),
-        .factory = ui_button_new(ui_str_c("factory")),
-        .logistic = ui_button_new(ui_str_c("logistic")),
+        .tabs = ui_tabs_new(9, false),
 
         .control_list = ui_tree_new(
                 make_dim(ui_layout_inf, ui_layout_inf), im_id_str_len),
@@ -198,12 +197,15 @@ void ui_star_alloc(struct ui_view_state *state)
         },
     };
 
-    ui->control.disabled = true;
-
     size_t goto_width = (ui->panel->w.dim.w - ui_st.font.dim.w) / 3;
     ui->goto_map.w.dim.w = goto_width;
     ui->goto_factory.w.dim.w = goto_width;
     ui->goto_log.w.dim.w = goto_width;
+
+    ui_str_setc(ui_tabs_add(&ui->tabs, ui_star_control), "control");
+    ui_str_setc(ui_tabs_add(&ui->tabs, ui_star_factory), "factory");
+    ui_str_setc(ui_tabs_add(&ui->tabs, ui_star_logistics), "logistics");
+    ui_tabs_select(&ui->tabs, ui_star_control);
 
     ui->pills.toggle.w.dim.w = ui_layout_inf;
     ui->workers.toggle.w.dim.w = ui_layout_inf;
@@ -245,9 +247,7 @@ static void ui_star_free(void *state)
     ui_label_free(&ui->elem);
     ui_label_free(&ui->elem_val);
 
-    ui_button_free(&ui->control);
-    ui_button_free(&ui->factory);
-    ui_button_free(&ui->logistic);
+    ui_tabs_free(&ui->tabs);
 
     ui_tree_free(&ui->control_list);
     ui_tree_free(&ui->factory_list);
@@ -485,7 +485,7 @@ static void ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
 static bool ui_star_event(void *state, SDL_Event *ev)
 {
     struct ui_star *ui = state;
-    
+
     if (ev->type == render.event)
         ui_star_event_user(ui, ev);
 
@@ -514,59 +514,55 @@ static bool ui_star_event(void *state, SDL_Event *ev)
         return true;
     }
 
-    if ((ret = ui_button_event(&ui->control, ev))) {
-        if (ret != ui_action) return true;
-        ui->control.disabled = true;
-        ui->factory.disabled = ui->logistic.disabled = false;
-        return true;
+    if ((ret = ui_tabs_event(&ui->tabs, ev))) return ret;
+
+    switch (ui_tabs_selected(&ui->tabs))
+    {
+
+    case ui_star_control: {
+        if ((ret = ui_tree_event(&ui->control_list, ev))) {
+            if (ret != ui_action) return true;
+            im_id id = ui->control_list.selected;
+            if (ret == ui_action && im_id_seq(id))
+                ui_item_show(id, ui->id);
+            return true;
+        }
+        break;
     }
 
-    if ((ret = ui_button_event(&ui->factory, ev))) {
-        if (ret != ui_action) return true;
-        ui->factory.disabled = true;
-        ui->control.disabled = ui->logistic.disabled = false;
-        return true;
+    case ui_star_factory: {
+        if ((ret = ui_tree_event(&ui->factory_list, ev))) {
+            if (ret != ui_action) return true;
+            im_id id = ui->factory_list.selected;
+            if (ret == ui_action && im_id_seq(id))
+                ui_item_show(id, ui->id);
+            return true;
+        }
+        break;
     }
 
-    if ((ret = ui_button_event(&ui->logistic, ev))) {
-        if (ret != ui_action) return true;
-        ui->logistic.disabled = true;
-        ui->control.disabled = ui->factory.disabled = false;
-        return true;
+    case ui_star_logistics: {
+        if ((ret = ui_button_event(&ui->pills.toggle, ev))) {
+            if (ret != ui_action) return true;
+            ui_pills_show(ui->id);
+            return true;
+        }
+
+        if ((ret = ui_button_event(&ui->workers.toggle, ev))) {
+            if (ret != ui_action) return true;
+            ui_workers_show(ui->id);
+            return true;
+        }
+
+        if ((ret = ui_button_event(&ui->energy_toggle, ev))) {
+            if (ret != ui_action) return true;
+            ui_energy_show(ui->id);
+            return true;
+        }
+        break;
     }
 
-    if (ui->control.disabled && (ret = ui_tree_event(&ui->control_list, ev))) {
-        if (ret != ui_action) return true;
-        im_id id = ui->control_list.selected;
-        if (ret == ui_action && im_id_seq(id))
-            ui_item_show(id, ui->id);
-        return true;
-    }
-
-    if (ui->factory.disabled && (ret = ui_tree_event(&ui->factory_list, ev))) {
-        if (ret != ui_action) return true;
-        im_id id = ui->factory_list.selected;
-        if (ret == ui_action && im_id_seq(id))
-            ui_item_show(id, ui->id);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->pills.toggle, ev))) {
-        if (ret != ui_action) return true;
-        ui_pills_show(ui->id);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->workers.toggle, ev))) {
-        if (ret != ui_action) return true;
-        ui_workers_show(ui->id);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->energy_toggle, ev))) {
-        if (ret != ui_action) return true;
-        ui_energy_show(ui->id);
-        return true;
+    default: { assert(false); }
     }
 
     return false;
@@ -624,19 +620,24 @@ static void ui_star_render(
         ui_layout_sep_row(layout);
     }
 
-    ui_button_render(&ui->control, layout, renderer);
-    ui_button_render(&ui->factory, layout, renderer);
-    ui_button_render(&ui->logistic, layout, renderer);
+    ui_tabs_render(&ui->tabs, layout, renderer);
     ui_layout_next_row(layout);
     ui_layout_sep_row(layout);
 
-    if (ui->control.disabled)
+    switch (ui_tabs_selected(&ui->tabs))
+    {
+
+    case ui_star_control: {
         ui_tree_render(&ui->control_list, layout, renderer);
+        break;
+    }
 
-    if (ui->factory.disabled)
+    case ui_star_factory: {
         ui_tree_render(&ui->factory_list, layout, renderer);
+        break;
+    }
 
-    if (ui->logistic.disabled) {
+    case ui_star_logistics: {
         ui_button_render(&ui->pills.toggle, layout, renderer);
         ui_layout_next_row(layout);
         ui_label_render(&ui->pills.count, layout, renderer);
@@ -741,5 +742,10 @@ static void ui_star_render(
             ui_label_render(&ui->battery.total_val, layout, renderer);
             ui_layout_next_row(layout);
         }
+
+        break;
+    }
+
+    default: { assert(false); }
     }
 }
