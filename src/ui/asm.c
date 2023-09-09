@@ -494,6 +494,19 @@ static enum ui_ret ui_asm_event_copy(struct ui_asm *ui)
     return ui_consume;
 }
 
+static enum ui_ret ui_asm_event_help(struct ui_asm *ui)
+{
+    char line[ui_asm_line_cols] = {0};
+    struct asm_line_index index = asm_line_str(
+            asm_at(ui->as, ui->carret.row), line, sizeof(line));
+
+    str_to_lower_case(line + index.op.pos, index.op.len);
+    ui_man_show_slot_path(ui_slot_right, "/asm/%.*s",
+            (unsigned) index.op.len, line + index.op.pos);
+
+    return ui_consume;
+}
+
 enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 {
     if (render_user_event_is(ev, ev_focus_input))
@@ -551,6 +564,11 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
         case 'c': {
             if (!(mod & KMOD_CTRL)) return ui_nil;
             return ui_asm_event_copy(ui);
+        }
+
+        case 'h': {
+            if (!(mod & KMOD_CTRL)) return ui_nil;
+            return ui_asm_event_help(ui);
         }
 
         default: { return ui_nil; }

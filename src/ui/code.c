@@ -680,6 +680,41 @@ static enum ui_ret ui_code_event_paste(struct ui_code *ui)
     return ui_consume;
 }
 
+static enum ui_ret ui_code_event_help(struct ui_code *ui)
+{
+    code_update(ui->code);
+
+    ast_it node = code_ast_node_for(ui->code, ui->carret.pos);
+    if (!node) return ui_consume;
+
+    if (node->type == ast_keyword) {
+        char str[symbol_cap + 1] = {0};
+        code_write_range(
+                ui->code,
+                node->pos, node->pos + node->len,
+                str, sizeof(str) - 1);
+
+        ui_man_show_slot_path(ui_slot_right, "/%s/%s",
+                str_is_lower_case(str[0]) ? "lisp" : "asm", str);
+    }
+
+    else if (node->type == ast_atom) {
+        char str[symbol_cap + 1] = {0};
+        code_write_range(
+                ui->code,
+                node->pos, node->pos + node->len,
+                str, sizeof(str) - 1);
+
+        static const char prefix_item[] = "item-";
+        if (str_starts_with(str + 1, prefix_item)) {
+            ui_man_show_slot_path(ui_slot_right, "/items/%s",
+                    str + sizeof(prefix_item)); // sizeof includes to zero byte
+        }
+    }
+
+    return ui_consume;
+}
+
 enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 {
     switch (render_user_event(ev))
@@ -763,6 +798,8 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
             case 'x': { return ui_code_event_copy(ui, true); }
             case 'c': { return ui_code_event_copy(ui, false); }
             case 'v': { return ui_code_event_paste(ui); }
+
+            case 'h': { return ui_code_event_help(ui); }
 
             default: { return ui_nil; }
             }

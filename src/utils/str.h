@@ -64,6 +64,11 @@ inline bool str_is_vowel(char c)
     }
 }
 
+inline bool str_is_upper_case(char c) { return c >= 'A' && c <= 'Z'; }
+inline bool str_is_lower_case(char c) { return c >= 'a' && c <= 'z'; }
+void str_to_upper_case(char *, size_t);
+void str_to_lower_case(char *, size_t);
+
 inline bool str_is_space(char c) { return c <= 0x20; }
 size_t str_skip_spaces(const char *str, size_t len);
 
