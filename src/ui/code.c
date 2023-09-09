@@ -118,9 +118,25 @@ static void ui_code_select_end(struct ui_code *ui)
     ui->select.active = false;
 }
 
+static void ui_code_select_all(struct ui_code *ui)
+{
+    ui->select.active = false;
+    ui->select.first.pos = ui->select.first.row = ui->select.first.col = 0;
+
+    ui->select.last.pos = code_len(ui->code);
+    struct rowcol rc = code_rowcol_for(ui->code, ui->select.last.pos);
+    ui->select.last.row = rc.row;
+    ui->select.last.col = rc.col;
+}
+
 static void ui_code_select_clear(struct ui_code *ui)
 {
     memset(&ui->select, 0, sizeof(ui->select));
+}
+
+static bool ui_code_select_active(struct ui_code *ui)
+{
+    return ui->select.first.pos != ui->select.last.pos;
 }
 
 enum ui_code_update_flag : uint8_t
@@ -325,7 +341,7 @@ void ui_code_render(
 
     struct { struct rowcol first, last; bool active; } select = {0};
     {
-        select.active = ui->select.first.pos != ui->select.last.pos;
+        select.active = ui_code_select_active(ui);
         if (ui->select.first.pos < ui->select.last.pos) {
             select.first = make_rowcol(ui->select.first.row, ui->select.first.col);
             select.last = make_rowcol(ui->select.last.row, ui->select.last.col);
@@ -497,10 +513,14 @@ enum ui_ret ui_code_event_click(struct ui_code *ui)
 enum ui_ret ui_code_event_move(
         struct ui_code *ui, uint16_t mod, int32_t row, int32_t col)
 {
-    (void) mod;
-
-    if (row) ui->carret.pos = code_move_row(ui->code, ui->carret.pos, row);
-    if (col) ui->carret.pos = code_move_col(ui->code, ui->carret.pos, col);
+    if ((mod & KMOD_SHIFT)) {
+        if (row) ui->carret.pos = code_move_paragraph(ui->code, ui->carret.pos, row);
+        if (col) ui->carret.pos = code_move_token(ui->code, ui->carret.pos, col);
+    }
+    else {
+        if (row) ui->carret.pos = code_move_row(ui->code, ui->carret.pos, row);
+        if (col) ui->carret.pos = code_move_col(ui->code, ui->carret.pos, col);
+    }
 
     ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
@@ -547,8 +567,17 @@ enum ui_ret ui_code_event_del(struct ui_code *ui, uint16_t mod, int32_t inc)
     if (!ui->writable) return ui_nil;
     if (mod & (KMOD_CTRL | KMOD_ALT | KMOD_SHIFT)) return ui_nil;
 
-    if (inc < 0 && ui->carret.pos) --ui->carret.pos;
-    if (inc > 0 || ui->carret.pos) code_delete(ui->code, ui->carret.pos);
+    if (ui_code_select_active(ui)) {
+        uint32_t first = legion_min(ui->select.first.pos, ui->select.last.pos);
+        uint32_t last = legion_max(ui->select.first.pos, ui->select.last.pos);
+        code_delete_range(ui->code, first, last);
+        ui->carret.pos = first;
+        ui_code_select_clear(ui);
+    }
+    else {
+        if (inc < 0 && ui->carret.pos) --ui->carret.pos;
+        if (inc > 0 || ui->carret.pos) code_delete(ui->code, ui->carret.pos);
+    }
 
     ui_code_update(ui, ui_code_update_all);
     return ui_consume;
@@ -693,6 +722,8 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
                 ui->select.active ? ui_code_select_clear(ui) : ui_code_select_begin(ui);
                 return ui_consume;
             }
+
+            case 'a': { ui_code_select_all(ui); return ui_consume; }
 
             case 'z': { return ui_code_event_undo(ui, mod); }
 

@@ -76,6 +76,8 @@ uint32_t code_pos_for(const struct code *, uint32_t row, uint32_t col);
 
 uint32_t code_move_row(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_col(struct code *, uint32_t pos, int32_t inc);
+uint32_t code_move_token(struct code *, uint32_t pos, int32_t inc);
+uint32_t code_move_paragraph(struct code *code, uint32_t pos, int32_t inc);
 uint32_t code_move_home(struct code *, uint32_t pos);
 uint32_t code_move_end(struct code *, uint32_t pos);
 

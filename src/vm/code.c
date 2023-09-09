@@ -20,7 +20,7 @@ struct code_str
 
 static void code_str_reserve(struct code_str *str, size_t len)
 {
-    if (likely(len <= str->cap)) return;
+    if (likely(len && len <= str->cap)) return;
 
     size_t old = str->cap;
     if (!old) str->cap = legion_max(len, 8U);
@@ -41,7 +41,6 @@ static void code_str_set(struct code_str *str, const char *src, size_t len)
     str->len = 0;
     code_str_append(str, src, len);
 }
-
 
 static void code_str_put(struct code_str *str, uint32_t pos, char c)
 {
@@ -661,6 +660,38 @@ uint32_t code_move_col(struct code *code, uint32_t pos, int32_t inc)
     return pos;
 }
 
+uint32_t code_move_token(struct code *code, uint32_t pos, int32_t inc)
+{
+    const struct code_str *str = code_inc_str(code);
+
+    char c = code_inc(str, &pos, inc);
+    while (str_is_space(c) && (c = code_inc(str, &pos, inc)));
+    while (c &&  c != '(' && c != ')' && !str_is_space(c))
+        c = code_inc(str, &pos, inc);
+
+    if (inc < 0 && c && str_is_space(c)) code_inc(str, &pos, +1);
+
+    return pos;
+}
+
+uint32_t code_move_paragraph(struct code *code, uint32_t pos, int32_t inc)
+{
+    const struct code_str *str = code_inc_str(code);
+
+    char c = str->str[pos];
+    while (str_is_space(c) && (c = code_inc(str, &pos, inc)));
+
+    while (c) {
+        while ((c = code_inc(str, &pos, inc)) && c != '\n');
+        uint32_t eol = pos;
+        while ((c = code_inc(str, &pos, inc)) && c != '\n' && str_is_space(c));
+        if (c == '\n') { pos = eol; break; }
+    }
+
+    if (inc > 0) code_inc(str, &pos, inc);
+    return pos;
+}
+
 uint32_t code_move_home(struct code *code, uint32_t pos)
 {
     const struct code_str *str = code_inc_str(code);
@@ -681,6 +712,7 @@ uint32_t code_move_end(struct code *code, uint32_t pos)
     while (c != '\n' && (c = code_inc(str, &pos, +1)));
     return pos;
 }
+
 
 
 // -----------------------------------------------------------------------------
