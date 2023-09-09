@@ -108,6 +108,7 @@ enum ui_ret ui_button_event(struct ui_button *button, const SDL_Event *ev)
             button->state = ui_button_idle;
             return ui_nil;
         }
+        if (button->disabled) return ui_consume;
         button->state = ui_button_hover;
         return ui_action;
     }

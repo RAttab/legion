@@ -31,7 +31,7 @@ struct ui_mods_tab
     mod_id id;
     const struct mod *mod;
 
-    struct { bool attached; vm_ip ip; } debug;
+    struct { bool loaded; bool attached; vm_ip ip; } debug;
 
     enum ui_mods_mode mode;
     struct ui_code code;
@@ -275,6 +275,23 @@ static void ui_mods_tabs_update(struct ui_mods *ui)
     }
 }
 
+static bool ui_mods_tabs_set_write(
+        struct ui_mods *ui, struct ui_mods_tab *tab, bool write)
+{
+    if (tab->write == write) return true;
+    if (ui_mods_tabs_find(ui, tab->id, write)) return false;
+    if (!write && ui_code_modified(&tab->code)) return false;
+
+    tab->write = tab->code.writable = write;
+    uint64_t old = legion_xchg(&tab->user, vm_pack(tab->id, tab->write));
+
+    if (old == ui_tabs_selected(&ui->tabs.ui))
+        ui_tabs_select(&ui->tabs.ui, tab->user);
+
+    ui_mods_tabs_update(ui);
+    return true;
+}
+
 
 // -----------------------------------------------------------------------------
 // mode
@@ -349,12 +366,15 @@ static void ui_mods_mode_debug(
     tab->debug.attached = debug;
     ui_str_setc(&ui->attach.str, debug ? "detach" : "attach");
 
-    ui->step.disabled = debug;
+    ui->attach.disabled = false;
+    ui->step.disabled = !tab->debug.attached;
     if (debug && ip != tab->debug.ip) ui_mods_mode_goto(ui, tab, ip);
     tab->debug.ip = ip;
 
     ui_code_breakpoint(&tab->code, bp);
     ui_asm_breakpoint(&tab->as, bp);
+
+    if (!debug) ui_mods_tabs_set_write(ui, tab, true);
 }
 
 
@@ -391,6 +411,12 @@ static void ui_mods_load(mod_id id, bool write, vm_ip ip)
     if (!mod_version(id)) id = proxy_mod_latest(mod_major(id));
 
     struct ui_mods_tab *tab = ui_mods_select(ui, id, write);
+
+    if (!tab && (tab = ui_mods_tabs_find(ui, id, !write))) {
+        if (!ui_mods_tabs_set_write(ui, tab, write))
+            tab = nullptr;
+    }
+
     if (tab) { ui_mods_mode_goto(ui, tab, ip); return; }
 
     ui->request.id = id;
@@ -414,6 +440,7 @@ void ui_mods_debug(mod_id id, bool debug, vm_ip ip, vm_ip bp)
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
     if (!tab || tab->id != id) {
+        ui->attach.disabled = true;
         ui_str_setc(&ui->attach.str, "attach");
         return;
     }
@@ -491,7 +518,8 @@ static void ui_mods_update(void *state)
     bool disabled =
         im_id_item(ui_item_selected()) != item_brain ||
         !tab || ui_code_modified(&tab->code);
-    ui->load.disabled = ui->step.disabled = ui->attach.disabled = disabled;
+    if (disabled) ui->attach.disabled = ui->step.disabled = true;
+    ui->load.disabled = disabled;
 
     struct dim dim = make_dim(ui->tree_w, ui_layout_inf);
     if (ui_mods_tabs_len(ui)) dim.w += ui->pad_w + ui->code_w;
