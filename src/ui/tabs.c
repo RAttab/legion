@@ -237,7 +237,9 @@ enum ui_ret ui_tabs_event(struct ui_tabs *ui, const SDL_Event *ev)
         }
 
         ui->close.user = tab->user;
+        struct ui_tab swap = *tab;
         memmove(tab, tab + 1, (ui->len - (i + 1)) * sizeof(*tab));
+        *(ui->list + (ui->len - 1)) = swap;
         ui->len--;
 
         if (ui->close.user == ui->select.user) {
