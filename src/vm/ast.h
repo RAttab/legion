@@ -39,6 +39,7 @@ struct ast_node
     enum ast_type type;
     uint32_t pos, len;
     uint32_t parent;
+    hash_val hash;
 };
 typedef const struct ast_node *ast_it;
 

@@ -20,10 +20,11 @@ struct code;
 
 struct ui_code_style
 {
-    const struct font *font, *bold;
+    const struct font *font;
     struct { struct rgba fg, bg; } row, bp;
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
+    struct { const struct font *font; struct rgba bg; } match;
     struct { struct rgba fg, bg; } errors;
     struct rgba fg, comment, keyword, atom;
     struct rgba current, select, box;
@@ -49,6 +50,7 @@ struct ui_code
     struct { uint32_t pos, row, col; } carret;
     struct { uint32_t pos, row, col; vm_ip ip; } bp;
     struct { uint32_t len, row, col; time_sys ts; } hl;
+    struct { hash_val sym; uint32_t paren; } match;
 
     struct
     {

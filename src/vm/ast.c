@@ -211,6 +211,7 @@ static struct ast_node *ast_append_type(
         .pos = parser->token.pos,
         .len = parser->token.len,
         .parent = parent,
+        .hash = 0,
     };
 
     /* dbgf("ast.append: type=%s, node=%lu, parent=%u, pos=%u, len=%u", */
@@ -221,13 +222,19 @@ static struct ast_node *ast_append_type(
     return node;
 }
 
+static void ast_hash_node(struct ast_parser *parser, struct ast_node *node)
+{
+    assert(node->pos + node->len < parser->len);
+    node->hash = hash_bytes(hash_init(), parser->str + node->pos, node->len);
+}
+
 static void ast_parse_fn_defconst(struct ast_parser *parser, uint32_t parent)
 {
     if (!token_expect(&parser->tok, &parser->token, token_symbol)) {
         token_goto_close(&parser->tok, &parser->token);
         return;
     }
-    ast_append_type(parser, ast_decl, parent);
+    ast_hash_node(parser, ast_append_type(parser, ast_decl, parent));
 
     if (!ast_parse_one(parser, parent)) {
         token_err(&parser->tok, "missing closing bracket");
@@ -246,7 +253,7 @@ static void ast_parse_fn_defun(struct ast_parser *parser, uint32_t parent)
             token_goto_close(&parser->tok, &parser->token);
             return;
         }
-        ast_append_type(parser, ast_decl, parent);
+        ast_hash_node(parser, ast_append_type(parser, ast_decl, parent));
     }
 
     { // param list
@@ -259,7 +266,7 @@ static void ast_parse_fn_defun(struct ast_parser *parser, uint32_t parent)
         uint32_t list_node = ast_index(parser, list);
 
         while (token_next(&parser->tok, &parser->token)->type == token_symbol)
-            ast_append_type(parser, ast_decl, list_node);
+            ast_hash_node(parser, ast_append_type(parser, ast_decl, list_node));
 
         if (!token_assert(&parser->tok, &parser->token, token_close)) {
             token_goto_close(&parser->tok, &parser->token);
@@ -292,7 +299,7 @@ static void ast_parse_fn_let(struct ast_parser *parser, uint32_t parent)
             token_goto_close(&parser->tok, &parser->token);
             continue;
         }
-        ast_append_type(parser, ast_decl, tuple_node);
+        ast_hash_node(parser, ast_append_type(parser, ast_decl, tuple_node));
 
         if (!ast_parse_until_close(parser, tuple_node)) {
             token_err(&parser->tok, "missing closing bracket");
@@ -325,7 +332,7 @@ static void ast_parse_fn_for(struct ast_parser *parser, uint32_t parent)
             token_goto_close(&parser->tok, &parser->token);
             goto predicate;
         }
-        ast_append_type(parser, ast_decl, tuple_node);
+        ast_hash_node(parser, ast_append_type(parser, ast_decl, tuple_node));
 
         if (!ast_parse_one(parser, tuple_node)) {
             token_goto_close(&parser->tok, &parser->token);
@@ -407,7 +414,7 @@ static void ast_parse_fn_case(struct ast_parser *parser, uint32_t parent)
             return;
         }
 
-        ast_append_type(parser, ast_decl, tuple_node);
+        ast_hash_node(parser, ast_append_type(parser, ast_decl, tuple_node));
 
         if (!ast_parse_one(parser, tuple_node)) {
             token_err(&parser->tok, "missing default-clause");
@@ -447,6 +454,8 @@ static void ast_parse_fn_mod(struct ast_parser *parser, uint32_t parent)
 
             name->len += parser->token.len;
         }
+
+        ast_hash_node(parser, name);
     }
 
     if (token_expect(&parser->tok, &parser->token, token_close))
@@ -483,6 +492,8 @@ static void ast_parse_fn(struct ast_parser *parser, uint32_t parent)
         return;
     }
 
+    if (node->type != ast_keyword) ast_hash_node(parser, node);
+
     if (!ast_parse_until_close(parser, parent))
         token_err(&parser->tok, "missing closing bracket");
 }
@@ -499,9 +510,9 @@ static bool ast_parse_one(struct ast_parser *parser, uint32_t parent)
     case token_atom:
     case token_atom_make: { ast_append_type(parser, ast_atom, parent); break; }
     case token_number:    { ast_append_type(parser, ast_number, parent); break; }
-    case token_symbol:    { ast_append_type(parser, ast_ref, parent); break; }
     case token_reg:       { ast_append_type(parser, ast_reg, parent); break; }
     case token_comment:   { ast_append_type(parser, ast_comment, parent); break; }
+    case token_symbol:    { ast_hash_node(parser, ast_append_type(parser, ast_ref, parent)); break; }
 
     case token_sep: { token_err(&parser->tok, "unexpected seperator"); break; }
 

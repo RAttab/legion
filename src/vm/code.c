@@ -404,7 +404,7 @@ void code_delete(struct code *code, uint32_t pos)
 
 
 // -----------------------------------------------------------------------------
-// navigation
+// render
 // -----------------------------------------------------------------------------
 
 struct code_it code_begin(struct code *code, uint32_t row)
@@ -568,6 +568,14 @@ struct rowcol code_rowcol(const struct code *code)
 
 }
 
+char code_char_for(const struct code *code, uint32_t pos)
+{
+    struct code_str *it = code->str.list;
+    struct code_str *end = it + code->str.len;
+    for (; it < end && it->len < pos; pos -= it->len, it++);
+    return pos >= it->len ? 0 : it->str[pos];
+}
+
 struct rowcol code_rowcol_for(const struct code *code, uint32_t pos)
 {
     struct rowcol rc = {0};
@@ -598,6 +606,20 @@ uint32_t code_pos_for(const struct code *code, uint32_t row, uint32_t col)
 
     return pos;
 }
+
+ast_it code_ast_node_for(const struct code *code, uint32_t pos)
+{
+    const struct code_str *it = code->str.list;
+    const struct code_str *end = it + code->str.len;
+    for (; it < end && it->len < pos; ++it, pos -= it->len);
+    if (it == end || !it->ast.node) return nullptr;
+    return ast_next(code->ast, it->ast.node, pos);
+}
+
+
+// -----------------------------------------------------------------------------
+// move
+// -----------------------------------------------------------------------------
 
 const struct code_str *code_inc_str(struct code *code)
 {
@@ -713,6 +735,48 @@ uint32_t code_move_end(struct code *code, uint32_t pos)
     return pos;
 }
 
+uint32_t code_move_paren(struct code *code, uint32_t pos)
+{
+    const struct code_str *str = code_inc_str(code);
+    char c = str->str[pos];
+
+    if (c == '(') {
+        for (size_t n = 1; n && (c = code_inc(str, &pos, +1)); ) {
+            if (c == '(') n++;
+            if (c == ')') n--;
+        }
+    }
+
+    else if (c == ')') {
+        for (size_t n = 1; n && (c = code_inc(str, &pos, -1)); ) {
+            if (c == ')') n++;
+            if (c == '(') n--;
+        }
+    }
+
+    return pos;
+}
+
+uint32_t code_move_symbol(struct code *code, uint32_t pos, int32_t inc)
+{
+    if (!inc) return pos;
+
+    const struct code_str *str = code_inc_str(code);
+
+    char c = str->str[pos];
+    if (str_is_space(c)) return pos;
+    if (c == '(' || c == ')') return pos;
+
+    ast_it it = code_ast_node_for(code, pos);
+    if (!it || !it->hash) return pos;
+
+    hash_val hash = it->hash;
+    ast_it end = inc > 0 ? ast_end(code->ast) : ast_begin(code->ast);
+    for (it += inc; it != end && it->hash != hash; it += inc);
+    if (it == end) return pos;
+
+    return it->pos;
+}
 
 
 // -----------------------------------------------------------------------------

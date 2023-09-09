@@ -71,14 +71,18 @@ bool code_step(struct code *, struct code_it *);
 size_t code_next_cols(struct code *, struct code_it *);
 
 struct rowcol code_rowcol(const struct code *);
+char code_char_for(const struct code *, uint32_t pos);
 struct rowcol code_rowcol_for(const struct code *, uint32_t pos);
 uint32_t code_pos_for(const struct code *, uint32_t row, uint32_t col);
+ast_it code_ast_node_for(const struct code *, uint32_t pos);
 
 uint32_t code_move_row(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_col(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_token(struct code *, uint32_t pos, int32_t inc);
-uint32_t code_move_paragraph(struct code *code, uint32_t pos, int32_t inc);
+uint32_t code_move_paragraph(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_home(struct code *, uint32_t pos);
 uint32_t code_move_end(struct code *, uint32_t pos);
+uint32_t code_move_paren(struct code *, uint32_t pos);
+uint32_t code_move_symbol(struct code *, uint32_t pos, int32_t inc);
 
 void code_dump(struct code *);

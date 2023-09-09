@@ -17,7 +17,6 @@ void ui_code_style_default(struct ui_style *s)
 {
     s->code = (struct ui_code_style) {
         .font = s->font.base,
-        .bold = s->font.bold,
 
         .row = { .fg = s->rgba.index.fg, .bg = s->rgba.index.bg },
         .bp = { .fg = s->rgba.code.bp.fg, .bg = s->rgba.code.bp.bg },
@@ -26,6 +25,11 @@ void ui_code_style_default(struct ui_style *s)
         .hl = {
             .bg = s->rgba.code.highlight,
             .opaque = 1 * ts_sec, .fade = 300 * ts_msec,
+        },
+
+        .match = {
+            .font = s->font.bold,
+            .bg = make_rgba(0xAD, 0xD8, 0xE6, 0x55), // LightBlue
         },
 
         .errors = {
@@ -168,6 +172,15 @@ static void ui_code_update(struct ui_code *ui, enum ui_code_update_flag flag)
         ui->carret.col = rc.col;
 
         ui_code_select_move(ui);
+    }
+
+    {
+        ast_it ast = code_ast_node_for(ui->code, ui->carret.pos);
+        ui->match.sym = ast ? ast->hash : 0;
+
+        char c = code_char_for(ui->code, ui->carret.pos);
+        ui->match.paren = (c == '(' || c == ')') ?
+            code_move_paren(ui->code, ui->carret.pos) : code_pos_nil;
     }
 }
 
@@ -450,6 +463,12 @@ void ui_code_render(
             }
         }
 
+        if (it.pos == ui->match.paren) {
+            rgba_render(ui->s.match.bg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = pos.x, pos.y, .w = cell.w, .h = cell.h }));
+        }
+
         {
             enum ast_type type = node ? node->type : ast_nil;
             struct rgba fg =
@@ -458,7 +477,11 @@ void ui_code_render(
                 type == ast_atom ? ui->s.atom :
                 ui->s.fg;
 
-            font_render(ui->s.font, renderer, pos, fg, it.str + first, len);
+            const struct font *font = ui->s.font;
+            if (node && node->hash && node->hash == ui->match.sym)
+                 font = ui->s.match.font;
+
+            font_render(font, renderer, pos, fg, it.str + first, len);
         }
     }
 
@@ -513,7 +536,17 @@ enum ui_ret ui_code_event_click(struct ui_code *ui)
 enum ui_ret ui_code_event_move(
         struct ui_code *ui, uint16_t mod, int32_t row, int32_t col)
 {
-    if ((mod & KMOD_SHIFT)) {
+    if ((mod & KMOD_CTRL)) {
+        if (row) ui->carret.pos = code_move_symbol(ui->code, ui->carret.pos, row);
+        if (col) {
+            char c = code_char_for(ui->code, ui->carret.pos);
+            if (c == '(' && col > 0)
+                ui->carret.pos = code_move_paren(ui->code, ui->carret.pos);
+            if (c == ')' && col < 0)
+                ui->carret.pos = code_move_paren(ui->code, ui->carret.pos);
+        }
+    }
+    else if ((mod & KMOD_SHIFT)) {
         if (row) ui->carret.pos = code_move_paragraph(ui->code, ui->carret.pos, row);
         if (col) ui->carret.pos = code_move_token(ui->code, ui->carret.pos, col);
     }
