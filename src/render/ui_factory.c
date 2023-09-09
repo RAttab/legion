@@ -422,11 +422,16 @@ static bool ui_factory_event(void *state, SDL_Event *ev)
 
     case SDL_MOUSEWHEEL: {
         ui->scale = scale_inc(ui->scale, -ev->wheel.y);
-        return false;
+        return true;
     }
 
     case SDL_MOUSEMOTION: {
         if (!ui->panning) return false;
+        if (!ui_cursor_button_down(SDL_BUTTON_LEFT)) {
+            ui->panning = ui->panned = false;
+            return false;
+        }
+
         int64_t xrel = scale_mult(ui->scale, ev->motion.xrel);
         ui->pos.x = i64_clamp(ui->pos.x - xrel, INT32_MIN, INT32_MAX);
 
@@ -438,11 +443,7 @@ static bool ui_factory_event(void *state, SDL_Event *ev)
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_MouseButtonEvent *b = &ev->button;
-        if (b->button != SDL_BUTTON_LEFT) return false;
-
-        ui->panning = true;
-        return false;
+        return ui->panning = ui_cursor_button_down(SDL_BUTTON_LEFT);
     }
 
     case SDL_MOUSEBUTTONUP: {
@@ -450,12 +451,12 @@ static bool ui_factory_event(void *state, SDL_Event *ev)
         if (b->button != SDL_BUTTON_LEFT) return false;
 
         ui->panning = false;
-        if (ui->panned) { ui->panned = false; return false; }
+        if (ui->panned) { ui->panned = false; return true; }
 
         return ui_factory_event_click(ui);
     }
 
-    default: { return false; }
+    default: { return true; }
     }
 }
 

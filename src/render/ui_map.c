@@ -208,11 +208,15 @@ static bool ui_map_event(void *state, SDL_Event *event)
 
     case SDL_MOUSEWHEEL: {
         ui->scale = scale_inc(ui->scale, -event->wheel.y);
-        break;
+        return true;
     }
 
     case SDL_MOUSEMOTION: {
-        if (!ui->panning)  break;
+        if (!ui->panning)  return false;
+        if (!ui_cursor_button_down(SDL_BUTTON_LEFT)) {
+            ui->panning = ui->panned = false;
+            return false;
+        }
 
         int64_t xrel = scale_mult(ui->scale, event->motion.xrel);
         ui->pos.x = i64_clamp(ui->pos.x - xrel, 0, UINT32_MAX);
@@ -221,22 +225,20 @@ static bool ui_map_event(void *state, SDL_Event *event)
         ui->pos.y = i64_clamp(ui->pos.y - yrel, 0, UINT32_MAX);
 
         ui->panned = true;
-        break;
+        return false;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
-        SDL_MouseButtonEvent *b = &event->button;
-        if (b->button == SDL_BUTTON_LEFT) ui->panning = true;
-        break;
+        return ui->panning = ui_cursor_button_down(SDL_BUTTON_LEFT);
     }
 
     case SDL_MOUSEBUTTONUP: {
         SDL_MouseButtonEvent *b = &event->button;
-        if (b->button != SDL_BUTTON_LEFT) break;
+        if (b->button != SDL_BUTTON_LEFT) return false;
 
         ui->panning = false;
-        if (ui->panned) { ui->panned = false; break; }
-        if (ui->scale >= ui_map_thresh_stars) break;
+        if (ui->panned) { ui->panned = false; return true; }
+        if (ui->scale >= ui_map_thresh_stars) return true;
 
         SDL_Point point = ui_cursor_point();
         size_t px = scale_div(ui->scale, ui_map_star_px);
@@ -248,13 +250,11 @@ static bool ui_map_event(void *state, SDL_Event *event)
 
         const struct star *star = proxy_star_in(rect);
         if (star) ui_star_show(star->coord);
-
-        break;
+        return true;
     }
 
+    default: { return false; }
     }
-
-    return false;
 }
 
 
