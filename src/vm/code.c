@@ -184,7 +184,7 @@ size_t code_next_cols(struct code *code, struct code_it *it)
 
     for (; str < str_end; ++str, pos = 0) {
         while (unlikely(pos < str->len) && str->str[pos] != '\n') { pos++; cols++; }
-        if (str->str[pos] == '\n') break;
+        if (pos < str->len && str->str[pos] == '\n') break;
     }
 
     return cols;
