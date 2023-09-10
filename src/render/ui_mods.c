@@ -817,9 +817,7 @@ static void ui_mods_render(
         ui_button_render(&ui->publish, layout, renderer);
 
         ui_layout_sep_col(layout);
-
-        ui_button_render(&ui->import, layout, renderer);
-        ui_button_render(&ui->export, layout, renderer);
+        ui_button_render(&ui->reset, layout, renderer);
 
         ui_layout_sep_col(layout);
         ui_button_render(&ui->load, layout, renderer);
@@ -827,7 +825,8 @@ static void ui_mods_render(
         ui_button_render(&ui->step, layout, renderer);
 
         ui_layout_dir(layout, ui_layout_right_left);
-        ui_button_render(&ui->reset, layout, renderer);
+        ui_button_render(&ui->export, layout, renderer);
+        ui_button_render(&ui->import, layout, renderer);
 
         ui_layout_dir(layout, ui_layout_left_right);
         ui_layout_next_row(layout);
