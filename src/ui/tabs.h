@@ -14,6 +14,7 @@
 
 struct ui_tabs_style
 {
+    int16_t margin;
     struct dim pad;
     const struct font *font, *bold;
     struct rgba fg, line, hover, pressed;

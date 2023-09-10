@@ -622,7 +622,6 @@ static void ui_star_render(
 
     ui_tabs_render(&ui->tabs, layout, renderer);
     ui_layout_next_row(layout);
-    ui_layout_sep_row(layout);
 
     switch (ui_tabs_selected(&ui->tabs))
     {

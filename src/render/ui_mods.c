@@ -805,7 +805,6 @@ static void ui_mods_render(
 
     ui_tabs_render(&ui->tabs.ui, layout, renderer);
     ui_layout_next_row(layout);
-    ui_layout_sep_y(layout, 4);
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
     assert(tab);

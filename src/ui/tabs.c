@@ -13,6 +13,7 @@
 void ui_tabs_style_default(struct ui_style *s)
 {
     s->tabs = (struct ui_tabs_style) {
+        .margin = 4,
         .pad = s->pad.box,
 
         .font = s->font.base,
@@ -36,7 +37,9 @@ struct ui_tabs ui_tabs_new(size_t chars, bool close)
     const struct ui_tabs_style *s = &ui_st.tabs;
 
     return (struct ui_tabs) {
-        .w = ui_widget_new(ui_layout_inf, s->font->glyph_h + (s->pad.h * 2)),
+        .w = ui_widget_new(
+                ui_layout_inf,
+                s->font->glyph_h + (s->pad.h * 2) + s->margin),
         .s = *s,
 
         .str = ui_str_v(chars),
@@ -262,7 +265,7 @@ void ui_tabs_render(
 
     ui_tabs_update(ui);
 
-    const int16_t h = ui->w.dim.h;
+    const int16_t h = ui->w.dim.h - ui->s.margin;
     const int16_t y0 = ui->w.pos.y;
     const int16_t y1 = y0 + h - 1;
 
