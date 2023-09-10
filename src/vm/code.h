@@ -51,20 +51,10 @@ void code_free(struct code *);
 bool code_empty(struct code *);
 size_t code_len(struct code *);
 hash_val code_hash(struct code *);
-size_t code_write(struct code *, char *dst, size_t len);
 
 void code_reset(struct code *);
 void code_set(struct code *, const char *, size_t);
-void code_insert(struct code *, uint32_t pos, char);
-void code_delete(struct code *, uint32_t pos);
 void code_update(struct code *);
-
-void code_insert_range(struct code *, uint32_t pos, const char *, size_t);
-void code_delete_range(struct code *, uint32_t first, uint32_t last);
-size_t code_write_range(struct code *, uint32_t first, uint32_t last, char *dst, size_t len);
-
-uint32_t code_undo(struct code *);
-uint32_t code_redo(struct code *);
 
 struct code_it code_begin(struct code *, uint32_t row);
 bool code_step(struct code *, struct code_it *);
@@ -75,6 +65,18 @@ char code_char_for(const struct code *, uint32_t pos);
 struct rowcol code_rowcol_for(const struct code *, uint32_t pos);
 uint32_t code_pos_for(const struct code *, uint32_t row, uint32_t col);
 ast_it code_ast_node_for(const struct code *, uint32_t pos);
+
+uint32_t code_undo(struct code *);
+uint32_t code_redo(struct code *);
+
+void code_insert(struct code *, uint32_t pos, char);
+void code_insert_range(struct code *, uint32_t pos, const char *, size_t);
+
+void code_delete(struct code *, uint32_t pos);
+void code_delete_range(struct code *, uint32_t first, uint32_t last);
+
+size_t code_write(struct code *, char *dst, size_t len);
+size_t code_write_range(struct code *, uint32_t first, uint32_t last, char *dst, size_t len);
 
 uint32_t code_move_row(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_col(struct code *, uint32_t pos, int32_t inc);

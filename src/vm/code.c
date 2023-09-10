@@ -129,279 +129,25 @@ hash_val code_hash(struct code *code)
     return code->hash;
 }
 
-size_t code_write(struct code *code, char *dst, size_t len)
+const struct code_str *code_inc_str(struct code *code)
 {
-    size_t sum = 0;
-    const struct code_str *it = code->str.list;
-    const struct code_str *end = it + code->str.len;
-
-    for (; len && it < end; ++it) {
-        size_t n = legion_min(len, it->len);
-        memcpy(dst, it->str, n);
-        dst += n; sum += n; len -= n;
-    }
-
-    return sum;
+    code_update(code);
+    assert(code->str.len == 1);
+    return code->str.list;
 }
 
-
-// -----------------------------------------------------------------------------
-// hist
-// -----------------------------------------------------------------------------
-
-static void code_hist_push(
-        struct code *code, enum code_hist_type type, char c, uint32_t pos)
+static char code_inc(const struct code_str *str, uint32_t *pos, int32_t inc)
 {
-    if (code->hist.skip) return;
-
-    if (type == code_hist_mark) {
-        if (!code->hist.top) return;
-        if (code->hist.top > code->hist.it) return;
-        if (code->hist.list[code->hist.top - 1].type == type) return;
+    if (inc > 0) {
+        if (*pos == str->len) return 0;
+        ++(*pos);
     }
-
-    if (code->hist.top == code->hist.cap) {
-        size_t old = legion_xchg(&code->hist.cap,
-                code->hist.cap ? code->hist.cap * 2 : 128);
-        code->hist.list = realloc_zero(
-                code->hist.list, old, code->hist.cap, sizeof(*code->hist.list));
+    if (inc < 0) {
+        if (!*pos) return 0;
+        --(*pos);
     }
-
-    struct code_hist *it = code->hist.list + code->hist.it;
-    *it = (struct code_hist) { .type = type, .c = c, .pos = pos };
-    code->hist.top = ++code->hist.it;
+    return str->str[(*pos)];
 }
-
-uint32_t code_undo(struct code *code)
-{
-    uint32_t pos = code_pos_nil;
-    code->hist.skip = true;
-
-    for (; code->hist.it; --code->hist.it) {
-        struct code_hist *it = code->hist.list + (code->hist.it - 1);
-
-        switch (it->type)
-        {
-        case code_hist_mark: { if (pos != code_pos_nil) { goto done; } break;}
-        case code_hist_put: { code_delete(code, pos = it->pos); break; }
-        case code_hist_del: { code_insert(code, pos = it->pos, it->c); pos++; break; }
-        default: { assert(false); }
-        }
-    }
-
-  done:
-    code->hist.skip = false;
-    return pos;
-}
-
-uint32_t code_redo(struct code *code)
-{
-    uint32_t pos = code_pos_nil;
-    code->hist.skip = true;
-
-    for (; code->hist.it < code->hist.top; ++code->hist.it) {
-        struct code_hist *it = code->hist.list + code->hist.it;
-
-        switch (it->type)
-        {
-        case code_hist_mark: { if (pos != code_pos_nil) { goto done; } break;}
-        case code_hist_put: { code_insert(code, pos = it->pos, it->c); pos++; break; }
-        case code_hist_del: { code_delete(code, pos = it->pos); break; }
-        default: { assert(false); }
-        }
-    }
-
-  done:
-    code->hist.skip = false;
-    return pos;
-}
-
-
-// -----------------------------------------------------------------------------
-// updates
-// -----------------------------------------------------------------------------
-
-static struct code_str *code_prefix(struct code *code, struct code_str *it)
-{
-    // See code_check_update() for boundary condition avoidance.
-    assert(code->str.len < code_str_cap);
-
-    struct code_str *begin = code->str.list;
-    struct code_str *end = begin + code->str.len;
-
-    if (!it) it = begin;
-    assert(it >= begin && it <= end);
-
-    if (it < end) {
-        memmove(it + 1, it, sizeof(*it) * (end - it));
-        memset(it, 0, sizeof(*it));
-    }
-
-    code->str.len++;
-    return it;
-}
-
-void code_reset(struct code *code)
-{
-    struct code_str *begin = code->str.list;
-    struct code_str *end = begin + code->str.len;
-
-    for (struct code_str *it = begin; it < end; ++it) free(it->str);
-    memset(begin, 0, (end - begin) * sizeof(*begin));
-    code->str.len = 0;
-
-    code->hash = 0;
-}
-
-void code_set(struct code *code, const char *str, size_t len)
-{
-    code_reset(code);
-    while (len && !str[len-1]) len--;
-
-    struct code_str *it = code_prefix(code, NULL);
-    if (!len) return;
-
-    code_str_set(it, str, len);
-    ast_parse(code->ast, it->str, it->len);
-    it->ast.node = ast_begin(code->ast);
-    it->ast.log = ast_log_begin(code->ast);
-
-}
-
-void code_update(struct code *code)
-{
-    if (!code->modified) return;
-    code->modified = false;
-
-    code->hash = 0;
-    code_hist_push(code, code_hist_mark, 0, 0);
-
-    size_t len = 0;
-    for (size_t i = 0; i < code->str.len; ++i)
-        len += code->str.list[i].len;
-
-    struct code_str str = {0};
-    for (size_t i = 0; i < code->str.len; ++i) {
-        const struct code_str *it = code->str.list + i;
-        code_str_append(&str, it->str, it->len);
-    }
-
-    ast_parse(code->ast, str.str, str.len);
-    str.ast.node = ast_begin(code->ast);
-    str.ast.log = ast_log_begin(code->ast);
-
-    code_reset(code);
-    code->str.list[code->str.len++] = str;
-}
-
-static void code_check_update(struct code *code)
-{
-    if (unlikely(code->str.len + 2 == code_str_cap))
-        code_update(code);
-}
-
-static struct code_str *code_split(
-        struct code *code, struct code_str *it, uint32_t *pos)
-{
-    assert(it->ast.node);
-
-    struct code_str *next = code_prefix(code, it + 1);
-
-    uint32_t ast = it->ast.node->pos;
-    uint32_t ast_pos = ast + *pos;
-    ast_it ast_it = ast_next(code->ast, it->ast.node, ast_pos);
-
-    bool splits = ast_pos <= ast_it->pos + ast_it->len;
-
-    uint32_t begin_ast = ast_it->pos + (splits ? 0 : ast_it->len);
-    uint32_t end_ast = (ast_it + 1)->pos;
-
-    uint32_t begin = begin_ast - ast;
-    uint32_t end = end_ast - ast;
-
-    code_str_set(next, it->str + end, it->len - end);
-    next->ast.node = ast_it + 1;
-    next->ast.log = ast_log_next(code->ast, next->ast.node->pos, it->ast.log);
-
-    if (!begin) {
-        it->len = end;
-        it->ast.node = nullptr;
-        it->ast.log = nullptr;
-        return it;
-    }
-
-    next = code_prefix(code, next);
-    code_str_set(next, it->str + begin, end - begin);
-    it->len = begin;
-    *pos -= begin;
-    return next;
-}
-
-void code_insert(struct code *code, uint32_t pos, char c)
-{
-    code_check_update(code);
-    code->modified = true;
-    code->hash = 0;
-
-    code_hist_push(code, code_hist_put, c, pos);
-
-    struct code_str *it = code->str.list;
-    struct code_str *end = it + code->str.len;
-    for (; it < end && pos > it->len; ++it) pos -= it->len;
-
-    if (pos == it->len && it->ast.node) {
-        struct code_str *next = it + 1;
-        if (next < end && !next->ast.node) {
-            pos -= it->len;
-            it++;
-        }
-    }
-
-    assert (it < end);
-
-    if (!it->ast.node) {
-        code_str_put(it, pos, c);
-        return;
-    }
-
-    if (pos == it->len) {
-        code_str_put(code_prefix(code, it + 1), 0, c);
-        return;
-    }
-
-    struct code_str *split = code_split(code, it, &pos);
-    code_str_put(split, pos, c);
-}
-
-void code_delete(struct code *code, uint32_t pos)
-{
-    const size_t abs = pos;
-
-    code_check_update(code);
-    code->modified = true;
-    code->hash = 0;
-
-    struct code_str *it = code->str.list;
-    struct code_str *end = it + code->str.len;
-    for (; it < end && pos >= it->len; ++it) pos -= it->len;
-    if (it == end) return;
-
-    code_hist_push(code, code_hist_del, it->str[pos], abs);
-
-    if (!it->ast.node) {
-        code_str_del(it, pos);
-        return;
-    }
-
-    if (pos == it->len - 1) {
-        code_str_del(it, pos);
-        return;
-    }
-
-    struct code_str *split = code_split(code, it, &pos);
-    code_str_del(split, pos);
-}
-
 
 // -----------------------------------------------------------------------------
 // render
@@ -618,29 +364,314 @@ ast_it code_ast_node_for(const struct code *code, uint32_t pos)
 
 
 // -----------------------------------------------------------------------------
-// move
+// hist
 // -----------------------------------------------------------------------------
 
-const struct code_str *code_inc_str(struct code *code)
+static void code_hist_push(
+        struct code *code, enum code_hist_type type, char c, uint32_t pos)
 {
-    code_update(code);
-    assert(code->str.len == 1);
-    return code->str.list;
+    if (code->hist.skip) return;
+
+    if (type == code_hist_mark) {
+        if (!code->hist.top) return;
+        if (code->hist.top > code->hist.it) return;
+        if (code->hist.list[code->hist.top - 1].type == type) return;
+    }
+
+    if (code->hist.top == code->hist.cap) {
+        size_t old = legion_xchg(&code->hist.cap,
+                code->hist.cap ? code->hist.cap * 2 : 128);
+        code->hist.list = realloc_zero(
+                code->hist.list, old, code->hist.cap, sizeof(*code->hist.list));
+    }
+
+    struct code_hist *it = code->hist.list + code->hist.it;
+    *it = (struct code_hist) { .type = type, .c = c, .pos = pos };
+    code->hist.top = ++code->hist.it;
 }
 
-static char code_inc(const struct code_str *str, uint32_t *pos, int32_t inc)
+uint32_t code_undo(struct code *code)
 {
-    if (inc > 0) {
-        if (*pos == str->len) return 0;
-        ++(*pos);
+    uint32_t pos = code_pos_nil;
+    code->hist.skip = true;
+
+    for (; code->hist.it; --code->hist.it) {
+        struct code_hist *it = code->hist.list + (code->hist.it - 1);
+
+        switch (it->type)
+        {
+        case code_hist_mark: { if (pos != code_pos_nil) { goto done; } break;}
+        case code_hist_put: { code_delete(code, pos = it->pos); break; }
+        case code_hist_del: { code_insert(code, pos = it->pos, it->c); pos++; break; }
+        default: { assert(false); }
+        }
     }
-    if (inc < 0) {
-        if (!*pos) return 0;
-        --(*pos);
-    }
-    return str->str[(*pos)];
+
+  done:
+    code->hist.skip = false;
+    return pos;
 }
 
+uint32_t code_redo(struct code *code)
+{
+    uint32_t pos = code_pos_nil;
+    code->hist.skip = true;
+
+    for (; code->hist.it < code->hist.top; ++code->hist.it) {
+        struct code_hist *it = code->hist.list + code->hist.it;
+
+        switch (it->type)
+        {
+        case code_hist_mark: { if (pos != code_pos_nil) { goto done; } break;}
+        case code_hist_put: { code_insert(code, pos = it->pos, it->c); pos++; break; }
+        case code_hist_del: { code_delete(code, pos = it->pos); break; }
+        default: { assert(false); }
+        }
+    }
+
+  done:
+    code->hist.skip = false;
+    return pos;
+}
+
+
+// -----------------------------------------------------------------------------
+// updates
+// -----------------------------------------------------------------------------
+
+static struct code_str *code_prefix(struct code *code, struct code_str *it)
+{
+    // See code_check_update() for boundary condition avoidance.
+    assert(code->str.len < code_str_cap);
+
+    struct code_str *begin = code->str.list;
+    struct code_str *end = begin + code->str.len;
+
+    if (!it) it = begin;
+    assert(it >= begin && it <= end);
+
+    if (it < end) {
+        memmove(it + 1, it, sizeof(*it) * (end - it));
+        memset(it, 0, sizeof(*it));
+    }
+
+    code->str.len++;
+    return it;
+}
+
+void code_reset(struct code *code)
+{
+    struct code_str *begin = code->str.list;
+    struct code_str *end = begin + code->str.len;
+
+    for (struct code_str *it = begin; it < end; ++it) free(it->str);
+    memset(begin, 0, (end - begin) * sizeof(*begin));
+    code->str.len = 0;
+
+    code->hash = 0;
+}
+
+void code_set(struct code *code, const char *str, size_t len)
+{
+    code_reset(code);
+    while (len && !str[len-1]) len--;
+
+    struct code_str *it = code_prefix(code, NULL);
+    if (!len) return;
+
+    code_str_set(it, str, len);
+    ast_parse(code->ast, it->str, it->len);
+    it->ast.node = ast_begin(code->ast);
+    it->ast.log = ast_log_begin(code->ast);
+
+}
+
+void code_update(struct code *code)
+{
+    if (!code->modified) return;
+    code->modified = false;
+
+    code->hash = 0;
+    code_hist_push(code, code_hist_mark, 0, 0);
+
+    size_t len = 0;
+    for (size_t i = 0; i < code->str.len; ++i)
+        len += code->str.list[i].len;
+
+    struct code_str str = {0};
+    for (size_t i = 0; i < code->str.len; ++i) {
+        const struct code_str *it = code->str.list + i;
+        code_str_append(&str, it->str, it->len);
+    }
+
+    ast_parse(code->ast, str.str, str.len);
+    str.ast.node = ast_begin(code->ast);
+    str.ast.log = ast_log_begin(code->ast);
+
+    code_reset(code);
+    code->str.list[code->str.len++] = str;
+}
+
+static void code_check_update(struct code *code)
+{
+    if (unlikely(code->str.len + 2 == code_str_cap))
+        code_update(code);
+}
+
+// -----------------------------------------------------------------------------
+// modifications
+// -----------------------------------------------------------------------------
+
+static struct code_str *code_split(
+        struct code *code, struct code_str *it, uint32_t *pos)
+{
+    assert(it->ast.node);
+
+    struct code_str *next = code_prefix(code, it + 1);
+
+    uint32_t ast = it->ast.node->pos;
+    uint32_t ast_pos = ast + *pos;
+    ast_it ast_it = ast_next(code->ast, it->ast.node, ast_pos);
+
+    bool splits = ast_pos <= ast_it->pos + ast_it->len;
+
+    uint32_t begin_ast = ast_it->pos + (splits ? 0 : ast_it->len);
+    uint32_t end_ast = (ast_it + 1)->pos;
+
+    uint32_t begin = begin_ast - ast;
+    uint32_t end = end_ast - ast;
+
+    code_str_set(next, it->str + end, it->len - end);
+    next->ast.node = ast_it + 1;
+    next->ast.log = ast_log_next(code->ast, next->ast.node->pos, it->ast.log);
+
+    if (!begin) {
+        it->len = end;
+        it->ast.node = nullptr;
+        it->ast.log = nullptr;
+        return it;
+    }
+
+    next = code_prefix(code, next);
+    code_str_set(next, it->str + begin, end - begin);
+    it->len = begin;
+    *pos -= begin;
+    return next;
+}
+
+void code_insert(struct code *code, uint32_t pos, char c)
+{
+    code_check_update(code);
+    code->modified = true;
+    code->hash = 0;
+
+    code_hist_push(code, code_hist_put, c, pos);
+
+    struct code_str *it = code->str.list;
+    struct code_str *end = it + code->str.len;
+    for (; it < end && pos > it->len; ++it) pos -= it->len;
+
+    if (pos == it->len && it->ast.node) {
+        struct code_str *next = it + 1;
+        if (next < end && !next->ast.node) {
+            pos -= it->len;
+            it++;
+        }
+    }
+
+    assert (it < end);
+
+    if (!it->ast.node) {
+        code_str_put(it, pos, c);
+        return;
+    }
+
+    if (pos == it->len) {
+        code_str_put(code_prefix(code, it + 1), 0, c);
+        return;
+    }
+
+    struct code_str *split = code_split(code, it, &pos);
+    code_str_put(split, pos, c);
+}
+
+void code_insert_range(
+        struct code *code, uint32_t pos, const char *src, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+        code_insert(code, pos + i, src[i]);
+}
+
+void code_delete(struct code *code, uint32_t pos)
+{
+    const size_t abs = pos;
+
+    code_check_update(code);
+    code->modified = true;
+    code->hash = 0;
+
+    struct code_str *it = code->str.list;
+    struct code_str *end = it + code->str.len;
+    for (; it < end && pos >= it->len; ++it) pos -= it->len;
+    if (it == end) return;
+
+    code_hist_push(code, code_hist_del, it->str[pos], abs);
+
+    if (!it->ast.node) {
+        code_str_del(it, pos);
+        return;
+    }
+
+    if (pos == it->len - 1) {
+        code_str_del(it, pos);
+        return;
+    }
+
+    struct code_str *split = code_split(code, it, &pos);
+    code_str_del(split, pos);
+}
+
+void code_delete_range(struct code *code, uint32_t first, uint32_t last)
+{
+    // deleting backwards is more efficient then forward deletion.
+    for (size_t i = last; i > first; --i)
+        code_delete(code, i - 1);
+}
+
+size_t code_write(struct code *code, char *dst, size_t len)
+{
+    size_t sum = 0;
+    const struct code_str *it = code->str.list;
+    const struct code_str *end = it + code->str.len;
+
+    for (; len && it < end; ++it) {
+        size_t n = legion_min(len, it->len);
+        memcpy(dst, it->str, n);
+        dst += n; sum += n; len -= n;
+    }
+
+    return sum;
+}
+
+size_t code_write_range(
+        struct code *code, uint32_t first, uint32_t last, char *dst, size_t len)
+{
+    assert(first < last);
+    const struct code_str *str = code_inc_str(code);
+
+    last = legion_min(last, str->len);
+    len = legion_min(len, last - first);
+    if (!len || first >= last) return 0;
+
+    memcpy(dst, str->str + first, len);
+    return len;
+}
+
+
+
+// -----------------------------------------------------------------------------
+// move
+// -----------------------------------------------------------------------------
 
 // I pity any who have to modify this hellish function
 uint32_t code_move_row(struct code *code, uint32_t pos, int32_t inc)
@@ -776,42 +807,6 @@ uint32_t code_move_symbol(struct code *code, uint32_t pos, int32_t inc)
     if (it == end) return pos;
 
     return it->pos;
-}
-
-
-// -----------------------------------------------------------------------------
-// range
-// -----------------------------------------------------------------------------
-// These functions are intentionally implemented inneficiently to maintain the
-// undo/redo history. Also because it would be somewhat complicated to do
-// anything else.
-
-void code_insert_range(
-        struct code *code, uint32_t pos, const char *src, size_t len)
-{
-    for (size_t i = 0; i < len; ++i)
-        code_insert(code, pos + i, src[i]);
-}
-
-void code_delete_range(struct code *code, uint32_t first, uint32_t last)
-{
-    // deleting backwards is more efficient then forward deletion.
-    for (size_t i = last; i > first; --i)
-        code_delete(code, i - 1);
-}
-
-size_t code_write_range(
-        struct code *code, uint32_t first, uint32_t last, char *dst, size_t len)
-{
-    assert(first < last);
-    const struct code_str *str = code_inc_str(code);
-
-    last = legion_min(last, str->len);
-    len = legion_min(len, last - first);
-    if (!len || first >= last) return 0;
-
-    memcpy(dst, str->str + first, len);
-    return len;
 }
 
 
