@@ -339,7 +339,6 @@ void ui_code_render(
 
         char str[ui_code_row_cols] = {0};
         str_utoa(row_first + row + 1, str, sizeof(str));
-        rgba_render(ui->s.row.fg, renderer);
         font_render(
                 ui->s.font, renderer,
                 (SDL_Point) { .x = rect.x, .y = rect.y },
