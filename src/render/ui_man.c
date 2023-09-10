@@ -17,7 +17,7 @@ static void ui_man_render(void *, struct ui_layout *, SDL_Renderer *);
 // man
 // -----------------------------------------------------------------------------
 
-enum { ui_man_cols = 80, ui_man_depth = 4 };
+enum { ui_man_cols = 89, ui_man_depth = 4 };
 
 struct ui_man
 {
