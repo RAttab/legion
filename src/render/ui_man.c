@@ -93,7 +93,9 @@ void ui_man_show_slot(enum ui_slot slot, struct link link)
     if (link_is_nil(link)) { ui_hide(ui_view_man); return; }
 
     ui_man_update(ui);
-    ui_show_slot(ui_view_man, slot);
+
+    if (slot == ui_slot_nil) ui_show(ui_view_man);
+    else ui_show_slot(ui_view_man, slot);
 
     enum item item = man_item(link.page);
     if (!item || tech_known(proxy_tech(), item))

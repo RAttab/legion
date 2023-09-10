@@ -582,6 +582,58 @@ void ast_parse(struct ast *ast, const char *str, size_t len)
     }
 }
 
+bool ast_step(const char *in, size_t len, struct ast_node *out)
+{
+    assert(out->pos + out->len <= len);
+
+    const char *it = in + out->pos + out->len;
+    const char *end = in + len;
+    memset(out, 0, sizeof(*out));
+
+    it += str_skip_spaces(it, end - it);
+    if (it == end) return false;
+    out->pos = it - in;
+
+    switch (*it)
+    {
+    case ';': {
+        out->len = end - it;
+        out->type = ast_comment;
+        break;
+    }
+
+    case '(': case ')': {
+        while (it < end && (*it == '(' || *it == ')')) ++it, ++out->len;
+        break;
+    }
+
+    case '?': case '!': {
+        while (it < end && !str_is_space(*it) && *it != '(' && *it != ')')
+            ++it, ++out->len;
+        out->type = ast_atom;
+        break;
+    }
+
+    default: {
+        while (it < end && !str_is_space(*it) && *it != '(' && *it != ')')
+            ++it, ++out->len;
+
+        hash_val hash = hash_bytes(hash_init(), in + out->pos, out->len);
+        if (hset_test(ast_data.keywords, hash))
+            out->type = ast_keyword;
+
+        break;
+    }
+
+    }
+
+    /* dbgf("ast.step: len=%zu, out=%u:%u:%s, str=%.*s", */
+    /*         len, out->pos, out->len, ast_type_str(out->type), */
+    /*         (unsigned) out->len, in + out->pos); */
+
+    return true;
+}
+
 
 // -----------------------------------------------------------------------------
 // populate

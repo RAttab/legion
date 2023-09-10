@@ -68,6 +68,9 @@ inline bool ast_log_in(ast_log_it it, uint32_t pos)
 
 void ast_parse(struct ast *, const char *str, size_t len);
 
+// Simple ast stepper for syntax highlighting
+bool ast_step(const char *in, size_t len, struct ast_node *it);
+
 void ast_dump(const struct ast *);
 
 void ast_populate(void);

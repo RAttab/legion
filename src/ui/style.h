@@ -41,7 +41,7 @@ extern struct ui_style
 
         struct {
             struct rgba read, write, modified;
-            struct rgba comment, keyword;
+            struct rgba comment, keyword, atom;
             struct rgba current, select, highlight;
             struct { struct rgba fg, bg; } bp;
         } code;

@@ -20,6 +20,10 @@ void ui_doc_style_default(struct ui_style *s)
             .font = s->font.base,
             .fg = s->rgba.fg,
             .bg = rgba_gray_a(0x66, 0x33),
+
+            .comment = s->rgba.code.comment,
+            .keyword = s->rgba.code.keyword,
+            .atom = s->rgba.code.atom,
         },
 
 #define make_from(src) { .font = s->font.base, .fg = (src).fg, .bg = (src).bg }
@@ -240,12 +244,21 @@ void ui_doc_render(
                                 .h = font->glyph_h,
                             }));
 
-            font_render(
-                    font,
-                    renderer,
-                    pos_as_point(pos),
-                    doc->s.code.fg,
-                    it->text, it->len);
+            struct ast_node node = {0};
+            while (ast_step(it->text, it->len, &node)) {
+                struct rgba fg =
+                    node.type == ast_comment ? doc->s.code.comment :
+                    node.type == ast_keyword ? doc->s.code.keyword :
+                    node.type == ast_atom ? doc->s.code.atom :
+                    doc->s.code.fg;
+
+                SDL_Point pt = {
+                    .x = pos.x + (node.pos * font->glyph_w),
+                    .y = pos.y
+                };
+                font_render(font, renderer, pt, fg, it->text + node.pos, node.len);
+            }
+
             pos.x += it->len * font->glyph_w;
             break;
         }

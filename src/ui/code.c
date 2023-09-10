@@ -35,7 +35,7 @@ void ui_code_style_default(struct ui_style *s)
         .fg = s->rgba.fg,
         .comment = s->rgba.code.comment,
         .keyword = s->rgba.code.keyword,
-        .atom = make_rgba(0xFF, 0xDE, 0xAD, 0xFF), // NavajoWhite
+        .atom = s->rgba.code.atom,
 
         .current = s->rgba.code.current,
         .select = s->rgba.code.select,

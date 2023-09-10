@@ -20,7 +20,13 @@ struct ui_doc_style
     {
         const struct font *font;
         struct rgba fg, bg;
-    } text, bold, code, link, hover, pressed;
+    } text, bold, link, hover, pressed;
+
+    struct {
+        const struct font *font;
+        struct rgba fg, bg;
+        struct rgba comment, keyword, atom;
+    } code;
 
     struct { struct rgba fg; int8_t offset; } underline;
 };

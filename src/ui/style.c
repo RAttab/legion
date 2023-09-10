@@ -80,6 +80,7 @@ void ui_style_default(void)
         s->rgba.code.modified = rgba_yellow();
         s->rgba.code.comment = make_rgba(0x32, 0xCD, 0x32, 0xFF); // LimeGreen
         s->rgba.code.keyword = make_rgba(0x40, 0xE0, 0xD0, 0xFF); // Turquoise
+        s->rgba.code.atom = make_rgba(0xFF, 0xDE, 0xAD, 0xFF), // NavajoWhite
         s->rgba.code.current = rgba_gray_a(0x55, 0x55);
         s->rgba.code.select = make_rgba(0x2F, 0x4F, 0x4F, 0xFF); // DarkSlateGray
         s->rgba.code.highlight = make_rgba(0x00, 0x80, 0x00, 0xFF); // Green
