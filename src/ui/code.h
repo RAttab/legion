@@ -24,10 +24,9 @@ struct ui_code_style
     struct { struct rgba fg, bg; } row, bp;
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
-    struct { const struct font *font; struct rgba bg; } match;
     struct { struct rgba fg, bg; } errors;
     struct rgba fg, comment, keyword, atom;
-    struct rgba current, select, box;
+    struct rgba current, select, match, box;
 };
 
 void ui_code_style_default(struct ui_style *);

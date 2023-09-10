@@ -27,11 +27,6 @@ void ui_code_style_default(struct ui_style *s)
             .opaque = 1 * ts_sec, .fade = 300 * ts_msec,
         },
 
-        .match = {
-            .font = s->font.bold,
-            .bg = make_rgba(0xAD, 0xD8, 0xE6, 0x55), // LightBlue
-        },
-
         .errors = {
             .fg = make_rgba(0xB2, 0x22, 0x22, 0xFF), // FireBrick
             .bg = make_rgba(0xB2, 0x22, 0x22, 0xAA), // FireBrick
@@ -44,6 +39,7 @@ void ui_code_style_default(struct ui_style *s)
 
         .current = s->rgba.code.current,
         .select = s->rgba.code.select,
+        .match = make_rgba(0xAD, 0xD8, 0xE6, 0x55), // LightBlue
         .box = s->rgba.box.border,
     };
 }
@@ -463,10 +459,14 @@ void ui_code_render(
             }
         }
 
-        if (it.pos == ui->match.paren) {
-            rgba_render(ui->s.match.bg, renderer);
+        bool match_paren = it.pos == ui->match.paren;
+        bool match_sym = node && node->hash && node->hash == ui->match.sym;
+
+        if (match_paren || match_sym) {
+            rgba_render(ui->s.match, renderer);
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = pos.x, pos.y, .w = cell.w, .h = cell.h }));
+                                .x = pos.x, pos.y,
+                                .w = len * cell.w, .h = cell.h }));
         }
 
         {
@@ -477,11 +477,7 @@ void ui_code_render(
                 type == ast_atom ? ui->s.atom :
                 ui->s.fg;
 
-            const struct font *font = ui->s.font;
-            if (node && node->hash && node->hash == ui->match.sym)
-                 font = ui->s.match.font;
-
-            font_render(font, renderer, pos, fg, it.str + first, len);
+            font_render(ui->s.font, renderer, pos, fg, it.str + first, len);
         }
     }
 
