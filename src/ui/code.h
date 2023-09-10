@@ -24,7 +24,7 @@ struct ui_code_style
     struct { struct rgba fg, bg; } row, bp;
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
-    struct { struct rgba fg, bg; } errors;
+    struct { struct rgba fg, bg; int16_t margin; } errors;
     struct rgba fg, comment, keyword, atom;
     struct rgba current, select, match, box;
 };

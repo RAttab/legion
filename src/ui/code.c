@@ -30,6 +30,7 @@ void ui_code_style_default(struct ui_style *s)
         .errors = {
             .fg = make_rgba(0xB2, 0x22, 0x22, 0xFF), // FireBrick
             .bg = make_rgba(0xB2, 0x22, 0x22, 0xAA), // FireBrick
+            .margin = 4,
         },
 
         .fg = s->rgba.fg,
@@ -300,15 +301,20 @@ void ui_code_render(
 
     if (ui->mod->errs_len) {
         ui_layout_dir_vert(layout, ui_layout_down_up);
-        struct ui_layout bot = ui_layout_split_y(layout, ui->errors.w.dim.h);
-        ui_layout_dir_vert(layout, ui_layout_up_down);
+        struct ui_layout bot = ui_layout_split_y(layout,
+                ui->errors.w.dim.h + ui->s.errors.margin * 2);
 
         rgba_render(ui->s.box, renderer);
         sdl_err(SDL_RenderDrawLine(renderer,
                         bot.base.pos.x, bot.base.pos.y,
                         bot.base.pos.x + bot.base.dim.w,
                         bot.base.pos.y));
+
+        ui_layout_sep_x(&bot, ui->s.errors.margin);
+        ui_layout_sep_y(&bot, ui->s.errors.margin);
         ui_list_render(&ui->errors, &bot, renderer);
+
+        ui_layout_dir_vert(layout, ui_layout_up_down);
     }
 
     // We split the rows from the text so that the scroll bar doesn't show up on
@@ -524,10 +530,10 @@ enum ui_ret ui_code_event_click(struct ui_code *ui)
     uint32_t row = (cursor.y - rect.y) / ui->s.font->glyph_h;
     row += ui_scroll_first_row(&ui->scroll);
 
-    uint32_t col = (cursor.x - rect.x) / ui->s.font->glyph_w;
-    bool in_margins = col < ui_code_line_col;
+    int32_t col = (cursor.x - rect.x) / ui->s.font->glyph_w;
+    bool in_margins = col < 0;
 
-    col = in_margins ? 0 : col - ui_code_line_col;
+    col = in_margins ? 0 : col;
     col += ui_scroll_first_col(&ui->scroll);
 
     ui->carret.pos = code_pos_for(ui->code, row, col);
