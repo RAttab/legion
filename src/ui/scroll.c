@@ -54,6 +54,8 @@ void ui_scroll_update_cols(struct ui_scroll *scroll, size_t total)
 
 void ui_scroll_move_rows(struct ui_scroll *scroll, ssize_t inc)
 {
+    if (!scroll->rows.total) return;
+
     scroll->rows.first = legion_bound(
             (ssize_t) scroll->rows.first + inc,
             (ssize_t) 0,
@@ -62,6 +64,8 @@ void ui_scroll_move_rows(struct ui_scroll *scroll, ssize_t inc)
 
 void ui_scroll_move_cols(struct ui_scroll *scroll, ssize_t inc)
 {
+    if (!scroll->cols.total) return;
+
     scroll->cols.first = legion_bound(
             (ssize_t) scroll->cols.first + inc,
             (ssize_t) 0,
@@ -205,20 +209,24 @@ enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
     case SDL_MOUSEBUTTONDOWN: {
         SDL_Point cursor = ui_cursor_point();
 
-        SDL_Rect rows = ui_scroll_rect_rows(scroll);
-        if (SDL_PointInRect(&cursor, &rows)) {
-            scroll->drag.type = ui_scroll_rows;
-            scroll->drag.start = cursor.y;
-            scroll->drag.bar = rows.y;
-            return ui_consume;
+        if (scroll->rows.show) {
+            SDL_Rect rows = ui_scroll_rect_rows(scroll);
+            if (SDL_PointInRect(&cursor, &rows)) {
+                scroll->drag.type = ui_scroll_rows;
+                scroll->drag.start = cursor.y;
+                scroll->drag.bar = rows.y;
+                return ui_consume;
+            }
         }
 
-        SDL_Rect cols = ui_scroll_rect_cols(scroll);
-        if (SDL_PointInRect(&cursor, &cols)) {
-            scroll->drag.type = ui_scroll_cols;
-            scroll->drag.start = cursor.x;
-            scroll->drag.bar = cols.x;
-            return ui_consume;
+        if (scroll->cols.show) {
+            SDL_Rect cols = ui_scroll_rect_cols(scroll);
+            if (SDL_PointInRect(&cursor, &cols)) {
+                scroll->drag.type = ui_scroll_cols;
+                scroll->drag.start = cursor.x;
+                scroll->drag.bar = cols.x;
+                return ui_consume;
+            }
         }
 
         return ui_nil;
