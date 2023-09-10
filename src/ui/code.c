@@ -317,6 +317,11 @@ void ui_code_render(
 
     ui->scroll.w.dim.h = ui_layout_inf;
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    ui->inner = (SDL_Rect) {
+        .x = inner.base.pos.x, .y = inner.base.pos.y,
+        .w = inner.base.dim.w, .h = inner.base.dim.h
+    };
+
     if (code_empty(ui->code) || ui_layout_is_nil(&inner)) return;
 
     ui_tooltip_hide(&ui->tooltip);
@@ -380,10 +385,15 @@ void ui_code_render(
             if (it.row == select.last.row) to = select.last.col;
             if (!(to - from)) to++;
 
-            rgba_render(ui->s.select, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = base.x + (from * cell.w), .y = base.y,
-                                .w = (to - from) * cell.w, .h = cell.h }));
+            if (from < col_last && to > col_first) {
+                from = legion_max(from, col_first) - col_first;
+                to = legion_min(to, col_last) - col_first;
+
+                rgba_render(ui->s.select, renderer);
+                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                    .x = base.x + (from * cell.w), .y = base.y,
+                                    .w = (to - from) * cell.w, .h = cell.h }));
+            }
         }
 
 
@@ -506,7 +516,7 @@ void ui_code_render(
 enum ui_ret ui_code_event_click(struct ui_code *ui)
 {
     SDL_Point cursor = ui_cursor_point();
-    SDL_Rect rect = ui_widget_rect(&ui->w);
+    SDL_Rect rect = ui->inner;
 
     ui->focused = SDL_PointInRect(&cursor, &rect);
     if (!ui->focused) return ui_nil;
