@@ -78,6 +78,9 @@ void code_delete_range(struct code *, uint32_t first, uint32_t last);
 size_t code_write(struct code *, char *dst, size_t len);
 size_t code_write_range(struct code *, uint32_t first, uint32_t last, char *dst, size_t len);
 
+uint32_t code_indent(struct code *, uint32_t pos);
+uint32_t code_indent_range(struct code *, uint32_t first, uint32_t last);
+
 uint32_t code_move_row(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_col(struct code *, uint32_t pos, int32_t inc);
 uint32_t code_move_token(struct code *, uint32_t pos, int32_t inc);

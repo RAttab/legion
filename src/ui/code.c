@@ -590,6 +590,22 @@ enum ui_ret ui_code_event_put(struct ui_code *ui, char key, uint16_t mod)
     ui->carret.pos++;
 
     if (key == '(') code_insert(ui->code, ui->carret.pos, ')');
+    if (key == '\n') ui->carret.pos = code_indent(ui->code, ui->carret.pos);
+
+    ui_code_update(ui, ui_code_update_all);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_indent(struct ui_code *ui, uint16_t mod)
+{
+    if (!ui->writable) return ui_nil;
+    if (mod & (KMOD_SHIFT | KMOD_CTRL | KMOD_ALT)) return ui_nil;
+
+    ui->carret.pos = !ui_code_select_active(ui) ?
+        code_indent(ui->code, ui->carret.pos) :
+        code_indent_range(ui->code,
+            legion_min(ui->select.first.pos, ui->select.last.pos),
+            legion_max(ui->select.first.pos, ui->select.last.pos));
 
     ui_code_update(ui, ui_code_update_all);
     return ui_consume;
@@ -819,6 +835,7 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
             // mapped by SDL so they're just skipped
             case ' '...'~':   { return ui_code_event_put(ui, keysym, mod); }
             case SDLK_RETURN: { return ui_code_event_put(ui, '\n', mod); }
+            case SDLK_TAB:    { return ui_code_event_indent(ui, mod); }
 
             case SDLK_DELETE:    { return ui_code_event_del(ui, mod, +1); }
             case SDLK_BACKSPACE: { return ui_code_event_del(ui, mod, -1); }

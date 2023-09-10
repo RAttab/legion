@@ -667,6 +667,62 @@ size_t code_write_range(
     return len;
 }
 
+static uint32_t code_indent_row(struct code *code, uint32_t row)
+{
+    const struct code_str *str = code_inc_str(code);
+
+    uint32_t pos = code_pos_for(code, row, 0);
+    ast_it it = code_ast_node_for(code, pos);
+    if (!it) return pos;
+
+    switch (it->type)
+    {
+    case ast_nil: { return pos; }
+    case ast_close: { it = ast_begin(code->ast) + it->parent; } // fallthrough
+    default: { it = ast_begin(code->ast) + it->parent; break; }
+    }
+
+    uint32_t indent = 0;
+    switch (it->type)
+    {
+    case ast_nil: { return pos; }
+    case ast_fn: { indent = 2; break; }
+    case ast_list: case ast_tuple: { indent = 1; break; }
+    default: { assert(false); }
+    }
+
+    char c = 0;
+    for (uint32_t i = it->pos;
+         (c = code_inc(str, &i, -1)) && c != '\n';
+         indent++);
+
+    uint32_t current = 0;
+    c = code_inc(str, &pos, 0);
+    for (uint32_t i = pos;
+         str_is_space(c) && c != '\n' && (c = code_inc(str, &i, +1));
+         current++);
+
+    for (; current < indent; ++current) code_insert(code, pos, ' ');
+    for (; current > indent; --current) code_delete(code, pos);
+    return pos;
+}
+
+uint32_t code_indent(struct code *code, uint32_t pos)
+{
+    struct rowcol rc = code_rowcol_for(code, pos);
+    return code_move_home(code, code_indent_row(code, rc.row));
+}
+
+uint32_t code_indent_range(struct code *code, uint32_t first, uint32_t last)
+{
+    assert(first < last);
+    struct rowcol first_rc = code_rowcol_for(code, first);
+    struct rowcol last_rc = code_rowcol_for(code, last);
+    for (uint32_t row = first_rc.row; row <= last_rc.row; ++row)
+        last = code_indent_row(code, row);
+
+    return code_move_end(code, last);
+}
 
 
 // -----------------------------------------------------------------------------
@@ -752,7 +808,8 @@ uint32_t code_move_home(struct code *code, uint32_t pos)
     char c = str->str[pos];
     if (c == '\n') c = code_inc(str, &pos, -1);
     while (c != '\n' && (c = code_inc(str, &pos, -1)));
-    if (c == '\n') code_inc(str, &pos, +1);
+    if (c == '\n') c = code_inc(str, &pos, +1);
+    while (c != '\n' && str_is_space(c) && (c = code_inc(str, &pos, +1)));
 
     return pos;
 }
@@ -816,7 +873,7 @@ uint32_t code_move_symbol(struct code *code, uint32_t pos, int32_t inc)
 
 void code_dump(struct code *code)
 {
-    ast_dump(code->ast); dbg("");
+    /* ast_dump(code->ast); dbg(""); */
 
     ast_it ast_first = ast_begin(code->ast);
     ast_log_it log_first = ast_log_begin(code->ast);
