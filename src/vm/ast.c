@@ -670,6 +670,7 @@ void ast_populate(void)
     ast_data.keywords = hset_reserve(128);
 
     keyword("asm");
+    keyword("@");
 #define vm_op_fn(op, str, arg) keyword(#str);
 #include "opx.h"
 
