@@ -591,6 +591,31 @@ enum ui_ret ui_code_event_end(struct ui_code *ui, uint16_t mod)
     return ui_consume;
 }
 
+enum ui_ret ui_code_event_page(struct ui_code *ui, int32_t dir)
+{
+    if (dir < 0) {
+        ui_scroll_page_up(&ui->scroll);
+        ui->carret.pos = code_pos_for(
+                ui->code, ui_scroll_first_row(&ui->scroll), ui->carret.col);
+    }
+
+    if (dir > 0) {
+        ui_scroll_page_down(&ui->scroll);
+        ui->carret.pos = code_pos_for(
+                ui->code, ui_scroll_last_row(&ui->scroll), ui->carret.col);
+    }
+
+    ui_code_update(ui, ui_code_update_nil);
+    return ui_consume;
+}
+
+enum ui_ret ui_code_event_center(struct ui_code *ui, uint16_t mod)
+{
+    if ((mod & KMOD_SHIFT)) ui->scroll.rows.first = ui->carret.row;
+    else ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
+    return ui_consume;
+}
+
 enum ui_ret ui_code_event_put(struct ui_code *ui, char key, uint16_t mod)
 {
     if (!ui->writable) return ui_nil;
@@ -828,6 +853,8 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 
             case 'h': { return ui_code_event_help(ui); }
 
+            case 'l': { return ui_code_event_center(ui, mod); }
+
             default: { return ui_nil; }
             }
         }
@@ -841,6 +868,9 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 
             case SDLK_HOME: { return ui_code_event_home(ui, mod); }
             case SDLK_END:  { return ui_code_event_end(ui, mod); }
+
+            case SDLK_PAGEUP:   { return ui_code_event_page(ui, -1); }
+            case SDLK_PAGEDOWN: { return ui_code_event_page(ui, +1); }
 
             // from 32 to 176 on the ascii table. The uppercase letters are not
             // mapped by SDL so they're just skipped

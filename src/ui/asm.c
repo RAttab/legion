@@ -460,6 +460,28 @@ enum ui_ret ui_asm_event_end(struct ui_asm *ui, uint16_t mod)
     return ui_consume;
 }
 
+enum ui_ret ui_asm_event_page(struct ui_asm *ui, int32_t dir)
+{
+    if (dir < 0) {
+        ui_scroll_page_up(&ui->scroll);
+        ui->carret.row = ui_scroll_first_row(&ui->scroll);
+    }
+
+    if (dir > 0) {
+        ui_scroll_page_down(&ui->scroll);
+        ui->carret.row = ui_scroll_last_row(&ui->scroll) - 1;
+    }
+
+    return ui_consume;
+}
+
+enum ui_ret ui_asm_event_center(struct ui_asm *ui, uint16_t mod)
+{
+    if ((mod & KMOD_SHIFT)) ui->scroll.rows.first = ui->carret.row;
+    else ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
+    return ui_consume;
+}
+
 static enum ui_ret ui_asm_event_copy(struct ui_asm *ui)
 {
     struct rowcol first, last;
@@ -555,6 +577,9 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
         case SDLK_HOME: { return ui_asm_event_home(ui, mod); }
         case SDLK_END: { return ui_asm_event_end(ui, mod); }
 
+        case SDLK_PAGEUP:   { return ui_asm_event_page(ui, -1); }
+        case SDLK_PAGEDOWN: { return ui_asm_event_page(ui, +1); }
+
         case SDLK_SPACE: {
             if (!(mod & KMOD_CTRL)) return ui_nil;
             ui->select.active ? ui_asm_select_clear(ui) : ui_asm_select_begin(ui);
@@ -569,6 +594,11 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
         case 'h': {
             if (!(mod & KMOD_CTRL)) return ui_nil;
             return ui_asm_event_help(ui);
+        }
+
+        case 'l': {
+            if (!(mod & KMOD_CTRL)) return ui_nil;
+            return ui_asm_event_center(ui, mod);
         }
 
         default: { return ui_nil; }

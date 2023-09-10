@@ -42,6 +42,9 @@ void ui_scroll_update_cols(struct ui_scroll *, size_t total);
 void ui_scroll_move_rows(struct ui_scroll *, ssize_t inc);
 void ui_scroll_move_cols(struct ui_scroll *, ssize_t inc);
 
+void ui_scroll_page_up(struct ui_scroll *);
+void ui_scroll_page_down(struct ui_scroll *);
+
 size_t ui_scroll_first_row(const struct ui_scroll *);
 size_t ui_scroll_last_row(const struct ui_scroll *);
 size_t ui_scroll_first_col(const struct ui_scroll *);

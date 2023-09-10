@@ -57,7 +57,7 @@ void ui_scroll_move_rows(struct ui_scroll *scroll, ssize_t inc)
     scroll->rows.first = legion_bound(
             (ssize_t) scroll->rows.first + inc,
             (ssize_t) 0,
-            (ssize_t) scroll->rows.total);
+            (ssize_t) scroll->rows.total - 1);
 }
 
 void ui_scroll_move_cols(struct ui_scroll *scroll, ssize_t inc)
@@ -65,7 +65,17 @@ void ui_scroll_move_cols(struct ui_scroll *scroll, ssize_t inc)
     scroll->cols.first = legion_bound(
             (ssize_t) scroll->cols.first + inc,
             (ssize_t) 0,
-            (ssize_t) scroll->cols.total);
+            (ssize_t) scroll->cols.total - 1);
+}
+
+void ui_scroll_page_up(struct ui_scroll *scroll)
+{
+    ui_scroll_move_rows(scroll, -scroll->rows.visible);
+}
+
+void ui_scroll_page_down(struct ui_scroll *scroll)
+{
+    ui_scroll_move_rows(scroll, scroll->rows.visible);
 }
 
 size_t ui_scroll_first_row(const struct ui_scroll *scroll)
