@@ -297,7 +297,9 @@ void man_dbg(struct man *man)
         case markup_text: { type = 't'; break; }
         case markup_underline: { type = 'u'; break; }
         case markup_bold: { type = 'b'; break; }
+        case markup_code_begin: { type = '{'; break; }
         case markup_code: { type = 'c'; break; }
+        case markup_code_end: { type = '}'; break; }
         case markup_link: { type = 'l'; break; }
         default: { type = '?'; break; }
         }

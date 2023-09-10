@@ -334,6 +334,8 @@ static void man_render_code(struct man_parser *parser)
     bool prologue = true;
     const size_t indent = parser->out.indent + man_indent_code_rel;
 
+    man_markup(parser->out.man, markup_code_begin);
+
     struct man_token token = {0};
     while ((token = man_parser_line(parser)).type == man_token_line) {
         if (token.len + indent > parser->out.col.cap) {
@@ -352,6 +354,8 @@ static void man_render_code(struct man_parser *parser)
 
         (void) man_render_newline(parser);
     }
+
+    man_markup(parser->out.man, markup_code_end);
 }
 
 static void man_render_eval(struct man_parser *parser)

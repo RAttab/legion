@@ -33,6 +33,15 @@ void ui_doc_style_default(struct ui_style *s)
 #undef make_from
 
         .underline = { .fg = s->rgba.fg, .offset = 2 },
+
+        .copy = {
+            .margin = s->button.base.margin.w,
+            .font = s->font.base,
+            .fg = s->rgba.fg,
+            .bg = s->button.base.idle.bg,
+            .hover = s->button.base.hover.bg,
+            .pressed = s->button.base.pressed.bg,
+        },
     };
 }
 
@@ -72,6 +81,7 @@ void ui_doc_free(struct ui_doc *doc)
 {
     ui_scroll_free(&doc->scroll);
     if (doc->man) man_free(doc->man);
+    if (doc->copy.cap) free(doc->copy.buffer);
 }
 
 
@@ -85,6 +95,43 @@ void ui_doc_open(struct ui_doc *doc, struct link link, struct lisp *lisp)
 
     ui_scroll_update_rows(&doc->scroll, man_lines(doc->man));
     doc->scroll.rows.first = man_section_line(doc->man, link.section);
+}
+
+static enum ui_ret ui_doc_copy(struct ui_doc *doc)
+{
+    assert(doc->copy.line);
+
+    doc->copy.len = 0;
+    const struct markup *it = man_line_markup(doc->man, doc->copy.line);
+
+    for (; it; it = man_next_markup(doc->man, it)) {
+        switch (it->type)
+        {
+
+        case markup_code: {
+            while (doc->copy.len + it->len > doc->copy.cap) {
+                size_t old = legion_xchg(&doc->copy.cap, doc->copy.cap ? doc->copy.cap * 2 : 128);
+                doc->copy.buffer = realloc_zero(doc->copy.buffer, old, doc->copy.cap, 1);
+            }
+
+            memcpy(doc->copy.buffer + doc->copy.len, it->text, it->len);
+            doc->copy.len += it->len;
+
+            doc->copy.buffer[doc->copy.len] = '\n';
+            doc->copy.len++;
+            break;
+        }
+
+        case markup_code_end:  {
+            ui_clipboard_copy(doc->copy.buffer, doc->copy.len);
+            return ui_consume;
+        }
+
+        default: { break; }
+        }
+    }
+
+    assert(false);
 }
 
 enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
@@ -111,6 +158,9 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         SDL_Rect rect = ui_widget_rect(&doc->w);
         if (!SDL_PointInRect(&cursor, &rect)) return ui_nil;
 
+        if (doc->copy.line && SDL_PointInRect(&cursor, &doc->copy.rect))
+            return ui_doc_copy(doc);
+
         const struct font *font = doc->s.text.font;
         uint8_t col = (cursor.x - doc->w.pos.x) / font->glyph_w;
         man_line line = (cursor.y - doc->w.pos.y) / font->glyph_h;
@@ -132,14 +182,8 @@ enum ui_ret ui_doc_event(struct ui_doc *doc, const SDL_Event *ev)
         case SDLK_UP: { ui_scroll_move_rows(&doc->scroll, -1); return ui_consume; }
         case SDLK_DOWN: { ui_scroll_move_rows(&doc->scroll, 1); return ui_consume; }
 
-        case SDLK_PAGEUP: {
-            ui_scroll_move_rows(&doc->scroll, -doc->scroll.rows.visible);
-            return true;
-        }
-        case SDLK_PAGEDOWN: {
-            ui_scroll_move_rows(&doc->scroll, doc->scroll.rows.visible);
-            return true;
-        }
+        case SDLK_PAGEUP: { ui_scroll_page_up(&doc->scroll); return ui_consume; }
+        case SDLK_PAGEDOWN: {ui_scroll_page_down(&doc->scroll); return ui_consume; }
 
         case SDLK_HOME: { doc->scroll.rows.first = 0; return ui_consume; }
         case SDLK_END: {
@@ -170,7 +214,10 @@ void ui_doc_render(
     const man_line end = ui_scroll_last_row(&doc->scroll);
     const struct markup *it = man_line_markup(doc->man, line);
 
-    while (it && line < end) {
+    struct { man_line line; int16_t y; bool pressed; } copy = {0};
+    doc->copy.line = 0;
+
+    for (; it && line < end; it = man_next_markup(doc->man, it)) {
         switch (it->type)
         {
 
@@ -233,16 +280,25 @@ void ui_doc_render(
             break;
         }
 
+        case markup_code_begin: { copy.line = line; copy.y = pos.y; break; }
+
         case markup_code: {
             const struct font *font = doc->s.code.font;
 
+            SDL_Rect rect = {
+                .x = pos.x,
+                .y = pos.y,
+                .w = inner.base.dim.w - (pos.x - inner.base.pos.x),
+                .h = font->glyph_h,
+            };
+
+            if (ui_cursor_in(&rect)) {
+                doc->copy.line = copy.line;
+                doc->copy.rect.y = copy.y;
+            }
+
             rgba_render(doc->s.code.bg, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = pos.x,
-                                .y = pos.y,
-                                .w = inner.base.dim.w - (pos.x - inner.base.pos.x),
-                                .h = font->glyph_h,
-                            }));
+            sdl_err(SDL_RenderFillRect(renderer, &rect));
 
             struct ast_node node = {0};
             while (ast_step(it->text, it->len, &node)) {
@@ -262,6 +318,8 @@ void ui_doc_render(
             pos.x += it->len * font->glyph_w;
             break;
         }
+
+        case markup_code_end: { copy.line = 0; break; }
 
         case markup_link: {
             const struct font *font = doc->s.link.font;
@@ -297,7 +355,29 @@ void ui_doc_render(
 
         default: { assert(false); }
         }
+    }
 
-        it = man_next_markup(doc->man, it);
+    if (doc->copy.line) {
+        constexpr size_t chars = 4;
+        const struct font *font = doc->s.copy.font;
+
+        SDL_Rect *rect = &doc->copy.rect;
+        rect->w = (chars * font->glyph_w) + (doc->s.copy.margin * 2);
+        rect->x = (inner.base.pos.x + inner.base.dim.w) - rect->w;
+        rect->h = font->glyph_h;
+
+        bool hover = ui_cursor_in(rect);
+        bool pressed = ui_cursor_button_down(SDL_BUTTON_LEFT);
+
+        struct rgba bg =
+            (hover && pressed) ? doc->s.copy.pressed :
+            hover ? doc->s.copy.hover :
+            doc->s.copy.bg;
+
+        rgba_render(bg, renderer);
+        sdl_err(SDL_RenderFillRect(renderer, rect));
+
+        SDL_Point pt = { .x = rect->x + doc->s.copy.margin, .y = rect->y };
+        font_render(font, renderer, pt, doc->s.copy.fg, "copy", chars);
     }
 }

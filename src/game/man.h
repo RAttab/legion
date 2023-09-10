@@ -65,7 +65,9 @@ enum markup_type : uint8_t
     markup_text,
     markup_underline,
     markup_bold,
+    markup_code_begin,
     markup_code,
+    markup_code_end,
     markup_link,
 };
 

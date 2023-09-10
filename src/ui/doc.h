@@ -29,6 +29,12 @@ struct ui_doc_style
     } code;
 
     struct { struct rgba fg; int8_t offset; } underline;
+
+    struct {
+        int16_t margin;
+        const struct font *font;
+        struct rgba fg, bg, hover, pressed, border;
+    } copy;
 };
 
 void ui_doc_style_default(struct ui_style *);
@@ -45,6 +51,11 @@ struct ui_doc
 
     man_page page;
     struct man *man;
+
+    struct {
+        man_line line; SDL_Rect rect;
+        char *buffer; size_t len, cap;
+    } copy;
 };
 
 struct ui_doc ui_doc_new(struct dim);
