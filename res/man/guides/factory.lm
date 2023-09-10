@@ -168,11 +168,11 @@ programmed using the {_io-tape} command and so the process in this
 section will be very similar to the process in the previous section.
 
 The tape for {_!item-extract}, our end goal, requires as input the
-items {_!item-muscle} and {_!item-nodule} each of which can be created
-by programming printers with their respective tapes. We can start by
-navigating to the IO interface of {_printer.01} and executing the
-{_io-tape} command with the tape id {_!item-muscle}. Repeat the
-process with {_printer.02} and the tape id {_!item-nodule} and
+items {_!item-monobarex} and {_!item-monobararkon} each of which can
+be created by programming printers with their respective tapes. We can
+start by navigating to the IO interface of {_printer.01} and executing
+the {_io-tape} command with the tape id {_!item-monobarex}. Repeat the
+process with {_printer.02} and the tape id {_!item-monobararkon} and
 finally with {_assembly.01} with the tape id {_!item-extract}.
 
 You'll notice that as you execute each of these IO commands, the

@@ -61,11 +61,6 @@ by clicking on the {_asm} button. Note that the details of the
 assembly language is out-of-scope of this guide and is described in
 the {/asm} volume.
 
-{>indent} As mods become bigger and more complex, readability becomes
-more and more of an issue that needs to be managed. While this is a
-deep topic, a good place to start is with consistent code formatting
-which can be accomplished by clicking the {_indent} button.
-
 {>reset} Removes all modifications that were done to the mod,
 effectively reverting it back to the current version. This is a
 destructive operation so use with care.
@@ -79,10 +74,8 @@ programming loop will follow this pattern:
 
 {>edit} Use the editor to make the needed modifications.
 
-{>indent} Indent the mod to give it a consistent formatting.
-
-{>compile} Compile the mod and fix any errors until it compiles
-without errors.
+{>build} Build the mod and fix any raised errors. The mod must be
+built without errors before proceeding to the publish step.
 
 {>publish} Publish the mod to make it available to the factory.
 
@@ -305,8 +298,8 @@ the manual steps we took in the previous chapter:
 (io !io-tape (id !item-extract 2) !item-elem-b)
 
 ; Transform
-(io !io-tape (id !item-printer 1) !item-muscle)
-(io !io-tape (id !item-printer 2) !item-nodule)
+(io !io-tape (id !item-printer 1) !item-monobarex)
+(io !io-tape (id !item-printer 2) !item-monobararkon)
 (io !io-tape (id !item-assembly 1) !item-extract)
 
 ; Deploy

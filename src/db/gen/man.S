@@ -349,13 +349,13 @@ db_man_list:
 
 	.byte 0xFF
 	.4byte 26
-	.4byte 9699
+	.4byte 9717
 	.asciz "res/man/guides/factory.lm"
 	.incbin "res/man/guides/factory.lm"
 
 	.byte 0xFF
 	.4byte 23
-	.4byte 14580
+	.4byte 14305
 	.asciz "res/man/guides/mods.lm"
 	.incbin "res/man/guides/mods.lm"
 
