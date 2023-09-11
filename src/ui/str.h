@@ -25,7 +25,7 @@ struct ui_str
     const char *str;
 };
 
-enum { ui_str_cap = 128 };
+constexpr size_t ui_str_cap = 128;
 
 struct ui_str ui_str_c(const char *);
 struct ui_str ui_str_c(const char *);

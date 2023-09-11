@@ -18,6 +18,7 @@ void ui_code_style_default(struct ui_style *s)
     s->code = (struct ui_code_style) {
         .font = s->font.base,
 
+        .find = { .margin = 4 },
         .row = { .fg = s->rgba.index.fg, .bg = s->rgba.index.bg },
         .bp = { .fg = s->rgba.code.bp.fg, .bg = s->rgba.code.bp.bg },
         .carret = { .fg = s->rgba.carret, .blink = s->carret.blink },
@@ -69,8 +70,19 @@ struct ui_code ui_code_new(struct dim dim)
         .code = code_alloc(),
 
         .bp = { .ip = vm_ip_nil },
+
+        .find = {
+            .type = ui_code_find_nil,
+            .op = ui_label_new(ui_str_c("replace: ")),
+            .by = ui_label_new(ui_str_c(" by ")),
+            .value = ui_input_new_s(&ui_st.input.line, 30),
+            .replace = ui_input_new_s(&ui_st.input.line, 30),
+            .exec = ui_button_new_s(&ui_st.button.line, ui_str_c(">")),
+            .close = ui_button_new_s(&ui_st.button.line, ui_str_c("x")),
+        },
     };
 
+    ui.find.value.s.pad.h = ui.find.replace.s.pad.h = 0;
     ui.errors.s.idle.fg = ui.errors.s.hover.fg = ui.errors.s.selected.fg =
         s->errors.fg;
 
@@ -83,6 +95,14 @@ void ui_code_free(struct ui_code *ui)
     ui_scroll_free(&ui->scroll);
     ui_tooltip_free(&ui->tooltip);
     ui_list_free(&ui->errors);
+
+    ui_label_free(&ui->find.op);
+    ui_label_free(&ui->find.by);
+    ui_input_free(&ui->find.value);
+    ui_input_free(&ui->find.replace);
+    ui_button_free(&ui->find.exec);
+    ui_button_free(&ui->find.close);
+
     code_free(ui->code);
 }
 
@@ -96,6 +116,8 @@ void ui_code_reset(struct ui_code *ui)
     ui_scroll_update_rows(&ui->scroll, 0);
     ui_scroll_update_cols(&ui->scroll, 0);
     ui_tooltip_hide(&ui->tooltip);
+
+    ui->find.type = ui_code_find_nil;
 }
 
 static void ui_code_select_begin(struct ui_code *ui)
@@ -154,7 +176,6 @@ static void ui_code_update(struct ui_code *ui, enum ui_code_update_flag flag)
         ui->edit = ts_now();
         memset(&ui->hl, 0, sizeof(ui->hl));
     }
-    else ui->edit = 0;
 
     if (flag & ui_code_update_rows) {
         struct rowcol rc = code_rowcol(ui->code);
@@ -313,6 +334,30 @@ void ui_code_render(
         ui_layout_sep_x(&bot, ui->s.errors.margin);
         ui_layout_sep_y(&bot, ui->s.errors.margin);
         ui_list_render(&ui->errors, &bot, renderer);
+
+        ui_layout_dir_vert(layout, ui_layout_up_down);
+    }
+
+    if (ui->find.type) {
+        ui_layout_dir_vert(layout, ui_layout_down_up);
+        struct ui_layout top = ui_layout_split_y(layout,
+                ui->find.value.w.dim.h + ui->s.find.margin * 2);
+
+        ui_layout_sep_x(&top, ui->s.find.margin);
+        ui_layout_sep_y(&top, ui->s.find.margin);
+
+        ui_label_render(&ui->find.op, &top, renderer);
+        ui_input_render(&ui->find.value, &top, renderer);
+        if (ui->find.type == ui_code_find_replace) {
+            ui_label_render(&ui->find.by, &top, renderer);
+            ui_input_render(&ui->find.replace, &top, renderer);
+        }
+
+        ui_layout_sep_col(&top);
+        ui_button_render(&ui->find.exec, &top, renderer);
+
+        ui_layout_dir_hori(&top, ui_layout_right_left);
+        ui_button_render(&ui->find.close, &top, renderer);
 
         ui_layout_dir_vert(layout, ui_layout_up_down);
     }
@@ -767,6 +812,129 @@ static enum ui_ret ui_code_event_help(struct ui_code *ui)
     return ui_consume;
 }
 
+static enum ui_ret ui_code_event_find(
+        struct ui_code *ui, enum ui_code_find_type type)
+{
+    if (!type) {
+        ui->find.type = type;
+        ui_code_update(ui, ui_code_update_nil);
+        return ui_consume;
+    }
+
+    if (type != ui->find.type) {
+        ui->find.type = type;
+        ui->find.len = 0;
+
+        ui_input_clear(&ui->find.value);
+        ui_input_clear(&ui->find.replace);
+
+        const char *op =
+            type == ui_code_find_row ? "goto: " :
+            type == ui_code_find_text ? "find: " :
+            type == ui_code_find_replace ? "replace: " :
+            nullptr;
+        assert(op != nullptr);
+
+        ui_str_setc(&ui->find.op.str, op);
+        ui_input_focus(&ui->find.value);
+
+        ui_code_update(ui, ui_code_update_nil);
+        return ui_consume;
+    }
+
+    switch (type)
+    {
+
+    case ui_code_find_row: {
+        uint64_t row = 0;
+        if (!ui_input_get_u64(&ui->find.value, &row)) {
+            ui_log(st_error, "invalid line value");
+            break;
+        }
+
+        if (row) --row;
+
+        uint32_t pos = code_pos_for(ui->code, row, 0);
+        uint32_t cols = code_cols_for(ui->code, row);
+
+        ui_code_highlight(ui, pos, cols);
+        ui_code_event_find(ui, ui_code_find_nil);
+        ui_code_focus(ui);
+        break;
+    }
+
+    case ui_code_find_text: {
+        uint32_t start = ui->carret.pos + ui->find.len;
+        uint32_t end = code_len(ui->code);
+
+        const char *value = nullptr;
+        ui->find.len = ui_input_get_str(&ui->find.value, &value);
+        if (!ui->find.len) { ui_log(st_error, "no find value given"); break;}
+
+        uint32_t match = code_find(ui->code, start, end, value, ui->find.len);
+        if (match == code_pos_nil)
+            match = code_find(ui->code, 0, start, value, ui->find.len);
+
+        if (match != code_pos_nil) ui_code_highlight(ui, match, ui->find.len);
+        else ui_log(st_info, "no find matches found");
+        ui_code_focus(ui);
+        break;
+    }
+
+    case ui_code_find_replace: {
+
+        const char *value = nullptr;
+        size_t value_len = ui_input_get_str(&ui->find.value, &value);
+        if (!value_len) { ui_log(st_error, "no find value given"); break;}
+
+        const char *replace = nullptr;
+        size_t replace_len = ui_input_get_str(&ui->find.replace, &replace);
+
+        ssize_t delta = replace_len - value_len;
+
+        uint32_t first = 0, last = 0;
+        if (ui_code_select_active(ui)) {
+            first = legion_min(ui->select.first.pos, ui->select.last.pos);
+            last = legion_max(ui->select.first.pos, ui->select.last.pos);
+        }
+        else {
+            first = ui->carret.pos;
+            last = code_len(ui->code);
+        }
+
+        size_t count = code_replace(
+                ui->code, first, last, value, value_len, replace, replace_len);
+
+        ui->carret.pos = last + (delta * count);
+        ui_log(st_info, "replaced %zu instances", count);
+
+        ui_code_select_clear(ui);
+        ui_code_update(ui, ui_code_update_all);
+        ui_code_event_find(ui, ui_code_find_nil);
+        ui_code_focus(ui);
+        break;
+    }
+
+    case ui_code_find_nil: default: { assert(false); }
+    }
+
+    return ui_consume;
+}
+
+static enum ui_ret ui_code_event_escape(struct ui_code *ui)
+{
+    if (ui->find.type)
+        return ui_code_event_find(ui, ui_code_find_nil);
+
+    if (ui_code_select_active(ui)) {
+        ui_code_select_clear(ui);
+        return ui_consume;
+    }
+
+    return ui_nil;
+}
+
+
 enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 {
     switch (render_user_event(ev))
@@ -789,8 +957,34 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
     }
 
     enum ui_ret ret = ui_nil;
+
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret;
     if ((ret = ui_tooltip_event(&ui->tooltip, ev))) return ret;
+
+    if (ui->find.type) {
+        if ((ret = ui_input_event(&ui->find.value, ev))) {
+            if (ret != ui_action) return ret;
+
+            if (ui->find.type == ui_code_find_replace) {
+                ui_input_focus(&ui->find.replace);
+                return ret;
+            }
+
+            return ui_code_event_find(ui, ui->find.type);
+        }
+
+        if (ui->find.type == ui_code_find_replace) {
+            if ((ret = ui_input_event(&ui->find.replace, ev)))
+                return ret == ui_action ? ui_code_event_find(ui, ui->find.type) : ret;
+        }
+
+        if ((ret = ui_button_event(&ui->find.exec, ev)))
+            return ret == ui_action ? ui_code_event_find(ui, ui->find.type) : ret;
+
+        if ((ret = ui_button_event(&ui->find.close, ev)))
+            return ret == ui_action ? ui_code_event_find(ui, ui_code_find_nil) : ret;
+    }
+
     if (code_empty(ui->code)) return ui_nil;
 
     if (ui->mod->errs_len && (ret = ui_list_event(&ui->errors, ev))) {
@@ -838,6 +1032,9 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
             case SDLK_LEFT:  { return ui_code_event_move(ui, mod, 0, -1); }
             case SDLK_RIGHT: { return ui_code_event_move(ui, mod, 0, +1); }
 
+            case SDLK_HOME: { return ui_code_event_home(ui, mod); }
+            case SDLK_END:  { return ui_code_event_end(ui, mod); }
+
             case SDLK_SPACE: {
                 ui->select.active ? ui_code_select_clear(ui) : ui_code_select_begin(ui);
                 return ui_consume;
@@ -854,6 +1051,10 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
             case 'h': { return ui_code_event_help(ui); }
 
             case 'l': { return ui_code_event_center(ui, mod); }
+
+            case 'g': { return ui_code_event_find(ui, ui_code_find_row); }
+            case 'f': { return ui_code_event_find(ui, ui_code_find_text); }
+            case 'r': { return ui_code_event_find(ui, ui_code_find_replace); }
 
             default: { return ui_nil; }
             }
@@ -880,6 +1081,8 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 
             case SDLK_DELETE:    { return ui_code_event_del(ui, mod, +1); }
             case SDLK_BACKSPACE: { return ui_code_event_del(ui, mod, -1); }
+
+            case SDLK_ESCAPE: { return ui_code_event_escape(ui); }
 
             default: { return ui_nil; }
             }

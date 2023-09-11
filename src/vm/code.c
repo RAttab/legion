@@ -6,6 +6,7 @@
 #include "vm/code.h"
 #include "vm/ast.h"
 #include "utils/str.h"
+#include "utils/vec.h"
 
 // -----------------------------------------------------------------------------
 // code str
@@ -82,6 +83,8 @@ struct code
 
     bool modified;
     hash_val hash;
+
+    struct vec32 *matches;
 };
 
 
@@ -100,6 +103,7 @@ void code_free(struct code *code)
     free(code->str.list);
 
     ast_free(code->ast);
+    vec32_free(code->matches);
     free(code);
 }
 
@@ -322,6 +326,25 @@ char code_char_for(const struct code *code, uint32_t pos)
     return pos >= it->len ? 0 : it->str[pos];
 }
 
+uint32_t code_cols_for(const struct code *code, uint32_t row)
+{
+    struct code_str *it = code->str.list;
+    struct code_str *end = it + code->str.len;
+
+    uint32_t rows = 0, cols = 0;
+    for (; it < end; ++it) {
+        size_t i = 0;
+
+        for (; i < it->len && rows < row; ++i)
+            if (likely(it->str[i] == '\n')) rows++;
+
+        for (; i < it->len; ++i, ++cols)
+            if (likely(it->str[i] == '\n')) return cols;
+    }
+
+    return cols;
+}
+
 struct rowcol code_rowcol_for(const struct code *code, uint32_t pos)
 {
     struct rowcol rc = {0};
@@ -539,9 +562,10 @@ static struct code_str *code_split(
     uint32_t end_ast = (ast_it + 1)->pos;
 
     uint32_t begin = begin_ast - ast;
-    uint32_t end = end_ast - ast;
+    uint32_t end = legion_min(end_ast - ast, it->len);
 
     code_str_set(next, it->str + end, it->len - end);
+
     next->ast.node = ast_it + 1;
     next->ast.log = ast_log_next(code->ast, next->ast.node->pos, it->ast.log);
 
@@ -864,6 +888,61 @@ uint32_t code_move_symbol(struct code *code, uint32_t pos, int32_t inc)
     if (it == end) return pos;
 
     return it->pos;
+}
+
+// -----------------------------------------------------------------------------
+// search / replace
+// -----------------------------------------------------------------------------
+
+uint32_t code_find(
+        struct code *code,
+        uint32_t first, uint32_t last,
+        const char *find, size_t len)
+{
+    assert(len);
+    assert(first < last);
+
+    const struct code_str *str = code_inc_str(code);
+    assert(first <= str->len);
+    assert(last <= str->len);
+
+    for (uint32_t it = first; it + len <= last; ++it) {
+        size_t i = 0;
+        while (unlikely(i < len && str->str[it + i] == find[i])) ++i;
+        if (unlikely(i == len)) return it;
+    }
+
+    return code_pos_nil;
+}
+
+size_t code_replace(
+        struct code *code,
+        uint32_t first, uint32_t last,
+        const char *find, size_t find_len,
+        const char *value, size_t value_len)
+{
+    assert(find_len);
+    assert(first < last);
+    if (code->matches) code->matches->len = 0;
+
+    // Searching for all matches first allows to reuse code_find without calling
+    // code_update on each match.
+    for (uint32_t it = first; it + find_len <= last; ) {
+        uint32_t match = code_find(code, it, last, find, find_len);
+        if (match == code_pos_nil) break;
+
+        code->matches = vec32_append(code->matches, match);
+        it = match + find_len;
+    }
+
+    // We go backwards to not invalidate our positions
+    for (size_t i = vec32_len(code->matches); i; --i) {
+        uint32_t pos = code->matches->vals[i - 1];
+        code_delete_range(code, pos, pos + find_len);
+        code_insert_range(code, pos, value, value_len);
+    }
+
+    return vec32_len(code->matches);
 }
 
 

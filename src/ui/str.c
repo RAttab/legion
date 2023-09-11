@@ -65,7 +65,7 @@ void ui_str_paste(struct ui_str *str)
 
 void ui_str_setc(struct ui_str *str, const char *val)
 {
-    str->len = strnlen(val, ui_str_cap);
+    str->len = legion_min(strlen(val), ui_str_cap);
     if (!str->cap) str->str = val;
     else memcpy((char *) str->str, val, str->len);
 }

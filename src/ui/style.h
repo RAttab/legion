@@ -71,10 +71,11 @@ extern struct ui_style
         struct { struct ui_button_style close, open; } list;
     } button;
 
+    struct { struct ui_input_style base, line; } input;
+
     struct ui_link_style link;
     struct ui_tooltip_style tooltip;
     struct ui_scroll_style scroll;
-    struct ui_input_style input;
     struct ui_asm_style as;
     struct ui_code_style code;
     struct ui_doc_style doc;

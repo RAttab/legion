@@ -100,9 +100,9 @@ struct ui_layout ui_layout_split_y(struct ui_layout *layout, int16_t height)
     else {
         inner.base.pos.y = layout->base.pos.y + (layout->base.dim.h - height);
         inner.row.pos.y = inner.base.pos.y;
+        layout->base.dim.h -= height;
     }
 
-    layout->base.dim.h -= height;
     return inner;
 }
 

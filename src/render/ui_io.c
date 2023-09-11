@@ -227,7 +227,7 @@ bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
 
             struct ui_io_arg *next = arg + 1;
             if (next == cmd->args + cmd->len) ui_io_exec(ui, cmd);
-            else render_push_event(ev_focus_input, (uintptr_t) &next->val, 0);
+            else ui_input_focus(&next->val);
 
             return true;
         }

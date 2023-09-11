@@ -21,6 +21,7 @@ struct code;
 struct ui_code_style
 {
     const struct font *font;
+    struct { int16_t margin; } find;
     struct { struct rgba fg, bg; } row, bp;
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
@@ -30,6 +31,14 @@ struct ui_code_style
 };
 
 void ui_code_style_default(struct ui_style *);
+
+enum ui_code_find_type : uint8_t
+{
+    ui_code_find_nil = 0,
+    ui_code_find_row,
+    ui_code_find_text,
+    ui_code_find_replace,
+};
 
 struct ui_code
 {
@@ -57,6 +66,15 @@ struct ui_code
         bool active;
         struct { uint32_t pos, row, col; } first, last;
     } select;
+
+    struct
+    {
+        enum ui_code_find_type type;
+        struct ui_label op, by;
+        struct ui_input value, replace;
+        struct ui_button exec, close;
+        uint32_t len;
+    } find;
 };
 
 struct ui_code ui_code_new(struct dim);
