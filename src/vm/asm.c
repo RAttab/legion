@@ -163,6 +163,38 @@ asm_jmp_it asm_jmp_to(const struct assembly *as, uint32_t row)
     return nullptr;
 }
 
+
+bool asm_find(
+        const struct assembly *as, struct rowcol *it,
+        const char *match, size_t match_len)
+{
+    if (!it) *it = make_rowcol(0, 0);
+    else it->col += match_len;
+
+    for (size_t i = 0; i < as->line.len; ++i, it->col = 0) {
+        uint32_t row = (it->row + i) % as->line.len;
+
+        char line[32] = {0};
+        size_t line_len = asm_line_str(asm_at(as, row), line, sizeof(line)).len;
+        if (it->col + match_len > line_len) continue;
+
+        size_t len = line_len - it->col;
+        size_t col = str_find(line + it->col, len, match, match_len);
+        if (col == len) continue;
+
+        it->row = row;
+        it->col += col;
+        return true;
+    }
+
+    return false;
+}
+
+
+// -----------------------------------------------------------------------------
+// parse
+// -----------------------------------------------------------------------------
+
 static struct asm_line *asm_append_line(struct assembly *as)
 {
     if (unlikely(as->line.len == as->line.cap)) {

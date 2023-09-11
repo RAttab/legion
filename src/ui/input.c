@@ -116,6 +116,16 @@ bool ui_input_get_u64(struct ui_input *input, uint64_t *ret)
     return read > 0;
 }
 
+bool ui_input_get_hex(struct ui_input *input, uint64_t *ret)
+{
+    const char *it = input->buf.c;
+    const char *end = it + input->buf.len;
+    it += str_skip_spaces(it, end - it);
+
+    size_t read = str_atox(it, end - it, ret);
+    return read > 0;
+}
+
 bool ui_input_get_symbol(struct ui_input *input, struct symbol *ret)
 {
     if (!input->buf.len) return false;

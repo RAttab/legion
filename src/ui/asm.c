@@ -17,6 +17,7 @@ void ui_asm_style_default(struct ui_style *s)
     s->as = (struct ui_asm_style) {
         .font = s->font.base,
 
+        .find = { .margin = 4 },
         .row = { .fg = s->rgba.index.fg, .bg = s->rgba.index.bg },
         .bp = { .fg = s->rgba.code.bp.fg, .bg = s->rgba.code.bp.bg },
         .jmp = { .current = rgba_gray(0xFF), .base = rgba_gray(0x88) },
@@ -56,6 +57,14 @@ struct ui_asm ui_asm_new(struct dim dim)
         .as = asm_alloc(),
 
         .bp = { .ip = vm_ip_nil },
+
+        .find = {
+            .type = ui_asm_find_nil,
+            .op = ui_label_new(ui_str_c("find: ")),
+            .value = ui_input_new_s(&ui_st.input.line, 30),
+            .exec = ui_button_new_s(&ui_st.button.line, ui_str_c(">")),
+            .close = ui_button_new_s(&ui_st.button.line, ui_str_c("x")),
+        },
     };
 
     return ui;
@@ -64,6 +73,10 @@ struct ui_asm ui_asm_new(struct dim dim)
 void ui_asm_free(struct ui_asm *ui)
 {
     ui_scroll_free(&ui->scroll);
+    ui_label_free(&ui->find.op);
+    ui_input_free(&ui->find.value);
+    ui_button_free(&ui->find.exec);
+    ui_button_free(&ui->find.close);
     asm_free(ui->as);
 }
 
@@ -179,7 +192,33 @@ void ui_asm_render(
     ui->w.dim = ui_layout_remaining(layout);
     struct dim cell = make_dim(ui->s.font->glyph_w, ui->s.font->glyph_h);
 
+    if (ui->find.type) {
+        ui_layout_dir_vert(layout, ui_layout_down_up);
+        struct ui_layout top = ui_layout_split_y(layout,
+                ui->find.value.w.dim.h + ui->s.find.margin * 2);
+
+        ui_layout_sep_x(&top, ui->s.find.margin);
+        ui_layout_sep_y(&top, ui->s.find.margin);
+
+        ui_label_render(&ui->find.op, &top, renderer);
+        ui_input_render(&ui->find.value, &top, renderer);
+
+        ui_layout_sep_col(&top);
+        ui_button_render(&ui->find.exec, &top, renderer);
+
+        ui_layout_dir_hori(&top, ui_layout_right_left);
+        ui_button_render(&ui->find.close, &top, renderer);
+
+        ui_layout_dir_vert(layout, ui_layout_up_down);
+    }
+
+    ui->scroll.w.dim.h = ui_layout_inf;
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    ui->inner = (SDL_Rect) {
+        .x = inner.base.pos.x, .y = inner.base.pos.y,
+        .w = inner.base.dim.w, .h = inner.base.dim.h
+    };
+
     if (asm_empty(ui->as) || ui_layout_is_nil(&inner)) return;
 
     const uint32_t row_first = ui_scroll_first_row(&ui->scroll);
@@ -372,7 +411,7 @@ void ui_asm_render(
 enum ui_ret ui_asm_event_click(struct ui_asm *ui)
 {
     SDL_Point cursor = ui_cursor_point();
-    SDL_Rect rect = ui_widget_rect(&ui->w);
+    SDL_Rect rect = ui->inner;
 
     ui->focused = SDL_PointInRect(&cursor, &rect);
     if (!ui->focused) return ui_nil;
@@ -529,13 +568,101 @@ static enum ui_ret ui_asm_event_help(struct ui_asm *ui)
     return ui_consume;
 }
 
+static enum ui_ret ui_asm_event_find(
+        struct ui_asm *ui, enum ui_asm_find_type type)
+{
+    if (!type) {
+        ui->find.type = type;
+        return ui_consume;
+    }
+
+    if (type != ui->find.type) {
+        ui->find.type = type;
+        ui->find.len = 0;
+
+        const char *op =
+            type == ui_asm_find_row ? "goto: " :
+            type == ui_asm_find_text ? "find: " :
+            nullptr;
+        assert(op != nullptr);
+        ui_str_setc(&ui->find.op.str, op);
+
+        ui_input_clear(&ui->find.value);
+        ui_input_focus(&ui->find.value);
+        return ui_consume;
+    }
+
+    switch (type)
+    {
+
+    case ui_asm_find_row: {
+        uint64_t ip = 0;
+        if (!ui_input_get_hex(&ui->find.value, &ip)) {
+            ui_log(st_error, "invalid line value");
+            break;
+        }
+
+        ui->carret.col = 0;
+        ui->carret.row = asm_row(ui->as, ip);
+        ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
+
+        ui->hl.row = ui->carret.row;
+        ui->hl.ts = ts_now();
+
+        ui_asm_event_find(ui, ui_asm_find_nil);
+        ui_asm_focus(ui);
+        break;
+    }
+
+    case ui_asm_find_text: {
+        struct rowcol it = ui->carret;
+        if (ui->find.len) it.col += ui->find.len;
+
+        const char *value = nullptr;
+        ui->find.len = ui_input_get_str(&ui->find.value, &value);
+        if (!ui->find.len) { ui_log(st_error, "missing find value"); break; }
+
+        if (!asm_find(ui->as, &it, value, ui->find.len)) {
+            ui_log(st_info, "no matches found");
+            break;
+        }
+
+        ui->carret = it;
+        ui_scroll_visible(&ui->scroll, ui->carret.row, ui->carret.col);
+
+        ui->hl.row = ui->carret.row;
+        ui->hl.ts = ts_now();
+
+        ui_asm_focus(ui);
+        break;
+    }
+
+    case ui_asm_find_nil: default: { assert(false); }
+    }
+
+    return ui_consume;
+}
+
 enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 {
     if (render_user_event_is(ev, ev_focus_input))
         ui->focused = (ui == ev->user.data1);
 
     enum ui_ret ret = ui_nil;
+
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret;
+
+    if (ui->find.type) {
+        if ((ret = ui_input_event(&ui->find.value, ev)))
+            return ret == ui_action ? ui_asm_event_find(ui, ui->find.type) : ret;
+
+        if ((ret = ui_button_event(&ui->find.exec, ev)))
+            return ret == ui_action ? ui_asm_event_find(ui, ui->find.type) : ret;
+
+        if ((ret = ui_button_event(&ui->find.close, ev)))
+            return ret == ui_action ? ui_asm_event_find(ui, ui_asm_find_nil) : ret;
+    }
+
     if (asm_empty(ui->as)) return ui_nil;
 
     switch (ev->type)
@@ -567,41 +694,48 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;
-        switch (keysym)
-        {
-        case SDLK_UP: { return ui_asm_event_move(ui, mod, -1, 0); }
-        case SDLK_DOWN: { return ui_asm_event_move(ui, mod, 1, 0); }
-        case SDLK_LEFT: { return ui_asm_event_move(ui, mod, 0, -1); }
-        case SDLK_RIGHT: { return ui_asm_event_move(ui, mod, 0, 1); }
 
-        case SDLK_HOME: { return ui_asm_event_home(ui, mod); }
-        case SDLK_END: { return ui_asm_event_end(ui, mod); }
+        if ((mod & KMOD_CTRL)) {
+            switch (keysym)
+            {
+            case SDLK_UP: { return ui_asm_event_move(ui, mod, -1, 0); }
+            case SDLK_DOWN: { return ui_asm_event_move(ui, mod, 1, 0); }
+            case SDLK_LEFT: { return ui_asm_event_move(ui, mod, 0, -1); }
+            case SDLK_RIGHT: { return ui_asm_event_move(ui, mod, 0, 1); }
 
-        case SDLK_PAGEUP:   { return ui_asm_event_page(ui, -1); }
-        case SDLK_PAGEDOWN: { return ui_asm_event_page(ui, +1); }
+            case SDLK_HOME: { return ui_asm_event_home(ui, mod); }
+            case SDLK_END: { return ui_asm_event_end(ui, mod); }
 
-        case SDLK_SPACE: {
-            if (!(mod & KMOD_CTRL)) return ui_nil;
-            ui->select.active ? ui_asm_select_clear(ui) : ui_asm_select_begin(ui);
-            return ui_consume;
+            case SDLK_SPACE: {
+                ui->select.active ? ui_asm_select_clear(ui) : ui_asm_select_begin(ui);
+                return ui_consume;
+            }
+
+            case 'c': { return ui_asm_event_copy(ui); }
+            case 'h': { return ui_asm_event_help(ui); }
+            case 'l': { return ui_asm_event_center(ui, mod); }
+            case 'g': { return ui_asm_event_find(ui, ui_asm_find_row); }
+            case 'f': { return ui_asm_event_find(ui, ui_asm_find_text); }
+
+            default: { return ui_nil; }
+            }
         }
+        else {
+            switch (keysym)
+            {
+            case SDLK_UP: { return ui_asm_event_move(ui, mod, -1, 0); }
+            case SDLK_DOWN: { return ui_asm_event_move(ui, mod, 1, 0); }
+            case SDLK_LEFT: { return ui_asm_event_move(ui, mod, 0, -1); }
+            case SDLK_RIGHT: { return ui_asm_event_move(ui, mod, 0, 1); }
 
-        case 'c': {
-            if (!(mod & KMOD_CTRL)) return ui_nil;
-            return ui_asm_event_copy(ui);
-        }
+            case SDLK_HOME: { return ui_asm_event_home(ui, mod); }
+            case SDLK_END: { return ui_asm_event_end(ui, mod); }
 
-        case 'h': {
-            if (!(mod & KMOD_CTRL)) return ui_nil;
-            return ui_asm_event_help(ui);
-        }
+            case SDLK_PAGEUP:   { return ui_asm_event_page(ui, -1); }
+            case SDLK_PAGEDOWN: { return ui_asm_event_page(ui, +1); }
 
-        case 'l': {
-            if (!(mod & KMOD_CTRL)) return ui_nil;
-            return ui_asm_event_center(ui, mod);
-        }
-
-        default: { return ui_nil; }
+            default: { return ui_nil; }
+            }
         }
     }
 

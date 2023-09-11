@@ -30,6 +30,21 @@ bool str_ends_with(const char *str, const char *prefix)
     return true;
 }
 
+size_t str_find(
+        const char *str, size_t str_len,
+        const char *match, size_t match_len)
+{
+    assert(match_len);
+
+    for (uint32_t it = 0; it + match_len <= str_len; ++it) {
+        size_t i = 0;
+        while (unlikely(i < match_len && str[it + i] == match[i])) ++i;
+        if (unlikely(i == match_len)) return it;
+    }
+
+    return str_len;
+}
+
 
 size_t str_utoa(uint64_t val, char *dst, size_t len)
 {

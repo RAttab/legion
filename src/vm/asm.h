@@ -69,6 +69,9 @@ typedef const struct asm_jmp *asm_jmp_it;
 asm_jmp_it asm_jmp_from(const struct assembly *, uint32_t row);
 asm_jmp_it asm_jmp_to(const struct assembly *, uint32_t row);
 
+bool asm_find(
+        const struct assembly *, struct rowcol *it,
+        const char *str, size_t len);
 
 void asm_parse(struct assembly *, const struct mod *);
 void asm_dump(struct assembly *);

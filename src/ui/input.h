@@ -52,6 +52,7 @@ void ui_input_set(struct ui_input *, const char *str);
 
 size_t ui_input_get_str(struct ui_input *, const char **str);
 bool ui_input_get_u64(struct ui_input *, uint64_t *ret);
+bool ui_input_get_hex(struct ui_input *, uint64_t *ret);
 bool ui_input_get_symbol(struct ui_input *, struct symbol *ret);
 bool ui_input_eval(struct ui_input *, vm_word *ret);
 

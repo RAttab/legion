@@ -817,7 +817,6 @@ static enum ui_ret ui_code_event_find(
 {
     if (!type) {
         ui->find.type = type;
-        ui_code_update(ui, ui_code_update_nil);
         return ui_consume;
     }
 
@@ -825,18 +824,17 @@ static enum ui_ret ui_code_event_find(
         ui->find.type = type;
         ui->find.len = 0;
 
-        ui_input_clear(&ui->find.value);
-        ui_input_clear(&ui->find.replace);
-
         const char *op =
             type == ui_code_find_row ? "goto: " :
             type == ui_code_find_text ? "find: " :
             type == ui_code_find_replace ? "replace: " :
             nullptr;
         assert(op != nullptr);
-
         ui_str_setc(&ui->find.op.str, op);
+
         ui_input_focus(&ui->find.value);
+        ui_input_clear(&ui->find.value);
+        ui_input_clear(&ui->find.replace);
 
         ui_code_update(ui, ui_code_update_nil);
         return ui_consume;
@@ -869,14 +867,14 @@ static enum ui_ret ui_code_event_find(
 
         const char *value = nullptr;
         ui->find.len = ui_input_get_str(&ui->find.value, &value);
-        if (!ui->find.len) { ui_log(st_error, "no find value given"); break;}
+        if (!ui->find.len) { ui_log(st_error, "missing find value"); break;}
 
         uint32_t match = code_find(ui->code, start, end, value, ui->find.len);
         if (match == code_pos_nil)
             match = code_find(ui->code, 0, start, value, ui->find.len);
 
         if (match != code_pos_nil) ui_code_highlight(ui, match, ui->find.len);
-        else ui_log(st_info, "no find matches found");
+        else ui_log(st_info, "no matches found");
         ui_code_focus(ui);
         break;
     }
@@ -885,7 +883,7 @@ static enum ui_ret ui_code_event_find(
 
         const char *value = nullptr;
         size_t value_len = ui_input_get_str(&ui->find.value, &value);
-        if (!value_len) { ui_log(st_error, "no find value given"); break;}
+        if (!value_len) { ui_log(st_error, "missing find value"); break;}
 
         const char *replace = nullptr;
         size_t replace_len = ui_input_get_str(&ui->find.replace, &replace);
@@ -906,7 +904,7 @@ static enum ui_ret ui_code_event_find(
                 ui->code, first, last, value, value_len, replace, replace_len);
 
         ui->carret.pos = last + (delta * count);
-        ui_log(st_info, "replaced %zu instances", count);
+        ui_log(st_info, "replaced %zu matches", count);
 
         ui_code_select_clear(ui);
         ui_code_update(ui, ui_code_update_all);

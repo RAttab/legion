@@ -900,19 +900,15 @@ uint32_t code_find(
         const char *find, size_t len)
 {
     assert(len);
-    assert(first < last);
+    assert(first <= last);
 
     const struct code_str *str = code_inc_str(code);
     assert(first <= str->len);
     assert(last <= str->len);
 
-    for (uint32_t it = first; it + len <= last; ++it) {
-        size_t i = 0;
-        while (unlikely(i < len && str->str[it + i] == find[i])) ++i;
-        if (unlikely(i == len)) return it;
-    }
-
-    return code_pos_nil;
+    size_t str_len = str->len - first;
+    size_t match = str_find(str->str + first, str_len, find, len);
+    return match < str_len ? first + match : code_pos_nil;
 }
 
 size_t code_replace(

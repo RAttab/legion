@@ -19,6 +19,7 @@ struct assembly;
 struct ui_asm_style
 {
     const struct font *font;
+    struct { int16_t margin; } find;
     struct { struct rgba fg, bg; } row, bp;
     struct { struct rgba current, base; } jmp;
     struct { struct rgba fg; time_sys blink; } carret;
@@ -29,6 +30,13 @@ struct ui_asm_style
 
 void ui_asm_style_default(struct ui_style *);
 
+enum ui_asm_find_type : uint8_t
+{
+    ui_asm_find_nil = 0,
+    ui_asm_find_row,
+    ui_asm_find_text,
+};
+
 struct ui_asm
 {
     struct ui_widget w;
@@ -37,6 +45,7 @@ struct ui_asm
 
     bool focused;
     struct ui_scroll scroll;
+    SDL_Rect inner;
 
     struct assembly *as;
     const struct mod *mod;
@@ -45,6 +54,14 @@ struct ui_asm
     struct { vm_ip ip; uint32_t row; } bp;
     struct { uint32_t row; time_sys ts; } hl;
     struct { bool active; struct rowcol first, last; } select;
+
+    struct {
+        enum ui_asm_find_type type;
+        struct ui_label op;
+        struct ui_input value;
+        struct ui_button exec, close;
+        size_t len;
+    } find;
 };
 
 struct ui_asm ui_asm_new(struct dim);
