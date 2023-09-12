@@ -64,7 +64,7 @@ size_t vm_op_arg_fmt(enum vm_op_arg type, vm_word val, char *dst, size_t len)
     case vm_op_arg_reg: {
         assert(len >= 1);
         *dst = '$'; dst++;
-        dst += str_utox(val, dst, last - dst);
+        dst += str_utox(val, dst, 1);
         break;
     }
 
