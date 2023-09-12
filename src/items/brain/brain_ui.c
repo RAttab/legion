@@ -13,6 +13,12 @@
 // brain
 // -----------------------------------------------------------------------------
 
+struct ui_brain_frame
+{
+    mod_id mod; vm_ip ip;
+    struct ui_button show;
+};
+
 struct ui_brain
 {
     struct ui_label mod;
@@ -29,14 +35,21 @@ struct ui_brain
     struct ui_label spec, spec_stack, spec_speed, spec_sep;
     struct ui_label io, io_val;
     struct ui_label tsc, tsc_val;
-    struct ui_label ip;
-    struct ui_link ip_val;
+    struct ui_label ip, ip_val;
+    struct ui_button ip_show;
+    struct ui_label sbp, sbp_val;
     struct ui_label flags, flags_val;
 
     struct ui_label regs, regs_index, regs_val;
 
-    struct ui_scroll scroll;
-    struct ui_label stack, stack_index, stack_val;
+
+    struct
+    {
+        struct ui_label title, index, val;
+        struct ui_scroll scroll;
+
+        struct ui_brain_frame list[vm_stack_len(1)];
+    } stack;
 
     size_t state_len;
     struct im_brain state;
@@ -79,7 +92,11 @@ static void *ui_brain_alloc(void)
         .tsc_val = ui_label_new(ui_str_v(u32_len)),
 
         .ip = ui_label_new(ui_str_c("ip:   ")),
-        .ip_val = ui_link_new(ui_str_v(u32_len)),
+        .ip_val = ui_label_new(ui_str_v(u32_len)),
+        .ip_show = ui_button_new_s(&ui_st.button.line, ui_str_c(">>")),
+
+        .sbp = ui_label_new(ui_str_c("sbp:  ")),
+        .sbp_val = ui_label_new(ui_str_v(u8_len)),
 
         .flags = ui_label_new(ui_str_c("flag: ")),
         .flags_val = ui_label_new(ui_str_c("XX ")),
@@ -88,13 +105,20 @@ static void *ui_brain_alloc(void)
         .regs_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
         .regs_val = ui_label_new(ui_str_v(u64_len)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
-        .stack = ui_label_new(ui_str_c("stack: ")),
-        .stack_index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
-        .stack_val = ui_label_new(ui_str_v(u64_len)),
+        .stack = {
+            .title = ui_label_new(ui_str_c("stack: ")),
+            .index = ui_label_new_s(&ui_st.label.index, ui_str_v(u8_len)),
+            .val = ui_label_new(ui_str_v(u64_len)),
+            .scroll = ui_scroll_new(
+                    make_dim(ui_layout_inf, ui_layout_inf),
+                    ui_st.font.dim),
+        },
 
         .state_len = sizeof(ui->state) + stack_len,
     };
+
+    for (size_t i = 0; i < array_len(ui->stack.list); ++i)
+        ui->stack.list[i].show = ui_button_new_s(&ui_st.button.line, ui_str_c(">>"));
 
     return ui;
 }
@@ -132,7 +156,11 @@ static void ui_brain_free(void *_ui)
     ui_label_free(&ui->tsc_val);
 
     ui_label_free(&ui->ip);
-    ui_link_free(&ui->ip_val);
+    ui_label_free(&ui->ip_val);
+    ui_button_free(&ui->ip_show);
+
+    ui_label_free(&ui->sbp);
+    ui_label_free(&ui->sbp_val);
 
     ui_label_free(&ui->flags);
     ui_label_free(&ui->flags_val);
@@ -141,10 +169,12 @@ static void ui_brain_free(void *_ui)
     ui_label_free(&ui->regs_index);
     ui_label_free(&ui->regs_val);
 
-    ui_scroll_free(&ui->scroll);
-    ui_label_free(&ui->stack);
-    ui_label_free(&ui->stack_index);
-    ui_label_free(&ui->stack_val);
+    ui_scroll_free(&ui->stack.scroll);
+    ui_label_free(&ui->stack.title);
+    ui_label_free(&ui->stack.index);
+    ui_label_free(&ui->stack.val);
+    for (size_t i = 0; i < array_len(ui->stack.list); ++i)
+        ui_button_free(&ui->stack.list[i].show);
 
     free(ui);
 }
@@ -193,12 +223,31 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     if (!state->msg.len) ui_set_nil(&ui->msg_len);
     else ui_str_set_u64(ui_set(&ui->msg_len), state->msg.len);
 
+    ui->ip_show.disabled = !state->mod_id;
+
     ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
     ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
     ui_str_set_hex(&ui->io_val.str, state->vm.io);
     ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
     ui_str_set_hex(&ui->ip_val.str, state->vm.ip);
-    ui_scroll_update_rows(&ui->scroll, state->vm.sp);
+    ui_str_set_hex(&ui->sbp_val.str, state->vm.sbp);
+
+    ui_scroll_update_rows(&ui->stack.scroll, state->vm.sp);
+    for (size_t i = 0; i < state->vm.sp; ++i)
+        ui->stack.list[i].show.disabled = true;
+
+    uint8_t sp = state->vm.sbp;
+    while (sp) {
+        vm_ip ip = 0; uint8_t sbp = 0; mod_id mod = 0;
+        vm_unpack_ret(state->vm.stack[sp - 1], &ip, &sbp, &mod);
+
+        struct ui_brain_frame *frame = ui->stack.list + (sp - 1);
+        frame->show.disabled = false;
+        frame->ip = ip;
+        frame->mod = mod ? mod : ui->state.mod_id;
+
+        sp = sbp;
+    }
 }
 
 static bool ui_brain_event(void *_ui, const SDL_Event *ev)
@@ -229,7 +278,7 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
         return true;
     }
 
-    if ((ret = ui_link_event(&ui->ip_val, ev))) {
+    if ((ret = ui_button_event(&ui->ip_show, ev))) {
         if (ret != ui_action) return true;
 
         if (!state->mod_id) {
@@ -242,7 +291,18 @@ static bool ui_brain_event(void *_ui, const SDL_Event *ev)
         return true;
     }
 
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
+    if ((ret = ui_scroll_event(&ui->stack.scroll, ev))) return true;
+
+    for (size_t i = 0; i < ui->state.vm.sp; ++i) {
+        struct ui_brain_frame *frame = ui->stack.list + i;
+        if (frame->show.disabled) continue;
+
+        if ((ret = ui_button_event(&frame->show, ev))) {
+            if (ret != ui_action) return true;
+            ui_mods_show(frame->mod, frame->ip);
+            return true;
+        }
+    }
 
     return false;
 }
@@ -307,7 +367,13 @@ static void ui_brain_render(
     ui_layout_next_row(layout);
 
     ui_label_render(&ui->ip, layout, renderer);
-    ui_link_render(&ui->ip_val, layout, renderer);
+    ui_label_render(&ui->ip_val, layout, renderer);
+    ui_layout_sep_col(layout);
+    ui_button_render(&ui->ip_show, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_label_render(&ui->sbp, layout, renderer);
+    ui_label_render(&ui->sbp_val, layout, renderer);
     ui_layout_next_row(layout);
 
     { // flags
@@ -360,22 +426,28 @@ static void ui_brain_render(
     }
 
     { // stack
-        ui_label_render(&ui->stack, layout, renderer);
+        ui_label_render(&ui->stack.title, layout, renderer);
         ui_layout_next_row(layout);
 
-        struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+        struct ui_layout inner = ui_scroll_render(&ui->stack.scroll, layout, renderer);
         if (ui_layout_is_nil(&inner)) return;
 
-        size_t first = ui_scroll_first_row(&ui->scroll);
-        size_t last = ui_scroll_last_row(&ui->scroll);
+        size_t first = ui_scroll_first_row(&ui->stack.scroll);
+        size_t last = ui_scroll_last_row(&ui->stack.scroll);
 
         for (size_t i = first; i < last; ++i) {
-            ui_str_set_u64(&ui->stack_index.str, i);
-            ui_label_render(&ui->stack_index, &inner, renderer);
+            ui_str_set_u64(&ui->stack.index.str, i);
+            ui_label_render(&ui->stack.index, &inner, renderer);
             ui_layout_sep_col(&inner);
 
-            ui_str_set_hex(&ui->stack_val.str, state->vm.stack[i]);
-            ui_label_render(&ui->stack_val, &inner, renderer);
+            ui_str_set_hex(&ui->stack.val.str, state->vm.stack[i]);
+            ui_label_render(&ui->stack.val, &inner, renderer);
+            ui_layout_sep_col(&inner);
+
+            struct ui_brain_frame *frame = ui->stack.list + i;
+            if (!frame->show.disabled)
+                ui_button_render(&frame->show, &inner, renderer);
+
             ui_layout_next_row(&inner);
         }
     }
