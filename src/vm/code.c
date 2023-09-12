@@ -198,10 +198,12 @@ bool code_step(struct code *code, struct code_it *it)
 {
     struct code_str *str = it->node;
     struct code_str *str_end = code->str.list + code->str.len;
+    ast_it ast_node_end = ast_end(code->ast);
 
     uint32_t old = it->pos;
     if (it->len) it->pos += it->len;
-    if (it->ast.node && it->ast.node->pos == old) ++it->ast.node;
+    if (it->ast.node && it->ast.node->pos == old && it->ast.node < ast_node_end)
+        ++it->ast.node;
 
     it->str = nullptr;
     it->len = 0;
@@ -270,9 +272,12 @@ bool code_step(struct code *code, struct code_it *it)
         }
 
         if (it->pos + ast >= ast_node->pos + ast_node->len)
-            ast_node++;
+            if (ast_node < ast_node_end)
+                ast_node++;
 
-        uint32_t end = legion_min(str->len, ast_node->pos - ast);
+        uint32_t end = str->len;
+        if (ast_node < ast_node_end) end = legion_min(end, ast_node->pos - ast);
+
         if (ast_log && it->pos < ast_log->pos - ast)
             end = legion_min(end, ast_log->pos - ast);
 
