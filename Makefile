@@ -10,7 +10,7 @@
 
 PREFIX ?= build
 
-TEST ?= ring text lisp chunk lanes tech save protocol items proxy man
+TEST ?= ring lisp chunk lanes tech save protocol items proxy man
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu2x -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc

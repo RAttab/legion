@@ -18,7 +18,6 @@
 
 struct mods;
 struct save;
-struct text;
 struct atoms;
 
 typedef uint16_t mod_maj;

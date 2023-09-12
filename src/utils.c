@@ -8,7 +8,6 @@
 #include "utils/str.c"
 #include "utils/net.c"
 #include "utils/bits.c"
-#include "utils/text.c"
 #include "utils/hset.c"
 #include "utils/color.c"
 #include "utils/htable.c"
