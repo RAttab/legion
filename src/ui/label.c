@@ -22,12 +22,14 @@ void ui_label_style_default(struct ui_style *s)
         .font = s->font.base,
         .fg = s->rgba.fg,
         .bg = s->rgba.bg,
+        .zeroes = rgba_gray(0xCC),
         .disabled = s->rgba.disabled,
     };
 
     s->label.index = s->label.base;
     s->label.index.fg = s->rgba.index.fg;
     s->label.index.bg = s->rgba.index.bg;
+    s->label.index.zeroes = s->rgba.index.fg;
 
     s->label.bold = s->label.base;
     s->label.bold.font = s->font.bold;
@@ -86,13 +88,26 @@ void ui_label_render(
     SDL_Rect rect = ui_widget_rect(&label->w);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
+    const struct font *font = label->s.font;
     SDL_Point point = pos_as_point(label->w.pos);
-    font_render(
-            label->s.font,
-            renderer,
-            point,
-            label->disabled ? label->s.disabled : label->s.fg,
-            label->str.str, label->str.len);
+
+    const char *start = label->str.str;
+    const char *end = start + label->str.len;
+
+    if (label->disabled) {
+        font_render(font, renderer, point, label->s.disabled, start, end - start);
+        return;
+    }
+
+    const char *it = label->str.str;
+    while (it < end && *it == '0') ++it;
+
+    if (it > start)
+        font_render(font, renderer, point, label->s.zeroes, start, it - start);
+    else it = start;
+
+    point.x += (it - start) * font->glyph_w;
+    font_render(font, renderer, point, label->s.fg, it, end - it);
 }
 
 // -----------------------------------------------------------------------------

@@ -16,7 +16,7 @@
 struct ui_label_style
 {
     const struct font *font;
-    struct rgba fg, bg, disabled;
+    struct rgba fg, bg, zeroes, disabled;
 };
 
 void ui_label_style_default(struct ui_style *);
