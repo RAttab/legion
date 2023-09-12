@@ -105,8 +105,11 @@ size_t vm_dbg(struct vm *vm, char *dst, size_t len)
             (unsigned) vm->specs.stack, (unsigned) vm->specs.speed);
     dst += n; len -= n;
 
-    n = snprintf(dst, len, "gen:   { ip=%08x, sp=%02x, flags:%02x, io:%02x }, tsc:%08x }\n",
-            vm->ip, (unsigned) vm->sp, (unsigned) vm->flags, (unsigned) vm->io, vm->tsc);
+    n = snprintf(dst, len, "gen:   { ip=%08x, sp=%02x, sbp=%02x, flags:%02x, io:%02x }, tsc:%08x }\n",
+            vm->ip,
+            (unsigned) vm->sp, (unsigned) vm->sbp,
+            (unsigned) vm->flags, (unsigned) vm->io,
+            vm->tsc);
     dst += n; len -= n;
 
     n = snprintf(dst, len, "reg:   [ 0:%016lx 1:%016lx 2:%016lx 3:%016lx ]\n",
@@ -390,17 +393,16 @@ mod_id vm_exec(struct vm *vm, const struct mod *mod)
       op_cmp: { vm_ensure(2); vm_stack(1) = vm_stack(0) -  vm_stack(1); vm_pop(); continue; }
 
       op_ret: {
-            mod_id mod_id = 0; vm_ip ip = 0;
-            vm_unpack(vm_pop(), &mod_id, &ip);
-            vm->ip = ip;
+            mod_id mod_id = 0;
+            vm_unpack_ret(vm_pop(), &vm->ip, &vm->sbp, &mod_id);
             if (unlikely(mod_id)) return mod_id;
             continue;
         }
       op_call: {
-            mod_id mod_id = 0; vm_ip ip = 0;
+            vm_ip ip = 0; mod_id mod_id = 0;
             vm_unpack(vm_code(vm_word), &mod_id, &ip);
-            vm_push(vm_pack(unlikely(mod_id) ? mod->id : 0, vm->ip));
-            vm->ip = ip;
+            vm_push(vm_pack_ret(vm->ip, vm->sbp, unlikely(mod_id) ? mod->id : 0));
+            vm->ip = ip; vm->sbp = vm->sp;
             if (unlikely(mod_id)) { return mod_id; }
             continue;
         }

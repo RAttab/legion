@@ -51,6 +51,7 @@ enum field_type
     field_io,
     field_ip,
     field_sp,
+    field_sbp,
     field_si,
     field_reg,
     field_ret,
@@ -90,6 +91,7 @@ struct field token_field(struct tokenizer *tok, struct atoms *atoms)
     else if (hash == symbol_hash_c("io")) set(field_io, "io");
     else if (hash == symbol_hash_c("ip")) set(field_ip, "ip");
     else if (hash == symbol_hash_c("sp")) set(field_sp, "sp");
+    else if (hash == symbol_hash_c("sbp")) set(field_sbp, "sbp");
     else if (hash == symbol_hash_c("s")) field.type = field_si;
     else if (hash == symbol_hash_c("r")) field.type = field_reg;
     else if (hash == symbol_hash_c("ret")) set(field_ret, "ret");
@@ -207,6 +209,7 @@ bool check_mod(
         case field_io:    { ok = check_u64(str, vm->io, exp) && ok; break; }
         case field_ip:    { ok = check_u64(str, vm->ip, exp) && ok; break; }
         case field_sp:    { ok = check_u64(str, vm->sp, exp) && ok; break; }
+        case field_sbp:   { ok = check_u64(str, vm->sbp, exp) && ok; break; }
         case field_si:    { ok = check_u64(str, vm->stack[field.index], exp) && ok; break; }
         case field_reg:   { ok = check_u64(str, vm->regs[field.index], exp) && ok; break; }
         case field_ret:   { ok = check_u64(str, ret, exp) && ok; break; }

@@ -41,15 +41,11 @@ enum flags
 
 struct legion_packed vm
 {
-    struct legion_packed {
-        uint8_t stack; // = 2 + type * 8
-        uint8_t speed;
-    } specs;
-    uint8_t flags, sp; // u16 - u32
-    uint32_t tsc; // -> u64
+    uint32_t tsc;
+    struct legion_packed { uint8_t stack, speed; } specs;
+    uint8_t flags, sp, sbp, io;
 
-    uint8_t io;
-    legion_pad(3);
+    legion_pad(2);
 
     vm_ip ip;
     vm_word regs[4]; // half of the cacheline
@@ -99,6 +95,18 @@ inline void vm_unpack(vm_word in, uint32_t *msb, uint32_t *lsb)
 {
     *msb = ((uint64_t) in) >> 32;
     *lsb = (uint32_t) in;
+}
+
+inline vm_word vm_pack_ret(vm_ip ip, uint8_t sbp, mod_id mod)
+{
+    return ip | (((uint64_t) sbp) << 24) | (((uint64_t) mod) << 32);
+}
+
+inline void vm_unpack_ret(vm_word value, vm_ip *ip, uint8_t *sbp, mod_id *mod)
+{
+    *ip = ((uint64_t) value >> 0) & ((1ULL << 24) - 1);
+    *sbp = ((uint64_t) value >> 24) & ((1ULL << 8) - 1);
+    *mod = ((uint64_t) value >> 32) & ((1ULL << 32) - 1);
 }
 
 size_t vm_dbg(struct vm *, char *dst, size_t len);

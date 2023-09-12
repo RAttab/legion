@@ -411,14 +411,14 @@
   (asm (CALL fn)
        (@ fn)
        (YIELD)))
- (check (ret 0) (sp 1) (s 0 0x9)))
+ (check (ret 0) (sp 1) (sbp 1) (s 0 0x9)))
 
 (vm/mod (mod (defun fn () 0)))
 (vm/call-mod
  (vm (S 1))
  (mod
   (asm (CALL vm/mod.fn)))
- (check (ret 0x230002) (sp 1)))
+ (check (ret 0x230002) (sp 1) (sbp 1)))
 
 (vm/ret
  (vm (S 1))
@@ -427,14 +427,69 @@
        (YIELD)
        (@ fn)
        (RET)))
- (check (ret 0) (sp 0)))
+ (check (ret 0) (sp 0) (sbp 0)))
 
 (vm/ret-mod
  (vm (S 1))
  (mod
   (asm (PUSH 0x100000002)
        (RET)))
- (check (ret 1) (ip 2) (sp 0)))
+ (check (ret 1) (ip 2) (sp 0) (sbp 0)))
+
+(vm/sbp-call-nested
+ (vm (S 2))
+ (mod
+  (asm (CALL a)
+       (@ a)
+       (CALL b)
+       (@ b)
+       (YIELD)))
+ (check (ret 0) (sp 2) (sbp 2)
+	(s 0 0x9)
+	(s 1 0x01000012)))
+
+(vm/sbp-ret-nested
+ (vm (S 2))
+ (mod
+  (asm (CALL a)
+       (@ a)
+       (CALL b)
+       (YIELD)
+       (@ b)
+       (RET)))
+ (check (ret 0) (sp 1) (sbp 1) (s 0 0x9)))
+
+(vm/sbp-call-push
+ (vm (S 4))
+ (mod
+  (asm (PUSH 0xAA)
+       (CALL a)
+       (@ a)
+       (PUSH 0xBB)
+       (CALL b)
+       (@ b)
+       (YIELD)))
+ (check (ret 0) (sp 4) (sbp 4)
+	(s 0 0xAA)
+	(s 1 0x12)
+	(s 2 0xBB)
+	(s 3 0x02000024)))
+
+(vm/sbp-ret-push
+ (vm (S 4))
+ (mod
+  (asm (PUSH 0xAA)
+       (CALL a)
+       (@ a)
+       (PUSH 0xBB)
+       (CALL b)
+       (YIELD)
+       (@ b)
+       (RET)))
+ (check (ret 0) (sp 3) (sbp 2)
+	(s 0 0xAA)
+	(s 1 0x12)
+	(s 2 0xBB)))
 
 (vm/jmp
  (vm (S 1))
