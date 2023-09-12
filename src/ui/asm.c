@@ -629,6 +629,7 @@ static enum ui_ret ui_asm_event_find(
 
         ui->carret = it;
         ui_scroll_visible(&ui->scroll, ui->carret.row, ui->carret.col);
+        ui_asm_select_move(ui);
 
         ui->hl.row = ui->carret.row;
         ui->hl.ts = ts_now();
@@ -642,6 +643,20 @@ static enum ui_ret ui_asm_event_find(
 
     return ui_consume;
 }
+
+static enum ui_ret ui_asm_event_escape(struct ui_asm *ui)
+{
+    if (ui->find.type)
+        return ui_asm_event_find(ui, ui_asm_find_nil);
+
+    if (rowcol_cmp(ui->select.first, ui->select.last)) {
+        ui_asm_select_clear(ui);
+        return ui_consume;
+    }
+
+    return ui_nil;
+}
+
 
 enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 {
@@ -733,6 +748,8 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 
             case SDLK_PAGEUP:   { return ui_asm_event_page(ui, -1); }
             case SDLK_PAGEDOWN: { return ui_asm_event_page(ui, +1); }
+
+            case SDLK_ESCAPE: { return ui_asm_event_escape(ui); }
 
             default: { return ui_nil; }
             }
