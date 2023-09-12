@@ -225,8 +225,8 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
 
     ui->ip_show.disabled = !state->mod_id;
 
-    ui_str_set_hex(&ui->spec_stack.str, state->vm.specs.stack);
-    ui_str_set_hex(&ui->spec_speed.str, state->vm.specs.speed);
+    ui_str_set_u64(&ui->spec_stack.str, state->vm.specs.stack);
+    ui_str_set_u64(&ui->spec_speed.str, state->vm.specs.speed);
     ui_str_set_hex(&ui->io_val.str, state->vm.io);
     ui_str_set_hex(&ui->tsc_val.str, state->vm.tsc);
     ui_str_set_hex(&ui->ip_val.str, state->vm.ip);
@@ -357,14 +357,7 @@ static void ui_brain_render(
     ui_label_render(&ui->spec_sep, layout, renderer);
     ui_label_render(&ui->spec_speed, layout, renderer);
     ui_layout_next_row(layout);
-
-    ui_label_render(&ui->io, layout, renderer);
-    ui_label_render(&ui->io_val, layout, renderer);
-    ui_layout_next_row(layout);
-
-    ui_label_render(&ui->tsc, layout, renderer);
-    ui_label_render(&ui->tsc_val, layout, renderer);
-    ui_layout_next_row(layout);
+    ui_layout_sep_row(layout);
 
     ui_label_render(&ui->ip, layout, renderer);
     ui_label_render(&ui->ip_val, layout, renderer);
@@ -374,6 +367,13 @@ static void ui_brain_render(
 
     ui_label_render(&ui->sbp, layout, renderer);
     ui_label_render(&ui->sbp_val, layout, renderer);
+    ui_layout_next_row(layout);
+    ui_label_render(&ui->io, layout, renderer);
+    ui_label_render(&ui->io_val, layout, renderer);
+    ui_layout_next_row(layout);
+
+    ui_label_render(&ui->tsc, layout, renderer);
+    ui_label_render(&ui->tsc_val, layout, renderer);
     ui_layout_next_row(layout);
 
     { // flags
