@@ -241,6 +241,12 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
         vm_ip ip = 0; uint8_t sbp = 0; mod_id mod = 0;
         vm_unpack_ret(state->vm.stack[sp - 1], &ip, &sbp, &mod);
 
+        // The compiler generates a swap before the vm_op_ret to setup the
+        // return value. This gives a tiny window in which the sbp chain is
+        // corrupted. I think it's possible to recover by looking at the op
+        // pointed to by ip but for now bailing is easier.
+        if (sbp >= sp) break;
+
         struct ui_brain_frame *frame = ui->stack.list + (sp - 1);
         frame->show.disabled = false;
         frame->ip = ip;
