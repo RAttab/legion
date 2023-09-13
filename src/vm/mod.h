@@ -37,12 +37,14 @@ inline bool mod_validate(vm_word word) { return word > 0 && word <= UINT32_MAX; 
 // -----------------------------------------------------------------------------
 // mod
 // -----------------------------------------------------------------------------
+// Mods can get quite big (multiple Kb) so packing these structure tight can
+// help quite a bit.
 
-enum { mod_err_cap = s_cache_line - 6 };
+enum { mod_err_cap = s_cache_line - 4 };
 struct legion_packed mod_err
 {
-    uint32_t pos;
-    uint16_t len;
+    uint32_t pos:24;
+    uint8_t len;
     char str[mod_err_cap];
 };
 
@@ -51,21 +53,21 @@ static_assert(sizeof(struct mod_err) == s_cache_line);
 
 struct legion_packed mod_index
 {
-    uint32_t pos, len;
-    vm_ip ip;
+    vm_ip ip:24;
+    uint32_t pos:24;
+    uint8_t len:8;
 };
 
-static_assert(sizeof(struct mod_index) == 12);
+static_assert(sizeof(struct mod_index) == 7);
 
 
 struct legion_packed mod_pub
 {
     uint64_t key;
-    vm_ip ip;
-    legion_pad(4);
+    vm_ip ip:24;
 };
 
-static_assert(sizeof(struct mod_pub) == 16);
+static_assert(sizeof(struct mod_pub) == 11);
 
 
 struct legion_packed mod

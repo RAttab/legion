@@ -29,6 +29,14 @@ int main(int argc, const char *argv[])
     asm_dump(as);
     asm_free(as);
 
+    dbgf("index: %u:%zu", mod->index_len, mod->index_len * sizeof(struct mod_index));
+    for (size_t i = 0; i < mod->index_len; ++i) {
+        const struct mod_index *index = mod->index + i;
+        dbgf("  [%04zu] ip=%08x pos=%06u len=%04u sym=%.*s",
+                i, index->ip, index->pos, index->len,
+                (unsigned) index->len, mod->src + index->pos);
+    }
+
     mod_free(mod);
     atoms_free(atoms);
     mods_free(mods);
