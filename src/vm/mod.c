@@ -194,13 +194,23 @@ vm_ip mod_byte(const struct mod *mod, uint32_t pos)
     const struct mod_index *it = mod->index;
     const struct mod_index *end = it + mod->index_len;
 
+    struct { uint32_t delta; vm_ip ip; } closest = {
+        .delta = UINT32_MAX,
+        .ip = (end - 1)->ip
+    };
+
     for (; it < end; it++) {
-        const struct mod_index *next = it + 1;
-        if (next < end && pos >= next->pos) continue;
-        return it->pos;
+        if (pos >= it->pos && pos < it->pos + it->len) return it->ip;
+        if (pos > it->pos) continue;
+
+        uint32_t delta = it->pos - pos;
+        if (delta > closest.delta) continue;
+
+        closest.delta = delta;
+        closest.ip = it->ip;
     }
 
-    return mod->index[mod->index_len-1].ip;
+    return closest.ip;
 }
 
 size_t mod_dump(const struct mod *mod, char *dst, size_t len)
