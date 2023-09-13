@@ -33,6 +33,8 @@ enum event : int
     ev_item_select,
     ev_tape_select,
 
+    ev_mod_break,
+
     ev_max,
 };
 

@@ -374,7 +374,8 @@ static void ui_mods_mode_debug(
     ui_code_breakpoint(&tab->code, bp);
     ui_asm_breakpoint(&tab->as, bp);
 
-    if (!debug) ui_mods_tabs_set_write(ui, tab, true);
+    if (!debug && bp == vm_ip_nil)
+        ui_mods_tabs_set_write(ui, tab, true);
 }
 
 
@@ -674,6 +675,16 @@ static bool ui_mods_event(void *state, SDL_Event *ev)
         ui_tabs_clear(&ui->tabs.ui);
         ui_tree_reset(&ui->tree);
         ui_mods_request_reset(ui);
+    }
+
+    if (render_user_event_is(ev, ev_mod_break)) {
+        mod_id mod = (uintptr_t) ev->user.data1;
+        vm_ip ip = (uintptr_t) ev->user.data2;
+
+        struct ui_mods_tab *tab = ui_mods_select(ui, mod, false);
+        if (!tab) ui_mods_load(mod, false, ip);
+
+        return false;
     }
 
     if (ev->type == SDL_KEYDOWN && ui_mods_shortcuts(ui, ev))

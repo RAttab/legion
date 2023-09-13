@@ -224,6 +224,15 @@ void ui_asm_render(
     const uint32_t row_first = ui_scroll_first_row(&ui->scroll);
     const uint32_t row_last = ui_scroll_last_row(&ui->scroll);
 
+    struct { bool margin; uint32_t row; } cursor = {0};
+    {
+        SDL_Rect margin = ui->inner;
+        margin.w =  (ui_asm_row_cols + ui_asm_margin_cols) * cell.w;
+
+        cursor.margin = ui_cursor_in(&margin);
+        if (cursor.margin)
+            cursor.row = ((ui_cursor_pos().y - margin.y) / cell.h) + row_first;
+    }
 
     struct { struct rowcol first, last; } select = {0};
     {
@@ -273,6 +282,13 @@ void ui_asm_render(
             sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                 .x = line_x + (from * cell.w), .y = base.y, .h = cell.h,
                 .w = (to - from) * cell.w }));
+        }
+
+        if (cursor.margin && cursor.row == row) {
+            struct rgba fg = ui->s.bp.fg; fg.a = 0x88;
+            rgba_render(fg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                .x = margin_x, .y = base.y, .w = cell.w, .h = cell.h }));
         }
 
         if (ui->bp.ip != vm_ip_nil && ui->bp.row == row) {

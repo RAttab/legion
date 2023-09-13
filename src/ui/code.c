@@ -296,6 +296,8 @@ static void ui_code_breakpoint_at(struct ui_code *ui, uint32_t pos)
     ui->bp.pos = pos;
     ui->bp.row = rc.row;
     ui->bp.col = rc.col;
+
+    render_push_event(ev_mod_break, ui->mod->id, ui->bp.ip);
 }
 
 
@@ -387,6 +389,14 @@ void ui_code_render(
     const uint32_t col_first = ui_scroll_first_col(&ui->scroll);
     const uint32_t col_last = ui_scroll_last_col(&ui->scroll);
 
+    const bool modified = ui_code_modified(ui);
+    struct { bool margin; uint32_t row; } cursor = {0};
+    {
+        cursor.margin = ui_cursor_in(&ui->margin);
+        if (cursor.margin)
+            cursor.row = ((ui_cursor_pos().y - ui->margin.y) / cell.h) + row_first;
+    }
+
     for (uint32_t row = 0; row < row_last - row_first; ++row) {
         SDL_Rect rect = {
             .x = margin.base.pos.x,
@@ -451,6 +461,14 @@ void ui_code_render(
             }
         }
 
+
+        if (!modified && cursor.margin && cursor.row == it.row) {
+            struct rgba fg = ui->s.bp.fg; fg.a = 0x88;
+            rgba_render(fg, renderer);
+            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
+                                .x = base.x - cell.w, .y = base.y,
+                                .w = cell.w, .h = cell.h }));
+        }
 
         if (ui->bp.ip != vm_ip_nil && ui->bp.row == it.row) {
             rgba_render(ui->s.bp.fg, renderer);
@@ -584,7 +602,8 @@ enum ui_ret ui_code_event_click(struct ui_code *ui)
     col += ui_scroll_first_col(&ui->scroll);
 
     ui->carret.pos = code_pos_for(ui->code, row, col);
-    if (margin) ui_code_breakpoint_at(ui, ui->carret.pos);
+    if (margin && !ui_code_modified(ui))
+        ui_code_breakpoint_at(ui, ui->carret.pos);
 
     ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
