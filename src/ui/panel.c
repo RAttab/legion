@@ -15,7 +15,7 @@ void ui_panel_style_default(struct ui_style *s)
     s->panel = (struct ui_panel_style) {
         .margin = make_dim(4, 4),
 
-        .bg = rgba_gray_a(0x11, 0x88),
+        .bg = rgba_gray_a(0x11, 0xEE),
         .border = s->rgba.box.border,
 
         .head = {
