@@ -365,6 +365,10 @@ void ui_code_render(
     // We split the rows from the text so that the scroll bar doesn't show up on
     // the rows.
     struct ui_layout margin = ui_layout_split_x(layout, ui_code_line_col * cell.w);
+    ui->margin = (SDL_Rect) {
+        .x = margin.base.pos.x, .y = margin.base.pos.y,
+        .w = margin.base.dim.w, .h = margin.base.dim.h
+    };
 
     ui->scroll.w.dim.h = ui_layout_inf;
     struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
@@ -566,23 +570,21 @@ void ui_code_render(
 
 enum ui_ret ui_code_event_click(struct ui_code *ui)
 {
+    bool margin = ui_cursor_in(&ui->margin);
+    if (!margin && !ui_cursor_in(&ui->inner)) return ui_nil;
+    ui->focused = true;
+
     SDL_Point cursor = ui_cursor_point();
-    SDL_Rect rect = ui->inner;
 
-    ui->focused = SDL_PointInRect(&cursor, &rect);
-    if (!ui->focused) return ui_nil;
-
-    uint32_t row = (cursor.y - rect.y) / ui->s.font->glyph_h;
+    uint32_t row = (cursor.y - ui->inner.y) / ui->s.font->glyph_h;
     row += ui_scroll_first_row(&ui->scroll);
 
-    int32_t col = (cursor.x - rect.x) / ui->s.font->glyph_w;
-    bool in_margins = col < 0;
-
-    col = in_margins ? 0 : col;
+    uint32_t col = 0;
+    if (!margin) col = (cursor.x - ui->inner.x) / ui->s.font->glyph_w;
     col += ui_scroll_first_col(&ui->scroll);
 
     ui->carret.pos = code_pos_for(ui->code, row, col);
-    if (in_margins) ui_code_breakpoint_at(ui, ui->carret.pos);
+    if (margin) ui_code_breakpoint_at(ui, ui->carret.pos);
 
     ui_code_select_move(ui);
     ui_code_update(ui, ui_code_update_nil);
