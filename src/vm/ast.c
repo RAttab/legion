@@ -224,7 +224,7 @@ static struct ast_node *ast_append_type(
 
 static void ast_hash_node(struct ast_parser *parser, struct ast_node *node)
 {
-    assert(node->pos + node->len < parser->len);
+    assert(node->pos + node->len <= parser->len);
     node->hash = hash_bytes(hash_init(), parser->str + node->pos, node->len);
 }
 
