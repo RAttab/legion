@@ -43,7 +43,6 @@ struct ui_asm
     struct ui_asm_style s;
     struct ui_panel *p;
 
-    bool focused;
     struct ui_scroll scroll;
     SDL_Rect inner;
 

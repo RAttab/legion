@@ -24,6 +24,7 @@
 #include "ui/histo.c"
 #include "ui/game.c"
 #include "ui/panel.c"
+#include "ui/focus.c"
 #include "ui/style.c"
 
 // The compiler sometimes doesn't feel like inlining it and we can't shove this

@@ -51,7 +51,6 @@ struct ui_asm ui_asm_new(struct dim dim)
         .s = *s,
         .p = ui_panel_current(),
 
-        .focused = false,
         .scroll = ui_scroll_new(dim, ui_st.font.dim),
 
         .as = asm_alloc(),
@@ -126,7 +125,7 @@ void ui_asm_set_mod(struct ui_asm *ui, const struct mod *mod)
 
 void ui_asm_focus(struct ui_asm *ui)
 {
-    render_push_event(ev_focus_input, (uintptr_t) ui, 0);
+    ui_focus_acquire(ui->p, ui);
 }
 
 vm_ip ui_asm_ip(struct ui_asm *ui)
@@ -405,7 +404,7 @@ void ui_asm_render(
     }
 
     do {
-        if (!ui->focused) break;
+        if (ui_focus_element() != ui) break;
         if (ui->carret.row < row_first || ui->carret.row >= row_last) break;
         if (((ts_now() / ui->s.carret.blink) % 2) == 0) break;
 
@@ -429,8 +428,11 @@ enum ui_ret ui_asm_event_click(struct ui_asm *ui)
     SDL_Point cursor = ui_cursor_point();
     SDL_Rect rect = ui->inner;
 
-    ui->focused = SDL_PointInRect(&cursor, &rect);
-    if (!ui->focused) return ui_nil;
+    if (!SDL_PointInRect(&cursor, &rect)) {
+        ui_focus_release(ui->p, ui);
+        return ui_nil;
+    }
+    ui_focus_acquire(ui->p, ui);
 
     ui->carret.row = (cursor.y - rect.y) / ui->s.font->glyph_h;
     ui->carret.row += ui_scroll_first_row(&ui->scroll);
@@ -676,9 +678,6 @@ static enum ui_ret ui_asm_event_escape(struct ui_asm *ui)
 
 enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
 {
-    if (render_user_event_is(ev, ev_focus_input))
-        ui->focused = (ui == ev->user.data1);
-
     enum ui_ret ret = ui_nil;
 
     if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret;
@@ -721,7 +720,7 @@ enum ui_ret ui_asm_event(struct ui_asm *ui, const SDL_Event *ev)
     }
 
     case SDL_KEYDOWN: {
-        if (!ui->focused) return ui_nil;
+        if (ui_focus_element() != ui) return ui_nil;
 
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;

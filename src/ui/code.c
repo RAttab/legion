@@ -61,7 +61,6 @@ struct ui_code ui_code_new(struct dim dim)
         .s = *s,
         .p = ui_panel_current(),
 
-        .focused = false,
         .writable = true,
         .scroll = ui_scroll_new(dim, ui_st.font.dim),
         .tooltip = ui_tooltip_new(ui_str_v(ast_log_cap), (SDL_Rect) {0}),
@@ -225,7 +224,7 @@ void ui_code_set_text(struct ui_code *ui, const char *str, size_t len)
 
 void ui_code_focus(struct ui_code *ui)
 {
-    render_push_event(ev_focus_input, (uintptr_t) ui, 0);
+    ui_focus_acquire(ui->p, ui);
 }
 
 bool ui_code_modified(struct ui_code *ui)
@@ -564,7 +563,7 @@ void ui_code_render(
     }
 
     do {
-        if (!ui->focused) break;
+        if (ui_focus_element() != ui) break;
 
         if (ui->carret.row < row_first || ui->carret.row >= row_last) break;
         if (ui->carret.col < col_first || ui->carret.col >= col_last) break;
@@ -589,8 +588,11 @@ void ui_code_render(
 enum ui_ret ui_code_event_click(struct ui_code *ui)
 {
     bool margin = ui_cursor_in(&ui->margin);
-    if (!margin && !ui_cursor_in(&ui->inner)) return ui_nil;
-    ui->focused = true;
+    if (!margin && !ui_cursor_in(&ui->inner)) {
+        ui_focus_release(ui->p, ui);
+        return ui_nil;
+    }
+    ui_focus_acquire(ui->p, ui);
 
     SDL_Point cursor = ui_cursor_point();
 
@@ -956,23 +958,11 @@ static enum ui_ret ui_code_event_escape(struct ui_code *ui)
 
 enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 {
-    switch (render_user_event(ev))
-    {
-
-    case ev_focus_input: {
-        ui->focused = (ui == ev->user.data1);
-        break;
-    }
-
-    case ev_frame: {
-        if (!ui->edit) break;
-        if ((ts_now() - ui->edit) < (500 * ts_msec)) break;
-        code_update(ui->code);
-        ui->edit = 0;
-        break;
-    }
-
-    default: { break; }
+    if (render_user_event_is(ev, ev_frame) && ui->edit) {
+        if (ts_now() - ui->edit >= 500 * ts_msec)  {
+            code_update(ui->code);
+            ui->edit = 0;
+        }
     }
 
     enum ui_ret ret = ui_nil;
@@ -1038,7 +1028,7 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
     }
 
     case SDL_KEYDOWN: {
-        if (!ui->focused) return ui_nil;
+        if (ui_focus_element() != ui) return ui_nil;
 
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;

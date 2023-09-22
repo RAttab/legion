@@ -14,14 +14,6 @@
 // panel
 // -----------------------------------------------------------------------------
 
-enum ui_panel_state
-{
-    ui_panel_hidden = 0,
-    ui_panel_visible = 1,
-    ui_panel_focused = 2,
-};
-
-
 struct ui_panel_style
 {
     struct dim margin;
@@ -43,8 +35,7 @@ struct ui_panel
     struct ui_label title;
     struct ui_button close;
 
-    bool menu;
-    enum ui_panel_state state;
+    bool menu, visible;
 };
 
 struct ui_panel *ui_panel_current(void);
@@ -57,7 +48,6 @@ void ui_panel_resize(struct ui_panel *, struct dim);
 void ui_panel_focus(struct ui_panel *);
 void ui_panel_show(struct ui_panel *);
 void ui_panel_hide(struct ui_panel *);
-bool ui_panel_is_visible(struct ui_panel *);
 
 enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
 enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);

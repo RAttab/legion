@@ -4,6 +4,7 @@
 */
 
 #include "input.h"
+#include "focus.h"
 #include "vm/mod.h"
 #include "utils/str.h"
 
@@ -42,7 +43,6 @@ struct ui_input ui_input_new_s(const struct ui_input_style *s, size_t len)
                 s->font->glyph_h + s->pad.h * 2),
         .s = *s,
         .p = ui_panel_current(),
-        .focused = false,
     };
 
     input.view.col = 0;
@@ -68,7 +68,7 @@ void ui_input_free(struct ui_input *input)
 
 void ui_input_focus(struct ui_input *input)
 {
-    render_push_event(ev_focus_input, (uintptr_t) input, 0);
+    ui_focus_acquire(input->p, input);
 }
 
 static void ui_input_view_update(struct ui_input *input)
@@ -169,7 +169,7 @@ void ui_input_render(
     font_render(input->s.font, renderer, pos, input->s.fg, it, len);
 
     do {
-        if (!input->focused) break;
+        if (ui_focus_element() != input) break;
         if (((ts_now() / input->s.carret.blink) % 2) == 0) break;
 
         size_t col = input->carret - input->view.col;
@@ -195,13 +195,15 @@ static enum ui_ret ui_input_event_click(struct ui_input *input)
     SDL_Point cursor = ui_cursor_point();
     SDL_Rect rect = ui_widget_rect(&input->w);
 
-    input->focused = SDL_PointInRect(&cursor, &rect);
-    if (!input->focused) return ui_nil;
+    if (!SDL_PointInRect(&cursor, &rect)) {
+        ui_focus_release(input->p, input);
+        return ui_nil;
+    }
+    ui_focus_acquire(input->p, input);
 
     size_t col = (cursor.x - input->w.pos.x) / input->s.font->glyph_w;
     input->carret = legion_min(col, input->buf.len);
 
-    render_push_event(ev_focus_input, (uintptr_t) input, 0);
     return ui_consume;
 }
 
@@ -277,15 +279,12 @@ static enum ui_ret ui_input_event_backspace(struct ui_input *input)
 
 enum ui_ret ui_input_event(struct ui_input *input, const SDL_Event *ev)
 {
-    if (render_user_event_is(ev, ev_focus_input))
-        input->focused = (input == ev->user.data1);
-
     switch (ev->type) {
 
     case SDL_MOUSEBUTTONDOWN: { return ui_input_event_click(input); }
 
     case SDL_KEYDOWN: {
-        if (!input->focused) return ui_nil;
+        if (ui_focus_element() != input) return ui_nil;
 
         uint16_t mod = ev->key.keysym.mod;
         SDL_Keycode keysym = ev->key.keysym.sym;

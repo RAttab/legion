@@ -202,7 +202,7 @@ void ui_event(SDL_Event *ev)
 
         if (state->panel) {
             enum ui_ret ret = ui_panel_event(state->panel, ev);
-            if (ret == ui_action && !ui_panel_is_visible(state->panel))
+            if (ret == ui_action && !state->panel->visible)
                 ui_hide(view);
             if (ret) return ret != ui_skip;
         }

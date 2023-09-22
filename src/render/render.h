@@ -26,8 +26,6 @@ enum event : int
     ev_state_load,
 
     ev_frame,
-    ev_focus_panel,
-    ev_focus_input,
 
     ev_star_select,
     ev_item_select,

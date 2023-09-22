@@ -35,7 +35,6 @@ struct ui_input
     struct ui_input_style s;
     struct ui_panel *p;
 
-    bool focused;
     struct { uint8_t col, len; } view;
     struct { char *c; uint8_t len; } buf;
     uint8_t carret;

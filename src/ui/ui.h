@@ -30,6 +30,7 @@
 
 #include "game.h"
 #include "panel.h"
+#include "focus.h"
 #include "style.h"
 
 

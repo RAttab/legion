@@ -4,6 +4,7 @@
 */
 
 #include "panel.h"
+#include "focus.h"
 
 
 // -----------------------------------------------------------------------------
@@ -48,7 +49,7 @@ static struct ui_panel *ui_panel_new(struct dim dim)
     *panel = (struct ui_panel) {
         .w = (struct ui_widget) { .pos = {0}, .dim = dim },
         .s = *s,
-        .state = ui_panel_visible,
+        .visible = true,
     };
 
     if (panel->w.dim.w != ui_layout_inf)
@@ -95,61 +96,45 @@ void ui_panel_resize(struct ui_panel *panel, struct dim dim)
 
 void ui_panel_show(struct ui_panel *panel)
 {
-    panel->state = ui_panel_focused;
-    render_push_event(ev_focus_panel, (uintptr_t) panel, 0);
+    panel->visible = true;
+    ui_focus_panel_acquire(panel);
 }
 
 void ui_panel_hide(struct ui_panel *panel)
 {
-    if (panel->state == ui_panel_focused)
-        render_push_event(ev_focus_panel, (uintptr_t) 0, 0);
-    panel->state = ui_panel_hidden;
-}
-
-bool ui_panel_is_visible(struct ui_panel *panel)
-{
-    return panel->state != ui_panel_hidden;
+    panel->visible = false;
+    ui_focus_panel_release(panel);
 }
 
 
 enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
 {
-    if (panel->state == ui_panel_hidden) return ui_skip;
+    if (!panel->visible) return ui_skip;
 
     switch (ev->type) {
 
     case SDL_KEYUP:
-    case SDL_KEYDOWN: { return panel->state == ui_panel_focused ? ui_nil : ui_skip; }
+    case SDL_KEYDOWN: { return ui_focus_panel() == panel ? ui_nil : ui_skip; }
 
     case SDL_MOUSEWHEEL:
     case SDL_MOUSEBUTTONUP: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        if (!ui_cursor_in(&rect)) {
-            panel->state = ui_panel_visible;
-            return ui_skip;
-        }
-
-        if (panel->state == ui_panel_visible) {
-            panel->state = ui_panel_focused;
-            render_push_event(ev_focus_panel, (uintptr_t) panel, 0);
-        }
-
+        if (!ui_cursor_in(&rect)) return ui_skip;
         break;
     }
 
     case SDL_MOUSEBUTTONDOWN: {
         struct SDL_Rect rect = ui_widget_rect(&panel->w);
-        if (!ui_cursor_in(&rect))
+        if (!ui_cursor_in(&rect)) {
+            ui_focus_panel_release(panel);
             return ui_skip;
+        }
+
+        ui_focus_panel_acquire(panel);
         break;
     }
 
     default: { break; }
-    }
-
-    if (render_user_event_is(ev, ev_focus_panel)) {
-        struct ui_panel *target = (void *) ev->user.data1;
-        panel->state = target == panel ? ui_panel_focused : ui_panel_visible;
     }
 
     enum ui_ret ret = 0;
@@ -158,19 +143,23 @@ enum ui_ret ui_panel_event(struct ui_panel *panel, const SDL_Event *ev)
         return ret;
     }
 
+    if (ev->type == SDL_MOUSEBUTTONDOWN && !panel->menu) {
+        struct SDL_Rect rect = ui_widget_rect(&panel->w);
+        rect.h = panel->close.w.dim.h + panel->s.margin.h;
+        if (ui_cursor_in(&rect)) return ui_consume;
+    }
+    
     return ui_nil;
 }
 
 enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
 {
-    if (panel->state == ui_panel_hidden) return ui_skip;
+    if (!panel->visible) return ui_skip;
 
     switch (ev->type) {
 
     case SDL_KEYUP:
-    case SDL_KEYDOWN: {
-        return panel->state == ui_panel_focused ? ui_consume : ui_nil;
-    }
+    case SDL_KEYDOWN: { return ui_focus_panel() == panel ? ui_consume : ui_nil; }
 
     case SDL_MOUSEBUTTONUP:
     case SDL_MOUSEBUTTONDOWN: {
@@ -185,7 +174,7 @@ enum ui_ret ui_panel_event_consume(struct ui_panel *panel, const SDL_Event *ev)
 struct ui_layout ui_panel_render(
         struct ui_panel *panel, struct ui_layout *layout, SDL_Renderer *renderer)
 {
-    if (panel->state == ui_panel_hidden) return (struct ui_layout) {0};
+    if (!panel->visible) return (struct ui_layout) {0};
 
     ui_layout_add(layout, &panel->w);
     struct SDL_Rect rect = ui_widget_rect(&panel->w);
@@ -193,10 +182,10 @@ struct ui_layout ui_panel_render(
     rgba_render(panel->s.bg, renderer);
     sdl_err(SDL_RenderFillRect(renderer, &rect));
 
-    if (!panel->menu) {
-        struct rgba bg = panel->state == ui_panel_focused ?
-            panel->s.focused.bg : panel->s.head.bg;
+    const bool focused = ui_focus_panel() == panel;
 
+    if (!panel->menu) {
+        struct rgba bg = focused ? panel->s.focused.bg : panel->s.head.bg;
         rgba_render(bg, renderer);
         sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
                             .x = rect.x, .y = rect.y,
@@ -216,7 +205,7 @@ struct ui_layout ui_panel_render(
                     panel->w.dim.h - (panel->s.margin.h * 2)));
 
     if (!panel->menu) {
-        if (panel->state == ui_panel_focused) {
+        if (focused) {
             panel->title.s.font = panel->s.focused.font;
             panel->title.s.fg = panel->s.focused.fg;
         }

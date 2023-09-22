@@ -192,6 +192,7 @@ static void ui_io_toggle(struct ui_io *ui, struct ui_io_cmd *cmd)
 
     ui->open = cmd->io;
     cmd->name.s = ui_st.button.list.open;
+    if (cmd->len) ui_input_focus(&cmd->args[0].val);
 }
 
 

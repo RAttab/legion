@@ -219,6 +219,7 @@ static struct ui_mods_tab *ui_mods_tabs_alloc(
     if (!tab->init) {
         tab->code = ui_code_new(make_dim(ui_layout_inf, ui_layout_inf));
         tab->as = ui_asm_new(make_dim(ui_layout_inf, ui_layout_inf));
+        tab->code.p = tab->as.p = ui->panel;
     }
     else {
         ui_code_reset(&tab->code);
@@ -437,7 +438,7 @@ void ui_mods_show(mod_id id, vm_ip ip)
 void ui_mods_debug(mod_id id, bool debug, vm_ip ip, vm_ip bp)
 {
     struct ui_mods *ui = ui_state(ui_view_mods);
-    if (!ui_panel_is_visible(ui->panel)) return;
+    if (!ui->panel->visible) return;
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
     if (!tab || tab->id != id) {
@@ -646,7 +647,7 @@ static bool ui_mods_reset(struct ui_mods *ui, struct ui_mods_tab *tab)
 
 static bool ui_mods_shortcuts(struct ui_mods *ui, SDL_Event *ev)
 {
-    if (ui->panel->state != ui_panel_focused) return false;
+    if (ui_focus_panel() != ui->panel) return false;
 
     uint16_t mod = ev->key.keysym.mod;
     if (!(mod & KMOD_CTRL)) return false;

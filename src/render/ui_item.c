@@ -106,7 +106,7 @@ void ui_item_free(void *state)
 im_id ui_item_selected(void)
 {
     struct ui_item *ui = ui_state(ui_view_item);
-    return ui_panel_is_visible(ui->panel) ? ui->id : 0;
+    return ui->panel->visible ? ui->id : 0;
 }
 
 void ui_item_show(im_id id, struct coord star)
@@ -142,7 +142,7 @@ bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
         return false;
     }
 
-    if (!ui_panel_is_visible(ui->panel)) {
+    if (!ui->panel->visible) {
         struct symbol io_sym = {0};
         bool ok = atoms_str(proxy_atoms(), io, &io_sym);
         assert(ok);

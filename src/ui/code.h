@@ -46,7 +46,7 @@ struct ui_code
     struct ui_code_style s;
     struct ui_panel *p;
 
-    bool focused, writable, modified;
+    bool writable, modified;
     SDL_Rect margin, inner;
     struct ui_scroll scroll;
     struct ui_tooltip tooltip;
