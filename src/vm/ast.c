@@ -508,11 +508,12 @@ static bool ast_parse_one(struct ast_parser *parser, uint32_t parent)
     case token_nil: { ast_append_type(parser, ast_eof, 0); return false; }
 
     case token_atom:
-    case token_atom_make: { ast_append_type(parser, ast_atom, parent); break; }
+    case token_atom_make: { ast_hash_node(parser, ast_append_type(parser, ast_atom, parent)); break; }
+    case token_symbol:    { ast_hash_node(parser, ast_append_type(parser, ast_ref, parent)); break; }
+
     case token_number:    { ast_append_type(parser, ast_number, parent); break; }
     case token_reg:       { ast_append_type(parser, ast_reg, parent); break; }
     case token_comment:   { ast_append_type(parser, ast_comment, parent); break; }
-    case token_symbol:    { ast_hash_node(parser, ast_append_type(parser, ast_ref, parent)); break; }
 
     case token_sep: { token_err(&parser->tok, "unexpected seperator"); break; }
 
