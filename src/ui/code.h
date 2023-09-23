@@ -20,14 +20,14 @@ struct code;
 
 struct ui_code_style
 {
-    const struct font *font;
+    const struct font *font, *match;
     struct { int16_t margin; } find;
     struct { struct rgba fg, bg; } row, bp;
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
     struct { struct rgba fg, bg; int16_t margin; } errors;
     struct rgba fg, comment, keyword, atom;
-    struct rgba current, select, match, box;
+    struct rgba current, select, box;
 };
 
 void ui_code_style_default(struct ui_style *);

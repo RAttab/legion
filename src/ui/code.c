@@ -17,6 +17,7 @@ void ui_code_style_default(struct ui_style *s)
 {
     s->code = (struct ui_code_style) {
         .font = s->font.base,
+        .match = s->font.bold,
 
         .find = { .margin = 4 },
         .row = { .fg = s->rgba.index.fg, .bg = s->rgba.index.bg },
@@ -41,7 +42,6 @@ void ui_code_style_default(struct ui_style *s)
 
         .current = s->rgba.code.current,
         .select = s->rgba.code.select,
-        .match = make_rgba(0xAD, 0xD8, 0xE6, 0x55), // LightBlue
         .box = s->rgba.box.border,
     };
 }
@@ -544,17 +544,13 @@ void ui_code_render(
             }
         }
 
-        bool match_paren = it.pos == ui->match.paren;
-        bool match_sym = node && node->hash && node->hash == ui->match.sym;
-
-        if (match_paren || match_sym) {
-            rgba_render(ui->s.match, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                .x = pos.x, pos.y,
-                                .w = len * cell.w, .h = cell.h }));
-        }
-
         {
+            bool match_paren = it.pos == ui->match.paren;
+            bool match_sym = node && node->hash && node->hash == ui->match.sym;
+
+            const struct font *font = match_paren || match_sym ?
+                ui->s.match : ui->s.font;
+
             enum ast_type type = node ? node->type : ast_nil;
             struct rgba fg =
                 type == ast_comment ? ui->s.comment :
@@ -562,7 +558,8 @@ void ui_code_render(
                 type == ast_atom ? ui->s.atom :
                 ui->s.fg;
 
-            font_render(ui->s.font, renderer, pos, fg, it.str + first, len);
+
+            font_render(font, renderer, pos, fg, it.str + first, len);
         }
     }
 
@@ -964,8 +961,9 @@ enum ui_ret ui_code_event(struct ui_code *ui, const SDL_Event *ev)
 {
     if (render_user_event_is(ev, ev_frame) && ui->edit) {
         if (ts_now() - ui->edit >= 500 * ts_msec)  {
-            code_update(ui->code);
             ui->edit = 0;
+            code_update(ui->code);
+            ui_code_update(ui, ui_code_update_nil);
         }
     }
 
