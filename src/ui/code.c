@@ -191,13 +191,17 @@ static void ui_code_update(struct ui_code *ui, enum ui_code_update_flag flag)
         ui_code_select_move(ui);
     }
 
-    {
+    if (!ui->edit) {
         ast_it ast = code_ast_node_for(ui->code, ui->carret.pos);
         ui->match.sym = ast ? ast->hash : 0;
 
         char c = code_char_for(ui->code, ui->carret.pos);
         ui->match.paren = (c == '(' || c == ')') ?
             code_move_paren(ui->code, ui->carret.pos) : code_pos_nil;
+    }
+    else {
+        ui->match.sym = 0;
+        ui->match.paren = code_pos_nil;
     }
 }
 
@@ -729,7 +733,7 @@ enum ui_ret ui_code_event_del(struct ui_code *ui, uint16_t mod, int32_t inc)
     }
     else {
         if (inc < 0 && ui->carret.pos) --ui->carret.pos;
-        if (inc > 0 || ui->carret.pos) code_delete(ui->code, ui->carret.pos);
+        if (inc) code_delete(ui->code, ui->carret.pos);
     }
 
     ui_code_update(ui, ui_code_update_all);
