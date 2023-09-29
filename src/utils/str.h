@@ -67,8 +67,20 @@ inline bool str_is_vowel(char c)
 
 inline bool str_is_upper_case(char c) { return c >= 'A' && c <= 'Z'; }
 inline bool str_is_lower_case(char c) { return c >= 'a' && c <= 'z'; }
-void str_to_upper_case(char *, size_t);
-void str_to_lower_case(char *, size_t);
+
+inline char str_upper_case(char c) { return str_is_lower_case(c) ? c - 'a' + 'A' : c; }
+inline char str_lower_case(char c) { return str_is_upper_case(c) ? c - 'A' + 'a' : c; }
+
+inline void str_to_upper_case(char *str, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+        str[i] = str_upper_case(str[i]);
+}
+inline void str_to_lower_case(char *str, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+        str[i] = str_lower_case(str[i]);
+}
 
 inline bool str_is_space(char c) { return c <= 0x20; }
 size_t str_skip_spaces(const char *str, size_t len);

@@ -128,20 +128,6 @@ size_t str_scaled(uint64_t val, char *dst, size_t len)
     return str_scaled_len;
 }
 
-void str_to_upper_case(char *str, size_t len)
-{
-    for (size_t i = 0; i < len; ++i)
-        if (str_is_lower_case(str[i]))
-            str[i] = str[i] - 'a' + 'A';
-}
-
-void str_to_lower_case(char *str, size_t len)
-{
-    for (size_t i = 0; i < len; ++i)
-        if (str_is_upper_case(str[i]))
-            str[i] = str[i] - 'A' + 'a';
-}
-
 size_t str_skip_spaces(const char *str, size_t len)
 {
     const char *it = str;
