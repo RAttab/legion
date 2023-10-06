@@ -6,19 +6,13 @@
 #pragma once
 
 #include "common.h"
-
-struct mod;
+#include "vm/types.h"
 
 
 // -----------------------------------------------------------------------------
 // types
 // -----------------------------------------------------------------------------
 
-typedef int64_t vm_word;
-typedef uint8_t vm_reg;
-typedef uint32_t mod_id; // see mod.h for the full definition
-
-typedef uint32_t vm_ip;
 static const vm_ip vm_ip_nil = UINT32_MAX;
 inline bool ip_validate(vm_word word) { return word >= 0 && word < UINT32_MAX; }
 

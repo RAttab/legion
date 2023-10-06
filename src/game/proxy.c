@@ -606,7 +606,7 @@ void proxy_mod_compile(mod_maj maj, const char *code, size_t len)
 // render
 // -----------------------------------------------------------------------------
 
-struct proxy_render_it proxy_render_it(struct rect viewport)
+struct proxy_render_it proxy_render_it(struct coord_rect viewport)
 {
     return (struct proxy_render_it) {
         .rect = viewport,
@@ -620,11 +620,11 @@ const struct star *proxy_render_next(struct proxy_render_it *it)
     while (true) {
         if (it->index < it->sector->stars_len) {
             struct star *star = &it->sector->stars[it->index++];
-            if (rect_contains(&it->rect, star->coord)) return star;
+            if (coord_rect_contains(it->rect, star->coord)) return star;
             continue;
         }
 
-        struct coord coord = rect_next_sector(it->rect, it->sector->coord);
+        struct coord coord = coord_rect_next_sector(it->rect, it->sector->coord);
         if (coord_is_nil(coord)) return NULL;
         it->sector = proxy_sector(coord);
         it->index = 0;
@@ -665,18 +665,18 @@ vm_word proxy_star_name(struct coord coord)
     return star_name(coord, proxy.state->seed, proxy.state->atoms);
 }
 
-const struct star *proxy_star_in(struct rect rect)
+const struct star *proxy_star_in(struct coord_rect rect)
 {
     // Very likely that the center of the rectangle is the right place to look
     // so make a first initial guess.
-    struct sector *sector = proxy_sector(rect_center(&rect));
+    struct sector *sector = proxy_sector(coord_rect_center(rect));
     const struct star *star = sector_star_in(sector, rect);
     if (star) return star;
 
     // Alright so our guess didn't work out so time for an exhaustive search.
-    struct coord it = rect_next_sector(rect, coord_nil());
-    for (; !coord_is_nil(it); it = rect_next_sector(rect, it)) {
-        sector = proxy_sector(rect_center(&rect));
+    struct coord it = coord_rect_next_sector(rect, coord_nil());
+    for (; !coord_is_nil(it); it = coord_rect_next_sector(rect, it)) {
+        sector = proxy_sector(coord_rect_center(rect));
         star = sector_star_in(sector, rect);
         if (star) return star;
     }

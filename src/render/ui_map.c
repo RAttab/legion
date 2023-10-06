@@ -43,14 +43,14 @@ enum
 
     // Tweaked in relation to map_star_px so that our default view isn't
     // useless.
-    ui_map_scale_default = scale_base << 5,
+    ui_map_scale_default = coord_scale_base << 5,
 
     // As we zoom out we need to pull more nad more sector data which becomes
     // too expansive. These determine at which zoom threshold do we stop pulling
     // some data and displaying things like the sector or area grid.
-    ui_map_thresh_stars = scale_base << 0x8,
-    ui_map_thresh_sector_low = scale_base << 0x7,
-    ui_map_thresh_sector_high = scale_base << 0xE,
+    ui_map_thresh_stars = coord_scale_base << 0x8,
+    ui_map_thresh_sector_low = coord_scale_base << 0x7,
+    ui_map_thresh_sector_high = coord_scale_base << 0xE,
 };
 
 
@@ -132,8 +132,8 @@ static struct coord ui_map_project_coord(struct ui_map *ui, SDL_Point sdl)
     SDL_Rect rect = render.rect;
     int64_t x = sdl.x, y = sdl.y; // needed as a signed int
 
-    int64_t rel_x = scale_mult(ui->scale, x - rect.x - rect.w / 2);
-    int64_t rel_y = scale_mult(ui->scale, y - rect.y - rect.h / 2);
+    int64_t rel_x = coord_scale_mult(ui->scale, x - rect.x - rect.w / 2);
+    int64_t rel_y = coord_scale_mult(ui->scale, y - rect.y - rect.h / 2);
 
     return (struct coord) {
         .x = ui->pos.x + rel_x,
@@ -142,10 +142,10 @@ static struct coord ui_map_project_coord(struct ui_map *ui, SDL_Point sdl)
 
 }
 
-static struct rect ui_map_project_coord_rect(
+static struct coord_rect ui_map_project_coord_rect(
         struct ui_map *ui, const SDL_Rect *sdl)
 {
-    return (struct rect) {
+    return (struct coord_rect) {
         .top = ui_map_project_coord(ui, (SDL_Point) {
                     .x = sdl->x,
                     .y = sdl->y
@@ -162,8 +162,8 @@ static SDL_Point ui_map_project_sdl(struct ui_map *ui, struct coord coord)
     SDL_Rect rect = render.rect;
     int64_t x = coord.x, y = coord.y; // needed as a signed int
 
-    int64_t rel_x = scale_div(ui->scale, x - ui->pos.x);
-    int64_t rel_y = scale_div(ui->scale, y - ui->pos.y);
+    int64_t rel_x = coord_scale_div(ui->scale, x - ui->pos.x);
+    int64_t rel_y = coord_scale_div(ui->scale, y - ui->pos.y);
 
     return (SDL_Point) {
         .x = rel_x + rect.w / 2 + rect.x,
@@ -207,7 +207,7 @@ static bool ui_map_event(void *state, SDL_Event *event)
     {
 
     case SDL_MOUSEWHEEL: {
-        ui->scale = scale_inc(ui->scale, -event->wheel.y);
+        ui->scale = coord_scale_inc(ui->scale, -event->wheel.y);
         return true;
     }
 
@@ -218,10 +218,10 @@ static bool ui_map_event(void *state, SDL_Event *event)
             return false;
         }
 
-        int64_t xrel = scale_mult(ui->scale, event->motion.xrel);
+        int64_t xrel = coord_scale_mult(ui->scale, event->motion.xrel);
         ui->pos.x = i64_clamp(ui->pos.x - xrel, 0, UINT32_MAX);
 
-        int64_t yrel = scale_mult(ui->scale, event->motion.yrel);
+        int64_t yrel = coord_scale_mult(ui->scale, event->motion.yrel);
         ui->pos.y = i64_clamp(ui->pos.y - yrel, 0, UINT32_MAX);
 
         ui->panned = true;
@@ -241,8 +241,8 @@ static bool ui_map_event(void *state, SDL_Event *event)
         if (ui->scale >= ui_map_thresh_stars) return true;
 
         SDL_Point point = ui_cursor_point();
-        size_t px = scale_div(ui->scale, ui_map_star_px);
-        struct rect rect = ui_map_project_coord_rect(ui, &(SDL_Rect) {
+        size_t px = coord_scale_div(ui->scale, ui_map_star_px);
+        struct coord_rect rect = ui_map_project_coord_rect(ui, &(SDL_Rect) {
                     .x = point.x - px / 2,
                     .y = point.y - px / 2,
                     .h = px, .w = px,
@@ -264,10 +264,10 @@ static bool ui_map_event(void *state, SDL_Event *event)
 
 static void ui_map_render_areas(struct ui_map *ui, SDL_Renderer *renderer)
 {
-    struct rect rect = ui_map_project_coord_rect(ui, &render.rect);
+    struct coord_rect rect = ui_map_project_coord_rect(ui, &render.rect);
 
-    struct coord it = rect_next_area(rect, coord_nil());
-    for (; !coord_is_nil(it); it = rect_next_area(rect, it)) {
+    struct coord it = coord_rect_next_area(rect, coord_nil());
+    for (; !coord_is_nil(it); it = coord_rect_next_area(rect, it)) {
         SDL_Point top = ui_map_project_sdl(ui, it);
         SDL_Point bot = ui_map_project_sdl(ui, make_coord(
                 it.x + coord_area_inc,
@@ -286,10 +286,10 @@ static void ui_map_render_areas(struct ui_map *ui, SDL_Renderer *renderer)
 
 static void ui_map_render_sectors(struct ui_map *ui, SDL_Renderer *renderer)
 {
-    struct rect rect = ui_map_project_coord_rect(ui, &render.rect);
+    struct coord_rect rect = ui_map_project_coord_rect(ui, &render.rect);
 
-    struct coord it = rect_next_sector(rect, coord_nil());
-    for (; !coord_is_nil(it); it = rect_next_sector(rect, it)) {
+    struct coord it = coord_rect_next_sector(rect, coord_nil());
+    for (; !coord_is_nil(it); it = coord_rect_next_sector(rect, it)) {
         SDL_Point top = ui_map_project_sdl(ui, it);
         SDL_Point bot = ui_map_project_sdl(ui, make_coord(
                 it.x + coord_sector_size,
@@ -331,14 +331,14 @@ static void ui_map_render_lanes(
 
 static void ui_map_render_stars(struct ui_map *ui, SDL_Renderer *renderer)
 {
-    struct rect rect = ui_map_project_coord_rect(ui, &render.rect);
+    struct coord_rect rect = ui_map_project_coord_rect(ui, &render.rect);
     struct proxy_render_it it = proxy_render_it(rect);
 
     const struct star *star = NULL;
     while ((star = proxy_render_next(&it))) {
         SDL_Point pos = ui_map_project_sdl(ui, star->coord);
 
-        size_t px = scale_div(ui->scale, ui_map_star_px);
+        size_t px = coord_scale_div(ui->scale, ui_map_star_px);
         SDL_Rect dst = {
             .x = pos.x - px / 2,
             .y = pos.y - px / 2,

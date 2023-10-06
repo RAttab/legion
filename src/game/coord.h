@@ -7,8 +7,6 @@
 
 #include "common.h"
 #include "utils/bits.h"
-#include "vm/vm.h"
-#include "SDL.h"
 
 // -----------------------------------------------------------------------------
 // coord
@@ -131,40 +129,42 @@ size_t coord_str(struct coord coord, char *str, size_t len);
 // rect
 // -----------------------------------------------------------------------------
 
-struct rect
+struct coord_rect
 {
     struct coord top, bot;
 };
 
-inline struct rect make_rect(struct coord top, struct coord bot)
+inline struct coord_rect make_coord_rect(struct coord top, struct coord bot)
 {
-    return (struct rect) { .top = top, .bot = bot };
+    return (struct coord_rect) { .top = top, .bot = bot };
 }
 
-inline bool rect_contains(const struct rect *r, struct coord coord)
-{
-    return
-        (coord.x >= r->top.x && coord.x < r->bot.x) &&
-        (coord.y >= r->top.y && coord.y < r->bot.y);
-}
-
-
-inline bool rect_intersect(const struct rect *lhs, struct rect *rhs)
+inline bool coord_rect_contains(const struct coord_rect r, struct coord coord)
 {
     return
-        (lhs->top.x >= rhs->bot.x && lhs->bot.x < rhs->top.x) ||
-        (lhs->top.y >= rhs->bot.y && lhs->bot.y < rhs->top.y);
+        (coord.x >= r.top.x && coord.x < r.bot.x) &&
+        (coord.y >= r.top.y && coord.y < r.bot.y);
 }
 
-inline struct coord rect_center(const struct rect *r)
+
+inline bool coord_rect_intersect(
+        const struct coord_rect lhs, struct coord_rect rhs)
+{
+    return
+        (lhs.top.x >= rhs.bot.x && lhs.bot.x < rhs.top.x) ||
+        (lhs.top.y >= rhs.bot.y && lhs.bot.y < rhs.top.y);
+}
+
+inline struct coord coord_rect_center(const struct coord_rect r)
 {
     return (struct coord) {
-        .x = r->top.x + ((r->bot.x - r->top.x) / 2),
-        .y = r->top.y + ((r->bot.y - r->top.y) / 2),
+        .x = r.top.x + ((r.bot.x - r.top.x) / 2),
+        .y = r.top.y + ((r.bot.y - r.top.y) / 2),
     };
 }
 
-inline struct coord rect_next_sector(struct rect rect, struct coord it)
+inline struct coord coord_rect_next_sector(
+        struct coord_rect rect, struct coord it)
 {
     if (coord_is_nil(it)) return coord_sector(rect.top);
 
@@ -181,7 +181,8 @@ inline struct coord rect_next_sector(struct rect rect, struct coord it)
     return coord_nil();
 }
 
-inline struct coord rect_next_area(struct rect rect, struct coord it)
+inline struct coord coord_rect_next_area(
+        struct coord_rect rect, struct coord it)
 {
     if (coord_is_nil(it)) return coord_area(rect.top);
 
@@ -204,21 +205,21 @@ inline struct coord rect_next_area(struct rect rect, struct coord it)
 // -----------------------------------------------------------------------------
 
 typedef int64_t coord_scale;
-enum { scale_base = 1 << 8 };
+enum { coord_scale_base = 1 << 8 };
 
-inline coord_scale scale_init() { return scale_base; }
+inline coord_scale coord_scale_init() { return coord_scale_base; }
 
-coord_scale scale_inc(coord_scale scale, int dir);
+coord_scale coord_scale_inc(coord_scale scale, int dir);
 
-inline int64_t scale_mult(coord_scale scale, int64_t value)
+inline int64_t coord_scale_mult(coord_scale scale, int64_t value)
 {
-    return (value * scale) / scale_base;
+    return (value * scale) / coord_scale_base;
 }
 
-inline int64_t scale_div(coord_scale scale, int64_t value)
+inline int64_t coord_scale_div(coord_scale scale, int64_t value)
 {
-    return (value * scale_base) / scale;
+    return (value * coord_scale_base) / scale;
 }
 
-enum { scale_str_len = 1+2+1+2 };
-size_t scale_str(coord_scale, char *str, size_t len);
+enum { coord_scale_str_len = 1+2+1+2 };
+size_t coord_scale_str(coord_scale, char *str, size_t len);

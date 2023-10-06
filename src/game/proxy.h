@@ -101,12 +101,12 @@ void proxy_mod_compile(mod_maj, const char *code, size_t len);
 
 struct proxy_render_it
 {
-    struct rect rect;
+    struct coord_rect rect;
     struct sector *sector;
     size_t index;
 };
 
-struct proxy_render_it proxy_render_it(struct rect viewport);
+struct proxy_render_it proxy_render_it(struct coord_rect viewport);
 const struct star *proxy_render_next(struct proxy_render_it *);
 
 bool proxy_active_star(struct coord);
@@ -114,5 +114,5 @@ bool proxy_active_sector(struct coord);
 struct sector *proxy_sector(struct coord);
 
 vm_word proxy_star_name(struct coord);
-const struct star *proxy_star_in(struct rect);
+const struct star *proxy_star_in(struct coord_rect);
 const struct star *proxy_star_at(struct coord);

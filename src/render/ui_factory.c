@@ -62,7 +62,7 @@ void ui_factory_alloc(struct ui_view_state *state)
 {
     struct ui_factory *ui = calloc(1, sizeof (*ui));
     *ui = (struct ui_factory) {
-        .scale = scale_init(),
+        .scale = coord_scale_init(),
         .pos = (struct flow_pos) {0},
 
         .ui_id = ui_label_new(ui_str_v(im_id_str_len)),
@@ -219,7 +219,7 @@ void ui_factory_show(struct coord star, im_id id)
     assert(!coord_is_nil(star));
 
     ui->star = star;
-    ui->scale = scale_init();
+    ui->scale = coord_scale_init();
     ui_factory_update(ui);
 
     ui->pos = (struct flow_pos) {0};
@@ -293,8 +293,8 @@ static SDL_Point ui_factory_project_sdl_point(
     SDL_Rect rect = render_rect();
     int64_t x = origin.x, y = origin.y;
 
-    int64_t rel_x = scale_div(ui->scale, x - ui->pos.x);
-    int64_t rel_y = scale_div(ui->scale, y - ui->pos.y);
+    int64_t rel_x = coord_scale_div(ui->scale, x - ui->pos.x);
+    int64_t rel_y = coord_scale_div(ui->scale, y - ui->pos.y);
 
     return (SDL_Point) {
         .x = i64_clamp(rel_x + rect.w / 2 + rect.x, INT_MIN, INT_MAX),
@@ -327,8 +327,8 @@ static struct flow_pos ui_factory_project_flow_pos(
     SDL_Rect rect = render_rect();
     int64_t x = origin.x, y = origin.y;
 
-    int64_t rel_x = scale_mult(ui->scale, x - rect.x - rect.w / 2);
-    int64_t rel_y = scale_mult(ui->scale, y - rect.y - rect.h / 2);
+    int64_t rel_x = coord_scale_mult(ui->scale, x - rect.x - rect.w / 2);
+    int64_t rel_y = coord_scale_mult(ui->scale, y - rect.y - rect.h / 2);
 
     return (struct flow_pos) {
         .x = i64_clamp(ui->pos.x + rel_x, INT32_MIN, INT32_MAX),
@@ -421,7 +421,7 @@ static bool ui_factory_event(void *state, SDL_Event *ev)
     {
 
     case SDL_MOUSEWHEEL: {
-        ui->scale = scale_inc(ui->scale, -ev->wheel.y);
+        ui->scale = coord_scale_inc(ui->scale, -ev->wheel.y);
         return true;
     }
 
@@ -432,10 +432,10 @@ static bool ui_factory_event(void *state, SDL_Event *ev)
             return false;
         }
 
-        int64_t xrel = scale_mult(ui->scale, ev->motion.xrel);
+        int64_t xrel = coord_scale_mult(ui->scale, ev->motion.xrel);
         ui->pos.x = i64_clamp(ui->pos.x - xrel, INT32_MIN, INT32_MAX);
 
-        int64_t yrel = scale_mult(ui->scale, ev->motion.yrel);
+        int64_t yrel = coord_scale_mult(ui->scale, ev->motion.yrel);
         ui->pos.y = i64_clamp(ui->pos.y - yrel, INT32_MIN, INT32_MAX);
 
         ui->panned = true;

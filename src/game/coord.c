@@ -49,9 +49,9 @@ size_t coord_str(struct coord coord, char *str, size_t len)
 // scale
 // -----------------------------------------------------------------------------
 
-inline coord_scale scale_inc(coord_scale scale, int dir)
+inline coord_scale coord_scale_inc(coord_scale scale, int dir)
 {
-    if (scale == scale_base && dir < 0) return scale;
+    if (scale == coord_scale_base && dir < 0) return scale;
     if (scale < (1 << 4)) return scale + dir;
 
     uint64_t delta = (1 << (u64_log2(scale) - 4));
@@ -59,14 +59,14 @@ inline coord_scale scale_inc(coord_scale scale, int dir)
 }
 
 
-size_t scale_str(coord_scale scale, char *str, size_t len)
+size_t coord_scale_str(coord_scale scale, char *str, size_t len)
 {
-    assert(len >= scale_str_len);
+    assert(len >= coord_scale_str_len);
 
     size_t i = 0;
     size_t msb = u64_log2(scale);
-    uint64_t top = scale < scale_base ? 0 : msb - 8;
-    uint64_t bot = scale < scale_base ? (uint64_t)scale :
+    uint64_t top = scale < coord_scale_base ? 0 : msb - 8;
+    uint64_t bot = scale < coord_scale_base ? (uint64_t)scale :
         (((uint64_t) scale) & ((1 << msb) - 1)) >> (msb - 8);
 
     str[i++] = 'x';
@@ -76,6 +76,6 @@ size_t scale_str(coord_scale scale, char *str, size_t len)
     str[i++] = str_hexchar(bot >> 4);
     str[i++] = str_hexchar(bot >> 0);
 
-    assert(i == scale_str_len);
-    return scale_str_len;
+    assert(i == coord_scale_str_len);
+    return coord_scale_str_len;
 }

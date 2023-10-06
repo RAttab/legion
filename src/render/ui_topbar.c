@@ -32,7 +32,7 @@ struct ui_topbar
 enum : uint64_t
 {
     topbar_ticks_len = 8,
-    topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + scale_str_len+1,
+    topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + coord_scale_str_len+1,
 };
 
 void ui_topbar_alloc(struct ui_view_state *state)
@@ -247,7 +247,7 @@ static void topbar_render_coord(
     it += coord_str(coord, it, end - it);
     *it = ' '; it++; assert(it < end);
 
-    it += scale_str(scale, it, end - it);
+    it += coord_scale_str(scale, it, end - it);
     assert(it <= end);
 
     ui_str_setv(&ui->coord.str, buffer, sizeof(buffer));

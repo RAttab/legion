@@ -70,7 +70,7 @@ void sector_free(struct sector *);
 struct sector *sector_load(struct world *, struct save *);
 void sector_save(const struct sector *, struct save *);
 
-const struct star *sector_star_in(const struct sector *, struct rect);
+const struct star *sector_star_in(const struct sector *, struct coord_rect);
 const struct star *sector_star_at(const struct sector *, struct coord coord);
 
 ssize_t sector_scan(const struct sector *, struct coord, enum item);
