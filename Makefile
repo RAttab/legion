@@ -13,7 +13,7 @@ PREFIX ?= build
 TEST ?= ring lisp chunk lanes tech save protocol items proxy man
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu2x -D_GNU_SOURCE -lm -pthread
-CFLAGS := $(CFLAGS) -Isrc
+CFLAGS := $(CFLAGS) -Isrc -Isrc/engine
 CFLAGS := $(CFLAGS) $(shell sdl2-config --cflags)
 CFLAGS := $(CFLAGS) $(shell pkg-config --cflags freetype2)
 CFLAGS := $(CFLAGS) -Wall -Wextra
@@ -36,6 +36,9 @@ VALGRIND_FLAGS := $(VALGRIND_FLAGS) --suppressions=legion.supp
 
 LIBS := $(LIBS) $(shell sdl2-config --libs)
 LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
+
+ENGINE_LIBS := $(ENGINE_LIBS) $(shell pkg-config --libs glfw3)
+ENGINE_LIBS := $(ENGINE_LIBS) $(shell pkg-config --libs opengl)
 
 ASM := src/db/res.S
 
@@ -114,11 +117,21 @@ gen: $(PREFIX)/gen gen-tech gen-db
 # res
 # -----------------------------------------------------------------------------
 
+$(shell mkdir -p $(PREFIX)/shaders/)
+shaders: $(foreach shader,$(wildcard res/shaders/*),$(PREFIX)/shaders/$(notdir $(shader)).glsl)
+
+$(PREFIX)/shaders/%.glsl: res/shaders/%
+	@echo -e "\e[32m[shader]\e[0m $<"
+	@glslang --quiet --glsl-version 430 -l $<
+	@touch $@
+
 src/db/res.S: src/db/gen/man.S
+src/db/res.S: $(wildcard res/shaders/*)
 src/db/res.S: $(wildcard res/img/*.bmp)
 src/db/res.S: $(wildcard res/font/*.otf)
 	@echo -e "\e[32m[res]\e[0m $@"
 	@touch $@
+
 
 
 # -----------------------------------------------------------------------------
@@ -138,6 +151,24 @@ legion: $(PREFIX)/legion
 run: $(PREFIX)/legion
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
+
+# -----------------------------------------------------------------------------
+# engine
+# -----------------------------------------------------------------------------
+
+$(PREFIX)/engine: $(PREFIX)/obj/engine-main.o $(PREFIX)/obj/engine.o $(PREFIX)/liblegion.a $(ASM)
+	@echo -e "\e[32m[build]\e[0m $@"
+	@$(CC) -o $@ $^ $(LIBS) $(ENGINE_LIBS) $(CFLAGS)
+
+engine: $(PREFIX)/engine shaders
+
+run-engine: $(PREFIX)/engine shaders
+	@echo -e "\e[32m[run]\e[0m $<"
+	@$(PREFIX)/engine
+
+valgrind-engine: $(PREFIX)/engine shaders
+	@echo -e "\e[32m[run]\e[0m $@"
+	@valgrind $(VALGRIND_FLAGS) $(PREFIX)/engine
 
 
 # -----------------------------------------------------------------------------
