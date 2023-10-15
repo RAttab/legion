@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "scroll.h"
-#include "render/ui.h"
-
-
 // -----------------------------------------------------------------------------
 // style
 // -----------------------------------------------------------------------------
@@ -16,7 +12,7 @@ void ui_scroll_style_default(struct ui_style *s)
     s->scroll = (struct ui_scroll_style) {
         .fg = rgba_gray(0x88),
         .bg = s->rgba.bg,
-        .width = 6,
+        .width = engine_cell().w,
     };
 }
 
@@ -28,7 +24,7 @@ void ui_scroll_style_default(struct ui_style *s)
 struct ui_scroll ui_scroll_new(struct dim dim, struct dim cell)
 {
     return (struct ui_scroll) {
-        .w = ui_widget_new(dim.w, dim.h),
+        .w = make_ui_widget(dim),
         .s = ui_st.scroll,
         .cell = cell,
         .rows = {0},
@@ -148,138 +144,141 @@ void ui_scroll_center(struct ui_scroll *scroll, size_t row, size_t col)
 // event / render
 // -----------------------------------------------------------------------------
 
-static SDL_Rect ui_scroll_rect_rows(struct ui_scroll *scroll)
+static struct rect ui_scroll_rect_rows(struct ui_scroll *scroll)
 {
-    if (!scroll->rows.show) return (SDL_Rect) {0};
+    if (!scroll->rows.show) return rect_nil();
 
-    int16_t height = scroll->w.dim.h;
+    unit height = scroll->w.h;
     if (scroll->cols.total) height -= scroll->cell.h;
 
-    SDL_Rect rect = {
-        .x = scroll->w.pos.x + (scroll->w.dim.w - scroll->cell.w),
-        .y = scroll->w.pos.y + ((height * scroll->rows.first) / scroll->rows.total),
+    struct rect rect = {
+        .x = scroll->w.x + (scroll->w.w - scroll->cell.w),
+        .y = scroll->w.y + ((height * scroll->rows.first) / scroll->rows.total),
         .w = scroll->s.width,
         .h = (height * scroll->rows.visible) / scroll->rows.total,
     };
 
     rect.x += (scroll->cell.w / 2) - (rect.w / 2);
 
-    const int max = scroll->w.pos.y + height;
+    const unit max = scroll->w.y + height;
     if (rect.y + rect.h > max) rect.h = max - rect.y;
 
     return rect;
 }
 
-static SDL_Rect ui_scroll_rect_cols(struct ui_scroll *scroll)
+static struct rect ui_scroll_rect_cols(struct ui_scroll *scroll)
 {
-    if (!scroll->cols.show) return (SDL_Rect) {0};
+    if (!scroll->cols.show) return rect_nil();
 
-    int16_t width = scroll->w.dim.w;
+    unit width = scroll->w.w;
     if (scroll->rows.total) width -= scroll->cell.w;
 
-    SDL_Rect rect = {
-        .x = scroll->w.pos.x + ((width * scroll->cols.first) / scroll->cols.total),
-        .y = scroll->w.pos.y + (scroll->w.dim.h - scroll->cell.h),
+    struct rect rect = {
+        .x = scroll->w.x + ((width * scroll->cols.first) / scroll->cols.total),
+        .y = scroll->w.y + (scroll->w.h - scroll->cell.h),
         .w = (width * scroll->cols.visible) / scroll->cols.total,
         .h = scroll->s.width,
     };
 
     rect.y += (scroll->cell.h / 2) - (rect.h / 2);
 
-    const int max = scroll->w.pos.x + width;
+    const unit max = scroll->w.x + width;
     if (rect.x + rect.w > max) rect.w = max - rect.x;
 
     return rect;
 }
 
 
-enum ui_ret ui_scroll_event(struct ui_scroll *scroll, const SDL_Event *ev)
+void ui_scroll_event(struct ui_scroll *scroll)
 {
-    switch (ev->type) {
+    for (auto ev = ev_next_scroll(nullptr); ev; ev = ev_next_scroll(ev)) {
+        if (!ev_mouse_in(scroll->w)) continue;
 
-    case SDL_MOUSEWHEEL: {
-        SDL_Rect widget = ui_widget_rect(&scroll->w);
-        if (!ui_cursor_in(&widget)) return ui_nil;
-
-        ui_scroll_move_rows(scroll, -ev->wheel.y);
-        ui_scroll_move_cols(scroll, ev->wheel.x);
-        return ui_consume;
+        ui_scroll_move_rows(scroll, -ev->dy);
+        ui_scroll_move_cols(scroll, ev->dx);
+        ev_consume_scroll(ev);
     }
 
-    case SDL_MOUSEBUTTONDOWN: {
-        SDL_Point cursor = ui_cursor_point();
+    for (auto ev = ev_next_button(nullptr); ev; ev = ev_next_button(ev)) {
+        if (ev->button != ev_button_left) continue;
 
-        if (scroll->rows.show) {
-            SDL_Rect rows = ui_scroll_rect_rows(scroll);
-            if (SDL_PointInRect(&cursor, &rows)) {
+        struct pos cursor = ev_mouse_pos();
+        switch (ev->state)
+        {
+
+        case ev_state_down: {
+            struct rect rows = ui_scroll_rect_rows(scroll);
+            if (rect_contains(rows, cursor)) {
                 scroll->drag.type = ui_scroll_rows;
                 scroll->drag.start = cursor.y;
                 scroll->drag.bar = rows.y;
-                return ui_consume;
+                ev_consume_button(ev);
+                break;
             }
-        }
 
-        if (scroll->cols.show) {
-            SDL_Rect cols = ui_scroll_rect_cols(scroll);
-            if (SDL_PointInRect(&cursor, &cols)) {
+            struct rect cols = ui_scroll_rect_cols(scroll);
+            if (rect_contains(cols, cursor)) {
                 scroll->drag.type = ui_scroll_cols;
                 scroll->drag.start = cursor.x;
                 scroll->drag.bar = cols.x;
-                return ui_consume;
+                ev_consume_button(ev);
+                break;
             }
         }
 
-        return ui_nil;
+        case ev_state_up: {
+            if (!scroll->drag.type) break;
+            memset(&scroll->drag, 0, sizeof(scroll->drag));
+            ev_consume_button(ev);
+            break;
+        }
+
+        default: { break; }
+        }
     }
 
-    case SDL_MOUSEBUTTONUP: {
-        if (!scroll->drag.type) return ui_nil;
-        memset(&scroll->drag, 0, sizeof(scroll->drag));
-        return ui_consume;
-    }
-
-    case SDL_MOUSEMOTION: {
+    for (auto ev = ev_mouse(); ev; ev = nullptr) {
         switch (scroll->drag.type)
         {
-        case ui_scroll_nil: { return ui_nil; }
+        case ui_scroll_nil: { break; }
 
         case ui_scroll_rows: {
-            int16_t delta = ui_cursor_point().y - scroll->drag.start;
-            int16_t bar = scroll->drag.bar + delta;
-            if (bar < scroll->w.pos.y) scroll->rows.first = 0;
+            unit delta = ev_mouse_pos().y - scroll->drag.start;
+            unit bar = scroll->drag.bar + delta;
+            if (bar < scroll->w.y) scroll->rows.first = 0;
             else {
-                size_t first = ((bar - scroll->w.pos.y) * scroll->rows.total) / scroll->w.dim.h;
+                size_t first = ((bar - scroll->w.y) * scroll->rows.total) / scroll->w.h;
                 scroll->rows.first = legion_min(scroll->rows.total, first);
             }
-            return ui_nil;
+            break;
         }
 
         case ui_scroll_cols: {
-            int16_t delta = ui_cursor_point().x - scroll->drag.start;
-            int16_t bar = scroll->drag.bar + delta;
-            if (bar < scroll->w.pos.x) scroll->cols.first = 0;
+            unit delta = ev_mouse_pos().x - scroll->drag.start;
+            unit bar = scroll->drag.bar + delta;
+            if (bar < scroll->w.x) scroll->cols.first = 0;
             else {
-                size_t first = ((bar - scroll->w.pos.x) * scroll->cols.total) / scroll->w.dim.h;
+                size_t first = ((bar - scroll->w.x) * scroll->cols.total) / scroll->w.h;
                 scroll->cols.first = legion_min(scroll->cols.total, first);
             }
-            return ui_nil;
+            break;
         }
 
         default: { assert(false); }
         }
     }
 
-    default: { return ui_nil; }
-    }
 }
 
-struct ui_layout ui_scroll_render(
-        struct ui_scroll *scroll, struct ui_layout *layout, SDL_Renderer *renderer)
+struct ui_layout ui_scroll_render(struct ui_scroll *scroll, struct ui_layout *layout)
 {
     ui_layout_add(layout, &scroll->w);
 
-    scroll->rows.visible = scroll->w.dim.h / scroll->cell.h;
-    scroll->cols.visible = scroll->w.dim.w / scroll->cell.w;
+    const render_layer layer_bg = render_layer_push(2);
+    const render_layer layer_fg = layer_bg + 1;
+
+    scroll->rows.visible = scroll->w.h / scroll->cell.h;
+    scroll->cols.visible = scroll->w.w / scroll->cell.w;
 
     if (scroll->center.row || scroll->center.col) {
         ui_scroll_center(scroll, scroll->center.row, scroll->center.col);
@@ -296,26 +295,21 @@ struct ui_layout ui_scroll_render(
     if (scroll->cols.show) scroll->rows.visible--;
     if (scroll->rows.show) scroll->cols.visible--;
 
-    if (!rgba_is_nil(scroll->s.bg)) {
-        rgba_render(scroll->s.bg, renderer);
-        SDL_Rect rect = ui_widget_rect(&scroll->w);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
-    }
+    if (!rgba_is_nil(scroll->s.bg))
+        render_rect_fill(layer_bg, scroll->s.bg, scroll->w);
 
-    if (scroll->rows.show) {
-        rgba_render(scroll->s.fg, renderer);
-        SDL_Rect rect = ui_scroll_rect_rows(scroll);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
-    }
+    if (scroll->rows.show)
+        render_rect_fill(layer_fg, scroll->s.fg, ui_scroll_rect_rows(scroll));
 
-    if (scroll->cols.show) {
-        rgba_render(scroll->s.fg, renderer);
-        SDL_Rect rect = ui_scroll_rect_cols(scroll);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
-    }
+    if (scroll->cols.show)
+        render_rect_fill(layer_fg, scroll->s.fg, ui_scroll_rect_cols(scroll));
+
+    // The inner layout doesn't overlap with the scroll bars so we can safely
+    // pop the layers.
+    render_layer_pop();
 
     struct dim dim = make_dim(
-            scroll->w.dim.w - (scroll->rows.show ? scroll->cell.w : 0),
-            scroll->w.dim.h - (scroll->cols.show ? scroll->cell.h : 0));
-    return ui_layout_new(scroll->w.pos, dim);
+            scroll->w.w - (scroll->rows.show ? scroll->cell.w : 0),
+            scroll->w.h - (scroll->cols.show ? scroll->cell.h : 0));
+    return ui_layout_new(rect_pos(scroll->w), dim);
 }

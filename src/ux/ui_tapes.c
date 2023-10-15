@@ -4,16 +4,15 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "game/tech.h"
 #include "items/lab/lab.h"
 #include "db/tapes.h"
 
 static void ui_tapes_free(void *);
 static void ui_tapes_update(void *);
-static bool ui_tapes_event(void *, SDL_Event *);
-static void ui_tapes_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_tapes_event(void *);
+static void ui_tapes_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -47,7 +46,7 @@ struct ui_tapes
 
 void ui_tapes_alloc(struct ui_view_state *state)
 {
-    struct dim cell = ui_st.font.dim;
+    struct dim cell = engine_cell();
     int tree_w = (item_str_len + 3) * cell.w;
     int tape_w = (item_str_len + 8 + 1) * cell.w;
 
@@ -137,7 +136,6 @@ void ui_tapes_show(enum item tape)
 
     ui_tapes_update(ui);
     ui_show(ui_view_tapes);
-    render_push_event(ev_tape_select, tape, 0);
 }
 
 static bool ui_tapes_selected(struct ui_tapes *ui)
@@ -150,15 +148,15 @@ static void ui_tapes_update_cat(
 {
     const struct tech *tech = proxy_tech();
 
-    ui_node parent = ui_tree_index(&ui->tree);
-    ui_str_setc(ui_tree_add(&ui->tree, ui_node_nil, first + items_max), name);
+    ui_tree_node parent = ui_tree_index(&ui->tree);
+    ui_str_setc(ui_tree_add(&ui->tree, ui_tree_node_nil, first + items_max), name);
 
     for (enum item it = first; it < last; ++it) {
         const struct im_config *config = im_config(it);
         if (!config) continue;
 
         const struct tape_info *info = tapes_info(it);
-        if (!info || info->rank >= 14) continue;
+        if (!info || info->rank >= im_rank_sys) continue;
 
         const struct tape *tape = tapes_get(it);
         if (!tape) continue;
@@ -187,18 +185,14 @@ static void ui_tapes_update(void *state)
     ui_tapes_update_cat(ui, "Active", items_active_first, items_active_last);
     ui_tapes_update_cat(ui, "Logistics", items_logistics_first, items_logistics_last);
 
+    struct dim cell = engine_cell();
+
     if (!ui_tapes_selected(ui)) {
-        ui_panel_resize(ui->panel,
-                make_dim(
-                        ui->tree_w + ui_st.font.base->glyph_w,
-                        ui_layout_inf));
+        ui_panel_resize(ui->panel, make_dim(ui->tree_w + cell.w, ui_layout_inf));
         return;
     }
 
-    ui_panel_resize(ui->panel,
-            make_dim(
-                    ui->tree_w + ui->tape_w + ui_st.font.base->glyph_w,
-                    ui_layout_inf));
+    ui_panel_resize(ui->panel, make_dim(ui->tree_w + ui->tape_w + cell.w, ui_layout_inf));
 
     enum item item = ui->tree.selected;
     const struct tech *tech = proxy_tech();
@@ -222,48 +216,33 @@ static bool ui_tapes_show_help(struct ui_tapes *ui)
         item_is_logistics(ui->tree.selected);
 }
 
-static bool ui_tapes_event(void *state, SDL_Event *ev)
+static void ui_tapes_event(void *state)
 {
     struct ui_tapes *ui = state;
 
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_tree_event(&ui->tree, ev))) {
-        if (ret == ui_action) ui_tapes_update(ui);
-        return true;
-    }
+    if (ui_tree_event(&ui->tree)) ui_tapes_update(ui);
 
-    if (!ui_tapes_selected(ui)) return false;
+    if (!ui_tapes_selected(ui)) return;
 
-    if ((ret = ui_button_event(&ui->help, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_button_event(&ui->help))
         ui_man_show_slot_path(ui_slot_right,
                 "/items/%s", item_str_c(ui->tree.selected));
-        return true;
-    }
 
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return true;
+    ui_scroll_event(&ui->scroll);
 
     if (ui_tapes_show_help(ui)) {
-        if ((ret = ui_link_event(&ui->host_val, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_link_event(&ui->host_val))
             ui_tapes_show(tape_host(tapes_get(ui->tree.selected)));
-            return true;
-        }
     }
-
-    return false;
 }
 
 // \TODO: basically a copy of ui_tape. Need to not do that.
-static void ui_tapes_render_tape(
-        struct ui_tapes *ui,
-        struct ui_layout *layout,
-        SDL_Renderer *renderer)
+static void ui_tapes_render_tape(struct ui_tapes *ui, struct ui_layout *layout)
 {
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout);
     if (ui_layout_is_nil(&inner)) return;
 
-    const struct font *font = ui_st.font.base;
+    struct dim cell = engine_cell();
     const struct tech *tech = proxy_tech();
     const struct tape *tape = tapes_get(ui->tree.selected);
 
@@ -272,14 +251,14 @@ static void ui_tapes_render_tape(
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);
-        ui_label_render(&ui->index, &inner, renderer);
-        ui_layout_sep_x(&inner, font->glyph_w);
+        ui_label_render(&ui->index, &inner);
+        ui_layout_sep_x(&inner, cell.w);
 
         struct tape_ret ret = tape_at(tape, i);
 
         if (tape_state_item(ret.state) && !tech_learned(tech, ret.item))
-            ui_label_render(&ui->known, &inner, renderer);
-        else ui_layout_sep_x(&inner, font->glyph_w);
+            ui_label_render(&ui->known, &inner);
+        else ui_layout_sep_x(&inner, cell.w);
 
         struct ui_label *label = NULL;
         switch (ret.state)
@@ -293,18 +272,17 @@ static void ui_tapes_render_tape(
 
         if (tape_state_item(ret.state))
             ui_str_set_item(&label->str, ret.item);
-        ui_label_render(label, &inner, renderer);
+        ui_label_render(label, &inner);
 
         ui_layout_next_row(&inner);
     }
 }
 
-static void ui_tapes_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_tapes_render(void *state, struct ui_layout *layout)
 {
     struct ui_tapes *ui = state;
 
-    ui_tree_render(&ui->tree, layout, renderer);
+    ui_tree_render(&ui->tree, layout);
 
     if (!ui_tapes_selected(ui)) return;
 
@@ -313,32 +291,32 @@ static void ui_tapes_render(
 
     if (ui_tapes_show_help(ui)) {
         ui_layout_dir_hori(layout, ui_layout_right_left);
-        ui_button_render(&ui->help, layout, renderer);
+        ui_button_render(&ui->help, layout);
         ui_layout_dir_hori(layout, ui_layout_left_right);
     }
 
-    ui_label_render(&ui->name, &inner, renderer);
+    ui_label_render(&ui->name, &inner);
     ui_layout_next_row(&inner);
 
     ui_layout_sep_row(&inner);
 
-    ui_label_render(&ui->lab, &inner, renderer);
-    ui_lab_bits_render(&ui->lab_val, &inner, renderer);
+    ui_label_render(&ui->lab, &inner);
+    ui_lab_bits_render(&ui->lab_val, &inner);
     ui_layout_next_row(&inner);
 
-    ui_label_render(&ui->energy, &inner, renderer);
-    ui_label_render(&ui->energy_val, &inner, renderer);
-    ui_layout_next_row(&inner);
-
-    ui_layout_sep_row(&inner);
-
-    ui_label_render(&ui->host, &inner, renderer);
-    ui_link_render(&ui->host_val, &inner, renderer);
+    ui_label_render(&ui->energy, &inner);
+    ui_label_render(&ui->energy_val, &inner);
     ui_layout_next_row(&inner);
 
     ui_layout_sep_row(&inner);
 
-    ui_label_render(&ui->tape, &inner, renderer);
+    ui_label_render(&ui->host, &inner);
+    ui_link_render(&ui->host_val, &inner);
     ui_layout_next_row(&inner);
-    ui_tapes_render_tape(ui, &inner, renderer);
+
+    ui_layout_sep_row(&inner);
+
+    ui_label_render(&ui->tape, &inner);
+    ui_layout_next_row(&inner);
+    ui_tapes_render_tape(ui, &inner);
 }

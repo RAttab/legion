@@ -68,20 +68,19 @@ static void ui_deploy_update(void *_ui, struct chunk *chunk, im_id id)
     ui_loops_set(&ui->loops_val, deploy->loops);
 }
 
-static void ui_deploy_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_deploy_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_deploy *ui = _ui;
 
-    ui_label_render(&ui->item, layout, renderer);
-    ui_label_render(&ui->item_val, layout, renderer);
+    ui_label_render(&ui->item, layout);
+    ui_label_render(&ui->item_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->loops, layout, renderer);
-    ui_label_render(&ui->loops_val, layout, renderer);
+    ui_label_render(&ui->loops, layout);
+    ui_label_render(&ui->loops_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, layout, renderer);
-    ui_label_render(&ui->state_val, layout, renderer);
+    ui_label_render(&ui->state, layout);
+    ui_label_render(&ui->state_val, layout);
     ui_layout_next_row(layout);
 }

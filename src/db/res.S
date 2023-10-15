@@ -36,17 +36,12 @@
 
 	.include "db/gen/man.S"
 
-	DB_RES db_img_cursor "./res/img/cursor.bmp"
-	DB_RES db_img_map "./res/img/map.bmp"
-
         DB_RES db_font_regular "./res/font/IbmPlexMonoRegular.otf"
         DB_RES db_font_italic "./res/font/IbmPlexMonoItalic.otf"
         DB_RES db_font_bold "./res/font/IbmPlexMonoBold.otf"
 
-
-	// ---------------------------------------------------------------------
-	// engine
-	// ---------------------------------------------------------------------
+	DB_RES db_texture_cursor "./res/textures/cursor.tga"
+	DB_RES db_texture_star "./res/textures/star.tga"
 
         DB_RES db_shader_prim_vert "./res/shaders/prim.vert"
         DB_RES db_shader_prim_frag "./res/shaders/prim.frag"
@@ -54,6 +49,3 @@
         DB_RES db_shader_tex_frag "./res/shaders/tex.frag"
         DB_RES db_shader_font_vert "./res/shaders/font.vert"
         DB_RES db_shader_font_frag "./res/shaders/font.frag"
-
-	DB_RES db_texture_cursor "./res/textures/cursor.tga"
-	DB_RES db_texture_star "./res/textures/star.tga"

@@ -84,24 +84,23 @@ static void ui_receive_update(void *_ui, struct chunk *chunk, im_id id)
         ui->packets[i] = receive->buffer[(receive->tail + i) % ui->cap];
 }
 
-static void ui_receive_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_receive_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_receive *ui = _ui;
 
-    ui_label_render(&ui->target, layout, renderer);
-    ui_label_render(&ui->target_val, layout, renderer);
+    ui_label_render(&ui->target, layout);
+    ui_label_render(&ui->target_val, layout);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->channel, layout, renderer);
-    ui_label_render(&ui->channel_val, layout, renderer);
+    ui_label_render(&ui->channel, layout);
+    ui_label_render(&ui->channel_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->buffer, layout, renderer);
-    ui_label_render(&ui->buffer_len, layout, renderer);
-    ui_label_render(&ui->buffer_sep, layout, renderer);
-    ui_label_render(&ui->buffer_cap, layout, renderer);
+    ui_label_render(&ui->buffer, layout);
+    ui_label_render(&ui->buffer_len, layout);
+    ui_label_render(&ui->buffer_sep, layout);
+    ui_label_render(&ui->buffer_cap, layout);
     ui_layout_next_row(layout);
 
     for (size_t i = 0; i < ui->len; ++i) {
@@ -109,11 +108,11 @@ static void ui_receive_render(
         ui_str_set_u64(&ui->packet.str, i);
 
         for (size_t j = 0; j < packet->len; ++j) {
-            ui_label_render(&ui->packet, layout, renderer);
+            ui_label_render(&ui->packet, layout);
             ui_layout_sep_col(layout);
 
             ui_str_set_hex(&ui->packet_data.str, packet->data[j]);
-            ui_label_render(&ui->packet_data, layout, renderer);
+            ui_label_render(&ui->packet_data, layout);
 
             ui_str_setc(&ui->packet.str, " ");
             ui_layout_next_row(layout);

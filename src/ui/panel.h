@@ -18,10 +18,7 @@ struct ui_panel_style
 {
     struct dim margin;
     struct rgba bg, border;
-    struct {
-        const struct font *font;
-        struct rgba fg, bg;
-    } head, focused;
+    struct { enum render_font font; struct rgba fg, bg; } head, focused;
 };
 
 void ui_panel_style_default(struct ui_style *);
@@ -29,7 +26,7 @@ void ui_panel_style_default(struct ui_style *);
 
 struct ui_panel
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_panel_style s;
 
     struct ui_label title;
@@ -49,7 +46,8 @@ void ui_panel_focus(struct ui_panel *);
 void ui_panel_show(struct ui_panel *);
 void ui_panel_hide(struct ui_panel *);
 
-enum ui_ret ui_panel_event(struct ui_panel *, const SDL_Event *);
-enum ui_ret ui_panel_event_consume(struct ui_panel *, const SDL_Event *);
-struct ui_layout ui_panel_render(
-        struct ui_panel *, struct ui_layout *, SDL_Renderer *);
+enum ui_panel_ev { ui_panel_ev_nil = 0, ui_panel_ev_skip, ui_panel_ev_close };
+enum ui_panel_ev ui_panel_event(struct ui_panel *);
+void ui_panel_event_consume(struct ui_panel *);
+
+struct ui_layout ui_panel_render(struct ui_panel *, struct ui_layout *);

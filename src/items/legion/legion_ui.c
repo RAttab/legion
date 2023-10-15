@@ -27,7 +27,7 @@ static void *ui_legion_alloc(void)
         .mod = ui_label_new(ui_str_c("mod: ")),
         .mod_val = ui_label_new(ui_str_v(symbol_cap)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), engine_cell()),
         .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .cargo = ui_label_new(ui_str_v(item_str_len)),
     };
@@ -70,26 +70,21 @@ static void ui_legion_update(void *_ui, struct chunk *chunk, im_id id)
     ui_scroll_update_rows(&ui->scroll, count);
 }
 
-static bool ui_legion_event(void *_ui, const SDL_Event *ev)
+static void ui_legion_event(void *_ui)
 {
     struct ui_legion *ui = _ui;
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
-
-    return false;
+    ui_scroll_event(&ui->scroll);
 }
 
-static void ui_legion_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_legion_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_legion *ui = _ui;
 
-    ui_label_render(&ui->mod, layout, renderer);
-    ui_label_render(&ui->mod_val, layout, renderer);
+    ui_label_render(&ui->mod, layout);
+    ui_label_render(&ui->mod_val, layout);
     ui_layout_next_row(layout);
 
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout);
     if (ui_layout_is_nil(&inner)) return;
 
     size_t first = ui_scroll_first_row(&ui->scroll);
@@ -98,11 +93,11 @@ static void ui_legion_render(
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);
-        ui_label_render(&ui->index, &inner, renderer);
+        ui_label_render(&ui->index, &inner);
         ui_layout_sep_col(&inner);
 
         ui_str_set_item(&ui->cargo.str, list[i]);
-        ui_label_render(&ui->cargo, &inner, renderer);
+        ui_label_render(&ui->cargo, &inner);
 
         ui_layout_next_row(&inner);
     }

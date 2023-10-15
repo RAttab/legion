@@ -70,20 +70,19 @@ static void ui_storage_update(void *_ui, struct chunk *chunk, im_id id)
     ui_waiting_set(&ui->state_val, storage->waiting);
 }
 
-static void ui_storage_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_storage_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_storage *ui = _ui;
 
-    ui_label_render(&ui->item, layout, renderer);
-    ui_label_render(&ui->item_val, layout, renderer);
+    ui_label_render(&ui->item, layout);
+    ui_label_render(&ui->item_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->count, layout, renderer);
-    ui_label_render(&ui->count_val, layout, renderer);
+    ui_label_render(&ui->count, layout);
+    ui_label_render(&ui->count_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, layout, renderer);
-    ui_label_render(&ui->state_val, layout, renderer);
+    ui_label_render(&ui->state, layout);
+    ui_label_render(&ui->state_val, layout);
     ui_layout_next_row(layout);
 }

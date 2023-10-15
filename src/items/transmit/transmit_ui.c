@@ -56,16 +56,15 @@ static void ui_transmit_update(void *_ui, struct chunk *chunk, im_id id)
     ui_str_set_u64(&ui->channel_val.str, transmit->channel);
 }
 
-static void ui_transmit_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_transmit_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_transmit *ui = _ui;
 
-    ui_label_render(&ui->target, layout, renderer);
-    ui_label_render(&ui->target_val, layout, renderer);
+    ui_label_render(&ui->target, layout);
+    ui_label_render(&ui->target_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->channel, layout, renderer);
-    ui_label_render(&ui->channel_val, layout, renderer);
+    ui_label_render(&ui->channel, layout);
+    ui_label_render(&ui->channel_val, layout);
     ui_layout_next_row(layout);
 }

@@ -16,24 +16,23 @@
 // tree
 // -----------------------------------------------------------------------------
 
-typedef uint32_t ui_node;
-static legion_unused ui_node ui_node_nil = -1;
+typedef uint32_t ui_tree_node;
+constexpr ui_tree_node ui_tree_node_nil = UINT32_MAX;
 
-
-struct ui_node
+struct ui_tree_node
 {
     bool open, leaf;
     uint8_t depth;
     struct ui_str str;
     uint64_t user;
-    ui_node parent;
+    ui_tree_node parent;
 };
 
 
 struct ui_tree_style
 {
     struct {
-        const struct font *font;
+        enum render_font font;
         struct rgba fg, bg;
     } idle, hover, selected;
 };
@@ -43,16 +42,16 @@ void ui_tree_style_default(struct ui_style *);
 
 struct ui_tree
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_tree_style s;
 
     struct ui_scroll scroll;
     struct ui_str str;
 
-    ui_node len, cap;
-    struct ui_node *nodes;
+    ui_tree_node len, cap;
+    struct ui_tree_node *nodes;
 
-    uint64_t hover, selected;
+    uint64_t selected;
     struct hset *open, *path;
 };
 
@@ -60,15 +59,15 @@ struct ui_tree
 struct ui_tree ui_tree_new(struct dim, size_t chars);
 void ui_tree_free(struct ui_tree *);
 
-struct ui_node *ui_tree_node(struct ui_tree *, ui_node);
-ui_node ui_tree_user(struct ui_tree *, uint64_t user);
+struct ui_tree_node *ui_tree_at(struct ui_tree *, ui_tree_node);
+ui_tree_node ui_tree_user(struct ui_tree *, uint64_t user);
 
 void ui_tree_clear(struct ui_tree *);
-ui_node ui_tree_select(struct ui_tree *, uint64_t user);
+ui_tree_node ui_tree_select(struct ui_tree *, uint64_t user);
 
 void ui_tree_reset(struct ui_tree *);
-ui_node ui_tree_index(struct ui_tree *);
-struct ui_str *ui_tree_add(struct ui_tree *, ui_node parent, uint64_t user);
+ui_tree_node ui_tree_index(struct ui_tree *);
+struct ui_str *ui_tree_add(struct ui_tree *, ui_tree_node parent, uint64_t user);
 
-enum ui_ret ui_tree_event(struct ui_tree *, const SDL_Event *);
-void ui_tree_render(struct ui_tree *, struct ui_layout *, SDL_Renderer *);
+uint64_t ui_tree_event(struct ui_tree *);
+void ui_tree_render(struct ui_tree *, struct ui_layout *);

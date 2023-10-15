@@ -88,26 +88,25 @@ static void ui_lab_update(void *_ui, struct chunk *chunk, im_id id)
 }
 
 
-static void ui_lab_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_lab_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_lab *ui = _ui;
 
-    ui_label_render(&ui->item, layout, renderer);
-    ui_label_render(&ui->item_val, layout, renderer);
+    ui_label_render(&ui->item, layout);
+    ui_label_render(&ui->item_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, layout, renderer);
-    ui_label_render(&ui->state_val, layout, renderer);
+    ui_label_render(&ui->state, layout);
+    ui_label_render(&ui->state_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->work, layout, renderer);
-    ui_label_render(&ui->work_left, layout, renderer);
-    ui_label_render(&ui->work_sep, layout, renderer);
-    ui_label_render(&ui->work_cap, layout, renderer);
+    ui_label_render(&ui->work, layout);
+    ui_label_render(&ui->work_left, layout);
+    ui_label_render(&ui->work_sep, layout);
+    ui_label_render(&ui->work_cap, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->total, layout, renderer);
+    ui_label_render(&ui->total, layout);
 
-    ui_lab_bits_render(&ui->bits, layout, renderer);
+    ui_lab_bits_render(&ui->bits, layout);
 }

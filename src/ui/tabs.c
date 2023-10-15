@@ -16,8 +16,8 @@ void ui_tabs_style_default(struct ui_style *s)
         .margin = 4,
         .pad = s->pad.box,
 
-        .font = s->font.base,
-        .bold = s->font.bold,
+        .font = font_base,
+        .bold = font_bold,
 
         .fg = s->rgba.fg,
         .line = s->rgba.box.border,
@@ -36,10 +36,11 @@ struct ui_tabs ui_tabs_new(size_t chars, bool close)
 {
     const struct ui_tabs_style *s = &ui_st.tabs;
 
+    struct dim cell = engine_cell();
     return (struct ui_tabs) {
-        .w = ui_widget_new(
-                ui_layout_inf,
-                s->font->glyph_h + (s->pad.h * 2) + s->margin),
+        .w = make_ui_widget(make_dim(
+                        ui_layout_inf,
+                        cell.h + (s->pad.h * 2) + s->margin)),
         .s = *s,
 
         .str = ui_str_v(chars),
@@ -116,14 +117,14 @@ struct ui_str *ui_tabs_add(struct ui_tabs *ui, uint64_t user)
 static void ui_tabs_update(struct ui_tabs *ui)
 {
     if (!ui->update && !ui->select.update) return;
+    struct dim cell = engine_cell();
 
-    int16_t x = ui->w.pos.x;
-    int16_t w = ui->w.dim.w;
-    int16_t cell = ui->s.font->glyph_w;
+    unit x = ui->w.x;
+    unit w = ui->w.w;
     ui->first = legion_min(ui->first, ui->len - 1);
 
     {
-        ui->left.w = ui->s.pad.w * 2 + 1 * cell;
+        ui->left.w = ui->s.pad.w * 2 + 1 * cell.w;
         ui->left.x = x;
         ui->right.w = ui->left.w;
         ui->right.x = x + w - ui->right.w;
@@ -133,12 +134,12 @@ static void ui_tabs_update(struct ui_tabs *ui)
     }
 
     {
-        int32_t sum = 0;
+        unit sum = 0;
         for (size_t i = 0; i < ui->len; ++i) {
             struct ui_tab *tab = ui->list + i;
             tab->w =
-                (tab->str.len * cell) +
-                (ui->close.show ? 2 * cell : 0) +
+                (tab->str.len * cell.w) +
+                (ui->close.show ? 2 * cell.w : 0) +
                 ui->s.pad.w * 2;
             sum += tab->w;
         }
@@ -152,7 +153,7 @@ static void ui_tabs_update(struct ui_tabs *ui)
         assert(ui->select.user);
         assert(ix < ui->len);
 
-        int32_t sum = 0;
+        unit sum = 0;
         ui->first = legion_min(ui->first, ix);
         for (; ix > ui->first; --ix) {
             struct ui_tab *tab = ui->list + ix;
@@ -164,7 +165,7 @@ static void ui_tabs_update(struct ui_tabs *ui)
     }
 
     {
-        int32_t sum = 0;
+        unit sum = 0;
         for (size_t i = ui->first; i < ui->len; ++i) {
             struct ui_tab *tab = ui->list + i;
             if (sum + tab->w > w) break;
@@ -199,158 +200,169 @@ static void ui_tabs_update(struct ui_tabs *ui)
     ui->update = false;
 }
 
-enum ui_ret ui_tabs_event(struct ui_tabs *ui, const SDL_Event *ev)
+enum ui_tabs_ev ui_tabs_event(struct ui_tabs *ui)
 {
-    if (ev->type != SDL_MOUSEBUTTONUP) return ui_nil;
+    enum ui_tabs_ev ret = ui_tabs_ev_nil;
+    struct dim cell = engine_cell();
 
-    SDL_Rect rect = {
-        .x = 0, .y = ui->w.pos.y,
-        .w = 0, .h = ui->w.dim.h,
-    };
+    for (auto ev = ev_next_button(nullptr); ev; ev = ev_next_button(ev)) {
+        if (ev->button != ev_button_left) continue;
+        if (ev->state != ev_state_up) continue;
 
-    rect.x = ui->left.x; rect.w = ui->left.w;
-    if (ui->left.show && ui_cursor_in(&rect)) {
-        assert(ui->first > 0);
-        ui->first--;
-        ui->update = true;
-        return ui_consume;
-    }
+        if (rect_contains(ui->w, ev_mouse_pos()))
+            ev_consume_button(ev);
 
-    rect.x = ui->right.x; rect.w = ui->right.w;
-    if (ui->right.show && ui_cursor_in(&rect)) {
-        assert(ui->first > 0);
-        ui->first++;
-        ui->update = true;
-        return ui_consume;
-    }
+        struct rect rect = {
+            .x = 0, .y = ui->w.y,
+            .w = 0, .h = ui->w.h,
+        };
 
-    for (size_t i = ui->first; i < ui->len; ++i) {
-        struct ui_tab *tab = ui->list + i;
-        if (tab->hidden) continue;
-
-        rect.x = tab->x; rect.w = tab->w;
-        if (!ui_cursor_in(&rect)) continue;
-
-        rect.w = ui->s.font->glyph_w;
-        rect.x = (tab->x + tab->w) - (ui->s.pad.w + rect.w);
-
-        if (!ui->close.show || !ui_cursor_in(&rect)) {
-            ui->select.user = tab->user;
-            return ui_action;
+        rect.x = ui->left.x; rect.w = ui->left.w;
+        if (ui->left.show && ev_mouse_in(rect)) {
+            assert(ui->first > 0);
+            ui->first--;
+            ui->update = true;
+            continue;
         }
 
-        ui->close.user = tab->user;
-        struct ui_tab swap = *tab;
-        memmove(tab, tab + 1, (ui->len - (i + 1)) * sizeof(*tab));
-        *(ui->list + (ui->len - 1)) = swap;
-        ui->len--;
-
-        if (ui->close.user == ui->select.user) {
-            if (i < ui->len) ui->select.user = tab->user;
-            else if (i > 0) ui->select.user = (tab - 1)->user;
-            else ui->select.user = 0;
+        rect.x = ui->right.x; rect.w = ui->right.w;
+        if (ui->right.show && ev_mouse_in(rect)) {
+            assert(ui->first > 0);
+            ui->first++;
+            ui->update = true;
+            continue;
         }
 
-        ui->update = true;
-        return ui_action;
-    }
+        for (size_t i = ui->first; i < ui->len; ++i) {
+            struct ui_tab *tab = ui->list + i;
+            if (tab->hidden) continue;
 
-    return ui_nil;
-}
+            rect.x = tab->x; rect.w = tab->w;
+            if (!ev_mouse_in(rect)) continue;
 
-void ui_tabs_render(
-        struct ui_tabs *ui, struct ui_layout *layout, SDL_Renderer *renderer)
-{
-    ui_layout_add(layout, &ui->w);
-
-    ui_tabs_update(ui);
-
-    const int16_t h = ui->w.dim.h - ui->s.margin;
-    const int16_t y0 = ui->w.pos.y;
-    const int16_t y1 = y0 + h - 1;
-
-    { // left
-        SDL_Rect rect = { .x = ui->left.x, .y = y0, .w = ui->left.w, .h = h };
-
-        if (ui->left.show) {
-            if (ui_cursor_in(&rect)) {
-                rgba_render(ui->s.hover, renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &rect));
+            rect.w = cell.w;
+            rect.x = (tab->x + tab->w) - (ui->s.pad.w + rect.w);
+            if (!ui->close.show || !ev_mouse_in(rect)) {
+                ui->select.user = tab->user;
+                ret = ui_tabs_ev_select;
+                break;
             }
 
-            SDL_Point pos = {
-                .x = rect.x + ui->s.pad.w,
-                .y = rect.y + ui->s.pad.h,
-            };
-            font_render(ui->s.font, renderer, pos, ui->s.fg, "<", 1);
+            ui->close.user = tab->user;
+            struct ui_tab swap = *tab;
+            memmove(tab, tab + 1, (ui->len - (i + 1)) * sizeof(*tab));
+            *(ui->list + (ui->len - 1)) = swap;
+            ui->len--;
+
+            if (ui->close.user == ui->select.user) {
+                if (i < ui->len) ui->select.user = tab->user;
+                else if (i > 0) ui->select.user = (tab - 1)->user;
+                else ui->select.user = 0;
+            }
+
+            ret = ui_tabs_ev_close;
+            ui->update = true;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+void ui_tabs_render(struct ui_tabs *ui, struct ui_layout *layout)
+{
+    ui_layout_add(layout, &ui->w);
+    ui_tabs_update(ui);
+
+    struct dim cell = engine_cell();
+    const unit h = ui->w.h - ui->s.margin;
+    const unit y0 = ui->w.y;
+    const unit y1 = y0 + h - 1;
+
+    enum : render_layer
+    {
+        layer_bg = 0,
+        layer_border,
+        layer_fg,
+        layer_len,
+    };
+    const render_layer l = render_layer_push(layer_len);
+
+    { // left
+        struct rect rect = { .x = ui->left.x, .y = y0, .w = ui->left.w, .h = h };
+
+        if (ui->left.show) {
+            if (ev_mouse_in(rect)) {
+                struct rgba bg = ev_button_down(ev_button_left) ?
+                    ui->s.pressed : ui->s.hover;
+                render_rect_fill(l + layer_bg, bg, rect);
+            }
+
+            struct pos pos = { rect.x + ui->s.pad.w,rect.y + ui->s.pad.h };
+            render_font(l + layer_fg, ui->s.font, ui->s.fg, pos, "<", 1);
         }
 
-        rgba_render(ui->s.line, renderer);
-        sdl_err(SDL_RenderDrawLine(renderer,
-                        ui->left.x, y1, ui->left.x + ui->left.w, y1));
+        render_line(l + layer_border, ui->s.line, (struct line) {
+                    { ui->left.x, y1 },
+                    { ui->left.x + ui->left.w, y1 }});
     }
 
 
-    int16_t x_last = 0;
+    unit x_last = 0;
 
     for (size_t i = ui->first; i < ui->len; ++i) {
         struct ui_tab *tab = ui->list + i;
         if (tab->hidden) break;
 
-        SDL_Rect rect = { .x = tab->x, .y = y0, .w = tab->w, .h = h };
-        if (ui_cursor_in(&rect)) {
-            struct rgba bg = ui_cursor_button_down(SDL_BUTTON_LEFT) ?
+        struct rect rect = { .x = tab->x, .y = y0, .w = tab->w, .h = h };
+        if (ev_mouse_in(rect)) {
+            struct rgba bg = ev_button_down(ev_button_left) ?
                 ui->s.pressed : ui->s.hover;
-            rgba_render(bg, renderer);
-            sdl_err(SDL_RenderFillRect(renderer, &rect));
+            render_rect_fill(l + layer_bg, bg, rect);
         }
 
-        const struct font *font = tab->user == ui->select.user ?
+        enum render_font font = tab->user == ui->select.user ?
             ui->s.bold : ui->s.font;
 
-        SDL_Point pos = {
-            .x = rect.x + ui->s.pad.w,
-            .y = rect.y + ui->s.pad.h,
-        };
-        font_render(font, renderer, pos, tab->fg, tab->str.str, tab->str.len);
+        struct pos pos = { .x = rect.x + ui->s.pad.w, .y = rect.y + ui->s.pad.h };
+        render_font(l + layer_fg, font, tab->fg, pos, tab->str.str, tab->str.len);
 
         if (ui->close.show) {
-            pos.x = (rect.x + rect.w) - (ui->s.pad.w + font->glyph_w);
-            font_render(ui->s.font, renderer, pos, ui->s.fg, "x", 1);
+            pos.x = (rect.x + rect.w) - (ui->s.pad.w + cell.w);
+            render_font(l + layer_fg, ui->s.font, ui->s.fg, pos, "x", 1);
         }
 
-        rgba_render(ui->s.line, renderer);
+        const unit x0 = tab->x;
+        const unit x1 = x0 + tab->w;
+        x_last = x1;
+
         if (tab->user != ui->select.user) {
-            sdl_err(SDL_RenderDrawRect(renderer, &rect));
+            render_rect_line(l + layer_border, ui->s.line, rect);
             continue;
         }
 
-        const int16_t x0 = tab->x;
-        const int16_t x1 = x0 + tab->w;
-        sdl_err(SDL_RenderDrawLine(renderer, x0, y0, x0, y1));
-        sdl_err(SDL_RenderDrawLine(renderer, x0, y0, x1, y0));
-        sdl_err(SDL_RenderDrawLine(renderer, x1, y0, x1, y1));
-
-        x_last = x1;
+        render_line(l + layer_border, ui->s.line, (struct line) {{x0, y0}, {x0, y1}});
+        render_line(l + layer_border, ui->s.line, (struct line) {{x0, y0}, {x1, y0}});
+        render_line(l + layer_border, ui->s.line, (struct line) {{x1, y0}, {x1, y1}});
     }
 
     { // right
-        SDL_Rect rect = { .x = ui->right.x, .y = y0, .w = ui->right.w, .h = h };
+        struct rect rect = { .x = ui->right.x, .y = y0, .w = ui->right.w, .h = h };
         if (ui->left.show) {
-            if (ui_cursor_in(&rect)) {
-                rgba_render(ui->s.hover, renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &rect));
+            if (ev_mouse_in(rect)) {
+                struct rgba bg = ev_button_down(ev_button_left) ?
+                    ui->s.pressed : ui->s.hover;
+                render_rect_fill(l + layer_bg, bg, rect);
             }
 
-            SDL_Point pos = {
-                .x = rect.x + ui->s.pad.w,
-                .y = rect.y + ui->s.pad.h,
-            };
-            font_render(ui->s.font, renderer, pos, ui->s.fg, ">", 1);
+            struct pos pos = { .x = rect.x + ui->s.pad.w, .y = rect.y + ui->s.pad.h };
+            render_font(l + layer_fg, ui->s.font, ui->s.fg, pos, ">", 1);
         }
 
-        const int16_t x1 = ui->w.pos.x + ui->w.dim.w;
-        rgba_render(ui->s.line, renderer);
-        sdl_err(SDL_RenderDrawLine(renderer, x_last, y1, x1, y1));
+        const unit x1 = ui->w.x + ui->w.w;
+        render_line(l + layer_border, ui->s.line, (struct line) {
+                    {x_last, y1}, {x1, y1}});
     }
+
+    render_layer_pop();
 }

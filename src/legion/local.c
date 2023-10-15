@@ -4,9 +4,9 @@
 */
 
 #include "common.h"
+#include "engine/engine.h"
 #include "game/sim.h"
 #include "game/proxy.h"
-#include "render/render.h"
 
 
 // -----------------------------------------------------------------------------
@@ -22,9 +22,9 @@ bool local_run(const char *file, world_seed seed)
     proxy_init();
     struct proxy_pipe *proxy_pipe = proxy_pipe_new(sim_pipe);
 
-    render_init();
-    render_loop();
-    render_close();
+    engine_init();
+    engine_loop();
+    engine_close();
 
     proxy_pipe_close(proxy_pipe);
     proxy_free();

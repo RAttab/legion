@@ -3,10 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "engine/engine.h"
+#include "ux/ui.h"
 #include "ui/ui.h"
-#include "render/ui.h"
 #include "game/proxy.h"
-#include "render/render.h"
 
 
 // -----------------------------------------------------------------------------
@@ -111,7 +111,7 @@ static void *ui_brain_alloc(void)
             .val = ui_label_new(ui_str_v(u64_len)),
             .scroll = ui_scroll_new(
                     make_dim(ui_layout_inf, ui_layout_inf),
-                    ui_st.font.dim),
+                    engine_cell()),
         },
 
         .state_len = sizeof(ui->state) + stack_len,
@@ -256,134 +256,115 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     }
 }
 
-static bool ui_brain_event(void *_ui, const SDL_Event *ev)
+static void ui_brain_event(void *_ui)
 {
     struct ui_brain *ui = _ui;
     const struct im_brain *state = &ui->state;
 
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_link_event(&ui->breakpoint_val, ev))) {
-        if (ret != ui_action) return true;
-
+    if (ui_link_event(&ui->breakpoint_val)) {
         if (!state->mod_id) {
-            ui_log(st_error, "unable to jump to breakpoint '%x' while no mods are loaded",
-                state->breakpoint);
-            return true;
+            ui_log(st_error,
+                    "unable to jump to breakpoint '%x' while no mods are loaded",
+                    state->breakpoint);
         }
-
-        if (state->breakpoint != vm_ip_nil)
+        else if (state->breakpoint != vm_ip_nil)
             ui_mods_show(state->mod_id, state->breakpoint);
-
-        return true;
     }
 
-    if ((ret = ui_link_event(&ui->mod_val, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_link_event(&ui->mod_val)) {
         if (state->mod_id) ui_mods_show(state->mod_id, 0);
-        return true;
     }
 
-    if ((ret = ui_button_event(&ui->ip_show, ev))) {
-        if (ret != ui_action) return true;
-
+    if (ui_button_event(&ui->ip_show)) {
         if (!state->mod_id) {
-            ui_log(st_error, "unable to jump to ip '%x' while no mods are loaded",
-                state->vm.ip);
-            return true;
+            ui_log(st_error,
+                    "unable to jump to ip '%x' while no mods are loaded",
+                    state->vm.ip);
         }
-
-        ui_mods_show(state->mod_id, state->vm.ip);
-        return true;
+        else ui_mods_show(state->mod_id, state->vm.ip);
     }
 
-    if ((ret = ui_scroll_event(&ui->stack.scroll, ev))) return true;
+    ui_scroll_event(&ui->stack.scroll);
 
     for (size_t i = 0; i < ui->state.vm.sp; ++i) {
         struct ui_brain_frame *frame = ui->stack.list + i;
         if (frame->show.disabled) continue;
 
-        if ((ret = ui_button_event(&frame->show, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_button_event(&frame->show))
             ui_mods_show(frame->mod, frame->ip);
-            return true;
-        }
     }
-
-    return false;
 }
 
-static void ui_brain_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_brain_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_brain *ui = _ui;
     const struct im_brain *state = &ui->state;
 
-    ui_label_render(&ui->mod, layout, renderer);
-    ui_link_render(&ui->mod_val, layout, renderer);
+    ui_label_render(&ui->mod, layout);
+    ui_link_render(&ui->mod_val, layout);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->mod_ver, layout, renderer);
-    ui_label_render(&ui->mod_ver_val, layout, renderer);
+    ui_label_render(&ui->mod_ver, layout);
+    ui_label_render(&ui->mod_ver_val, layout);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->mod_fault, layout, renderer);
-    ui_label_render(&ui->mod_fault_val, layout, renderer);
+    ui_label_render(&ui->mod_fault, layout);
+    ui_label_render(&ui->mod_fault_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->debug, layout, renderer);
-    ui_label_render(&ui->debug_val, layout, renderer);
+    ui_label_render(&ui->debug, layout);
+    ui_label_render(&ui->debug_val, layout);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->breakpoint, layout, renderer);
-    ui_link_render(&ui->breakpoint_val, layout, renderer);
+    ui_label_render(&ui->breakpoint, layout);
+    ui_link_render(&ui->breakpoint_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
     { // msg
-        ui_label_render(&ui->msg, layout, renderer);
-        ui_label_render(&ui->msg_len, layout, renderer);
+        ui_label_render(&ui->msg, layout);
+        ui_label_render(&ui->msg_len, layout);
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < im_packet_max; ++i) {
             ui_str_set_u64(&ui->msg_index.str, i);
-            ui_label_render(&ui->msg_index, layout, renderer);
+            ui_label_render(&ui->msg_index, layout);
             ui_layout_sep_col(layout);
 
             ui_str_set_hex(&ui->msg_val.str, state->msg.data[i]);
-            ui_label_render(&ui->msg_val, layout, renderer);
+            ui_label_render(&ui->msg_val, layout);
             ui_layout_next_row(layout);
         }
     }
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->spec, layout, renderer);
-    ui_label_render(&ui->spec_stack, layout, renderer);
-    ui_label_render(&ui->spec_sep, layout, renderer);
-    ui_label_render(&ui->spec_speed, layout, renderer);
+    ui_label_render(&ui->spec, layout);
+    ui_label_render(&ui->spec_stack, layout);
+    ui_label_render(&ui->spec_sep, layout);
+    ui_label_render(&ui->spec_speed, layout);
     ui_layout_next_row(layout);
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->ip, layout, renderer);
-    ui_label_render(&ui->ip_val, layout, renderer);
+    ui_label_render(&ui->ip, layout);
+    ui_label_render(&ui->ip_val, layout);
     ui_layout_sep_col(layout);
-    ui_button_render(&ui->ip_show, layout, renderer);
+    ui_button_render(&ui->ip_show, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->sbp, layout, renderer);
-    ui_label_render(&ui->sbp_val, layout, renderer);
+    ui_label_render(&ui->sbp, layout);
+    ui_label_render(&ui->sbp_val, layout);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->io, layout, renderer);
-    ui_label_render(&ui->io_val, layout, renderer);
+    ui_label_render(&ui->io, layout);
+    ui_label_render(&ui->io_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->tsc, layout, renderer);
-    ui_label_render(&ui->tsc_val, layout, renderer);
+    ui_label_render(&ui->tsc, layout);
+    ui_label_render(&ui->tsc_val, layout);
     ui_layout_next_row(layout);
 
     { // flags
-        ui_label_render(&ui->flags, layout, renderer);
+        ui_label_render(&ui->flags, layout);
 
         for (size_t i = 1; i < 8; ++i) {
             enum flags flag = 1 << i;
@@ -406,7 +387,7 @@ static void ui_brain_render(
 
             ui->flags_val.s.fg = color;
             ui_str_setc(&ui->flags_val.str, str);
-            ui_label_render(&ui->flags_val, layout, renderer);
+            ui_label_render(&ui->flags_val, layout);
         }
 
         ui_layout_next_row(layout);
@@ -415,16 +396,16 @@ static void ui_brain_render(
     ui_layout_sep_row(layout);
 
     { // regs
-        ui_label_render(&ui->regs, layout, renderer);
+        ui_label_render(&ui->regs, layout);
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < 4; ++i) {
             ui_str_set_u64(&ui->regs_index.str, i);
-            ui_label_render(&ui->regs_index, layout, renderer);
+            ui_label_render(&ui->regs_index, layout);
             ui_layout_sep_col(layout);
 
             ui_str_set_hex(&ui->regs_val.str, state->vm.regs[i]);
-            ui_label_render(&ui->regs_val, layout, renderer);
+            ui_label_render(&ui->regs_val, layout);
             ui_layout_next_row(layout);
         }
 
@@ -432,10 +413,10 @@ static void ui_brain_render(
     }
 
     { // stack
-        ui_label_render(&ui->stack.title, layout, renderer);
+        ui_label_render(&ui->stack.title, layout);
         ui_layout_next_row(layout);
 
-        struct ui_layout inner = ui_scroll_render(&ui->stack.scroll, layout, renderer);
+        struct ui_layout inner = ui_scroll_render(&ui->stack.scroll, layout);
         if (ui_layout_is_nil(&inner)) return;
 
         size_t first = ui_scroll_first_row(&ui->stack.scroll);
@@ -443,16 +424,16 @@ static void ui_brain_render(
 
         for (size_t i = first; i < last; ++i) {
             ui_str_set_u64(&ui->stack.index.str, i);
-            ui_label_render(&ui->stack.index, &inner, renderer);
+            ui_label_render(&ui->stack.index, &inner);
             ui_layout_sep_col(&inner);
 
             ui_str_set_hex(&ui->stack.val.str, state->vm.stack[i]);
-            ui_label_render(&ui->stack.val, &inner, renderer);
+            ui_label_render(&ui->stack.val, &inner);
             ui_layout_sep_col(&inner);
 
             struct ui_brain_frame *frame = ui->stack.list + i;
             if (!frame->show.disabled)
-                ui_button_render(&frame->show, &inner, renderer);
+                ui_button_render(&frame->show, &inner);
 
             ui_layout_next_row(&inner);
         }

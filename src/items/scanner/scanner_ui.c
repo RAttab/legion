@@ -105,45 +105,37 @@ static void ui_scanner_update(void *_ui, struct chunk *chunk, im_id id)
 }
 
 
-static bool ui_scanner_event(void *_ui, const SDL_Event *ev)
+static void ui_scanner_event(void *_ui)
 {
     struct ui_scanner *ui = _ui;
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_link_event(&ui->sector_val, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_link_event(&ui->sector_val))
         ui_clipboard_copy_hex(coord_to_u64(ui->state.coord));
-        return true;
-    }
-
-    return false;
 }
 
 
-static void ui_scanner_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_scanner_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_scanner *ui = _ui;
 
-    ui_label_render(&ui->status, layout, renderer);
-    ui_label_render(&ui->status_val, layout, renderer);
+    ui_label_render(&ui->status, layout);
+    ui_label_render(&ui->status_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->work, layout, renderer);
+    ui_label_render(&ui->work, layout);
     if (!coord_is_nil(ui->state.coord)) {
-        ui_label_render(&ui->work_left, layout, renderer);
-        ui_label_render(&ui->work_sep, layout, renderer);
+        ui_label_render(&ui->work_left, layout);
+        ui_label_render(&ui->work_sep, layout);
     }
-    ui_label_render(&ui->work_cap, layout, renderer);
+    ui_label_render(&ui->work_cap, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->sector, layout, renderer);
-    ui_link_render(&ui->sector_val, layout, renderer);
+    ui_label_render(&ui->sector, layout);
+    ui_link_render(&ui->sector_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->result, layout, renderer);
-    ui_label_render(&ui->result_val, layout, renderer);
+    ui_label_render(&ui->result, layout);
+    ui_label_render(&ui->result_val, layout);
     ui_layout_next_row(layout);
 }

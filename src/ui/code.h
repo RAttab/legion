@@ -20,12 +20,13 @@ struct code;
 
 struct ui_code_style
 {
-    const struct font *font, *match;
-    struct { int16_t margin; } find;
-    struct { struct rgba fg, bg; } row, bp;
+    enum render_font font, match;
+    struct { unit margin; } find;
+    struct { struct rgba fg, bg; } row;
+    struct { struct rgba fg, bg, hover; } bp;
     struct { struct rgba fg; time_sys blink; } carret;
     struct { struct rgba bg; time_sys opaque, fade; } hl;
-    struct { struct rgba fg, bg; int16_t margin; } errors;
+    struct { struct rgba fg, bg; unit margin; } errors;
     struct rgba fg, comment, keyword, atom;
     struct rgba current, select, box;
 };
@@ -42,14 +43,13 @@ enum ui_code_find_type : uint8_t
 
 struct ui_code
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_code_style s;
     struct ui_panel *p;
 
     bool writable, modified;
-    SDL_Rect margin, inner;
+    struct rect margin, inner;
     struct ui_scroll scroll;
-    struct ui_tooltip tooltip;
     struct ui_list errors;
 
     struct code *code;
@@ -91,5 +91,5 @@ vm_ip ui_code_ip(struct ui_code *);
 void ui_code_goto(struct ui_code *, vm_ip);
 void ui_code_breakpoint(struct ui_code *, vm_ip);
 
-enum ui_ret ui_code_event(struct ui_code *, const SDL_Event *);
-void ui_code_render(struct ui_code *, struct ui_layout *, SDL_Renderer *);
+void ui_code_event(struct ui_code *);
+void ui_code_render(struct ui_code *, struct ui_layout *);

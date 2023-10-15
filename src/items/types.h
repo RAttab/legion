@@ -16,7 +16,8 @@
 // -----------------------------------------------------------------------------
 
 typedef uint8_t im_loops;
-enum { im_loops_inf = UINT8_MAX };
+enum : im_loops { im_loops_inf = UINT8_MAX };
+
 inline im_loops im_loops_io(vm_word loops)
 {
     return loops > 0 && loops < im_loops_inf ? loops : im_loops_inf;
@@ -80,16 +81,17 @@ inline int cargo_cmp(struct cargo lhs, struct cargo rhs)
 
 // used in config->gm.flow
 
+typedef uint8_t im_rank;
+constexpr im_rank im_rank_max = 16;
+constexpr im_rank im_rank_sys = 14;
+
 struct legion_packed flow
 {
     im_id id;
-    uint16_t row, col;
-
-    legion_pad(2);
 
     im_loops loops;
     enum item target;
-    uint8_t rank;
+    im_rank rank;
 
     enum item item;
     enum tape_state state;
@@ -98,7 +100,7 @@ struct legion_packed flow
     legion_pad(1);
 };
 
-static_assert(sizeof(struct flow) == 16);
+static_assert(sizeof(struct flow) == 10);
 
 
 // -----------------------------------------------------------------------------

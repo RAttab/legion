@@ -34,16 +34,14 @@ VALGRIND_FLAGS := $(VALGRIND_FLAGS) --trace-children=yes
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --error-exitcode=1
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --suppressions=legion.supp
 
-LIBS := $(LIBS) $(shell sdl2-config --libs)
+LIBS := $(LIBS) $(shell pkg-config --libs glfw3)
+LIBS := $(LIBS) $(shell pkg-config --libs opengl)
 LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
-
-ENGINE_LIBS := $(ENGINE_LIBS) $(shell pkg-config --libs glfw3)
-ENGINE_LIBS := $(ENGINE_LIBS) $(shell pkg-config --libs opengl)
 
 ASM := src/db/res.S
 
 OBJECTS_GEN := gen common utils
-OBJECTS_LEGION := common items ui render game vm utils db
+OBJECTS_LEGION := common items ui ux engine game vm utils db
 
 DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
 DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
@@ -133,7 +131,6 @@ src/db/res.S: $(wildcard res/font/*.otf)
 	@touch $@
 
 
-
 # -----------------------------------------------------------------------------
 # legion
 # -----------------------------------------------------------------------------
@@ -151,24 +148,6 @@ legion: $(PREFIX)/legion
 run: $(PREFIX)/legion
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
-
-# -----------------------------------------------------------------------------
-# engine
-# -----------------------------------------------------------------------------
-
-$(PREFIX)/engine: $(PREFIX)/obj/engine-main.o $(PREFIX)/obj/engine.o $(PREFIX)/liblegion.a $(ASM)
-	@echo -e "\e[32m[build]\e[0m $@"
-	@$(CC) -o $@ $^ $(LIBS) $(ENGINE_LIBS) $(CFLAGS)
-
-engine: $(PREFIX)/engine shaders
-
-run-engine: $(PREFIX)/engine shaders
-	@echo -e "\e[32m[run]\e[0m $<"
-	@$(PREFIX)/engine
-
-valgrind-engine: $(PREFIX)/engine shaders
-	@echo -e "\e[32m[run]\e[0m $@"
-	@valgrind $(VALGRIND_FLAGS) $(PREFIX)/engine
 
 
 # -----------------------------------------------------------------------------

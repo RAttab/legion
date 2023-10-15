@@ -20,7 +20,7 @@ void ui_tape_init(struct ui_tape *ui)
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), engine_cell()),
         .index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .in = ui_label_new_s(&ui_st.label.in, ui_str_v(item_str_len)),
         .work = ui_label_new_s(&ui_st.label.work, ui_str_c("work")),
@@ -56,29 +56,23 @@ void ui_tape_update(struct ui_tape *ui, tape_packed state)
     ui_scroll_update_rows(&ui->scroll, tape ? tape_len(tape) : 0);
 }
 
-bool ui_tape_event(struct ui_tape *ui, tape_packed state, const SDL_Event *ev)
+void ui_tape_event(struct ui_tape *ui, tape_packed)
 {
-    (void) state;
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
-
-    return false;
+    ui_scroll_event(&ui->scroll);
 }
 
 void ui_tape_render(
-        struct ui_tape *ui, tape_packed state,
-        struct ui_layout *layout, SDL_Renderer *renderer)
+        struct ui_tape *ui, tape_packed state, struct ui_layout *layout)
 {
-    ui_label_render(&ui->tape, layout, renderer);
-    ui_label_render(&ui->tape_val, layout, renderer);
+    ui_label_render(&ui->tape, layout);
+    ui_label_render(&ui->tape_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->energy, layout, renderer);
-    ui_label_render(&ui->energy_val, layout, renderer);
+    ui_label_render(&ui->energy, layout);
+    ui_label_render(&ui->energy_val, layout);
     ui_layout_next_row(layout);
 
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout);
     if (ui_layout_is_nil(&inner)) return;
 
     size_t first = ui_scroll_first_row(&ui->scroll);
@@ -87,7 +81,7 @@ void ui_tape_render(
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->index.str, i);
-        ui_label_render(&ui->index, &inner, renderer);
+        ui_label_render(&ui->index, &inner);
         ui_layout_sep_col(&inner);
 
         struct ui_label *label = NULL;
@@ -106,7 +100,7 @@ void ui_tape_render(
             ui_str_set_item(&label->str, ret.item);
 
         label->s.bg = i == tape_packed_it(state) ? rgba_gray(0x44) : rgba_nil();
-        ui_label_render(label, &inner, renderer);
+        ui_label_render(label, &inner);
 
         ui_layout_next_row(&inner);
     }

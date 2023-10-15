@@ -3,7 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "render/ui.h"
+#include "ux/ui.h"
+
+#include <stdarg.h>
 
 // -----------------------------------------------------------------------------
 // utils
@@ -71,8 +73,8 @@ void ui_init(void)
 
     ui_style_default();
 
-    ui_cursor_init();
     ui_clipboard_init();
+    ui_tooltip_init();
 
     ui_topbar_alloc(ui.views + ui_view_topbar);
     ui_status_alloc(ui.views + ui_view_status);
@@ -103,8 +105,8 @@ void ui_free()
         if (state->fn.free) state->fn.free(state->state);
     }
 
-    ui_cursor_free();
     ui_clipboard_free();
+    ui_tooltip_free();
 }
 
 void *ui_state(enum ui_view view)
@@ -152,95 +154,95 @@ void ui_update_frame(void)
             state->fn.update_frame(state->state);
     }
 
-    // ui_cursor_update is handled in render.c because it should not depend on
-    // whether we've received a new state from proxy.
-
     update_view(ui_view_topbar);
     update_view(ui_view_status);
     for (size_t i = 0; i < ui_slot_len; ++i)
         update_view(ui.slots[i]);
 }
 
-static bool ui_event_shortcuts(SDL_Event *ev)
+static void ui_event_shortcuts(void)
 {
-    if (ev->type != SDL_KEYDOWN) return false;
-    if (!(ev->key.keysym.mod & KMOD_ALT)) return false;
+    for (auto ev = ev_next_key(nullptr); ev; ev = ev_next_key(ev)) {
+        if (ev->state != ev_state_down) continue;
+        if (ev->mods != ev_mods_alt) continue;
 
-    switch (ev->key.keysym.sym)
-    {
+        switch (ev->c)
+        {
 
-    case SDLK_s: { proxy_save(); return true; }
-    case SDLK_o: { proxy_load(); return true; }
+        case 's': { proxy_save(); ev_consume_key(ev); break; }
+        case 'o': { proxy_load(); break; }
 
-    case SDLK_1: { proxy_set_speed(speed_slow); return true; }
-    case SDLK_2: { proxy_set_speed(speed_fast); return true; }
-    case SDLK_3: { proxy_set_speed(speed_faster); return true; }
-    case SDLK_4: { proxy_set_speed(speed_fastest); return true; }
-    case SDLK_SPACE: {
-        if (proxy_speed() == speed_pause)
-            proxy_set_speed(speed_slow);
-        else proxy_set_speed(speed_pause);
-        return true;
+        case '1': { proxy_set_speed(speed_slow); ev_consume_key(ev); break; }
+        case '2': { proxy_set_speed(speed_fast); ev_consume_key(ev); break; }
+        case '3': { proxy_set_speed(speed_faster); ev_consume_key(ev); break; }
+        case '4': { proxy_set_speed(speed_fastest); ev_consume_key(ev); break; }
+        case ev_key_space: {
+            if (proxy_speed() == speed_pause)
+                proxy_set_speed(speed_slow);
+            else proxy_set_speed(speed_pause);
+
+            ev_consume_key(ev);
+            return;
+        }
+
+        case 't': { ui_toggle(ui_view_tapes); ev_consume_key(ev); break; }
+        case 'a': { ui_toggle(ui_view_stars); ev_consume_key(ev); break; }
+        case 'm': { ui_toggle(ui_view_mods); ev_consume_key(ev); break; }
+        case 'l': { ui_toggle(ui_view_log); ev_consume_key(ev); break; }
+        case 'h': { ui_toggle(ui_view_man); ev_consume_key(ev); break; }
+        case 'q': { engine_quit(); ev_consume_key(ev); break; }
+
+        default: { break; }
+        }
     }
 
-    case SDLK_t: { ui_toggle(ui_view_tapes); return true; }
-    case SDLK_a: { ui_toggle(ui_view_stars); return true; }
-    case SDLK_m: { ui_toggle(ui_view_mods); return true; }
-    case SDLK_l: { ui_toggle(ui_view_log); return true; }
-    case SDLK_h: { ui_toggle(ui_view_man); return true; }
-    case SDLK_q: { render_quit(); return true; }
-
-    default: { return false; }
-    }
 }
 
-void ui_event(SDL_Event *ev)
+void ui_event(void)
 {
-    bool event_view(enum ui_view view)
+    void event_view(enum ui_view view)
     {
         struct ui_view_state *state = ui.views + view;
 
         if (state->panel) {
-            enum ui_ret ret = ui_panel_event(state->panel, ev);
-            if (ret == ui_action && !state->panel->visible)
-                ui_hide(view);
-            if (ret) return ret != ui_skip;
+            switch (ui_panel_event(state->panel))
+            {
+            case ui_panel_ev_close: { ui_hide(view); } // fallthrough
+            case ui_panel_ev_skip: { return; }
+            default: { break; }
+            }
         }
 
-        if (state->fn.event && state->fn.event(state->state, ev))
-            return true;
-
-        if (state->panel && ui_panel_event_consume(state->panel, ev))
-            return true;
-
-        return false;
+        if (state->fn.event) state->fn.event(state->state);
+        if (state->panel) ui_panel_event_consume(state->panel);
     }
 
-    bool event_slot(enum ui_slot slot)
+    void event_slot(enum ui_slot slot)
     {
-        return event_view(ui.slots[u64_ctz(slot)]);
+        event_view(ui.slots[u64_ctz(slot)]);
     }
 
-    ui_cursor_event(ev);
-    if (ui_event_shortcuts(ev)) return;
-    if (event_view(ui_view_topbar)) return;
-    if (event_view(ui_view_status)) return;
-    if (event_slot(ui_slot_left)) return;
-    if (event_slot(ui_slot_right)) return;
-    if (event_slot(ui_slot_right_sub)) return;
-    if (event_slot(ui_slot_back)) return;
+    ui_event_shortcuts();
+    event_view(ui_view_topbar);
+    event_view(ui_view_status);
+    event_slot(ui_slot_left);
+    event_slot(ui_slot_right);
+    event_slot(ui_slot_right_sub);
+    event_slot(ui_slot_back);
 }
 
-void ui_render(SDL_Renderer *renderer)
+void ui_render(void)
 {
-    struct ui_layout layout = ui_layout_new(make_pos(0, 0), render_dim());
+    struct rect area = engine_area();
+    struct ui_layout layout = ui_layout_new(rect_pos(area), rect_dim(area));
 
     void render_view(enum ui_view view)
     {
         struct ui_layout inner = layout;
         struct ui_view_state *state = ui.views + view;
-        if (state->panel) inner = ui_panel_render(state->panel, &layout, renderer);
-        if (state->fn.render) state->fn.render(state->state, &inner, renderer);
+        if (state->panel) inner = ui_panel_render(state->panel, &layout);
+        if (state->fn.render) state->fn.render(state->state, &inner);
+        if (state->panel) render_layer_pop();
     }
 
     void render_slot(enum ui_slot slot)
@@ -250,22 +252,34 @@ void ui_render(SDL_Renderer *renderer)
 
     render_slot(ui_slot_back);
 
-    ui_layout_dir(&layout, ui_layout_left_right | ui_layout_up_down);
-    render_view(ui_view_topbar);
-    ui_layout_next_row(&layout);
+    {
+        render_layer_push_max();
 
-    ui_layout_dir(&layout, ui_layout_left_right | ui_layout_down_up);
-    render_view(ui_view_status);
-    ui_layout_next_row(&layout);
+        ui_layout_dir(&layout, ui_layout_left_right | ui_layout_up_down);
+        render_view(ui_view_topbar);
+        ui_layout_next_row(&layout);
 
-    ui_layout_dir(&layout, ui_layout_left_right | ui_layout_up_down);
-    render_slot(ui_slot_left);
+        ui_layout_dir(&layout, ui_layout_left_right | ui_layout_down_up);
+        render_view(ui_view_status);
+        ui_layout_next_row(&layout);
 
-    ui_layout_dir(&layout, ui_layout_right_left | ui_layout_up_down);
-    render_slot(ui_slot_right);
-    render_slot(ui_slot_right_sub);
+        ui_layout_dir(&layout, ui_layout_left_right | ui_layout_up_down);
+        render_slot(ui_slot_left);
 
-    ui_cursor_render(renderer);
+        ui_layout_dir(&layout, ui_layout_right_left | ui_layout_up_down);
+        render_slot(ui_slot_right);
+        render_slot(ui_slot_right_sub);
+
+        render_layer_pop();
+    }
+
+    {
+        render_layer_push_max();
+
+        ui_tooltip_render();
+
+        render_layer_pop();
+    }
 }
 
 

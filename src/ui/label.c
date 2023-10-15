@@ -19,7 +19,7 @@ void ui_label_style_default(struct ui_style *s)
     }
 
     s->label.base = (struct ui_label_style) {
-        .font = s->font.base,
+        .font = font_base,
         .fg = s->rgba.fg,
         .bg = s->rgba.bg,
         .zeroes = rgba_gray(0xCC),
@@ -32,7 +32,7 @@ void ui_label_style_default(struct ui_style *s)
     s->label.index.zeroes = s->rgba.index.fg;
 
     s->label.bold = s->label.base;
-    s->label.bold.font = s->font.bold;
+    s->label.bold.font = font_bold;
 
     fg(&s->label.in, s->rgba.in);
     fg(&s->label.out, s->rgba.out);
@@ -62,7 +62,7 @@ struct ui_label ui_label_new_s(
         struct ui_str str)
 {
     return (struct ui_label) {
-        .w = ui_widget_new(ui_str_len(&str) * s->font->glyph_w, s->font->glyph_h),
+        .w = make_ui_widget(engine_dim(ui_str_len(&str), 1)),
         .s = *s,
         .str = str,
         .disabled = false,
@@ -79,35 +79,30 @@ void ui_label_free(struct ui_label *label)
     ui_str_free(&label->str);
 }
 
-void ui_label_render(
-        struct ui_label *label, struct ui_layout *layout, SDL_Renderer *renderer)
+void ui_label_render(struct ui_label *label, struct ui_layout *layout)
 {
     ui_layout_add(layout, &label->w);
+    render_layer layer = render_layer_push(1);
 
-    rgba_render(label->s.bg, renderer);
-    SDL_Rect rect = ui_widget_rect(&label->w);
-    sdl_err(SDL_RenderFillRect(renderer, &rect));
-
-    const struct font *font = label->s.font;
-    SDL_Point point = pos_as_point(label->w.pos);
+    struct pos pos = rect_pos(label->w);
+    struct rgba fg = label->disabled ? label->s.disabled : label->s.fg;
+    struct rgba bg = label->s.bg;
 
     const char *start = label->str.str;
     const char *end = start + label->str.len;
 
-    if (label->disabled) {
-        font_render(font, renderer, point, label->s.disabled, start, end - start);
-        return;
-    }
-
     const char *it = label->str.str;
-    while (it < end && *it == '0') ++it;
+    if (!label->disabled) while (it < end && *it == '0') ++it;
 
     if (it > start)
-        font_render(font, renderer, point, label->s.zeroes, start, it - start);
-    else it = start;
+        render_font_bg(layer, label->s.font, label->s.zeroes, bg, pos, start, it - start);
 
-    point.x += (it - start) * font->glyph_w;
-    font_render(font, renderer, point, label->s.fg, it, end - it);
+    if (it < end) {
+        pos.x += (it - start) * engine_cell().w;
+        render_font_bg(layer, label->s.font, fg, bg, pos, it, end - it);
+    }
+
+    render_layer_pop();
 }
 
 // -----------------------------------------------------------------------------

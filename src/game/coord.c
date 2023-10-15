@@ -51,10 +51,9 @@ size_t coord_str(struct coord coord, char *str, size_t len)
 
 inline coord_scale coord_scale_inc(coord_scale scale, int dir)
 {
-    if (scale == coord_scale_base && dir < 0) return scale;
-    if (scale < (1 << 4)) return scale + dir;
+    if (scale == coord_scale_min && dir < 0) return scale;
 
-    uint64_t delta = (1 << (u64_log2(scale) - 4));
+    uint64_t delta = (1 << (u64_log2(scale) - coord_scale_bits));
     return dir < 0 ? scale - delta : scale + delta;
 }
 
@@ -65,9 +64,9 @@ size_t coord_scale_str(coord_scale scale, char *str, size_t len)
 
     size_t i = 0;
     size_t msb = u64_log2(scale);
-    uint64_t top = scale < coord_scale_base ? 0 : msb - 8;
-    uint64_t bot = scale < coord_scale_base ? (uint64_t)scale :
-        (((uint64_t) scale) & ((1 << msb) - 1)) >> (msb - 8);
+    uint64_t top = scale < coord_scale_min ? 0 : msb - coord_scale_bits;
+    uint64_t bot = scale < coord_scale_min ? (uint64_t)scale :
+        (((uint64_t) scale) & ((1 << msb) - 1)) >> (msb - coord_scale_bits);
 
     str[i++] = 'x';
     str[i++] = str_hexchar(top >> 4);

@@ -8,8 +8,6 @@
 #include "ui/ui.h"
 #include "game/tape.h"
 
-#include "SDL.h"
-
 
 // -----------------------------------------------------------------------------
 // tape
@@ -26,5 +24,5 @@ struct ui_tape
 void ui_tape_init(struct ui_tape *);
 void ui_tape_free(struct ui_tape *);
 void ui_tape_update(struct ui_tape *, tape_packed);
-bool ui_tape_event(struct ui_tape *, tape_packed, const SDL_Event *);
-void ui_tape_render(struct ui_tape *, tape_packed, struct ui_layout *, SDL_Renderer *);
+void ui_tape_event(struct ui_tape *, tape_packed);
+void ui_tape_render(struct ui_tape *, tape_packed, struct ui_layout *);

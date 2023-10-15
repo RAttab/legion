@@ -115,46 +115,33 @@ static void ui_library_update(void *_ui, struct chunk *chunk, im_id id)
     else ui_set_nil(&ui->value_val);
 }
 
-static bool ui_library_event(void *_ui, const SDL_Event *ev)
+static void ui_library_event(void *_ui)
 {
     struct ui_library *ui = _ui;
-    enum ui_ret ret = ui_nil;
 
-    if ((ret = ui_link_event(&ui->tape_val, ev))) {
-        if (ret != ui_action) return true;
-        ui_tapes_show(ui->state.item);
-        return true;
-    }
-
-    if ((ret = ui_link_event(&ui->value_val, ev))) {
-        if (ret != ui_action) return true;
-        ui_tapes_show(ui->state.value);
-        return true;
-    }
-
-    return false;
+    if (ui_link_event(&ui->tape_val)) ui_tapes_show(ui->state.item);
+    if (ui_link_event(&ui->value_val)) ui_tapes_show(ui->state.value);
 }
 
-static void ui_library_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_library_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_library *ui = _ui;
 
-    ui_label_render(&ui->op, layout, renderer);
-    ui_label_render(&ui->op_val, layout, renderer);
+    ui_label_render(&ui->op, layout);
+    ui_label_render(&ui->op_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->tape, layout, renderer);
-    ui_link_render(&ui->tape_val, layout, renderer);
+    ui_label_render(&ui->tape, layout);
+    ui_link_render(&ui->tape_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->index, layout, renderer);
-    ui_label_render(&ui->index_val, layout, renderer);
-    ui_label_render(&ui->index_of, layout, renderer);
-    ui_label_render(&ui->index_cap, layout, renderer);
+    ui_label_render(&ui->index, layout);
+    ui_label_render(&ui->index_val, layout);
+    ui_label_render(&ui->index_of, layout);
+    ui_label_render(&ui->index_cap, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->value, layout, renderer);
-    ui_link_render(&ui->value_val, layout, renderer);
+    ui_label_render(&ui->value, layout);
+    ui_link_render(&ui->value_val, layout);
     ui_layout_next_row(layout);
 }

@@ -6,9 +6,6 @@
 #pragma once
 
 #include "common.h"
-#include "utils/err.h"
-
-#include "SDL.h"
 
 
 // -----------------------------------------------------------------------------
@@ -31,12 +28,6 @@ inline struct rgba rgba_red(void)       { return make_rgba(0xCC, 0x00, 0x00, 0xF
 inline struct rgba rgba_green(void)     { return make_rgba(0x00, 0xCC, 0x00, 0xFF); }
 inline struct rgba rgba_blue(void)      { return make_rgba(0x00, 0x00, 0xCC, 0xFF); }
 inline struct rgba rgba_yellow(void)    { return make_rgba(0xCC, 0xCC, 0x00, 0xFF); }
-
-inline void rgba_render(struct rgba c, SDL_Renderer *renderer)
-{
-    sdl_err(SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a));
-    sdl_err(SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND));
-};
 
 inline bool rgba_is_nil(struct rgba c)
 {

@@ -4,12 +4,11 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "utils/str.h"
 
 static void ui_status_free(void *);
-static void ui_status_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_status_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -32,10 +31,10 @@ struct ui_status
 void ui_status_alloc(struct ui_view_state *state)
 {
     struct ui_status *ui = calloc(1, sizeof(*ui));
+
+    struct dim cell = engine_cell();
     *ui = (struct ui_status) {
-        .panel = ui_panel_menu(make_dim(
-                        ui_layout_inf,
-                        ui_st.font.base->glyph_h + 8)),
+        .panel = ui_panel_menu(make_dim(ui_layout_inf, cell.h + 8)),
         .status = ui_label_new(ui_str_v(ui_status_cap)),
     };
 
@@ -74,8 +73,7 @@ void ui_status_set(enum status_type type, const char *msg, size_t len)
     ui_str_setv(&ui->status.str, msg, len);
 }
 
-static void ui_status_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_status_render(void *state, struct ui_layout *layout)
 {
     struct ui_status *ui = state;
 
@@ -89,5 +87,5 @@ static void ui_status_render(
     }
     else ui->status.s.fg.a = 0xFF;
 
-    ui_label_render(&ui->status, layout, renderer);
+    ui_label_render(&ui->status, layout);
 }

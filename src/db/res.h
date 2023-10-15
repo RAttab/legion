@@ -6,25 +6,6 @@
 #pragma once
 
 #include "common.h"
-#include "SDL.h"
-
-
-// -----------------------------------------------------------------------------
-// img
-// -----------------------------------------------------------------------------
-
-SDL_Texture *db_img_cursor(SDL_Renderer *);
-SDL_Texture *db_img_map(SDL_Renderer *);
-
-
-// -----------------------------------------------------------------------------
-// font
-// -----------------------------------------------------------------------------
-
-struct db_font { size_t len; const uint8_t *ptr; };
-struct db_font db_font_regular(void);
-struct db_font db_font_italic(void);
-struct db_font db_font_bold(void);
 
 
 // -----------------------------------------------------------------------------

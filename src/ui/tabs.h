@@ -14,9 +14,9 @@
 
 struct ui_tabs_style
 {
-    int16_t margin;
+    unit margin;
     struct dim pad;
-    const struct font *font, *bold;
+    enum render_font font, bold;
     struct rgba fg, line, hover, pressed;
 };
 
@@ -29,18 +29,18 @@ struct ui_tab
     struct ui_str str;
 
     bool hidden;
-    int16_t x, w;
+    unit x, w;
 };
 
 struct ui_tabs
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_tabs_style s;
 
     struct ui_str str;
 
     bool update;
-    struct { bool show; int16_t x, w; } left, right;
+    struct { bool show; unit x, w; } left, right;
     struct { bool update; uint64_t user; } select;
     struct { bool show; uint64_t user; } close;
 
@@ -60,5 +60,6 @@ void ui_tabs_reset(struct ui_tabs *);
 struct ui_str *ui_tabs_add(struct ui_tabs *, uint64_t user);
 struct ui_str *ui_tabs_add_s(struct ui_tabs *, uint64_t user, struct rgba fg);
 
-enum ui_ret ui_tabs_event(struct ui_tabs *, const SDL_Event *);
-void ui_tabs_render(struct ui_tabs *, struct ui_layout *, SDL_Renderer *);
+enum ui_tabs_ev { ui_tabs_ev_nil = 0, ui_tabs_ev_close, ui_tabs_ev_select };
+enum ui_tabs_ev ui_tabs_event(struct ui_tabs *);
+void ui_tabs_render(struct ui_tabs *, struct ui_layout *);

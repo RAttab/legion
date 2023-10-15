@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "types.h"
-#include "vm/vm.h"
-
-struct symbol;
-
 
 // -----------------------------------------------------------------------------
 // input
@@ -21,7 +16,7 @@ enum { ui_input_cap = 256 };
 struct ui_input_style
 {
     struct dim pad;
-    const struct font *font;
+    enum render_font font;
     struct rgba fg, bg, border;
     struct { struct rgba fg; time_sys blink; } carret;
 };
@@ -31,7 +26,7 @@ void ui_input_style_default(struct ui_style *);
 
 struct ui_input
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_input_style s;
     struct ui_panel *p;
 
@@ -55,5 +50,5 @@ bool ui_input_get_hex(struct ui_input *, uint64_t *ret);
 bool ui_input_get_symbol(struct ui_input *, struct symbol *ret);
 bool ui_input_eval(struct ui_input *, vm_word *ret);
 
-enum ui_ret ui_input_event(struct ui_input *, const SDL_Event *);
-void ui_input_render(struct ui_input *, struct ui_layout *, SDL_Renderer *);
+bool ui_input_event(struct ui_input *);
+void ui_input_render(struct ui_input *, struct ui_layout *);

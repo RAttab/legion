@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "tooltip.h"
-
-
 // -----------------------------------------------------------------------------
 // style
 // -----------------------------------------------------------------------------
@@ -13,7 +10,7 @@
 void ui_tooltip_style_default(struct ui_style *s)
 {
     s->tooltip = (struct ui_tooltip_style) {
-        .font = s->font.base,
+        .font = font_base,
         .fg = s->rgba.fg,
         .bg = s->rgba.box.bg,
         .border = s->rgba.box.border,
@@ -26,73 +23,77 @@ void ui_tooltip_style_default(struct ui_style *s)
 // tooltip
 // -----------------------------------------------------------------------------
 
-struct ui_tooltip ui_tooltip_new(struct ui_str str, SDL_Rect rect)
+struct ui_tooltip
 {
-    const struct ui_tooltip_style *s = &ui_st.tooltip;
+    struct ui_tooltip_style s;
+    struct ui_str str;
+    struct rowcol rc;
+    struct rect rect;
+} ui_tooltip = {0};
 
-    return (struct ui_tooltip) {
-        .w = ui_widget_new(
-                s->font->glyph_w * ui_str_len(&str) + s->pad.w*2,
-                s->font->glyph_h + s->pad.h*2),
-        .s = *s,
-        .str = str,
 
-        .rect = rect,
-        .disabled = true,
-    };
+void ui_tooltip_init(void)
+{
+    ui_tooltip.s = ui_st.tooltip;
 }
 
-void ui_tooltip_free(struct ui_tooltip *tooltip)
+void ui_tooltip_free(void)
 {
-    ui_str_free(&tooltip->str);
+    ui_str_free(&ui_tooltip.str);
+
 }
 
-void ui_tooltip_show(struct ui_tooltip *tooltip) { tooltip->disabled = false; }
-void ui_tooltip_hide(struct ui_tooltip *tooltip) { tooltip->disabled = true; }
-
-enum ui_ret ui_tooltip_event(struct ui_tooltip *tooltip, const SDL_Event *ev)
+void ui_tooltip_set(struct rect rect, struct ui_str str)
 {
-    switch (ev->type) {
+    ui_str_free(&ui_tooltip.str);
 
-    case SDL_MOUSEMOTION: {
-        SDL_Point cursor = ui_cursor_point();
-        tooltip->w.pos = make_pos(cursor.x + ui_cursor_size(), cursor.y);
+    ui_tooltip.str = str;
+    ui_tooltip.rect = rect;
 
-        if (!tooltip->rect.w && !tooltip->rect.h)
-            tooltip->disabled = !SDL_PointInRect(&cursor, &tooltip->rect);
-
-        return ui_nil;
+    uint32_t cols = 0;
+    struct rowcol rc = {0};
+    for (size_t i = 0; i < str.len; ++str.len) {
+        if (str.str[i] != '\n') { cols++; continue; }
+        rc.col = legion_max(rc.col, cols);
+        rc.row++;
     }
-
-    default: { return ui_nil; }
-    }
+    ui_tooltip.rc = rc;
 }
 
-void ui_tooltip_render(struct ui_tooltip *tooltip, SDL_Renderer *renderer)
+void ui_tooltip_unset(void)
 {
-    if (tooltip->disabled) return;
+    ui_tooltip.rect = rect_nil();
+}
 
-    SDL_Rect rect = {
-        .x = tooltip->w.pos.x,
-        .y = tooltip->w.pos.y,
-        .w = tooltip->s.font->glyph_w * tooltip->str.len + tooltip->s.pad.w * 2,
-        .h = tooltip->s.font->glyph_h                    + tooltip->s.pad.h * 2,
+void ui_tooltip_render(void)
+{
+    if (rect_is_nil(ui_tooltip.rect)) return;
+
+    struct pos cursor = ev_mouse_pos();
+    if (!rect_contains(ui_tooltip.rect, cursor)) return;
+
+    struct rect area = engine_area();
+    unit cursor_w = render_cursor_size();
+    struct dim box = engine_dim_margin(
+            ui_tooltip.rc.row, ui_tooltip.rc.col, ui_tooltip.s.pad);
+
+    bool right = cursor.x + cursor_w + box.w <= area.x + area.w;
+    bool left = cursor.x - box.w >= area.x;
+
+    struct rect rect = {
+        .x = right || !left ? cursor.x + cursor_w : cursor.x - box.w,
+        .y = cursor.y, .w = box.w, .h = box.h
     };
 
-    rgba_render(tooltip->s.bg, renderer);
-    sdl_err(SDL_RenderFillRect(renderer, &rect));
+    const render_layer layer_bg = render_layer_push(2);
+    const render_layer layer_fg = layer_bg + 1;
 
-    rgba_render(tooltip->s.border, renderer);
-    sdl_err(SDL_RenderDrawRect(renderer, &rect));
+    render_rect_fill(layer_bg, ui_tooltip.s.bg, rect);
+    render_rect_line(layer_fg, ui_tooltip.s.border, rect);
+    render_font(
+            layer_fg, ui_tooltip.s.font, ui_tooltip.s.fg,
+            make_pos(rect.x + ui_tooltip.s.pad.w, rect.y + ui_tooltip.s.pad.h),
+            ui_tooltip.str.str, ui_tooltip.str.len);
 
-    SDL_Point point = {
-        .x = tooltip->w.pos.x + tooltip->s.pad.w,
-        .y = tooltip->w.pos.y + tooltip->s.pad.h
-    };
-    font_render(
-            tooltip->s.font,
-            renderer,
-            point,
-            tooltip->s.fg,
-            tooltip->str.str, tooltip->str.len);
+    render_layer_pop();
 }

@@ -4,15 +4,14 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "game/chunk.h"
 #include "items/config.h"
 
 static void ui_item_free(void *);
 static void ui_item_update(void *);
-static bool ui_item_event(void *, SDL_Event *);
-static void ui_item_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_item_event(void *);
+static void ui_item_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -37,9 +36,11 @@ struct ui_item
 
 static struct dim ui_item_dim(struct ui_item *ui)
 {
-    int16_t width = 40 * ui_st.font.dim.w;
+    struct dim cell = engine_cell();
+
+    unit width = 40 * cell.w;
     if (ui && ui->io_visible)
-        width += ui_st.font.dim.w + ui_io_width();
+        width += cell.w + ui_io_width();
 
     return make_dim(width, ui_layout_inf);
 }
@@ -62,7 +63,7 @@ void ui_item_alloc(struct ui_view_state *state)
     };
 
     ui_panel_hide(ui->panel);
-    ui->io_toggle.w.dim.w = ui_layout_inf;
+    ui->io_toggle.w.w = ui_layout_inf;
 
     for (size_t i = 0; i < items_active_len; ++i) {
         const struct im_config *config = im_config(items_active_first + i);
@@ -123,7 +124,8 @@ void ui_item_show(im_id id, struct coord star)
 
     ui_star_show(star);
     ui_show(ui_view_item);
-    render_push_event(ev_item_select, id, coord_to_u64(star));
+
+    ev_set_select_item(star, id);
 }
 
 bool ui_item_io(enum io io, enum item item, const vm_word *args, size_t len)
@@ -198,75 +200,59 @@ static void ui_item_update(void *state)
     config->ui.update(ui_item_state(ui, ui->id), chunk, ui->id);
 }
 
-static bool ui_item_event(void *state, SDL_Event *ev)
+static void ui_item_event(void *state)
 {
     struct ui_item *ui = state;
 
-    if (ev->type == render.event && ev->user.code == ev_star_select) {
-        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
-        if (!coord_eq(ui->star, new))
+    for (auto ev = ev_select_star(); ev; ev = nullptr)
+        if (!coord_eq(ui->star, ev->star))
             ui_hide(ui_view_item);
-        return false;
-    }
 
-    if (ui->loading) return false;
+    if (ui->loading) return;
 
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_button_event(&ui->io_toggle, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_button_event(&ui->io_toggle)) {
         ui->io_visible = !ui->io_visible;
         ui_panel_resize(ui->panel, ui_item_dim(ui));
-        return true;
     }
 
-    if ((ret = ui_button_event(&ui->help, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_button_event(&ui->help))
         ui_man_show_slot_path(ui_slot_left,
                 "/items/%s", item_str_c(im_id_item(ui->id)));
-        return true;
-    }
 
-    if ((ret = ui_link_event(&ui->id_val, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_link_event(&ui->id_val))
         ui_clipboard_copy_hex(ui->id);
-        return true;
-    }
 
     void *im_state = ui_item_state(ui, ui->id);
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
-    if (config->ui.event && config->ui.event(im_state, ev)) return true;
-
-    if (ui->io_visible && (ret = ui_io_event(ui->io, ev))) return ret;
-
-    return false;
+    if (config->ui.event) config->ui.event(im_state);
+    if (ui->io_visible) ui_io_event(ui->io);
 }
 
-static void ui_item_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_item_render(void *state, struct ui_layout *layout)
 {
     struct ui_item *ui = state;
     if (ui->loading) return;
 
     if (ui->io_visible) {
         struct ui_layout inner = ui_layout_split_x(layout, ui_io_width());
-        ui_io_render(ui->io, &inner, renderer);
-        ui_layout_split_x(layout, ui_st.font.dim.w);
+        ui_io_render(ui->io, &inner);
+        ui_layout_split_x(layout, engine_cell().w);
     }
 
     ui_layout_dir(layout, ui_layout_right_left);
-    ui_button_render(&ui->help, layout, renderer);
+    ui_button_render(&ui->help, layout);
     ui_layout_dir(layout, ui_layout_left_right);
-    ui_button_render(&ui->io_toggle, layout, renderer);
+    ui_button_render(&ui->io_toggle, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->id_lbl, layout, renderer);
-    ui_link_render(&ui->id_val, layout, renderer);
+    ui_label_render(&ui->id_lbl, layout);
+    ui_link_render(&ui->id_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
     const struct im_config *config = im_config_assert(im_id_item(ui->id));
-    config->ui.render(ui_item_state(ui, ui->id), layout, renderer);
+    config->ui.render(ui_item_state(ui, ui->id), layout);
 }

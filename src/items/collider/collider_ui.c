@@ -175,37 +175,35 @@ static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)
     ui_waiting_set(&ui->waiting_val, collider->waiting);
 }
 
-static bool ui_collider_event(void *_ui, const SDL_Event *ev)
+static void ui_collider_event(void *_ui)
 {
     struct ui_collider *ui = _ui;
 
     if (ui->state.op == im_collider_tape && ui->state.state != tape_output)
-        return ui_tape_event(&ui->tape, ui->state.tape, ev);
-    return false;
+        ui_tape_event(&ui->tape, ui->state.tape);
 }
 
-static void ui_collider_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_collider_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_collider *ui = _ui;
 
-    ui_label_render(&ui->size, layout, renderer);
-    ui_label_render(&ui->size_val, layout, renderer);
+    ui_label_render(&ui->size, layout);
+    ui_label_render(&ui->size_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->rate, layout, renderer);
-    ui_label_render(&ui->rate_val, layout, renderer);
-    ui_label_render(&ui->rate_pct, layout, renderer);
+    ui_label_render(&ui->rate, layout);
+    ui_label_render(&ui->rate_val, layout);
+    ui_label_render(&ui->rate_pct, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->op, layout, renderer);
-    ui_label_render(&ui->op_val, layout, renderer);
+    ui_label_render(&ui->op, layout);
+    ui_label_render(&ui->op_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->loops, layout, renderer);
-    ui_label_render(&ui->loops_val, layout, renderer);
+    ui_label_render(&ui->loops, layout);
+    ui_label_render(&ui->loops_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
@@ -216,13 +214,13 @@ static void ui_collider_render(
     case im_collider_nil: { break; }
 
     case im_collider_grow: {
-        ui_label_render(&ui->waiting, layout, renderer);
-        ui_label_render(&ui->waiting_val, layout, renderer);
+        ui_label_render(&ui->waiting, layout);
+        ui_label_render(&ui->waiting_val, layout);
         ui_layout_next_row(layout);
 
         ui->item_val.s.fg = ui_st.rgba.in;
-        ui_label_render(&ui->item, layout, renderer);
-        ui_label_render(&ui->item_val, layout, renderer);
+        ui_label_render(&ui->item, layout);
+        ui_label_render(&ui->item_val, layout);
         ui_layout_next_row(layout);
         break;
     }
@@ -234,26 +232,26 @@ static void ui_collider_render(
 
         case tape_input:
         case tape_work: {
-            ui_label_render(&ui->waiting, layout, renderer);
-            ui_label_render(&ui->waiting_val, layout, renderer);
+            ui_label_render(&ui->waiting, layout);
+            ui_label_render(&ui->waiting_val, layout);
             ui_layout_next_row(layout);
 
             ui_layout_sep_row(layout);
 
-            ui_tape_render(&ui->tape, ui->state.tape, layout, renderer);
+            ui_tape_render(&ui->tape, ui->state.tape, layout);
             break;
         }
 
         case tape_output: {
-            ui_label_render(&ui->out, layout, renderer);
-            ui_label_render(&ui->out_left, layout, renderer);
-            ui_label_render(&ui->out_sep, layout, renderer);
-            ui_label_render(&ui->out_cap, layout, renderer);
+            ui_label_render(&ui->out, layout);
+            ui_label_render(&ui->out_left, layout);
+            ui_label_render(&ui->out_sep, layout);
+            ui_label_render(&ui->out_cap, layout);
             ui_layout_next_row(layout);
 
             ui->item_val.s.fg = ui_st.rgba.out;
-            ui_label_render(&ui->item, layout, renderer);
-            ui_label_render(&ui->item_val, layout, renderer);
+            ui_label_render(&ui->item, layout);
+            ui_label_render(&ui->item_val, layout);
             ui_layout_next_row(layout);
             break;
         }

@@ -4,9 +4,9 @@
 */
 
 #include "common.h"
+#include "engine/engine.h"
 #include "game/sim.h"
 #include "game/proxy.h"
-#include "render/render.h"
 #include "utils/net.h"
 #include "utils/time.h"
 
@@ -142,10 +142,8 @@ bool client_run(const char *node, const char *service, const char *config)
     proxy_init();
     proxy_auth(config);
 
-    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-
-    render_init();
-    render_fork();
+    engine_init();
+    engine_fork();
 
     int poll = epoll_create1(EPOLL_CLOEXEC);
     if (poll == -1) fail_errno("unable to create epoll");
@@ -168,7 +166,7 @@ bool client_run(const char *node, const char *service, const char *config)
 
     infof("connecting to '%s:%s'", node, service);
 
-    while (!exit && !render_done()) {
+    while (!exit && !engine_done()) {
         int ready = epoll_wait(poll, events, array_len(events), 1);
         if (ready == -1) {
             if (errno == EINTR) continue;
@@ -215,8 +213,8 @@ bool client_run(const char *node, const char *service, const char *config)
     sigintfd_close(sigint);
     close(poll);
 
-    render_join();
-    render_close();
+    engine_join();
+    engine_close();
 
     return true;
 }

@@ -7,6 +7,6 @@ out vec4 fs_rgba;
 void main()
 {
   vec4 tex = texture(fs_tex, fs_in.tex) * fs_in.fg;
-  fs_rgba = fs_in.bg.a == 0 ? tex :
-    (tex * tex.a) + (fs_in.bg * (1 - tex.a));
+  float sum = tex.a + fs_in.bg.a;
+  fs_rgba = tex * (tex.a / sum) + fs_in.bg * (fs_in.bg.a / sum);
 }

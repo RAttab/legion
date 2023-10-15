@@ -68,26 +68,24 @@ static void ui_printer_update(void *_ui, struct chunk *chunk, im_id id)
     ui_tape_update(&ui->tape, printer->tape);
 }
 
-static bool ui_printer_event(void *_ui, const SDL_Event *ev)
+static void ui_printer_event(void *_ui)
 {
     struct ui_printer *ui = _ui;
-
-    return ui_tape_event(&ui->tape, ui->tape_state, ev);
+    ui_tape_event(&ui->tape, ui->tape_state);
 }
 
-static void ui_printer_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_printer_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_printer *ui = _ui;
 
-    ui_label_render(&ui->loops, layout, renderer);
-    ui_label_render(&ui->loops_val, layout, renderer);
+    ui_label_render(&ui->loops, layout);
+    ui_label_render(&ui->loops_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, layout, renderer);
-    ui_label_render(&ui->state_val, layout, renderer);
+    ui_label_render(&ui->state, layout);
+    ui_label_render(&ui->state_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
-    ui_tape_render(&ui->tape, ui->tape_state, layout, renderer);
+    ui_tape_render(&ui->tape, ui->tape_state, layout);
 }

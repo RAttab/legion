@@ -16,14 +16,6 @@ void ui_style_default(void)
 {
     struct ui_style *s = &ui_st;
 
-    { // font
-        s->font.base = make_font(font_small, font_nil);
-        s->font.bold = make_font(font_small, font_bold);
-        s->font.dim = make_dim(
-                s->font.base->glyph_w,
-                s->font.base->glyph_h);
-    }
-
     { // rgba
         s->rgba.fg = rgba_white();
         s->rgba.bg = rgba_nil();
@@ -44,7 +36,7 @@ void ui_style_default(void)
 
         s->rgba.carret = rgba_gray_a(0xCC, 0xCC);
 
-        s->rgba.index.fg = rgba_gray(0x88);
+        s->rgba.index.fg = rgba_gray(0xBB);
         s->rgba.index.bg = rgba_gray_a(0x44, 0x88);
 
         s->rgba.box.bg = rgba_black();
@@ -66,6 +58,18 @@ void ui_style_default(void)
         s->rgba.worker.fail =  make_rgba(0x8B, 0x00, 0x00, 0xFF); // DarkRed
         s->rgba.worker.idle =  make_rgba(0x80, 0x00, 0x80, 0xFF); // Purple
 
+        s->rgba.map.select = make_rgba(0x88, 0xFF, 0x88, 0x88);
+        s->rgba.map.lanes = rgba_gray(0xAA);
+        s->rgba.map.sector = make_rgba(0x00, 0x33, 0x00, 0x88);
+        s->rgba.map.area = make_rgba(0x00, 0x00, 0x33, 0x88);
+
+        s->rgba.factory.fg = rgba_white();
+        s->rgba.factory.bg = rgba_gray(0x11);
+        s->rgba.factory.hover = rgba_gray(0x33);
+        s->rgba.factory.select = rgba_gray(0x22);
+        s->rgba.factory.border = rgba_gray(0x33);
+        s->rgba.factory.op = rgba_white();
+
         s->rgba.energy.consumed = make_rgba(0xFF, 0xD7, 0x00, 0xFF); // Gold
         s->rgba.energy.saved =    make_rgba(0xFF, 0x8C, 0x00, 0xFF); // SlateBlue
         s->rgba.energy.need =     make_rgba(0x8B, 0x00, 0x00, 0xFF); // DarkRed
@@ -86,6 +90,7 @@ void ui_style_default(void)
         s->rgba.code.highlight = make_rgba(0x00, 0x80, 0x00, 0xFF); // Green
         s->rgba.code.bp.fg = make_rgba(0xB2, 0x22, 0x22, 0xFF); // FireBrick
         s->rgba.code.bp.bg = make_rgba(0xB2, 0x22, 0x22, 0x55); // FireBrick
+        s->rgba.code.bp.hover = make_rgba(0xB2, 0x22, 0x22, 0x88); // FireBrick
     }
 
     { // pad
@@ -109,5 +114,6 @@ void ui_style_default(void)
     ui_list_style_default(s);
     ui_tree_style_default(s);
     ui_histo_style_default(s);
+    ui_lab_bits_style_default(s);
     ui_panel_style_default(s);
 }

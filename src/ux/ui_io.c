@@ -8,8 +8,7 @@
 #include "game/active.h"
 #include "items/types.h"
 #include "vm/atoms.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 
 // -----------------------------------------------------------------------------
 // io
@@ -56,7 +55,7 @@ struct ui_io
 
 int16_t ui_io_width(void)
 {
-    return 36 * ui_st.font.dim.w;
+    return 36 * engine_cell().w;
 }
 
 struct ui_io *ui_io_alloc(void)
@@ -75,7 +74,7 @@ struct ui_io *ui_io_alloc(void)
             .exec = ui_button_new(ui_str_c("exec >>")),
         };
 
-        cmd->name.w.dim.w = ui_layout_inf;
+        cmd->name.w.w = ui_layout_inf;
 
         for (size_t j = 0; j < ui_io_args_max; ++j) {
             cmd->args[j] = (struct ui_io_arg) {
@@ -196,64 +195,47 @@ static void ui_io_toggle(struct ui_io *ui, struct ui_io_cmd *cmd)
 }
 
 
-bool ui_io_event(struct ui_io *ui, SDL_Event *ev)
+void ui_io_event(struct ui_io *ui)
 {
-    enum ui_ret ret = ui_nil;
     for (size_t i = 0; i < ui->len; ++i) {
         struct ui_io_cmd *cmd = ui->cmds + i;
 
-        if ((ret = ui_button_event(&cmd->name, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_button_event(&cmd->name))
             ui_io_toggle(ui, cmd);
-            return true;
-        }
 
-        if ((ret = ui_button_event(&cmd->help, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_button_event(&cmd->help))
             ui_man_show_slot_path(ui_slot_left,
                     "/items/%s/io/%.*s",
                     item_str_c(im_id_item(ui->id)),
                     (unsigned) cmd->name.str.len,
                     cmd->name.str.str);
-            return true;
-        }
 
         if (ui->open != cmd->io) continue;
 
         for (size_t j = 0; j < cmd->len; ++j) {
             struct ui_io_arg *arg = cmd->args + j;
-
-            if (!(ret = ui_input_event(&arg->val, ev))) continue;
-            if (ret != ui_action) return true;
+            if (!ui_input_event(&arg->val)) continue;
 
             struct ui_io_arg *next = arg + 1;
             if (next == cmd->args + cmd->len) ui_io_exec(ui, cmd);
             else ui_input_focus(&next->val);
-
-            return true;
         }
 
-        if ((ret = ui_button_event(&cmd->exec, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_button_event(&cmd->exec))
             ui_io_exec(ui, cmd);
-            return true;
-        }
     }
-
-    return false;
 }
 
-void ui_io_render(
-        struct ui_io *ui, struct ui_layout *layout, SDL_Renderer *renderer)
+void ui_io_render(struct ui_io *ui, struct ui_layout *layout)
 {
     for (size_t i = 0; i < ui->len; ++i) {
         struct ui_io_cmd *cmd = ui->cmds + i;
 
         ui_layout_dir(layout, ui_layout_right_left);
-        ui_button_render(&cmd->help, layout, renderer);
+        ui_button_render(&cmd->help, layout);
 
         ui_layout_dir(layout, ui_layout_left_right);
-        ui_button_render(&cmd->name, layout, renderer);
+        ui_button_render(&cmd->name, layout);
 
         ui_layout_next_row(layout);
 
@@ -266,16 +248,16 @@ void ui_io_render(
             ui_layout_sep_cols(layout, 2);
 
             if (!arg->required) ui_layout_sep_col(layout);
-            else ui_label_render(&ui->required, layout, renderer);
+            else ui_label_render(&ui->required, layout);
 
-            ui_label_render(&arg->name, layout, renderer);
-            ui_input_render(&arg->val, layout, renderer);
+            ui_label_render(&arg->name, layout);
+            ui_input_render(&arg->val, layout);
 
             ui_layout_next_row(layout);
         }
 
         ui_layout_sep_cols(layout, 2);
-        ui_button_render(&cmd->exec, layout, renderer);
+        ui_button_render(&cmd->exec, layout);
 
         ui_layout_next_row(layout);
         ui_layout_sep_row(layout);

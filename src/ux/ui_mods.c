@@ -4,16 +4,16 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "vm/mod.h"
 #include "vm/code.h"
+#include "game/sys.h"
 #include "utils/fs.h"
 
 static void ui_mods_free(void *);
 static void ui_mods_update(void *);
-static bool ui_mods_event(void *, SDL_Event *);
-static void ui_mods_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_mods_event(void *);
+static void ui_mods_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ struct ui_mods_tab
 struct ui_mods
 {
     struct ui_panel *panel;
-    int16_t tree_w, code_w, pad_w;
+    unit tree_w, code_w, pad_w;
 
     struct ui_button new;
     struct ui_input new_val;
@@ -71,9 +71,10 @@ struct ui_mods
 
 void ui_mods_alloc(struct ui_view_state *state)
 {
-    int16_t tree_w = (symbol_cap + 4) * ui_st.font.dim.w;
-    int16_t code_w = (5 + ui_mods_cols + 2) * ui_st.font.dim.w;
-    int16_t pad_w = ui_st.font.dim.w;
+    struct dim cell = engine_cell();
+    unit tree_w = (symbol_cap + 4) * cell.w;
+    unit code_w = (5 + ui_mods_cols + 2) * cell.w;
+    unit pad_w = cell.w;
 
     struct ui_mods *ui = calloc(1, sizeof(*ui));
     *ui = (struct ui_mods) {
@@ -463,8 +464,8 @@ static void ui_mods_update_tree(struct ui_mods *ui)
         const struct mods_item *mod = list->items + i;
 
         uint64_t user = make_mod(mod->maj, 0);
-        ui_node parent = ui_tree_index(&ui->tree);
-        struct ui_str *str = ui_tree_add(&ui->tree, ui_node_nil, user);
+        ui_tree_node parent = ui_tree_index(&ui->tree);
+        struct ui_str *str = ui_tree_add(&ui->tree, ui_tree_node_nil, user);
         ui_str_set_symbol(str, &mod->str);
 
         for (mod_ver ver = mod->ver; ver > 0; --ver) {
@@ -546,11 +547,11 @@ static void ui_mods_new(struct ui_mods *ui)
     proxy_mod_register(name);
 }
 
-static bool ui_mods_build(struct ui_mods *ui, struct ui_mods_tab *tab)
+static void ui_mods_build(struct ui_mods *ui, struct ui_mods_tab *tab)
 {
-    if (!tab) { ui_log(st_error, "no mod selected"); return false; }
-    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return false; }
-    if (!tab->write) { ui_log(st_error, "unable to build read-only mod"); return false; }
+    if (!tab) { ui_log(st_error, "no mod selected"); return; }
+    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return; }
+    if (!tab->write) { ui_log(st_error, "unable to build read-only mod"); return; }
 
     size_t len = code_len(tab->code.code);
     char *buffer = calloc(len, sizeof(*buffer));
@@ -561,35 +562,27 @@ static bool ui_mods_build(struct ui_mods *ui, struct ui_mods_tab *tab)
     proxy_mod_compile(mod_major(tab->id), buffer, len);
 
     free(buffer);
-    return true;
 }
 
-static bool ui_mods_publish(struct ui_mods *ui, struct ui_mods_tab *tab)
+static void ui_mods_publish(struct ui_mods *ui, struct ui_mods_tab *tab)
 {
-    if (!tab) { ui_log(st_error, "no mod selected"); return false; }
-    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return false; }
-    if (!tab->write) { ui_log(st_error, "unable to publish read-only mod"); return false; }
-    if (tab->mod->errs_len) {
-        ui_log(st_error, "unable to publish mod with errors");
-        return false;
-    }
+    if (!tab) { ui_log(st_error, "no mod selected"); return; }
+    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return; }
+    if (!tab->write) { ui_log(st_error, "unable to publish read-only mod"); return; }
+    if (tab->mod->errs_len) {ui_log(st_error, "unable to publish mod with errors"); return; }
 
     ui->request.id = tab->id;
     ui->request.write = tab->write;
     proxy_mod_publish(mod_major(tab->id));
 
     ui->publish.disabled = true;
-    return true;
 }
 
-static bool ui_mods_import(struct ui_mods *, struct ui_mods_tab *tab)
+static void ui_mods_import(struct ui_mods *, struct ui_mods_tab *tab)
 {
-    if (!tab) { ui_log(st_error, "no mod selected"); return false; }
-    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return false; }
-    if (!tab->write) {
-        ui_log(st_error, "unable to import into read-only mod");
-        return false;
-    }
+    if (!tab) { ui_log(st_error, "no mod selected"); return; }
+    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return; }
+    if (!tab->write) {ui_log(st_error, "unable to import into read-only mod"); return; }
 
     struct symbol name = {0};
     bool ok = proxy_mod_name(mod_major(tab->id), &name);
@@ -601,6 +594,7 @@ static bool ui_mods_import(struct ui_mods *, struct ui_mods_tab *tab)
     if (!file_exists(path)) {
         ui_log(st_error,
                 "unable to import mod '%s': '%s' doesn't exist", name.c, path);
+        return;
     }
 
     struct mfile file = mfile_open(path);
@@ -608,13 +602,12 @@ static bool ui_mods_import(struct ui_mods *, struct ui_mods_tab *tab)
     mfile_close(&file);
 
     ui_log(st_info, "mod '%s' imported from '%s'", name.c, path);
-    return true;
 }
 
-static bool ui_mods_export(struct ui_mods *, struct ui_mods_tab *tab)
+static void ui_mods_export(struct ui_mods *, struct ui_mods_tab *tab)
 {
-    if (!tab) { ui_log(st_error, "no mod selected"); return false; }
-    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return false; }
+    if (!tab) { ui_log(st_error, "no mod selected"); return; }
+    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return; }
 
     struct symbol name = {0};
     bool ok = proxy_mod_name(mod_major(tab->id), &name);
@@ -630,166 +623,108 @@ static bool ui_mods_export(struct ui_mods *, struct ui_mods_tab *tab)
     file_tmp_swap(path);
 
     ui_log(st_info, "mod '%s' exported to '%s'", name.c, path);
-    return true;
 }
 
-static bool ui_mods_reset(struct ui_mods *ui, struct ui_mods_tab *tab)
+static void ui_mods_reset(struct ui_mods *ui, struct ui_mods_tab *tab)
 {
-    if (!tab) { ui_log(st_error, "no mod selected"); return false; }
-    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return false; }
-    if (!tab->write) { ui_log(st_error, "unable to reset read-only mod"); return false; }
+    if (!tab) { ui_log(st_error, "no mod selected"); return; }
+    if (!tab->mod) { ui_log(st_warn, "mod is loading"); return; }
+    if (!tab->write) { ui_log(st_error, "unable to reset read-only mod"); return; }
 
     ui->request.id = tab->id;
     ui->request.write = tab->write;
     proxy_mod_select(tab->id);
-    return true;
 }
 
-static bool ui_mods_shortcuts(struct ui_mods *ui, SDL_Event *ev)
+static bool ui_mods_shortcuts(struct ui_mods *ui, const struct ev_key *ev)
 {
     if (ui_focus_panel() != ui->panel) return false;
-
-    uint16_t mod = ev->key.keysym.mod;
-    if (!(mod & KMOD_CTRL)) return false;
+    if (ev->state != ev_state_down) return false;
+    if (ev->mods != ev_mods_ctrl) return false;
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
 
-    switch (ev->key.keysym.sym)
+    switch (ev->c)
     {
     case 'n': { ui_input_focus(&ui->new_val); return true; }
-    case 'm': { if (tab) ui_mods_mode_toggle(ui, tab); return !!tab; }
-    case 'b': { return ui_mods_build(ui, tab); }
-    case 'p': { return ui_mods_publish(ui, tab); }
-    case 'i': { return ui_mods_import(ui, tab); }
-    case 'e': { return ui_mods_export(ui, tab); }
+    case 'm': { if (tab) ui_mods_mode_toggle(ui, tab); return true; }
+    case 'b': { ui_mods_build(ui, tab); return true; }
+    case 'p': { ui_mods_publish(ui, tab); return true; }
+    case 'i': { ui_mods_import(ui, tab); return true; }
+    case 'e': { ui_mods_export(ui, tab); return true; }
     case 's': { ui_item_io(io_dbg_step, item_brain, nullptr, 0); return true; }
     default: { return false; }
     }
 }
 
-static bool ui_mods_event(void *state, SDL_Event *ev)
+static void ui_mods_event(void *state)
 {
     struct ui_mods *ui = state;
 
-    if (render_user_event_is(ev, ev_state_load)) {
+    for (auto ev = ev_load(); ev; ev = nullptr) {
         ui->tabs.len = 0;
         ui_tabs_clear(&ui->tabs.ui);
         ui_tree_reset(&ui->tree);
         ui_mods_request_reset(ui);
     }
 
-    if (render_user_event_is(ev, ev_mod_break)) {
-        mod_id mod = (uintptr_t) ev->user.data1;
-        vm_ip ip = (uintptr_t) ev->user.data2;
-
-        struct ui_mods_tab *tab = ui_mods_select(ui, mod, false);
-        if (!tab) ui_mods_load(mod, false, ip);
-
-        return false;
+    for (auto ev = ev_mod_break(); ev; ev = nullptr) {
+        struct ui_mods_tab *tab = ui_mods_select(ui, ev->mod, false);
+        if (!tab) ui_mods_load(ev->mod, false, ev->ip);
     }
 
-    if (ev->type == SDL_KEYDOWN && ui_mods_shortcuts(ui, ev))
-        return true;
+    for (auto ev = ev_next_key(nullptr); ev; ev = ev_next_key(ev))
+        if (ui_mods_shortcuts(ui, ev)) ev_consume_key(ev);
 
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_input_event(&ui->new_val, ev))) {
-        if (ret == ui_action) ui_mods_new(ui);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->new, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_new(ui);
-        return ret;
-    }
-
-    if ((ret = ui_tree_event(&ui->tree, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_input_event(&ui->new_val)) ui_mods_new(ui);
+    if (ui_button_event(&ui->new)) ui_mods_new(ui);
+    if (ui_tree_event(&ui->tree))
         ui_mods_load(ui->tree.selected, true, vm_ip_nil);
-        return true;
+
+    if (!ui_mods_tabs_len(ui)) return;
+
+    switch (ui_tabs_event(&ui->tabs.ui))
+    {
+    case ui_tabs_ev_close: {
+        ui_mods_tabs_close(ui, ui_tabs_closed(&ui->tabs.ui));
+        break;
     }
-
-    if (!ui_mods_tabs_len(ui)) return false;
-
-    if ((ret = ui_tabs_event(&ui->tabs.ui, ev))) {
-        if (ret != ui_action) return true;
-
-        uint64_t closed = ui_tabs_closed(&ui->tabs.ui);
-        if (closed) ui_mods_tabs_close(ui, closed);
-
+    case ui_tabs_ev_select: {
         struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
         if (tab) ui_tree_select(&ui->tree, tab->id);
-
-        return true;
+        break;
+    }
+    default: { break; }
     }
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
-    if (!tab) return false;
+    if (!tab) return;
 
-    if ((ret = ui_button_event(&ui->mode, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_mode_toggle(ui, tab);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->build, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_build(ui, tab);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->publish, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_publish(ui, tab);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->import, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_import(ui, tab);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->export, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_export(ui, tab);
-        return true;
-    }
-
-
-    if ((ret = ui_button_event(&ui->load, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_button_event(&ui->mode)) ui_mods_mode_toggle(ui, tab);
+    if (ui_button_event(&ui->build)) ui_mods_build(ui, tab);
+    if (ui_button_event(&ui->publish)) ui_mods_publish(ui, tab);
+    if (ui_button_event(&ui->import)) ui_mods_import(ui, tab);
+    if (ui_button_event(&ui->export)) ui_mods_export(ui, tab);
+    if (ui_button_event(&ui->reset)) ui_mods_reset(ui, tab);
+    
+    if (ui_button_event(&ui->load)) {
         vm_word args = tab->id;
         ui_item_io(io_mod, item_brain, &args, 1);
-        return true;
     }
 
-    if ((ret = ui_button_event(&ui->attach, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_button_event(&ui->attach)) {
         enum io io = tab->debug.attached ? io_dbg_detach : io_dbg_attach;
         ui_item_io(io, item_brain, nullptr, 0);
-        return true;
     }
 
-    if ((ret = ui_button_event(&ui->step, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_button_event(&ui->step))
         ui_item_io(io_dbg_step, item_brain, nullptr, 0);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->reset, ev))) {
-        if (ret != ui_action) return true;
-        ui_mods_reset(ui, tab);
-        return true;
-    }
 
     switch (tab->mode)
     {
-    case ui_mods_code: { if ((ret = ui_code_event(&tab->code, ev))) return true; }
-    case ui_mods_asm: { if ((ret = ui_asm_event(&tab->as, ev))) return true; }
+    case ui_mods_code: { ui_code_event(&tab->code); }
+    case ui_mods_asm: { ui_asm_event(&tab->as); }
     }
-
-    return false;
 }
 
 
@@ -797,48 +732,47 @@ static bool ui_mods_event(void *state, SDL_Event *ev)
 // render
 // -----------------------------------------------------------------------------
 
-static void ui_mods_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_mods_render(void *state, struct ui_layout *layout)
 {
     struct ui_mods *ui = state;
 
     struct ui_layout inner = ui_layout_split_x(layout, ui->tree_w);
     {
-        ui_input_render(&ui->new_val, &inner, renderer);
-        ui_button_render(&ui->new, &inner, renderer);
+        ui_input_render(&ui->new_val, &inner);
+        ui_button_render(&ui->new, &inner);
         ui_layout_next_row(&inner);
 
         ui_layout_sep_row(&inner);
 
-        ui_tree_render(&ui->tree, &inner, renderer);
+        ui_tree_render(&ui->tree, &inner);
     }
 
     if (!ui_mods_tabs_len(ui)) return;
 
-    ui_tabs_render(&ui->tabs.ui, layout, renderer);
+    ui_tabs_render(&ui->tabs.ui, layout);
     ui_layout_next_row(layout);
 
     struct ui_mods_tab *tab = ui_mods_tabs_selected(ui);
     assert(tab);
 
     {
-        ui_button_render(&ui->mode, layout, renderer);
+        ui_button_render(&ui->mode, layout);
         ui_layout_sep_col(layout);
 
-        ui_button_render(&ui->build, layout, renderer);
-        ui_button_render(&ui->publish, layout, renderer);
+        ui_button_render(&ui->build, layout);
+        ui_button_render(&ui->publish, layout);
 
         ui_layout_sep_col(layout);
-        ui_button_render(&ui->reset, layout, renderer);
+        ui_button_render(&ui->reset, layout);
 
         ui_layout_sep_col(layout);
-        ui_button_render(&ui->load, layout, renderer);
-        ui_button_render(&ui->attach, layout, renderer);
-        ui_button_render(&ui->step, layout, renderer);
+        ui_button_render(&ui->load, layout);
+        ui_button_render(&ui->attach, layout);
+        ui_button_render(&ui->step, layout);
 
         ui_layout_dir(layout, ui_layout_right_left);
-        ui_button_render(&ui->export, layout, renderer);
-        ui_button_render(&ui->import, layout, renderer);
+        ui_button_render(&ui->export, layout);
+        ui_button_render(&ui->import, layout);
 
         ui_layout_dir(layout, ui_layout_left_right);
         ui_layout_next_row(layout);
@@ -847,7 +781,7 @@ static void ui_mods_render(
 
     switch (tab->mode)
     {
-    case ui_mods_code: { ui_code_render(&tab->code, layout, renderer); break; }
-    case ui_mods_asm: { ui_asm_render(&tab->as, layout, renderer); break; }
+    case ui_mods_code: { ui_code_render(&tab->code, layout); break; }
+    case ui_mods_asm: { ui_asm_render(&tab->as, layout); break; }
     }
 }

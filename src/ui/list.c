@@ -13,19 +13,19 @@ void ui_list_style_default(struct ui_style *s)
 {
     s->list = (struct ui_list_style) {
         .idle = {
-            .font = s->font.base,
+            .font = font_base,
             .fg = s->rgba.fg,
             .bg = s->rgba.bg,
         },
 
         .hover = {
-            .font = s->font.base,
+            .font = font_base,
             .fg = s->rgba.fg,
             .bg = s->rgba.list.hover,
         },
 
         .selected = {
-            .font = s->font.bold,
+            .font = font_bold,
             .fg = s->rgba.fg,
             .bg = s->rgba.list.selected,
         },
@@ -43,19 +43,16 @@ struct ui_list ui_list_new(struct dim dim, size_t chars)
     const struct ui_list_style *s = &ui_st.list;
 
     return (struct ui_list) {
-        .w = ui_widget_new(dim.w, dim.h),
+        .w = make_ui_widget(dim),
         .s = *s,
 
-        .scroll = ui_scroll_new(dim, make_dim(
-                        s->idle.font->glyph_w,
-                        s->idle.font->glyph_h)),
+        .scroll = ui_scroll_new(dim, engine_cell()),
         .str = ui_str_v(chars),
 
         .len = 0,
         .cap = 0,
         .entries = NULL,
 
-        .hover = 0,
         .selected = 0,
     };
 }
@@ -103,7 +100,7 @@ struct ui_str *ui_list_add(struct ui_list *list, uint64_t user)
         list->entries = realloc_zero(list->entries, old, list->cap, sizeof(*list->entries));
     }
 
-    struct ui_entry *entry = list->entries + list->len;
+    struct ui_list_entry *entry = list->entries + list->len;
     list->len++;
 
     entry->user = user;
@@ -115,66 +112,61 @@ struct ui_str *ui_list_add(struct ui_list *list, uint64_t user)
 }
 
 
-enum ui_ret ui_list_event(struct ui_list *list, const SDL_Event *ev)
+uint64_t ui_list_event(struct ui_list *list)
 {
-    enum ui_ret ret = ui_scroll_event(&list->scroll, ev);
-    if (ret) return ret;
+    ui_scroll_event(&list->scroll);
 
-    struct SDL_Rect rect = ui_widget_rect(&list->w);
+    uint64_t ret = 0;
 
-    switch (ev->type) {
+    for (auto ev = ev_next_button(nullptr); ev; ev = ev_next_button(ev)) {
+        if (ev->button != ev_button_left) continue;
 
-    case SDL_MOUSEMOTION: {
-        list->hover = 0;
+        struct pos cursor = ev_mouse_pos();
+        if (!rect_contains(list->w, cursor)) continue;
+        ev_consume_button(ev);
 
-        SDL_Point point = ui_cursor_point();
-        if (!SDL_PointInRect(&point, &rect)) return ui_nil;
-
-        size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
+        size_t row = (cursor.y - list->w.y) / engine_cell().h;
         row += ui_scroll_first_row(&list->scroll);
-        if (row >= list->len) return ui_nil;
+        if (row >= list->len) continue;
 
-        list->hover = list->entries[row].user;
-        return ui_nil;
+        ret = list->selected = list->entries[row].user;
     }
 
-    case SDL_MOUSEBUTTONUP: {
-        SDL_Point point = ui_cursor_point();
-        if (!SDL_PointInRect(&point, &rect)) return ui_nil;
-
-        size_t row = (point.y - rect.y) / list->s.idle.font->glyph_h;
-        row += ui_scroll_first_row(&list->scroll);
-        if (row >= list->len) return ui_consume;
-
-        list->selected = list->entries[row].user;
-        return ui_action;
-    }
-
-    default: { return ui_nil; }
-    }
+    return ret;
 }
 
-void ui_list_render(
-        struct ui_list *list, struct ui_layout *layout, SDL_Renderer *renderer)
+void ui_list_render(struct ui_list *list, struct ui_layout *layout)
 {
     ui_scroll_update_rows(&list->scroll, list->len);
 
-    struct ui_layout inner = ui_scroll_render(&list->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&list->scroll, layout);
     if (ui_layout_is_nil(&inner)) return;
     list->w = list->scroll.w;
 
+    const render_layer layer_bg = render_layer_push(2);
+    const render_layer layer_fg = layer_bg + 1;
+
+    struct dim cell = engine_cell();
     struct pos pos = inner.base.pos;
+
     size_t last = ui_scroll_last_row(&list->scroll);
     size_t first = ui_scroll_first_row(&list->scroll);
 
     for (size_t i = first; i < last; ++i) {
-        const struct ui_entry *entry = list->entries + i;
+        const struct ui_list_entry *entry = list->entries + i;
 
-        const struct font *font = NULL;
+        struct rect rect = {
+            .x = pos.x, .y = pos.y,
+            .w = inner.base.dim.w, .h = cell.h,
+        };
+
+        enum render_font font = font_nil;
         struct rgba fg = {0}, bg = {0};
-        bool selected = entry->user == list->selected;
 
-        if (entry->user == list->hover) {
+        bool selected = entry->user == list->selected;
+        bool hover = ev_mouse_in(rect);
+
+        if (hover) {
             font = selected ? list->s.selected.font : list->s.hover.font;
             fg = list->s.hover.fg;
             bg = list->s.hover.bg;
@@ -190,16 +182,10 @@ void ui_list_render(
             bg = list->s.idle.bg;
         }
 
-        rgba_render(bg, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                            .x = pos.x, .y = pos.y,
-                            .w = inner.base.dim.w,
-                            .h = font->glyph_h
-                        }));
-
-        font_render(
-                font, renderer, pos_as_point(pos), fg,
-                entry->str.str, entry->str.len);
-        pos.y += font->glyph_h;
+        render_rect_fill(layer_bg, bg, rect);
+        render_font(layer_fg, font, fg, pos, entry->str.str, entry->str.len);
+        pos.y += cell.h;
     }
+
+    render_layer_pop();
 }

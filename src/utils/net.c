@@ -173,7 +173,7 @@ struct sockaddr_str sockaddr_str(struct sockaddr *addr)
 int sigintfd_new(void)
 {
     // Blocking the signal doesn't seem to be enough despite what the man-page
-    // says. This is true in the server where SDL is not at all involved.
+    // says. This is true in the server where GLFW is not at all involved.
     struct sigaction act = { .sa_handler = SIG_IGN };
     struct sigaction prev = {0};
     assert(!sigaction(SIGINT, &act, &prev));

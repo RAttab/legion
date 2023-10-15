@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "types.h"
 #include "items/types.h"
 #include "db/items.h"
 
@@ -32,13 +31,22 @@ void ui_loops_set(struct ui_label *, im_loops);
 // ui
 // -----------------------------------------------------------------------------
 
+struct ui_lab_bits_style
+{
+    struct dim margin;
+    struct rgba fg, border;
+};
+
+void ui_lab_bits_style_default(struct ui_style *);
+
 struct ui_lab_bits
 {
+    struct ui_lab_bits_style s;
+
     uint8_t bits;
     uint64_t known;
-    struct dim margin;
 };
 
 struct ui_lab_bits ui_lab_bits_new(void);
 void ui_lab_bits_update(struct ui_lab_bits *, const struct tech *, enum item);
-void ui_lab_bits_render(struct ui_lab_bits *, struct ui_layout *, SDL_Renderer *);
+void ui_lab_bits_render(struct ui_lab_bits *, struct ui_layout *);

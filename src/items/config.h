@@ -10,8 +10,6 @@
 #include "db/items.h"
 #include "vm/vm.h"
 
-#include "SDL.h"
-
 struct flow;
 struct chunk;
 struct atoms;
@@ -38,8 +36,8 @@ typedef bool (*im_flow_fn) (const void *state, struct flow *);
 typedef void *(*im_ui_alloc_fn)  (void);
 typedef void  (*im_ui_free_fn)   (void *state);
 typedef void  (*im_ui_update_fn) (void *state, struct chunk *, im_id);
-typedef bool  (*im_ui_event_fn)  (void *state, const SDL_Event *);
-typedef void  (*im_ui_render_fn) (void *state, struct ui_layout *, SDL_Renderer *);
+typedef void  (*im_ui_event_fn)  (void *state);
+typedef void  (*im_ui_render_fn) (void *state, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------

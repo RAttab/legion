@@ -11,8 +11,6 @@
 #include "game/protocol.h"
 #include "game/proxy.h"
 
-#include "SDL.h"
-
 
 // -----------------------------------------------------------------------------
 // ui
@@ -62,8 +60,8 @@ const char *ui_view_str(enum ui_view);
 
 
 typedef void (*ui_state_fn) (void *);
-typedef bool (*ui_event_fn) (void *, SDL_Event *);
-typedef void (*ui_render_fn) (void *, struct ui_layout *, SDL_Renderer *);
+typedef void (*ui_event_fn) (void *);
+typedef void (*ui_render_fn) (void *, struct ui_layout *);
 
 struct ui_view_state
 {
@@ -89,8 +87,8 @@ enum ui_view ui_slot(enum ui_slot);
 
 void ui_update_state(void);
 void ui_update_frame(void);
-void ui_event(SDL_Event *);
-void ui_render(SDL_Renderer *);
+void ui_event(void);
+void ui_render(void);
 
 void ui_reset(void);
 void ui_show(enum ui_view);
@@ -101,25 +99,6 @@ void ui_toggle(enum ui_view);
 void ui_log_msg(enum status_type, const char *msg, size_t len);
 void ui_logv(enum status_type, const char *fmt, va_list);
 void ui_log(enum status_type, const char *fmt, ...) legion_printf(2, 3);
-
-
-// -----------------------------------------------------------------------------
-// cursor
-// -----------------------------------------------------------------------------
-
-void ui_cursor_init(void);
-void ui_cursor_free(void);
-
-size_t ui_cursor_size(void);
-struct pos ui_cursor_pos(void);
-SDL_Point ui_cursor_point(void);
-bool ui_cursor_in(const SDL_Rect* rect);
-
-bool ui_cursor_button_down(uint8_t);
-
-void ui_cursor_update(void);
-void ui_cursor_event(SDL_Event *);
-void ui_cursor_render(SDL_Renderer *);
 
 
 // -----------------------------------------------------------------------------
@@ -192,8 +171,8 @@ struct ui_io *ui_io_alloc(void);
 int16_t ui_io_width(void);
 void ui_io_show(struct ui_io *, struct coord, im_id);
 void ui_io_free(struct ui_io *);
-bool ui_io_event(struct ui_io *, SDL_Event *);
-void ui_io_render(struct ui_io *, struct ui_layout *, SDL_Renderer *);
+void ui_io_event(struct ui_io *);
+void ui_io_render(struct ui_io *, struct ui_layout *);
 
 struct ui_pills;
 void ui_pills_alloc(struct ui_view_state *);

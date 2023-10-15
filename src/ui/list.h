@@ -13,7 +13,7 @@
 // list
 // -----------------------------------------------------------------------------
 
-struct ui_entry
+struct ui_list_entry
 {
     struct ui_str str;
     uint64_t user;
@@ -23,7 +23,7 @@ struct ui_entry
 struct ui_list_style
 {
     struct {
-        const struct font *font;
+        enum render_font font;
         struct rgba fg, bg;
     } idle, hover, selected;
 };
@@ -33,16 +33,16 @@ void ui_list_style_default(struct ui_style *);
 
 struct ui_list
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_list_style s;
 
     struct ui_scroll scroll;
     struct ui_str str;
 
     size_t len, cap;
-    struct ui_entry *entries;
+    struct ui_list_entry *entries;
 
-    uint64_t hover, selected;
+    uint64_t selected;
 };
 
 
@@ -55,5 +55,5 @@ bool ui_list_select(struct ui_list *, uint64_t user);
 void ui_list_reset(struct ui_list *);
 struct ui_str *ui_list_add(struct ui_list *, uint64_t user);
 
-enum ui_ret ui_list_event(struct ui_list *, const SDL_Event *);
-void ui_list_render(struct ui_list *, struct ui_layout *, SDL_Renderer *);
+uint64_t ui_list_event(struct ui_list *);
+void ui_list_render(struct ui_list *, struct ui_layout *);

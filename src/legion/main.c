@@ -4,9 +4,10 @@
 */
 
 #include "common.h"
+#include "engine/engine.h"
 #include "game/sys.h"
 #include "game/user.h"
-#include "render/render.h"
+#include "game/world.h"
 #include "utils/str.h"
 
 #include <getopt.h>

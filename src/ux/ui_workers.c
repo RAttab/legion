@@ -4,15 +4,14 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "game/chunk.h"
 
 static void ui_workers_free(void *);
 static void ui_workers_update_state(void *);
 static void ui_workers_update_frame(void *);
-static bool ui_workers_event(void *, SDL_Event *);
-static void ui_workers_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_workers_event(void *);
+static void ui_workers_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -53,7 +52,7 @@ void ui_workers_alloc(struct ui_view_state *state)
         .star = coord_nil(),
 
         .panel = ui_panel_title(
-                make_dim(77 * ui_st.font.dim.w, ui_layout_inf),
+                make_dim(77 * engine_cell().w, ui_layout_inf),
                 ui_str_c("workers")),
 
         .histo = ui_histo_new(
@@ -125,25 +124,19 @@ static void ui_workers_update_frame(void *state)
     ui_histo_update_legend(&ui->histo);
 }
 
-static bool ui_workers_event(void *state, SDL_Event *ev)
+static void ui_workers_event(void *state)
 {
     struct ui_workers *ui = state;
 
-    if (render_user_event_is(ev, ev_star_select)) {
-        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
-        if (!coord_eq(ui->star, new)) ui_workers_show(new);
-    }
+    for (auto ev = ev_select_star(); ev; ev = nullptr)
+        if (!coord_eq(ui->star, ev->star))
+            ui_workers_show(ev->star);
     
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_histo_event(&ui->histo, ev))) return true;
-
-    return false;
+    ui_histo_event(&ui->histo);
 }
 
-static void ui_workers_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_workers_render(void *state, struct ui_layout *layout)
 {
     struct ui_workers *ui = state;
-
-    ui_histo_render(&ui->histo, layout, renderer);
+    ui_histo_render(&ui->histo, layout);
 }

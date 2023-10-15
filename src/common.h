@@ -30,10 +30,6 @@
 #define likely(x)    __builtin_expect(x, 1)
 #define unlikely(x)  __builtin_expect(x, 0)
 
-// The current SDL_config.h header doesn't define this macro which leads to a
-// warning... fun...
-#define _HAVE_STDINT_H 1
-
 
 // -----------------------------------------------------------------------------
 // macro utils

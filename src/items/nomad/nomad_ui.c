@@ -138,66 +138,65 @@ static void ui_nomad_update(void *_ui, struct chunk *chunk, im_id id)
     memcpy(ui->state.cargo, nomad->cargo, sizeof(nomad->cargo));
 }
 
-static void ui_nomad_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_nomad_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_nomad *ui = _ui;
 
-    ui_label_render(&ui->op, layout, renderer);
-    ui_label_render(&ui->op_val, layout, renderer);
+    ui_label_render(&ui->op, layout);
+    ui_label_render(&ui->op_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->item, layout, renderer);
-    ui_label_render(&ui->item_val, layout, renderer);
+    ui_label_render(&ui->item, layout);
+    ui_label_render(&ui->item_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->loops, layout, renderer);
-    ui_label_render(&ui->loops_val, layout, renderer);
+    ui_label_render(&ui->loops, layout);
+    ui_label_render(&ui->loops_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->waiting, layout, renderer);
-    ui_label_render(&ui->waiting_val, layout, renderer);
+    ui_label_render(&ui->waiting, layout);
+    ui_label_render(&ui->waiting_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->mod, layout, renderer);
-    ui_label_render(&ui->mod_val, layout, renderer);
+    ui_label_render(&ui->mod, layout);
+    ui_label_render(&ui->mod_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
     {
-        ui_label_render(&ui->memory, layout, renderer);
+        ui_label_render(&ui->memory, layout);
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < array_len(ui->state.memory); ++i) {
             ui_str_set_u64(&ui->memory_index.str, i);
-            ui_label_render(&ui->memory_index, layout, renderer);
+            ui_label_render(&ui->memory_index, layout);
 
             ui_layout_sep_col(layout);
 
             ui_str_set_hex(&ui->memory_val.str, ui->state.memory[i]);
-            ui_label_render(&ui->memory_val, layout, renderer);
+            ui_label_render(&ui->memory_val, layout);
             ui_layout_next_row(layout);
         }
     }
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->cargo, layout, renderer);
+    ui_label_render(&ui->cargo, layout);
     ui_layout_next_row(layout);
 
     for (size_t i = 0; i < im_nomad_cargo_len; ++i) {
         struct im_nomad_cargo *cargo = ui->state.cargo + i;
 
         ui_str_set_u64(&ui->cargo_count.str, cargo->count);
-        ui_label_render(&ui->cargo_count, layout, renderer);
+        ui_label_render(&ui->cargo_count, layout);
 
         ui_layout_sep_col(layout);
 
         ui_str_set_item(&ui->cargo_item.str, cargo->item);
-        ui_label_render(&ui->cargo_item, layout, renderer);
+        ui_label_render(&ui->cargo_item, layout);
         ui_layout_next_row(layout);
     }
 }

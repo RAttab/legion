@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "layout.h"
-
-
 // -----------------------------------------------------------------------------
 // layout
 // -----------------------------------------------------------------------------
@@ -34,27 +31,27 @@ struct dim ui_layout_remaining(struct ui_layout *layout)
             layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y));
 }
 
-void ui_layout_add(struct ui_layout *layout, struct ui_widget *widget)
+void ui_layout_add(struct ui_layout *layout, ui_widget *widget)
 {
-    if (widget->dim.w == ui_layout_inf)
-        widget->dim.w = layout->row.dim.w;
-    if (widget->dim.h == ui_layout_inf)
-        widget->dim.h = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
+    if (widget->w == ui_layout_inf)
+        widget->w = layout->row.dim.w;
+    if (widget->h == ui_layout_inf)
+        widget->h = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
 
-    assert(layout->row.dim.w >= widget->dim.w);
-    assert(layout->row.pos.y + widget->dim.h <= layout->base.pos.y + layout->base.dim.h);
+    assert(layout->row.dim.w >= widget->w);
+    assert(layout->row.pos.y + widget->h <= layout->base.pos.y + layout->base.dim.h);
 
-    layout->row.dim.w -= widget->dim.w;
-    layout->row.dim.h = legion_max(layout->row.dim.h, widget->dim.h);
+    layout->row.dim.w -= widget->w;
+    layout->row.dim.h = legion_max(layout->row.dim.h, widget->h);
 
-    widget->pos = layout->row.pos;
+    *widget = rect_set_pos(*widget, layout->row.pos);
 
     if ((layout->dir & ui_layout_hori_mask) == ui_layout_left_right)
-        layout->row.pos.x += widget->dim.w;
-    else widget->pos.x += layout->row.dim.w;
+        layout->row.pos.x += widget->w;
+    else widget->x += layout->row.dim.w;
 
     if ((layout->dir & ui_layout_vert_mask) == ui_layout_down_up)
-        widget->pos.y = layout->base.pos.y + layout->base.dim.h - widget->dim.h;
+        widget->y = layout->base.pos.y + layout->base.dim.h - widget->h;
 }
 
 struct ui_layout ui_layout_inner(struct ui_layout *layout)
@@ -62,10 +59,10 @@ struct ui_layout ui_layout_inner(struct ui_layout *layout)
     return ui_layout_new(layout->row.pos, layout->row.dim);
 }
 
-struct ui_layout ui_layout_split_x(struct ui_layout *layout, int16_t width)
+struct ui_layout ui_layout_split_x(struct ui_layout *layout, unit width)
 {
     assert(width <= layout->row.dim.w);
-    int16_t height = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
+    unit height = layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y);
 
     struct ui_layout inner =
         ui_layout_new(layout->row.pos, make_dim(width,  height));
@@ -85,10 +82,10 @@ struct ui_layout ui_layout_split_x(struct ui_layout *layout, int16_t width)
     return inner;
 }
 
-struct ui_layout ui_layout_split_y(struct ui_layout *layout, int16_t height)
+struct ui_layout ui_layout_split_y(struct ui_layout *layout, unit height)
 {
     assert(height <= layout->base.dim.h - (layout->row.pos.y - layout->base.pos.y));
-    int16_t width = layout->base.dim.w;
+    unit width = layout->base.dim.w;
 
     struct ui_layout inner =
         ui_layout_new(layout->row.pos, make_dim(width,  height));
@@ -106,7 +103,7 @@ struct ui_layout ui_layout_split_y(struct ui_layout *layout, int16_t height)
     return inner;
 }
 
-void ui_layout_sep_x(struct ui_layout *layout, int16_t px)
+void ui_layout_sep_x(struct ui_layout *layout, unit px)
 {
     assert(layout->row.dim.w >= px);
 
@@ -117,12 +114,12 @@ void ui_layout_sep_x(struct ui_layout *layout, int16_t px)
 
 void ui_layout_sep_col(struct ui_layout *layout)
 {
-    ui_layout_sep_x(layout, ui_st.font.dim.w);
+    ui_layout_sep_x(layout, engine_cell().w);
 }
 
 void ui_layout_sep_cols(struct ui_layout *layout, size_t n)
 {
-    ui_layout_sep_x(layout, n * ui_st.font.dim.w);
+    ui_layout_sep_x(layout, n * engine_cell().w);
 }
 
 void ui_layout_tab(struct ui_layout *layout, size_t n)
@@ -130,8 +127,8 @@ void ui_layout_tab(struct ui_layout *layout, size_t n)
     // \todo I don't have a need for it yet.
     assert(layout->dir == ui_layout_left_right);
 
-    int16_t w = n * ui_st.font.dim.w;
-    int16_t x = layout->base.pos.x + w;
+    unit w = n * engine_cell().w;
+    unit x = layout->base.pos.x + w;
 
     assert(w <= layout->base.dim.w);
     assert(x >= layout->row.pos.x);
@@ -140,16 +137,16 @@ void ui_layout_tab(struct ui_layout *layout, size_t n)
     layout->row.pos.x = x;
 }
 
-void ui_layout_mid(struct ui_layout *layout, int width)
+void ui_layout_mid(struct ui_layout *layout, unit width)
 {
-    int x = layout->base.pos.x + (layout->base.dim.w/2 - width/2);
+    unit x = layout->base.pos.x + (layout->base.dim.w/2 - width/2);
     assert(layout->row.pos.x < x);
     layout->row.pos.x = x;
     layout->row.dim.w = width;
 }
 
 
-void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
+void ui_layout_sep_y(struct ui_layout *layout, unit px)
 {
     assert(layout->row.dim.h == 0);
     assert(layout->row.pos.y + px <= layout->base.pos.y + layout->base.dim.h);
@@ -161,7 +158,7 @@ void ui_layout_sep_y(struct ui_layout *layout, int16_t px)
 
 void ui_layout_sep_row(struct ui_layout *layout)
 {
-    ui_layout_sep_y(layout, ui_st.font.dim.h);
+    ui_layout_sep_y(layout, engine_cell().h);
 }
 
 void ui_layout_next_row(struct ui_layout *layout)

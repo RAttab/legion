@@ -4,8 +4,7 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "game/log.h"
 #include "game/chunk.h"
 #include "game/world.h"
@@ -13,8 +12,8 @@
 static void ui_log_free(void *);
 static void ui_log_hide(void *);
 static void ui_log_update(void *);
-static bool ui_log_event(void *, SDL_Event *);
-static void ui_log_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_log_event(void *);
+static void ui_log_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -64,7 +63,7 @@ struct ui_logi ui_logi_alloc(void)
 
 void ui_log_alloc(struct ui_view_state *state)
 {
-    struct dim cell = ui_st.font.dim;
+    struct dim cell = engine_cell();
     cell.h *= 2;
 
     struct ui_log *ui = calloc(1, sizeof(*ui));
@@ -174,110 +173,97 @@ static void ui_log_update(void *state)
 }
 
 
-static bool ui_logi_event(struct ui_logi *ui, struct coord star, SDL_Event *ev)
+static void ui_logi_event(struct ui_logi *ui, struct coord star)
 {
-    enum ui_ret ret = ui_nil;
-
-    if (coord_is_nil(star) && (ret = ui_link_event(&ui->star, ev))) {
-        if (ret != ui_action) return true;
+    if (coord_is_nil(star) && ui_link_event(&ui->star)) {
         ui_star_show(ui->state.star);
         ui_map_show(ui->state.star);
-        return true;
     }
 
-    if ((ret = ui_link_event(&ui->id, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_link_event(&ui->id)) {
         struct coord coord = coord_is_nil(star) ? ui->state.star : star;
         ui_item_show(ui->state.id, coord);
         ui_map_goto(coord);
-        return true;
     }
-
-    return false;
 }
 
-static bool ui_log_event(void *state, SDL_Event *ev)
+static void ui_log_event(void *state)
 {
     struct ui_log *ui = state;
+    ui_scroll_event(&ui->scroll);
 
-    if (render_user_event_is(ev, ev_star_select)) {
+    for (auto ev = ev_select_star(); ev; ev = nullptr)
         if (!coord_is_nil(ui->coord))
-            ui_log_show(coord_from_u64((uintptr_t) ev->user.data1));
-    }
+            ui_log_show(ev->star);
 
-    if (ui_scroll_event(&ui->scroll, ev)) return true;
 
     size_t first = ui_scroll_first_row(&ui->scroll);
     size_t last = ui_scroll_last_row(&ui->scroll);
     for (size_t i = first; i < last; ++i)
-        if (ui_logi_event(ui->items + i, ui->coord, ev))
-            return true;
-
-    return false;
+        ui_logi_event(ui->items + i, ui->coord);
 }
 
 
 static void ui_logi_render(
         struct ui_log *ui,
         size_t row,
-        struct ui_layout *layout,
-        SDL_Renderer *renderer)
+        struct ui_layout *layout)
 {
     struct ui_logi *entry = ui->items + row;
 
+    const render_layer layer = render_layer_push(1);
+
     {
-        SDL_Rect rect = {
+        struct rect rect = {
             .x = layout->row.pos.x, .y = layout->row.pos.y,
             .w = layout->row.dim.w, .h = ui->cell.h,
         };
 
-        struct rgba rgba = ui_st.rgba.bg;
+        struct rgba bg =
+            ev_mouse_in(rect) ? ui_st.rgba.list.hover :
+            row % 2 == 1 ? ui_st.rgba.list.selected :
+            ui_st.rgba.bg;
 
-        if (ui_cursor_in(&rect))
-            rgba = ui_st.rgba.list.hover;
-        else if (row % 2 == 1)
-            rgba = ui_st.rgba.list.selected;
-
-        rgba_render(rgba, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
+        render_rect_fill(layer, bg, rect);
     }
 
     {
-        ui_label_render(&entry->time, layout, renderer);
+        ui_label_render(&entry->time, layout);
         ui_layout_sep_col(layout);
 
         if (!coord_is_nil(entry->state.star))
-            ui_link_render(&entry->star, layout, renderer);
-        else ui_layout_sep_x(layout, entry->star.w.dim.w);
+            ui_link_render(&entry->star, layout);
+        else ui_layout_sep_x(layout, entry->star.w.w);
         ui_layout_sep_col(layout);
 
-        ui_link_render(&entry->id, layout, renderer);
+        ui_link_render(&entry->id, layout);
         ui_layout_next_row(layout);
     }
 
     {
-        ui_layout_sep_x(layout, entry->time.w.dim.w);
+        ui_layout_sep_x(layout, entry->time.w.w);
         ui_layout_sep_col(layout);
 
-        ui_label_render(&entry->key, layout, renderer);
+        ui_label_render(&entry->key, layout);
         ui_layout_sep_col(layout);
 
-        ui_label_render(&entry->value, layout, renderer);
+        ui_label_render(&entry->value, layout);
         ui_layout_next_row(layout);
     }
+
+    render_layer_pop();
 }
 
-static void ui_log_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_log_render(void *state, struct ui_layout *layout)
 {
     struct ui_log *ui = state;
 
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout);
     if (ui_layout_is_nil(&inner)) return;
 
     size_t first = ui_scroll_first_row(&ui->scroll);
     size_t last = ui_scroll_last_row(&ui->scroll);
 
     for (size_t row = first; row < last; ++row)
-        ui_logi_render(ui, row, &inner, renderer);
+        ui_logi_render(ui, row, &inner);
 }

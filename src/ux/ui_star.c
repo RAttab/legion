@@ -4,8 +4,7 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "game/chunk.h"
 #include "game/energy.h"
 #include "db/items.h"
@@ -14,8 +13,8 @@
 
 static void ui_star_free(void *);
 static void ui_star_update(void *);
-static bool ui_star_event(void *, SDL_Event *);
-static void ui_star_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_star_event(void *);
+static void ui_star_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -95,9 +94,11 @@ enum ui_star_tabs { ui_star_control = 1, ui_star_factory, ui_star_logistics, };
 void ui_star_alloc(struct ui_view_state *state)
 {
     struct ui_star *ui = calloc(1, sizeof(*ui));
+
+    struct dim cell = engine_cell();
     *ui = (struct ui_star) {
         .panel = ui_panel_title(
-                make_dim(38 * ui_st.font.dim.w, ui_layout_inf),
+                make_dim(38 * cell.w, ui_layout_inf),
                 ui_str_c("star")),
 
         .goto_map = ui_button_new(ui_str_c("<< map")),
@@ -197,19 +198,19 @@ void ui_star_alloc(struct ui_view_state *state)
         },
     };
 
-    size_t goto_width = (ui->panel->w.dim.w - ui_st.font.dim.w) / 3;
-    ui->goto_map.w.dim.w = goto_width;
-    ui->goto_factory.w.dim.w = goto_width;
-    ui->goto_log.w.dim.w = goto_width;
+    size_t goto_width = (ui->panel->w.w - cell.w) / 3;
+    ui->goto_map.w.w = goto_width;
+    ui->goto_factory.w.w = goto_width;
+    ui->goto_log.w.w = goto_width;
 
     ui_str_setc(ui_tabs_add(&ui->tabs, ui_star_control), "control");
     ui_str_setc(ui_tabs_add(&ui->tabs, ui_star_factory), "factory");
     ui_str_setc(ui_tabs_add(&ui->tabs, ui_star_logistics), "logistics");
     ui_tabs_select(&ui->tabs, ui_star_control);
 
-    ui->pills.toggle.w.dim.w = ui_layout_inf;
-    ui->workers.toggle.w.dim.w = ui_layout_inf;
-    ui->energy_toggle.w.dim.w = ui_layout_inf;
+    ui->pills.toggle.w.w = ui_layout_inf;
+    ui->workers.toggle.w.w = ui_layout_inf;
+    ui->energy_toggle.w.w = ui_layout_inf;
 
     *state = (struct ui_view_state) {
         .state = ui,
@@ -325,8 +326,7 @@ void ui_star_show(struct coord star)
 
     ui_star_update(ui);
     ui_show(ui_view_star);
-    if (!coord_eq(old, star))
-        render_push_event(ev_star_select, coord_to_u64(star), 0);
+    if (!coord_eq(old, star)) ev_set_select_star(star);
 }
 
 static void ui_star_update_list(
@@ -335,7 +335,7 @@ static void ui_star_update_list(
     ui_tree_reset(tree);
 
     enum item item = item_nil;
-    ui_node parent = ui_node_nil;
+    ui_tree_node parent = ui_tree_node_nil;
     struct vec16 *ids = chunk_list_filter(chunk, filter);
 
     for (size_t i = 0; i < ids->len; ++i) {
@@ -344,7 +344,7 @@ static void ui_star_update_list(
         if (item != im_id_item(id)) {
             item = im_id_item(id);
             parent = ui_tree_index(tree);
-            ui_str_set_item(ui_tree_add(tree, ui_node_nil, make_im_id(item, 0)), item);
+            ui_str_set_item(ui_tree_add(tree, ui_tree_node_nil, make_im_id(item, 0)), item);
         }
 
         ui_str_set_id(ui_tree_add(tree, parent, id), id);
@@ -461,155 +461,95 @@ static void ui_star_update(void *state)
     }
 }
 
-static void ui_star_event_user(struct ui_star *ui, SDL_Event *ev)
-{
-    switch (ev->user.code)
-    {
-
-    case ev_item_select: {
-        struct coord coord = coord_from_u64((uintptr_t) ev->user.data2);
-        if (!coord_eq(coord, ui->id))
-            ui_star_show(coord);
-
-        im_id selected = (uintptr_t) ev->user.data1;
-        ui_tree_select(&ui->control_list, selected);
-        ui_tree_select(&ui->factory_list, selected);
-        return;
-    }
-
-    default: { return; }
-    }
-}
-
-
-static bool ui_star_event(void *state, SDL_Event *ev)
+static void ui_star_event(void *state)
 {
     struct ui_star *ui = state;
 
-    if (ev->type == render.event)
-        ui_star_event_user(ui, ev);
-
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_button_event(&ui->goto_map, ev))) {
-        if (ret != ui_action) return true;
-        ui_map_show(ui->id);
-        return true;
+    for (auto ev = ev_select_item(); ev; ev = nullptr) {
+        if (!coord_eq(ev->star, ui->id)) ui_star_show(ev->star);
+        ui_tree_select(&ui->control_list, ev->item);
+        ui_tree_select(&ui->factory_list, ev->item);
     }
 
-    if ((ret = ui_button_event(&ui->goto_factory, ev))) {
-        if (ret != ui_action) return true;
-        ui_factory_show(ui->id, 0);
-        return true;
-    }
+    if (ui_button_event(&ui->goto_map)) ui_map_show(ui->id);
+    if (ui_button_event(&ui->goto_factory)) ui_factory_show(ui->id, 0);
+    if (ui_button_event(&ui->goto_log)) ui_log_show(ui->id);
 
-    if ((ret = ui_button_event(&ui->goto_log, ev))) {
-        if (ret != ui_action) return true;
-        ui_log_show(ui->id);
-        return true;
-    }
-
-    if ((ret = ui_link_event(&ui->coord_val, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_link_event(&ui->coord_val))
         ui_clipboard_copy_hex(coord_to_u64(ui->star.coord));
-        return true;
-    }
 
-    if ((ret = ui_tabs_event(&ui->tabs, ev))) return ret;
-
+    ui_tabs_event(&ui->tabs);
     switch (ui_tabs_selected(&ui->tabs))
     {
 
     case ui_star_control: {
-        if ((ret = ui_tree_event(&ui->control_list, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_tree_event(&ui->control_list)) {
             im_id id = ui->control_list.selected;
-            if (ret == ui_action && im_id_seq(id))
-                ui_item_show(id, ui->id);
-            return true;
+            if (im_id_seq(id)) ui_item_show(id, ui->id);
         }
         break;
     }
 
     case ui_star_factory: {
-        if ((ret = ui_tree_event(&ui->factory_list, ev))) {
-            if (ret != ui_action) return true;
+        if (ui_tree_event(&ui->factory_list)) {
             im_id id = ui->factory_list.selected;
-            if (ret == ui_action && im_id_seq(id))
-                ui_item_show(id, ui->id);
-            return true;
+            if (im_id_seq(id)) ui_item_show(id, ui->id);
         }
         break;
     }
 
     case ui_star_logistics: {
-        if ((ret = ui_button_event(&ui->pills.toggle, ev))) {
-            if (ret != ui_action) return true;
-            ui_pills_show(ui->id);
-            return true;
-        }
-
-        if ((ret = ui_button_event(&ui->workers.toggle, ev))) {
-            if (ret != ui_action) return true;
-            ui_workers_show(ui->id);
-            return true;
-        }
-
-        if ((ret = ui_button_event(&ui->energy_toggle, ev))) {
-            if (ret != ui_action) return true;
-            ui_energy_show(ui->id);
-            return true;
-        }
+        if (ui_button_event(&ui->pills.toggle)) ui_pills_show(ui->id);
+        if (ui_button_event(&ui->workers.toggle)) ui_workers_show(ui->id);
+        if (ui_button_event(&ui->energy_toggle)) ui_energy_show(ui->id);
         break;
     }
 
     default: { assert(false); }
     }
-
-    return false;
 }
 
-static void ui_star_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_star_render(void *state, struct ui_layout *layout)
 {
     struct ui_star *ui = state;
 
-    ui_button_render(&ui->goto_log, layout, renderer);
-    ui_button_render(&ui->goto_map, layout, renderer);
-    ui_button_render(&ui->goto_factory, layout, renderer);
+    ui_button_render(&ui->goto_log, layout);
+    ui_button_render(&ui->goto_map, layout);
+    ui_button_render(&ui->goto_factory, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->name, layout, renderer);
-    ui_label_render(&ui->name_val, layout, renderer);
+    ui_label_render(&ui->name, layout);
+    ui_label_render(&ui->name_val, layout);
     ui_layout_next_row(layout);
-    ui_label_render(&ui->coord, layout, renderer);
-    ui_link_render(&ui->coord_val, layout, renderer);
+    ui_label_render(&ui->coord, layout);
+    ui_link_render(&ui->coord_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
+    struct dim cell = engine_cell();
     {
         uint32_t energy = ui->star.energy;
         ui_str_set_scaled(&ui->energy_val.str, energy);
         ui->energy_val.s.fg = rgba_gray(0x11 * u64_log2(energy));
 
-        ui_label_render(&ui->energy, layout, renderer);
-        ui_label_render(&ui->energy_val, layout, renderer);
+        ui_label_render(&ui->energy, layout);
+        ui_label_render(&ui->energy_val, layout);
         ui_layout_next_row(layout);
 
         for (size_t i = 0; i < items_natural_len; ++i) {
             if (i == items_natural_len-1)
-                ui_layout_sep_x(layout,
-                        (ui_star_elems_col_len+1)*2 * ui_st.font.dim.w);
+                ui_layout_sep_x(layout, (ui_star_elems_col_len+1)*2 * cell.w);
 
             ui_str_setc(&ui->elem.str, ui_star_elems[i]);
-            ui_label_render(&ui->elem, layout, renderer);
+            ui_label_render(&ui->elem, layout);
 
             uint16_t value = ui->star.elems[i];
             ui_str_set_scaled(&ui->elem_val.str, value);
             ui->elem_val.s.fg = rgba_gray(0x11 * u64_log2(value));
-            ui_label_render(&ui->elem_val, layout, renderer);
+            ui_label_render(&ui->elem_val, layout);
 
             size_t col = i % 5;
             if (col < 4) ui_layout_sep_col(layout);
@@ -620,125 +560,125 @@ static void ui_star_render(
         ui_layout_sep_row(layout);
     }
 
-    ui_tabs_render(&ui->tabs, layout, renderer);
+    ui_tabs_render(&ui->tabs, layout);
     ui_layout_next_row(layout);
 
     switch (ui_tabs_selected(&ui->tabs))
     {
 
     case ui_star_control: {
-        ui_tree_render(&ui->control_list, layout, renderer);
+        ui_tree_render(&ui->control_list, layout);
         break;
     }
 
     case ui_star_factory: {
-        ui_tree_render(&ui->factory_list, layout, renderer);
+        ui_tree_render(&ui->factory_list, layout);
         break;
     }
 
     case ui_star_logistics: {
-        ui_button_render(&ui->pills.toggle, layout, renderer);
+        ui_button_render(&ui->pills.toggle, layout);
         ui_layout_next_row(layout);
-        ui_label_render(&ui->pills.count, layout, renderer);
-        ui_label_render(&ui->pills.count_val, layout, renderer);
-        ui_layout_next_row(layout);
-
-        ui_layout_sep_row(layout);
-
-        ui_button_render(&ui->workers.toggle, layout, renderer);
-        ui_layout_next_row(layout);
-        ui_label_render(&ui->workers.count, layout, renderer);
-        ui_label_render(&ui->workers.count_val, layout, renderer);
-        ui_layout_next_row(layout);
-        ui_label_render(&ui->workers.queue, layout, renderer);
-        ui_label_render(&ui->workers.queue_val, layout, renderer);
-        ui_layout_next_row(layout);
-        ui_label_render(&ui->workers.idle, layout, renderer);
-        ui_label_render(&ui->workers.idle_val, layout, renderer);
-        ui_layout_next_row(layout);
-        ui_label_render(&ui->workers.fail, layout, renderer);
-        ui_label_render(&ui->workers.fail_val, layout, renderer);
-        ui_layout_next_row(layout);
-        ui_label_render(&ui->workers.clean, layout, renderer);
-        ui_label_render(&ui->workers.clean_val, layout, renderer);
+        ui_label_render(&ui->pills.count, layout);
+        ui_label_render(&ui->pills.count_val, layout);
         ui_layout_next_row(layout);
 
         ui_layout_sep_row(layout);
 
-        ui_button_render(&ui->energy_toggle, layout, renderer);
+        ui_button_render(&ui->workers.toggle, layout);
         ui_layout_next_row(layout);
-        ui_label_render(&ui->need, layout, renderer);
-        ui_label_render(&ui->need_val, layout, renderer);
+        ui_label_render(&ui->workers.count, layout);
+        ui_label_render(&ui->workers.count_val, layout);
         ui_layout_next_row(layout);
-        ui_label_render(&ui->consumed, layout, renderer);
-        ui_label_render(&ui->consumed_val, layout, renderer);
+        ui_label_render(&ui->workers.queue, layout);
+        ui_label_render(&ui->workers.queue_val, layout);
         ui_layout_next_row(layout);
-        ui_label_render(&ui->produced, layout, renderer);
-        ui_label_render(&ui->produced_val, layout, renderer);
+        ui_label_render(&ui->workers.idle, layout);
+        ui_label_render(&ui->workers.idle_val, layout);
         ui_layout_next_row(layout);
-        ui_label_render(&ui->stored, layout, renderer);
-        ui_label_render(&ui->stored_val, layout, renderer);
+        ui_label_render(&ui->workers.fail, layout);
+        ui_label_render(&ui->workers.fail_val, layout);
+        ui_layout_next_row(layout);
+        ui_label_render(&ui->workers.clean, layout);
+        ui_label_render(&ui->workers.clean_val, layout);
+        ui_layout_next_row(layout);
+
+        ui_layout_sep_row(layout);
+
+        ui_button_render(&ui->energy_toggle, layout);
+        ui_layout_next_row(layout);
+        ui_label_render(&ui->need, layout);
+        ui_label_render(&ui->need_val, layout);
+        ui_layout_next_row(layout);
+        ui_label_render(&ui->consumed, layout);
+        ui_label_render(&ui->consumed_val, layout);
+        ui_layout_next_row(layout);
+        ui_label_render(&ui->produced, layout);
+        ui_label_render(&ui->produced_val, layout);
+        ui_layout_next_row(layout);
+        ui_label_render(&ui->stored, layout);
+        ui_label_render(&ui->stored_val, layout);
         ui_layout_next_row(layout);
 
         if (ui->fusion.show) {
             ui_layout_sep_row(layout);
-            ui_label_render(&ui->fusion.name, layout, renderer);
-            ui_label_render(&ui->fusion.count, layout, renderer);
+            ui_label_render(&ui->fusion.name, layout);
+            ui_label_render(&ui->fusion.count, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->fusion.prod, layout, renderer);
-            ui_label_render(&ui->fusion.prod_val, layout, renderer);
+            ui_label_render(&ui->fusion.prod, layout);
+            ui_label_render(&ui->fusion.prod_val, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->fusion.total, layout, renderer);
-            ui_label_render(&ui->fusion.total_val, layout, renderer);
+            ui_label_render(&ui->fusion.total, layout);
+            ui_label_render(&ui->fusion.total_val, layout);
             ui_layout_next_row(layout);
         }
 
         if (ui->solar.show) {
             ui_layout_sep_row(layout);
-            ui_label_render(&ui->solar.name, layout, renderer);
-            ui_label_render(&ui->solar.count, layout, renderer);
+            ui_label_render(&ui->solar.name, layout);
+            ui_label_render(&ui->solar.count, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->solar.prod, layout, renderer);
-            ui_label_render(&ui->solar.prod_val, layout, renderer);
+            ui_label_render(&ui->solar.prod, layout);
+            ui_label_render(&ui->solar.prod_val, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->solar.total, layout, renderer);
-            ui_label_render(&ui->solar.total_val, layout, renderer);
+            ui_label_render(&ui->solar.total, layout);
+            ui_label_render(&ui->solar.total_val, layout);
             ui_layout_next_row(layout);
         }
 
         if (ui->burner.show) {
             ui_layout_sep_row(layout);
-            ui_label_render(&ui->burner.name, layout, renderer);
-            ui_label_render(&ui->burner.count, layout, renderer);
+            ui_label_render(&ui->burner.name, layout);
+            ui_label_render(&ui->burner.count, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->burner.total, layout, renderer);
-            ui_label_render(&ui->burner.total_val, layout, renderer);
+            ui_label_render(&ui->burner.total, layout);
+            ui_label_render(&ui->burner.total_val, layout);
             ui_layout_next_row(layout);
         }
 
         if (ui->kwheel.show) {
             ui_layout_sep_row(layout);
-            ui_label_render(&ui->kwheel.name, layout, renderer);
-            ui_label_render(&ui->kwheel.count, layout, renderer);
+            ui_label_render(&ui->kwheel.name, layout);
+            ui_label_render(&ui->kwheel.count, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->kwheel.prod, layout, renderer);
-            ui_label_render(&ui->kwheel.prod_val, layout, renderer);
+            ui_label_render(&ui->kwheel.prod, layout);
+            ui_label_render(&ui->kwheel.prod_val, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->kwheel.total, layout, renderer);
-            ui_label_render(&ui->kwheel.total_val, layout, renderer);
+            ui_label_render(&ui->kwheel.total, layout);
+            ui_label_render(&ui->kwheel.total_val, layout);
             ui_layout_next_row(layout);
         }
 
         if (ui->battery.show) {
             ui_layout_sep_row(layout);
-            ui_label_render(&ui->battery.name, layout, renderer);
-            ui_label_render(&ui->battery.count, layout, renderer);
+            ui_label_render(&ui->battery.name, layout);
+            ui_label_render(&ui->battery.count, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->battery.prod, layout, renderer);
-            ui_label_render(&ui->battery.prod_val, layout, renderer);
+            ui_label_render(&ui->battery.prod, layout);
+            ui_label_render(&ui->battery.prod_val, layout);
             ui_layout_next_row(layout);
-            ui_label_render(&ui->battery.total, layout, renderer);
-            ui_label_render(&ui->battery.total_val, layout, renderer);
+            ui_label_render(&ui->battery.total, layout);
+            ui_label_render(&ui->battery.total_val, layout);
             ui_layout_next_row(layout);
         }
 

@@ -163,97 +163,90 @@ static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)
     else ui_str_set_coord_name(ui_set(&ui->has.origin_val), port->origin);
 }
 
-static bool ui_port_event(void *_ui, const SDL_Event *ev)
+static void ui_port_event(void *_ui)
 {
     struct ui_port *ui = _ui;
 
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_link_event(&ui->input.coord_val, ev))) {
-        if (ret == ui_action && !coord_is_nil(ui->state.coord)) {
+    if (ui_link_event(&ui->input.coord_val)) {
+        if (!coord_is_nil(ui->state.coord)) {
             ui_star_show(ui->state.coord);
             ui_map_show(ui->state.coord);
         }
-        return true;
     }
 
-    if ((ret = ui_link_event(&ui->want.target_val, ev))) {
-        if (ret == ui_action && !coord_is_nil(ui->state.target)) {
+    if (ui_link_event(&ui->want.target_val)) {
+        if (!coord_is_nil(ui->state.target)) {
             ui_star_show(ui->state.target);
             ui_map_show(ui->state.target);
         }
-        return true;
     }
 
-    if ((ret = ui_link_event(&ui->has.origin_val, ev))) {
-        if (ret == ui_action && !coord_is_nil(ui->state.origin)) {
+    if (ui_link_event(&ui->has.origin_val)) {
+        if (!coord_is_nil(ui->state.origin)) {
             ui_star_show(ui->state.origin);
             ui_map_show(ui->state.origin);
         }
-        return true;
     }
-
-    return false;
 }
 
-static void ui_port_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_port_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_port *ui = _ui;
 
-    ui_label_render(&ui->status, layout, renderer);
-    ui_label_render(&ui->status_val, layout, renderer);
+    ui_label_render(&ui->status, layout);
+    ui_label_render(&ui->status_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
     { // input
-        ui_label_render(&ui->input.head, layout, renderer);
+        ui_label_render(&ui->input.head, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->item, layout, renderer);
-        ui_label_render(&ui->input.item, layout, renderer);
+        ui_label_render(&ui->item, layout);
+        ui_label_render(&ui->input.item, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->input.coord, layout, renderer);
-        ui_link_render(&ui->input.coord_val, layout, renderer);
+        ui_label_render(&ui->input.coord, layout);
+        ui_link_render(&ui->input.coord_val, layout);
         ui_layout_next_row(layout);
     }
 
     ui_layout_sep_row(layout);
 
     { // want
-        ui_label_render(&ui->want.head, layout, renderer);
+        ui_label_render(&ui->want.head, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->item, layout, renderer);
-        ui_label_render(&ui->want.item, layout, renderer);
+        ui_label_render(&ui->item, layout);
+        ui_label_render(&ui->want.item, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->count, layout, renderer);
-        ui_label_render(&ui->want.count, layout, renderer);
+        ui_label_render(&ui->count, layout);
+        ui_label_render(&ui->want.count, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->want.target, layout, renderer);
-        ui_link_render(&ui->want.target_val, layout, renderer);
+        ui_label_render(&ui->want.target, layout);
+        ui_link_render(&ui->want.target_val, layout);
         ui_layout_next_row(layout);
     }
 
     ui_layout_sep_row(layout);
 
     { // has
-        ui_label_render(&ui->has.head, layout, renderer);
+        ui_label_render(&ui->has.head, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->item, layout, renderer);
-        ui_label_render(&ui->has.item, layout, renderer);
+        ui_label_render(&ui->item, layout);
+        ui_label_render(&ui->has.item, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->count, layout, renderer);
-        ui_label_render(&ui->has.count, layout, renderer);
+        ui_label_render(&ui->count, layout);
+        ui_label_render(&ui->has.count, layout);
         ui_layout_next_row(layout);
 
-        ui_label_render(&ui->has.origin, layout, renderer);
-        ui_link_render(&ui->has.origin_val, layout, renderer);
+        ui_label_render(&ui->has.origin, layout);
+        ui_link_render(&ui->has.origin_val, layout);
         ui_layout_next_row(layout);
     }
 }

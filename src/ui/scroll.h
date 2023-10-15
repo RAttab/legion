@@ -5,9 +5,6 @@
 
 #pragma once
 
-#include "types.h"
-
-
 // -----------------------------------------------------------------------------
 // scroll
 // -----------------------------------------------------------------------------
@@ -15,7 +12,7 @@
 struct ui_scroll_style
 {
     struct rgba fg, bg;
-    int16_t width;
+    unit width;
 };
 
 void ui_scroll_style_default(struct ui_style *);
@@ -24,12 +21,12 @@ enum ui_scroll_drag { ui_scroll_nil = 0, ui_scroll_rows, ui_scroll_cols, };
 
 struct ui_scroll
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_scroll_style s;
 
     struct dim cell;
     struct { bool show; size_t first, total, visible; } rows, cols;
-    struct { enum ui_scroll_drag type; int16_t start, bar; } drag;
+    struct { enum ui_scroll_drag type; unit start, bar; } drag;
     struct rowcol center;
 };
 
@@ -53,8 +50,8 @@ size_t ui_scroll_last_col(const struct ui_scroll *);
 void ui_scroll_visible(struct ui_scroll *, size_t row, size_t col);
 void ui_scroll_center(struct ui_scroll *, size_t row, size_t col);
 
-enum ui_ret ui_scroll_event(struct ui_scroll *, const SDL_Event *);
-struct ui_layout ui_scroll_render(struct ui_scroll *, struct ui_layout *, SDL_Renderer *);
+void ui_scroll_event(struct ui_scroll *);
+struct ui_layout ui_scroll_render(struct ui_scroll *, struct ui_layout *);
 
 
 

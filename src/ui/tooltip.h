@@ -5,39 +5,23 @@
 
 #pragma once
 
-#include "types.h"
-#include "str.h"
-
-
 // -----------------------------------------------------------------------------
 // tooltip
 // -----------------------------------------------------------------------------
 
 struct ui_tooltip_style
 {
-    const struct font *font;
+    enum render_font font;
     struct rgba fg, bg, border;
     struct dim pad;
 };
 
 void ui_tooltip_style_default(struct ui_style *);
 
+void ui_tooltip_init(void);
+void ui_tooltip_free(void);
 
-struct ui_tooltip
-{
-    struct ui_widget w;
-    struct ui_tooltip_style s;
-    struct ui_str str;
+void ui_tooltip_set(struct rect, struct ui_str);
+void ui_tooltip_unset(void);
 
-    SDL_Rect rect;
-    bool disabled;
-};
-
-struct ui_tooltip ui_tooltip_new(struct ui_str, SDL_Rect);
-void ui_tooltip_free(struct ui_tooltip *);
-
-void ui_tooltip_show(struct ui_tooltip *);
-void ui_tooltip_hide(struct ui_tooltip *);
-
-enum ui_ret ui_tooltip_event(struct ui_tooltip *, const SDL_Event *);
-void ui_tooltip_render(struct ui_tooltip *, SDL_Renderer *);
+void ui_tooltip_render(void);

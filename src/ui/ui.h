@@ -6,7 +6,34 @@
 #pragma once
 
 #include "common.h"
-#include "types.h"
+#include "engine/engine.h"
+
+#include "utils/time.h"
+#include "utils/str.h"
+
+// -----------------------------------------------------------------------------
+// types
+// -----------------------------------------------------------------------------
+
+
+struct ui_style;
+struct ui_panel;
+struct ui_layout;
+
+enum ui_align : uint8_t
+{
+    ui_align_left = 0,
+    ui_align_center,
+    ui_align_right,
+};
+
+typedef struct rect ui_widget;
+inline ui_widget make_ui_widget(struct dim d) { return make_rect(0, 0, d.w, d.h); }
+
+
+// -----------------------------------------------------------------------------
+// implementation
+// -----------------------------------------------------------------------------
 
 #include "clipboard.h"
 #include "layout.h"

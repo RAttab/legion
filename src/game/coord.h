@@ -12,7 +12,7 @@
 // coord
 // -----------------------------------------------------------------------------
 
-enum
+enum : uint32_t
 {
     coord_sector_bits = 16,
     coord_sector_size = 1 << coord_sector_bits,
@@ -205,21 +205,25 @@ inline struct coord coord_rect_next_area(
 // -----------------------------------------------------------------------------
 
 typedef int64_t coord_scale;
-enum { coord_scale_base = 1 << 8 };
+enum : coord_scale
+{
+    coord_scale_bits = 4,
+    coord_scale_min = 1 << coord_scale_bits,
+};
 
-inline coord_scale coord_scale_init() { return coord_scale_base; }
+inline coord_scale coord_scale_init() { return coord_scale_min; }
 
 coord_scale coord_scale_inc(coord_scale scale, int dir);
 
 inline int64_t coord_scale_mult(coord_scale scale, int64_t value)
 {
-    return (value * scale) / coord_scale_base;
+    return (value * scale) / coord_scale_min;
 }
 
 inline int64_t coord_scale_div(coord_scale scale, int64_t value)
 {
-    return (value * coord_scale_base) / scale;
+    return (value * coord_scale_min) / scale;
 }
 
-enum { coord_scale_str_len = 1+2+1+2 };
+constexpr size_t coord_scale_str_len = 1+2+1+2;
 size_t coord_scale_str(coord_scale, char *str, size_t len);

@@ -116,51 +116,43 @@ static void ui_prober_update(void *_ui, struct chunk *chunk, im_id id)
 }
 
 
-static bool ui_prober_event(void *_ui, const SDL_Event *ev)
+static void ui_prober_event(void *_ui)
 {
     struct ui_prober *ui = _ui;
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_link_event(&ui->coord_val, ev))) {
-        if (ret != ui_action) return true;
+    if (ui_link_event(&ui->coord_val))
         ui_clipboard_copy_hex(coord_to_u64(ui->state.coord));
-        return true;
-    }
-
-    return false;
 }
 
 
-static void ui_prober_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_prober_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_prober *ui = _ui;
 
-    ui_label_render(&ui->coord, layout, renderer);
-    ui_link_render(&ui->coord_val, layout, renderer);
+    ui_label_render(&ui->coord, layout);
+    ui_link_render(&ui->coord_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->item, layout, renderer);
-    ui_label_render(&ui->item_val, layout, renderer);
+    ui_label_render(&ui->item, layout);
+    ui_label_render(&ui->item_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->status, layout, renderer);
-    ui_label_render(&ui->status_val, layout, renderer);
+    ui_label_render(&ui->status, layout);
+    ui_label_render(&ui->status_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->work, layout, renderer);
+    ui_label_render(&ui->work, layout);
     if (ui->state.item) {
-        ui_label_render(&ui->work_left, layout, renderer);
-        ui_label_render(&ui->work_sep, layout, renderer);
+        ui_label_render(&ui->work_left, layout);
+        ui_label_render(&ui->work_sep, layout);
     }
-    ui_label_render(&ui->work_cap, layout, renderer);
+    ui_label_render(&ui->work_cap, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->result, layout, renderer);
-    ui_label_render(&ui->result_val, layout, renderer);
+    ui_label_render(&ui->result, layout);
+    ui_label_render(&ui->result_val, layout);
     ui_layout_next_row(layout);
 }

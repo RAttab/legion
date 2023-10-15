@@ -4,16 +4,15 @@
 */
 
 #include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
+#include "ux/ui.h"
 #include "game/chunk.h"
 #include "game/energy.h"
 
 static void ui_energy_free(void *);
 static void ui_energy_update_state(void *);
 static void ui_energy_update_frame(void *);
-static bool ui_energy_event(void *, SDL_Event *);
-static void ui_energy_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_energy_event(void *);
+static void ui_energy_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -57,11 +56,12 @@ void ui_energy_alloc(struct ui_view_state *state)
     };
 
     struct ui_energy *ui = calloc(1, sizeof(*ui));
+    struct dim cell = engine_cell();
     *ui = (struct ui_energy) {
         .star = coord_nil(),
 
         .panel = ui_panel_title(
-                make_dim(77 * ui_st.font.dim.w, ui_layout_inf),
+                make_dim(77 * cell.w, ui_layout_inf),
                 ui_str_c("energy")),
 
         .histo = ui_histo_new(
@@ -143,22 +143,19 @@ static void ui_energy_update_frame(void *state)
     ui_histo_update_legend(&ui->histo);
 }
 
-static bool ui_energy_event(void *state, SDL_Event *ev)
+static void ui_energy_event(void *state)
 {
     struct ui_energy *ui = state;
 
-    if (render_user_event_is(ev, ev_star_select)) {
-        struct coord new = coord_from_u64((uintptr_t) ev->user.data1);
-        if (!coord_eq(ui->star, new)) ui_energy_show(new);
-    }
+    for (auto ev = ev_select_star(); ev; ev = nullptr)
+        if (!coord_eq(ui->star, ev->star))
+            ui_energy_show(ev->star);
 
-    if (ui_histo_event(&ui->histo, ev)) return true;
-    return false;
+    ui_histo_event(&ui->histo);
 }
 
-static void ui_energy_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_energy_render(void *state, struct ui_layout *layout)
 {
     struct ui_energy *ui = state;
-    ui_histo_render(&ui->histo, layout, renderer);
+    ui_histo_render(&ui->histo, layout);
 }

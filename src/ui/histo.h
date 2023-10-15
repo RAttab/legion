@@ -5,12 +5,6 @@
 
 #pragma once
 
-#include "types.h"
-#include "label.h"
-#include "input.h"
-#include "button.h"
-
-
 // -----------------------------------------------------------------------------
 // histo
 // -----------------------------------------------------------------------------
@@ -21,10 +15,10 @@ struct ui_histo_style
 {
     struct dim pad;
     struct rgba edge, border;
-    struct { int16_t h, pad; } row;
+    struct { unit h, pad; } row;
     struct { struct rgba fg, bg; } hover;
     struct { struct dim pad; struct rgba fg; } axes;
-    struct { const struct font *font; struct rgba fg, bg; } value;
+    struct { enum render_font font; struct rgba fg, bg; } value;
 };
 
 void ui_histo_style_default(struct ui_style *);
@@ -46,17 +40,17 @@ struct ui_histo_legend
 
 struct ui_histo
 {
-    struct ui_widget w;
+    ui_widget w;
     struct ui_histo_style s;
 
     struct pos inner;
     struct dim row;
-    int16_t legend_h;
+    unit legend_h;
 
     struct { ui_histo_data bound; } v;
     struct { ui_histo_data scale; } t;
     struct { ui_histo_data t; size_t row; } edge;
-    struct { ui_histo_data t, v; size_t row; int16_t x; bool active; } hover;
+    struct { ui_histo_data t, v; size_t row; unit x; bool active; } hover;
     struct {
         size_t len, cols, rows;
         ui_histo_data *data;
@@ -91,5 +85,5 @@ void ui_histo_push(struct ui_histo *, size_t series, ui_histo_data v);
 
 void ui_histo_update_legend(struct ui_histo *);
 
-enum ui_ret ui_histo_event(struct ui_histo *, const SDL_Event *);
-void ui_histo_render(struct ui_histo *, struct ui_layout *, SDL_Renderer *);
+void ui_histo_event(struct ui_histo *);
+void ui_histo_render(struct ui_histo *, struct ui_layout *);

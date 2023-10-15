@@ -3,10 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "histo.h"
 #include "game/proxy.h"
-#include "render/render.h"
-
 
 // -----------------------------------------------------------------------------
 // style
@@ -32,7 +29,7 @@ void ui_histo_style_default(struct ui_style *s)
         },
 
         .value = {
-            .font = ui_st.font.base,
+            .font = font_base,
             .fg = ui_st.rgba.fg,
             .bg = ui_st.rgba.bg,
         },
@@ -47,13 +44,12 @@ void ui_histo_style_default(struct ui_style *s)
 enum { ui_histo_val_len = 6 };
 
 struct ui_histo ui_histo_new(
-        struct dim dim,
-        const struct ui_histo_series *list, size_t len)
+        struct dim dim, const struct ui_histo_series *list, size_t len)
 {
     struct ui_histo_style *s = &ui_st.histo;
 
     struct ui_histo histo = (struct ui_histo) {
-        .w = ui_widget_new(dim.w, dim.h),
+        .w = make_ui_widget(dim),
         .s = *s,
 
         .v = { .bound = 1 },
@@ -103,7 +99,7 @@ struct ui_histo ui_histo_new(
     }
 
     histo.legend.rows = legion_max(histo.legend.rows, len - col_start);
-    histo.legend_h = histo.s.value.font->glyph_h * (3 + histo.legend.rows);
+    histo.legend_h = engine_cell().h * (3 + histo.legend.rows);
 
     ui_input_set(&histo.legend.scale.val, "1");
     return histo;
@@ -131,19 +127,19 @@ void ui_histo_free(struct ui_histo *histo)
 
 }
 
-static void ui_histo_init(struct ui_histo *histo, struct pos pos, struct dim dim)
+static void ui_histo_init(struct ui_histo *histo, struct rect rect)
 {
 
-    int16_t side = histo->s.pad.w + histo->s.axes.pad.w;
-    int16_t head =
+    unit side = histo->s.pad.w + histo->s.axes.pad.w;
+    unit head =
         histo->legend_h +
         histo->s.pad.h +
         histo->s.axes.pad.h +
-        histo->s.value.font->glyph_h;
-    histo->inner = make_pos(pos.x + side, pos.y + head);
+        engine_cell().h;
+    histo->inner = make_pos(rect.x + side, rect.y + head);
 
-    int16_t width = dim.w - side - histo->s.pad.w;
-    int16_t height = dim.h - head - histo->s.pad.h;
+    unit width = rect.w - side - histo->s.pad.w;
+    unit height = rect.h - head - histo->s.pad.h;
 
     histo->row = make_dim(width, (histo->s.row.h * histo->series.cols)  + histo->s.row.pad);
     histo->series.rows = height / histo->row.h;
@@ -276,37 +272,28 @@ static void ui_histo_scale_set(struct ui_histo *histo)
             histo->legend.scale.val.buf.c);
 }
 
-enum ui_ret ui_histo_event(struct ui_histo *histo, const SDL_Event *ev)
+void ui_histo_event(struct ui_histo *histo)
 {
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_input_event(&histo->legend.scale.val, ev))) {
-        if (ret != ui_action) return ret;
+    if (ui_input_event(&histo->legend.scale.val))
         ui_histo_scale_set(histo);
-        return ret;
-    }
 
-    if ((ret = ui_button_event(&histo->legend.scale.set, ev))) {
-        if (ret != ui_action) return ret;
+    if (ui_button_event(&histo->legend.scale.set))
         ui_histo_scale_set(histo);
-        return ret;
-    }
 
-    switch (ev->type) {
+    for (auto ev = ev_mouse(); ev; ev = nullptr) {
+        if (!histo->series.data) continue;
 
-    case SDL_MOUSEMOTION: {
-        if (!histo->series.data) return ui_nil;
-
-        SDL_Point cursor = ui_cursor_point();
-        struct SDL_Rect inner = {
+        struct pos cursor = ev_mouse_pos();
+        struct rect inner = {
             .x = histo->inner.x,
             .y = histo->inner.y,
             .w = histo->row.w,
             .h = histo->row.h * histo->series.rows,
         };
 
-        if (!SDL_PointInRect(&cursor, &inner)) {
+        if (!rect_contains(inner, cursor)) {
             histo->hover.active = false;
-            return ui_nil;
+            continue;
         }
 
         histo->hover.active = true;
@@ -317,37 +304,31 @@ enum ui_ret ui_histo_event(struct ui_histo *histo, const SDL_Event *ev)
         histo->hover.x = cursor.x;
 
         ui_histo_update_legend(histo);
-        break;
     }
-
-    default: { break; }
-    }
-
-    return ui_nil;
 }
 
-static void ui_histo_render_legend(
-        struct ui_histo *histo, SDL_Renderer *renderer)
+static void ui_histo_render_legend(struct ui_histo *histo)
 {
     struct ui_layout layout = ui_layout_new(
-            histo->w.pos, make_dim(histo->w.dim.w, histo->legend_h));
+            rect_pos(histo->w),
+            make_dim(histo->w.w, histo->legend_h));
 
     size_t tab_col = layout.base.dim.w
-        / histo->s.value.font->glyph_w
+        / engine_cell().w
         / histo->series.cols;
     size_t tab_data = 12;
 
     {
         ui_layout_tab(&layout, (0 * tab_col));
-        ui_label_render(&histo->legend.time, &layout, renderer);
+        ui_label_render(&histo->legend.time, &layout);
         ui_layout_tab(&layout, (0 * tab_col) + tab_data);
-        ui_label_render(&histo->legend.time_val, &layout, renderer);
+        ui_label_render(&histo->legend.time_val, &layout);
 
         ui_layout_tab(&layout, (1 * tab_col));
-        ui_label_render(&histo->legend.scale.label, &layout, renderer);
+        ui_label_render(&histo->legend.scale.label, &layout);
         ui_layout_tab(&layout, (1 * tab_col) + tab_data);
-        ui_input_render(&histo->legend.scale.val, &layout, renderer);
-        ui_button_render(&histo->legend.scale.set, &layout, renderer);
+        ui_input_render(&histo->legend.scale.val, &layout);
+        ui_button_render(&histo->legend.scale.set, &layout);
 
         ui_layout_next_row(&layout);
         ui_layout_sep_row(&layout);
@@ -383,14 +364,14 @@ static void ui_histo_render_legend(
             struct ui_histo_legend *legend = histo->legend.list + it[col];
 
             ui_layout_tab(&layout, (col * tab_col));
-            ui_label_render(&legend->name, &layout, renderer);
+            ui_label_render(&legend->name, &layout);
 
             ui_layout_tab(&layout, (col * tab_col) + tab_data);
-            ui_label_render(&legend->val, &layout, renderer);
+            ui_label_render(&legend->val, &layout);
 
             ui_layout_sep_cols(&layout, 2);
-            ui_label_render(&legend->tick, &layout, renderer);
-            ui_label_render(&histo->legend.per_tick, &layout, renderer);
+            ui_label_render(&legend->tick, &layout);
+            ui_label_render(&histo->legend.per_tick, &layout);
 
             it[col]++;
         }
@@ -400,64 +381,61 @@ static void ui_histo_render_legend(
     }
 }
 
-void ui_histo_render(
-        struct ui_histo *histo,
-        struct ui_layout *layout,
-        SDL_Renderer *renderer)
+void ui_histo_render(struct ui_histo *histo, struct ui_layout *layout)
 {
     ui_layout_add(layout, &histo->w);
-    if (!histo->series.data)
-        ui_histo_init(histo, histo->w.pos, histo->w.dim);
+    if (!histo->series.data) ui_histo_init(histo, histo->w);
 
-    ui_histo_render_legend(histo, renderer);
+    ui_histo_render_legend(histo);
     ui_histo_update_v_bound(histo);
 
-    const int16_t up = histo->w.pos.y + histo->legend_h + histo->s.pad.h;
-    const int16_t down = histo->w.pos.y + histo->w.dim.h - histo->s.pad.h;
-    const int16_t left = histo->w.pos.x + histo->s.pad.w;
-    const int16_t right = histo->w.pos.x + histo->w.dim.w - histo->s.pad.w;
+    struct dim cell = engine_cell();
+    const unit up = histo->w.y + histo->legend_h + histo->s.pad.h;
+    const unit down = histo->w.y + histo->w.h - histo->s.pad.h;
+    const unit left = histo->w.x + histo->s.pad.w;
+    const unit right = histo->w.x + histo->w.w - histo->s.pad.w;
+
+    enum : render_layer
+    {
+        layer_hover = 0,
+        layer_edge,
+        layer_bar_fill,
+        layer_bar_border,
+        layer_axes,
+        layer_guide,
+        layer_len,
+    };
+    const render_layer l = render_layer_push(layer_len);
 
     // Axes
     {
-        rgba_render(histo->s.axes.fg, renderer);
+        unit y = up + cell.h;
+        render_line(l + layer_axes, histo->s.axes.fg, (struct line) {
+                    make_pos(left, up), make_pos(left, down)});
+        render_line(l + layer_axes, histo->s.axes.fg, (struct line) {
+                    make_pos(left, y), make_pos(right, y)});
 
-        int16_t y = up + histo->s.value.font->glyph_h;
-        sdl_err(SDL_RenderDrawLine(renderer, left, up, left, down));
-        sdl_err(SDL_RenderDrawLine(renderer, left, y, right, y));
-
-        SDL_Point pos = { .x = histo->inner.x, .y = up };
-        font_render_bg(
-                histo->s.value.font, renderer, pos,
+        render_font_bg(
+                l + layer_axes, histo->s.value.font,
                 histo->s.value.fg, histo->s.value.bg,
+                make_pos(histo->inner.x, up),
                 "0u", 2);
 
         char bound_str[str_scaled_len] = {0};
         str_scaled(histo->v.bound, bound_str, sizeof(bound_str));
 
-        pos.x = right - sizeof(bound_str) * histo->s.value.font->glyph_w;
-        font_render_bg(
-                histo->s.value.font, renderer, pos,
+        render_font_bg(
+                l + layer_axes, histo->s.value.font,
                 histo->s.value.fg, histo->s.value.bg,
+                make_pos(histo->inner.x + right - sizeof(bound_str) * cell.w, up),
                 bound_str, sizeof(bound_str));
     }
 
-    // Hover - bg
-    if (histo->hover.active) {
-        SDL_Rect rect = {
-            .x = histo->inner.x,
-            .y = histo->inner.y + histo->hover.row * histo->row.h,
-            .w = histo->row.w,
-            .h = histo->row.h,
-        };
-
-        rgba_render(histo->s.hover.bg, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
-    }
 
     // Data
     {
         struct pos pos = histo->inner;
-        int16_t h = (histo->row.h - histo->s.row.pad) / histo->series.cols;
+        unit h = (histo->row.h - histo->s.row.pad) / histo->series.cols;
         ui_histo_data *it = histo->series.data;
 
         for (size_t row = 0; row < histo->series.rows; ++row) {
@@ -475,50 +453,50 @@ void ui_histo_render(
                     col = series->col;
                 }
 
-                int16_t w = (*it * histo->row.w) / histo->v.bound;
+                unit w = (*it * histo->row.w) / histo->v.bound;
                 assert(w <= histo->row.w);
 
-                rgba_render(series->fg, renderer);
-                sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                                    .x = pos.x, .y = pos.y, .w = w, .h = h }));
-
-                rgba_render(histo->s.border, renderer);
-                sdl_err(SDL_RenderDrawRect(renderer, &(SDL_Rect) {
-                                    .x = pos.x, .y = pos.y, .w = w, .h = h }));
+                struct rect rect = { .x = pos.x, .y = pos.y, .w = w, .h = h };
+                render_rect_fill(l + layer_bar_fill, series->fg, rect);
+                render_rect_line(l + layer_bar_border, histo->s.border, rect);
 
                 pos.x += w;
             }
         }
     }
+    // Hover - bg
+    if (histo->hover.active) {
+        render_rect_fill(l + layer_hover, histo->s.hover.bg, make_rect(
+                        histo->inner.x,
+                        histo->inner.y + histo->hover.row * histo->row.h,
+                        histo->row.w,
+                        histo->row.h ));
+    }
 
     // Edge
     {
-        rgba_render(histo->s.edge, renderer);
-        sdl_err(SDL_RenderFillRect(renderer, &(SDL_Rect) {
-                            .x = left,
-                            .y = histo->inner.y + (histo->edge.row * histo->row.h),
-                            .w = histo->row.w,
-                            .h = histo->row.h,
-                        }));
+        render_rect_fill(l + layer_edge, histo->s.edge, make_rect(
+                        left,
+                        histo->inner.y + (histo->edge.row * histo->row.h),
+                        histo->row.w,
+                        histo->row.h ));
     }
 
-    // Hover - fg
+    // Guide
     if (histo->hover.active) {
-        int16_t x = histo->hover.x;
-        rgba_render(histo->s.hover.fg, renderer);
-        sdl_err(SDL_RenderDrawLine(renderer, x, up, x, down));
+        unit x = histo->hover.x;
+        render_line(l + layer_guide, histo->s.hover.fg, (struct line) {
+                    make_pos(x, up), make_pos(x, down) });
 
         char val_str[str_scaled_len] = {0};
         str_scaled(histo->hover.v, val_str, sizeof(val_str));
 
-        SDL_Point pos = {
-            .x = x - (sizeof(val_str) * histo->s.value.font->glyph_w) + 1,
-            .y = up
-        };
-
-        font_render_bg(
-                histo->s.value.font, renderer, pos,
+        render_font_bg(
+                l + layer_guide, histo->s.value.font,
                 histo->s.value.fg, histo->s.value.bg,
+                make_pos(x - (sizeof(val_str) * cell.w) + 1, up),
                 val_str, sizeof(val_str));
     }
+
+    render_layer_pop();
 }

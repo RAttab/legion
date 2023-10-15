@@ -3,7 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game.h"
 #include "db/specs.h"
 
 
@@ -60,9 +59,19 @@ void ui_loops_set(struct ui_label *label, im_loops loops)
 // lab bits
 // -----------------------------------------------------------------------------
 
+void ui_lab_bits_style_default(struct ui_style *s)
+{
+    struct dim cell = engine_cell();
+    s->lab_bits = (struct ui_lab_bits_style) {
+        .margin = make_dim(cell.w / 2, cell.w / 2),
+        .fg = rgba_gray(0xAA),
+        .border = s->rgba.box.border,
+    };
+}
+
 struct ui_lab_bits ui_lab_bits_new(void)
 {
-    return (struct ui_lab_bits) { .margin = make_dim(5, 5) };
+    return (struct ui_lab_bits) { .s = ui_st.lab_bits };
 }
 
 void ui_lab_bits_update(
@@ -76,29 +85,30 @@ void ui_lab_bits_update(
     }
 }
 
-void ui_lab_bits_render(
-        struct ui_lab_bits *ui,
-        struct ui_layout *layout,
-        SDL_Renderer *renderer)
+void ui_lab_bits_render(struct ui_lab_bits *ui, struct ui_layout *layout)
 {
     if (!ui->bits) return;
 
-    struct ui_widget w = ui_widget_new(ui_layout_inf, ui_st.font.dim.h);
+    ui_widget w = make_ui_widget(make_dim(ui_layout_inf, engine_cell().h));
     ui_layout_add(layout, &w);
 
-    SDL_Rect rect = ui_widget_rect(&w);
-    rgba_render(rgba_white(), renderer);
-    sdl_err(SDL_RenderDrawRect(renderer, &rect));
+    unit bits_w = (w.w - (ui->s.margin.w * 2)) / ui->bits;
+    unit outer_w = (ui->bits * bits_w) + ui->s.margin.w * 2;
 
-    rect = (SDL_Rect) {
-        .x = rect.x + ui->margin.w,
-        .y = rect.y + ui->margin.h,
-        .w = (rect.w - 2*ui->margin.w) / ui->bits,
-        .h = rect.h - 2*ui->margin.h,
+    const render_layer layer = render_layer_push(1);
+    render_rect_line(layer, ui->s.border, make_rect(w.x, w.y, outer_w, w.h));
+
+    struct rect bits = {
+        .x = w.x + ui->s.margin.w,
+        .y = w.y + ui->s.margin.h,
+        .w = bits_w,
+        .h = w.h - (ui->s.margin.h * 2),
     };
 
-    for (size_t i = 0; i < ui->bits; ++i, rect.x += rect.w) {
+    for (size_t i = 0; i < ui->bits; ++i, bits.x += bits.w) {
         if (!(ui->known & (1ULL << i))) continue;
-        sdl_err(SDL_RenderFillRect(renderer, &rect));
+        render_rect_fill(layer, ui->s.fg, bits);
     }
+
+    render_layer_pop();
 }

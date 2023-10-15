@@ -3,9 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "clipboard.h"
-#include "render/ui.h"
-
+#include "ux/ui.h"
 
 // -----------------------------------------------------------------------------
 // clipboard

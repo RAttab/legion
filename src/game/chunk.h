@@ -19,6 +19,7 @@
 struct ack;
 struct star;
 struct logi;
+struct vec32;
 struct vec64;
 struct coord;
 struct energy;

@@ -4,15 +4,17 @@
 */
 
 #include "common.h"
+#include "engine/engine.h"
 #include "game/sim.h"
-#include "utils/save.h"
 #include "game/protocol.h"
 #include "game/chunk.h"
+#include "utils/save.h"
 #include "utils/time.h"
 #include "utils/config.h"
 
 #include <stdatomic.h>
 #include <pthread.h>
+#include <stdarg.h>
 
 static struct sim_pipe *sim_pipe_next(struct sim *sim, struct sim_pipe *start);
 static void sim_publish_mod(struct sim_pipe *pipe, const struct mod *mod);
@@ -730,7 +732,7 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
         return;
     }
 
-    if (unlikely(sim_prof_enabled && render_initialized())) {
+    if (unlikely(sim_prof_enabled && engine_initialized())) {
         if (!(world_time(sim->world) % sim_prof_freq))
             save_prof(save);
     }

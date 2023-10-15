@@ -29,7 +29,7 @@ static void *ui_memory_alloc(void)
         .size = ui_label_new(ui_str_c("size: ")),
         .size_val = ui_label_new(ui_str_v(2)),
 
-        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), ui_st.font.dim),
+        .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), engine_cell()),
         .data_index = ui_label_new_s(&ui_st.label.index, ui_str_v(2)),
         .data_val = ui_label_new(ui_str_v(16)),
 
@@ -65,29 +65,24 @@ static void ui_memory_update(void *_ui, struct chunk *chunk, im_id id)
     ui_scroll_update_rows(&ui->scroll, state->len);
 }
 
-static bool ui_memory_event(void *_ui, const SDL_Event *ev)
+static void ui_memory_event(void *_ui)
 {
     struct ui_memory *ui = _ui;
-    enum ui_ret ret = ui_nil;
-
-    if ((ret = ui_scroll_event(&ui->scroll, ev))) return ret == ui_consume;
-
-    return false;
+    ui_scroll_event(&ui->scroll);
 }
 
-static void ui_memory_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_memory_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_memory *ui = _ui;
     const struct im_memory *state = &ui->state;
 
-    ui_label_render(&ui->size, layout, renderer);
-    ui_label_render(&ui->size_val, layout, renderer);
+    ui_label_render(&ui->size, layout);
+    ui_label_render(&ui->size_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout, renderer);
+    struct ui_layout inner = ui_scroll_render(&ui->scroll, layout);
     if (ui_layout_is_nil(&inner)) return;
 
     size_t first = ui_scroll_first_row(&ui->scroll);
@@ -95,11 +90,11 @@ static void ui_memory_render(
 
     for (size_t i = first; i < last; ++i) {
         ui_str_set_u64(&ui->data_index.str, i);
-        ui_label_render(&ui->data_index, &inner, renderer);
+        ui_label_render(&ui->data_index, &inner);
         ui_layout_sep_col(&inner);
 
         ui_str_set_hex(&ui->data_val.str, state->data[i]);
-        ui_label_render(&ui->data_val, &inner, renderer);
+        ui_label_render(&ui->data_val, &inner);
         ui_layout_next_row(&inner);
     }
 }

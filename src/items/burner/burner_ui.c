@@ -114,27 +114,26 @@ static void ui_burner_update(void *_ui, struct chunk *chunk, im_id id)
     }
 }
 
-static void ui_burner_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_burner_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_burner *ui = _ui;
 
-    ui_label_render(&ui->item, layout, renderer);
-    ui_label_render(&ui->item_val, layout, renderer);
+    ui_label_render(&ui->item, layout);
+    ui_label_render(&ui->item_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->output, layout, renderer);
-    ui_label_render(&ui->output_val, layout, renderer);
+    ui_label_render(&ui->output, layout);
+    ui_label_render(&ui->output_val, layout);
     ui_layout_next_row(layout);
 
     ui_layout_sep_row(layout);
 
-    ui_label_render(&ui->loops, layout, renderer);
-    ui_label_render(&ui->loops_val, layout, renderer);
+    ui_label_render(&ui->loops, layout);
+    ui_label_render(&ui->loops_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->op, layout, renderer);
-    ui_label_render(&ui->op_val, layout, renderer);
+    ui_label_render(&ui->op, layout);
+    ui_label_render(&ui->op_val, layout);
     ui_layout_next_row(layout);
 
     switch (ui->state.op)
@@ -142,17 +141,17 @@ static void ui_burner_render(
     case im_burner_nil: { break; }
 
     case im_burner_in: {
-        ui_label_render(&ui->waiting, layout, renderer);
-        ui_label_render(&ui->waiting_val, layout, renderer);
+        ui_label_render(&ui->waiting, layout);
+        ui_label_render(&ui->waiting_val, layout);
         ui_layout_next_row(layout);
         break;
     }
 
     case im_burner_work: {
-        ui_label_render(&ui->work, layout, renderer);
-        ui_label_render(&ui->work_left, layout, renderer);
-        ui_label_render(&ui->work_sep, layout, renderer);
-        ui_label_render(&ui->work_cap, layout, renderer);
+        ui_label_render(&ui->work, layout);
+        ui_label_render(&ui->work_left, layout);
+        ui_label_render(&ui->work_sep, layout);
+        ui_label_render(&ui->work_cap, layout);
         ui_layout_next_row(layout);
         break;
     }

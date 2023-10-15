@@ -7,7 +7,6 @@
 
 #include "common.h"
 
-#include "SDL.h"
 #include <errno.h>
 #include <stdio.h>
 
@@ -104,30 +103,3 @@
         errf_posix(errnum, fmt, __VA_ARGS__);   \
         abort();                                \
     } while(false)
-
-
-// -----------------------------------------------------------------------------
-// sdl
-// -----------------------------------------------------------------------------
-
-#define sdl_fail(p)                                             \
-    {                                                           \
-        fprintf(stderr, "%s:%u: <err> %s: %s\n",                \
-                __FILE__, __LINE__, #p, SDL_GetError());        \
-        abort();                                                \
-    } while(false)
-
-
-#define sdl_err(p)                              \
-    ({                                          \
-        typeof(p) ret = (p);                    \
-        if (unlikely(ret < 0)) sdl_fail(p);     \
-        ret;                                    \
-    })
-
-#define sdl_ptr(p)                              \
-    ({                                          \
-        typeof(p) ret = (p);                    \
-        if (unlikely(!ret)) sdl_fail(p);        \
-        ret;                                    \
-    })

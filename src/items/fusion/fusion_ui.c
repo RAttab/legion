@@ -65,20 +65,19 @@ static void ui_fusion_update(void *_ui, struct chunk *chunk, im_id id)
     else ui_str_set_item(ui_set(&ui->input_val), im_fusion_input_item);
 }
 
-static void ui_fusion_render(
-        void *_ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_fusion_render(void *_ui, struct ui_layout *layout)
 {
     struct ui_fusion *ui = _ui;
 
-    ui_label_render(&ui->energy, layout, renderer);
-    ui_label_render(&ui->energy_val, layout, renderer);
+    ui_label_render(&ui->energy, layout);
+    ui_label_render(&ui->energy_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->state, layout, renderer);
-    ui_label_render(&ui->state_val, layout, renderer);
+    ui_label_render(&ui->state, layout);
+    ui_label_render(&ui->state_val, layout);
     ui_layout_next_row(layout);
 
-    ui_label_render(&ui->input, layout, renderer);
-    ui_label_render(&ui->input_val, layout, renderer);
+    ui_label_render(&ui->input, layout);
+    ui_label_render(&ui->input_val, layout);
     ui_layout_next_row(layout);
 }

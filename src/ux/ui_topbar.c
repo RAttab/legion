@@ -3,15 +3,11 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "render/ui.h"
-#include "ui/ui.h"
-#include "utils/str.h"
 
 static void ui_topbar_free(void *);
 static void ui_topbar_update(void *);
-static bool ui_topbar_event(void *, SDL_Event *);
-static void ui_topbar_render(void *, struct ui_layout *, SDL_Renderer *);
+static void ui_topbar_event(void *);
+static void ui_topbar_render(void *, struct ui_layout *);
 
 
 // -----------------------------------------------------------------------------
@@ -125,100 +121,30 @@ static void ui_topbar_update(void *state)
     }
 }
 
-static bool ui_topbar_event(void *state, SDL_Event *ev)
+static void ui_topbar_event(void *state)
 {
     struct ui_topbar *ui = state;
 
-    enum ui_ret ret = ui_nil;
-    if ((ret = ui_button_event(&ui->save, ev))) {
-        if (ret != ui_action) return true;
-        proxy_save();
-        return true;
-    }
+    if (ui_button_event(&ui->save)) proxy_save();
+    if (ui_button_event(&ui->load)) proxy_load();
 
-    if ((ret = ui_button_event(&ui->load, ev))) {
-        if (ret != ui_action) return true;
-        proxy_load();
-        return true;
-    }
+    if (ui_button_event(&ui->pause)) proxy_set_speed(speed_pause);
+    if (ui_button_event(&ui->slow)) proxy_set_speed(speed_slow);
+    if (ui_button_event(&ui->fast)) proxy_set_speed(speed_fast);
+    if (ui_button_event(&ui->faster)) proxy_set_speed(speed_faster);
+    if (ui_button_event(&ui->fastest)) proxy_set_speed(speed_fastest);
 
-    if ((ret = ui_button_event(&ui->pause, ev))) {
-        if (ret != ui_action) return true;
-        proxy_set_speed(speed_pause);
-        return true;
-    }
+    if (ui_button_event(&ui->home)) ui_map_show(proxy_home());
+    if (ui_button_event(&ui->stars)) ui_toggle(ui_view_stars);
+    if (ui_button_event(&ui->tapes)) ui_toggle(ui_view_tapes);
+    if (ui_button_event(&ui->mods)) ui_toggle(ui_view_mods);
+    if (ui_button_event(&ui->log)) ui_toggle(ui_view_log);
 
-    if ((ret = ui_button_event(&ui->slow, ev))) {
-        if (ret != ui_action) return true;
-        proxy_set_speed(speed_slow);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->fast, ev))) {
-        if (ret != ui_action) return true;
-        proxy_set_speed(speed_fast);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->faster, ev))) {
-        if (ret != ui_action) return true;
-        proxy_set_speed(speed_faster);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->fastest, ev))) {
-        if (ret != ui_action) return true;
-        proxy_set_speed(speed_fastest);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->home, ev))) {
-        if (ret != ui_action) return true;
-        ui_map_show(proxy_home());
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->stars, ev))) {
-        if (ret != ui_action) return true;
-        ui_toggle(ui_view_stars);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->tapes, ev))) {
-        if (ret != ui_action) return true;
-        ui_toggle(ui_view_tapes);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->mods, ev))) {
-        if (ret != ui_action) return true;
-        ui_toggle(ui_view_mods);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->log, ev))) {
-        if (ret != ui_action) return true;
-        ui_toggle(ui_view_log);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->man, ev))) {
-        if (ret != ui_action) return true;
-        ui_toggle(ui_view_man);
-        return true;
-    }
-
-    if ((ret = ui_button_event(&ui->close, ev))) {
-        if (ret != ui_action) return true;
-        sdl_err(SDL_PushEvent(&(SDL_Event) { .type = SDL_QUIT }));
-        return true;
-    }
-
-    return false;
+    if (ui_button_event(&ui->man)) ui_toggle(ui_view_man);
+    if (ui_button_event(&ui->close)) engine_quit();
 }
 
-static void topbar_render_coord(
-        struct ui_topbar *ui, struct ui_layout *layout, SDL_Renderer *renderer)
+static void topbar_render_coord(struct ui_topbar *ui, struct ui_layout *layout)
 {
     char buffer[topbar_coord_len] = {0};
 
@@ -251,38 +177,37 @@ static void topbar_render_coord(
     assert(it <= end);
 
     ui_str_setv(&ui->coord.str, buffer, sizeof(buffer));
-    ui_label_render(&ui->coord, layout, renderer);
+    ui_label_render(&ui->coord, layout);
 }
 
-static void ui_topbar_render(
-        void *state, struct ui_layout *layout, SDL_Renderer *renderer)
+static void ui_topbar_render(void *state, struct ui_layout *layout)
 {
     struct ui_topbar *ui = state;
 
-    ui_button_render(&ui->save, layout, renderer);
-    ui_button_render(&ui->load, layout, renderer);
+    ui_button_render(&ui->save, layout);
+    ui_button_render(&ui->load, layout);
     ui_layout_sep_x(layout, 10);
 
-    ui_button_render(&ui->pause, layout, renderer);
-    ui_button_render(&ui->slow, layout, renderer);
-    ui_button_render(&ui->fast, layout, renderer);
-    ui_button_render(&ui->faster, layout, renderer);
-    ui_button_render(&ui->fastest, layout, renderer);
+    ui_button_render(&ui->pause, layout);
+    ui_button_render(&ui->slow, layout);
+    ui_button_render(&ui->fast, layout);
+    ui_button_render(&ui->faster, layout);
+    ui_button_render(&ui->fastest, layout);
     ui_layout_sep_x(layout, 10);
 
-    ui_button_render(&ui->home, layout, renderer);
+    ui_button_render(&ui->home, layout);
     ui_layout_sep_x(layout, 10);
-    ui_button_render(&ui->stars, layout, renderer);
-    ui_button_render(&ui->tapes, layout, renderer);
-    ui_button_render(&ui->mods, layout, renderer);
-    ui_button_render(&ui->log, layout, renderer);
+    ui_button_render(&ui->stars, layout);
+    ui_button_render(&ui->tapes, layout);
+    ui_button_render(&ui->mods, layout);
+    ui_button_render(&ui->log, layout);
 
     ui_layout_dir(layout, ui_layout_right_left);
-    ui_button_render(&ui->close, layout, renderer);
+    ui_button_render(&ui->close, layout);
     ui_layout_sep_x(layout, 10);
-    ui_button_render(&ui->man, layout, renderer);
+    ui_button_render(&ui->man, layout);
     ui_layout_dir(layout, ui_layout_left_right);
 
-    ui_layout_mid(layout, ui->coord.w.dim.w);
-    topbar_render_coord(ui, layout, renderer);
+    ui_layout_mid(layout, ui->coord.w.w);
+    topbar_render_coord(ui, layout);
 }
