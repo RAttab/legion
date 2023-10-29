@@ -8,8 +8,17 @@
 #include "common.h"
 #include "engine/engine.h"
 
-#include "utils/time.h"
+#include "vm/types.h"
+#include "game/id.h"
+#include "game/coord.h"
+#include "game/man.h"
+#include "db/items.h"
+#include "items/types.h"
 #include "utils/str.h"
+#include "utils/time.h"
+#include "utils/hset.h"
+#include "utils/symbol.h"
+
 
 // -----------------------------------------------------------------------------
 // types
@@ -35,30 +44,30 @@ inline ui_widget make_ui_widget(struct dim d) { return make_rect(0, 0, d.w, d.h)
 // implementation
 // -----------------------------------------------------------------------------
 
-#include "clipboard.h"
-#include "layout.h"
-#include "scroll.h"
-#include "str.h"
+#include "ui_clipboard.h"
+#include "ui_layout.h"
+#include "ui_scroll.h"
+#include "ui_str.h"
 
-#include "label.h"
-#include "link.h"
-#include "button.h"
-#include "tooltip.h"
+#include "ui_label.h"
+#include "ui_link.h"
+#include "ui_button.h"
+#include "ui_input.h"
+#include "ui_tooltip.h"
 
-#include "input.h"
-#include "asm.h"
-#include "code.h"
-#include "doc.h"
+#include "ui_tabs.h"
+#include "ui_list.h"
+#include "ui_tree.h"
+#include "ui_histo.h"
 
-#include "tabs.h"
-#include "list.h"
-#include "tree.h"
-#include "histo.h"
+#include "ui_asm.h"
+#include "ui_code.h"
+#include "ui_doc.h"
 
-#include "game.h"
-#include "panel.h"
-#include "focus.h"
-#include "style.h"
+#include "ui_game.h"
+#include "ui_panel.h"
+#include "ui_focus.h"
+#include "ui_style.h"
 
 
 // -----------------------------------------------------------------------------
