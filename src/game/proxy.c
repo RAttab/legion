@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "ux/ui.h"
+#include "ux/ux.h"
 #include "game/proxy.h"
 #include "game/sector.h"
 #include "game/protocol.h"
@@ -231,7 +231,7 @@ static void proxy_update_status(struct save *save)
     struct status status = {0};
     if (!status_load(&status, save)) return;
 
-    ui_log_msg(status.type, status.msg, status.len);
+    ux_log_msg(status.type, status.msg, status.len);
 }
 
 static void proxy_update_state_io(struct world_io *io)
@@ -246,7 +246,7 @@ static void proxy_update_state_io(struct world_io *io)
     assert(ok);
 
     if (!io->len) {
-        ui_log(st_info, "received IO command '%s' from '%s'",
+        ux_log(st_info, "received IO command '%s' from '%s'",
                 io_str.c, id_str);
         return;
     }
@@ -264,7 +264,7 @@ static void proxy_update_state_io(struct world_io *io)
     *it = '\0';
     assert((uintptr_t)(it - arg_str) <= sizeof(arg_str));
 
-    ui_log(st_info, "received IO command '%s' from '%s' with [ %s]",
+    ux_log(st_info, "received IO command '%s' from '%s' with [ %s]",
             io_str.c, id_str, arg_str);
 }
 
@@ -342,7 +342,7 @@ enum proxy_ret proxy_update(void)
         if (save_read(save, &head, sizeof(head)) != sizeof(head)) break;
 
         if (head.magic != header_magic) {
-            ui_log(st_warn, "invalid head magic: %x != %x",
+            ux_log(st_warn, "invalid head magic: %x != %x",
                     head.magic, header_magic);
             break;
         }
@@ -361,7 +361,7 @@ enum proxy_ret proxy_update(void)
         if (result != proxy_loaded && ret != proxy_nil) result = ret;
         save_ring_commit(pipe->in, save);
 
-        if (result != proxy_loaded) ui_update_state();
+        if (result != proxy_loaded) ux_update_state();
     }
 
     // if the pipe was reset make sure to restore our subscriptions
@@ -454,7 +454,7 @@ static void proxy_cmd(const struct cmd *cmd)
 {
     struct proxy_pipe *pipe = proxy_pipe();
     if (!pipe) {
-        ui_log(st_error,
+        ux_log(st_error,
                 "unable to send command '%x' while not connected to a server",
                 cmd->type);
         return;
@@ -464,7 +464,7 @@ static void proxy_cmd(const struct cmd *cmd)
 
     struct header *head = save_bytes(save);
     if (save_ring_consume(save, sizeof(*head)) != sizeof(*head)) {
-        ui_log(st_error, "unable to send command '%x' due to overflow",
+        ux_log(st_error, "unable to send command '%x' due to overflow",
                 cmd->type);
         return;
     }
@@ -472,7 +472,7 @@ static void proxy_cmd(const struct cmd *cmd)
     cmd_save(cmd, save);
 
     if (save_eof(save)) {
-        ui_log(st_error, "unable to send command '%x' due to overflow",
+        ux_log(st_error, "unable to send command '%x' due to overflow",
                 cmd->type);
         return;
     }

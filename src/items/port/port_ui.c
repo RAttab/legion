@@ -169,22 +169,22 @@ static void ui_port_event(void *_ui)
 
     if (ui_link_event(&ui->input.coord_val)) {
         if (!coord_is_nil(ui->state.coord)) {
-            ui_star_show(ui->state.coord);
-            ui_map_show(ui->state.coord);
+            ux_star_show(ui->state.coord);
+            ux_map_show(ui->state.coord);
         }
     }
 
     if (ui_link_event(&ui->want.target_val)) {
         if (!coord_is_nil(ui->state.target)) {
-            ui_star_show(ui->state.target);
-            ui_map_show(ui->state.target);
+            ux_star_show(ui->state.target);
+            ux_map_show(ui->state.target);
         }
     }
 
     if (ui_link_event(&ui->has.origin_val)) {
         if (!coord_is_nil(ui->state.origin)) {
-            ui_star_show(ui->state.origin);
-            ui_map_show(ui->state.origin);
+            ux_star_show(ui->state.origin);
+            ux_map_show(ui->state.origin);
         }
     }
 }

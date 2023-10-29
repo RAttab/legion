@@ -5,7 +5,7 @@
 
 #include "ui/ui.h"
 
-#include "ux/ui.h"
+#include "ux/ux.h"
 #include "vm/asm.h"
 #include "vm/code.h"
 #include "vm/atoms.h"

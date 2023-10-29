@@ -75,7 +75,7 @@ void ui_doc_free(struct ui_doc *doc)
 void ui_doc_open(struct ui_doc *doc, struct link link, struct lisp *lisp)
 {
     struct man *man = man_open(link.page, doc->cols, lisp);
-    if (!man) { ui_log(st_error, "unknown man link"); return; }
+    if (!man) { ux_log(st_error, "unknown man link"); return; }
 
     if (doc->man) man_free(doc->man);
     doc->man = man;
@@ -148,8 +148,8 @@ void ui_doc_event(struct ui_doc *doc)
         if (link_is_nil(link)) continue;
 
         if (link.page == link_ui_tape)
-            ui_tapes_show(link.section);
-        else ui_man_show(link);
+            ux_tapes_show(link.section);
+        else ux_man_show(link);
 
         ev_consume_button(ev);
     }

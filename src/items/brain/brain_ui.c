@@ -4,7 +4,7 @@
 */
 
 #include "engine/engine.h"
-#include "ux/ui.h"
+#include "ux/ux.h"
 #include "ui/ui.h"
 #include "game/proxy.h"
 
@@ -208,7 +208,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     if (state->debug) {
         ui_str_setc(ui_set(&ui->debug_val), "attached");
         if (state->mod_id && (!old_debug || old_ip != state->vm.ip))
-            ui_mods_show(state->mod_id, state->vm.ip);
+            ux_mods_show(state->mod_id, state->vm.ip);
     }
     else {
         ui_str_setc(&ui->debug_val.str, "detached");
@@ -218,7 +218,7 @@ static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)
     if (state->breakpoint == vm_ip_nil) ui_set_nil(&ui->breakpoint_val);
     else ui_str_set_hex(ui_set(&ui->breakpoint_val), state->breakpoint);
 
-    ui_mods_debug(state->mod_id, state->debug, state->vm.ip, state->breakpoint);
+    ux_mods_debug(state->mod_id, state->debug, state->vm.ip, state->breakpoint);
 
     if (!state->msg.len) ui_set_nil(&ui->msg_len);
     else ui_str_set_u64(ui_set(&ui->msg_len), state->msg.len);
@@ -263,25 +263,25 @@ static void ui_brain_event(void *_ui)
 
     if (ui_link_event(&ui->breakpoint_val)) {
         if (!state->mod_id) {
-            ui_log(st_error,
+            ux_log(st_error,
                     "unable to jump to breakpoint '%x' while no mods are loaded",
                     state->breakpoint);
         }
         else if (state->breakpoint != vm_ip_nil)
-            ui_mods_show(state->mod_id, state->breakpoint);
+            ux_mods_show(state->mod_id, state->breakpoint);
     }
 
     if (ui_link_event(&ui->mod_val)) {
-        if (state->mod_id) ui_mods_show(state->mod_id, 0);
+        if (state->mod_id) ux_mods_show(state->mod_id, 0);
     }
 
     if (ui_button_event(&ui->ip_show)) {
         if (!state->mod_id) {
-            ui_log(st_error,
+            ux_log(st_error,
                     "unable to jump to ip '%x' while no mods are loaded",
                     state->vm.ip);
         }
-        else ui_mods_show(state->mod_id, state->vm.ip);
+        else ux_mods_show(state->mod_id, state->vm.ip);
     }
 
     ui_scroll_event(&ui->stack.scroll);
@@ -291,7 +291,7 @@ static void ui_brain_event(void *_ui)
         if (frame->show.disabled) continue;
 
         if (ui_button_event(&frame->show))
-            ui_mods_show(frame->mod, frame->ip);
+            ux_mods_show(frame->mod, frame->ip);
     }
 }
 

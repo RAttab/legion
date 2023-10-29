@@ -164,7 +164,7 @@ static void ui_asm_breakpoint_at(struct ui_asm *ui, uint32_t row)
         ip = asm_ip(ui->as, row);
 
     vm_word args = ip != vm_ip_nil ? ip : 0;
-    if (!ui_item_io(io_dbg_break, item_brain, &args, 1)) return;
+    if (!ux_item_io(io_dbg_break, item_brain, &args, 1)) return;
 
     ui->bp.ip = ip;
     ui->bp.row = row;
@@ -535,7 +535,7 @@ static void ui_asm_event_copy(struct ui_asm *ui)
 {
     struct rowcol first, last;
     int cmp = rowcol_cmp(ui->select.first, ui->select.last);
-    if (!cmp) { ui_log(st_warn, "nothing selected"); return; }
+    if (!cmp) { ux_log(st_warn, "nothing selected"); return; }
     else if (cmp < 0) { first = ui->select.first; last = ui->select.last; }
     else if (cmp > 0) { first = ui->select.last; last = ui->select.first; }
     ui_asm_select_clear(ui);
@@ -570,7 +570,7 @@ static void ui_asm_event_help(struct ui_asm *ui)
             asm_at(ui->as, ui->carret.row), line, sizeof(line));
 
     str_to_lower_case(line + index.op.pos, index.op.len);
-    ui_man_show_slot_path(ui_slot_right, "/asm/%.*s",
+    ux_man_show_slot_path(ux_slot_right, "/asm/%.*s",
             (unsigned) index.op.len, line + index.op.pos);
 }
 
@@ -600,7 +600,7 @@ static void ui_asm_event_find(struct ui_asm *ui, enum ui_asm_find_type type)
     case ui_asm_find_row: {
         uint64_t ip = 0;
         if (!ui_input_get_hex(&ui->find.value, &ip)) {
-            ui_log(st_error, "invalid line value");
+            ux_log(st_error, "invalid line value");
             break;
         }
 
@@ -622,10 +622,10 @@ static void ui_asm_event_find(struct ui_asm *ui, enum ui_asm_find_type type)
 
         const char *value = nullptr;
         ui->find.len = ui_input_get_str(&ui->find.value, &value);
-        if (!ui->find.len) { ui_log(st_error, "missing find value"); break; }
+        if (!ui->find.len) { ux_log(st_error, "missing find value"); break; }
 
         if (!asm_find(ui->as, &it, value, ui->find.len)) {
-            ui_log(st_info, "no matches found");
+            ux_log(st_info, "no matches found");
             break;
         }
 

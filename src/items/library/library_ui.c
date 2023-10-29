@@ -119,8 +119,8 @@ static void ui_library_event(void *_ui)
 {
     struct ui_library *ui = _ui;
 
-    if (ui_link_event(&ui->tape_val)) ui_tapes_show(ui->state.item);
-    if (ui_link_event(&ui->value_val)) ui_tapes_show(ui->state.value);
+    if (ui_link_event(&ui->tape_val)) ux_tapes_show(ui->state.item);
+    if (ui_link_event(&ui->value_val)) ux_tapes_show(ui->state.value);
 }
 
 static void ui_library_render(void *_ui, struct ui_layout *layout)

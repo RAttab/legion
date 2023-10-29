@@ -4,7 +4,7 @@
 */
 
 #include "game/proxy.h"
-#include "ux/ui.h"
+#include "ux/ux.h"
 
 #include <stdatomic.h>
 #include <pthread.h>
@@ -157,7 +157,7 @@ void engine_init(void)
     textures_populate();
     engine.glyph = fonts_populate();
     render_init();
-    ui_init();
+    ux_init();
 
     engine.area.x = engine.area.y = 0;
     engine.area.w = engine.glyph.w * engine_cols_len;
@@ -168,7 +168,7 @@ void engine_init(void)
 
 void engine_close(void)
 {
-    ui_free();
+    ux_free();
     render_close();
     fonts_close();
     textures_close();
@@ -251,18 +251,18 @@ static bool engine_step(void)
     switch (proxy_update())
     {
     case proxy_nil: { break; }
-    case proxy_loaded: { ui_reset(); ev_set_load(); } // fallthrough
-    case proxy_updated: { ui_update_frame(); break; }
+    case proxy_loaded: { ux_reset(); ev_set_load(); } // fallthrough
+    case proxy_updated: { ux_update_frame(); break; }
     default: { assert(false); }
     }
 
     events_poll();
     if (glfwWindowShouldClose(engine_window())) return false;
-    ui_event();
+    ux_event();
 
     render_clear();
     {
-        ui_render();
+        ux_render();
         render_cursor(ev_mouse_pos());
     }
     render_draw();

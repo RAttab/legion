@@ -134,7 +134,7 @@ bool ui_input_eval(struct ui_input *input, vm_word *ret)
     *ret = eval.value;
 
     if (!eval.ok)
-        ui_log(st_error, "Invalid const LISP statement: '%s'", input->buf.c);
+        ux_log(st_error, "Invalid const LISP statement: '%s'", input->buf.c);
     return eval.ok;
 }
 

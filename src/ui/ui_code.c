@@ -291,7 +291,7 @@ static void ui_code_breakpoint_at(struct ui_code *ui, uint32_t pos)
         ip = mod_byte(ui->mod, pos);
 
     vm_word args = ip != vm_ip_nil ? ip : 0;
-    if (!ui_item_io(io_dbg_break, item_brain, &args, 1)) return;
+    if (!ux_item_io(io_dbg_break, item_brain, &args, 1)) return;
 
     struct rowcol rc = code_rowcol_for(ui->code, pos);
 
@@ -718,7 +718,7 @@ static void ui_code_event_undo(struct ui_code *ui, enum ev_mods mods)
     const uint32_t pos = redo ? code_redo(ui->code) : code_undo(ui->code);
 
     if (pos == code_pos_nil) {
-        ui_log(st_warn, "nothing to %s", redo ? "redo" : "undo");
+        ux_log(st_warn, "nothing to %s", redo ? "redo" : "undo");
         return;
     }
 
@@ -729,7 +729,7 @@ static void ui_code_event_undo(struct ui_code *ui, enum ev_mods mods)
 static void ui_code_event_copy(struct ui_code *ui, bool del)
 {
     if (ui->select.first.pos == ui->select.last.pos) {
-        ui_log(st_warn, "nothing selected");
+        ux_log(st_warn, "nothing selected");
         return;
     }
 
@@ -757,7 +757,7 @@ static void ui_code_event_copy(struct ui_code *ui, bool del)
 static void ui_code_event_paste(struct ui_code *ui)
 {
     if (!ui_clipboard_len()) {
-        ui_log(st_warn, "nothing to copy");
+        ux_log(st_warn, "nothing to copy");
         return;
     }
 
@@ -782,7 +782,7 @@ static void ui_code_event_help(struct ui_code *ui)
                 node->pos, node->pos + node->len,
                 str, sizeof(str) - 1);
 
-        ui_man_show_slot_path(ui_slot_right, "/%s/%s",
+        ux_man_show_slot_path(ux_slot_right, "/%s/%s",
                 str_is_lower_case(str[0]) ? "lisp" : "asm", str);
     }
 
@@ -795,7 +795,7 @@ static void ui_code_event_help(struct ui_code *ui)
 
         static const char prefix_item[] = "item-";
         if (str_starts_with(str + 1, prefix_item)) {
-            ui_man_show_slot_path(ui_slot_right, "/items/%s",
+            ux_man_show_slot_path(ux_slot_right, "/items/%s",
                     str + sizeof(prefix_item)); // sizeof includes to zero byte
         }
     }
@@ -831,7 +831,7 @@ static void ui_code_event_find(struct ui_code *ui, enum ui_code_find_type type)
     case ui_code_find_row: {
         uint64_t row = 0;
         if (!ui_input_get_u64(&ui->find.value, &row)) {
-            ui_log(st_error, "invalid line value");
+            ux_log(st_error, "invalid line value");
             break;
         }
 
@@ -853,14 +853,14 @@ static void ui_code_event_find(struct ui_code *ui, enum ui_code_find_type type)
 
         const char *value = nullptr;
         ui->find.len = ui_input_get_str(&ui->find.value, &value);
-        if (!ui->find.len) { ui_log(st_error, "missing find value"); break; }
+        if (!ui->find.len) { ux_log(st_error, "missing find value"); break; }
 
         uint32_t match = code_find(ui->code, start, end, value, ui->find.len);
         if (match == code_pos_nil)
             match = code_find(ui->code, 0, start, value, ui->find.len);
 
         if (match != code_pos_nil) ui_code_highlight(ui, match, ui->find.len);
-        else ui_log(st_info, "no matches found");
+        else ux_log(st_info, "no matches found");
         ui_code_focus(ui);
         break;
     }
@@ -869,7 +869,7 @@ static void ui_code_event_find(struct ui_code *ui, enum ui_code_find_type type)
 
         const char *value = nullptr;
         size_t value_len = ui_input_get_str(&ui->find.value, &value);
-        if (!value_len) { ui_log(st_error, "missing find value"); break; }
+        if (!value_len) { ux_log(st_error, "missing find value"); break; }
 
         const char *replace = nullptr;
         size_t replace_len = ui_input_get_str(&ui->find.replace, &replace);
@@ -890,7 +890,7 @@ static void ui_code_event_find(struct ui_code *ui, enum ui_code_find_type type)
                 ui->code, first, last, value, value_len, replace, replace_len);
 
         ui->carret.pos = last + (delta * count);
-        ui_log(st_info, "replaced %zu matches", count);
+        ux_log(st_info, "replaced %zu matches", count);
 
         ui_code_select_clear(ui);
         ui_code_update(ui, ui_code_update_all);
