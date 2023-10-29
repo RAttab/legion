@@ -52,12 +52,12 @@ void ui_tooltip_set(struct rect rect, struct ui_str str)
     ui_tooltip.rect = rect;
 
     uint32_t cols = 0;
-    struct rowcol rc = {0};
-    for (size_t i = 0; i < str.len; ++str.len) {
-        if (str.str[i] != '\n') { cols++; continue; }
-        rc.col = legion_max(rc.col, cols);
-        rc.row++;
+    struct rowcol rc = { .row = 1, .col = 0 };
+    for (size_t i = 0; i < str.len; ++i) {
+        if (unlikely(str.str[i] == '\n')) { rc.row++; cols = 0; continue; }
+        rc.col = legion_max(rc.col, ++cols);
     }
+
     ui_tooltip.rc = rc;
 }
 
@@ -76,7 +76,7 @@ void ui_tooltip_render(void)
     struct rect area = engine_area();
     unit cursor_w = render_cursor_size();
     struct dim box = engine_dim_margin(
-            ui_tooltip.rc.row, ui_tooltip.rc.col, ui_tooltip.s.pad);
+            ui_tooltip.rc.col, ui_tooltip.rc.row, ui_tooltip.s.pad);
 
     bool right = cursor.x + cursor_w + box.w <= area.x + area.w;
     bool left = cursor.x - box.w >= area.x;
