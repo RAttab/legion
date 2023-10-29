@@ -4,9 +4,8 @@
 */
 
 #include "engine/engine.h"
-#include "ux/ux.h"
-#include "ui/ui.h"
 #include "game/proxy.h"
+#include "ux/ux.h"
 
 
 // -----------------------------------------------------------------------------
