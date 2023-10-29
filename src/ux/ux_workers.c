@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/chunk.h"
 
 static void ux_workers_free(void *);
 static void ux_workers_update_state(void *);

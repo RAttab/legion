@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ux/ux.h"
-#include "game/world.h"
-#include "db/res.h"
-#include "utils/color.h"
-#include "utils/hset.h"
 
 static void ux_map_free(void *);
 static void ux_map_update(void *);

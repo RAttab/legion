@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/chunk.h"
-#include "game/pills.h"
-
 static void ux_pills_free(void *);
 static void ux_pills_update(void *);
 static void ux_pills_event(void *);

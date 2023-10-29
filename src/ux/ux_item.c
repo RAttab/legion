@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/chunk.h"
-#include "items/config.h"
 
 static void ux_item_free(void *);
 static void ux_item_update(void *);

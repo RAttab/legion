@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/tech.h"
-#include "items/lab/lab.h"
-#include "db/tapes.h"
 
 static void ux_tapes_free(void *);
 static void ux_tapes_update(void *);

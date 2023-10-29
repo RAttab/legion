@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/chunk.h"
-#include "game/energy.h"
 
 static void ux_energy_free(void *);
 static void ux_energy_update_state(void *);

@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "utils/str.h"
-
 static void ux_status_free(void *);
 static void ux_status_render(void *, struct ui_layout *);
 

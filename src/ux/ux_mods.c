@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "vm/mod.h"
-#include "vm/code.h"
-#include "game/sys.h"
-#include "utils/fs.h"
 
 static void ux_mods_free(void *);
 static void ux_mods_update(void *);

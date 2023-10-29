@@ -3,6 +3,35 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "ux/ux.h"
+#include "vm/mod.h"
+#include "vm/code.h"
+#include "vm/atoms.h"
+#include "db/tapes.h"
+#include "db/items.h"
+#include "db/specs.h"
+#include "items/types.h"
+#include "items/config.h"
+#include "items/lab/lab.h"
+#include "game/sys.h"
+#include "game/log.h"
+#include "game/man.h"
+#include "game/tech.h"
+#include "game/pills.h"
+#include "game/chunk.h"
+#include "game/energy.h"
+#include "game/coord.h"
+#include "game/chunk.h"
+#include "game/world.h"
+#include "utils/fs.h"
+#include "utils/str.h"
+#include "utils/color.h"
+#include "utils/htable.h"
+#include "utils/vec.h"
+#include "utils/hset.h"
+
+#include <stdarg.h>
+
 #include "ux/ux.c"
 #include "ux/ux_map.c"
 #include "ux/ux_factory.c"

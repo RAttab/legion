@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/chunk.h"
-#include "game/active.h"
-#include "items/types.h"
-#include "vm/atoms.h"
-#include "ux/ux.h"
 
 // -----------------------------------------------------------------------------
 // io

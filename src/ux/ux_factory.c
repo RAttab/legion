@@ -3,13 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db/items.h"
-#include "game/coord.h"
-#include "game/chunk.h"
-#include "items/types.h"
-#include "items/config.h"
-#include "utils/htable.h"
-#include "utils/vec.h"
 
 static void ux_factory_free(void *);
 static void ux_factory_update(void *);

@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/man.h"
-
-#include <stdarg.h>
 
 static void ux_man_free(void *);
 static void ux_man_update(void *);

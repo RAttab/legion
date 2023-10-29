@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/log.h"
-#include "game/chunk.h"
-#include "game/world.h"
-
 static void ux_log_free(void *);
 static void ux_log_hide(void *);
 static void ux_log_update(void *);

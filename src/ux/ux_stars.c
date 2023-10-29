@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/sector.h"
-#include "ux/ux.h"
 
 static void ux_stars_free(void *);
 static void ux_stars_update(void *);

@@ -3,14 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/chunk.h"
-#include "game/energy.h"
-#include "db/items.h"
-#include "db/specs.h"
-#include "utils/vec.h"
-
 static void ux_star_free(void *);
 static void ux_star_update(void *);
 static void ux_star_event(void *);
