@@ -126,7 +126,7 @@ void engine_init(void)
     const GLFWvidmode *mode = glfwGetVideoMode(engine.monitor);
     if (!mode) glfw_fail("glfwGetVideoMode");
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RED_BITS, mode->redBits);
     glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
