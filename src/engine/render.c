@@ -206,7 +206,10 @@ static void render_buffer_reserve_vertex(struct render_buffer *buffer, size_t le
 {
     if (likely(buffer->vlen + len <= buffer->vcap)) return;
 
-    size_t old = legion_xchg(&buffer->vcap, buffer->vcap ? buffer->vcap * 2 : 128);
+    size_t old = buffer->vcap;
+    if (!buffer->vcap) buffer->vcap = 128;
+    while (buffer->vcap < buffer->vlen + len) buffer->vcap *= 2;
+
     buffer->v.raw = realloc_zero(buffer->v.raw, old, buffer->vcap, buffer->vertex_len);
 }
 
@@ -235,7 +238,10 @@ static void render_buffer_reserve_index(struct render_buffer *buffer, size_t len
 {
     if (likely(buffer->elen + len <= buffer->ecap)) return;
 
-    size_t old = legion_xchg(&buffer->ecap, buffer->ecap ? buffer->ecap * 2 : 128);
+    size_t old = buffer->ecap;
+    if (!buffer->ecap) buffer->ecap = 128;
+    while (buffer->ecap < buffer->elen + len) buffer->ecap *= 2;
+
     buffer->e = realloc_zero(buffer->e, old, buffer->ecap, sizeof(*buffer->e));
 }
 
