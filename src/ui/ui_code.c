@@ -711,7 +711,8 @@ static void ui_code_event_del(struct ui_code *ui, enum ev_mods mods, int32_t inc
 
 static void ui_code_event_undo(struct ui_code *ui, enum ev_mods mods)
 {
-    if (!ui->writable || !ev_mods_allows(mods, ev_mods_shift)) return;
+    if (!ui->writable || !ev_mods_allows(mods, ev_mods_ctrl | ev_mods_shift))
+        return;
 
     const bool redo = mods == ev_mods_shift;
     const uint32_t pos = redo ? code_redo(ui->code) : code_undo(ui->code);
