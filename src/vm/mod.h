@@ -40,7 +40,7 @@ inline bool mod_validate(vm_word word) { return word > 0 && word <= UINT32_MAX; 
 // Mods can get quite big (multiple Kb) so packing these structure tight can
 // help quite a bit.
 
-enum { mod_err_cap = s_cache_line - 4 };
+enum : size_t { mod_err_cap = s_cache_line - 4 };
 struct legion_packed mod_err
 {
     uint32_t pos:24;

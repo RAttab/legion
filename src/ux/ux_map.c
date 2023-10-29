@@ -22,25 +22,20 @@ struct ux_map
 };
 
 
-enum : unit
-{
-    // Number of pixels per star at scale_base (not
-    // map_scale_default). Basically it needs to be tweaked to a number that's
-    // big enough to see and click on but not too big that there are overlaps
-    // between stars during gen.
-    ux_map_star_size = 800,
+// Number of pixels per star at scale_base (not map_scale_default). Basically it
+// needs to be tweaked to a number that's big enough to see and click on but not
+// too big that there are overlaps between stars during gen.
+constexpr unit ux_map_star_size = 800;
 
-    // Tweaked in relation to map_star_px so that our default view isn't
-    // useless.
-    ux_map_scale_default = coord_scale_min << 5,
+// Tweaked in relation to map_star_px so that our default view isn't useless.
+constexpr unit ux_map_scale_default = coord_scale_min << 5;
 
-    // As we zoom out we need to pull more nad more sector data which becomes
-    // too expansive. These determine at which zoom threshold do we stop pulling
-    // some data and displaying things like the sector or area grid.
-    ux_map_thresh_stars = coord_scale_min << 0x8,
-    ux_map_thresh_sector_low = coord_scale_min << 0x7,
-    ux_map_thresh_sector_high = coord_scale_min << 0xE,
-};
+// As we zoom out we need to pull more nad more sector data which becomes too
+// expansive. These determine at which zoom threshold do we stop pulling some
+// data and displaying things like the sector or area grid.
+constexpr unit ux_map_thresh_stars = coord_scale_min << 0x8;
+constexpr unit ux_map_thresh_sector_low = coord_scale_min << 0x7;
+constexpr unit ux_map_thresh_sector_high = coord_scale_min << 0xE;
 
 
 

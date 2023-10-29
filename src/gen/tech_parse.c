@@ -189,7 +189,7 @@ static void tech_parse(struct tree *tree, const char *path)
             }
 
             else if (hash == symbol_hash_c("specs")) {
-                enum { cap = 256 };
+                constexpr size_t cap = 256;
                 info.specs.data = calloc(cap, sizeof(char));
                 info.specs.len = reader_until_close(in, info.specs.data, cap);
                 assert(info.specs.len < cap - 1);

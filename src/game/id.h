@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------------------
 
 typedef uint16_t im_id;
-enum { id_shift = 8 };
+enum : size_t { id_shift = 8 };
 
 inline im_id make_im_id(enum item type, im_id id) { return type << id_shift | id; }
 inline enum item im_id_item(im_id id) { return id >> id_shift; }
@@ -28,5 +28,5 @@ inline bool id_validate(vm_word word)
         item_validate(im_id_item(word));
 }
 
-enum { im_id_str_len = item_str_len + 1 + 2 };
+enum : size_t { im_id_str_len = item_str_len + 1 + 2 };
 size_t im_id_str(im_id id, char *dst, size_t len);

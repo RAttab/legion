@@ -83,7 +83,7 @@ static void im_receive_io_channel(
     if (!im_check_args(chunk, receive->id, io_channel, len, 1)) return;
 
     uint8_t channel = args[0];
-    if (args[0] < 0 || args[0] >= im_channels_max)
+    if (args[0] < 0 || (size_t) args[0] >= im_channels_max)
         return chunk_log(chunk, receive->id, io_channel, ioe_a0_invalid);
 
     im_receive_unlisten(receive, chunk);

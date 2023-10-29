@@ -110,12 +110,9 @@ static void im_nomad_reset(struct im_nomad *nomad, struct chunk *chunk)
 }
 
 
-enum
-{
-    im_nomad_data_cargo = 4,
-    im_nomad_data_len =
-      1 + im_nomad_memory_len + (im_nomad_cargo_len / im_nomad_data_cargo),
-};
+constexpr size_t im_nomad_data_cargo = 4;
+constexpr size_t im_nomad_data_len =
+    1 + im_nomad_memory_len + (im_nomad_cargo_len / im_nomad_data_cargo);
 
 static_assert(
         sizeof(struct im_nomad_cargo) * im_nomad_data_cargo ==

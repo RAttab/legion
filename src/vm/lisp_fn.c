@@ -740,7 +740,7 @@ static void lisp_fn_io(struct lisp *lisp)
     while (lisp_stmt(lisp)) len++;
 
     if (len > vm_io_cap)
-        lisp_err(lisp, "too many io arguments: %zu > %u", len, vm_io_cap);
+        lisp_err(lisp, "too many io arguments: %zu > %zu", len, vm_io_cap);
 
     lisp_index_at(lisp, &token);
     lisp_write_op(lisp, vm_op_io);

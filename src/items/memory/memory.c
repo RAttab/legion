@@ -10,11 +10,8 @@
 // specs
 // -----------------------------------------------------------------------------
 
-enum
-{
-    im_memory_len_base = 7 + 8 * 0,
-    im_memory_len_max = im_memory_len_base,
-};
+constexpr size_t im_memory_len_base = 7 + 8 * 0;
+constexpr size_t im_memory_len_max = im_memory_len_base;
 
 // -----------------------------------------------------------------------------
 // impl

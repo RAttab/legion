@@ -15,7 +15,7 @@ static void ux_energy_render(void *, struct ui_layout *);
 // energy
 // -----------------------------------------------------------------------------
 
-enum
+enum : unsigned
 {
     ux_energy_stored = 0,
     ux_energy_fusion,

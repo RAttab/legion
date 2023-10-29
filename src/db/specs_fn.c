@@ -47,11 +47,11 @@ static struct specs_ret spec_solar_energy_fn(const vm_word *args, size_t len)
         return (struct specs_ret) { .ok = false };
 
     vm_word star = args[0];
-    if (star < 0 || star > star_elem_cap)
+    if (star < 0 || (size_t) star > star_elem_cap)
         return (struct specs_ret) { .ok = false };
 
     vm_word solar = len >= 2 ? args[1] : 1;
-    if (solar < 0 || solar > chunk_item_cap)
+    if (solar < 0 || (size_t) solar > chunk_item_cap)
         return (struct specs_ret) { .ok = false };
 
     return (struct specs_ret) {

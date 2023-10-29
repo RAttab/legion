@@ -17,7 +17,7 @@ struct atoms;
 // types
 // -----------------------------------------------------------------------------
 
-enum { man_path_max = 64, man_toc_max = 16 };
+enum : size_t { man_path_max = 64, man_toc_max = 16 };
 
 typedef uint16_t man_line;
 typedef uint16_t man_page;
@@ -28,7 +28,7 @@ typedef uint16_t man_section;
 // link
 // -----------------------------------------------------------------------------
 
-enum { link_ui_tape = 0xFFFF };
+enum : man_section { link_ui_tape = 0xFFFF };
 
 struct legion_packed link { man_page page; man_section section; };
 

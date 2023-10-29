@@ -40,7 +40,7 @@ void ui_histo_style_default(struct ui_style *s)
 // histo
 // -----------------------------------------------------------------------------
 
-enum { ui_histo_val_len = 6 };
+constexpr size_t ui_histo_val_len = 6;
 
 struct ui_histo ui_histo_new(
         struct dim dim, const struct ui_histo_series *list, size_t len)

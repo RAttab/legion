@@ -107,7 +107,7 @@ static_assert(sizeof(struct flow) == 10);
 // channels
 // -----------------------------------------------------------------------------
 
-enum { im_channels_max = 4 };
+enum : size_t { im_channels_max = 4 };
 
 struct legion_packed im_channels
 {
@@ -144,7 +144,7 @@ inline struct im_channels im_channels_from_u64(uint64_t data)
 // packet
 // -----------------------------------------------------------------------------
 
-enum { im_packet_max = 3 };
+enum : size_t { im_packet_max = 3 };
 
 struct legion_packed im_packet
 {

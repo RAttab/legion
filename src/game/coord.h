@@ -120,7 +120,7 @@ inline struct coord coord_from_u64(uint64_t id)
     };
 }
 
-enum { coord_str_len = (2+1+2+1+4)*2 + 3 };
+enum : size_t { coord_str_len = (2+1+2+1+4)*2 + 3 };
 
 size_t coord_str(struct coord coord, char *str, size_t len);
 

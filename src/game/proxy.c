@@ -251,7 +251,7 @@ static void proxy_update_state_io(struct world_io *io)
         return;
     }
 
-    enum { arg_str_len = 16 };
+    constexpr size_t arg_str_len = 16;
     char arg_str[(2 + arg_str_len + 1) * 4 + 1] = {0};
 
     char *it = arg_str;

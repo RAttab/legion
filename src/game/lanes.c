@@ -55,7 +55,7 @@ struct lane
 
 static struct lane *lane_alloc(struct coord src, struct coord dst)
 {
-    enum { cap_default = 1 };
+    constexpr size_t cap_default = 1;
 
     struct lane *lane = calloc(1, sizeof(*lane));
     *lane = (struct lane) {

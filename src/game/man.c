@@ -81,7 +81,7 @@ struct man
     struct { size_t len, cap; struct markup *list; } markup;
 };
 
-enum { man_markup_inc = 64 };
+constexpr size_t man_markup_inc = 64;
 
 static const char *man_text_current(struct man *);
 static const char *man_text_put(struct man *, char);

@@ -22,7 +22,7 @@ static void chunk_ports_step(struct chunk *);
 // cargo
 // -----------------------------------------------------------------------------
 
-enum { chunk_log_cap = 8 };
+constexpr size_t chunk_log_cap = 8;
 
 struct chunk
 {

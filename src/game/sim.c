@@ -24,19 +24,16 @@ static void sim_publish_mod(struct sim_pipe *pipe, const struct mod *mod);
 // sim
 // -----------------------------------------------------------------------------
 
-enum
-{
-    sim_freq_slow = 10,
-    sim_freq_fast = 100,
-    sim_freq_faster = 1000,
+constexpr size_t sim_freq_slow = 10;
+constexpr size_t sim_freq_fast = 100;
+constexpr size_t sim_freq_faster = 1000;
 
-    sim_log_len = 8,
+constexpr size_t sim_log_len = 8;
 
-    sim_save_version = 1,
+constexpr uint8_t sim_save_version = 1;
 
-    sim_prof_enabled = 0,
-    sim_prof_freq = 100,
-};
+constexpr bool sim_prof_enabled = false;
+constexpr size_t sim_prof_freq = 100;
 
 struct sim
 {

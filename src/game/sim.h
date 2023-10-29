@@ -24,7 +24,7 @@ struct save;
 
 struct sim;
 
-enum
+enum : size_t
 {
     sim_in_len = 100 * s_page_len,
     sim_out_len = 2000 * s_page_len,

@@ -75,11 +75,8 @@ static const char *ux_star_elems[] = {
     "K:"
 };
 
-enum
-{
-    ux_star_elems_col_len = 2 + str_scaled_len,
-    ux_star_elems_total_len = ux_star_elems_col_len * 5 + 4,
-};
+constexpr size_t ux_star_elems_col_len = 2 + str_scaled_len;
+constexpr size_t ux_star_elems_total_len = ux_star_elems_col_len * 5 + 4;
 
 enum ux_star_tabs { ux_star_control = 1, ux_star_factory, ux_star_logistics, };
 

@@ -19,7 +19,7 @@
 // socket
 // -----------------------------------------------------------------------------
 
-enum { socket_listen_backlog = 64 };
+constexpr size_t socket_listen_backlog = 64;
 
 static bool socket_nodelay(int fd)
 {

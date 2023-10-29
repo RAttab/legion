@@ -15,21 +15,18 @@
 #define im_brain_len(stack) \
     (sizeof(struct im_brain) + sizeof(vm_word) * vm_stack_len(stack))
 
-enum
-{
-    im_brain_stack_base = 1,
-    im_brain_stack_volume = 3,
-    im_brain_stack_dense = 1,
-    im_brain_stack_max = im_brain_stack_volume,
+constexpr size_t im_brain_stack_base = 1;
+constexpr size_t im_brain_stack_volume = 3;
+constexpr size_t im_brain_stack_dense = 1;
+constexpr size_t im_brain_stack_max = im_brain_stack_volume;
 
-    im_brain_speed_base = 2,
-    im_brain_speed_volume = 2,
-    im_brain_speed_dense = 4,
+constexpr size_t im_brain_speed_base = 2;
+constexpr size_t im_brain_speed_volume = 2;
+constexpr size_t im_brain_speed_dense = 4;
 
-    im_brain_len_base = im_brain_len(im_brain_stack_base),
-    im_brain_len_volume = im_brain_len(im_brain_stack_volume),
-    im_brain_len_dense = im_brain_len(im_brain_stack_dense),
-};
+constexpr size_t im_brain_len_base = im_brain_len(im_brain_stack_base);
+constexpr size_t im_brain_len_volume = im_brain_len(im_brain_stack_volume);
+constexpr size_t im_brain_len_dense = im_brain_len(im_brain_stack_dense);
 
 
 // -----------------------------------------------------------------------------

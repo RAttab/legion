@@ -13,7 +13,7 @@
 // properly set an ordering between ring_it_t values by comparing their deltas
 // against ring_cap. Important for computing save/load deltas.
 typedef uint32_t ring_it;
-enum { ring_cap = UINT16_MAX };
+enum : size_t { ring_cap = UINT16_MAX };
 
 inline size_t ring_delta(ring_it first, ring_it last)
 {

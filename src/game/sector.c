@@ -89,21 +89,18 @@ ssize_t sector_scan(
 // gen
 // -----------------------------------------------------------------------------
 
-enum
-{
-    gen_stars_min = 4,
-    gen_stars_max = 1000,
+constexpr size_t gen_stars_min = 4;
+constexpr size_t gen_stars_max = 1000;
 
-    gen_square_size = 256,
-    gen_square_margin = 128,
-    gen_square_fuzz = gen_square_size - gen_square_margin,
+constexpr size_t gen_square_size = 256;
+constexpr size_t gen_square_margin = 128;
+constexpr size_t gen_square_fuzz = gen_square_size - gen_square_margin;
 
-    gen_square_num = 256,
-    gen_square_total = gen_square_num * gen_square_num,
+constexpr size_t gen_square_num = 256;
+constexpr size_t gen_square_total = gen_square_num * gen_square_num;
 
-    gen_prefix_cap = 15,
-    gen_suffix_cap = 14,
-};
+constexpr size_t gen_prefix_cap = 15;
+constexpr size_t gen_suffix_cap = 14;
 
 static_assert(gen_square_size > gen_square_margin);
 static_assert(gen_square_num * gen_square_num > gen_stars_max * 2);

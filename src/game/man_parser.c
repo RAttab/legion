@@ -12,7 +12,7 @@
 
 static const char man_title[] = "Legion's Programmer Manual";
 
-enum man_markup_type
+enum man_markup_type : char
 {
     man_markup_nil       = 0,
     man_markup_comment   = '%',

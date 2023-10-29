@@ -14,7 +14,8 @@ static void ux_man_render(void *, struct ui_layout *);
 // man
 // -----------------------------------------------------------------------------
 
-enum { ux_man_cols = 89, ux_man_depth = 4 };
+constexpr size_t ux_man_cols = 89;
+constexpr size_t ux_man_depth = 4;
 
 struct ux_man
 {

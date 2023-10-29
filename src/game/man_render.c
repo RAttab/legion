@@ -9,15 +9,12 @@
 // indent
 // -----------------------------------------------------------------------------
 
-enum
-{
-    man_indent_section_abs = 4,
-    man_indent_topic_header_abs = 2,
-    man_indent_topic_body_abs = 4,
+constexpr size_t man_indent_section_abs = 4;
+constexpr size_t man_indent_topic_header_abs = 2;
+constexpr size_t man_indent_topic_body_abs = 4;
 
-    man_indent_list_rel = 8,
-    man_indent_code_rel = 0,
-};
+constexpr size_t man_indent_list_rel = 8;
+constexpr size_t man_indent_code_rel = 0;
 
 
 // -----------------------------------------------------------------------------

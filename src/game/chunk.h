@@ -29,7 +29,7 @@ struct energy;
 // chunk
 // -----------------------------------------------------------------------------
 
-enum { chunk_item_cap = UINT8_MAX };
+enum : size_t { chunk_item_cap = UINT8_MAX };
 
 struct chunk;
 

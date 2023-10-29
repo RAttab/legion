@@ -25,11 +25,8 @@ struct ux_topbar
     struct ui_button close;
 };
 
-enum : uint64_t
-{
-    topbar_ticks_len = 8,
-    topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + coord_scale_str_len+1,
-};
+constexpr size_t topbar_ticks_len = 8;
+constexpr size_t topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + coord_scale_str_len+1;
 
 void ux_topbar_alloc(struct ux_view_state *state)
 {

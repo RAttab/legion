@@ -36,7 +36,7 @@ struct atoms
     uint64_t inil;
 };
 
-enum { atoms_default_cap = 1 << 10 };
+constexpr size_t atoms_default_cap = 1 << 10;
 
 struct atoms *atoms_new(void)
 {

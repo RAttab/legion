@@ -19,7 +19,7 @@ struct chunk;
 // star
 // -----------------------------------------------------------------------------
 
-enum { star_elem_cap = UINT16_MAX };
+enum : size_t { star_elem_cap = UINT16_MAX };
 
 struct legion_packed star
 {

@@ -272,7 +272,7 @@ static bool engine_step(void)
 
 void engine_loop(void)
 {
-    enum { fps_cap = 60 };
+    constexpr size_t fps_cap = 60;
     time_sys sleep = ts_sec / fps_cap;
 
     time_sys ts = ts_now();

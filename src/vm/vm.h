@@ -16,7 +16,7 @@
 static const vm_ip vm_ip_nil = UINT32_MAX;
 inline bool ip_validate(vm_word word) { return word >= 0 && word < UINT32_MAX; }
 
-enum flags
+enum flags : uint8_t
 {
     FLAG_IO          = 1 << 0,
     FLAG_SUSPENDED   = 1 << 1,
@@ -69,7 +69,7 @@ bool vm_fault(struct vm *);
 void vm_io_fault(struct vm *);
 inline bool vm_io(struct vm *vm) { return vm->flags & FLAG_IO; }
 
-enum { vm_io_cap = 8 };
+enum : size_t { vm_io_cap = 8 };
 typedef vm_word vm_io_buf_t[vm_io_cap];
 
 void vm_push(struct vm *, vm_word);

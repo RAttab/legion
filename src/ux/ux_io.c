@@ -8,11 +8,8 @@
 // io
 // -----------------------------------------------------------------------------
 
-enum
-{
-    ux_io_cmds_max = 32,
-    ux_io_args_max = 5,
-};
+constexpr size_t ux_io_cmds_max = 32;
+constexpr size_t ux_io_args_max = 5;
 
 struct ux_io_arg
 {

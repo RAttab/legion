@@ -25,7 +25,7 @@ size_t str_atod(const char *src, size_t len, int64_t *dst);
 size_t str_atou(const char *src, size_t len, uint64_t *dst);
 size_t str_atox(const char *src, size_t len, uint64_t *dst);
 
-enum { str_scaled_len = 4 };
+enum : size_t { str_scaled_len = 4 };
 size_t str_scaled(uint64_t val, char *dst, size_t len);
 
 inline char str_hexchar(uint8_t val)

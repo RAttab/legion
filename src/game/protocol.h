@@ -142,7 +142,7 @@ void ack_reset_chunk(struct ack *);
 // cmd
 // -----------------------------------------------------------------------------
 
-enum cmd_type
+enum cmd_type : uint8_t
 {
     CMD_NIL          = 0x00,
     CMD_QUIT         = 0x01,

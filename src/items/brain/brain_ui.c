@@ -56,7 +56,7 @@ struct ui_brain
 
 static void *ui_brain_alloc(void)
 {
-    enum { u8_len = 2, u16_len = 4, u32_len = 8, u64_len = 16 };
+    enum : size_t { u8_len = 2, u16_len = 4, u32_len = 8, u64_len = 16 };
 
     size_t stack_len = vm_stack_len(im_brain_stack_max) * sizeof(vm_word);
     struct ui_brain *ui = calloc(1, sizeof(*ui) + stack_len);

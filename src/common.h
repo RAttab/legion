@@ -116,10 +116,10 @@ typedef unsigned __int128 uint128_t;
 // constants
 // -----------------------------------------------------------------------------
 
-enum { s_cache_line = 64 };
+enum : size_t { s_cache_line = 64 };
 static const size_t cache_line = s_cache_line;
 
-enum { s_page_len = 4096 };
+enum : size_t { s_page_len = 4096 };
 static const size_t page_len = s_page_len;
 
 

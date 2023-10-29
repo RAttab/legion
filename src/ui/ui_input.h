@@ -10,7 +10,7 @@
 // input
 // -----------------------------------------------------------------------------
 
-enum { ui_input_cap = 256 };
+enum : size_t { ui_input_cap = 256 };
 
 
 struct ui_input_style
