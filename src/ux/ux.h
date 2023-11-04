@@ -84,6 +84,7 @@ void ux_free(void);
 
 void *ux_state(enum ux_view);
 enum ux_view ux_slot(enum ux_slot);
+struct ui_panel *ux_cursor_panel(void);
 
 void ux_update_state(void);
 void ux_update_frame(void);

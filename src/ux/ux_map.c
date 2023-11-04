@@ -277,7 +277,9 @@ static void ux_map_render_stars(
         struct ux_map *ux, const render_layer l, struct coord_rect area)
 {
     struct rect render_area = ux_map_to_rect(area);
-    struct pos cursor = ux_map_to_pos(ux_map_to_coord(ux, ev_mouse_pos()));
+
+    struct pos cursor = ux_cursor_panel() ? make_pos(unit_min, unit_min) :
+        ux_map_to_pos(ux_map_to_coord(ux, ev_mouse_pos()));
 
     struct coord_rect area_it = area;
     area_it.top.x -= ux_map_star_size/2; area_it.top.y -= ux_map_star_size/2;

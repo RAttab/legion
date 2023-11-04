@@ -60,6 +60,7 @@ struct
     bool init;
     enum ux_view slots[ux_slot_len];
     struct ux_view_state views[ux_view_len];
+    struct ui_panel *cursor_panel;
 } ux = { .init = false };
 
 
@@ -116,6 +117,11 @@ enum ux_view ux_slot(enum ux_slot slot)
     size_t ix = u64_ctz(slot);
     assert(u64_pop(slot) == 1 && ix < ux_slot_len);
     return ux.slots[ix];
+}
+
+struct ui_panel *ux_cursor_panel(void)
+{
+    return ux.cursor_panel;
 }
 
 
@@ -231,6 +237,7 @@ void ux_render(void)
 {
     struct rect area = engine_area();
     struct ui_layout layout = ui_layout_new(rect_pos(area), rect_dim(area));
+    struct ui_panel *cursor_panel = nullptr;
 
     void render_view(enum ux_view view)
     {
@@ -238,7 +245,11 @@ void ux_render(void)
         struct ux_view_state *state = ux.views + view;
         if (state->panel) inner = ui_panel_render(state->panel, &layout);
         if (state->fn.render) state->fn.render(state->state, &inner);
-        if (state->panel) render_layer_pop();
+        if (state->panel) {
+            render_layer_pop();
+            if (rect_contains(state->panel->w, ev_mouse_pos()))
+                cursor_panel = state->panel;
+        }
     }
 
     void render_slot(enum ux_slot slot)
@@ -276,6 +287,8 @@ void ux_render(void)
 
         render_layer_pop();
     }
+
+    ux.cursor_panel = cursor_panel;
 }
 
 

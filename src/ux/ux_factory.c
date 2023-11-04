@@ -360,9 +360,12 @@ static void ux_factory_render_flow(
     const render_layer layer_bg = layer + 0;
     const render_layer layer_fg = layer + 1;
 
+    flow_pos cursor = ux_cursor_panel() ? make_pos(unit_min, unit_min) :
+        ux_factory_to_flow_pos(ux, ev_mouse_pos());
+
     {
         struct rgba bg =
-            rect_contains(rect, ux_factory_to_flow_pos(ux, ev_mouse_pos())) ? ux->s.hover :
+            rect_contains(rect, cursor) ? ux->s.hover :
             flow->id == ux->state.select ? ux->s.select :
             ux->s.bg;
 
