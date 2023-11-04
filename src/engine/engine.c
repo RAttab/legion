@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/game.h"
-#include "ux/ux.h"
-
-#include <stdatomic.h>
-#include <pthread.h>
-
 
 // -----------------------------------------------------------------------------
 // state

@@ -5,9 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "vm/types.h"
-
 struct atoms;
 
 

@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "engine/engine.h"
-#include "game/game.h"
-
 
 // -----------------------------------------------------------------------------
 // local

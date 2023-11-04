@@ -3,15 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "utils/fs.h"
-#include "utils/net.h"
-
-#include <sys/epoll.h>
-#include <sys/socket.h>
-
-static_assert(EAGAIN == EWOULDBLOCK);
-
 
 // -----------------------------------------------------------------------------
 // server

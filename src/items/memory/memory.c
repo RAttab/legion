@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/memory/memory.h"
-#include "items/config.h"
 
 // -----------------------------------------------------------------------------
 // specs

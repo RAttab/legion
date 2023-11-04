@@ -3,9 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/game.h"
-#include "items/config.h"
-#include "engine/engine.h"
+#include "game.h"
+#include "engine.h"
+
 #include "utils/hset.h"
 
 // -----------------------------------------------------------------------------

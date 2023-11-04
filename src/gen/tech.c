@@ -3,16 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "utils/symbol.h"
-#include "utils/fs.h"
-#include "utils/rng.h"
-#include "utils/str.h"
-#include "utils/bits.h"
-#include "utils/htable.h"
-#include "utils/config.h"
-
-#include <sys/mman.h>
 
 // -----------------------------------------------------------------------------
 // config

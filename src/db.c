@@ -3,12 +3,11 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db/db.h"
+#include "db.h"
+#include "vm.h"
+#include "game.h"
+#include "items.h"
 
-#include "vm/vm.h"
-#include "game/game.h"
-#include "items/config.h"
-#include "items/items.h"
 #include "utils/err.h"
 #include "utils/rng.h"
 #include "utils/bits.h"

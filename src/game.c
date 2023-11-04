@@ -3,13 +3,13 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/game.h"
+#include "db.h"
+#include "vm.h"
+#include "game.h"
+#include "items.h"
+#include "ux.h"
+#include "engine.h"
 
-#include "db/db.h"
-#include "ux/ux.h"
-#include "vm/vm.h"
-#include "items/config.h"
-#include "items/items.h"
 #include "utils/rng.h"
 #include "utils/vec.h"
 #include "utils/str.h"
@@ -17,7 +17,6 @@
 #include "utils/save.h"
 #include "utils/time.h"
 #include "utils/config.h"
-#include "engine/engine.h"
 
 #include <stdarg.h>
 #include <stdatomic.h>

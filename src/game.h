@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include "game/types.h"
 
-#include "db/db.h"
-#include "vm/vm.h"
-#include "items/config.h"
+#include "db.h"
+#include "vm.h"
+#include "items.h"
+
+#include "game/types.h"
 #include "utils/bits.h"
 #include "utils/hash.h"
 #include "utils/user.h"

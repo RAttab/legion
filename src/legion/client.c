@@ -3,16 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "engine/engine.h"
-#include "game/game.h"
-#include "utils/net.h"
-#include "utils/time.h"
-
-#include <sys/epoll.h>
-#include <unistd.h>
-
-static_assert(EAGAIN == EWOULDBLOCK);
 
 
 // -----------------------------------------------------------------------------

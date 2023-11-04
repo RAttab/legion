@@ -5,17 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "vm/types.h"
-#include "game/types.h"
-#include "utils/err.h"
-#include "utils/color.h"
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include "engine/types.h"
-
 // -----------------------------------------------------------------------------
 // engine
 // -----------------------------------------------------------------------------
@@ -47,11 +36,3 @@ void engine_populate_tests(void);
 
 void engine_path_mods(char *dst, size_t len);
 void engine_path_mod(const char *name, char *dst, size_t len);
-
-
-// -----------------------------------------------------------------------------
-// impl
-// -----------------------------------------------------------------------------
-
-#include "engine/render.h"
-#include "engine/events.h"

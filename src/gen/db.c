@@ -3,15 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "gen/types.h"
-#include "utils/err.h"
-#include "utils/fs.h"
-#include "utils/str.h"
-#include "utils/bits.h"
-#include "utils/htable.h"
-#include "utils/config.h"
-
 
 // -----------------------------------------------------------------------------
 // misc

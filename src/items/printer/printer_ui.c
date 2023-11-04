@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ui/ui.h"
-#include "items/ui_tape.h"
-
 
 // -----------------------------------------------------------------------------
 // printer

@@ -3,9 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/vm.h"
-#include "game/game.h"
-#include "engine/engine.h"
+#include "vm.h"
+#include "game.h"
+#include "engine.h"
+
 #include "utils/vec.h"
 #include "utils/htable.h"
 

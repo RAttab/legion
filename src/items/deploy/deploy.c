@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/deploy/deploy.h"
-#include "items/config.h"
-
 
 // -----------------------------------------------------------------------------
 // impl

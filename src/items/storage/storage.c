@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/storage/storage.h"
-#include "items/config.h"
-
 
 // -----------------------------------------------------------------------------
 // impl

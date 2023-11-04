@@ -3,10 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/vm.h"
-#include "game/game.h"
-#include "items/config.h"
-#include "engine/engine.h"
+#include "vm.h"
+#include "game.h"
+#include "engine.h"
 
 
 void check_toc(const struct toc *toc, struct lisp *lisp)

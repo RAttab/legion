@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/collider/collider.h"
-#include "items/config.h"
-
 
 // -----------------------------------------------------------------------------
 // impl

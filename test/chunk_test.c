@@ -3,9 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/game.h"
-#include "items/config.h"
-#include "engine/engine.h"
+#include "game.h"
+#include "engine.h"
 
 
 void test_ports_1on1(void)

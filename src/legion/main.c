@@ -3,8 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/game.h"
-#include "engine/engine.h"
+#include "game.h"
+#include "engine.h"
+
 #include "utils/str.h"
 
 #include <getopt.h>

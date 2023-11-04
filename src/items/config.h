@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "db/db.h"
-#include "vm/types.h"
-#include "game/types.h"
-
-struct flow;
 struct chunk;
 struct atoms;
 struct energy;

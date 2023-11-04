@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "engine.h"
-#include "utils/bits.h"
 
 // -----------------------------------------------------------------------------
 // state

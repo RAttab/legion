@@ -17,7 +17,7 @@
        License: MIT-style license
 */
 
-#include "rng.h"
+#include "utils/rng.h"
 
 
 // -----------------------------------------------------------------------------

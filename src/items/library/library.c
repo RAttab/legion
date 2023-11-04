@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/library/library.h"
-#include "items/config.h"
 
 // -----------------------------------------------------------------------------
 // impl

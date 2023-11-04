@@ -3,8 +3,8 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/vm.h"
-#include "engine/engine.h"
+#include "vm.h"
+#include "engine.h"
 
 struct mod *compile(const char *code)
 {

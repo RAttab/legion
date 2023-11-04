@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ui/ui.h"
-
 
 // -----------------------------------------------------------------------------
 // memory

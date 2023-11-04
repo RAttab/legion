@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "str.h"
+#include "utils/str.h"
 
 
 // -----------------------------------------------------------------------------

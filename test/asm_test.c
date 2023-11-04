@@ -7,7 +7,8 @@
    bigger hassle then anything else.
 */
 
-#include "vm/vm.h"
+#include "vm.h"
+
 #include "utils/fs.h"
 
 int main(int argc, const char *argv[])

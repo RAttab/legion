@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "engine.h"
-#include "utils/err.h"
 
 // -----------------------------------------------------------------------------
 // state
