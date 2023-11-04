@@ -6,12 +6,6 @@
    function.
 */
 
-#include "vm/atoms.h"
-#include "game/game.h"
-#include "utils/err.h"
-#include "utils/htable.h"
-#include "utils/config.h"
-
 static uint64_t atoms_insert(struct atoms *, const struct symbol *, vm_word);
 
 // -----------------------------------------------------------------------------

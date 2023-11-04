@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "op.h"
-#include "utils/str.h"
 
 // -----------------------------------------------------------------------------
 // vm_op

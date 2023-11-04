@@ -3,12 +3,15 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "utils/user.h"
+#include "utils/config.h"
+
+#include <sys/random.h>
+
 
 // -----------------------------------------------------------------------------
 // token
 // -----------------------------------------------------------------------------
-
-#include <sys/random.h>
 
 user_token make_user_token(void)
 {

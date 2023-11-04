@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "utils/config.h"
-#include "vm/atoms.h"
+#include "vm/vm.h"
 
 
 // -----------------------------------------------------------------------------

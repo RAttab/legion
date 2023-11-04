@@ -5,10 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "vm/ast.h"
-#include "utils/hash.h"
-
 
 // -----------------------------------------------------------------------------
 // code

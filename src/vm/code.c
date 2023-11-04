@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/code.h"
-#include "vm/ast.h"
-#include "utils/str.h"
-#include "utils/vec.h"
 
 // -----------------------------------------------------------------------------
 // code str

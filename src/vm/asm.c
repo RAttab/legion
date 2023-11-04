@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/asm.h"
-
 
 // -----------------------------------------------------------------------------
 // assembly

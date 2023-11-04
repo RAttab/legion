@@ -3,8 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "vm/mod.h"
+#include "vm/vm.h"
 
 struct mod *compile(const char *code)
 {

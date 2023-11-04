@@ -8,7 +8,7 @@
 #include "common.h"
 
 // -----------------------------------------------------------------------------
-// types
+// vm
 // -----------------------------------------------------------------------------
 
 typedef int64_t vm_word;
@@ -17,7 +17,7 @@ typedef uint32_t vm_ip;
 
 
 // -----------------------------------------------------------------------------
-// types
+// mods
 // -----------------------------------------------------------------------------
 
 struct mod;
@@ -36,3 +36,16 @@ inline mod_id make_mod(mod_maj maj, mod_ver ver)
 inline mod_maj mod_major(mod_id mod) { return mod >> 16; }
 inline mod_ver mod_version(mod_id mod) { return ((1 << 16) - 1) & mod; }
 inline bool mod_validate(vm_word word) { return word > 0 && word <= UINT32_MAX; }
+
+
+// -----------------------------------------------------------------------------
+// atoms
+// -----------------------------------------------------------------------------
+
+enum : vm_word {
+    atom_nil = 0x00,
+
+    atom_ns_io   = 0x01000000,
+    atom_ns_ioe  = 0x02000000,
+    atom_ns_user = 0x80000000,
+};

@@ -7,14 +7,13 @@
 
 #include "game/types.h"
 
-#include "vm/vm.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
 #include "db/io.h"
 #include "db/items.h"
+#include "vm/vm.h"
 #include "items/config.h"
 #include "utils/bits.h"
 #include "utils/hash.h"
+#include "utils/user.h"
 #include "utils/ring.h"
 #include "utils/heap.h"
 #include "utils/htable.h"
@@ -22,7 +21,6 @@
 
 #include "game/tape.h"
 #include "game/sys.h"
-#include "game/user.h"
 #include "game/man.h"
 #include "game/pills.h"
 #include "game/tech.h"

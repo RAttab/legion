@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm.h"
-#include "vm/op.h"
-#include "vm/mod.h"
 
 // -----------------------------------------------------------------------------
 // flags

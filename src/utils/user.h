@@ -5,6 +5,10 @@
 
 #pragma once
 
+#include "common.h"
+#include "utils/htable.h"
+#include "utils/symbol.h"
+
 struct reader;
 struct writer;
 struct save;
@@ -13,6 +17,7 @@ struct save;
 // constants
 // -----------------------------------------------------------------------------
 
+typedef uint8_t user_id;
 enum : size_t { user_max = 64 };
 enum : user_id { user_admin = 0 };
 
@@ -28,6 +33,8 @@ user_token make_user_token(void);
 // -----------------------------------------------------------------------------
 // uset
 // -----------------------------------------------------------------------------
+
+typedef uint64_t user_set;
 
 inline user_set user_to_set(user_id id)
 {

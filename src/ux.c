@@ -3,13 +3,11 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ux/ux.h"
-#include "vm/mod.h"
-#include "vm/code.h"
-#include "vm/atoms.h"
 #include "db/tapes.h"
 #include "db/items.h"
 #include "db/specs.h"
+#include "ux/ux.h"
+#include "vm/vm.h"
 #include "items/config.h"
 #include "items/items.h"
 #include "game/game.h"

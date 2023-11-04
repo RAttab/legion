@@ -5,12 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "vm/vm.h"
-#include "vm/op.h"
-#include "utils/str.h"
-#include "utils/symbol.h"
-
 struct mod;
 
 

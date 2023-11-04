@@ -3,18 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "db/io.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
-#include "utils/token.h"
-#include "utils/symbol.h"
-#include "utils/str.h"
-#include "utils/vec.h"
-#include "utils/htable.h"
-
-#include <stdarg.h>
-
 
 // -----------------------------------------------------------------------------
 // lisp

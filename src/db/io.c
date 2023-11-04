@@ -4,8 +4,8 @@
 */
 
 #include "io.h"
-#include "vm/atoms.h"
-#include "utils/symbol.h"
+#include "vm/vm.h"
+
 
 // -----------------------------------------------------------------------------
 // io

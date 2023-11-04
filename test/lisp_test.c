@@ -3,13 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "vm/vm.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
-#include "game/game.h"
 #include "db/specs.h"
 #include "db/items.h"
+#include "vm/vm.h"
+#include "game/game.h"
 #include "items/config.h"
 #include "utils/token.h"
 #include "utils/fs.h"

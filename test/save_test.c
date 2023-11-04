@@ -3,14 +3,12 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
-#include "utils/save.h"
-#include "game/game.h"
 #include "db/io.h"
+#include "vm/vm.h"
+#include "game/game.h"
 #include "items/config.h"
 #include "utils/vec.h"
+#include "utils/save.h"
 
 #include <unistd.h>
 

@@ -3,9 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
+#include "vm/vm.h"
 #include "game/game.h"
 #include "utils/vec.h"
 #include "utils/htable.h"

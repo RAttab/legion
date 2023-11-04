@@ -6,9 +6,10 @@
 #pragma once
 
 #include "common.h"
-#include "vm/atoms.h"
+#include "vm/types.h"
 
 struct atoms;
+
 
 // -----------------------------------------------------------------------------
 // io

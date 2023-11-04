@@ -5,12 +5,11 @@
 
 #include "game/game.h"
 
-#include "ux/ux.h"
 #include "db/res.h"
 #include "db/specs.h"
 #include "db/stars.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
+#include "ux/ux.h"
+#include "vm/vm.h"
 #include "items/config.h"
 #include "items/items.h"
 #include "utils/rng.h"
@@ -28,8 +27,6 @@
 #include <unistd.h>
 
 // sys.c
-#include "vm/ast.h"
-#include "vm/atoms.h"
 #include "db/tapes.h"
 #include "utils/fs.h"
 #include "utils/err.h"
@@ -51,7 +48,6 @@
 #include "game/proxy.c"
 #include "game/tech.c"
 #include "game/energy.c"
-#include "game/user.c"
 #include "game/sim.c"
 #include "game/protocol.c"
 #include "game/man.c"

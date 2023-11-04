@@ -3,6 +3,22 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "vm/vm.h"
+#include "game/game.h"
+#include "db/io.h"
+#include "utils/fs.h"
+#include "utils/bits.h"
+#include "utils/err.h"
+#include "utils/vec.h"
+#include "utils/str.h"
+#include "utils/save.h"
+#include "utils/hset.h"
+#include "utils/token.h"
+#include "utils/htable.h"
+#include "utils/config.h"
+
+#include <stdarg.h>
+
 #include "vm/vm.c"
 #include "vm/op.c"
 #include "vm/mod.c"

@@ -6,17 +6,18 @@
 #pragma once
 
 #include "common.h"
-#include "vm/vm.h"
+#include "vm/types.h"
 #include "db/items.h"
 #include "game/types.h"
 
-#include "gen/specs_value.h"
-
 struct atoms;
+
 
 // -----------------------------------------------------------------------------
 // enum spec
 // -----------------------------------------------------------------------------
+
+#include "gen/specs_value.h"
 
 enum
 {

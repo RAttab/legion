@@ -3,10 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db.h"
+#include "vm/vm.h"
 #include "game/game.h"
 #include "items/config.h"
-#include "vm/atoms.h"
 #include "items/items.h"
 
 // -----------------------------------------------------------------------------

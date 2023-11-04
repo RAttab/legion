@@ -5,12 +5,10 @@
 
 #include "ui/ui.h"
 
-#include "ux/ux.h"
-#include "vm/asm.h"
-#include "vm/code.h"
-#include "vm/atoms.h"
-#include "game/game.h"
 #include "db/specs.h"
+#include "ux/ux.h"
+#include "vm/vm.h"
+#include "game/game.h"
 #include "utils/str.h"
 #include "utils/htable.h"
 

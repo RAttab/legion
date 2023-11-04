@@ -3,14 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/vm.h"
-#include "game/game.h"
-#include "utils/save.h"
-#include "utils/fs.h"
-#include "utils/bits.h"
-#include "utils/str.h"
-#include "utils/htable.h"
-
 
 // -----------------------------------------------------------------------------
 // mod

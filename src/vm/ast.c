@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ast.h"
-#include "utils/token.h"
-#include "utils/htable.h"
-#include "utils/hset.h"
-
 // -----------------------------------------------------------------------------
 // ast_type
 // -----------------------------------------------------------------------------
