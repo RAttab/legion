@@ -5,6 +5,7 @@
 
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 
 
 void test_ports_1on1(void)
@@ -184,7 +185,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate_tests();
+    engine_populate_tests();
 
     test_ports_1on1();
     test_ports_2on1();

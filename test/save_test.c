@@ -7,6 +7,7 @@
 #include "vm/vm.h"
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 #include "utils/vec.h"
 #include "utils/save.h"
 
@@ -17,7 +18,7 @@ void check_file(const char *path)
 {
     enum { attempts = 5, steps = 100 };
 
-    sys_populate_tests();
+    engine_populate_tests();
     struct world *old = world_new(0);
     world_populate(old);
     struct coord coord = world_home(old, user_admin);

@@ -5,6 +5,7 @@
 
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 #include "utils/hset.h"
 
 // -----------------------------------------------------------------------------
@@ -127,7 +128,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate_tests();
+    engine_populate_tests();
 
     test_basics();
     test_speed();

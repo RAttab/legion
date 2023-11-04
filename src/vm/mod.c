@@ -660,7 +660,7 @@ static void mods_file_compile(
 void mods_populate(struct mods *mods, struct atoms *atoms)
 {
     char path[PATH_MAX] = {0};
-    sys_path_mods(path, sizeof(path));
+    engine_path_mods(path, sizeof(path));
 
     {
         struct dir_it *it = dir_it(path);

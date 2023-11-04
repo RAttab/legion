@@ -6,6 +6,7 @@
 #include "db/db.h"
 #include "vm/vm.h"
 #include "game/game.h"
+#include "engine/engine.h"
 #include "items/config.h"
 #include "items/items.h"
 #include "items/test/test.h"
@@ -56,7 +57,7 @@ size_t storage_count(struct chunk *chunk, id_t storage_id, id_t test_id)
 
 int main(int, char **)
 {
-    sys_populate_tests();
+    engine_populate_tests();
 
     test_txrx();
     test_storage();

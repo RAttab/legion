@@ -42,6 +42,13 @@ void engine_fork(void);
 void engine_join(void);
 void engine_quit(void);
 
+void engine_populate(void);
+void engine_populate_tests(void);
+
+void engine_path_mods(char *dst, size_t len);
+void engine_path_mod(const char *name, char *dst, size_t len);
+
+
 // -----------------------------------------------------------------------------
 // impl
 // -----------------------------------------------------------------------------

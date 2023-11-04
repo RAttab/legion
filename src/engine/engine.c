@@ -30,6 +30,8 @@ struct
 
     pthread_t thread;
     atomic_bool join;
+
+    char mods_path[PATH_MAX];
 } engine = {0};
 
 
@@ -307,4 +309,63 @@ void engine_join(void)
 void engine_quit(void)
 {
     glfwSetWindowShouldClose(engine.window, GLFW_TRUE);
+}
+
+
+// -----------------------------------------------------------------------------
+// populate
+// -----------------------------------------------------------------------------
+
+static void engine_populate_impl(void)
+{
+    im_populate();
+    mod_compiler_init();
+    specs_populate();
+    tapes_populate();
+    stars_populate();
+    ast_populate();
+
+    {
+        struct atoms *atoms = atoms_new();
+
+        im_populate_atoms(atoms);
+        io_populate_atoms(atoms);
+        man_populate(atoms);
+
+        atoms_free(atoms);
+    }
+}
+
+void engine_populate(void)
+{
+    snprintf(engine.mods_path, sizeof(engine.mods_path),
+            "%s/.legion", path_home());
+
+    int ret = mkdir(engine.mods_path, 0740);
+    if (ret && errno != EEXIST)
+        failf_errno("unable to create mods dir '%s'", engine.mods_path);
+
+    engine_populate_impl();
+}
+
+void engine_populate_tests(void)
+{
+    snprintf(engine.mods_path, sizeof(engine.mods_path), "./res/mods");
+
+    engine_populate_impl();
+}
+
+
+// -----------------------------------------------------------------------------
+// paths
+// -----------------------------------------------------------------------------
+
+void engine_path_mods(char *dst, size_t len)
+{
+    snprintf(dst, len, "%s", engine.mods_path);
+}
+
+void engine_path_mod(const char *name, char *dst, size_t len)
+{
+    snprintf(dst, len, "%s/%s.lisp", engine.mods_path, name);
 }

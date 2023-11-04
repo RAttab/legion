@@ -7,6 +7,7 @@
 #include "vm/vm.h"
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 #include "utils/token.h"
 #include "utils/fs.h"
 #include "utils/str.h"
@@ -313,7 +314,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate_tests();
+    engine_populate_tests();
     struct dir_it *it = dir_it("./test/lisp");
 
     bool ok = true;

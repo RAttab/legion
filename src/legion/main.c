@@ -3,12 +3,12 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "engine/engine.h"
 #include "game/game.h"
+#include "engine/engine.h"
 #include "utils/str.h"
 
 #include <getopt.h>
+
 
 // -----------------------------------------------------------------------------
 // declarations
@@ -178,7 +178,7 @@ int main(int argc, char *const argv[])
     if (commands == 0) cmd = cmd_local;
     else if (commands > 1) usage(1, "too many commands provided");
 
-    sys_populate();
+    engine_populate();
 
     bool ok = false;
     switch (cmd)

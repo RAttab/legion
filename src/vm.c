@@ -6,6 +6,7 @@
 #include "db/db.h"
 #include "vm/vm.h"
 #include "game/game.h"
+#include "engine/engine.h"
 #include "utils/fs.h"
 #include "utils/bits.h"
 #include "utils/err.h"

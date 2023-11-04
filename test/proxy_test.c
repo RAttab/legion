@@ -5,6 +5,7 @@
 
 #include "vm/vm.h"
 #include "game/game.h"
+#include "engine/engine.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
 
@@ -76,7 +77,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate_tests();
+    engine_populate_tests();
     check_basics();
 
     return 0;

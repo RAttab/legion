@@ -4,6 +4,7 @@
 */
 
 #include "vm/vm.h"
+#include "engine/engine.h"
 
 struct mod *compile(const char *code)
 {
@@ -53,7 +54,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate_tests();
+    engine_populate_tests();
 
     test_compiler();
 

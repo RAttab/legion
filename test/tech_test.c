@@ -7,6 +7,7 @@
 #include "vm/vm.h"
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 
 
 // -----------------------------------------------------------------------------
@@ -63,7 +64,7 @@ void test_tech(void)
 
 int main(int, char **)
 {
-    sys_populate_tests();
+    engine_populate_tests();
 
     test_tech();
 

@@ -94,7 +94,7 @@ int main(int argc, char *const argv[])
     if (commands < 1) usage(1, "no commands provided");
     if (commands > 1) usage(1, "too many commands provided");
 
-    // We don't want to run sys_populate for this command.
+    // We don't want to run engine_populate for this command.
     if (cmd == cmd_db)
         return db_run(args.db, args.src) ? 0 : 1;
     

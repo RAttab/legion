@@ -7,6 +7,7 @@
 #include "vm/vm.h"
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 #include "utils/save.h"
 #include "utils/vec.h"
 #include "utils/hset.h"
@@ -34,7 +35,7 @@ void check(void)
 {
     enum { attempts = 5, steps = 100 };
 
-    sys_populate_tests();
+    engine_populate_tests();
     const user_id user = user_admin;
     struct world *world = world_new(0);
     world_populate(world);

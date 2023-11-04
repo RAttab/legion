@@ -6,6 +6,7 @@
 #include "vm/vm.h"
 #include "game/game.h"
 #include "items/config.h"
+#include "engine/engine.h"
 
 
 void check_toc(const struct toc *toc, struct lisp *lisp)
@@ -22,7 +23,7 @@ int main(int argc, char **argv)
 {
     (void) argc, (void) argv;
 
-    sys_populate_tests();
+    engine_populate_tests();
     struct atoms *atoms = atoms_new();
     im_populate_atoms(atoms);
     struct mods_list *mods = calloc(1, sizeof(*mods));

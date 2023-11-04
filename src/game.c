@@ -24,16 +24,8 @@
 #include <pthread.h>
 #include <unistd.h>
 
-// sys.c
-#include "db/tapes.h"
-#include "utils/fs.h"
-#include "utils/err.h"
-#include <sys/stat.h>
-#include <errno.h>
-
 #include "game/active.h"
 #include "game/types.c"
-#include "game/sys.c"
 #include "game/coord.c"
 #include "game/log.c"
 #include "game/lanes.c"

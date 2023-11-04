@@ -3,6 +3,13 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "db/db.h"
+#include "utils/fs.h"
+#include "utils/err.h"
+
+#include <sys/stat.h>
+#include <errno.h>
+
 #include "engine/glad/glad.c"
 #include "engine/events.c"
 #include "engine/shaders.c"

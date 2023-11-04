@@ -41,7 +41,7 @@ LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
 ASM := src/db/res.S
 
 OBJECTS_GEN := gen common utils
-OBJECTS_LEGION := common utils db items vm game ui ux engine
+OBJECTS_LEGION := common utils db vm items game ui ux engine
 
 DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
 DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)

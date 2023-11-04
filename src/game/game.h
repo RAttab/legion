@@ -19,7 +19,6 @@
 #include "utils/symbol.h"
 
 #include "game/tape.h"
-#include "game/sys.h"
 #include "game/man.h"
 #include "game/pills.h"
 #include "game/tech.h"

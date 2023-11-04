@@ -583,7 +583,7 @@ static void ux_mods_import(struct ux_mods *, struct ux_mods_tab *tab)
     assert(ok);
 
     char path[PATH_MAX] = {0};
-    sys_path_mod(name.c, path, sizeof(path));
+    engine_path_mod(name.c, path, sizeof(path));
 
     if (!file_exists(path)) {
         ux_log(st_error,
@@ -608,7 +608,7 @@ static void ux_mods_export(struct ux_mods *, struct ux_mods_tab *tab)
     assert(ok);
 
     char path[PATH_MAX] = {0};
-    sys_path_mod(name.c, path, sizeof(path));
+    engine_path_mod(name.c, path, sizeof(path));
 
     struct mfilew file = mfilew_create_tmp(path, code_len(tab->code.code));
     (void) code_write(tab->code.code, file.ptr, file.len);
