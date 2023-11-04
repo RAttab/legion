@@ -87,7 +87,7 @@ static void im_packer_io_id(
     im_id id = args[0];
     enum item item = im_id_item(id);
 
-    if (!id_validate(args[0]))
+    if (!im_id_validate(args[0]))
         return chunk_log(chunk, packer->id, io_id, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))

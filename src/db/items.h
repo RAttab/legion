@@ -6,8 +6,7 @@
 #pragma once
 
 #include "common.h"
-#include "vm/vm.h"
-#include "vm/atoms.h"
+#include "vm/types.h"
 #include "utils/symbol.h"
 
 struct atoms;

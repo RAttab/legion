@@ -299,7 +299,7 @@ static void im_nomad_io_id(
     im_id id = args[0];
     enum item item = im_id_item(id);
 
-    if (!id_validate(args[0]))
+    if (!im_id_validate(args[0]))
         return chunk_log(chunk, nomad->id, io_id, ioe_a0_invalid);
 
     if (!item_is_active(item) && !item_is_logistics(item))
@@ -459,7 +459,7 @@ static void im_nomad_io_launch(
         im_id id = args[1];
         enum item item = im_id_item(id);
 
-        if (!id_validate(args[1]))
+        if (!im_id_validate(args[1]))
             return chunk_log(chunk, nomad->id, io_launch, ioe_a1_invalid);
 
         if (!item_is_active(item) && !item_is_logistics(item))

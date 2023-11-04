@@ -9,29 +9,9 @@
 #include "vm/vm.h"
 #include "utils/symbol.h"
 #include "utils/hash.h"
-#include "game/user.h"
+#include "game/types.h"
 
-
-// -----------------------------------------------------------------------------
-// types
-// -----------------------------------------------------------------------------
-
-struct mods;
-struct save;
 struct atoms;
-
-typedef uint16_t mod_maj;
-typedef uint16_t mod_ver;
-
-inline mod_id make_mod(mod_maj maj, mod_ver ver)
-{
-    assert(!(maj >> 15));
-    return maj << 16 | ver;
-}
-
-inline mod_maj mod_major(mod_id mod) { return mod >> 16; }
-inline mod_ver mod_version(mod_id mod) { return ((1 << 16) - 1) & mod; }
-inline bool mod_validate(vm_word word) { return word > 0 && word <= UINT32_MAX; }
 
 
 // -----------------------------------------------------------------------------
