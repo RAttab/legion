@@ -13,3 +13,4 @@
 #include "game/types.h"
 
 #include "ux/ux.h"
+#include "ux/ux_views.h"
