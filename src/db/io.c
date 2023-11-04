@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "io.h"
-#include "vm/vm.h"
-
 
 // -----------------------------------------------------------------------------
 // io

@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "vm/types.h"
-#include "db/items.h"
-#include "game/types.h"
-
 struct atoms;
 
 

@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db/res.h"
-#include "utils/err.h"
-
 
 // -----------------------------------------------------------------------------
 // man

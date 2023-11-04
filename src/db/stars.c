@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "stars.h"
-#include "utils/rng.h"
-
 
 // -----------------------------------------------------------------------------
 // names

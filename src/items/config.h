@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include "db/db.h"
 #include "vm/types.h"
 #include "game/types.h"
-#include "db/io.h"
 
 struct flow;
 struct chunk;

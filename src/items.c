@@ -6,6 +6,7 @@
 #include "ux/ux.h"
 #include "game/game.h"
 #include "items/items.h"
+#include "items/ui_tape.h"
 
 #include "items/checks.c"
 #include "items/ui_tape.c"

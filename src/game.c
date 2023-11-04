@@ -5,9 +5,7 @@
 
 #include "game/game.h"
 
-#include "db/res.h"
-#include "db/specs.h"
-#include "db/stars.h"
+#include "db/db.h"
 #include "ux/ux.h"
 #include "vm/vm.h"
 #include "items/config.h"

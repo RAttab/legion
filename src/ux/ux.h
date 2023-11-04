@@ -6,9 +6,9 @@
 #pragma once
 
 #include "common.h"
-#include "ui/ui.h"
+#include "db/db.h"
 #include "game/types.h"
-#include "db/io.h"
+#include "ui/ui.h"
 
 
 // -----------------------------------------------------------------------------

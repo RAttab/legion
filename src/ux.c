@@ -3,9 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db/tapes.h"
-#include "db/items.h"
-#include "db/specs.h"
+#include "db/db.h"
 #include "ux/ux.h"
 #include "vm/vm.h"
 #include "items/config.h"

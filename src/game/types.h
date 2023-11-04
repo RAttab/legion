@@ -6,8 +6,8 @@
 #pragma once
 
 #include "common.h"
-#include "vm/types.h"
 #include "db/items.h"
+#include "vm/types.h"
 #include "game/coord.h"
 
 // -----------------------------------------------------------------------------

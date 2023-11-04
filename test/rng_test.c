@@ -3,7 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
 #include "utils/rng.h"
 #include "utils/bits.h"
 

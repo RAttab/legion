@@ -5,7 +5,7 @@
 
 #include "ui/ui.h"
 
-#include "db/specs.h"
+#include "db/db.h"
 #include "ux/ux.h"
 #include "vm/vm.h"
 #include "game/game.h"

@@ -8,9 +8,8 @@
 #include "common.h"
 #include "engine/engine.h"
 
+#include "db/db.h"
 #include "vm/types.h"
-#include "game/types.h"
-#include "db/items.h"
 #include "game/types.h"
 #include "utils/str.h"
 #include "utils/time.h"

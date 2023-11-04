@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "vm/vm.h"
-#include "game/game.h"
-#include "items/config.h"
-#include "items/items.h"
 
 // -----------------------------------------------------------------------------
 // config

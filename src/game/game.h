@@ -7,8 +7,7 @@
 
 #include "game/types.h"
 
-#include "db/io.h"
-#include "db/items.h"
+#include "db/db.h"
 #include "vm/vm.h"
 #include "items/config.h"
 #include "utils/bits.h"

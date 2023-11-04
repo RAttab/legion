@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "db/specs.h"
-#include "utils/rng.h"
+#include "db/db.h"
 #include "game/types.h"
+#include "utils/rng.h"
 
 #include "db/gen/im_includes.h"
 

@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/transmit/transmit.h"
-#include "db/specs.h"
-
 
 // -----------------------------------------------------------------------------
 // test

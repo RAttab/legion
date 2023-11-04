@@ -5,9 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "db/items.h"
-#include "game/types.h"
 
 // -----------------------------------------------------------------------------
 // tapes

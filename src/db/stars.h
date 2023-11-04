@@ -5,11 +5,8 @@
 
 #pragma once
 
-#include "common.h"
-#include "db/items.h"
-#include "utils/symbol.h"
-
 struct rng;
+
 
 // -----------------------------------------------------------------------------
 // stars_names

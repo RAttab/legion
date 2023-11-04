@@ -3,9 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/port/port.h"
-#include "db/specs.h"
-
+// -----------------------------------------------------------------------------
+// port
+// -----------------------------------------------------------------------------
 
 void test_port(void)
 {

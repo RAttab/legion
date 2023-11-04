@@ -3,9 +3,9 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "db/db.h"
 #include "vm/vm.h"
 #include "game/game.h"
-#include "db/io.h"
 #include "utils/fs.h"
 #include "utils/bits.h"
 #include "utils/err.h"
