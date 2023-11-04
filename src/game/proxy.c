@@ -3,18 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "ux/ux.h"
-#include "game/proxy.h"
-#include "game/sector.h"
-#include "game/protocol.h"
-#include "game/chunk.h"
-#include "utils/htable.h"
-#include "utils/hset.h"
-#include "utils/config.h"
-
-#include <stdatomic.h>
-
 static struct proxy_pipe *proxy_pipe();
 static void proxy_pipe_free(struct proxy_pipe *);
 static void proxy_cmd(const struct cmd *);

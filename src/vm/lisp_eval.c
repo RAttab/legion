@@ -5,7 +5,7 @@
 
 // included in lisp.c
 
-#include "game/id.h"
+#include "game/types.h"
 #include "db/specs.h"
 #include "db/items.h"
 

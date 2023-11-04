@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "items/test/test.h"
-#include "items/config.h"
-#include "game/chunk.h"
-
 
 // -----------------------------------------------------------------------------
 // impl

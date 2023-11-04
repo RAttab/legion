@@ -5,12 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/id.h"
-#include "items/types.h"
-#include "vm/vm.h"
-#include "vm/mod.h"
-
 struct im_config;
 
 

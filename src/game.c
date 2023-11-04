@@ -3,8 +3,42 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "game/game.h"
+
+#include "ux/ux.h"
+#include "db/res.h"
+#include "db/specs.h"
+#include "db/stars.h"
+#include "vm/mod.h"
+#include "vm/atoms.h"
+#include "items/config.h"
+#include "items/items.h"
+#include "utils/rng.h"
+#include "utils/vec.h"
+#include "utils/str.h"
+#include "utils/hset.h"
+#include "utils/save.h"
+#include "utils/time.h"
+#include "utils/config.h"
+#include "engine/engine.h"
+
+#include <stdarg.h>
+#include <stdatomic.h>
+#include <pthread.h>
+#include <unistd.h>
+
+// sys.c
+#include "vm/ast.h"
+#include "vm/atoms.h"
+#include "db/tapes.h"
+#include "utils/fs.h"
+#include "utils/err.h"
+#include <sys/stat.h>
+#include <errno.h>
+
+#include "game/active.h"
+#include "game/types.c"
 #include "game/sys.c"
-#include "game/id.c"
 #include "game/coord.c"
 #include "game/log.c"
 #include "game/lanes.c"

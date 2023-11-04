@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "engine/engine.h"
-#include "game/proxy.h"
-#include "ux/ux.h"
-
 
 // -----------------------------------------------------------------------------
 // brain

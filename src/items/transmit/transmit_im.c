@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db/io.h"
-#include "db/items.h"
-#include "items/types.h"
-#include "items/receive/receive.h"
-#include "game/chunk.h"
-
 
 // -----------------------------------------------------------------------------
 // transmit

@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/lanes.h"
-#include "db/items.h"
-#include "items/config.h"
-#include "utils/hset.h"
-#include "utils/hash.h"
-
 // -----------------------------------------------------------------------------
 // data
 // -----------------------------------------------------------------------------

@@ -9,11 +9,9 @@
 #include "engine/engine.h"
 
 #include "vm/types.h"
-#include "game/id.h"
-#include "game/coord.h"
-#include "game/man.h"
+#include "game/types.h"
 #include "db/items.h"
-#include "items/types.h"
+#include "game/types.h"
 #include "utils/str.h"
 #include "utils/time.h"
 #include "utils/hset.h"

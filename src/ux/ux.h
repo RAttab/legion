@@ -7,9 +7,8 @@
 
 #include "common.h"
 #include "ui/ui.h"
-#include "game/coord.h"
-#include "game/protocol.h"
-#include "game/proxy.h"
+#include "game/types.h"
+#include "db/io.h"
 
 
 // -----------------------------------------------------------------------------

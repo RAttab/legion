@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/id.h"
-#include "game/tape.h"
-#include "items/types.h"
-
 struct im_config;
 
 

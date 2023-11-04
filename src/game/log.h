@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/world.h"
-#include "db/io.h"
-#include "db/items.h"
-
 struct ack;
 
 

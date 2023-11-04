@@ -3,16 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/protocol.h"
-#include "game/log.h"
-#include "game/chunk.h"
-#include "utils/save.h"
-#include "vm/atoms.h"
-#include "vm/mod.h"
-#include "utils/vec.h"
-#include "utils/hset.h"
-
 
 // -----------------------------------------------------------------------------
 // status

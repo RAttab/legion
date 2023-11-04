@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/chunk.h"
-#include "db/io.h"
-
 
 // -----------------------------------------------------------------------------
 // memory

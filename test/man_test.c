@@ -6,8 +6,7 @@
 #include "common.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
-#include "game/sys.h"
-#include "game/man.h"
+#include "game/game.h"
 #include "items/config.h"
 
 

@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "db/io.h"
-#include "items/types.h"
-#include "game/chunk.h"
-
 
 // -----------------------------------------------------------------------------
 // lab

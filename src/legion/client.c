@@ -5,8 +5,7 @@
 
 #include "common.h"
 #include "engine/engine.h"
-#include "game/sim.h"
-#include "game/proxy.h"
+#include "game/game.h"
 #include "utils/net.h"
 #include "utils/time.h"
 

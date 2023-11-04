@@ -3,13 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/tape.h"
-#include "game/sys.h"
-#include "utils/fs.h"
-#include "utils/str.h"
-#include "utils/htable.h"
-#include "utils/config.h"
-
 
 // -----------------------------------------------------------------------------
 // tape

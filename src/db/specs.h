@@ -8,8 +8,7 @@
 #include "common.h"
 #include "vm/vm.h"
 #include "db/items.h"
-#include "game/tape.h"
-#include "game/energy.h"
+#include "game/types.h"
 
 #include "gen/specs_value.h"
 

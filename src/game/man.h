@@ -5,23 +5,8 @@
 
 #pragma once
 
-#include "common.h"
-#include "utils/symbol.h"
-#include "db/items.h"
-
 struct lisp;
 struct atoms;
-
-
-// -----------------------------------------------------------------------------
-// types
-// -----------------------------------------------------------------------------
-
-enum : size_t { man_path_max = 64, man_toc_max = 16 };
-
-typedef uint16_t man_line;
-typedef uint16_t man_page;
-typedef uint16_t man_section;
 
 
 // -----------------------------------------------------------------------------
@@ -29,8 +14,6 @@ typedef uint16_t man_section;
 // -----------------------------------------------------------------------------
 
 enum : man_section { link_ui_tape = 0xFFFF };
-
-struct legion_packed link { man_page page; man_section section; };
 
 inline bool link_is_nil(struct link link) { return link.page == 0; }
 

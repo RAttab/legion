@@ -9,7 +9,7 @@
 #include "vm/asm.h"
 #include "vm/code.h"
 #include "vm/atoms.h"
-#include "game/proxy.h"
+#include "game/game.h"
 #include "db/specs.h"
 #include "utils/str.h"
 #include "utils/htable.h"

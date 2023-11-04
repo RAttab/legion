@@ -5,14 +5,7 @@
 
 #pragma once
 
-#include "common.h"
-#include "utils/save.h"
-#include "db/items.h"
-#include "game/coord.h"
-#include "game/world.h"
-#include "vm/vm.h"
-#include "utils/htable.h"
-
+struct save;
 struct chunk;
 
 // -----------------------------------------------------------------------------

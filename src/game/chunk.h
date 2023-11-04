@@ -5,17 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/id.h"
-#include "utils/save.h"
-#include "game/world.h"
-#include "game/pills.h"
-#include "db/io.h"
-#include "db/items.h"
-#include "vm/vm.h"
-#include "utils/ring.h"
-#include "utils/hash.h"
-
 struct ack;
 struct star;
 struct logi;
@@ -23,6 +12,7 @@ struct vec32;
 struct vec64;
 struct coord;
 struct energy;
+struct world;
 
 
 // -----------------------------------------------------------------------------

@@ -3,8 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/pills.h"
-
 
 // -----------------------------------------------------------------------------
 // pills

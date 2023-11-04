@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/log.h"
-#include "utils/save.h"
-#include "game/protocol.h"
-
 
 // -----------------------------------------------------------------------------
 // log

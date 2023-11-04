@@ -5,13 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "db/io.h"
-#include "db/items.h"
-#include "items/config.h"
-#include "game/world.h"
-#include "utils/hash.h"
-
 struct chunk;
 struct energy;
 

@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "db/items.h"
-#include "items/types.h"
-#include "utils/bits.h"
-
 
 // -----------------------------------------------------------------------------
 // pills

@@ -4,10 +4,7 @@
 */
 
 #include "common.h"
-#include "game/chunk.h"
-#include "game/sector.h"
-#include "game/active.h"
-#include "game/sys.h"
+#include "game/game.h"
 #include "items/config.h"
 
 

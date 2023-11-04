@@ -5,7 +5,7 @@
 
 
 #include "common.h"
-#include "game/user.h"
+#include "game/types.h"
 #include "utils/symbol.h"
 #include "utils/config.h"
 

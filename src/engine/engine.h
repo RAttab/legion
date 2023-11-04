@@ -7,8 +7,7 @@
 
 #include "common.h"
 #include "vm/types.h"
-#include "game/id.h"
-#include "game/coord.h"
+#include "game/types.h"
 #include "utils/err.h"
 #include "utils/color.h"
 

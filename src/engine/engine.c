@@ -3,7 +3,7 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/proxy.h"
+#include "game/game.h"
 #include "ux/ux.h"
 
 #include <stdatomic.h>

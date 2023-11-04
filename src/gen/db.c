@@ -4,7 +4,7 @@
 */
 
 #include "common.h"
-#include "items/im_type.h"
+#include "gen/types.h"
 #include "utils/err.h"
 #include "utils/fs.h"
 #include "utils/str.h"
@@ -54,7 +54,7 @@ bool db_run(const char *res, const char *src)
     {
         db_file_open(&state.files.im_enum, state.path.out, "item.h");
         db_file_write(&state.files.im_enum,
-                "enum item : uint8_t\n{\n  item_nil = atom_nil,\n");
+                "enum item : uint8_t\n{\n  item_nil = 0x00,\n");
 
         db_file_open(&state.files.im_register, state.path.out, "im_register.h");
 

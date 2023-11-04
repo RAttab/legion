@@ -6,11 +6,7 @@
 #include "common.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
-#include "game/sim.h"
-#include "game/proxy.h"
-#include "game/chunk.h"
-#include "game/sector.h"
-#include "game/sys.h"
+#include "game/game.h"
 #include "utils/vec.h"
 #include "utils/htable.h"
 

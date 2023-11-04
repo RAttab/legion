@@ -4,7 +4,7 @@
 */
 
 #include "vm/vm.h"
-#include "game/sys.h"
+#include "game/game.h"
 #include "utils/save.h"
 #include "utils/fs.h"
 #include "utils/bits.h"

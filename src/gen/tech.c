@@ -5,7 +5,6 @@
 
 #include "common.h"
 #include "utils/symbol.h"
-#include "items/im_type.h"
 #include "utils/fs.h"
 #include "utils/rng.h"
 #include "utils/str.h"

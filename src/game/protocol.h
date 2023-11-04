@@ -5,14 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/coord.h"
-#include "game/world.h"
-#include "game/chunk.h"
-#include "game/tech.h"
-#include "game/user.h"
-#include "utils/htable.h"
-
 struct vec64;
 struct log;
 struct atoms;
@@ -80,16 +72,6 @@ inline struct header make_header(enum header_type type, size_t len)
 // -----------------------------------------------------------------------------
 // status
 // -----------------------------------------------------------------------------
-
-enum status_type : uint8_t
-{
-    st_info = 0,
-    st_warn = 1,
-    st_error = 2,
-};
-
-static_assert(sizeof(enum status_type) == 1);
-
 
 struct legion_packed status
 {

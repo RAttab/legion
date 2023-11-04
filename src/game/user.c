@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/user.h"
-#include "utils/save.h"
-#include "vm/atoms.h"
-#include "utils/config.h"
-
 
 // -----------------------------------------------------------------------------
 // token

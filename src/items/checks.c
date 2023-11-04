@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/chunk.h"
-#include "game/world.h"
-#include "game/tech.h"
-#include "db/io.h"
-
 
 // -----------------------------------------------------------------------------
 // checks

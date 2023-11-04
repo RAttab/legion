@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "coord.h"
-#include "utils/str.h"
-#include "utils/bits.h"
-
 
 // -----------------------------------------------------------------------------
 // coord

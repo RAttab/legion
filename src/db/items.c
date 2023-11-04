@@ -4,11 +4,10 @@
 */
 
 #include "db.h"
-#include "items.h"
+#include "game/game.h"
 #include "items/config.h"
 #include "vm/atoms.h"
-
-#include "gen/im_includes.h"
+#include "items/items.h"
 
 // -----------------------------------------------------------------------------
 // config

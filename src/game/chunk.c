@@ -3,18 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "chunk.h"
-
-#include "game/log.h"
-#include "game/world.h"
-#include "game/sector.h"
-#include "game/active.h"
-#include "game/energy.h"
-#include "items/types.h"
-#include "utils/vec.h"
-#include "utils/ring.h"
-#include "utils/htable.h"
-
 static void chunk_ports_step(struct chunk *);
 
 

@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "db/io.h"
-#include "game/chunk.h"
-#include "game/world.h"
-#include "db/specs.h"
-#include "vm/op.h"
-
 static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id);
 
 

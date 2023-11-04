@@ -8,12 +8,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/id.h"
-#include "db/io.h"
-#include "db/items.h"
-#include "vm/vm.h"
-
 struct im_config;
 
 

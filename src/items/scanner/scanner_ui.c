@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "ui/ui.h"
-#include "game/sector.h"
-
 
 // -----------------------------------------------------------------------------
 // scanner

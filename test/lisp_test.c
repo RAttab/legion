@@ -7,7 +7,7 @@
 #include "vm/vm.h"
 #include "vm/mod.h"
 #include "vm/atoms.h"
-#include "game/sys.h"
+#include "game/game.h"
 #include "db/specs.h"
 #include "db/items.h"
 #include "items/config.h"

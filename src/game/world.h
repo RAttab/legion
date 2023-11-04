@@ -5,15 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/id.h"
-#include "game/coord.h"
-#include "game/user.h"
-#include "db/io.h"
-#include "db/items.h"
-#include "vm/mod.h"
-#include "vm/vm.h"
-
 struct mods;
 struct hset;
 struct logi;
@@ -23,15 +14,6 @@ struct chunk;
 struct sector;
 struct save;
 struct htable_bucket;
-
-
-// -----------------------------------------------------------------------------
-// types
-// -----------------------------------------------------------------------------
-
-typedef uint64_t world_seed;
-typedef uint32_t world_ts;
-typedef int64_t world_ts_delta;
 
 
 // -----------------------------------------------------------------------------
@@ -93,12 +75,6 @@ void world_user_io_clear(struct world *, user_id);
 // -----------------------------------------------------------------------------
 // scan-it
 // -----------------------------------------------------------------------------
-
-struct legion_packed world_scan_it
-{
-    struct coord coord;
-    uint64_t index;
-};
 
 struct world_scan_it world_scan_it(struct world *, struct coord coord);
 struct coord world_scan_next(struct world *, struct world_scan_it *);

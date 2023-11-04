@@ -5,17 +5,11 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/coord.h"
-#include "game/sim.h"
-#include "vm/vm.h"
-#include "vm/mod.h"
-#include "utils/symbol.h"
-
 struct sector;
 struct tech;
 struct log;
 struct atoms;
+struct mod;
 struct mods_list;
 struct vec64;
 struct htable;

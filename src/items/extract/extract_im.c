@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/chunk.h"
-#include "game/tape.h"
-#include "db/io.h"
-#include "items/types.h"
-
 
 // -----------------------------------------------------------------------------
 // extract

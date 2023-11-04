@@ -3,13 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/man.h"
-#include "db/res.h"
-#include "utils/vec.h"
-#include "utils/hash.h"
-
-#include <unistd.h>
-
 
 // -----------------------------------------------------------------------------
 // link

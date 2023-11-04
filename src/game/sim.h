@@ -5,16 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/id.h"
-#include "game/coord.h"
-#include "game/protocol.h"
-#include "game/world.h"
-#include "utils/symbol.h"
-#include "vm/mod.h"
-#include "vm/vm.h"
-#include "db/io.h"
-
 struct save;
 
 

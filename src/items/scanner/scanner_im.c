@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "db/io.h"
-#include "game/chunk.h"
-
 
 // -----------------------------------------------------------------------------
 // scanner

@@ -5,9 +5,7 @@
 
 #include "common.h"
 #include "engine/engine.h"
-#include "game/sys.h"
-#include "game/user.h"
-#include "game/world.h"
+#include "game/game.h"
 #include "utils/str.h"
 
 #include <getopt.h>

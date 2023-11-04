@@ -705,7 +705,7 @@ static void lisp_fn_id(struct lisp *lisp)
 
     lisp_index_at(lisp, &index);
     lisp_write_op(lisp, vm_op_push);
-    lisp_write_value(lisp, (vm_word) id_shift);
+    lisp_write_value(lisp, (vm_word) im_id_shift);
     lisp_write_op(lisp, vm_op_bsl);
 
     if (!lisp_stmt(lisp)) { // index

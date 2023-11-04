@@ -3,9 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/active.h"
-#include "items/config.h"
-
 
 // -----------------------------------------------------------------------------
 // active

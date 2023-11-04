@@ -5,9 +5,7 @@
 
 #include "common.h"
 #include "vm/mod.h"
-#include "game/tape.h"
-#include "game/tech.h"
-#include "game/sys.h"
+#include "game/game.h"
 #include "items/config.h"
 #include "db/tapes.h"
 #include "db/specs.h"

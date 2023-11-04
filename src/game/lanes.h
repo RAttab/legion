@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/coord.h"
-#include "game/world.h"
-#include "utils/heap.h"
-
 struct hset;
 
 

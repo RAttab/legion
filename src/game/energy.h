@@ -5,17 +5,12 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/sector.h"
-
 struct save;
 
 
 // -----------------------------------------------------------------------------
 // energy
 // -----------------------------------------------------------------------------
-
-typedef uint32_t im_energy;
 
 struct energy
 {

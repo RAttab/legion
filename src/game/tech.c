@@ -3,10 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/tech.h"
-#include "utils/save.h"
-
 // -----------------------------------------------------------------------------
 // tech
 // -----------------------------------------------------------------------------

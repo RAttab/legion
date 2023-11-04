@@ -3,6 +3,10 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include "ux/ux.h"
+#include "game/game.h"
+#include "items/items.h"
+
 #include "items/checks.c"
 #include "items/ui_tape.c"
 

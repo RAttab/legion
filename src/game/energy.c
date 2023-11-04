@@ -3,11 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/energy.h"
-#include "utils/save.h"
-#include "db/specs.h"
-
 
 // -----------------------------------------------------------------------------
 // energy

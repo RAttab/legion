@@ -5,34 +5,15 @@
 
 #pragma once
 
-#include "common.h"
-#include "game/energy.h"
-#include "db/items.h"
-#include "utils/bits.h"
-
 
 // -----------------------------------------------------------------------------
-// types
+// misc
 // -----------------------------------------------------------------------------
-
-typedef uint8_t im_work;
-
-
-typedef uint8_t tape_it;
 
 inline bool tape_it_validate(vm_word word)
 {
     return word >= 0 && word <= UINT8_MAX;
 }
-
-
-enum tape_state : uint8_t
-{
-    tape_eof = 0,
-    tape_input,
-    tape_work,
-    tape_output,
-};
 
 inline bool tape_state_item(enum tape_state state)
 {
@@ -75,8 +56,6 @@ enum item tape_output_at(const struct tape *tape, tape_it it);
 // packed
 // -----------------------------------------------------------------------------
 
-typedef uint64_t tape_packed;
-
 inline tape_packed tape_pack(enum item id, tape_it it, const struct tape *ptr)
 {
     assert(!(((uintptr_t) ptr) >> 48));
@@ -118,9 +97,6 @@ inline tape_packed tape_packed_it_zero(tape_packed packed)
 // -----------------------------------------------------------------------------
 // tape_set
 // -----------------------------------------------------------------------------
-
-struct tape_set { uint64_t s[4]; };
-static_assert(sizeof(struct tape_set) * 8 >= items_max);
 
 size_t tape_set_len(const struct tape_set *);
 bool tape_set_empty(const struct tape_set *);

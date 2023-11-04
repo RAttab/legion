@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "db/items.h"
-#include "game/tape.h"
+#include "game/types.h"
 
 // -----------------------------------------------------------------------------
 // tapes
@@ -18,7 +18,7 @@ const struct tape *tapes_get(enum item id);
 
 struct legion_packed tape_info
 {
-    uint8_t rank;
+    im_rank rank;
     struct tape_set tech, inputs;
     uint32_t elems[items_natural_last];
 };

@@ -3,12 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "game/sector.h"
-#include "game/chunk.h"
-#include "db/stars.h"
-#include "utils/rng.h"
-#include "utils/vec.h"
-
 
 // -----------------------------------------------------------------------------
 // star

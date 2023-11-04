@@ -3,24 +3,6 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
-#include "common.h"
-#include "game/sys.h"
-#include "game/tape.h"
-#include "game/man.h"
-#include "db/specs.h"
-#include "db/items.h"
-#include "db/tapes.h"
-#include "db/stars.h"
-#include "items/config.h"
-#include "vm/mod.h"
-#include "vm/atoms.h"
-#include "vm/ast.h"
-#include "utils/err.h"
-#include "utils/fs.h"
-
-#include <sys/stat.h>
-#include <errno.h>
-
 
 // -----------------------------------------------------------------------------
 // sys

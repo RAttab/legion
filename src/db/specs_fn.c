@@ -5,9 +5,7 @@
    included from db/specs.c
 */
 
-#include "game/chunk.h"
-#include "game/lanes.h"
-#include "game/energy.h"
+#include "game/game.h"
 
 // -----------------------------------------------------------------------------
 // stars

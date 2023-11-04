@@ -4,14 +4,9 @@
 */
 
 #include "common.h"
-#include "game/world.h"
-#include "game/sector.h"
-#include "game/chunk.h"
-#include "game/lanes.h"
-#include "game/sys.h"
+#include "game/game.h"
 #include "db/io.h"
 #include "db/items.h"
-#include "items/types.h"
 #include "items/config.h"
 #include "items/test/test.h"
 #include "vm/mod.h"
