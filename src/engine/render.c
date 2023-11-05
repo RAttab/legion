@@ -329,6 +329,8 @@ static struct
 
 static void render_init(void)
 {
+    glEnable(GL_MULTISAMPLE);
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
