@@ -38,6 +38,8 @@ struct ux_log
     struct ui_panel *panel;
     struct ui_scroll scroll;
 
+    unit col[2];
+
     size_t len;
     struct ux_logi items[world_log_cap];
 };
@@ -47,27 +49,35 @@ struct ux_logi ux_logi_alloc(void)
     struct ux_logi ux = {
         .time = ui_label_new(ui_str_v(10)),
         .star = ui_link_new(ui_str_v(symbol_cap)),
-        .id = ui_link_new(ui_str_v(im_id_str_len)),
         .key = ui_label_new(ui_str_v(symbol_cap)),
+        .id = ui_link_new(ui_str_v(im_id_str_len)),
         .value = ui_label_new(ui_str_v(symbol_cap)),
     };
 
     return ux;
 }
 
+// should match the sizes in ux_logi_alloc
+static constexpr unit ux_logi_col[3] = {
+    [0] = 10,
+    [1] = symbol_cap,
+    [2] = symbol_cap,
+};
+static_assert(symbol_cap >= im_id_str_len); // ux_logi_col[1]
+
 void ux_log_alloc(struct ux_view_state *state)
 {
     struct dim cell = engine_cell();
     cell.h *= 2;
 
+    unit w = 0;
+    for (size_t i = 0; i < array_len(ux_logi_col); ++i)
+        w += cell.w * (ux_logi_col[i] + 1);
+
     struct ux_log *ux = calloc(1, sizeof(*ux));
     *ux = (struct ux_log) {
         .cell = cell,
-
-        .panel = ui_panel_title(
-                make_dim((10 + (symbol_cap * 2) + 4) * cell.w, ui_layout_inf),
-                ui_str_c("log")),
-
+        .panel = ui_panel_title(make_dim(w, ui_layout_inf), ui_str_c("log")),
         .scroll = ui_scroll_new(make_dim(ui_layout_inf, ui_layout_inf), cell),
     };
 
@@ -221,25 +231,28 @@ static void ux_logi_render(
         render_rect_fill(layer, bg, rect);
     }
 
+    const unit tab0 = ux_logi_col[0] + 1;
+    const unit tab1 = ux_logi_col[1] + 1 + tab0;
+
     {
         ui_label_render(&entry->time, layout);
-        ui_layout_sep_col(layout);
+        ui_layout_tab(layout, tab0);
 
         if (!coord_is_nil(entry->state.star))
             ui_link_render(&entry->star, layout);
         else ui_layout_sep_x(layout, entry->star.w.w);
-        ui_layout_sep_col(layout);
+        ui_layout_tab(layout, tab1);
 
-        ui_link_render(&entry->id, layout);
+        ui_label_render(&entry->key, layout);
         ui_layout_next_row(layout);
     }
 
     {
         ui_layout_sep_x(layout, entry->time.w.w);
-        ui_layout_sep_col(layout);
+        ui_layout_tab(layout, tab0);
 
-        ui_label_render(&entry->key, layout);
-        ui_layout_sep_col(layout);
+        ui_link_render(&entry->id, layout);
+        ui_layout_tab(layout, tab1);
 
         ui_label_render(&entry->value, layout);
         ui_layout_next_row(layout);
