@@ -685,7 +685,10 @@ static void ux_mods_event(void *state)
     }
     case ui_tabs_ev_select: {
         struct ux_mods_tab *tab = ux_mods_tabs_selected(ux);
-        if (tab) ui_tree_select(&ux->tree, tab->id);
+        if (tab) {
+            ui_tree_select(&ux->tree, tab->id);
+            ux_mods_mode_update(ux, tab);
+        }
         break;
     }
     default: { break; }
