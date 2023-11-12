@@ -20,9 +20,9 @@
 (assert (= (head) ?lab-boot))
 (let ((library-id (head)))
 
-;; -----------------------------------------------------------------------------
-;; Research
-;; -----------------------------------------------------------------------------
+  ;; -----------------------------------------------------------------------------
+  ;; Research
+  ;; -----------------------------------------------------------------------------
 
   ;; Setup
   (learn-item !item-extract library-id)
@@ -79,22 +79,22 @@
 (defun learn-reqs (item library-id)
   (for (req (ior !io-tape-tech library-id item)) req (ior !io-tape-tech library-id item)
        (when (not (ior !io-tape-learned library-id req))
-	 (while (not (band (ior !io-get tech-memory-id (+ (/ req 64) tech-memory-ix))
-			   (bsl 1 (rem req 64)))))
+         (while (not (band (ior !io-get tech-memory-id (+ (/ req 64) tech-memory-ix))
+                           (bsl 1 (rem req 64)))))
 
-	 (io !io-log (self) ?lab-research (pack item req))
-	 (for (id (ior !io-count prober-id !item-lab)) (> id 0) (- id 1)
-	      (io !io-item (id !item-lab id) req))
+         (io !io-log (self) ?lab-research (pack item req))
+         (for (id (ior !io-count prober-id !item-lab)) (> id 0) (- id 1)
+              (io !io-item (id !item-lab id) req))
 
-	 (while (not (ior !io-tape-learned library-id req))))))
+         (while (not (ior !io-tape-learned library-id req))))))
 
 (defun learn-item (item library-id)
   (when (not (ior !io-tape-learned library-id item))
     (while (not (band (ior !io-get tech-memory-id (+ (/ item 64) tech-memory-ix))
-		      (bsl 1 (rem item 64)))))
+                      (bsl 1 (rem item 64)))))
 
     (io !io-log (self) ?lab-research (pack 0 item))
     (for (id (ior !io-count prober-id !item-lab)) (> id 0) (- id 1)
-	 (io !io-item (id !item-lab id) item))
+         (io !io-item (id !item-lab id) item))
 
     (while (not (ior !io-tape-learned library-id item)))))

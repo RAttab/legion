@@ -20,27 +20,27 @@
     ((scan-star-ongoing 0)
      (scan-star-done
       (io !io-scan scanner-id
-	  (coord-inc (ior !io-state scanner-id !io-target)))))
+          (coord-inc (ior !io-state scanner-id !io-target)))))
     (star
      (when (check-star star)
        (let ((legion-id (legion)))
-	 (assert (= (io !io-ping legion-id) !io-ok))
+         (assert (= (io !io-ping legion-id) !io-ok))
 
-	 (io !io-mod legion-id (mod boot.2))
-	 (io !io-launch legion-id star)
-	 (os.net-child star))))))
+         (io !io-mod legion-id (mod boot.2))
+         (io !io-launch legion-id star)
+         (os.net-child star))))))
 
 
 (defun check-star (star)
   (if (> (count star !item-brain) 0) 0
-    (if (< (count star !item-elem-a) 30000) 0
-      (if (< (count star !item-elem-b) 30000) 0
-	(if (< (count star !item-elem-c) 20000) 0
-	  (if (< (count star !item-elem-d) 5000) 0
-	    (if (< (count star !item-elem-e) 5000) 0
-	      (if (< (count star !item-elem-f) 5000) 0
-		(if (< (count star !item-energy) 8000) 0
-		  1)))))))))
+      (if (< (count star !item-elem-a) 30000) 0
+	  (if (< (count star !item-elem-b) 30000) 0
+              (if (< (count star !item-elem-c) 20000) 0
+		  (if (< (count star !item-elem-d) 5000) 0
+		      (if (< (count star !item-elem-e) 5000) 0
+			  (if (< (count star !item-elem-f) 5000) 0
+			      (if (< (count star !item-energy) 8000) 0
+				  1)))))))))
 
 
 ;; We're incrementing the packed coord

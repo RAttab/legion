@@ -76,9 +76,9 @@
      (io !io-transmit (id !item-transmit 1) ?os-connect)
      (while (not (ior !io-get state-id state-home))
        (when (ior !io-receive (id !item-receive 1))
-	 (assert (= (head) ?os-accept))
-	 (let ((home (head))) (io !io-set state-id state-home home))
-	 (let ((depth (head))) (io !io-set state-id state-depth depth)))))))
+         (assert (= (head) ?os-accept))
+         (let ((home (head))) (io !io-set state-id state-home home))
+         (let ((depth (head))) (io !io-set state-id state-depth depth)))))))
 
 (defun net-accept ()
   (io !io-transmit
@@ -90,7 +90,7 @@
 (defun net-child (coord)
   (assert coord)
   (let ((child-ix (ior !io-get net-id net-len))
-	(child-id (+ child-ix 2)))
+        (child-id (+ child-ix 2)))
     (assert (= (io !io-ping (id !item-transmit child-id)) !io-ok))
     (assert (= (io !io-ping (id !item-receive child-id)) !io-ok))
 
@@ -148,13 +148,13 @@
 
     (let ((to-poll (+ (ior !io-get net-id net-len) 1)))
       (for (i 1) (and (<= i to-poll) (not recv-len)) (+ i 1)
-	   (set recv-len (ior !io-receive (id !item-receive i)))
-	   (when recv-len (io !io-set packet-id packet-src i))))
+           (set recv-len (ior !io-receive (id !item-receive i)))
+           (when recv-len (io !io-set packet-id packet-src i))))
 
     (io !io-set packet-id packet-len recv-len)
     (for (i 0) (< i recv-len) (+ i 1)
-	 (let ((part (head)))
-	   (io !io-set packet-id (+ packet-data i) part)))
+         (let ((part (head)))
+           (io !io-set packet-id (+ packet-data i) part)))
 
     recv-len))
 
@@ -165,23 +165,23 @@
   (assert (> (ior !io-get packet-id packet-len) 0))
 
   (let ((to-send (+ (ior !io-get net-id net-len) 1))
-	(to-skip (ior !io-get packet-id packet-src)))
+        (to-skip (ior !io-get packet-id packet-src)))
 
     (for (i 1) (<= i to-send) (+ i 1)
-	 (when (/= i to-skip)
-	   (case (ior !io-get packet-id packet-len)
+         (when (/= i to-skip)
+           (case (ior !io-get packet-id packet-len)
 
-	     ((1
-	       (io !io-transmit (id !item-transmit i)
-		   (ior !io-get packet-id (+ packet-data 0))))
+             ((1
+               (io !io-transmit (id !item-transmit i)
+                   (ior !io-get packet-id (+ packet-data 0))))
 
-	      (2
-	       (io !io-transmit (id !item-transmit i)
-		   (ior !io-get packet-id (+ packet-data 0))
-		   (ior !io-get packet-id (+ packet-data 1))))
+              (2
+               (io !io-transmit (id !item-transmit i)
+                   (ior !io-get packet-id (+ packet-data 0))
+                   (ior !io-get packet-id (+ packet-data 1))))
 
-	      (3
-	       (io !io-transmit (id !item-transmit i)
-		   (ior !io-get packet-id (+ packet-data 0))
-		   (ior !io-get packet-id (+ packet-data 1))
-		   (ior !io-get packet-id (+ packet-data 2))))))))))
+              (3
+               (io !io-transmit (id !item-transmit i)
+                   (ior !io-get packet-id (+ packet-data 0))
+                   (ior !io-get packet-id (+ packet-data 1))
+                   (ior !io-get packet-id (+ packet-data 2))))))))))

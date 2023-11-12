@@ -155,13 +155,13 @@
   (when (os.is-home)
     (deploy-item !item-storage port-elem-count)
     (for (i 0) (< i port-elem-count) (+ i 1)
-	 (io !io-input (last-id-offset !item-port i) (+ !item-elem-a i))
-	 (io !io-item (last-id-offset !item-storage i) (+ !item-elem-a i))))
+         (io !io-input (last-id-offset !item-port i) (+ !item-elem-a i))
+         (io !io-item (last-id-offset !item-storage i) (+ !item-elem-a i))))
 
   (unless (os.is-home)
     (for (i 0) (< i port-elem-count) (+ i 1)
-	 (io !io-item (last-id-offset !item-port i) (+ !item-elem-a i) port-item-count)
-	 (io !io-target (last-id-offset !item-port i) (os.home)))
+         (io !io-item (last-id-offset !item-port i) (+ !item-elem-a i) port-item-count)
+         (io !io-target (last-id-offset !item-port i) (os.home)))
     (deploy-item !item-pill (* port-elem-count 2)))
 
   (for (i 0) (< i port-elem-count) (+ i 1)
@@ -191,16 +191,16 @@
 
   (for (i 0) (< i collider-elem-count) (+ i 1)
        (let ((elem-id (+ !item-elem-l i))
-	     (collider-id (last-id-offset !item-collider i)))
+             (collider-id (last-id-offset !item-collider i)))
 
-	 (io !io-grow collider-id collider-size)
-	 (while (< (ior !io-state collider-id !io-size) collider-size))
+         (io !io-grow collider-id collider-size)
+         (while (< (ior !io-state collider-id !io-size) collider-size))
 
-	 (while (not (ior !io-tape-known library-id elem-id)))
-	 (io !io-tape collider-id elem-id)
-	 (io !io-item (last-id-offset !item-storage i) elem-id)
-	 (flag-tape !item-elem-o)
-	 (flag-tape elem-id)))
+         (while (not (ior !io-tape-known library-id elem-id)))
+         (io !io-tape collider-id elem-id)
+         (io !io-item (last-id-offset !item-storage i) elem-id)
+         (flag-tape !item-elem-o)
+         (flag-tape elem-id)))
 
   ;; Until we have a burner we need to store the garbage o elements
   (deploy-item !item-storage 2)
@@ -226,32 +226,32 @@
   (io !io-set (id !item-nomad 1) nomad-ix-elem !item-elem-g)
   (io !io-set (id !item-nomad 2) nomad-ix-elem !item-elem-h)
 
-  (unless (is-deployed !item-extract)	(deploy-item !item-extract 1))
-  (unless (is-deployed !item-memory)	(deploy-item !item-memory 1))
-  (unless (is-deployed !item-worker)	(deploy-item !item-worker 1))
+  (unless (is-deployed !item-extract)        (deploy-item !item-extract 1))
+  (unless (is-deployed !item-memory)        (deploy-item !item-memory 1))
+  (unless (is-deployed !item-worker)        (deploy-item !item-worker 1))
   (unless (is-deployed !item-condenser) (deploy-item !item-condenser 1))
-  (unless (is-deployed !item-solar)	(deploy-item !item-solar 1))
-  (unless (is-deployed !item-battery)	(deploy-item !item-battery 1))
-  (unless (is-deployed !item-transmit)	(deploy-item !item-transmit 1))
-  (unless (is-deployed !item-receive)	(deploy-item !item-receive 1))
-  (unless (is-deployed !item-port)	(deploy-item !item-port 1))
-  (unless (is-deployed !item-pill)	(deploy-item !item-pill 1))
+  (unless (is-deployed !item-solar)        (deploy-item !item-solar 1))
+  (unless (is-deployed !item-battery)        (deploy-item !item-battery 1))
+  (unless (is-deployed !item-transmit)        (deploy-item !item-transmit 1))
+  (unless (is-deployed !item-receive)        (deploy-item !item-receive 1))
+  (unless (is-deployed !item-port)        (deploy-item !item-port 1))
+  (unless (is-deployed !item-pill)        (deploy-item !item-pill 1))
 
-  (for (i 0) (< i 2) (+ i 0)
+  (for (i 0) (< i 2) (+ i 1)
        (io !io-set (last-id-offset !item-nomad i) nomad-ix-home (ior !io-coord (self)))
 
        (deploy-item !item-memory 1)
        (let ((nomad-state-id (last-id !item-memory)))
-	 (io !io-set nomad-state-id nomad-ix-nomad (last-id-offset !item-nomad i))
+         (io !io-set nomad-state-id nomad-ix-nomad (last-id-offset !item-nomad i))
 
-	 (deploy-item !item-prober 1)
-	 (io !io-set nomad-state-id nomad-ix-prober (last-id !item-prober))
-	 (deploy-item !item-scanner 1)
-	 (io !io-set nomad-state-id nomad-ix-scanner (last-id !item-scanner))
+         (deploy-item !item-prober 1)
+         (io !io-set nomad-state-id nomad-ix-prober (last-id !item-prober))
+         (deploy-item !item-scanner 1)
+         (io !io-set nomad-state-id nomad-ix-scanner (last-id !item-scanner))
 
-	 (deploy-item !item-brain 1)
-	 (io !io-send (last-id !item-brain) nomad-state-id)
-	 (io !io-mod (last-id !item-brain) (mod nomad.2)))))
+         (deploy-item !item-brain 1)
+         (io !io-send (last-id !item-brain) nomad-state-id)
+         (io !io-mod (last-id !item-brain) (mod nomad.2)))))
 
 (io !io-log (self) ?done (ior !io-coord (self)))
 
@@ -266,27 +266,27 @@
 
 (defun is-deployed (item)
   (band (ior !io-get tech-memory-id (+ (/ item 64) tech-memory-ix))
-			(bsl 1 (rem item 64))))
+        (bsl 1 (rem item 64))))
 
 (defun deploy-reqs (item)
   (for (req (ior !io-tape-tech library-id item)) req (ior !io-tape-tech library-id item)
        (let ((tech-index (+ (/ req 64) tech-memory-ix)))
-	 (when (not (band (ior !io-get tech-memory-id tech-index)
-			  (bsl 1 (rem req 64))))
+         (when (not (band (ior !io-get tech-memory-id tech-index)
+                          (bsl 1 (rem req 64))))
 
-	   (while (not (ior !io-tape-known library-id req)))
+           (while (not (ior !io-tape-known library-id req)))
 
-	   (let ((host (ior !io-tape-host library-id req)))
-	     (io !io-tape assembly-id host 2)
-	     (io !io-item deploy-id host 2)
-	     (while (ior !io-state deploy-id !io-item))
-	     (io !io-tape (id host (- (ior !io-count prober-id host) 0)) req)
-	     (io !io-tape (id host (- (ior !io-count prober-id host) 1)) req))
+           (let ((host (ior !io-tape-host library-id req)))
+             (io !io-tape assembly-id host 2)
+             (io !io-item deploy-id host 2)
+             (while (ior !io-state deploy-id !io-item))
+             (io !io-tape (id host (- (ior !io-count prober-id host) 0)) req)
+             (io !io-tape (id host (- (ior !io-count prober-id host) 1)) req))
 
-	   ;; Need to pre-compute the value to minimize stack usage
-	   (let ((value (bor (ior !io-get tech-memory-id tech-index)
-			     (bsl 1 (rem req 64)))))
-	     (io !io-set tech-memory-id tech-index value))))))
+           ;; Need to pre-compute the value to minimize stack usage
+           (let ((value (bor (ior !io-get tech-memory-id tech-index)
+                             (bsl 1 (rem req 64)))))
+             (io !io-set tech-memory-id tech-index value))))))
 
 (defun deploy-item (item n)
   (assert n)
@@ -303,7 +303,7 @@
 (defun flag-tape (item)
   (io !io-set tech-memory-id (+ (/ item 64) tech-memory-ix)
       (bor (ior !io-get tech-memory-id (+ (/ item 64) tech-memory-ix))
-	   (bsl 1 (rem item 64)))))
+           (bsl 1 (rem item 64)))))
 
 (defun deploy-tape (item n)
   (assert n)
@@ -317,7 +317,7 @@
     (while (ior !io-state deploy-id !io-item))
 
     (for (i 0) (< i n) (+ i 1)
-	 (io !io-tape (last-id-offset host i) item)))
+         (io !io-tape (last-id-offset host i) item)))
   (flag-tape item))
 
 (defun last-id (item)

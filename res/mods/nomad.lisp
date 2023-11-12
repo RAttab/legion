@@ -36,8 +36,8 @@
     (load-item nomad-id !item-transmit 1)
     (load-item nomad-id !item-receive 1)
     (if (>= (ior !io-get nomad-id ix-elem) !item-elem-i)
-	(load-item nomad-id !item-condenser extract-count)
-	(load-item nomad-id !item-extract extract-count)))
+        (load-item nomad-id !item-condenser extract-count)
+        (load-item nomad-id !item-extract extract-count)))
   (scan state-id)
   (launch state-id))
 
@@ -57,13 +57,13 @@
   (let ((elem (ior !io-get (id !item-nomad 1) ix-elem)))
     (let ((extract (if (>= elem !item-elem-i) !item-condenser !item-extract)))
       (for (i 1) (<= i extract-count) (+ i 1)
-	   (io !io-tape (id extract i) elem)))
+           (io !io-tape (id extract i) elem)))
 
     (let ((home (ior !io-get (id !item-nomad 1) ix-home)))
       (io !io-target (id !item-transmit 1) home)
       (io !io-target (id !item-receive 1) home)
       (io !io-send (id !item-transmit 1)
-	  ?os-roam-unpack (ior !io-coord (self)) elem)
+          ?os-roam-unpack (ior !io-coord (self)) elem)
 
       (io !io-target (id !item-port 1) home)
       (io !io-item (id !item-port 1) elem pill-elem-count)
@@ -81,7 +81,7 @@
       (while (> (ior !io-probe (id !item-prober 1) elem) 0)))
 
     (io !io-send (id !item-transmit 1)
-	?os-roam-pack (ior !io-get (id !item-memory 1) ix-target))
+        ?os-roam-pack (ior !io-get (id !item-memory 1) ix-target))
     (while (not (ior !io-receive (id !item-receive 1))))
     (assert (= (head) ?os-roam-next))
 
@@ -98,8 +98,8 @@
     (pack-item (id !item-nomad 1) !item-port)
     (pack-item (id !item-nomad 1) !item-pill)
     (if (>= (ior !io-get (id !item-nomad 1) ix-elem) !item-elem-i)
-	(pack-item (id !item-nomad 1) !item-condenser)
-	(pack-item (id !item-nomad 1) !item-extract)))
+        (pack-item (id !item-nomad 1) !item-condenser)
+        (pack-item (id !item-nomad 1) !item-extract)))
 
   ;; Launch
   (launch (id !item-memory 1)))
@@ -115,7 +115,7 @@
 
 (defun launch (state-id)
   (let ((nomad-id (ior !io-get state-id ix-nomad))
-	(target (ior !io-get state-id ix-target)))
+        (target (ior !io-get state-id ix-target)))
     (io !io-log (self) ?nomad-launch target)
     (pack nomad-id (ior !io-get state-id ix-prober))
     (pack nomad-id (ior !io-get state-id ix-scanner))
@@ -142,16 +142,16 @@
     (case (ior !io-value (ior !io-get state-id ix-scanner))
       ((scan-ongoing 0)
        (scan-done
-	(io !io-scan
-	    (ior !io-get state-id ix-scanner)
-	    (coord-inc (ior !io-state (ior !io-get state-id ix-scanner) !io-target)))))
+        (io !io-scan
+            (ior !io-get state-id ix-scanner)
+            (coord-inc (ior !io-state (ior !io-get state-id ix-scanner) !io-target)))))
 
       (star
        (when (> (probe star
-		    (ior !io-get state-id ix-prober)
-		    (ior !io-get (ior !io-get state-id ix-nomad) ix-elem))
-		2000)
-	 (io !io-set state-id ix-target star))))))
+                       (ior !io-get state-id ix-prober)
+                       (ior !io-get (ior !io-get state-id ix-nomad) ix-elem))
+                2000)
+         (io !io-set state-id ix-target star))))))
 
 
 (defun probe (coord prober-id elem)
