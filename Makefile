@@ -14,7 +14,7 @@ TEST ?= ring lisp chunk lanes tech save protocol items proxy man
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu2x -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc -Isrc/engine
-CFLAGS := $(CFLAGS) $(shell sdl2-config --cflags)
+CFLAGS := $(CFLAGS) -DLEGION_BUILD_PREFIX="$(PREFIX)"
 CFLAGS := $(CFLAGS) $(shell pkg-config --cflags freetype2)
 CFLAGS := $(CFLAGS) -Wall -Wextra
 CFLAGS := $(CFLAGS) -Wundef
@@ -42,6 +42,8 @@ ASM := src/db/res.S
 
 OBJECTS_GEN := gen common utils
 OBJECTS_LEGION := common utils db vm items game ui ux engine
+
+PCMS = bgm-piano sfx-button
 
 DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
 DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
@@ -115,6 +117,14 @@ gen: $(PREFIX)/gen gen-tech gen-db
 # res
 # -----------------------------------------------------------------------------
 
+$(shell mkdir -p $(PREFIX)/pcm/)
+pcm: $(foreach pcm,$(PCMS),$(PREFIX)/pcm/$(pcm).pcm)
+
+$(PREFIX)/pcm/%.pcm: res/pcm/%.*
+	@echo -e "\e[32m[pcm]\e[0m $@"
+	@ffmpeg -y -v error -i $< -acodec pcm_f32le -f f32le -ac 2 -ar 48000 $@
+
+
 $(shell mkdir -p $(PREFIX)/shaders/)
 shaders: $(foreach shader,$(wildcard res/shaders/*),$(PREFIX)/shaders/$(notdir $(shader)).glsl)
 
@@ -123,10 +133,12 @@ $(PREFIX)/shaders/%.glsl: res/shaders/%
 	@glslang --quiet --glsl-version 430 -l $<
 	@touch $@
 
+
 src/db/res.S: src/db/gen/man.S
 src/db/res.S: $(wildcard res/shaders/*)
 src/db/res.S: $(wildcard res/img/*.bmp)
 src/db/res.S: $(wildcard res/font/*.otf)
+src/db/res.S: $(foreach pcm,$(PCMS),$(PREFIX)/pcm/$(pcm).pcm)
 	@echo -e "\e[32m[res]\e[0m $@"
 	@touch $@
 
