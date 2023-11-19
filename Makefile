@@ -34,6 +34,7 @@ VALGRIND_FLAGS := $(VALGRIND_FLAGS) --trace-children=yes
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --error-exitcode=1
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --suppressions=legion.supp
 
+LIBS := $(LIBS) $(shell pkg-config --libs alsa)
 LIBS := $(LIBS) $(shell pkg-config --libs glfw3)
 LIBS := $(LIBS) $(shell pkg-config --libs opengl)
 LIBS := $(LIBS) $(shell pkg-config --libs freetype2)

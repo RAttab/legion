@@ -13,6 +13,7 @@
 #include "utils/str.h"
 #include "utils/bits.h"
 
+#include <alsa/asoundlib.h>
 #include <stdatomic.h>
 #include <sys/stat.h>
 #include <pthread.h>
@@ -24,4 +25,5 @@
 #include "engine/textures.c"
 #include "engine/fonts.c"
 #include "engine/render.c"
+#include "engine/sound.c"
 #include "engine/engine.c"
