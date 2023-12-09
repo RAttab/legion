@@ -21,6 +21,8 @@ struct ux_topbar
     struct ui_button pause, slow, fast, faster, fastest;
     struct ui_button home, stars, tapes, mods, log;
     struct ui_label coord;
+
+    struct ui_button music;
     struct ui_button man;
     struct ui_button close;
 };
@@ -52,9 +54,13 @@ void ux_topbar_alloc(struct ux_view_state *state)
 
         .coord = ui_label_new(ui_str_v(topbar_coord_len)),
 
+        .music = ui_button_new(ui_str_c("music")),
+
         .man = ui_button_new(ui_str_c("?")),
         .close = ui_button_new(ui_str_c("x")),
     };
+
+    ux->music.s.align = ui_align_center;
 
     *state = (struct ux_view_state) {
         .state = ux,
@@ -116,6 +122,8 @@ static void ux_topbar_update(void *state)
     case speed_fastest: { ux->fastest.disabled = true; break; }
     default: { assert(false); }
     }
+
+    ui_str_setc(&ux->music.str, sound_bgm_paused() ? "music" : "mute");
 }
 
 static void ux_topbar_event(void *state)
@@ -136,6 +144,8 @@ static void ux_topbar_event(void *state)
     if (ui_button_event(&ux->tapes)) ux_toggle(ux_view_tapes);
     if (ui_button_event(&ux->mods)) ux_toggle(ux_view_mods);
     if (ui_button_event(&ux->log)) ux_toggle(ux_view_log);
+
+    if (ui_button_event(&ux->music)) sound_bgm_pause(!sound_bgm_paused());
 
     if (ui_button_event(&ux->man)) ux_toggle(ux_view_man);
     if (ui_button_event(&ux->close)) engine_quit();
@@ -203,6 +213,8 @@ static void ux_topbar_render(void *state, struct ui_layout *layout)
     ui_button_render(&ux->close, layout);
     ui_layout_sep_x(layout, 10);
     ui_button_render(&ux->man, layout);
+    ui_layout_sep_x(layout, 10);
+    ui_button_render(&ux->music, layout);
     ui_layout_dir(layout, ui_layout_left_right);
 
     ui_layout_mid(layout, ux->coord.w.w);

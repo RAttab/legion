@@ -305,6 +305,7 @@ void ux_reset(void)
 
     ux_show(ux_view_map);
     ux_show(ux_view_man);
+    sound_bgm_play(bgm_piano);
 }
 
 static void ux_update_sub(void)

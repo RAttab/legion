@@ -88,6 +88,7 @@ bool ui_button_event(struct ui_button *button)
         if (!ev_mouse_in(button->w)) continue;
 
         if (ev->state == ev_state_up) {
+            sound_sfx_play(sfx_button);
             ev_consume_button(ev);
             ret = true;
         }
