@@ -563,6 +563,11 @@ static void ui_asm_event_copy(struct ui_asm *ui)
     free(buffer);
 }
 
+// Just about everything about this error here is wrong so it has to be a false
+// positive.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+
 static void ui_asm_event_help(struct ui_asm *ui)
 {
     char line[ui_asm_line_cols] = {0};
@@ -573,6 +578,8 @@ static void ui_asm_event_help(struct ui_asm *ui)
     ux_man_show_slot_path(ux_slot_right, "/asm/%.*s",
             (unsigned) index.op.len, line + index.op.pos);
 }
+
+#pragma GCC diagnostic pop
 
 static void ui_asm_event_find(struct ui_asm *ui, enum ui_asm_find_type type)
 {
