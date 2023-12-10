@@ -7,7 +7,14 @@
 // man
 // -----------------------------------------------------------------------------
 
-static void db_man_path(struct db_state *state, const char *dir)
+struct db_man
+{
+    size_t len, cap;
+    char paths[][PATH_MAX];
+};
+
+static void db_man_path(
+        struct db_state *state, const char *dir, struct db_man *man)
 {
     struct dir_it *it = dir_it(dir);
 
@@ -15,7 +22,7 @@ static void db_man_path(struct db_state *state, const char *dir)
         const char *path = dir_it_path(it);
 
         if (path_is_dir(path)) {
-            db_man_path(state, path);
+            db_man_path(state, path, man);
             continue;
         }
 
@@ -23,13 +30,9 @@ static void db_man_path(struct db_state *state, const char *dir)
         if (!str_ends_with(path, ".lm")) continue;
         if (str_starts_with(dir_it_name(it), "_")) continue;
 
-        db_file_writef(&state->files.man,
-                "\t.byte 0xFF\n"
-                "\t.4byte %zu\n"
-                "\t.4byte %zu\n"
-                "\t.asciz \"%s\"\n"
-                "\t.incbin \"%s\"\n\n",
-                strlen(path) + 1, file_len_p(path), path, path);
+        assert(man->len < man->cap);
+        strncpy(man->paths[man->len], path, sizeof(man->paths[0]));
+        man->len++;
     }
 }
 
@@ -41,7 +44,30 @@ static void db_gen_man(struct db_state *state)
             "\t.balign 64\n"
             "db_man_list:\n\n");
 
-    db_man_path(state, state->path.man);
+    constexpr size_t cap = 128;
+    struct db_man *man = calloc(1,sizeof(*man) + cap * sizeof(man->paths[0]));
+    *man = (struct db_man) { .len = 0, .cap = cap };
+
+    db_man_path(state, state->path.man, man);
+
+    int cmp(const void *lhs, const void *rhs)
+    {
+        return strncmp(lhs, rhs, PATH_MAX);
+    }
+    qsort(man->paths, man->len, sizeof(man->paths[0]), cmp);
+
+    for (size_t i = 0; i < man->len; ++i) {
+        const char *path = man->paths[i];
+        db_file_writef(&state->files.man,
+                "\t.byte 0xFF\n"
+                "\t.4byte %zu\n"
+                "\t.4byte %zu\n"
+                "\t.asciz \"%s\"\n"
+                "\t.incbin \"%s\"\n\n",
+                strlen(path) + 1, file_len_p(path), path, path);
+    }
+
+    free(man);
 
     db_file_write(&state->files.man,
             "\t.global db_man_list_end\n"
