@@ -16,10 +16,10 @@
 
 typedef uint64_t time_sys;
 
-static const time_sys ts_nsec = 1;
-static const time_sys ts_usec = 1000 * ts_nsec;
-static const time_sys ts_msec = 1000 * ts_usec;
-static const time_sys ts_sec  = 1000 * ts_msec;
+constexpr time_sys ts_nsec = 1;
+constexpr time_sys ts_usec = 1000 * ts_nsec;
+constexpr time_sys ts_msec = 1000 * ts_usec;
+constexpr time_sys ts_sec  = 1000 * ts_msec;
 
 // get around compiler warnings about static variables in inlined headers.
 #define ts_sec_s ((time_sys) 1000*1000*1000)
