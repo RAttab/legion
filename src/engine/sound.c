@@ -11,7 +11,7 @@
 constexpr uint16_t sound_sample_rate = 48000;
 constexpr uint8_t sound_sample_channels = 2;
 
-constexpr size_t sound_periods = 20;
+constexpr size_t sound_periods = 100;
 constexpr size_t sound_period_samples = sound_sample_rate / sound_periods;
 
 constexpr size_t sound_sfx_cap = 4;
@@ -31,8 +31,12 @@ struct
 {
     snd_pcm_t *pcm;
 
-    struct { float master, sfx, bgm; bool paused; } mix;
-    struct sound_pcm bgm, sfx[sound_sfx_cap];
+    pthread_t thread;
+    atomic_bool join;
+
+    struct { legion_atomic enum render_sound bgm, sfx[sound_sfx_cap]; } queue;
+    struct { atomic_float master, sfx, bgm; atomic_bool paused; } mix;
+    struct { struct sound_pcm bgm, sfx[sound_sfx_cap]; } pcms;
 
     struct
     {
@@ -151,11 +155,8 @@ static void sound_init(void)
 
 static void sound_close(void)
 {
-    check_snd(snd_pcm_drop(sound.pcm),
-            "close", "snd_pcm_drop");
-
-    check_snd(snd_pcm_close(sound.pcm),
-            "close", "snd_pcm_close");
+    snd_pcm_drop(sound.pcm);
+    snd_pcm_close(sound.pcm);
 }
 
 static size_t sound_mix(void)
@@ -182,15 +183,18 @@ static size_t sound_mix(void)
         }
     }
 
-    if (!sound.mix.paused)
-        mix(&sound.bgm, sound.mix.bgm, true);
+    float mix_bgm = atomic_load_explicit(&sound.mix.bgm, memory_order_relaxed);
+    bool mix_paused = atomic_load_explicit(&sound.mix.paused, memory_order_relaxed);
+    if (!mix_paused) mix(&sound.pcms.bgm, mix_bgm, true);
 
-    for (size_t i = 0; i < sound_sfx_cap; ++i)
-        mix(sound.sfx + i, sound.mix.sfx, false);
+    float mix_sfx = atomic_load_explicit(&sound.mix.sfx, memory_order_relaxed);
+    for (size_t i = 0; i < array_len(sound.pcms.sfx); ++i)
+        mix(sound.pcms.sfx + i, mix_sfx, false);
 
+    float mix_master = atomic_load_explicit(&sound.mix.master, memory_order_relaxed);
     for (size_t i = 0; i < cap; ++i)
         sound.out.samples[i] = legion_bound(
-                sound.out.samples[i] * sound.mix.master, -1.0f, 1.0f);
+                sound.out.samples[i] * mix_master, -1.0f, 1.0f);
 
     return cap;
 }
@@ -227,6 +231,65 @@ static void sound_write(void)
     }
 }
 
+static void sound_queue(void)
+{
+    enum render_sound bgm = atomic_exchange_explicit(
+            &sound.queue.bgm, sound_nil, memory_order_relaxed);
+    if (bgm) sound.pcms.bgm = sound_db(bgm);
+
+    for (size_t i = 0; i < array_len(sound.queue.sfx); ++i) {
+        enum render_sound sfx = atomic_exchange_explicit(
+                sound.queue.sfx + i, sound_nil, memory_order_relaxed);
+        if (!sfx) continue;
+
+        for (size_t j = 0; j < array_len(sound.pcms.sfx); ++j) {
+            struct sound_pcm *pcm = sound.pcms.sfx + j;
+            if (pcm->type) continue;
+            *pcm = sound_db(sfx);
+        }
+    }
+
+}
+
+
+// -----------------------------------------------------------------------------
+// thread
+// -----------------------------------------------------------------------------
+
+static void sound_fork(void)
+{
+    void *sound_loop(void *) {
+        sound_init();
+
+        constexpr time_sys delay = ts_sec / sound_periods / 2;
+        time_sys next = ts_now() + delay;
+
+        while (!atomic_load_explicit(&sound.join, memory_order_relaxed)) {
+            ts_sleep_until(next);
+            next += delay;
+
+            sound_queue();
+            sound_write();
+        }
+
+        sound_close();
+        return NULL;
+    }
+
+    int err = pthread_create(&sound.thread, NULL, sound_loop, NULL);
+    if (!err) return;
+
+    failf_posix(err, "unable to create sound thread: fn=%p", sound_loop);
+}
+
+static void sound_join(void)
+{
+    atomic_store_explicit(&sound.join, true, memory_order_relaxed);
+
+    int err = pthread_join(sound.thread, NULL);
+    if (err) err_posix(err, "unable to join sound thread");
+}
+
 
 // -----------------------------------------------------------------------------
 // interface
@@ -234,59 +297,64 @@ static void sound_write(void)
 
 float sound_mix_master(void)
 {
-    return sound.mix.master;
+    return atomic_load_explicit(&sound.mix.master, memory_order_relaxed);
 }
 
 void sound_mix_master_set(float level)
 {
     assert(level >= 0.0f && level <= 1.0f);
-    sound.mix.master = level;
+    atomic_store_explicit(&sound.mix.master, level, memory_order_relaxed);
 }
 
 float sound_mix_sfx(void)
 {
-    return sound.mix.sfx;
+    return atomic_load_explicit(&sound.mix.sfx, memory_order_relaxed);
 }
 
 void sound_mix_sfx_set(float level)
 {
     assert(level >= 0.0f && level <= 1.0f);
-    sound.mix.sfx = level;
+    atomic_store_explicit(&sound.mix.sfx, level, memory_order_relaxed);
 }
 
 float sound_mix_bgm(void)
 {
-    return sound.mix.bgm;
+    return atomic_load_explicit(&sound.mix.bgm, memory_order_relaxed);
 }
 
 void sound_mix_bgm_set(float level)
 {
     assert(level >= 0.0f && level <= 1.0f);
-    sound.mix.bgm = level;
+    atomic_store_explicit(&sound.mix.bgm, level, memory_order_relaxed);
 }
 
 void sound_sfx_play(enum render_sound sfx)
 {
-    for (size_t i = 0; i < sound_sfx_cap; ++i) {
-        if (sound.sfx[i].type) continue;
+    assert(sfx >= sound_sfx_first && sfx < sound_sfx_last);
 
-        sound.sfx[i] = sound_db(sfx);
-        break;
+    for (size_t i = 0; i < array_len(sound.queue.sfx); ++i) {
+        enum render_sound exp = sound_nil;
+        bool queued = atomic_compare_exchange_strong_explicit(
+                sound.queue.sfx + i, &exp, sfx,
+                memory_order_relaxed, memory_order_relaxed);
+        if (queued) break;
     }
 }
 
 void sound_bgm_play(enum render_sound bgm)
 {
-    sound.bgm = sound_db(bgm);
+    assert(bgm >= sound_bgm_first && bgm < sound_bgm_last);
+
+    atomic_store_explicit(&sound.queue.bgm, bgm, memory_order_relaxed);
     sound_bgm_pause(false);
 }
 
 void sound_bgm_pause(bool paused)
 {
-    sound.mix.paused = paused;
+    atomic_store_explicit(&sound.mix.paused, paused, memory_order_relaxed);
 }
 
 bool sound_bgm_paused(void)
 {
-    return sound.mix.paused;
+    return atomic_load_explicit(&sound.mix.paused, memory_order_relaxed);
 }

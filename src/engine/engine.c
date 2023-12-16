@@ -154,8 +154,8 @@ void engine_init(void)
     textures_populate();
     engine.glyph = fonts_populate();
     render_init();
-    sound_init();
     ux_init();
+    sound_fork();
 
     engine.area.x = engine.area.y = 0;
     engine.area.w = engine.glyph.w * engine_cols_len;
@@ -166,8 +166,8 @@ void engine_init(void)
 
 void engine_close(void)
 {
+    sound_join();
     ux_free();
-    sound_close();
     render_close();
     fonts_close();
     textures_close();
@@ -264,9 +264,7 @@ static bool engine_step(void)
         ux_render();
         render_cursor(ev_mouse_pos());
     }
-
     render_draw();
-    sound_write();
 
     return true;
 }
