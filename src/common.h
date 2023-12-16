@@ -30,6 +30,10 @@
 #define likely(x)    __builtin_expect(x, 1)
 #define unlikely(x)  __builtin_expect(x, 0)
 
+#define legion_atomic _Atomic
+typedef legion_atomic float atomic_float;
+typedef legion_atomic double atomic_double;
+
 
 // -----------------------------------------------------------------------------
 // macro utils
