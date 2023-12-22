@@ -169,6 +169,8 @@ bool server_run(
         const char *config,
         world_seed seed)
 {
+    threads_init(threads_profile_server);
+
     server.sim = sim_new(seed, save);
     if (file_exists(save)) sim_load(server.sim);
     sim_server(server.sim, config);

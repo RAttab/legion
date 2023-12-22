@@ -31,8 +31,7 @@ struct
 {
     snd_pcm_t *pcm;
 
-    pthread_t thread;
-    atomic_bool join;
+    threads_id thread;
 
     struct { legion_atomic enum render_sound bgm, sfx[sound_sfx_cap]; } queue;
     struct { atomic_float master, sfx, bgm; atomic_bool paused; } mix;
@@ -258,13 +257,14 @@ static void sound_queue(void)
 
 static void sound_fork(void)
 {
-    void *sound_loop(void *) {
+    void sound_loop(void *)
+    {
         sound_init();
 
         constexpr time_sys delay = ts_sec / sound_periods / 2;
         time_sys next = ts_now() + delay;
 
-        while (!atomic_load_explicit(&sound.join, memory_order_relaxed)) {
+        while (!threads_done(sound.thread)) {
             ts_sleep_until(next);
             next += delay;
 
@@ -273,21 +273,14 @@ static void sound_fork(void)
         }
 
         sound_close();
-        return NULL;
     }
 
-    int err = pthread_create(&sound.thread, NULL, sound_loop, NULL);
-    if (!err) return;
-
-    failf_posix(err, "unable to create sound thread: fn=%p", sound_loop);
+    threads_fork(threads_pool_sound, sound_loop, NULL, &sound.thread);
 }
 
 static void sound_join(void)
 {
-    atomic_store_explicit(&sound.join, true, memory_order_relaxed);
-
-    int err = pthread_join(sound.thread, NULL);
-    if (err) err_posix(err, "unable to join sound thread");
+    threads_join(sound.thread);
 }
 
 

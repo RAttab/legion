@@ -22,8 +22,7 @@ struct
     GLFWmonitor *monitor;
     GLFWwindow *window;
 
-    pthread_t thread;
-    atomic_bool join;
+    threads_id thread;
 
     char mods_path[PATH_MAX];
 } engine = {0};
@@ -244,8 +243,7 @@ GLFWwindow *engine_window(void)
 
 static bool engine_step(void)
 {
-    if (atomic_load_explicit(&engine.join, memory_order_relaxed))
-        return false;
+    if (threads_done(engine.thread)) return false;
 
     switch (proxy_update())
     {
@@ -276,31 +274,22 @@ void engine_loop(void)
 
     time_sys ts = ts_now();
     while (engine_step()) ts = ts_sleep_until(ts + sleep);
-
-    atomic_store_explicit(&engine.join, true, memory_order_relaxed);
 }
 
 bool engine_done(void)
 {
-    return atomic_load_explicit(&engine.join, memory_order_relaxed);
+    return threads_done(engine.thread);
 }
 
 void engine_fork(void)
 {
-    void *engine_run(void *) { engine_loop(); return NULL; }
-
-    int err = pthread_create(&engine.thread, NULL, engine_run, NULL);
-    if (!err) return;
-
-    failf_posix(err, "unable to create engine thread: fn=%p", engine_run);
+    void engine_run(void *) { engine_loop(); }
+    threads_fork(threads_pool_engine, engine_run, NULL, &engine.thread);
 }
 
 void engine_join(void)
 {
-    atomic_store_explicit(&engine.join, true, memory_order_relaxed);
-
-    int err = pthread_join(engine.thread, NULL);
-    if (err) err_posix(err, "unable to join engine thread");
+    threads_join(engine.thread);
 }
 
 void engine_quit(void)

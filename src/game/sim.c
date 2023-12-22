@@ -24,8 +24,8 @@ constexpr size_t sim_prof_freq = 100;
 
 struct sim
 {
-    pthread_t thread;
-    atomic_bool join, reload;
+    threads_id thread;
+    atomic_bool reload;
     time_sys next;
 
     struct world *world;
@@ -50,7 +50,6 @@ struct sim *sim_new(world_seed seed, const char *save)
     users_init(&sim->users);
     sim->speed = speed_slow;
     sim->stream = ts_now();
-    atomic_init(&sim->join, false);
     atomic_init(&sim->reload, false);
     strncpy(sim->save, save, sizeof(sim->save) - 1);
     return sim;
@@ -659,10 +658,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
 
         switch (cmd.type)
         {
-        case CMD_QUIT: {
-            atomic_store_explicit(&sim->join, true, memory_order_relaxed);
-            break;
-        }
+        case CMD_QUIT: { threads_exit(sim->thread); break; }
 
         // \todo should probably restrict to admin only.
         case CMD_SAVE: { sim_save(sim); break; }
@@ -820,7 +816,7 @@ void sim_step(struct sim *sim)
 void sim_loop(struct sim *sim)
 {
     time_sys now = sim->next = ts_now();
-    while (!atomic_load_explicit(&sim->join, memory_order_relaxed)) {
+    while (!threads_done(sim->thread)) {
 
         // Should eventually get more complicated as we might need to close some
         // pipes if we've invalidated active users but keep it simple for now.
@@ -858,19 +854,11 @@ void sim_loop(struct sim *sim)
 
 void sim_join(struct sim *sim)
 {
-    atomic_store_explicit(&sim->join, true, memory_order_relaxed);
-
-    int err = pthread_join(sim->thread, NULL);
-    if (err) err_posix(err, "unable to join sim thread");
+    threads_join(sim->thread);
 }
 
 void sim_fork(struct sim *sim)
 {
-    void *sim_run(void *ctx)  { sim_loop(ctx); return NULL; }
-
-    int err = pthread_create(&sim->thread, NULL, sim_run, sim);
-    if (!err) return;
-
-    failf_posix(err, "unable to create sim thread: fn=%p ctx=%p",
-            sim_run, sim);
+    void sim_run(void *ctx)  { sim_loop(ctx); }
+    threads_fork(threads_pool_sim, sim_run, sim, &sim->thread);
 }

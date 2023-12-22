@@ -10,6 +10,8 @@
 
 bool local_run(const char *file, world_seed seed)
 {
+    threads_init(threads_profile_local);
+
     struct sim *sim = sim_new(seed, file);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim);
     sim_fork(sim);

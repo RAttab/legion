@@ -20,7 +20,6 @@
 
 #include <stdarg.h>
 #include <stdatomic.h>
-#include <pthread.h>
 #include <unistd.h>
 
 #include "game/active.h"

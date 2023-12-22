@@ -128,6 +128,8 @@ static bool client_events(int poll, struct server *server, int events)
 
 bool client_run(const char *node, const char *service, const char *config)
 {
+    threads_init(threads_profile_client);
+
     proxy_init();
     proxy_auth(config);
 
