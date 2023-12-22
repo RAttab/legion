@@ -15,11 +15,14 @@
 
 #include <alsa/asoundlib.h>
 #include <stdatomic.h>
+#include <sys/sysinfo.h>
 #include <sys/stat.h>
 #include <pthread.h>
 #include <errno.h>
+#include <sched.h>
 
 #include "engine/glad/glad.c"
+#include "engine/threads.c"
 #include "engine/events.c"
 #include "engine/shaders.c"
 #include "engine/textures.c"

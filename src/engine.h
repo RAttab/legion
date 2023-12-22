@@ -17,6 +17,7 @@
 
 #include "engine/types.h"
 #include "engine/engine.h"
+#include "engine/threads.h"
 #include "engine/render.h"
 #include "engine/events.h"
 #include "engine/sound.h"
