@@ -32,6 +32,7 @@ struct
     snd_pcm_t *pcm;
 
     threads_id thread;
+    struct threads *threads;
 
     struct { legion_atomic enum render_sound bgm, sfx[sound_sfx_cap]; } queue;
     struct { atomic_float master, sfx, bgm; atomic_bool paused; } mix;
@@ -264,7 +265,7 @@ static void sound_fork(void)
         constexpr time_sys delay = ts_sec / sound_periods / 2;
         time_sys next = ts_now() + delay;
 
-        while (!threads_done(sound.thread)) {
+        while (!threads_done(sound.threads, thread_id())) {
             ts_sleep_until(next);
             next += delay;
 
@@ -275,12 +276,14 @@ static void sound_fork(void)
         sound_close();
     }
 
-    threads_fork(threads_pool_sound, sound_loop, NULL, &sound.thread);
+    sound.threads = threads_alloc(threads_pool_sound);
+    sound.thread = threads_fork(sound.threads, sound_loop, nullptr);
 }
 
 static void sound_join(void)
 {
-    threads_join(sound.thread);
+    threads_join(sound.threads, sound.thread);
+    threads_free(sound.threads);
 }
 
 

@@ -23,6 +23,7 @@ struct
     GLFWwindow *window;
 
     threads_id thread;
+    struct threads *threads;
 
     char mods_path[PATH_MAX];
 } engine = {0};
@@ -243,7 +244,8 @@ GLFWwindow *engine_window(void)
 
 static bool engine_step(void)
 {
-    if (threads_done(engine.thread)) return false;
+    if (engine.threads && threads_done(engine.threads, engine.thread))
+        return false;
 
     switch (proxy_update())
     {
@@ -278,18 +280,20 @@ void engine_loop(void)
 
 bool engine_done(void)
 {
-    return threads_done(engine.thread);
+    return threads_done(engine.threads, engine.thread);
 }
 
 void engine_fork(void)
 {
     void engine_run(void *) { engine_loop(); }
-    threads_fork(threads_pool_engine, engine_run, NULL, &engine.thread);
+    engine.threads = threads_alloc(threads_pool_engine);
+    engine.thread = threads_fork(engine.threads, engine_run, nullptr);
 }
 
 void engine_join(void)
 {
-    threads_join(engine.thread);
+    threads_join(engine.threads, engine.thread);
+    threads_free(engine.threads);
 }
 
 void engine_quit(void)
@@ -336,6 +340,7 @@ void engine_populate(void)
 
 void engine_populate_tests(void)
 {
+    threads_init(threads_profile_local);
     snprintf(engine.mods_path, sizeof(engine.mods_path), "./res/mods");
 
     engine_populate_impl();

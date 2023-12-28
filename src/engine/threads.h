@@ -9,6 +9,11 @@
 // threads
 // -----------------------------------------------------------------------------
 
+typedef uint8_t threads_id;
+typedef void (* threads_fn) (void *ctx);
+
+constexpr size_t threads_cpu_cap = 64;
+
 enum threads_profile : unsigned
 {
     threads_profile_nil = 0,
@@ -27,16 +32,19 @@ enum threads_pool : unsigned
     threads_pool_len,
 };
 
-typedef uint8_t threads_id;
-typedef void (* threads_fn) (void *ctx);
+struct threads;
 
 void threads_init(enum threads_profile);
 void threads_close(void);
 
-size_t threads_for(enum threads_pool);
+struct threads *threads_alloc(enum threads_pool);
+void threads_free(struct threads *);
 
-void threads_fork(enum threads_pool, threads_fn, void *ctx, threads_id *id);
-void threads_join(threads_id);
+size_t thread_id(void);
+size_t threads_cpus(struct threads *);
 
-bool threads_done(threads_id);
-void threads_exit(threads_id);
+threads_id threads_fork(struct threads *, threads_fn, void *ctx);
+void threads_join(struct threads *, threads_id);
+
+bool threads_done(struct threads *, threads_id);
+void threads_exit(struct threads *, threads_id);

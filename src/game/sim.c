@@ -25,6 +25,8 @@ constexpr size_t sim_prof_freq = 100;
 struct sim
 {
     threads_id thread;
+    struct threads *threads;
+
     atomic_bool reload;
     time_sys next;
 
@@ -658,7 +660,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
 
         switch (cmd.type)
         {
-        case CMD_QUIT: { threads_exit(sim->thread); break; }
+        case CMD_QUIT: { threads_exit(sim->threads, thread_id()); break; }
 
         // \todo should probably restrict to admin only.
         case CMD_SAVE: { sim_save(sim); break; }
@@ -816,7 +818,7 @@ void sim_step(struct sim *sim)
 void sim_loop(struct sim *sim)
 {
     time_sys now = sim->next = ts_now();
-    while (!threads_done(sim->thread)) {
+    while (!threads_done(sim->threads, thread_id())) {
 
         // Should eventually get more complicated as we might need to close some
         // pipes if we've invalidated active users but keep it simple for now.
@@ -852,13 +854,15 @@ void sim_loop(struct sim *sim)
     }
 }
 
-void sim_join(struct sim *sim)
-{
-    threads_join(sim->thread);
-}
-
 void sim_fork(struct sim *sim)
 {
     void sim_run(void *ctx)  { sim_loop(ctx); }
-    threads_fork(threads_pool_sim, sim_run, sim, &sim->thread);
+    sim->threads = threads_alloc(threads_pool_sim);
+    sim->thread = threads_fork(sim->threads, sim_run, sim);
+}
+
+void sim_join(struct sim *sim)
+{
+    threads_join(sim->threads, sim->thread);
+    threads_free(sim->threads);
 }
