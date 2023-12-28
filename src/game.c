@@ -28,6 +28,7 @@
 #include "game/log.c"
 #include "game/lanes.c"
 #include "game/sector.c"
+#include "game/shards.c"
 #include "game/world.c"
 #include "game/tape.c"
 #include "game/chunk.c"
