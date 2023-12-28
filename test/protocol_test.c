@@ -63,8 +63,21 @@ void check(void)
 
     struct ack *ack = ack_new();
     for (size_t attempt = 0; attempt < attempts; ++attempt) {
-        world_log_push(world, user, make_coord(1, 1), make_im_id(1, 1), io_ping, ioe_invalid_state);
-        world_log_push(world, user, make_coord(2, 2), make_im_id(2, 2), io_name, ioe_missing_arg);
+        log_push(world_log(world, user), (struct log_line) {
+                    .star = make_coord(1, 1),
+                    .time = world_time(world),
+                    .id = make_im_id(1, 1),
+                    .key = io_ping,
+                    .value = ioe_invalid_state
+                });
+
+        log_push(world_log(world, user), (struct log_line) {
+                    .star = make_coord(2, 2),
+                    .time = world_time(world),
+                    .id = make_im_id(2, 2),
+                    .key = io_name,
+                    .value = ioe_missing_arg
+                });
 
         save_mem_reset(save);
         state_save(save, &(struct state_ctx) {
@@ -129,8 +142,8 @@ void check(void)
             assert(htable_eq(&tech->research, &state->tech.research));
         }
 
-        const struct logi *wd_log = log_next(world_log(world, user), NULL);
-        const struct logi *st_log = log_next(state->log, NULL);
+        const struct log_line *wd_log = log_next(world_log(world, user), NULL);
+        const struct log_line *st_log = log_next(state->log, NULL);
         while (wd_log) {
             assert(coord_eq(wd_log->star, st_log->star));
             assert(wd_log->time == st_log->time);

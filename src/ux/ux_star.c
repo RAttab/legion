@@ -402,7 +402,7 @@ static void ux_star_update(void *state)
     ux_star_update_list(chunk, &ux->control_list, im_list_control);
     ux_star_update_list(chunk, &ux->factory_list, im_list_factory);
 
-    ui_str_set_u64(&ux->pills.count_val.str, chunk_scan(chunk, item_pill));
+    ui_str_set_u64(&ux->pills.count_val.str, chunk_count(chunk, item_pill));
 
     {
         struct workers workers = chunk_workers(chunk);
@@ -423,7 +423,7 @@ static void ux_star_update(void *state)
         ui_str_set_scaled(&ux->stored_val.str, energy.item.battery.stored);
 
         ux->fusion.show = tech_known(tech, item_fusion);
-        ui_str_set_u64(&ux->fusion.count.str, chunk_scan(chunk, item_fusion));
+        ui_str_set_u64(&ux->fusion.count.str, chunk_count(chunk, item_fusion));
         ui_str_set_scaled(&ux->fusion.total_val.str, energy.item.fusion.produced);
         ui_str_set_scaled(&ux->fusion.prod_val.str, im_fusion_energy_output);
 
@@ -434,7 +434,7 @@ static void ux_star_update(void *state)
         ui_str_set_scaled(&ux->solar.prod_val.str, energy_prod_solar(&energy, &ux->star));
 
         ux->burner.show = tech_known(tech, item_burner);
-        ui_str_set_u64(&ux->burner.count.str, chunk_scan(chunk, item_burner));
+        ui_str_set_u64(&ux->burner.count.str, chunk_count(chunk, item_burner));
         ui_str_set_scaled(&ux->burner.total_val.str, energy.item.burner);
 
         ux->kwheel.show = tech_known(tech, item_kwheel);

@@ -350,7 +350,7 @@ static void state_save_io(struct world *world, user_id user, struct save *save)
 {
     save_write_magic(save, save_magic_io);
 
-    struct world_io *io = world_user_io(world, user);
+    struct user_io *io = world_user_io(world, user);
     save_write_value(save, io->io);
 
     if (io->io) {
@@ -368,7 +368,7 @@ static void state_save_io(struct world *world, user_id user, struct save *save)
 static bool state_load_io(struct state *state, struct save *save)
 {
     if (!save_read_magic(save, save_magic_io)) return false;
-    struct world_io *io = &state->io;
+    struct user_io *io = &state->io;
 
     save_read_into(save, &io->io);
     if (io->io) {

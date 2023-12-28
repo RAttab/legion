@@ -283,8 +283,7 @@ static void im_library_io_tape_known(
         goto fail;
     }
 
-    struct tech *tech = chunk_tech(chunk);
-    vm_word known = tech_known(tech, item) ? 1 : 0;
+    vm_word known = tech_known(chunk_tech(chunk), item) ? 1 : 0;
     chunk_io(chunk, io_return, library->id, src, &known, 1);
     return;
 
@@ -309,8 +308,7 @@ static void im_library_io_tape_learned(
         goto fail;
     }
 
-    struct tech *tech = chunk_tech(chunk);
-    vm_word learned = tech_learned(tech, item) ? 1 : 0;
+    vm_word learned = tech_learned(chunk_tech(chunk), item) ? 1 : 0;
     chunk_io(chunk, io_return, library->id, src, &learned, 1);
     return;
 

@@ -31,7 +31,8 @@ static void im_prober_reset(struct im_prober *prober)
 
 im_work im_prober_work_cap(struct coord origin, struct coord target) {
     uint64_t delta = coord_dist(origin, target) / im_prober_div;
-    return delta > UINT8_MAX ? UINT8_MAX : delta;
+     // UINT8_MAX is aparently a signed int...??? Da fuck?
+    return legion_bound(delta, 1U, 0xFFU);
 }
 
 
@@ -46,13 +47,16 @@ static void im_prober_step(void *state, struct chunk *chunk)
     if (!prober->item) return;
     if (prober->result != im_prober_empty) return;
 
+    if (prober->work.left == 1)
+        chunk_probe(chunk, prober->coord, prober->item);
+
     if (prober->work.left) {
         if (energy_consume(chunk_energy(chunk), im_prober_work_energy))
             prober->work.left--;
         return;
     }
 
-    ssize_t ret = world_scan(chunk_world(chunk), prober->coord, prober->item);
+    ssize_t ret = chunk_probe_value(chunk, prober->coord, prober->item);
     prober->result = ret < 0 ? 0 : ret;
 }
 
@@ -90,7 +94,7 @@ static void im_prober_io_count(
         goto fail;
     }
 
-    vm_word ret = legion_max(0, chunk_scan(chunk, item));
+    vm_word ret = legion_max(0, chunk_count(chunk, item));
     chunk_io(chunk, io_return, prober->id, src, &ret, 1);
     return;
 

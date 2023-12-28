@@ -191,7 +191,7 @@ struct state
     struct htable names;
     struct tech tech;
     struct log *log;
-    struct world_io io;
+    struct user_io io;
 
     struct
     {

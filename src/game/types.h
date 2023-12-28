@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common.h"
+#include "db/io.h"
 #include "db/items.h"
 #include "vm/types.h"
 #include "game/coord.h"
@@ -18,12 +19,14 @@ typedef uint32_t world_ts;
 typedef int64_t world_ts_delta;
 typedef uint64_t world_seed;
 
-struct legion_packed world_scan_it
+struct legion_packed user_io
 {
-    struct coord coord;
-    uint64_t index;
+    enum io io;
+    id_t src;
+    uint8_t len;
+    legion_pad(1);
+    vm_word args[4];
 };
-
 
 // -----------------------------------------------------------------------------
 // im_id
@@ -80,6 +83,30 @@ enum tape_state : uint8_t
     tape_work,
     tape_output,
 };
+
+
+// -----------------------------------------------------------------------------
+// scan
+// -----------------------------------------------------------------------------
+
+struct legion_packed scan_it
+{
+    struct coord coord;
+    uint64_t index;
+};
+
+static_assert(sizeof(struct scan_it) == 16);
+
+inline struct scan_it make_scan_it(struct coord coord)
+{
+    return (struct scan_it) { .coord = coord_sector(coord), .index = 0 };
+}
+
+inline void scan_it_inc(struct scan_it *it) { it->index++; }
+inline bool scan_it_eq(struct scan_it rhs, struct scan_it lhs)
+{
+    return rhs.index == lhs.index && coord_eq(rhs.coord, lhs.coord);
+}
 
 
 // -----------------------------------------------------------------------------

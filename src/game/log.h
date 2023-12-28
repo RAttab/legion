@@ -12,7 +12,7 @@ struct ack;
 // logi
 // -----------------------------------------------------------------------------
 
-struct legion_packed logi
+struct legion_packed log_line
 {
     struct coord star;
     world_ts time;
@@ -21,7 +21,7 @@ struct legion_packed logi
     vm_word key, value;
 };
 
-static_assert(sizeof(struct logi) == 32);
+static_assert(sizeof(struct log_line) == 32);
 
 
 // -----------------------------------------------------------------------------
@@ -33,8 +33,8 @@ struct log;
 struct log *log_new(size_t cap);
 void log_free(struct log *);
 
-void log_push(struct log *, world_ts, struct coord, im_id, vm_word key, vm_word value);
-const struct logi *log_next(const struct log *, const struct logi *it);
+void log_push(struct log *, struct log_line);
+const struct log_line *log_next(const struct log *, const struct log_line *it);
 
 void log_save(const struct log *, struct save *);
 struct log *log_load(struct save *);

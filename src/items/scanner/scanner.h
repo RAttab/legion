@@ -20,7 +20,7 @@ struct legion_packed im_scanner
 
     legion_pad(4);
 
-    struct world_scan_it it;
+    struct scan_it it;
     vm_word result;
 };
 

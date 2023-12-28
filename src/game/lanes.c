@@ -353,39 +353,35 @@ bool lanes_list_load_into(struct htable *lanes, struct save *save)
     return true;
 }
 
-void lanes_launch(
-        struct lanes *lanes,
-        user_id owner, enum item type, size_t speed,
-        struct coord src, struct coord dst,
-        const vm_word *data, size_t len)
+void lanes_launch(struct lanes *lanes, struct lanes_packet packet)
 {
-    uint64_t key = lanes_key(src, dst);
+    uint64_t key = lanes_key(packet.src, packet.dst);
     struct htable_ret ret = htable_get(&lanes->lanes, key);
 
     struct lane *lane = NULL;
     if (ret.ok) lane = (void *) ret.value;
     else {
-        lane = lane_alloc(src, dst);
+        lane = lane_alloc(packet.src, packet.dst);
         ret = htable_put(&lanes->lanes, key, (uintptr_t) lane);
         assert(ret.ok);
 
-        lanes_index_put(lanes, src, dst);
-        lanes_index_put(lanes, dst, src);
+        lanes_index_put(lanes, packet.src, packet.dst);
+        lanes_index_put(lanes, packet.dst, packet.src);
     }
 
-    heap_ix data_index = heap_new(&lanes->data, lane_data_len(len));
+    heap_ix data_index = heap_new(&lanes->data, lane_data_len(packet.len));
     {
         struct lane_data *data_ptr = heap_ptr(&lanes->data, data_index);
         *data_ptr = (struct lane_data) {
-            .owner = owner,
-            .item = type,
-            .forward = coord_eq(src, lane->src),
-            .len = len,
+            .owner = packet.owner,
+            .item = packet.item,
+            .forward = coord_eq(packet.src, lane->src),
+            .len = packet.len,
         };
-        memcpy(data_ptr->data, data, len * sizeof(*data));
+        memcpy(data_ptr->data, packet.data, packet.len * sizeof(*packet.data));
     }
 
-    world_ts_delta travel = lanes_travel(speed, src, dst);
+    world_ts_delta travel = lanes_travel(packet.speed, packet.src, packet.dst);
     assert(travel > 0);
 
     lane_push(lane, world_time(lanes->world) + travel, data_index);

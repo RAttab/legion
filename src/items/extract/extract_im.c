@@ -78,7 +78,7 @@ static void im_extract_step_output(
         struct im_extract *extract, struct chunk *chunk, enum item item)
 {
     if (!extract->waiting) {
-        if (!chunk_harvest(chunk, item)) {
+        if (!chunk_extract(chunk, item)) {
             chunk_log(chunk, extract->id, io_step, ioe_starved);
             im_extract_reset(extract, chunk);
             return;

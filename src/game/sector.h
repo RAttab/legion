@@ -60,9 +60,6 @@ struct sector *sector_gen(struct coord, world_seed);
 struct sector *sector_new(size_t stars);
 void sector_free(struct sector *);
 
-struct sector *sector_load(struct world *, struct save *);
-void sector_save(const struct sector *, struct save *);
-
 const struct star *sector_star_in(const struct sector *, struct coord_rect);
 const struct star *sector_star_at(const struct sector *, struct coord coord);
 

@@ -32,8 +32,8 @@ void world_step(struct world *);
 void world_populate(struct world *);
 void world_populate_user(struct world *, user_id);
 
-world_seed world_gen_seed(struct world *);
-world_ts world_time(struct world *);
+world_seed world_gen_seed(const struct world *);
+world_ts world_time(const struct world *);
 struct mods *world_mods(struct world *);
 struct atoms *world_atoms(struct world *);
 struct coord world_home(struct world *, user_id);
@@ -51,36 +51,22 @@ bool world_user_access(struct world *, user_set, struct coord);
 
 enum : size_t { world_log_cap = 64 };
 struct log *world_log(struct world *, user_id);
-void world_log_push(
-        struct world *, user_id, struct coord, im_id, vm_word key, vm_word value);
 
 
 // -----------------------------------------------------------------------------
 // user-io
 // -----------------------------------------------------------------------------
 
-struct legion_packed world_io
-{
-    enum io io;
-    id_t src;
-    uint8_t len;
-    legion_pad(1);
-    vm_word args[4];
-};
-
-struct world_io *world_user_io(struct world *, user_id);
+struct user_io *world_user_io(struct world *, user_id);
 void world_user_io_clear(struct world *, user_id);
 
 
 // -----------------------------------------------------------------------------
-// scan-it
+// scan / probe
 // -----------------------------------------------------------------------------
 
-struct world_scan_it world_scan_it(struct world *, struct coord coord);
-struct coord world_scan_next(struct world *, struct world_scan_it *);
-struct coord world_scan_peek(struct world *, const struct world_scan_it *);
-
-ssize_t world_scan(struct world *, struct coord, enum item);
+ssize_t world_probe(struct world *, struct coord, enum item);
+struct coord world_scan(struct world *, struct scan_it);
 
 
 // -----------------------------------------------------------------------------
@@ -102,14 +88,10 @@ struct chunk *world_chunk_next(struct world *, struct world_chunk_it *);
 // lanes
 // -----------------------------------------------------------------------------
 
+struct lanes *world_lanes(struct world *);
 const struct hset *world_lanes_list(struct world *, struct coord key);
 void world_lanes_list_save(struct world *, struct save *, user_set);
 
-void world_lanes_launch(
-        struct world *,
-        user_id owner, enum item type, size_t speed,
-        struct coord src, struct coord dst,
-        const vm_word *data, size_t len);
 void world_lanes_arrive(
         struct world *,
         user_id owner, enum item type,

@@ -45,6 +45,25 @@ void wait(struct world *world, size_t speed, struct coord src, struct coord dst)
     for (world_ts_delta i = 0; i < wait; ++i) world_step(world);
 }
 
+void launch(
+        struct world *world,
+        user_id owner,
+        enum item item,
+        uint32_t speed,
+        struct coord src,
+        struct coord dst)
+{
+    lanes_launch(world_lanes(world), (struct lanes_packet) {
+                .owner = owner,
+                .item = item,
+                .speed = speed,
+                .src = src,
+                .dst = dst,
+                .len = 0,
+                .data = nullptr
+            });
+}
+
 
 // -----------------------------------------------------------------------------
 // tests
@@ -62,11 +81,11 @@ void test_basics(void)
     const struct coord dst = sector->stars[1].coord;
 
     for (size_t iteration = 0; iteration < 5; ++iteration) {
-        world_lanes_launch(world, user, item, speed, src, dst, NULL, 0);
+        launch(world, user, item, speed, src, dst);
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
-        world_lanes_launch(world, user, item, speed, dst, src, NULL, 0);
+        launch(world, user, item, speed, dst, src);
         check_hset(world_lanes_list(world, src), coord_to_u64(dst));
         check_hset(world_lanes_list(world, dst), coord_to_u64(src));
 
@@ -79,8 +98,8 @@ void test_basics(void)
         struct chunk *chunk_dst = world_chunk(world, dst);
         assert(chunk_src && chunk_dst);
 
-        assert(chunk_scan(chunk_src, item) > (ssize_t) iteration);
-        assert(chunk_scan(chunk_dst, item) > (ssize_t) iteration);
+        assert(chunk_count(chunk_src, item) > (ssize_t) iteration);
+        assert(chunk_count(chunk_dst, item) > (ssize_t) iteration);
         assert(chunk_owner(chunk_dst) == user);
     }
 
@@ -102,23 +121,23 @@ void test_speed(void)
     struct chunk *chunk_dst = world_chunk_alloc(world, dst, user_admin);
 
     for (size_t i = 0; i < count; ++i) {
-        world_lanes_launch(world, user_admin, item_slow, speed_slow, src, dst, NULL, 0);
-        world_lanes_launch(world, user_admin, item_fast, speed_fast, src, dst, NULL, 0);
+        launch(world, user_admin, item_slow, speed_slow, src, dst);
+        launch(world, user_admin, item_fast, speed_fast, src, dst);
         world_step(world);
     }
 
-    assert(chunk_scan(chunk_dst, item_slow) == 0);
-    assert(chunk_scan(chunk_dst, item_fast) == 0);
+    assert(chunk_count(chunk_dst, item_slow) == 0);
+    assert(chunk_count(chunk_dst, item_fast) == 0);
 
     wait(world, speed_fast, src, dst);
 
-    assert(chunk_scan(chunk_dst, item_slow) == 0);
-    assert(chunk_scan(chunk_dst, item_fast) == count);
+    assert(chunk_count(chunk_dst, item_slow) == 0);
+    assert(chunk_count(chunk_dst, item_fast) == count);
 
     wait(world, speed_slow, src, dst);
 
-    assert(chunk_scan(chunk_dst, item_slow) == count);
-    assert(chunk_scan(chunk_dst, item_fast) == count);
+    assert(chunk_count(chunk_dst, item_slow) == count);
+    assert(chunk_count(chunk_dst, item_fast) == count);
 
     world_free(world);
 }

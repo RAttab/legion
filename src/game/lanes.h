@@ -33,10 +33,16 @@ const struct hset *lanes_list(struct lanes *, struct coord key);
 void lanes_list_save(struct lanes *, struct save *, struct world *, user_set);
 bool lanes_list_load_into(struct htable *, struct save *);
 
-void lanes_launch(
-        struct lanes *,
-        user_id owner, enum item type, size_t speed,
-        struct coord src, struct coord dst,
-        const vm_word *data, size_t len);
+struct lanes_packet
+{
+    user_id owner;
+    enum item item;
+    uint8_t len;
+    uint32_t speed;
+    struct coord src, dst;
+    const vm_word *data;
+};
+
+void lanes_launch(struct lanes *, struct lanes_packet);
 
 void lanes_step(struct lanes *);

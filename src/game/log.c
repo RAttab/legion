@@ -11,7 +11,7 @@
 struct log
 {
     uint32_t it, cap;
-    struct logi items[];
+    struct log_line items[];
 };
 
 
@@ -36,25 +36,13 @@ static void log_reset(struct log *log)
     log->cap = cap;
 }
 
-void log_push(
-        struct log *log,
-        world_ts time,
-        struct coord star,
-        im_id id,
-        vm_word key,
-        vm_word value)
+void log_push(struct log *log, struct log_line line)
 {
-    log->items[log->it % log->cap] = (struct logi) {
-        .time = time,
-        .star = star,
-        .id = id,
-        .key = key,
-        .value = value,
-    };
+    log->items[log->it % log->cap] = line;
     log->it++;
 };
 
-const struct logi *log_next(const struct log *log, const struct logi *it)
+const struct log_line *log_next(const struct log *log, const struct log_line *it)
 {
     if (it == log->items + (log->it % log->cap)) return NULL;
     if (!it) it = log->items + (log->it % log->cap);
@@ -103,7 +91,7 @@ void log_save_delta(const struct log *log, struct save *save, world_ts ack)
 {
     save_write_magic(save, save_magic_log);
 
-    for (const struct logi *it = log_next(log, NULL);
+    for (const struct log_line *it = log_next(log, NULL);
          it; it = log_next(log, it))
     {
         if (it->time <= ack) continue;
@@ -132,7 +120,16 @@ static bool log_load_delta_item(struct log *log, struct save *save, world_ts ack
 
     if (!log_load_delta_item(log, save, ack)) return false;
 
-    if (time > ack) log_push(log, time, star, id, key, value);
+    if (time > ack) {
+        log_push(log, (struct log_line) {
+                .star = star,
+                .time = time,
+                .id = id,
+                .key = key,
+                .value = value
+            });
+    }
+
     return true;
 }
 

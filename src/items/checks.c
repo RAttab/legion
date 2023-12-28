@@ -19,7 +19,7 @@ inline bool im_check_args(
 inline bool im_check_known(
         struct chunk *chunk, im_id id, enum io io, enum item item)
 {
-    struct tech *tech = chunk_tech(chunk);
+    const struct tech *tech = chunk_tech(chunk);
     if (tech_known(tech, item)) return true;
 
     chunk_log(chunk, id, io, ioe_a0_unknown);

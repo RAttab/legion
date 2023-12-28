@@ -11,7 +11,8 @@ void test_ports_1on1(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
+    struct shard *shard = shard_alloc(world);
+    struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
     im_id src = make_im_id(item_extract, 1);
@@ -20,7 +21,7 @@ void test_ports_1on1(void)
     chunk_create(chunk, im_id_item(src));
     chunk_create(chunk, im_id_item(dst));
     chunk_create(chunk, item_worker);
-    chunk_step(chunk);
+    shard_step(shard);
 
     for (size_t i = 0; i < 3; ++i) {
         assert(chunk_ports_produce(chunk, src, item));
@@ -30,11 +31,12 @@ void test_ports_1on1(void)
         chunk_ports_request(chunk, dst, item);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
 
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
     }
 
     chunk_free(chunk);
+    shard_free(shard);
     world_free(world);
 }
 
@@ -42,7 +44,8 @@ void test_ports_2on1(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
+    struct shard *shard = shard_alloc(world);
+    struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
     im_id src0 = make_im_id(item_extract, 1);
@@ -53,22 +56,23 @@ void test_ports_2on1(void)
     chunk_create(chunk, im_id_item(src1));
     chunk_create(chunk, im_id_item(dst));
     chunk_create(chunk, item_worker);
-    chunk_step(chunk);
+    shard_step(shard);
 
     for (size_t i = 0; i < 3; ++i) {
         assert(chunk_ports_produce(chunk, src1, item));
         assert(chunk_ports_produce(chunk, src0, item));
         chunk_ports_request(chunk, dst, item);
 
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
         chunk_ports_request(chunk, dst, item);
 
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
     }
 
     chunk_free(chunk);
+    shard_free(shard);
     world_free(world);
 }
 
@@ -76,7 +80,8 @@ void test_ports_1on2(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
+    struct shard *shard = shard_alloc(world);
+    struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
     im_id src = make_im_id(item_extract, 1);
@@ -87,7 +92,7 @@ void test_ports_1on2(void)
     chunk_create(chunk, im_id_item(dst0));
     chunk_create(chunk, im_id_item(dst1));
     chunk_create(chunk, item_worker);
-    chunk_step(chunk);
+    shard_step(shard);
 
     for (size_t i = 0; i < 3; ++i) {
         chunk_ports_produce(chunk, src, item);
@@ -95,17 +100,18 @@ void test_ports_1on2(void)
         chunk_ports_request(chunk, dst0, item);
 
 
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst0) == item_nil);
         assert(chunk_ports_consume(chunk, dst1) == item);
         chunk_ports_produce(chunk, src, item);
 
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst0) == item);
         assert(chunk_ports_consume(chunk, dst1) == item_nil);
     }
 
     chunk_free(chunk);
+    shard_free(shard);
     world_free(world);
 }
 
@@ -113,7 +119,8 @@ void test_ports_reset(void)
 {
     struct star star = {0};
     struct world *world = world_new(0);
-    struct chunk *chunk = chunk_alloc(world, &star, user_admin, 0);
+    struct shard *shard = shard_alloc(world);
+    struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
     im_id src = make_im_id(item_extract, 1);
@@ -122,54 +129,54 @@ void test_ports_reset(void)
     chunk_create(chunk, im_id_item(src));
     chunk_create(chunk, im_id_item(dst));
     chunk_create(chunk, item_worker);
-    chunk_step(chunk);
+    shard_step(shard);
 
     for (size_t i = 0; i < 3; ++i) {
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
         assert(chunk_workers(chunk).queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_reset(chunk, src);
         chunk_ports_request(chunk, dst, item);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
         assert(chunk_workers(chunk).queue == 1);
         assert(chunk_workers(chunk).clean == 1);
         assert(chunk_workers(chunk).fail == 1);
 
         chunk_ports_produce(chunk, src, item);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
         assert(chunk_workers(chunk).queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
         chunk_ports_reset(chunk, dst);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
         assert(chunk_workers(chunk).queue == 1);
         assert(chunk_workers(chunk).clean == 1);
         assert(chunk_workers(chunk).fail == 0);
 
         chunk_ports_request(chunk, dst, item);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
         assert(chunk_workers(chunk).queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
         chunk_ports_reset(chunk, src);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
         assert(chunk_workers(chunk).queue == 1);
         assert(chunk_workers(chunk).clean == 1);
         assert(chunk_workers(chunk).fail == 1);
 
         chunk_ports_reset(chunk, dst);
-        chunk_step(chunk);
+        shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
         assert(chunk_workers(chunk).queue == 1);
         assert(chunk_workers(chunk).clean == 1);
@@ -177,6 +184,7 @@ void test_ports_reset(void)
     }
 
     chunk_free(chunk);
+    shard_free(shard);
     world_free(world);
 }
 

@@ -56,7 +56,7 @@ void check_file(const char *path)
         assert(new);
 
         for (enum item item = 0; item < items_max; ++item)
-            assert(world_scan(old, coord, item) <= world_scan(new, coord, item));
+            assert(world_probe(old, coord, item) <= world_probe(new, coord, item));
 
         struct vec64 *old_atoms = atoms_list(world_atoms(old));
         struct vec64 *new_atoms = atoms_list(world_atoms(new));

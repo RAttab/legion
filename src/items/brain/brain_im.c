@@ -49,14 +49,14 @@ static void im_brain_load(void *state, struct chunk *chunk)
     struct im_brain *brain = state;
     if (!brain->mod_id) return;
 
-    brain->mod = mods_get(world_mods(chunk_world(chunk)), brain->mod_id);
+    brain->mod = mods_get(chunk_mods(chunk), brain->mod_id);
     assert(brain->mod);
 }
 
 static void im_brain_mod(struct im_brain *brain, struct chunk *chunk, mod_id id)
 {
     brain->mod_id = id;
-    brain->mod = id ? mods_get(world_mods(chunk_world(chunk)), id) : NULL;
+    brain->mod = id ? mods_get(chunk_mods(chunk), id) : NULL;
     brain->fault = id && !brain->mod;
 }
 
@@ -170,7 +170,7 @@ static void im_brain_step_io(
 
     case io_id: { vm_push(&brain->vm, brain->id); break; }
     case io_log: { im_brain_log(brain, chunk, io + 1, len - 1); break; }
-    case io_tick: { vm_push(&brain->vm, world_time(chunk_world(chunk))); break; }
+    case io_tick: { vm_push(&brain->vm, chunk_time(chunk)); break; }
     case io_coord: { vm_push(&brain->vm, coord_to_u64(chunk_star(chunk)->coord)); break; }
     case io_name: { im_brain_step_name(brain, chunk, io + 1, len - 1); break; }
     case io_specs: { ok = im_brain_step_specs(brain, chunk, io + 1, len - 1); break; }
@@ -319,7 +319,7 @@ static void im_brain_io(
     case io_mod: { im_brain_io_mod(brain, chunk, args, len); return; }
 
     case io_tick: {
-        vm_word value = world_time(chunk_world(chunk));
+        vm_word value = chunk_time(chunk);
         im_brain_return_value(brain, chunk, src, value);
         break;
     }

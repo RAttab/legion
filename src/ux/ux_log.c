@@ -15,7 +15,7 @@ static void ux_log_render(void *, struct ui_layout *);
 // -----------------------------------------------------------------------------
 
 
-struct ux_logi
+struct ux_log_line
 {
     struct
     {
@@ -41,12 +41,12 @@ struct ux_log
     unit col[2];
 
     size_t len;
-    struct ux_logi items[world_log_cap];
+    struct ux_log_line items[world_log_cap];
 };
 
-struct ux_logi ux_logi_alloc(void)
+struct ux_log_line ux_log_line_alloc(void)
 {
-    struct ux_logi ux = {
+    struct ux_log_line ux = {
         .time = ui_label_new(ui_str_v(10)),
         .star = ui_link_new(ui_str_v(symbol_cap)),
         .key = ui_label_new(ui_str_v(symbol_cap)),
@@ -57,13 +57,13 @@ struct ux_logi ux_logi_alloc(void)
     return ux;
 }
 
-// should match the sizes in ux_logi_alloc
-static constexpr unit ux_logi_col[3] = {
+// should match the sizes in ux_log_line_alloc
+static constexpr unit ux_log_line_col[3] = {
     [0] = 10,
     [1] = symbol_cap,
     [2] = symbol_cap,
 };
-static_assert(symbol_cap >= im_id_str_len); // ux_logi_col[1]
+static_assert(symbol_cap >= im_id_str_len); // ux_log_line_col[1]
 
 void ux_log_alloc(struct ux_view_state *state)
 {
@@ -71,8 +71,8 @@ void ux_log_alloc(struct ux_view_state *state)
     cell.h *= 2;
 
     unit w = 0;
-    for (size_t i = 0; i < array_len(ux_logi_col); ++i)
-        w += cell.w * (ux_logi_col[i] + 1);
+    for (size_t i = 0; i < array_len(ux_log_line_col); ++i)
+        w += cell.w * (ux_log_line_col[i] + 1);
 
     struct ux_log *ux = calloc(1, sizeof(*ux));
     *ux = (struct ux_log) {
@@ -82,7 +82,7 @@ void ux_log_alloc(struct ux_view_state *state)
     };
 
     for (size_t i = 0; i < array_len(ux->items); ++i)
-        ux->items[i] = ux_logi_alloc();
+        ux->items[i] = ux_log_line_alloc();
 
     *state = (struct ux_view_state) {
         .state = ux,
@@ -99,7 +99,7 @@ void ux_log_alloc(struct ux_view_state *state)
     };
 }
 
-static void ux_logi_free(struct ux_logi *ux)
+static void ux_log_line_free(struct ux_log_line *ux)
 {
     ui_label_free(&ux->time);
     ui_link_free(&ux->star);
@@ -115,7 +115,7 @@ static void ux_log_free(void *state)
     ui_panel_free(ux->panel);
     ui_scroll_free(&ux->scroll);
     for (size_t i = 0; i < array_len(ux->items); ++i)
-        ux_logi_free(ux->items + i);
+        ux_log_line_free(ux->items + i);
 
     free(ux);
 }
@@ -137,7 +137,7 @@ static void ux_log_hide(void *state)
 }
 
 
-static void ux_logi_update(struct ux_logi *ux, const struct logi *it)
+static void ux_log_line_update(struct ux_log_line *ux, const struct log_line *it)
 {
     ui_str_set_u64(&ux->time.str, it->time);
 
@@ -163,11 +163,11 @@ static void ux_log_update(void *state)
     }
 
     size_t index = 0;
-    for (const struct logi *it = log_next(logs, NULL);
+    for (const struct log_line *it = log_next(logs, NULL);
          it; index++, it = log_next(logs, it))
     {
         assert(index < array_len(ux->items));
-        ux_logi_update(ux->items + index, it);
+        ux_log_line_update(ux->items + index, it);
     }
 
     assert(index <= array_len(ux->items));
@@ -177,7 +177,7 @@ static void ux_log_update(void *state)
 }
 
 
-static void ux_logi_event(struct ux_logi *ux, struct coord star)
+static void ux_log_line_event(struct ux_log_line *ux, struct coord star)
 {
     if (coord_is_nil(star) && ui_link_event(&ux->star)) {
         ux_star_show(ux->state.star);
@@ -204,16 +204,16 @@ static void ux_log_event(void *state)
     size_t first = ui_scroll_first_row(&ux->scroll);
     size_t last = ui_scroll_last_row(&ux->scroll);
     for (size_t i = first; i < last; ++i)
-        ux_logi_event(ux->items + i, ux->coord);
+        ux_log_line_event(ux->items + i, ux->coord);
 }
 
 
-static void ux_logi_render(
+static void ux_log_line_render(
         struct ux_log *ux,
         size_t row,
         struct ui_layout *layout)
 {
-    struct ux_logi *entry = ux->items + row;
+    struct ux_log_line *entry = ux->items + row;
 
     const render_layer layer = render_layer_push(1);
 
@@ -231,8 +231,8 @@ static void ux_logi_render(
         render_rect_fill(layer, bg, rect);
     }
 
-    const unit tab0 = ux_logi_col[0] + 1;
-    const unit tab1 = ux_logi_col[1] + 1 + tab0;
+    const unit tab0 = ux_log_line_col[0] + 1;
+    const unit tab1 = ux_log_line_col[1] + 1 + tab0;
 
     {
         ui_label_render(&entry->time, layout);
@@ -272,5 +272,5 @@ static void ux_log_render(void *state, struct ui_layout *layout)
     size_t last = ui_scroll_last_row(&ux->scroll);
 
     for (size_t row = first; row < last; ++row)
-        ux_logi_render(ux, row, &inner);
+        ux_log_line_render(ux, row, &inner);
 }

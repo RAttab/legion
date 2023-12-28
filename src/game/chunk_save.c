@@ -128,12 +128,12 @@ void chunk_save(struct chunk *chunk, struct save *save)
     save_write_magic(save, save_magic_chunk);
 }
 
-struct chunk *chunk_load(struct world *world, struct save *save)
+struct chunk *chunk_load(struct save *save, struct shard *shard)
 {
     if (!save_read_magic(save, save_magic_chunk)) return NULL;
 
     struct chunk *chunk = calloc(1, sizeof(*chunk));
-    chunk->world = world;
+    chunk->shard = shard;
 
     save_read_into(save, &chunk->name);
     save_read_into(save, &chunk->owner);
@@ -145,7 +145,6 @@ struct chunk *chunk_load(struct world *world, struct save *save)
 
     if (!(pills_load(&chunk->pills, save))) goto fail;
     if (!energy_load(&chunk->energy, save)) goto fail;
-
 
     if (!(chunk->log = log_load(save))) goto fail;
     if (!chunk_load_workers(chunk, save)) goto fail;

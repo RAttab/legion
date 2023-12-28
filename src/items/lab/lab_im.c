@@ -37,7 +37,7 @@ static void im_lab_step(void *state, struct chunk *chunk)
     struct im_lab *lab = state;
     if (lab->item == item_nil) return;
 
-    struct tech *tech = chunk_tech(chunk);
+    const struct tech *tech = chunk_tech(chunk);
 
     if (tech_learned(tech, lab->item)) {
         im_lab_reset(lab, chunk);
@@ -73,7 +73,7 @@ static void im_lab_step(void *state, struct chunk *chunk)
 
         const uint8_t bits = specs_var_assert(make_spec(lab->item, spec_lab_bits));
         uint8_t bit = rng_uni(&lab->rng, 0, bits);
-        tech_learn_bit(tech, lab->item, bit);
+        chunk_tech_learn_bit(chunk, lab->item, bit);
 
         lab->state = im_lab_idle;
         return;
@@ -134,7 +134,7 @@ static void im_lab_io_item_bits(
         goto fail;
     }
 
-    struct tech *tech = chunk_tech(chunk);
+    const struct tech *tech = chunk_tech(chunk);
     vm_word bits = tech_learned_bits(tech, item);
     chunk_io(chunk, io_return, lab->id, src, &bits, 1);
     return;
@@ -160,7 +160,7 @@ static void im_lab_io_item_known(
         goto fail;
     }
 
-    struct tech *tech = chunk_tech(chunk);
+    const struct tech *tech = chunk_tech(chunk);
     vm_word known = tech_learned(tech, item) ? 1 : 0;
     chunk_io(chunk, io_return, lab->id, src, &known, 1);
     return;

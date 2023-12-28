@@ -19,6 +19,8 @@ struct symbol;
 
 enum save_magic : uint8_t
 {
+    save_magic_nil    = 0x00,
+
     save_magic_vec32  = 0x01,
     save_magic_vec64  = 0x02,
     save_magic_ring16 = 0x03,
@@ -38,6 +40,7 @@ enum save_magic : uint8_t
     save_magic_lanes    = 0x16,
     save_magic_lane     = 0x17,
     save_magic_tape_set = 0x18,
+    save_magic_shards   = 0x19,
 
     save_magic_atoms   = 0x20,
     save_magic_mods    = 0x21,
@@ -55,6 +58,9 @@ enum save_magic : uint8_t
     save_magic_ack           = 0x3A,
     save_magic_user          = 0x3B,
     save_magic_io            = 0x3C,
+
+    save_magic_probe = 0x40,
+    save_magic_scan = 0x41,
 
     save_magic_len,
 };

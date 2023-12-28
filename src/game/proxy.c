@@ -222,7 +222,7 @@ static void proxy_update_status(struct save *save)
     ux_log_msg(status.type, status.msg, status.len);
 }
 
-static void proxy_update_state_io(struct world_io *io)
+static void proxy_update_state_io(struct user_io *io)
 {
     if (!io->io) return;
 

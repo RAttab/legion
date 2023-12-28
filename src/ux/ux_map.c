@@ -33,9 +33,9 @@ constexpr unit ux_map_scale_default = coord_scale_min << 5;
 // As we zoom out we need to pull more nad more sector data which becomes too
 // expansive. These determine at which zoom threshold do we stop pulling some
 // data and displaying things like the sector or area grid.
-constexpr unit ux_map_thresh_stars = coord_scale_min << 0x8;
+constexpr unit ux_map_thresh_stars = coord_scale_min << 0xA;
 constexpr unit ux_map_thresh_sector_low = coord_scale_min << 0x7;
-constexpr unit ux_map_thresh_sector_high = coord_scale_min << 0xE;
+constexpr unit ux_map_thresh_sector_high = coord_scale_min << 0x10;
 
 
 
@@ -238,14 +238,13 @@ static void ux_map_render_sectors(
         render_line_a(l, ux->s.sector, line, render_area);
     }
 
+    if (ux->view.scale < ux_map_thresh_sector_low) return;
+    rgba.a = 0x44;
+
     for (struct coord it = coord_rect_next_sector(area, coord_nil());
          !coord_is_nil(it); it = coord_rect_next_sector(area, it))
     {
         if (!proxy_active_sector(it)) continue;
-
-        rgba.a = 0xFF;
-        if (ux->view.scale < ux_map_thresh_stars)
-            rgba.a = rgba.a * u64_log2(ux->view.scale) / u64_log2(ux_map_thresh_sector_low);
 
         struct rect rect = {
             .x = it.x, .y = it.y,

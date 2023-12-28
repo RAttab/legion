@@ -5,16 +5,16 @@
 
 static void chunk_ports_step(struct chunk *);
 
-
-// -----------------------------------------------------------------------------
-// cargo
-// -----------------------------------------------------------------------------
-
 constexpr size_t chunk_log_cap = 8;
+
+
+// -----------------------------------------------------------------------------
+// struct
+// -----------------------------------------------------------------------------
 
 struct chunk
 {
-    struct world *world;
+    struct shard *shard;
     struct star star;
     user_id owner;
     vm_word name;
@@ -37,6 +37,11 @@ struct chunk
 
     struct active active[items_active_len];
 };
+
+
+// -----------------------------------------------------------------------------
+// active
+// -----------------------------------------------------------------------------
 
 static struct active *active_index(struct chunk *chunk, enum item item)
 {
@@ -67,6 +72,11 @@ static struct active *active_next(struct chunk *chunk, struct active *it)
     return NULL;
 }
 
+
+// -----------------------------------------------------------------------------
+// init
+// -----------------------------------------------------------------------------
+
 struct chunk *chunk_alloc_empty(void)
 {
     struct chunk *chunk = calloc(1, sizeof(*chunk));
@@ -84,17 +94,12 @@ struct chunk *chunk_alloc_empty(void)
     return chunk;
 }
 
-struct chunk *chunk_alloc(
-        struct world *world, const struct star *star, user_id owner, vm_word name)
+struct chunk *chunk_alloc(const struct star *star, user_id owner, vm_word name)
 {
-    assert(world);
-
     struct chunk *chunk = chunk_alloc_empty();
-    chunk->world = world;
     chunk->star = *star;
     chunk->name = name;
     chunk->owner = owner;
-    chunk->updated = world_time(world);
     return chunk;
 }
 
@@ -120,27 +125,38 @@ void chunk_free(struct chunk *chunk)
     free(chunk);
 }
 
+void chunk_shard(struct chunk *chunk, struct shard *shard)
+{
+    assert(!chunk->shard || chunk->shard == shard);
+    chunk->shard = shard;
+    chunk->updated = shard_time(shard);
+}
+
 
 // -----------------------------------------------------------------------------
-// implementation
+// save
 // -----------------------------------------------------------------------------
 
 #include "chunk_save.c"
 
 
 // -----------------------------------------------------------------------------
-// ops
+// state
 // -----------------------------------------------------------------------------
 
-user_id chunk_owner(struct chunk *chunk)
+user_id chunk_owner(const struct chunk *chunk)
 {
     return chunk->owner;
 }
 
-struct world *chunk_world(const struct chunk *chunk)
+world_ts chunk_time(const struct chunk *chunk)
 {
-    assert(chunk->world);
-    return chunk->world;
+    return shard_time(chunk->shard);
+}
+
+world_ts chunk_updated(const struct chunk *chunk)
+{
+    return chunk->updated;
 }
 
 const struct star *chunk_star(const struct chunk *chunk)
@@ -148,14 +164,24 @@ const struct star *chunk_star(const struct chunk *chunk)
     return &chunk->star;
 }
 
-struct tech *chunk_tech(const struct chunk *chunk)
+struct energy *chunk_energy(struct chunk *chunk)
 {
-    return world_tech(chunk_world(chunk), chunk->owner);
+    return &chunk->energy;
 }
 
-world_ts chunk_updated(const struct chunk *chunk)
+const struct mods *chunk_mods(struct chunk *chunk)
 {
-    return chunk->updated;
+    return shard_mods(chunk->shard);
+}
+
+const struct tech *chunk_tech(const struct chunk *chunk)
+{
+    return shard_tech(chunk->shard, chunk->owner);
+}
+
+void chunk_tech_learn_bit(const struct chunk *chunk, enum item item, uint8_t bit)
+{
+    shard_tech_push(chunk->shard, chunk->owner, item, bit);
 }
 
 vm_word chunk_name(struct chunk *chunk)
@@ -165,10 +191,15 @@ vm_word chunk_name(struct chunk *chunk)
 void chunk_rename(struct chunk *chunk, vm_word new)
 {
     chunk->name = new;
-    chunk->updated = world_time(chunk->world);
+    chunk->updated = shard_time(chunk->shard);
 }
 
-bool chunk_harvest(struct chunk *chunk, enum item item)
+
+// -----------------------------------------------------------------------------
+// items
+// -----------------------------------------------------------------------------
+
+bool chunk_extract(struct chunk *chunk, enum item item)
 {
     assert(item_is_natural(item));
 
@@ -176,11 +207,6 @@ bool chunk_harvest(struct chunk *chunk, enum item item)
     if (!chunk->star.elems[i]) return false;
     chunk->star.elems[i]--;
     return true;
-}
-
-struct workers chunk_workers(struct chunk *chunk)
-{
-    return chunk->workers;
 }
 
 im_id chunk_last(struct chunk *chunk, enum item item)
@@ -286,9 +312,9 @@ bool chunk_io(
 {
     enum item item = im_id_item(dst);
     if (item == item_user) {
-        struct world_io *dst = world_user_io(chunk->world, chunk->owner);
-        *dst = (struct world_io) { .io = io, .src = src, .len = len };
-        memcpy(dst->args, args, len *sizeof(*args));
+        struct user_io packet = { .io = io, .src = src, .len = len };
+        memcpy(packet.args, args, len * sizeof(*args));
+        shard_user_io_push(chunk->shard, chunk->owner, packet);
         return true;
     }
 
@@ -305,11 +331,17 @@ bool chunk_io(
 
 void chunk_log(struct chunk *chunk, im_id id, vm_word key, vm_word value)
 {
-    assert(chunk->world);
+    assert(chunk->shard);
 
-    struct coord star = chunk->star.coord;
-    log_push(chunk->log, world_time(chunk->world), star, id, key, value);
-    world_log_push(chunk->world, chunk->owner, star, id, key, value);
+    struct log_line line = {
+        .star = chunk->star.coord,
+        .time = shard_time(chunk->shard),
+        .id = id,
+        .key = key,
+        .value = value,
+    };
+    log_push(chunk->log, line);
+    shard_log_push(chunk->shard, chunk->owner, line);
 }
 
 const struct log *chunk_logs(struct chunk *chunk)
@@ -319,20 +351,10 @@ const struct log *chunk_logs(struct chunk *chunk)
 
 
 // -----------------------------------------------------------------------------
-// energy
-// -----------------------------------------------------------------------------
-
-struct energy *chunk_energy(struct chunk *chunk)
-{
-    return &chunk->energy;
-}
-
-
-// -----------------------------------------------------------------------------
 // scan
 // -----------------------------------------------------------------------------
 
-ssize_t chunk_scan(struct chunk *chunk, enum item item)
+ssize_t chunk_count(struct chunk *chunk, enum item item)
 {
     switch (item)
     {
@@ -357,6 +379,28 @@ ssize_t chunk_scan(struct chunk *chunk, enum item item)
 
     }
 }
+
+void chunk_probe(struct chunk *chunk, struct coord coord, enum item item)
+{
+    shard_probe_push(chunk->shard, chunk->star.coord, coord, item);
+}
+
+ssize_t chunk_probe_value(struct chunk *chunk, struct coord coord, enum item item)
+{
+    return shard_probe_get(chunk->shard, coord, item);
+}
+
+
+void chunk_scan(struct chunk *chunk, struct scan_it it)
+{
+    shard_scan_push(chunk->shard, chunk->star.coord, it);
+}
+
+struct coord chunk_scan_value(struct chunk *chunk, struct scan_it it)
+{
+    return shard_scan_get(chunk->shard, it);
+}
+
 
 // -----------------------------------------------------------------------------
 // lanes
@@ -473,7 +517,7 @@ void chunk_lanes_launch(
         struct coord dst,
         const vm_word *data, size_t len)
 {
-    assert(chunk->world);
+    assert(chunk->shard);
 
     switch (item)
     {
@@ -483,17 +527,26 @@ void chunk_lanes_launch(
     default: { assert(false); }
     }
 
-    world_lanes_launch(
-            chunk->world,
-            chunk->owner, item, speed,
-            chunk->star.coord, dst,
-            data, len);
+    shard_lanes_push(chunk->shard, (struct lanes_packet) {
+                .owner = chunk->owner,
+                .item = item,
+                .speed = speed,
+                .src = chunk->star.coord,
+                .dst = dst,
+                .len = len,
+                .data = data
+            });
 }
 
 
 // -----------------------------------------------------------------------------
 // ports
 // -----------------------------------------------------------------------------
+
+struct workers chunk_workers(struct chunk *chunk)
+{
+    return chunk->workers;
+}
 
 static void ring16_replace(struct ring16 *ring, uint32_t old, uint32_t new)
 {

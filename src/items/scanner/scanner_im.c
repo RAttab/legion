@@ -9,7 +9,8 @@
 // -----------------------------------------------------------------------------
 
 static const vm_word im_scanner_empty = -1;
-static const uint64_t im_scanner_div = 1000;
+static const uint64_t im_scanner_min = 4;
+static const uint64_t im_scanner_div = coord_sector_size / 16;
 
 
 static void im_scanner_init(void *state, struct chunk *chunk, im_id id)
@@ -31,15 +32,17 @@ static void im_scanner_reset(struct im_scanner *scanner)
 
 im_work im_scanner_work_cap(struct coord origin, struct coord target)
 {
+    target = coord_sector(target);
+    target.x += coord_sector_size / 2;
+    target.y += coord_sector_size / 2;
+
     uint64_t delta = coord_dist(origin, target) / im_scanner_div;
-    return delta < UINT8_MAX ? delta : UINT8_MAX;
+    return legion_bound(delta, im_scanner_min, 0xFFU);
 }
 
 static uint8_t im_scanner_work(struct im_scanner *scanner, struct chunk *chunk)
 {
-    struct coord origin = chunk_star(chunk)->coord;
-    struct coord next = world_scan_peek(chunk_world(chunk), &scanner->it);
-    return im_scanner_work_cap(origin, next);
+    return im_scanner_work_cap(chunk_star(chunk)->coord, scanner->it.coord);
 }
 
 
@@ -54,13 +57,17 @@ static void im_scanner_step(void *state, struct chunk *chunk)
     if (coord_is_nil(scanner->it.coord)) return;
     if (scanner->result != im_scanner_empty) return;
 
+    if (scanner->work.left == 1)
+        chunk_scan(chunk, scanner->it);
+
     if (scanner->work.left) {
         if (energy_consume(chunk_energy(chunk), im_scanner_work_energy))
             scanner->work.left--;
         return;
     }
 
-    struct coord coord = world_scan_next(chunk_world(chunk), &scanner->it);
+    struct coord coord = chunk_scan_value(chunk, scanner->it);
+    scan_it_inc(&scanner->it);
 
     if (coord_is_nil(coord)) im_scanner_reset(scanner);
     else scanner->result = coord_to_u64(coord);
@@ -99,7 +106,7 @@ static void im_scanner_io_scan(
     struct coord origin = chunk_star(chunk)->coord;
     if (coord_is_nil(coord)) coord = origin;
 
-    scanner->it = world_scan_it(chunk_world(chunk), coord_sector(coord));
+    scanner->it = make_scan_it(coord);
     scanner->work.cap = scanner->work.left = im_scanner_work(scanner, chunk);
     scanner->result = im_scanner_empty;
 }

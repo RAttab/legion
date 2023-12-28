@@ -295,6 +295,7 @@ void save_prof_dump(struct save *save)
         case save_magic_lanes:    { str = "lns"; break; }
         case save_magic_lane:     { str = " ln"; break; }
         case save_magic_tape_set: { str = "tps"; break; }
+        case save_magic_shards:   { str = "shd"; break; }
 
         case save_magic_atoms:  { str = "atm"; break; }
         case save_magic_mods:   { str = "mds"; break; }
