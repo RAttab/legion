@@ -138,6 +138,7 @@ size_t save_write(struct save *, const void *src, size_t len);
     } while (false)
 
 size_t save_read(struct save *, void *dst, size_t len);
+size_t save_read_skip(struct save *, size_t len);
 
 #define save_read_type(save, type)                      \
     ({                                                  \

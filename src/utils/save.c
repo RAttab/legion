@@ -93,6 +93,16 @@ size_t save_read(struct save *save, void *dst, size_t len)
     return len;
 }
 
+size_t save_read_skip(struct save *save, size_t len)
+{
+    if (unlikely(save->it + len > save->end))
+        len = save->end - save->it;
+
+    assert(save_len(save) + len <= save_cap(save));
+    save->it += len;
+    return len;
+}
+
 
 void save_write_magic(struct save *save, enum save_magic value)
 {
