@@ -10,6 +10,23 @@
 // mem
 // -----------------------------------------------------------------------------
 
+static void save_mem_grow(struct save *save, size_t len)
+{
+    size_t cap = save_cap(save);
+    const size_t old = save_len(save);
+    const size_t need = save_len(save) + len;
+
+    assert(need > cap);
+    while (need >= cap) cap += save_chunks;
+
+    void *new = mremap(save->base, save_cap(save), cap, MREMAP_MAYMOVE);
+    if (new == MAP_FAILED)
+        failf_errno("unable to grow mem '%lx'", cap);
+
+    save->it = save->base + old;
+    save->end = save->base + cap;
+}
+
 struct save *save_mem_new(void)
 {
     struct save *save = calloc(1, sizeof(*save));
@@ -25,6 +42,7 @@ struct save *save_mem_new(void)
 
     save->end = save->base + cap;
     save->it = save->base;
+    save->grow = save_mem_grow;
 
     return save;
 
