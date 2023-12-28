@@ -17,6 +17,14 @@ enum event_type : uint8_t
     ev_type_len,
 };
 
+enum event_state : uint8_t
+{
+    event_state_nil = 0,
+    event_state_queued,
+    event_state_armed,
+};
+
+
 struct event
 {
     union
@@ -54,10 +62,10 @@ struct
 
     struct
     {
-        struct { bool set; struct ev_load ev; } load;
-        struct { bool set; struct ev_select_star ev; } select_star;
-        struct { bool set; struct ev_select_item ev; } select_item;
-        struct { bool set; struct ev_mod_break ev; } mod_break;
+        struct { enum event_state state; struct ev_load ev; } load;
+        struct { enum event_state state; struct ev_select_star ev; } select_star;
+        struct { enum event_state state; struct ev_select_item ev; } select_item;
+        struct { enum event_state state; struct ev_mod_break ev; } mod_break;
     } legion;
 } events = {0};
 
@@ -270,36 +278,39 @@ static void ev_mouse_init(void)
 
 const struct ev_load *ev_load(void)
 {
-    return events.legion.load.set ? &events.legion.load.ev : nullptr;
+    return events.legion.load.state == event_state_armed ?
+        &events.legion.load.ev : nullptr;
 }
 
 void ev_set_load(void)
 {
-    events.legion.load.set = true;
+    dbgf("ev.queue: %p", &events.legion.load.state);
+    events.legion.load.state = event_state_queued;
 }
 
 
 const struct ev_select_star *ev_select_star(void)
 {
-    return events.legion.select_star.set ? &events.legion.select_star.ev : nullptr;
-
+    return events.legion.select_star.state == event_state_armed ?
+        &events.legion.select_star.ev : nullptr;
 }
 
 void ev_set_select_star(struct coord star)
 {
-    events.legion.select_star.set = true;
+    events.legion.select_star.state = event_state_queued;
     events.legion.select_star.ev = (struct ev_select_star) { .star = star };
 }
 
 
 const struct ev_select_item *ev_select_item(void)
 {
-    return events.legion.select_item.set ? &events.legion.select_item.ev : nullptr;
+    return events.legion.select_item.state == event_state_armed ?
+        &events.legion.select_item.ev : nullptr;
 }
 
 void ev_set_select_item(struct coord star, im_id item)
 {
-    events.legion.select_item.set = true;
+    events.legion.select_item.state = event_state_queued;
     events.legion.select_item.ev = (struct ev_select_item) {
         .star = star, .item = item,
     };
@@ -307,12 +318,13 @@ void ev_set_select_item(struct coord star, im_id item)
 
 const struct ev_mod_break *ev_mod_break(void)
 {
-    return events.legion.mod_break.set ? &events.legion.mod_break.ev : nullptr;
+    return events.legion.mod_break.state == event_state_armed ?
+        &events.legion.mod_break.ev : nullptr;
 }
 
 void ev_set_mod_break(mod_id mod, vm_ip ip)
 {
-    events.legion.mod_break.set = true;
+    events.legion.mod_break.state = event_state_queued;
     events.legion.mod_break.ev = (struct ev_mod_break) {
         .mod = mod, .ip = ip,
     };
@@ -341,7 +353,21 @@ void events_poll(void)
 {
     events.mouse.update = true;
     memset(&events.io, 0, sizeof(events.io));
-    memset(&events.legion, 0, sizeof(events.legion));
+
+    void update_state(enum event_state *state)
+    {
+        switch (*state)
+        {
+        case event_state_nil: { break; }
+        case event_state_queued: { *state = event_state_armed; break; }
+        case event_state_armed: { *state = event_state_nil; break; }
+        default: { assert(false); }
+        }
+    }
+    update_state(&events.legion.load.state);
+    update_state(&events.legion.select_star.state);
+    update_state(&events.legion.select_item.state);
+    update_state(&events.legion.mod_break.state);
 
     glfwPollEvents();
 }
