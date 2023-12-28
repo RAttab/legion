@@ -468,21 +468,21 @@ mod_id mods_set(struct mods *mods, mod_maj maj, const struct mod *mod)
     return mod->id;
 }
 
-const struct mod *mods_latest(struct mods *mods, mod_maj maj)
+const struct mod *mods_latest(const struct mods *mods, mod_maj maj)
 {
     if (!maj) return NULL;
 
     struct htable_ret ret = htable_get(&mods->by_maj, maj);
-    return ret.ok ? ((struct mod_entry *) ret.value)->mod : NULL;
+    return ret.ok ? ((const struct mod_entry *) ret.value)->mod : NULL;
 }
 
-const struct mod *mods_get(struct mods *mods, mod_id id)
+const struct mod *mods_get(const struct mods *mods, mod_id id)
 {
     if (!id) return NULL;
     if (!mod_version(id)) return mods_latest(mods, mod_major(id));
 
     struct htable_ret ret = htable_get(&mods->by_mod, id);
-    return ret.ok ? (struct mod *) ret.value : NULL;
+    return ret.ok ? (const struct mod *) ret.value : NULL;
 }
 
 mod_maj mods_find(struct mods *mods, const struct symbol *name)

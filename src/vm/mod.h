@@ -115,8 +115,8 @@ bool mods_name(struct mods *, mod_maj, struct symbol *dst);
 user_id mods_owner(struct mods *, mod_maj);
 
 mod_id mods_set(struct mods *, mod_maj, const struct mod *);
-const struct mod *mods_get(struct mods *, mod_id);
-const struct mod *mods_latest(struct mods *, mod_maj);
+const struct mod *mods_get(const struct mods *, mod_id);
+const struct mod *mods_latest(const struct mods *, mod_maj);
 
 mod_maj mods_find(struct mods *, const struct symbol *name);
 
