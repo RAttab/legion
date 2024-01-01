@@ -11,6 +11,8 @@ struct atoms;
 struct mods_list;
 struct mod;
 struct save;
+struct energy;
+struct workers;
 
 
 // -----------------------------------------------------------------------------
@@ -137,6 +139,7 @@ enum cmd_type : uint8_t
     CMD_ACK          = 0x20,
     CMD_SPEED        = 0x21,
     CMD_CHUNK        = 0x22,
+    CMD_STEPS        = 0x23,
 
     CMD_MOD          = 0x30,
     CMD_MOD_REGISTER = 0x31,
@@ -146,6 +149,12 @@ enum cmd_type : uint8_t
     CMD_IO           = 0x40,
 };
 
+enum cmd_steps : uint8_t
+{
+    cmd_steps_nil     = 0x00,
+    cmd_steps_energy  = 0x01,
+    cmd_steps_workers = 0x02,
+};
 
 struct cmd
 {
@@ -158,11 +167,15 @@ struct cmd
 
         struct ack *ack;
         enum speed speed;
+
         struct coord chunk;
+        enum cmd_steps steps;
+
         mod_id mod;
         struct symbol mod_register;
         struct { mod_maj maj; } mod_publish;
         struct { mod_maj maj; const char *code; uint32_t len; } mod_compile;
+
         struct { enum io io; im_id dst; uint8_t len; vm_word args[4]; } io;
     } data;
 };
@@ -198,6 +211,13 @@ struct state
         struct coord coord;
         struct chunk *chunk;
     } chunk;
+
+    struct
+    {
+        enum cmd_steps type;
+        struct save *data;
+        uint32_t len;
+    } steps;
 };
 
 struct state *state_alloc(void);
@@ -213,6 +233,12 @@ struct state_ctx
     struct world *world;
     enum speed speed;
     struct coord chunk;
+
+    struct
+    {
+        enum cmd_steps type;
+        struct save *data;
+    } steps;
 
     const struct ack *ack;
 };

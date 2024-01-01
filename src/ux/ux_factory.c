@@ -101,7 +101,7 @@ void ux_factory_alloc(struct ux_view_state *state)
         .slots = ux_slot_back,
         .fn = {
             .free = ux_factory_free,
-            .update_frame = ux_factory_update,
+            .update = ux_factory_update,
             .event = ux_factory_event,
             .render = ux_factory_render,
         },

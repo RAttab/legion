@@ -87,7 +87,7 @@ void ux_pills_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_pills_free,
-            .update_frame = ux_pills_update,
+            .update = ux_pills_update,
             .event = ux_pills_event,
             .render = ux_pills_render,
         },

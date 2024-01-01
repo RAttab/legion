@@ -33,7 +33,7 @@ void vec64_dbg(const struct vec64 *vec, const char *name)
 
 void check(void)
 {
-    enum { attempts = 5, steps = 100 };
+    enum { attempts = 5, world_steps = 100 };
 
     engine_populate_tests();
     const user_id user = user_admin;
@@ -45,6 +45,9 @@ void check(void)
 
     struct save *save = save_mem_new();
     assert(save);
+
+    struct save *steps = save_mem_new();
+    assert(steps);
 
     struct state *state = state_alloc();
     assert(state);
@@ -68,7 +71,7 @@ void check(void)
                     .time = world_time(world),
                     .id = make_im_id(1, 1),
                     .key = io_ping,
-                    .value = ioe_invalid_state
+                    .value = ioe_invalid_state,
                 });
 
         log_push(world_log(world, user), (struct log_line) {
@@ -76,8 +79,14 @@ void check(void)
                     .time = world_time(world),
                     .id = make_im_id(2, 2),
                     .key = io_name,
-                    .value = ioe_missing_arg
+                    .value = ioe_missing_arg,
                 });
+
+        save_mem_reset(steps);
+        world_ts wd_time = world_time(world);
+        save_write_value(steps, wd_time);
+        struct workers wd_workers = { .queue = 10, .count = 20 };
+        workers_save(&wd_workers, steps, false);
 
         save_mem_reset(save);
         state_save(save, &(struct state_ctx) {
@@ -86,6 +95,7 @@ void check(void)
                     .user = user,
                     .speed = speed_fast,
                     .chunk = home,
+                    .steps = { .type = cmd_steps_workers, .data = steps },
                     .ack = ack,
                 });
 
@@ -170,7 +180,21 @@ void check(void)
             vec16_free(st_items);
         }
 
-        for (size_t step = 0; step < steps; ++step) world_step(world);
+        {
+            assert(state->steps.type == cmd_steps_workers);
+            assert(state->steps.len > 0);
+
+            assert(save_read_type(state->steps.data, world_ts) == wd_time);
+
+            struct workers st_workers = {0};
+            assert(workers_load(&st_workers, state->steps.data, false));
+            assert(st_workers.queue == wd_workers.queue);
+            assert(st_workers.count == wd_workers.count);
+
+            assert(state->steps.len == save_len(state->steps.data));
+        }
+
+        for (size_t step = 0; step < world_steps; ++step) world_step(world);
     }
 
     ack_free(ack);

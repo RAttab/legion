@@ -208,7 +208,7 @@ void ux_star_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_star_free,
-            .update_frame = ux_star_update,
+            .update = ux_star_update,
             .event = ux_star_event,
             .render = ux_star_render,
         },
@@ -406,11 +406,11 @@ static void ux_star_update(void *state)
 
     {
         const struct workers *workers = chunk_workers(chunk);
-        ui_str_set_u64(&ux->workers.count_val.str, workers.count);
-        ui_str_set_u64(&ux->workers.queue_val.str, workers.queue);
-        ui_str_set_u64(&ux->workers.idle_val.str, workers.idle);
-        ui_str_set_u64(&ux->workers.fail_val.str, workers.fail);
-        ui_str_set_u64(&ux->workers.clean_val.str, workers.clean);
+        ui_str_set_u64(&ux->workers.count_val.str, workers->count);
+        ui_str_set_u64(&ux->workers.queue_val.str, workers->queue);
+        ui_str_set_u64(&ux->workers.idle_val.str, workers->idle);
+        ui_str_set_u64(&ux->workers.fail_val.str, workers->fail);
+        ui_str_set_u64(&ux->workers.clean_val.str, workers->clean);
     }
 
     {

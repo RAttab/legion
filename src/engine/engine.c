@@ -251,7 +251,7 @@ static bool engine_step(void)
     {
     case proxy_nil: { break; }
     case proxy_loaded: { ux_reset(); ev_set_load(); } // fallthrough
-    case proxy_updated: { ux_update_frame(); break; }
+    case proxy_updated: { ux_update(); break; }
     default: { assert(false); }
     }
 
@@ -271,11 +271,10 @@ static bool engine_step(void)
 
 void engine_loop(void)
 {
-    constexpr size_t fps_cap = 60;
-    time_sys sleep = ts_sec / fps_cap;
+    constexpr time_sys period = ts_sec / engine_frame_rate;
 
     time_sys ts = ts_now();
-    while (engine_step()) ts = ts_sleep_until(ts + sleep);
+    while (engine_step()) ts = ts_sleep_until(ts + period);
 }
 
 bool engine_done(void)

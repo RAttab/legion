@@ -84,7 +84,7 @@ void ux_tapes_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_tapes_free,
-            .update_frame = ux_tapes_update,
+            .update = ux_tapes_update,
             .event = ux_tapes_event,
             .render = ux_tapes_render,
         },

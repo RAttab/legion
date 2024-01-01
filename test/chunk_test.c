@@ -136,51 +136,51 @@ void test_ports_reset(void)
         chunk_ports_request(chunk, dst, item);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
-        assert(chunk_workers(chunk).queue == 1);
+        assert(chunk_workers(chunk)->queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_reset(chunk, src);
         chunk_ports_request(chunk, dst, item);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
-        assert(chunk_workers(chunk).queue == 1);
-        assert(chunk_workers(chunk).clean == 1);
-        assert(chunk_workers(chunk).fail == 1);
+        assert(chunk_workers(chunk)->queue == 1);
+        assert(chunk_workers(chunk)->clean == 1);
+        assert(chunk_workers(chunk)->fail == 1);
 
         chunk_ports_produce(chunk, src, item);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
-        assert(chunk_workers(chunk).queue == 1);
+        assert(chunk_workers(chunk)->queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
         chunk_ports_reset(chunk, dst);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
-        assert(chunk_workers(chunk).queue == 1);
-        assert(chunk_workers(chunk).clean == 1);
-        assert(chunk_workers(chunk).fail == 0);
+        assert(chunk_workers(chunk)->queue == 1);
+        assert(chunk_workers(chunk)->clean == 1);
+        assert(chunk_workers(chunk)->fail == 0);
 
         chunk_ports_request(chunk, dst, item);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item);
-        assert(chunk_workers(chunk).queue == 1);
+        assert(chunk_workers(chunk)->queue == 1);
 
         chunk_ports_produce(chunk, src, item);
         chunk_ports_request(chunk, dst, item);
         chunk_ports_reset(chunk, src);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
-        assert(chunk_workers(chunk).queue == 1);
-        assert(chunk_workers(chunk).clean == 1);
-        assert(chunk_workers(chunk).fail == 1);
+        assert(chunk_workers(chunk)->queue == 1);
+        assert(chunk_workers(chunk)->clean == 1);
+        assert(chunk_workers(chunk)->fail == 1);
 
         chunk_ports_reset(chunk, dst);
         shard_step(shard);
         assert(chunk_ports_consume(chunk, dst) == item_nil);
-        assert(chunk_workers(chunk).queue == 1);
-        assert(chunk_workers(chunk).clean == 1);
-        assert(chunk_workers(chunk).fail == 0);
+        assert(chunk_workers(chunk)->queue == 1);
+        assert(chunk_workers(chunk)->clean == 1);
+        assert(chunk_workers(chunk)->fail == 0);
     }
 
     chunk_free(chunk);

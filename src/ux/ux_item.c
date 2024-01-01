@@ -74,7 +74,7 @@ void ux_item_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_item_free,
-            .update_frame = ux_item_update,
+            .update = ux_item_update,
             .event = ux_item_event,
             .render = ux_item_render,
         },

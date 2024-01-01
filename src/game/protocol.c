@@ -185,6 +185,11 @@ void cmd_save(const struct cmd *cmd, struct save *save)
         break;
     }
 
+    case CMD_STEPS: {
+        save_write_value(save, cmd->data.steps);
+        break;
+    }
+
     case CMD_MOD: {
         save_write_value(save, cmd->data.mod);
         break;
@@ -261,6 +266,11 @@ bool cmd_load(struct cmd *cmd, struct save *save)
 
     case CMD_CHUNK: {
         cmd->data.chunk = coord_from_u64(save_read_type(save, uint64_t));
+        break;
+    }
+
+    case CMD_STEPS: {
+        cmd->data.steps = save_read_type(save, typeof(cmd->data.steps));
         break;
     }
 
@@ -433,6 +443,68 @@ static bool state_load_chunks(struct state *state, struct save *save)
     return save_read_magic(save, save_magic_chunks);
 }
 
+
+static void state_save_chunk(struct save *save, const struct state_ctx *ctx)
+{
+    save_write_magic(save, save_magic_state_chunk);
+
+    struct chunk *chunk = world_chunk(ctx->world, ctx->chunk);
+    if (!chunk) save_write_value(save, (uint64_t) 0);
+    else {
+        save_write_value(save, coord_to_u64(ctx->chunk));
+        chunk_save_delta(chunk, save, ctx->ack);
+    }
+
+    save_write_magic(save, save_magic_state_chunk);
+}
+
+static bool state_load_chunk(
+        struct state *state, struct save *save, struct ack *ack)
+{
+    if (!save_read_magic(save, save_magic_state_chunk)) return false;
+
+    state->chunk.coord = coord_from_u64(save_read_type(save, uint64_t));
+    if (!coord_is_nil(state->chunk.coord)) {
+        if (!chunk_load_delta(state->chunk.chunk, save, ack)) return false;
+    }
+
+    return save_read_magic(save, save_magic_state_chunk);
+}
+
+static void state_save_steps(struct save *save, const struct state_ctx *ctx)
+{
+    save_write_magic(save, save_magic_steps);
+    save_write_value(save, ctx->steps.type);
+
+    uint32_t len = ctx->steps.data ? save_len(ctx->steps.data) : 0;
+    save_write_value(save, len);
+    if (len) {
+        save_write(save, save_bytes(ctx->steps.data), len);
+        save_mem_reset(ctx->steps.data);
+    }
+
+    save_write_magic(save, save_magic_steps);
+}
+
+static bool state_load_steps(struct state *state, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_steps)) return false;
+    save_read_into(save, &state->steps.type);
+
+    if (state->steps.data) save_mem_reset(state->steps.data);
+
+    save_read_into(save, &state->steps.len);
+
+    if (state->steps.len) {
+        if (!state->steps.data) state->steps.data = save_mem_new();
+        size_t read = save_copy(state->steps.data, save, state->steps.len);
+        if (read < state->steps.len) return false;
+        save_mem_reset(state->steps.data);
+    }
+
+    return save_read_magic(save, save_magic_steps);
+}
+
 void state_save(struct save *save, const struct state_ctx *ctx)
 {
     save_write_magic(save, save_magic_state_world);
@@ -450,17 +522,8 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     tech_save(world_tech(ctx->world, ctx->user), save);
     log_save_delta(world_log(ctx->world, ctx->user), save, ctx->ack->time);
     state_save_io(ctx->world, ctx->user, save);
-
-    {
-        save_write_magic(save, save_magic_state_chunk);
-        struct chunk *chunk = world_chunk(ctx->world, ctx->chunk);
-        if (!chunk) save_write_value(save, (uint64_t) 0);
-        else {
-            save_write_value(save, coord_to_u64(ctx->chunk));
-            chunk_save_delta(chunk, save, ctx->ack);
-        }
-        save_write_magic(save, save_magic_state_chunk);
-    }
+    state_save_chunk(save, ctx);
+    state_save_steps(save, ctx);
 }
 
 bool state_load(struct state *state, struct save *save, struct ack *ack)
@@ -489,15 +552,8 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
     if (!tech_load(&state->tech, save)) return false;
     if (!log_load_delta(state->log, save, ack->time)) return false;
     if (!state_load_io(state, save)) return false;
-
-    {
-        if (!save_read_magic(save, save_magic_state_chunk)) return false;
-        state->chunk.coord = coord_from_u64(save_read_type(save, uint64_t));
-        if (!coord_is_nil(state->chunk.coord)) {
-            if (!chunk_load_delta(state->chunk.chunk, save, ack)) return false;
-        }
-        if (!save_read_magic(save, save_magic_state_chunk)) return false;
-    }
+    if (!state_load_chunk(state, save, ack)) return false;
+    if (!state_load_steps(state, save)) return false;
 
     ack->stream = state->stream;
     ack->time = ack->chunk.time = state->time;

@@ -50,6 +50,8 @@ enum save_magic : uint8_t
     save_magic_active  = 0x2A,
     save_magic_energy  = 0x2B,
     save_magic_pills   = 0x2C,
+    save_magic_steps   = 0x2D,
+    save_magic_workers = 0x2E,
 
     save_magic_state_world   = 0x30,
     save_magic_state_chunk   = 0x33,
@@ -159,7 +161,7 @@ size_t save_read_skip(struct save *, size_t len);
         (void) save_read(save, ptr, sizeof(*ptr));      \
     } while (false)
 
-void save_copy(struct save *dst, struct save *src, size_t len);
+size_t save_copy(struct save *dst, struct save *src, size_t len);
 
 void save_write_magic(struct save *, enum save_magic);
 bool save_read_magic(struct save *, enum save_magic exp);

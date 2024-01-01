@@ -68,7 +68,7 @@ void ux_topbar_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_topbar_free,
-            .update_frame = ux_topbar_update,
+            .update = ux_topbar_update,
             .event = ux_topbar_event,
             .render = ux_topbar_render,
         },

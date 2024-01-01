@@ -9,6 +9,8 @@
 // engine
 // -----------------------------------------------------------------------------
 
+constexpr size_t engine_frame_rate = 60;
+
 void engine_init(void);
 void engine_close(void);
 bool engine_initialized(void);

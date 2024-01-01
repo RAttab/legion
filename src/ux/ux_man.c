@@ -71,7 +71,7 @@ void ux_man_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_man_free,
-            .update_frame = ux_man_update,
+            .update = ux_man_update,
             .event = ux_man_event,
             .render = ux_man_render,
         },

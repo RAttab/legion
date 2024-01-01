@@ -66,7 +66,7 @@ void ux_map_alloc(struct ux_view_state *state)
         .slots = ux_slot_back,
         .fn = {
             .free = ux_map_free,
-            .update_frame = ux_map_update,
+            .update = ux_map_update,
             .event = ux_map_event,
             .render = ux_map_render,
         },

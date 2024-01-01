@@ -39,7 +39,7 @@ void ux_stars_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_stars_free,
-            .update_frame = ux_stars_update,
+            .update = ux_stars_update,
             .event = ux_stars_event,
             .render = ux_stars_render,
         },

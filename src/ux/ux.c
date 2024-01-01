@@ -129,31 +129,14 @@ struct ui_panel *ux_cursor_panel(void)
 // callbacks
 // -----------------------------------------------------------------------------
 
-void ux_update_state(void)
-{
-    // We don't want to run this in tests where we have no ux.
-    if (!ux.init) return;
 
-    void update_view(enum ux_view view)
-    {
-        struct ux_view_state *state = ux.views + view;
-        if (state->fn.update_state)
-            state->fn.update_state(state->state);
-    }
-
-    update_view(ux_view_topbar);
-    update_view(ux_view_status);
-    for (size_t i = 0; i < ux_slot_len; ++i)
-        update_view(ux.slots[i]);
-}
-
-void ux_update_frame(void)
+void ux_update(void)
 {
     void update_view(enum ux_view view)
     {
         struct ux_view_state *state = ux.views + view;
-        if (state->fn.update_frame)
-            state->fn.update_frame(state->state);
+        if (state->fn.update)
+            state->fn.update(state->state);
     }
 
     update_view(ux_view_topbar);

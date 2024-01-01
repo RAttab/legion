@@ -19,8 +19,8 @@ static void save_mem_grow(struct save *save, size_t len)
     assert(need > cap);
     while (need >= cap) cap += save_chunks;
 
-    void *new = mremap(save->base, save_cap(save), cap, MREMAP_MAYMOVE);
-    if (new == MAP_FAILED)
+    save->base = mremap(save->base, save_cap(save), cap, MREMAP_MAYMOVE);
+    if (save->base == MAP_FAILED)
         failf_errno("unable to grow mem '%lx'", cap);
 
     save->it = save->base + old;

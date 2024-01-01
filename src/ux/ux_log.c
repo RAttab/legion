@@ -92,7 +92,7 @@ void ux_log_alloc(struct ux_view_state *state)
         .fn = {
             .free = ux_log_free,
             .hide = ux_log_hide,
-            .update_frame = ux_log_update,
+            .update = ux_log_update,
             .event = ux_log_event,
             .render = ux_log_render,
         },

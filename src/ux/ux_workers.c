@@ -5,8 +5,8 @@
 
 
 static void ux_workers_free(void *);
-static void ux_workers_update_state(void *);
-static void ux_workers_update_frame(void *);
+static void ux_workers_hide(void *);
+static void ux_workers_update(void *);
 static void ux_workers_event(void *);
 static void ux_workers_render(void *, struct ui_layout *);
 
@@ -65,8 +65,8 @@ void ux_workers_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_workers_free,
-            .update_state = ux_workers_update_state,
-            .update_frame = ux_workers_update_frame,
+            .hide = ux_workers_hide,
+            .update = ux_workers_update,
             .event = ux_workers_event,
             .render = ux_workers_render,
         },
@@ -88,37 +88,37 @@ void ux_workers_show(struct coord star)
     ux->star = star;
     if (coord_is_nil(ux->star)) { ux_hide(ux_view_workers); return; }
 
-    ux_workers_update_frame(ux);
+    ux_workers_update(ux);
     ux_show(ux_view_workers);
+    proxy_steps(cmd_steps_workers);
 }
 
-static void ux_workers_update_state(void *state)
+static void ux_workers_hide(void *)
 {
-    struct ux_workers *ux = state;
-
-    struct chunk *chunk = proxy_chunk(ux->star);
-    if (!chunk) return;
-
-    world_ts t = proxy_time();
-    if (ux->last_t == t) return;
-    ux->last_t = t;
-
-    struct workers workers = chunk_workers(chunk);
-    ui_histo_advance(&ux->histo, t);
-
-    ui_histo_push(&ux->histo, ux_workers_queue, workers.queue);
-    ui_histo_push(&ux->histo, ux_workers_work,
-            workers.count - (workers.idle + workers.fail + workers.clean));
-    ui_histo_push(&ux->histo, ux_workers_clean, workers.clean);
-    ui_histo_push(&ux->histo, ux_workers_fail, workers.fail);
-    ui_histo_push(&ux->histo, ux_workers_idle, workers.idle);
+    proxy_steps(cmd_steps_nil);
 }
 
-static void ux_workers_update_frame(void *state)
+static void ux_workers_update(void *state)
 {
     struct ux_workers *ux = state;
-
     ui_histo_update_legend(&ux->histo);
+
+    world_ts t = 0;
+    struct workers workers = {0};
+
+    while (proxy_steps_next_workers(&t, &workers)) {
+        if (ux->last_t == t) continue;
+        ux->last_t = t;
+
+        ui_histo_advance(&ux->histo, t);
+
+        ui_histo_push(&ux->histo, ux_workers_queue, workers.queue);
+        ui_histo_push(&ux->histo, ux_workers_work,
+                workers.count - (workers.idle + workers.fail + workers.clean));
+        ui_histo_push(&ux->histo, ux_workers_clean, workers.clean);
+        ui_histo_push(&ux->histo, ux_workers_fail, workers.fail);
+        ui_histo_push(&ux->histo, ux_workers_idle, workers.idle);
+    }
 }
 
 static void ux_workers_event(void *state)
@@ -128,7 +128,7 @@ static void ux_workers_event(void *state)
     for (auto ev = ev_select_star(); ev; ev = nullptr)
         if (!coord_eq(ux->star, ev->star))
             ux_workers_show(ev->star);
-    
+
     ui_histo_event(&ux->histo);
 }
 

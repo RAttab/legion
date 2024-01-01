@@ -105,7 +105,7 @@ size_t save_read_skip(struct save *save, size_t len)
 
 size_t save_copy(struct save *dst, struct save *src, size_t len)
 {
-    size_t bytes = save_write(dst, save->it, len);
+    size_t bytes = save_write(dst, src->it, len);
     save_read_skip(src, bytes);
     return bytes;
 }

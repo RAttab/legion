@@ -132,9 +132,16 @@ struct sim_pipe
 
     struct { bool ok; struct user user; } auth;
 
+    struct { time_sys period, prev, next; } publish;
     struct ack *ack;
     struct coord chunk;
     const struct mod *compile;
+
+    struct
+    {
+        enum cmd_steps type;
+        struct save *data;
+    } steps;
 
     struct
     {
@@ -149,6 +156,8 @@ struct sim_pipe *sim_pipe_new(struct sim *sim)
     *pipe = (struct sim_pipe) {
         .in = save_ring_new(sim_in_len),
         .out = save_ring_new(sim_out_len),
+        .publish = { .period = ts_sec / (engine_frame_rate * 2) },
+        .steps = { .data = save_mem_new() },
         .ack = ack_new(),
     };
 
@@ -682,7 +691,19 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
             break;
         }
 
-        case CMD_CHUNK: { pipe->chunk = cmd.data.chunk; break; }
+        case CMD_CHUNK: {
+            if (!coord_eq(pipe->chunk, cmd.data.chunk))
+                save_mem_reset(pipe->steps.data);
+            pipe->chunk = cmd.data.chunk;
+            break;
+        }
+
+        case CMD_STEPS: {
+            if (pipe->steps.type != cmd.data.steps)
+                save_mem_reset(pipe->steps.data);
+            pipe->steps.type = cmd.data.steps;
+            break;
+        }
 
         case CMD_MOD: { sim_cmd_mod(sim, pipe, &cmd); break; }
         case CMD_MOD_REGISTER: { sim_cmd_mod_register(sim, pipe, &cmd); break; }
@@ -704,8 +725,34 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
 // publish
 // -----------------------------------------------------------------------------
 
+static void sim_publish_step(struct sim *sim, struct sim_pipe *pipe)
+{
+    if (likely(!pipe->steps.type)) return;
+    if (coord_is_nil(pipe->chunk)) return;
+
+    struct chunk *chunk = world_chunk(sim->world, pipe->chunk);
+    if (!chunk) return;
+
+    struct save *save = pipe->steps.data;
+    save_write_value(save, world_time(sim->world));
+
+    switch (pipe->steps.type) {
+    case cmd_steps_workers: { workers_save(chunk_workers(chunk), save, false); break; }
+    case cmd_steps_energy: { energy_save(chunk_energy(chunk), save); break; }
+    default: { assert(false); }
+    }
+}
+
 static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
 {
+    {
+        time_sys now = ts_now();
+        time_sys delta = now - pipe->publish.prev;
+        pipe->publish.prev = now;
+        if (now + delta < pipe->publish.next) return;
+        pipe->publish.next = now + pipe->publish.period;
+    }
+
     struct save *save = save_ring_write(pipe->out);
 
     struct header *head = save_bytes(save);
@@ -729,6 +776,7 @@ static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
                 .world = sim->world,
                 .speed = sim->speed,
                 .chunk = pipe->chunk,
+                .steps = { .type = pipe->steps.type, .data = pipe->steps.data },
                 .ack = pipe->ack,
             });
 
@@ -808,7 +856,10 @@ void sim_step(struct sim *sim)
          pipe; pipe = sim_pipe_next(sim, pipe))
     {
         sim_cmd(sim, pipe);
-        if (pipe->auth.ok) sim_publish_state(sim, pipe);
+        if (pipe->auth.ok) {
+            sim_publish_step(sim, pipe);
+            sim_publish_state(sim, pipe);
+        }
         sim_publish_log(pipe);
 
         save_ring_wake_signal(pipe->out);

@@ -148,7 +148,7 @@ inline void chunk_workers_ops(uint32_t val, im_id *src, im_id *dst)
 }
 
 void workers_save(const struct workers *, struct save *, bool ops);
-bool workers_load(struct workers *, struct save *);
+bool workers_load(struct workers *, struct save *, bool ops);
 
 void chunk_ports_reset(struct chunk *, im_id);
 bool chunk_ports_produce(struct chunk *, im_id, enum item);

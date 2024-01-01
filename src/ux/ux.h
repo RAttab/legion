@@ -66,7 +66,7 @@ struct ux_view_state
     struct
     {
         ux_state_fn free, show, hide;
-        ux_state_fn update_state, update_frame;
+        ux_state_fn update;
         ux_event_fn event;
         ux_render_fn render;
     } fn;
@@ -79,8 +79,7 @@ void *ux_state(enum ux_view);
 enum ux_view ux_slot(enum ux_slot);
 struct ui_panel *ux_cursor_panel(void);
 
-void ux_update_state(void);
-void ux_update_frame(void);
+void ux_update(void);
 void ux_event(void);
 void ux_render(void);
 

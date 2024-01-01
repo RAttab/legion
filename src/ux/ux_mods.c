@@ -105,7 +105,7 @@ void ux_mods_alloc(struct ux_view_state *state)
         .panel = ux->panel,
         .fn = {
             .free = ux_mods_free,
-            .update_frame = ux_mods_update,
+            .update = ux_mods_update,
             .event = ux_mods_event,
             .render = ux_mods_render,
         },

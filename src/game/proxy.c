@@ -348,8 +348,6 @@ enum proxy_ret proxy_update(void)
 
         if (result != proxy_loaded && ret != proxy_nil) result = ret;
         save_ring_commit(pipe->in, save);
-
-        if (result != proxy_loaded) ux_update_state();
     }
 
     // if the pipe was reset make sure to restore our subscriptions
@@ -507,6 +505,14 @@ struct chunk *proxy_chunk(struct coord coord)
                 .data = { .chunk = coord },
             });
     return NULL;
+}
+
+void proxy_steps(enum cmd_steps type)
+{
+    proxy_cmd(&(struct cmd) {
+                .type = CMD_STEPS,
+                .data = { .steps = type },
+            });
 }
 
 void proxy_io(
@@ -676,4 +682,31 @@ const struct star *proxy_star_in(struct coord_rect rect)
 const struct star *proxy_star_at(struct coord coord)
 {
     return sector_star_at(proxy_sector(coord), coord);
+}
+
+
+// -----------------------------------------------------------------------------
+// steps
+// -----------------------------------------------------------------------------
+
+bool proxy_steps_next_workers(world_ts *ts, struct workers *out)
+{
+    if (proxy.state->steps.type != cmd_steps_workers) return false;
+
+    struct save *save = proxy.state->steps.data;
+    if (save_len(save) >= proxy.state->steps.len) return false;
+
+    save_read_into(save, ts);
+    return workers_load(out, save, false);
+}
+
+bool proxy_steps_next_energy(world_ts *ts, struct energy *out)
+{
+    if (proxy.state->steps.type != cmd_steps_energy) return false;
+
+    struct save *save = proxy.state->steps.data;
+    if (save_len(save) >= proxy.state->steps.len) return false;
+
+    save_read_into(save, ts);
+    return energy_load(out, save);
 }

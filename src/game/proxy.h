@@ -71,6 +71,7 @@ void proxy_save(void);
 void proxy_load(void);
 void proxy_set_speed(enum speed);
 struct chunk *proxy_chunk(struct coord);
+void proxy_steps(enum cmd_steps);
 void proxy_io(enum io, im_id dst, const vm_word *args, uint8_t len);
 
 
@@ -110,3 +111,12 @@ struct sector *proxy_sector(struct coord);
 vm_word proxy_star_name(struct coord);
 const struct star *proxy_star_in(struct coord_rect);
 const struct star *proxy_star_at(struct coord);
+
+
+// -----------------------------------------------------------------------------
+// steps
+// -----------------------------------------------------------------------------
+
+bool proxy_steps_next_workers(world_ts *, struct workers *);
+bool proxy_steps_next_energy(world_ts *, struct energy *);
+
