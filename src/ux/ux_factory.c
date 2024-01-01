@@ -244,7 +244,7 @@ static void ux_factory_update(void *state)
         ux_factory_make_flow(ux, chunk, ids->vals[i]);
     vec16_free(ids);
 
-    ux->state.workers = chunk_workers(chunk);
+    ux->state.workers = *chunk_workers(chunk);
     ux->state.workers.ops = vec32_copy(ux->state.workers.ops);
 
     ux_factory_update_bbox(ux);

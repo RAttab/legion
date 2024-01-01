@@ -543,9 +543,9 @@ void chunk_lanes_launch(
 // ports
 // -----------------------------------------------------------------------------
 
-struct workers chunk_workers(struct chunk *chunk)
+const struct workers *chunk_workers(struct chunk *chunk)
 {
-    return chunk->workers;
+    return &chunk->workers;
 }
 
 static void ring16_replace(struct ring16 *ring, uint32_t old, uint32_t new)

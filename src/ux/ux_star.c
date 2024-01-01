@@ -405,7 +405,7 @@ static void ux_star_update(void *state)
     ui_str_set_u64(&ux->pills.count_val.str, chunk_count(chunk, item_pill));
 
     {
-        struct workers workers = chunk_workers(chunk);
+        const struct workers *workers = chunk_workers(chunk);
         ui_str_set_u64(&ux->workers.count_val.str, workers.count);
         ui_str_set_u64(&ux->workers.queue_val.str, workers.queue);
         ui_str_set_u64(&ux->workers.idle_val.str, workers.idle);

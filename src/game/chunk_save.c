@@ -37,24 +37,43 @@ static bool chunk_load_provided(struct chunk *chunk, struct save *save)
     return true;
 }
 
-static void chunk_save_workers(struct chunk *chunk, struct save *save)
+static void workers_save(const struct workers *workers, struct save *save, bool ops)
 {
-    save_write_value(save, chunk->workers.count);
-    save_write_value(save, chunk->workers.queue);
-    save_write_value(save, chunk->workers.idle);
-    save_write_value(save, chunk->workers.fail);
-    save_write_value(save, chunk->workers.clean);
-    save_write_vec32(save, chunk->workers.ops);
+    save_write_magic(save, save_magic_workers);
+
+    save_write_value(save, workers.count);
+    save_write_value(save, workers.queue);
+    save_write_value(save, workers.idle);
+    save_write_value(save, workers.fail);
+    save_write_value(save, workers.clean);
+    if (ops) save_write_vec32(save, workers.ops);
+    else save_write_value(save, (uint32_t) 0);
+
+    save_write_magic(save, save_magic_workers);
 }
 
-static bool chunk_load_workers(struct chunk *chunk, struct save *save)
+static void chunk_save_workers(struct chunk *chunk, struct save *save)
 {
+    workers_save(&chunk->workers, save, true);
+}
+
+static bool workers_load(struct workers *workers, struct save *save)
+{
+    if (!save_read_magic(save, save_magic_workers)) return false;
+
     save_read_into(save, &chunk->workers.count);
     save_read_into(save, &chunk->workers.queue);
     save_read_into(save, &chunk->workers.idle);
     save_read_into(save, &chunk->workers.fail);
     save_read_into(save, &chunk->workers.clean);
-    return save_read_vec32(save, &chunk->workers.ops);
+    if (!save_read_vec32(save, &chunk->workers.ops)) return false;
+
+    return save_read_magic(save, save_magic_workers);
+}
+
+static bool chunk_load_workers(struct chunk *chunk, struct save *save)
+{
+    return workers_load(&chunk->workers, save);
 }
 
 static void chunk_save_listen(struct chunk *chunk, struct save *save)

@@ -140,12 +140,15 @@ struct workers
     struct vec32 *ops;
 };
 
-struct workers chunk_workers(struct chunk *);
+const struct workers *chunk_workers(struct chunk *);
 inline void chunk_workers_ops(uint32_t val, im_id *src, im_id *dst)
 {
     *src = val >> 16;
     *dst = val & ((1ULL << 16) - 1);
 }
+
+void workers_save(const struct workers *, struct save *, bool ops);
+bool workers_load(struct workers *, struct save *);
 
 void chunk_ports_reset(struct chunk *, im_id);
 bool chunk_ports_produce(struct chunk *, im_id, enum item);
