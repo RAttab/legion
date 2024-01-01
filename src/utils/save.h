@@ -159,6 +159,8 @@ size_t save_read_skip(struct save *, size_t len);
         (void) save_read(save, ptr, sizeof(*ptr));      \
     } while (false)
 
+void save_copy(struct save *dst, struct save *src, size_t len);
+
 void save_write_magic(struct save *, enum save_magic);
 bool save_read_magic(struct save *, enum save_magic exp);
 

@@ -103,6 +103,13 @@ size_t save_read_skip(struct save *save, size_t len)
     return len;
 }
 
+size_t save_copy(struct save *dst, struct save *src, size_t len)
+{
+    size_t bytes = save_write(dst, save->it, len);
+    save_read_skip(src, bytes);
+    return bytes;
+}
+
 
 void save_write_magic(struct save *save, enum save_magic value)
 {
