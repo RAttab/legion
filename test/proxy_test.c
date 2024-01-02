@@ -20,7 +20,7 @@ void check_basics(void)
     enum { seed = 123 };
 
     struct sim *sim = sim_new(123, "./proxy.save");
-    struct sim_pipe *sim_pipe = sim_pipe_new(sim);
+    struct sim_pipe *sim_pipe = sim_pipe_new(sim, 0);
 
     proxy_init();
     struct proxy_pipe *proxy_pipe = proxy_pipe_new(sim_pipe);

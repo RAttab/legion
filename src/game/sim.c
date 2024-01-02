@@ -150,13 +150,13 @@ struct sim_pipe
     } log;
 };
 
-struct sim_pipe *sim_pipe_new(struct sim *sim)
+struct sim_pipe *sim_pipe_new(struct sim *sim, time_sys publish_period)
 {
     struct sim_pipe *pipe = calloc(1, sizeof(*pipe));
     *pipe = (struct sim_pipe) {
         .in = save_ring_new(sim_in_len),
         .out = save_ring_new(sim_out_len),
-        .publish = { .period = ts_sec / (engine_frame_rate * 2) },
+        .publish = { .period = publish_period },
         .steps = { .data = save_mem_new() },
         .ack = ack_new(),
     };

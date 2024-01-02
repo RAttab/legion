@@ -72,7 +72,7 @@ static void server_accept(int poll, int listen)
             .read = false,
             .addr = addr,
             .addr_len = addr_len,
-            .pipe = sim_pipe_new(server.sim),
+            .pipe = sim_pipe_new(server.sim, ts_sec / (engine_frame_rate * 2)),
         };
         client->in = sim_pipe_in(client->pipe);
         client->out = sim_pipe_out(client->pipe);

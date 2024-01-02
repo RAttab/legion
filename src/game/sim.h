@@ -27,7 +27,7 @@ void sim_server(struct sim *, const char *config);
 void sim_server_reload(struct sim *);
 
 struct sim_pipe;
-struct sim_pipe *sim_pipe_new(struct sim *);
+struct sim_pipe *sim_pipe_new(struct sim *, time_sys publish_period);
 void sim_pipe_close(struct sim_pipe *);
 struct save_ring *sim_pipe_in(struct sim_pipe *);
 struct save_ring *sim_pipe_out(struct sim_pipe *);

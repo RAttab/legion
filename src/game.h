@@ -11,6 +11,7 @@
 #include "items.h"
 
 #include "game/types.h"
+#include "utils/time.h"
 #include "utils/bits.h"
 #include "utils/hash.h"
 #include "utils/user.h"
