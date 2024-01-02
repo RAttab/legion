@@ -30,7 +30,7 @@ void ux_status_alloc(struct ux_view_state *state)
 
     struct dim cell = engine_cell();
     *ux = (struct ux_status) {
-        .panel = ui_panel_menu(make_dim(ui_layout_inf, cell.h + 8)),
+        .panel = ui_panel_menu(make_dim(ui_layout_inf, cell.h)),
         .status = ui_label_new(ui_str_v(ux_status_cap)),
     };
 
