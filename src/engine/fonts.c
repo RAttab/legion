@@ -103,9 +103,6 @@ static struct font fonts_db(enum render_font id)
 
 static FT_Library ft_library;
 
-static void fonts_freetype(struct font *font)
-{
-
 #define ft_err(p)                                                       \
     ({                                                                  \
         typeof(p) err = (p);                                            \
@@ -117,19 +114,50 @@ static void fonts_freetype(struct font *font)
         err;                                                            \
     })
 
+static uint32_t fonts_face_pt(FT_Face face, struct dpi dpi)
+{
+    // Empirical tests indicates that % is the one character that consistently
+    // gives us the width of the face in all 3 of our font types.
+    unit face_width(uint32_t pt)
+    {
+        ft_err(FT_Set_Char_Size(face, 0, pt, dpi.h, dpi.v));
+        ft_err(FT_Load_Char(face, '%', FT_LOAD_RENDER));
+        return face->glyph->metrics.width;
+    }
+
+    const uint32_t one = 1U << 6;
+    const unit target = (engine_viewport().w / engine_cols_len) * 64;
+
+    unit width = 0;
+    uint32_t pt = one;
+    for (; (width = face_width(pt)) < target; pt += one);
+    if (width == target) return pt;
+
+    for (uint32_t first = pt - one, last = pt; first < last; ) {
+        pt = (last - first) / 2;
+        width = face_width(pt);
+        if (width == target) return pt;
+        if (width < target) { last = pt; } else { first = pt; }
+    }
+
+    return pt;
+}
+
+static void fonts_freetype(struct font *font)
+{
     FT_Open_Args args = {
         .flags = FT_OPEN_MEMORY,
         .memory_base = font->data,
         .memory_size = font->len,
     };
 
-    constexpr uint32_t pt = 6U << 6;
-    struct dpi dpi = engine_dpi();
-
     FT_Face face;
     ft_err(FT_Open_Face(ft_library, &args, 0, &face));
-    ft_err(FT_Set_Char_Size(face, 0, pt, dpi.h, dpi.v));
     assert(FT_IS_SCALABLE(face));
+
+    struct dpi dpi = engine_dpi();
+    const uint32_t pt = fonts_face_pt(face, dpi);
+    ft_err(FT_Set_Char_Size(face, 0, pt, dpi.h, dpi.v));
 
     int64_t width = 0;
     int64_t ascender = 0;
@@ -183,9 +211,9 @@ static void fonts_freetype(struct font *font)
     font->pt = pt;
     font->glyph = glyph;
     font->texels = texels;
+}
 
 #undef ft_error
-}
 
 static void fonts_load(enum render_font type)
 {

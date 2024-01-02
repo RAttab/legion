@@ -11,6 +11,10 @@
 
 constexpr size_t engine_frame_rate = 60;
 
+// Entire UX layout is designed to be 240 columns of our base font glyph due to
+// historical reasons. Not going to change without major changes to UX layout.
+constexpr uint16_t engine_cols_len = 240;
+
 void engine_init(void);
 void engine_close(void);
 bool engine_initialized(void);

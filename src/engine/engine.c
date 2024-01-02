@@ -8,8 +8,6 @@
 // state
 // -----------------------------------------------------------------------------
 
-// Determined through ridiculous experiments.
-static constexpr uint16_t engine_cols_len = 240;
 
 struct
 {
