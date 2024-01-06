@@ -22,7 +22,7 @@ struct htable_bucket;
 
 struct world;
 
-struct world *world_new(world_seed seed);
+struct world *world_new(world_seed seed, struct metrics *);
 void world_free(struct world *);
 
 void world_save(struct world *, struct save *);
@@ -43,6 +43,7 @@ struct chunk *world_chunk_alloc(struct world *, struct coord, user_id);
 const struct sector *world_sector(struct world *, struct coord);
 vm_word world_star_name(struct world *, struct coord);
 bool world_user_access(struct world *, user_set, struct coord);
+struct metrics *world_metrics(struct world *);
 
 
 // -----------------------------------------------------------------------------

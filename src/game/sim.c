@@ -40,6 +40,8 @@ struct sim
     uint64_t stream;
     atomic_uintptr_t pipes;
 
+    struct metrics metrics;
+
     char save[PATH_MAX + 1];
     char config[PATH_MAX + 1];
 };
@@ -47,7 +49,7 @@ struct sim
 struct sim *sim_new(world_seed seed, const char *save)
 {
     struct sim *sim = calloc(1, sizeof(*sim));
-    sim->world = world_new(seed);
+    sim->world = world_new(seed, &sim->metrics);
     world_populate(sim->world);
     users_init(&sim->users);
     sim->speed = speed_slow;
@@ -855,15 +857,23 @@ void sim_step(struct sim *sim)
     for (struct sim_pipe *pipe = sim_pipe_next(sim, NULL);
          pipe; pipe = sim_pipe_next(sim, pipe))
     {
+        sys_ts mt = metric_now();
+
         sim_cmd(sim, pipe);
+        mt = metric_inc(&sim->metrics, sim.cmd, 1, mt);
+
         if (pipe->auth.ok) {
             sim_publish_step(sim, pipe);
             sim_publish_state(sim, pipe);
         }
         sim_publish_log(pipe);
+        metric_inc(&sim->metrics, sim.publish, 1, mt);
 
         save_ring_wake_signal(pipe->out);
     }
+
+    sim->metrics.ts.now = world_time(sim->world);
+    metrics_dump(&sim->metrics);
 }
 
 void sim_loop(struct sim *sim)
@@ -886,8 +896,11 @@ void sim_loop(struct sim *sim)
         default: { assert(false); }
         }
 
-        if (now < sim->next)
+        if (now < sim->next) {
+            sys_ts mt = metric_now();
             now = sys_sleep_until(sim->next);
+            metric_inc(&sim->metrics, sim.idle, 1, mt);
+        }
 
         sim_step(sim);
 

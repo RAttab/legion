@@ -71,7 +71,8 @@ void launch(
 
 void test_basics(void)
 {
-    struct world *world = world_new(0);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
     const struct sector *sector = world_sector(world, coord_center());
 
     const user_id user = 13;
@@ -108,7 +109,8 @@ void test_basics(void)
 
 void test_speed(void)
 {
-    struct world *world = world_new(0);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
     const struct sector *sector = world_sector(world, coord_center());
 
     enum { count = 10 };

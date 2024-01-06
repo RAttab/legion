@@ -10,8 +10,9 @@
 void test_ports_1on1(void)
 {
     struct star star = {0};
-    struct world *world = world_new(0);
-    struct shard *shard = shard_alloc(world);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
+    struct shard *shard = shard_alloc(0, world);
     struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
@@ -43,8 +44,9 @@ void test_ports_1on1(void)
 void test_ports_2on1(void)
 {
     struct star star = {0};
-    struct world *world = world_new(0);
-    struct shard *shard = shard_alloc(world);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
+    struct shard *shard = shard_alloc(0, world);
     struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
@@ -79,8 +81,9 @@ void test_ports_2on1(void)
 void test_ports_1on2(void)
 {
     struct star star = {0};
-    struct world *world = world_new(0);
-    struct shard *shard = shard_alloc(world);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
+    struct shard *shard = shard_alloc(0, world);
     struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;
@@ -118,8 +121,9 @@ void test_ports_1on2(void)
 void test_ports_reset(void)
 {
     struct star star = {0};
-    struct world *world = world_new(0);
-    struct shard *shard = shard_alloc(world);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
+    struct shard *shard = shard_alloc(0, world);
     struct chunk *chunk = shard_chunk_alloc(shard, &star, user_admin, 0);
 
     enum item item = item_elem_a;

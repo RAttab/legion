@@ -33,6 +33,7 @@ struct chunk *chunk_alloc(const struct star *, user_id, vm_word name);
 void chunk_free(struct chunk *);
 
 void chunk_shard(struct chunk *, struct shard *);
+struct metrics_shard *chunk_metrics(struct chunk *);
 
 
 // -----------------------------------------------------------------------------

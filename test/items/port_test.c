@@ -9,7 +9,8 @@
 
 void test_port(void)
 {
-    struct world *world = world_new(0);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
     world_populate(world);
 
     const user_id user = 0;

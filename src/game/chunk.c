@@ -15,6 +15,8 @@ constexpr size_t chunk_log_cap = 8;
 struct chunk
 {
     struct shard *shard;
+    struct metrics_shard *metrics;
+
     struct star star;
     user_id owner;
     vm_word name;
@@ -129,7 +131,13 @@ void chunk_shard(struct chunk *chunk, struct shard *shard)
 {
     assert(!chunk->shard || chunk->shard == shard);
     chunk->shard = shard;
+    chunk->metrics = shard_metrics(shard);
     chunk->updated = shard_time(shard);
+}
+
+struct metrics_shard *chunk_metrics(struct chunk *chunk)
+{
+    return chunk->metrics;
 }
 
 
@@ -695,6 +703,8 @@ static bool chunk_ports_step_queue(
 
 static void chunk_ports_step(struct chunk *chunk)
 {
+    sys_ts mt = metric_now();
+
     chunk->workers.idle = 0;
     chunk->workers.fail = 0;
     chunk->workers.clean = 0;
@@ -714,4 +724,6 @@ static void chunk_ports_step(struct chunk *chunk)
     }
 
     chunk->workers.idle = chunk->workers.count - worker;
+
+    metric_inc(chunk->metrics, chunk.workers, chunk->workers.count, mt);
 }

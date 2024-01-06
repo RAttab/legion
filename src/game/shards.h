@@ -12,7 +12,7 @@
 struct shard;
 
 // Only used for testing
-struct shard *shard_alloc(struct world *);
+struct shard *shard_alloc(size_t index, struct world *);
 void shard_free(struct shard *);
 void shard_step(struct shard *);
 struct chunk *shard_chunk_alloc(
@@ -22,7 +22,7 @@ world_ts shard_time(const struct shard *);
 const struct mods *shard_mods(struct shard *);
 const struct tech *shard_tech(struct shard *, user_id);
 
-
+struct metrics_shard *shard_metrics(struct shard *);
 void shard_user_io_push(struct shard *, user_id, struct user_io);
 void shard_log_push(struct shard *, user_id, struct log_line);
 void shard_tech_push(struct shard *, user_id, enum item, uint8_t bit);

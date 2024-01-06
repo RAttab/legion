@@ -37,7 +37,8 @@ void check(void)
 
     engine_populate_tests();
     const user_id user = user_admin;
-    struct world *world = world_new(0);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
     world_populate(world);
     struct coord home = world_home(world, user);
 

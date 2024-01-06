@@ -32,6 +32,7 @@ struct world
     struct world_user users[user_max];
 
     struct shards *shards;
+    struct metrics *metrics;
 };
 
 
@@ -63,7 +64,7 @@ static struct world_user *world_user_next(
 // world
 // -----------------------------------------------------------------------------
 
-struct world *world_new(world_seed seed)
+struct world *world_new(world_seed seed, struct metrics *metrics)
 {
     struct world *world = calloc(1, sizeof(*world));
 
@@ -72,6 +73,7 @@ struct world *world_new(world_seed seed)
     world->mods = mods_new();
     lanes_init(&world->lanes, world);
     htable_reset(&world->sectors);
+    world->metrics = metrics;
     world->shards = shards_alloc(world);
 
     return world;
@@ -180,7 +182,8 @@ struct world *world_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_world)) return NULL;
 
-    struct world *world = world_new(0);
+    struct metrics metrics = {0};
+    struct world *world = world_new(0, &metrics);
     save_read_into(save, &world->seed);
     save_read_into(save, &world->time);
 
@@ -341,6 +344,11 @@ void world_user_io_clear(struct world *world, user_id user_id)
 {
     struct user_io *io = &world_user(world, user_id)->io;
     memset(io, 0, sizeof(*io));
+}
+
+struct metrics *world_metrics(struct world *world)
+{
+    return world->metrics;
 }
 
 

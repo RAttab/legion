@@ -247,6 +247,8 @@ bool active_create_from(
 void active_step(
         struct active *active, struct chunk *chunk)
 {
+    sys_ts mt = metric_now();
+
     if (active->step) {
         for (size_t i = 0; i < active->len; ++i) {
             if (bits_test(&active->free, i)) continue;
@@ -270,6 +272,11 @@ void active_step(
         active->create--;
         active->count++;
     }
+
+    metric_inc(
+            chunk_metrics(chunk),
+            chunk.active[active->type - items_active_first],
+            active->len, mt);
 }
 
 bool active_io(

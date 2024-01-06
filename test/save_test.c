@@ -19,7 +19,8 @@ void check_file(const char *path)
     enum { attempts = 5, steps = 100 };
 
     engine_populate_tests();
-    struct world *old = world_new(0);
+    struct metrics metrics = {0};
+    struct world *old = world_new(0, &metrics);
     world_populate(old);
     struct coord coord = world_home(old, user_admin);
 

@@ -108,6 +108,8 @@ struct shard_scan
 struct shard
 {
     struct world *world;
+    struct metrics_shard *metrics;
+
     struct vec64 *chunks;
     struct save *out;
 
@@ -132,11 +134,12 @@ struct shard
 // init
 // -----------------------------------------------------------------------------
 
-struct shard *shard_alloc(struct world *world)
+struct shard *shard_alloc(size_t index, struct world *world)
 {
     struct shard *shard = calloc(1, sizeof(*shard));
     *shard = (struct shard) {
         .world = world,
+        .metrics = world_metrics(world)->shard + index,
         .out = save_mem_new(),
     };
     return shard;
@@ -188,6 +191,11 @@ const struct tech *shard_tech(struct shard *shard, user_id owner)
 // -----------------------------------------------------------------------------
 // read-write
 // -----------------------------------------------------------------------------
+
+struct metrics_shard *shard_metrics(struct shard *shard)
+{
+    return shard->metrics;
+}
 
 void shard_user_io_push(struct shard *shard, user_id user, struct user_io packet)
 {
@@ -395,12 +403,16 @@ static void shard_begin(struct shard *shard)
 
 static void shard_exec(struct shard *shard)
 {
+    shard->metrics->active = true;
+
     for (size_t i = 0; i < vec64_len(shard->chunks); ++i)
         chunk_step((struct chunk *)shard->chunks->vals[i]);
+
 }
 
 static void shard_end(struct shard *shard)
 {
+    shard->scan.len = 0;
     shard->probe.len = 0;
 
     size_t len = save_len(shard->out);
@@ -441,21 +453,27 @@ static void shard_thread_run(void *ctx)
     struct shard *shard = ctx;
     shard_sync_epoch epoch = 0;
 
+    sys_ts mt = metric_now();
     while (shard_sync_wait_start(shard->sync, epoch)) {
+        mt = metric_inc(shard->metrics, shard.idle, 1, mt);
+
         shard_exec(ctx);
         epoch = shard_sync_end(shard->sync);
+
+        mt = metric_inc(shard->metrics, shard.chunks, shard->chunks->len, mt);
     }
 }
 
 static struct shard *shard_thread_alloc(
-        struct world *world, struct threads *threads, shard_sync *sync)
+        size_t index,
+        struct world *world,
+        struct threads *threads,
+        shard_sync *sync)
 {
-    struct shard *shard = shard_alloc(world);
-
+    struct shard *shard = shard_alloc(index, world);
     shard->sync = sync;
     shard->threads = threads;
     shard->thread = threads_fork(threads, shard_thread_run, shard);
-
     return shard;
 }
 
@@ -470,22 +488,26 @@ static void shard_thread_free(struct shard *shard)
 // shards
 // -----------------------------------------------------------------------------
 
+static_assert(shards_cap == threads_cpu_cap);
+
 struct shards
 {
     struct threads *threads;
     struct world *world;
+    struct metrics *metrics;
     shard_sync sync;
 
     size_t len, active;
-    struct shard *shards[threads_cpu_cap];
+    struct shard *shards[shards_cap];
 };
 
 struct shards *shards_alloc(struct world *world)
 {
     struct shards *shards = calloc(1, sizeof(*shards));
-    shards->threads = threads_alloc(threads_pool_shards);
     shards->world = world;
+    shards->metrics = world_metrics(world);
     shard_sync_init(&shards->sync);
+    shards->threads = threads_alloc(threads_pool_shards);
     shards->len = threads_cpus(shards->threads);
     return shards;
 }
@@ -510,7 +532,11 @@ struct shard *shards_get(struct shards *shards, struct coord coord)
 
     struct shard **shard = shards->shards + index;
     if (!*shard) {
-        *shard = shard_thread_alloc(shards->world, shards->threads, &shards->sync);
+        *shard = shard_thread_alloc(
+                index,
+                shards->world,
+                shards->threads,
+                &shards->sync);
         shards->active++;
     }
 
@@ -527,18 +553,26 @@ void shards_step(struct shards *shards)
 {
     shard_sync_safe(&shards->sync, shards->active);
 
+    sys_ts mt = metric_now();
+
     for (size_t i = 0; i < shards->len; ++i) {
         struct shard *shard = shards->shards[i];
         if (shard) shard_begin(shard);
     }
 
+    mt = metric_inc(shards->metrics, shards.begin, shards->len, mt);
+
     shard_sync_start(&shards->sync);
     shard_sync_wait_end(&shards->sync, shards->active);
+
+    mt = metric_inc(shards->metrics, shards.wait, shards->len, mt);
 
     for (size_t i = 0; i < shards->len; ++i) {
         struct shard *shard = shards->shards[i];
         if (shard) shard_end(shard);
     }
+
+    mt = metric_inc(shards->metrics, shards.end, shards->len, mt);
 }
 
 void shards_save(struct shards *shards, struct save *save)

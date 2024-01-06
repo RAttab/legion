@@ -389,13 +389,16 @@ void lanes_launch(struct lanes *lanes, struct lanes_packet packet)
 
 void lanes_step(struct lanes *lanes)
 {
+    sys_ts mt = metric_now();
+    size_t mn = 0;
+
     world_ts now = world_time(lanes->world);
 
     const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
     for (; it; it = htable_next(&lanes->lanes, it)) {
         struct lane *lane = (void *) it->value;
 
-        while (lane_peek(lane) <= now) {
+        for (; lane_peek(lane) <= now; ++mn) {
             heap_ix data_index = lane_pop(lane);
             struct lane_data *data = heap_ptr(&lanes->data, data_index);
 
@@ -419,4 +422,6 @@ void lanes_step(struct lanes *lanes)
             assert(ret.ok);
         }
     }
+
+    metric_inc(world_metrics(lanes->world), world.lanes, mn, mt);
 }
