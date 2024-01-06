@@ -28,7 +28,7 @@ struct sim
     struct threads *threads;
 
     atomic_bool reload;
-    time_sys next;
+    sys_ts next;
 
     struct world *world;
     struct users users;
@@ -51,7 +51,7 @@ struct sim *sim_new(world_seed seed, const char *save)
     world_populate(sim->world);
     users_init(&sim->users);
     sim->speed = speed_slow;
-    sim->stream = ts_now();
+    sim->stream = sys_now();
     atomic_init(&sim->reload, false);
     strncpy(sim->save, save, sizeof(sim->save) - 1);
     return sim;
@@ -132,7 +132,7 @@ struct sim_pipe
 
     struct { bool ok; struct user user; } auth;
 
-    struct { time_sys period, prev, next; } publish;
+    struct { sys_ts period, prev, next; } publish;
     struct ack *ack;
     struct coord chunk;
     const struct mod *compile;
@@ -150,7 +150,7 @@ struct sim_pipe
     } log;
 };
 
-struct sim_pipe *sim_pipe_new(struct sim *sim, time_sys publish_period)
+struct sim_pipe *sim_pipe_new(struct sim *sim, sys_ts publish_period)
 {
     struct sim_pipe *pipe = calloc(1, sizeof(*pipe));
     *pipe = (struct sim_pipe) {
@@ -407,7 +407,7 @@ void sim_load(struct sim *sim)
     world = legion_xchg(&sim->world, world);
     world_free(world);
 
-    sim->stream = ts_now();
+    sim->stream = sys_now();
 
   fail:
     if (fail)
@@ -687,7 +687,7 @@ static void sim_cmd(struct sim *sim, struct sim_pipe *pipe)
         // \todo should probably restrict to admin only.
         case CMD_SPEED: {
             sim->speed = cmd.data.speed;
-            if (sim->speed != speed_pause) sim->next = ts_now();
+            if (sim->speed != speed_pause) sim->next = sys_now();
             break;
         }
 
@@ -746,8 +746,8 @@ static void sim_publish_step(struct sim *sim, struct sim_pipe *pipe)
 static void sim_publish_state(struct sim *sim, struct sim_pipe *pipe)
 {
     {
-        time_sys now = ts_now();
-        time_sys delta = now - pipe->publish.prev;
+        sys_ts now = sys_now();
+        sys_ts delta = now - pipe->publish.prev;
         pipe->publish.prev = now;
         if (now + delta < pipe->publish.next) return;
         pipe->publish.next = now + pipe->publish.period;
@@ -868,7 +868,7 @@ void sim_step(struct sim *sim)
 
 void sim_loop(struct sim *sim)
 {
-    time_sys now = sim->next = ts_now();
+    sys_ts now = sim->next = sys_now();
     while (!threads_done(sim->threads, thread_id())) {
 
         // Should eventually get more complicated as we might need to close some
@@ -876,18 +876,18 @@ void sim_loop(struct sim *sim)
         if (atomic_exchange_explicit(&sim->reload, false, memory_order_relaxed))
             sim_config_read(sim);
 
-        time_sys sleep = 0;
+        sys_ts sleep = 0;
         switch (sim->speed) {
         case speed_pause:
-        case speed_slow:    { sleep = ts_sec / sim_freq_slow; break; }
-        case speed_fast:    { sleep = ts_sec / sim_freq_fast; break; }
-        case speed_faster:  { sleep = ts_sec / sim_freq_faster; break; }
+        case speed_slow:    { sleep = sys_sec / sim_freq_slow; break; }
+        case speed_fast:    { sleep = sys_sec / sim_freq_fast; break; }
+        case speed_faster:  { sleep = sys_sec / sim_freq_faster; break; }
         case speed_fastest: { sleep = 0; break; }
         default: { assert(false); }
         }
 
         if (now < sim->next)
-            now = ts_sleep_until(sim->next);
+            now = sys_sleep_until(sim->next);
 
         sim_step(sim);
 

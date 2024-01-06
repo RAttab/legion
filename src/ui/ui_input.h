@@ -18,7 +18,7 @@ struct ui_input_style
     struct dim pad;
     enum render_font font;
     struct rgba fg, bg, border;
-    struct { struct rgba fg; time_sys blink; } carret;
+    struct { struct rgba fg; sys_ts blink; } carret;
 };
 
 void ui_input_style_default(struct ui_style *);

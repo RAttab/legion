@@ -46,7 +46,7 @@ extern struct ui_style
     } rgba;
 
     struct { struct dim box; } pad;
-    struct { time_sys blink; } carret;
+    struct { sys_ts blink; } carret;
 
     struct
     {

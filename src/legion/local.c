@@ -13,7 +13,7 @@ bool local_run(const char *file, world_seed seed)
     threads_init(threads_profile_local);
 
     struct sim *sim = sim_new(seed, file);
-    struct sim_pipe *sim_pipe = sim_pipe_new(sim, ts_sec / (engine_frame_rate * 2));
+    struct sim_pipe *sim_pipe = sim_pipe_new(sim, sys_sec / (engine_frame_rate * 2));
     sim_fork(sim);
 
     proxy_init();

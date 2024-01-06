@@ -25,7 +25,7 @@ void ui_asm_style_default(struct ui_style *s)
 
         .hl = {
             .bg = s->rgba.code.highlight,
-            .opaque = 1 * ts_sec, .fade = 300 * ts_msec,
+            .opaque = 1 * sys_sec, .fade = 300 * sys_msec,
         },
 
         .fg = s->rgba.fg,
@@ -144,7 +144,7 @@ void ui_asm_goto(struct ui_asm *ui, vm_ip ip)
     ui->carret.col = 0;
 
     ui->hl.row = row;
-    ui->hl.ts = ts_now();
+    ui->hl.ts = sys_now();
 
     ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
 }
@@ -302,7 +302,7 @@ void ui_asm_render(struct ui_asm *ui, struct ui_layout *layout)
 
         if (ui->hl.ts && ui->hl.row == row) {
             struct rgba bg = ui->s.hl.bg;
-            time_sys delta = ts_now() - ui->hl.ts;
+            sys_ts delta = sys_now() - ui->hl.ts;
 
             if (delta > ui->s.hl.opaque) {
                 delta -= ui->s.hl.opaque;
@@ -400,7 +400,7 @@ void ui_asm_render(struct ui_asm *ui, struct ui_layout *layout)
     do {
         if (ui_focus_element() != ui) break;
         if (ui->carret.row < row_first || ui->carret.row >= row_last) break;
-        if (((ts_now() / ui->s.carret.blink) % 2) == 0) break;
+        if (((sys_now() / ui->s.carret.blink) % 2) == 0) break;
 
         struct rect carret = {
             .x = inner.base.pos.x + ((ui->carret.col + ui_asm_line_col) * cell.w),
@@ -616,7 +616,7 @@ static void ui_asm_event_find(struct ui_asm *ui, enum ui_asm_find_type type)
         ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
 
         ui->hl.row = ui->carret.row;
-        ui->hl.ts = ts_now();
+        ui->hl.ts = sys_now();
 
         ui_asm_event_find(ui, ui_asm_find_nil);
         ui_asm_focus(ui);
@@ -641,7 +641,7 @@ static void ui_asm_event_find(struct ui_asm *ui, enum ui_asm_find_type type)
         ui_asm_select_move(ui);
 
         ui->hl.row = ui->carret.row;
-        ui->hl.ts = ts_now();
+        ui->hl.ts = sys_now();
 
         ui_asm_focus(ui);
         break;

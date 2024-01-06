@@ -13,12 +13,12 @@ static void ux_status_render(void *, struct ui_layout *);
 
 
 static const size_t ux_status_cap = ui_str_cap;
-static const time_sys ux_status_duration = 5 * ts_sec;
-static const time_sys ux_status_fade = 100 * ts_msec;
+static const sys_ts ux_status_duration = 5 * sys_sec;
+static const sys_ts ux_status_fade = 100 * sys_msec;
 
 struct ux_status
 {
-    time_sys ts;
+    sys_ts ts;
     struct ui_panel *panel;
     struct ui_label status;
 };
@@ -56,7 +56,7 @@ void ux_status_set(enum status_type type, const char *msg, size_t len)
 {
     struct ux_status *ux = ux_state(ux_view_status);
 
-    ux->ts = ts_now();
+    ux->ts = sys_now();
 
     switch (type)
     {
@@ -73,7 +73,7 @@ static void ux_status_render(void *state, struct ui_layout *layout)
 {
     struct ux_status *ux = state;
 
-    time_sys delta = ts_now() - ux->ts;
+    sys_ts delta = sys_now() - ux->ts;
     if (delta > ux_status_duration + ux_status_fade) ux->ts = 0;
     if (!ux->ts) return;
 

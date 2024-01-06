@@ -64,8 +64,8 @@ static bool shard_sync_wait_start(shard_sync *sync, shard_sync_epoch epoch)
     // When paused, we don't want to spin the thread needlessly. A futex would
     // make this more responsive but a simple 1ms sleep is a good-enough simple
     // approximation that will work in most cases.
-    constexpr time_sys period = 1 * ts_msec;
-    time_sys next = ts_now() + period;
+    constexpr sys_ts period = 1 * sys_msec;
+    sys_ts next = sys_now() + period;
     bool fast = true;
 
     while (true) {
@@ -73,9 +73,9 @@ static bool shard_sync_wait_start(shard_sync *sync, shard_sync_epoch epoch)
         if (value & shard_sync_quit_mask) return false;
         if (shard_sync_get_epoch(value) > epoch) return true;
 
-        if (fast && ts_now() < next) continue;
+        if (fast && sys_now() < next) continue;
         next += period; fast = false;
-        ts_sleep_until(next);
+        sys_sleep_until(next);
     }
 
 }

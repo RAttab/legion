@@ -96,7 +96,7 @@ void ui_style_default(void)
     }
 
     { // carret
-        s->carret.blink = 300 * ts_msec;
+        s->carret.blink = 300 * sys_msec;
     }
 
     ui_label_style_default(s);

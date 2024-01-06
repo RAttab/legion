@@ -161,7 +161,7 @@ void ui_input_render(struct ui_input *input, struct ui_layout *layout)
 
     do {
         if (ui_focus_element() != input) break;
-        if (((ts_now() / input->s.carret.blink) % 2) == 0) break;
+        if (((sys_now() / input->s.carret.blink) % 2) == 0) break;
 
         struct dim cell = engine_cell();
         struct rect carret = {

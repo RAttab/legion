@@ -27,7 +27,7 @@ void ui_code_style_default(struct ui_style *s)
 
         .hl = {
             .bg = s->rgba.code.highlight,
-            .opaque = 1 * ts_sec, .fade = 300 * ts_msec,
+            .opaque = 1 * sys_sec, .fade = 300 * sys_msec,
         },
 
         .errors = {
@@ -172,7 +172,7 @@ enum ui_code_update_flag : uint8_t
 static void ui_code_update(struct ui_code *ui, enum ui_code_update_flag flag)
 {
     if (flag & ui_code_update_edit) {
-        ui->edit = ts_now();
+        ui->edit = sys_now();
         memset(&ui->hl, 0, sizeof(ui->hl));
     }
 
@@ -250,7 +250,7 @@ static void ui_code_highlight(struct ui_code *ui, uint32_t pos, uint32_t len)
     ui->hl.len = len;
     ui->hl.row = rc.row;
     ui->hl.col = rc.col;
-    ui->hl.ts = ts_now();
+    ui->hl.ts = sys_now();
 
     ui_code_update(ui, ui_code_update_nil);
     ui_scroll_center(&ui->scroll, ui->carret.row, ui->carret.col);
@@ -484,7 +484,7 @@ void ui_code_render(struct ui_code *ui, struct ui_layout *layout)
 
         if (ui->hl.ts && ui->hl.row == it.row) {
             struct rgba bg = ui->s.hl.bg;
-            time_sys delta = ts_now() - ui->hl.ts;
+            sys_ts delta = sys_now() - ui->hl.ts;
 
             if (delta > ui->s.hl.opaque) {
                 delta -= ui->s.hl.opaque;
@@ -548,7 +548,7 @@ void ui_code_render(struct ui_code *ui, struct ui_layout *layout)
 
         if (ui->carret.row < row_first || ui->carret.row >= row_last) break;
         if (ui->carret.col < col_first || ui->carret.col >= col_last) break;
-        if (((ts_now() / ui->s.carret.blink) % 2) == 0) break;
+        if (((sys_now() / ui->s.carret.blink) % 2) == 0) break;
 
         render_rect_fill(l + layer_carret, ui->s.carret.fg, make_rect(
             inner.base.pos.x + ((ui->carret.col - col_first) * cell.w),
@@ -918,7 +918,7 @@ void ui_code_event(struct ui_code *ui)
 
     ui_scroll_event(&ui->scroll);
 
-    if (ui->edit && (ts_now() - ui->edit >= 500 * ts_msec)) {
+    if (ui->edit && (sys_now() - ui->edit >= 500 * sys_msec)) {
         ui->edit = 0;
         code_update(ui->code);
         ui_code_update(ui, ui_code_update_nil);

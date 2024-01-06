@@ -262,11 +262,11 @@ static void sound_fork(void)
     {
         sound_init();
 
-        constexpr time_sys delay = ts_sec / sound_periods / 2;
-        time_sys next = ts_now() + delay;
+        constexpr sys_ts delay = sys_sec / sound_periods / 2;
+        sys_ts next = sys_now() + delay;
 
         while (!threads_done(sound.threads, thread_id())) {
-            ts_sleep_until(next);
+            sys_sleep_until(next);
             next += delay;
 
             sound_queue();

@@ -19,8 +19,8 @@ struct ui_code_style
     struct { unit margin; } find;
     struct { struct rgba fg, bg; } row;
     struct { struct rgba fg, bg, hover; } bp;
-    struct { struct rgba fg; time_sys blink; } carret;
-    struct { struct rgba bg; time_sys opaque, fade; } hl;
+    struct { struct rgba fg; sys_ts blink; } carret;
+    struct { struct rgba bg; sys_ts opaque, fade; } hl;
     struct { struct rgba fg, bg; unit margin; } errors;
     struct rgba fg, comment, keyword, atom;
     struct rgba current, select, box;
@@ -50,10 +50,10 @@ struct ui_code
     struct code *code;
     const struct mod *mod;
 
-    time_sys edit;
+    sys_ts edit;
     struct { uint32_t pos, row, col; } carret;
     struct { uint32_t pos, row, col; vm_ip ip; } bp;
-    struct { uint32_t len, row, col; time_sys ts; } hl;
+    struct { uint32_t len, row, col; sys_ts ts; } hl;
     struct { hash_val sym; uint32_t paren; } match;
 
     struct

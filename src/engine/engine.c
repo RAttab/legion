@@ -269,10 +269,10 @@ static bool engine_step(void)
 
 void engine_loop(void)
 {
-    constexpr time_sys period = ts_sec / engine_frame_rate;
+    constexpr sys_ts period = sys_sec / engine_frame_rate;
 
-    time_sys ts = ts_now();
-    while (engine_step()) ts = ts_sleep_until(ts + period);
+    sys_ts ts = sys_now();
+    while (engine_step()) ts = sys_sleep_until(ts + period);
 }
 
 bool engine_done(void)

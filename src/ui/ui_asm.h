@@ -17,9 +17,9 @@ struct ui_asm_style
     enum render_font font;
     struct { unit margin; } find;
     struct { struct rgba current, base; } jmp;
-    struct { struct rgba fg; time_sys blink; } carret;
+    struct { struct rgba fg; sys_ts blink; } carret;
     struct { struct rgba fg, bg, hover; } row, bp;
-    struct { struct rgba bg; time_sys opaque, fade; } hl;
+    struct { struct rgba bg; sys_ts opaque, fade; } hl;
     struct rgba fg, keyword, symbol;
     struct rgba current, select, highlight;
 };
@@ -47,7 +47,7 @@ struct ui_asm
 
     struct rowcol carret;
     struct { vm_ip ip; uint32_t row; } bp;
-    struct { uint32_t row; time_sys ts; } hl;
+    struct { uint32_t row; sys_ts ts; } hl;
     struct { bool active; struct rowcol first, last; } select;
 
     struct {
