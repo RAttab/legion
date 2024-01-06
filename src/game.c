@@ -24,6 +24,7 @@
 
 #include "game/active.h"
 #include "game/types.c"
+
 #include "game/coord.c"
 #include "game/log.c"
 #include "game/lanes.c"
@@ -40,3 +41,4 @@
 #include "game/sim.c"
 #include "game/protocol.c"
 #include "game/man.c"
+#include "game/metrics.c"

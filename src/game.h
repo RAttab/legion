@@ -20,6 +20,7 @@
 #include "utils/htable.h"
 #include "utils/symbol.h"
 
+#include "game/metrics.h"
 #include "game/sector.h"
 #include "game/man.h"
 #include "game/log.h"
