@@ -8,11 +8,12 @@
 // local
 // -----------------------------------------------------------------------------
 
-bool local_run(const char *file, world_seed seed)
+bool local_run(const struct args *args)
 {
     threads_init(threads_profile_local);
+    if (args->metrics) metrics_open(args->metrics);
 
-    struct sim *sim = sim_new(seed, file);
+    struct sim *sim = sim_new(args->seed, args->save);
     struct sim_pipe *sim_pipe = sim_pipe_new(sim, sys_sec / (engine_frame_rate * 2));
     sim_fork(sim);
 
@@ -30,5 +31,6 @@ bool local_run(const char *file, world_seed seed)
     sim_join(sim);
     sim_free(sim);
 
+    if (args->metrics) metrics_close();
     return true;
 }

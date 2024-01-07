@@ -126,12 +126,12 @@ static bool client_events(int poll, struct server *server, int events)
     return true;
 }
 
-bool client_run(const char *node, const char *service, const char *config)
+bool client_run(const struct args *args)
 {
     threads_init(threads_profile_client);
 
     proxy_init();
-    proxy_auth(config);
+    proxy_auth(args->config);
 
     engine_init();
     engine_fork();
@@ -155,7 +155,7 @@ bool client_run(const char *node, const char *service, const char *config)
     struct server *server = NULL;
     struct epoll_event events[8] = {0};
 
-    infof("connecting to '%s:%s'", node, service);
+    infof("connecting to '%s:%s'", args->node, args->service);
 
     while (!exit && !engine_done()) {
         int ready = epoll_wait(poll, events, array_len(events), 1);
@@ -176,12 +176,12 @@ bool client_run(const char *node, const char *service, const char *config)
             assert(server == ev->data.ptr);
 
             if (client_events(poll, ev->data.ptr, ev->events)) {
-                if (!connected) infof("connected to '%s:%s'", node, service);
+                if (!connected) infof("connected to '%s:%s'", args->node, args->service);
                 connected = true;
                 reconn.inc = 1;
             }
             else {
-                if (connected) infof("disconnected from '%s:%s'", node, service);
+                if (connected) infof("disconnected from '%s:%s'", args->node, args->service);
                 connected = false;
                 server = NULL;
             }
@@ -193,8 +193,8 @@ bool client_run(const char *node, const char *service, const char *config)
             reconn.inc = legion_min(reconn.inc * 2, (size_t) 20);
             reconn.ts = (reconn.inc * sys_sec) + now;
 
-            infof("reconnecting to '%s:%s'", node, service);
-            server = client_connect(poll, node, service);
+            infof("reconnecting to '%s:%s'", args->node, args->service);
+            server = client_connect(poll, args->node, args->service);
         }
     }
 

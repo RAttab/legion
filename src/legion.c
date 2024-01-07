@@ -19,6 +19,7 @@ static_assert(EAGAIN == EWOULDBLOCK);
 
 void usage(int code, const char *msg);
 
+#include "legion/args.h"
 #include "legion/local.c"
 #include "legion/client.c"
 #include "legion/server.c"

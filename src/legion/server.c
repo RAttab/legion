@@ -162,24 +162,20 @@ static void server_events(int poll, struct client *client, uint32_t events)
     }
 }
 
-bool server_run(
-        const char *node,
-        const char *service,
-        const char *save,
-        const char *config,
-        world_seed seed)
+bool server_run(const struct args *args)
 {
     threads_init(threads_profile_server);
+    if (args->metrics) metrics_open(args->metrics);
 
-    server.sim = sim_new(seed, save);
-    if (file_exists(save)) sim_load(server.sim);
-    sim_server(server.sim, config);
+    server.sim = sim_new(args->seed, args->save);
+    if (file_exists(args->save)) sim_load(server.sim);
+    sim_server(server.sim, args->config);
     sim_fork(server.sim);
 
     int poll = epoll_create1(EPOLL_CLOEXEC);
     if (poll == -1) fail_errno("unable to create epoll");
 
-    int listen = socket_listen(node, service);
+    int listen = socket_listen(args->node, args->service);
     if (listen == -1) fail("unable to create listen socket");
 
     int ret = epoll_ctl(poll, EPOLL_CTL_ADD, listen, &(struct epoll_event) {
@@ -199,7 +195,7 @@ bool server_run(
             });
     if (ret == -1) failf_errno("unable to add sigint fd '%d' to epoll", sigint);
 
-    infof("accepting connections on '%s:%s'", node, service);
+    infof("accepting connections on '%s:%s'", args->node, args->service);
 
     bool exit = false;
     struct epoll_event events[8] = {0};
@@ -232,6 +228,7 @@ bool server_run(
     sim_join(server.sim);
     sim_save(server.sim);
     sim_free(server.sim);
+    if (args->metrics) metrics_close();
 
     return true;
 }

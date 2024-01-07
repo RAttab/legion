@@ -7,6 +7,7 @@
 #include "engine.h"
 
 #include "utils/str.h"
+#include "legion/args.h"
 
 #include <getopt.h>
 
@@ -15,27 +16,10 @@
 // declarations
 // -----------------------------------------------------------------------------
 
-bool local_run(
-        const char *file,
-        world_seed seed);
-
-bool client_run(
-        const char *node,
-        const char *service,
-        const char *config);
-
-bool server_run(
-        const char *node,
-        const char *service,
-        const char *save,
-        const char *config,
-        world_seed seed);
-
-bool config_run(
-        const char *type,
-        const char *path,
-        const struct symbol *name,
-        user_token auth);
+bool local_run(const struct args *);
+bool client_run(const struct args *);
+bool server_run(const struct args *);
+bool config_run(const struct args *);
 
 
 // -----------------------------------------------------------------------------
@@ -50,10 +34,10 @@ void usage(int code, const char *msg)
         "legion --help\n"
         "       --token\n"
         "       --config <type> [--config <path>] [--name <name>] [--auth <token>]\n"
-        "       --local [--file <path>] [--seed <seed>]\n"
+        "       --local [--file <path>] [--seed <seed>] [--metrics <path>]\n"
         "       --client <host> [--port <port>] [--config <path>]\n"
         "       --server <host> [--port <port>] [--file <path>] [--config <path>]\n"
-        "                       [--seed <seed>]\n"
+        "                       [--seed <seed>] [--metrics <path>]\n"
         "\n"
         "Commands:\n"
         "  -h --help    Prints this message\n"
@@ -73,6 +57,8 @@ void usage(int code, const char *msg)
         "               hexadecimal value; Defaults to 0\n"
         "  -n --name    Symbol representing the user on a server\n"
         "  -a --auth    Authentication token for a server\n"
+        "  -m --metrics Path to save simulation metrics into. Default is\n"
+        "               not generate any metrics\n"
         "";
     fprintf(stderr, usage);
     exit(code);
@@ -85,22 +71,23 @@ void usage(int code, const char *msg)
 
 int main(int argc, char *const argv[])
 {
-    const char *optstring = "+hTN:LS:C:D:E:f:c:p:s:n:a:";
+    const char *optstring = "+hTN:LS:C:D:E:f:c:p:s:n:a:m:";
     struct option longopts[] = {
-        { .val = 'h', .name = "help",   .has_arg = no_argument },
+        { .val = 'h', .name = "help",    .has_arg = no_argument },
 
-        { .val = 'T', .name = "token",  .has_arg = no_argument },
-        { .val = 'N', .name = "config", .has_arg = required_argument },
-        { .val = 'L', .name = "local",  .has_arg = no_argument },
-        { .val = 'S', .name = "server", .has_arg = required_argument },
-        { .val = 'C', .name = "client", .has_arg = required_argument },
+        { .val = 'T', .name = "token",   .has_arg = no_argument },
+        { .val = 'N', .name = "config",  .has_arg = required_argument },
+        { .val = 'L', .name = "local",   .has_arg = no_argument },
+        { .val = 'S', .name = "server",  .has_arg = required_argument },
+        { .val = 'C', .name = "client",  .has_arg = required_argument },
 
-        { .val = 'f', .name = "file",   .has_arg = required_argument },
-        { .val = 'c', .name = "config", .has_arg = required_argument },
-        { .val = 'p', .name = "port",   .has_arg = required_argument },
-        { .val = 's', .name = "seed",   .has_arg = required_argument },
-        { .val = 'n', .name = "name",   .has_arg = required_argument },
-        { .val = 'a', .name = "auth",   .has_arg = required_argument },
+        { .val = 'f', .name = "file",    .has_arg = required_argument },
+        { .val = 'c', .name = "config",  .has_arg = required_argument },
+        { .val = 'p', .name = "port",    .has_arg = required_argument },
+        { .val = 's', .name = "seed",    .has_arg = required_argument },
+        { .val = 'n', .name = "name",    .has_arg = required_argument },
+        { .val = 'a', .name = "auth",    .has_arg = required_argument },
+        { .val = 'm', .name = "metrics", .has_arg = required_argument },
 
         {0},
     };
@@ -111,18 +98,7 @@ int main(int argc, char *const argv[])
         cmd_local, cmd_server, cmd_client,
     } cmd = cmd_nil;
 
-    static struct {
-        const char *save;
-        const char *config;
-        const char *db;
-        const char *tech;
-        const char *node;
-        const char *service;
-        const char *type;
-        world_seed seed;
-        user_token auth;
-        struct symbol name;
-    } args = {
+    struct args args = {
         .save = "./legion.save",
         .config = "./legion.lisp",
         .service = "18181", // Dihedral Prime beause it makes me sound smart.
@@ -146,6 +122,7 @@ int main(int argc, char *const argv[])
         case 'f': { args.save = optarg; break; }
         case 'c': { args.config = optarg; break; }
         case 'p': { args.service = optarg; break; }
+        case 'm': { args.metrics = optarg; break; }
 
         case 's': {
             size_t len = strlen(optarg);
@@ -185,21 +162,11 @@ int main(int argc, char *const argv[])
     switch (cmd)
     {
 
-    case cmd_config: {
-        ok = config_run(args.type, args.config, &args.name, args.auth);
-        break;
-    }
     case cmd_token:  { ok = true; fprintf(stdout, "%lx\n", make_user_token()); break; }
-
-    case cmd_local:  { ok = local_run(args.save, args.seed); break; }
-    case cmd_client: {
-        ok = client_run(args.node, args.service, args.config);
-        break;
-    }
-    case cmd_server: {
-        ok = server_run(args.node, args.service, args.save, args.config, args.seed);
-        break;
-    }
+    case cmd_config: { ok = config_run(&args); break;}
+    case cmd_local:  { ok = local_run(&args); break; }
+    case cmd_client: { ok = client_run(&args); break; }
+    case cmd_server: { ok = server_run(&args); break; }
 
     default: { assert(false); }
     }

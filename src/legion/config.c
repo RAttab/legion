@@ -66,14 +66,17 @@ static void config_client(
     config_close(&config);
 }
 
-bool config_run(
-        const char *type,
-        const char *path,
-        const struct symbol *name,
-        user_token auth)
+bool config_run(const struct args *args)
 {
-    if (strcmp(type, "server") == 0) { config_server(path); return true; }
-    if (strcmp(type, "client") == 0) { config_client(path, name, auth); return true; }
+    if (strcmp(args->type, "server") == 0) {
+        config_server(args->config);
+        return true;
+    }
+
+    if (strcmp(args->type, "client") == 0) {
+        config_client(args->config, &args->name, args->auth);
+        return true;
+    }
 
     usage(1, "unknown config type argument");
     return false;

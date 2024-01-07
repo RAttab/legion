@@ -162,6 +162,10 @@ run: $(PREFIX)/legion
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
 
+run-metrics: $(PREFIX)/legion
+	@echo -e "\e[32m[run]\e[0m $<"
+	@$(PREFIX)/legion -m $(PREFIX)/metrics.lisp
+
 
 # -----------------------------------------------------------------------------
 # test
