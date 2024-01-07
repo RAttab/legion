@@ -16,7 +16,7 @@ static struct
 
 void metrics_open(const char *path)
 {
-    mfile_writer_open(&metrics.out, path, page_len * 1000);
+    mfile_writer_open(&metrics.out, path, page_len * 100);
     strbuf_alloc(&metrics.buf, page_len * 10);
     metrics.dump = true;
 }
@@ -77,7 +77,7 @@ void metrics_dump(struct metrics *m)
     for (size_t i = 0; i < items_active_len; ++i)
         items += sum.chunk.active[i].n;
 
-    struct mfile_writer *out = &metrics.out;
+    struct mfile_writer *out = mfile_writer_reset(&metrics.out);
     struct strbuf *buf = strbuf_reset(&metrics.buf);
 
     mfile_writef(out, "(m (dt %s) (steps %s %s)\n",
@@ -95,7 +95,7 @@ void metrics_dump(struct metrics *m)
             metric_rate(m->world.lanes.n, dt),
             metric_percent(m->world.lanes.t, dt));
 
-    mfile_writef(out, "  (shards (begin %s) (wait %s) (end %s)\n",
+    mfile_writef(out, "  (shards (begin %s) (wait %s) (end %s)\n\n",
             metric_percent(m->shards.begin.t, dt),
             metric_percent(m->shards.wait.t, dt),
             metric_percent(m->shards.end.t, dt));
@@ -122,7 +122,7 @@ void metrics_dump(struct metrics *m)
                     metric_percent(ms->chunk.active[i].t / div, dt));
 
         out->it--;
-        mfile_write(out, ")\n");
+        mfile_write(out, ")\n\n");
     }
 
     dump_shard("all", &sum, shards);
@@ -131,8 +131,8 @@ void metrics_dump(struct metrics *m)
         if (ms->active) dump_shard(strbuf_fmt(buf, "%02zu", i), ms, 1);
     }
 
-    out->it--;
-    mfile_write(out, "))\n\n");
+    out->it -= 2;
+    mfile_write(out, "))\n");
 
     world_ts ts = m->ts.now;
     memset(m, 0, sizeof(*m));

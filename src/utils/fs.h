@@ -87,6 +87,7 @@ struct mfile_writer
 
 void mfile_writer_open(struct mfile_writer *, const char *path, size_t cap);
 void mfile_writer_close(struct mfile_writer *);
+struct mfile_writer *mfile_writer_reset(struct mfile_writer *);
 
 #define mfile_write(_f, _str)                           \
     do {                                                \

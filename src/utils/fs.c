@@ -300,3 +300,9 @@ void mfile_writer_close(struct mfile_writer *file)
     file_tmp_swap(file->path);
     file_truncate(file->path, len);
 }
+
+struct mfile_writer *mfile_writer_reset(struct mfile_writer *file)
+{
+    file->it = file->mfile.ptr;
+    return file;
+}
