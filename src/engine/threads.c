@@ -9,7 +9,7 @@
 
 constexpr int threads_cpu_min = 4;
 
-struct
+static struct
 {
     size_t cpus;
     enum threads_profile profile;
