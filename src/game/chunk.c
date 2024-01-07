@@ -725,5 +725,5 @@ static void chunk_ports_step(struct chunk *chunk)
 
     chunk->workers.idle = chunk->workers.count - worker;
 
-    metric_inc(chunk->metrics, chunk.workers, chunk->workers.count, mt);
+    metric_inc(chunk->metrics, chunk.workers, worker, mt);
 }
