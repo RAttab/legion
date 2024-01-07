@@ -3,7 +3,51 @@
    FreeBSD-style copyright and disclaimer apply
 */
 
+#include <stdarg.h>
+
 #include "utils/str.h"
+
+// -----------------------------------------------------------------------------
+// strbuf
+// -----------------------------------------------------------------------------
+
+void strbuf_alloc(struct strbuf *buf, size_t cap)
+{
+    buf->len = 0;
+    buf->str = calloc(buf->cap = cap, 1);
+}
+
+void strbuf_free(struct strbuf *buf)
+{
+    free(buf->str);
+}
+
+struct strbuf *strbuf_reset(struct strbuf *buf)
+{
+    buf->len = 0;
+    return buf;
+}
+
+static const char *strbuf_commit(struct strbuf *buf, ssize_t len)
+{
+    assert(len >= 0);
+    assert(buf->len + len + 1 <= buf->cap);
+
+    const char *str = buf->str + buf->len;
+    buf->len += len + 1;
+    buf->str[buf->len - 1] = 0;
+    return str;
+}
+
+const char *strbuf_fmt(struct strbuf *buf, const char *fmt, ...)
+{
+    va_list args = {0};
+    va_start(args, fmt);
+    ssize_t len = vsnprintf(strbuf_it(buf), strbuf_len(buf), fmt, args);
+    va_end(args);
+
+    return strbuf_commit(buf, len);
+}
 
 
 // -----------------------------------------------------------------------------
@@ -107,7 +151,7 @@ size_t str_atou(const char *src, size_t len, uint64_t *dst)
 size_t str_scaled(uint64_t val, char *dst, size_t len)
 {
     assert(len >= str_scaled_len);
-    static const char units[] = "ukMG?";
+    static const char units[] = " KMG?";
 
     size_t unit = 0;
     while (val >= 1000) {
@@ -126,6 +170,32 @@ size_t str_scaled(uint64_t val, char *dst, size_t len)
     }
 
     return str_scaled_len;
+}
+
+const char *strbuf_scaled(struct strbuf *buf, uint64_t val)
+{
+    return strbuf_commit(buf, str_scaled(val, strbuf_it(buf), strbuf_len(buf)));
+}
+
+size_t str_scaled_f(double val, char *dst, size_t len)
+{
+    assert(val >= 0);
+
+    static const char units[] = "?num KMG?";
+    constexpr size_t units_zero = 4;
+    constexpr size_t units_cap = 8;
+
+    size_t unit = units_zero;
+    for (; val && val < 1.0; --unit) val *= 1000;
+    for (; val && val >= 1000.0; ++unit) val /= 1000;
+    unit = legion_bound(unit, 0U, units_cap);
+
+    return snprintf(dst, len, "%6.2lf%c", val, units[unit]);
+}
+
+const char *strbuf_scaled_f(struct strbuf *buf, double val)
+{
+    return strbuf_commit(buf, str_scaled_f(val, strbuf_it(buf), strbuf_len(buf)));
 }
 
 size_t str_skip_spaces(const char *str, size_t len)

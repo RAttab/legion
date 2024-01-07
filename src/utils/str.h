@@ -11,6 +11,22 @@
 
 
 // -----------------------------------------------------------------------------
+// strbuf
+// -----------------------------------------------------------------------------
+
+struct strbuf { size_t len, cap; char *str; };
+
+void strbuf_alloc(struct strbuf *, size_t cap);
+void strbuf_free(struct strbuf *);
+
+inline char *strbuf_it(struct strbuf *buf) { return buf->str + buf->len; }
+inline size_t strbuf_len(struct strbuf *buf) { return buf->cap - buf->len; }
+struct strbuf *strbuf_reset(struct strbuf *);
+
+const char *strbuf_fmt(struct strbuf *, const char *fmt, ...) legion_printf(2, 3);
+
+
+// -----------------------------------------------------------------------------
 // str
 // -----------------------------------------------------------------------------
 
@@ -25,8 +41,12 @@ size_t str_atod(const char *src, size_t len, int64_t *dst);
 size_t str_atou(const char *src, size_t len, uint64_t *dst);
 size_t str_atox(const char *src, size_t len, uint64_t *dst);
 
-enum : size_t { str_scaled_len = 4 };
+constexpr size_t str_scaled_len = 4;
 size_t str_scaled(uint64_t val, char *dst, size_t len);
+const char *strbuf_scaled(struct strbuf *buf, uint64_t val);
+
+size_t str_scaled_f(double val, char *dst, size_t len);
+const char *strbuf_scaled_f(struct strbuf *buf, double val);
 
 inline char str_hexchar(uint8_t val)
 {
@@ -86,6 +106,7 @@ inline bool str_is_space(char c) { return c <= 0x20; }
 size_t str_skip_spaces(const char *str, size_t len);
 
 char str_keycode_shift(unsigned char c);
+
 
 // -----------------------------------------------------------------------------
 // rowcol
