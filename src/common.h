@@ -34,6 +34,17 @@
 typedef legion_atomic float atomic_float;
 typedef legion_atomic double atomic_double;
 
+#ifndef __SIZEOF_INT128__
+# error "I need my 128 bit ints"
+#endif
+
+typedef __int128 int128_t;
+typedef unsigned __int128 uint128_t;
+
+
+constexpr size_t sys_cache_line_len = 64;
+constexpr size_t sys_page_len = 4096;
+
 
 // -----------------------------------------------------------------------------
 // macro utils
@@ -106,42 +117,83 @@ typedef legion_atomic double atomic_double;
 
 
 // -----------------------------------------------------------------------------
-// types
+// mem
 // -----------------------------------------------------------------------------
 
-#ifndef __SIZEOF_INT128__
-# error "I need my 128 bit ints"
-#endif
-
-typedef __int128 int128_t;
-typedef unsigned __int128 uint128_t;
-
-// -----------------------------------------------------------------------------
-// constants
-// -----------------------------------------------------------------------------
-
-enum : size_t { s_cache_line = 64 };
-static const size_t cache_line = s_cache_line;
-
-enum : size_t { s_page_len = 4096 };
-static const size_t page_len = s_page_len;
+inline void mem_free(void *ptr) { free(ptr); }
 
 
-// -----------------------------------------------------------------------------
-// alloc
-// -----------------------------------------------------------------------------
+#define mem_alloc_t(ptr) \
+    ({ mem_alloc(sizeof(*ptr)); })
 
-inline void *alloc_cache(size_t len)
+inline void *mem_alloc(size_t len)
 {
-    return memset(aligned_alloc(s_cache_line, len), 0, len);
+    return calloc(1, len);
 }
 
-inline void *realloc_zero(void *ptr, size_t old, size_t new, size_t size)
+inline void *mem_realloc(void *ptr, size_t old, size_t new)
 {
-    ptr = realloc(ptr, new * size);
-    memset(ptr + (old * size), 0, (new - old) * size);
+    ptr = realloc(ptr, new);
+    if (likely(new > old)) memset(ptr + old, 0, new - old);
     return ptr;
 }
+
+
+#define mem_array_alloc_t(elem, count) \
+    ({ mem_array_alloc(sizeof(elem), count); })
+#define mem_array_realloc_t(ptr, elem, old, new) \
+    ({ mem_array_realloc(ptr, sizeof(elem), old, new); })
+
+inline void *mem_array_alloc(size_t elem, size_t count)
+{
+    return calloc(count, elem);
+}
+
+inline void *mem_array_realloc(void *ptr, size_t elem, size_t old, size_t new)
+{
+    ptr = reallocarray(ptr, new, elem);
+    if (likely(new > old)) memset(ptr + (old * elem), 0, (new - old) * elem);
+    return ptr;
+}
+
+
+#define mem_struct_alloc_t(ptr, elem, count) \
+    ({ mem_struct_alloc(sizeof(*ptr), sizeof(elem), count); })
+#define mem_struct_realloc_t(ptr, elem, old, new) \
+    ({ mem_struct_realloc(ptr, sizeof(*ptr), sizeof(elem), old, new); })
+
+inline void *mem_struct_alloc(size_t head, size_t elem, size_t count)
+{
+    return calloc(1, head + (count * elem));
+}
+
+inline void *mem_struct_realloc(
+        void *ptr, size_t head, size_t elem, size_t old, size_t new)
+{
+    ptr = realloc(ptr, head + (new * elem));
+    if (likely(new > old))
+        memset(ptr + head + (old * elem), 0, (new - old) * elem);
+    return ptr;
+}
+
+
+#define mem_align_alloc_t(ptr, align) \
+    ({ mem_align_alloc(sizeof(*ptr), align); })
+
+inline void *mem_align_alloc(size_t len, size_t align)
+{
+    return memset(aligned_alloc(align, len), 0, len);
+}
+
+inline void *mem_align_realloc(void *ptr, size_t old, size_t new, size_t align)
+{
+    return memcpy(mem_align_alloc(new, align), ptr, old);
+}
+
+#define alloc_cache(len) \
+    ({ mem_align_alloc(len, sys_cache_line_len); })
+#define realloc_zero(ptr, old, new, elem) \
+    ({ mem_array_realloc(ptr, elem, old, new); })
 
 
 // -----------------------------------------------------------------------------
