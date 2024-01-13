@@ -23,7 +23,7 @@ static void code_str_reserve(struct code_str *str, size_t len)
     if (!old) str->cap = legion_max(len, 8U);
     while (str->cap < len) str->cap *= 2;
 
-    str->str = realloc_zero(str->str, old, str->cap, sizeof(char));
+    str->str = mem_array_realloc_t(str->str, char, old, str->cap);
 }
 
 static void code_str_append(struct code_str *str, const char *src, size_t len)
@@ -86,8 +86,8 @@ struct code
 
 struct code *code_alloc(void)
 {
-    struct code *code = calloc(1, sizeof(*code));
-    code->str.list = calloc(code_str_cap, sizeof(*code->str.list));
+    struct code *code = mem_alloc_t(code);
+    code->str.list = mem_array_alloc_t(*code->str.list, code_str_cap);
     code->ast = ast_alloc();
     return code;
 }
@@ -95,12 +95,12 @@ struct code *code_alloc(void)
 void code_free(struct code *code)
 {
     for (size_t i = 0; i < code->str.len; ++i)
-        free(code->str.list[i].str);
-    free(code->str.list);
+        mem_free(code->str.list[i].str);
+    mem_free(code->str.list);
 
     ast_free(code->ast);
     vec32_free(code->matches);
-    free(code);
+    mem_free(code);
 }
 
 bool code_empty(struct code *code)
@@ -405,8 +405,8 @@ static void code_hist_push(
     if (code->hist.top == code->hist.cap) {
         size_t old = legion_xchg(&code->hist.cap,
                 code->hist.cap ? code->hist.cap * 2 : 128);
-        code->hist.list = realloc_zero(
-                code->hist.list, old, code->hist.cap, sizeof(*code->hist.list));
+        code->hist.list = mem_array_realloc_t(
+                code->hist.list, *code->hist.list, old, code->hist.cap);
     }
 
     struct code_hist *it = code->hist.list + code->hist.it;
@@ -488,7 +488,7 @@ void code_reset(struct code *code)
     struct code_str *begin = code->str.list;
     struct code_str *end = begin + code->str.len;
 
-    for (struct code_str *it = begin; it < end; ++it) free(it->str);
+    for (struct code_str *it = begin; it < end; ++it) mem_free(it->str);
     memset(begin, 0, (end - begin) * sizeof(*begin));
     code->str.len = 0;
 

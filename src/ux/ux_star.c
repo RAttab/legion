@@ -82,7 +82,7 @@ enum ux_star_tabs { ux_star_control = 1, ux_star_factory, ux_star_logistics, };
 
 void ux_star_alloc(struct ux_view_state *state)
 {
-    struct ux_star *ux = calloc(1, sizeof(*ux));
+    struct ux_star *ux = mem_alloc_t(ux);
 
     struct dim cell = engine_cell();
     *ux = (struct ux_star) {
@@ -303,7 +303,7 @@ static void ux_star_free(void *state)
     ui_label_free(&ux->battery.total);
     ui_label_free(&ux->battery.total_val);
 
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_star_show(struct coord star)

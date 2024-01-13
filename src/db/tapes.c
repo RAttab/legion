@@ -28,7 +28,7 @@ const struct tape_info *tapes_info(enum item id)
 
 static void populate_tapes(void)
 {
-    const size_t len = 2 * s_page_len;
+    const size_t len = 2 * sys_page_len;
     void *it = mmap(0, len, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     if (it == MAP_FAILED) fail_errno("unable to mmap tapes");
     void *const end = it + len;

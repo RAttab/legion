@@ -70,7 +70,7 @@ void ux_mods_alloc(struct ux_view_state *state)
     unit code_w = (5 + ux_mods_cols + 2) * cell.w;
     unit pad_w = cell.w;
 
-    struct ux_mods *ux = calloc(1, sizeof(*ux));
+    struct ux_mods *ux = mem_alloc_t(ux);
     *ux = (struct ux_mods) {
         .panel = ui_panel_title(make_dim(tree_w, ui_layout_inf), ui_str_c("mods")),
         .tree_w = tree_w,
@@ -139,11 +139,11 @@ static void ux_mods_free(void *state)
         ui_asm_free(&tab->as);
         mod_free(tab->mod);
     }
-    free(ux->tabs.list);
-    free(ux->tabs.order);
+    mem_free(ux->tabs.list);
+    mem_free(ux->tabs.order);
     ui_tabs_free(&ux->tabs.ui);
 
-    free(ux);
+    mem_free(ux);
 }
 
 
@@ -191,10 +191,10 @@ static struct ux_mods_tab *ux_mods_tabs_alloc(
     if (!tab) {
         if (ux->tabs.len == ux->tabs.cap) {
             size_t old = legion_xchg(&ux->tabs.cap, ux->tabs.cap ? ux->tabs.cap * 2 : 8);
-            ux->tabs.list = realloc_zero(
-                    ux->tabs.list, old, ux->tabs.cap, sizeof(*ux->tabs.list));
-            ux->tabs.order = realloc_zero(
-                    ux->tabs.order, old, ux->tabs.cap, sizeof(*ux->tabs.order));
+            ux->tabs.list = mem_array_realloc_t(
+                    ux->tabs.list, *ux->tabs.list, old, ux->tabs.cap);
+            ux->tabs.order = mem_array_realloc_t(
+                    ux->tabs.order, *ux->tabs.order, old, ux->tabs.cap);
         }
 
         tab = ux->tabs.list + ux->tabs.len;
@@ -548,14 +548,14 @@ static void ux_mods_build(struct ux_mods *ux, struct ux_mods_tab *tab)
     if (!tab->write) { ux_log(st_error, "unable to buxld read-only mod"); return; }
 
     size_t len = code_len(tab->code.code);
-    char *buffer = calloc(len, sizeof(*buffer));
+    char *buffer = mem_array_alloc_t(*buffer, len);
     (void) code_write(tab->code.code, buffer, len);
 
     ux->request.id = tab->id;
     ux->request.write = tab->write;
     proxy_mod_compile(mod_major(tab->id), buffer, len);
 
-    free(buffer);
+    mem_free(buffer);
 }
 
 static void ux_mods_publish(struct ux_mods *ux, struct ux_mods_tab *tab)

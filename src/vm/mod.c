@@ -24,7 +24,7 @@ struct mod *mod_alloc(
     size_t total_bytes =
         head_bytes + code_bytes + src_bytes + pub_bytes + errs_bytes + index_bytes;
 
-    struct mod *mod = alloc_cache(align_cache(total_bytes));
+    struct mod *mod = mem_align_alloc(align_cache(total_bytes), sys_cache_line_len);
 
     memcpy(&mod->code, code, code_bytes);
     mod->len = code_len;
@@ -55,7 +55,7 @@ struct mod *mod_alloc(
 
 void mod_free(const struct mod *mod)
 {
-    free((void *) mod);
+    mem_free((void *) mod);
 }
 
 struct mod *mod_load(struct save *save)
@@ -88,7 +88,7 @@ struct mod *mod_load(struct save *save)
         + pub_bytes
         + errs_bytes
         + index_bytes;
-    mod = alloc_cache(align_cache(total_bytes));
+    mod = mem_align_alloc(align_cache(total_bytes), sys_cache_line_len);
     mod->id = id;
 
     void *it = mod + 1;
@@ -121,7 +121,7 @@ struct mod *mod_load(struct save *save)
 
     mod->src_hash = src_hash;
 
-    if (!save_read_magic(save, save_magic_mod)) { free(mod); return NULL; }
+    if (!save_read_magic(save, save_magic_mod)) { mem_free(mod); return NULL; }
     return mod;
 }
 
@@ -145,7 +145,7 @@ void mod_save(const struct mod *mod, struct save *save)
 
 struct mod *mod_nil(mod_id id)
 {
-    struct mod *mod = alloc_cache(sizeof(*mod));
+    struct mod *mod = mem_align_alloc_t(mod, sys_cache_line_len);
     void *end = mod+1;
 
     *mod = (struct mod) {
@@ -316,7 +316,7 @@ struct mod_entry
 
 struct mods *mods_new(void)
 {
-    struct mods *mods = calloc(1, sizeof(struct mods));
+    struct mods *mods = mem_alloc_t(mods);
     return mods;
 }
 
@@ -325,14 +325,14 @@ void mods_free(struct mods *mods)
     const struct htable_bucket *it = NULL;
 
     for (it = htable_next(&mods->by_maj, NULL); it; it = htable_next(&mods->by_maj, it))
-        free((struct mod_entry *) it->value);
+        mem_free((struct mod_entry *) it->value);
     htable_reset(&mods->by_maj);
 
     for (it = htable_next(&mods->by_mod, NULL); it; it = htable_next(&mods->by_mod, it))
         mod_free((struct mod *) it->value);
     htable_reset(&mods->by_mod);
 
-    free(mods);
+    mem_free(mods);
 }
 
 void mods_save(const struct mods *mods, struct save *save)
@@ -378,7 +378,7 @@ struct mods *mods_load(struct save *save)
     size_t id_len = save_read_type(save, typeof(mods->by_maj.len));
     htable_reserve(&mods->by_maj, id_len);
     for (size_t i = 0; i < id_len; ++i) {
-        struct mod_entry *entry = calloc(1, sizeof(*entry));
+        struct mod_entry *entry = mem_alloc_t(entry);
         save_read_into(save, &entry->maj);
         save_read_into(save, &entry->ver);
         save_read_into(save, &entry->owner);
@@ -406,7 +406,7 @@ mod_id mods_register(
 {
     if (mods_find(mods, name)) return 0;
 
-    struct mod_entry *entry = calloc(1, sizeof(*entry));
+    struct mod_entry *entry = mem_alloc_t(entry);
     entry->maj = ++mods->maj;
     entry->str = *name;
     entry->owner = owner;
@@ -529,8 +529,7 @@ const struct mod *mods_parse(struct mods *mods, const char *it, size_t len)
 
 struct mods_list *mods_list(struct mods *mods, user_set filter)
 {
-    struct mods_list *ret = calloc(1,
-            sizeof(*ret) + mods->by_maj.len * sizeof(ret->items[0]));
+    struct mods_list *ret = mem_struct_alloc_t(ret, ret->items[0], mods->by_maj.len);
     ret->cap = mods->by_maj.len;
 
     const struct htable_bucket *it = htable_next(&mods->by_maj, NULL);
@@ -558,8 +557,7 @@ struct mods_list *mods_list(struct mods *mods, user_set filter)
 
 struct mods_list *mods_list_reserve(size_t len)
 {
-    struct mods_list *list =
-        calloc(1, sizeof(*list) + len * sizeof(list->items[0]));
+    struct mods_list *list = mem_struct_alloc_t(list, list->items[0], len);
     list->cap = len;
     return list;
 }
@@ -578,7 +576,7 @@ void mods_list_save(struct mods *mods, struct save *save, user_set filter)
     }
 
     save_write_magic(save, save_magic_mods);
-    free(list);
+    mem_free(list);
 }
 
 bool mods_list_load_into(struct mods_list **ret, struct save *save)
@@ -588,7 +586,7 @@ bool mods_list_load_into(struct mods_list **ret, struct save *save)
 
     size_t len = save_read_type(save, typeof(list->len));
     if (!list || len > list->cap) {
-        list = realloc(list, list->cap * sizeof(list->items[0]));
+        list = mem_array_realloc_t(list, list->items[0], list->cap, len);
         list->cap = len;
         *ret = list;
     }

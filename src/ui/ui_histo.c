@@ -59,12 +59,12 @@ struct ui_histo ui_histo_new(
 
         .series = {
             .len = len, .cols = 0, .rows = 0,
-            .list = calloc(len, sizeof(*list)),
+            .list = mem_array_alloc_t(*list, len),
         },
 
         .legend = {
             .rows = 0,
-            .list = calloc(len, sizeof(struct ui_histo_legend)),
+            .list = mem_array_alloc_t(struct ui_histo_legend, len),
             .time = ui_label_new(ui_str_c("time:")),
             .time_val = ui_label_new(ui_str_v(14)),
             .per_tick  = ui_label_new(ui_str_c("/t")),
@@ -106,8 +106,8 @@ struct ui_histo ui_histo_new(
 
 void ui_histo_free(struct ui_histo *histo)
 {
-    free(histo->series.list);
-    free(histo->series.data);
+    mem_free(histo->series.list);
+    mem_free(histo->series.data);
 
     for (size_t i = 0; i < histo->series.len; ++i) {
         struct ui_histo_legend *legend = histo->legend.list + i;
@@ -115,7 +115,7 @@ void ui_histo_free(struct ui_histo *histo)
         ui_label_free(&legend->val);
         ui_label_free(&legend->tick);
     }
-    free(histo->legend.list);
+    mem_free(histo->legend.list);
 
     ui_label_free(&histo->legend.time);
     ui_label_free(&histo->legend.time_val);
@@ -143,9 +143,8 @@ static void ui_histo_init(struct ui_histo *histo, struct rect rect)
     histo->row = make_dim(width, (histo->s.row.h * histo->series.cols)  + histo->s.row.pad);
     histo->series.rows = height / histo->row.h;
 
-    histo->series.data = calloc(
-            histo->series.rows * histo->series.len,
-            sizeof(*histo->series.data));
+    histo->series.data = mem_array_alloc_t(
+            *histo->series.data, histo->series.rows * histo->series.len);
 }
 
 void ui_histo_clear(struct ui_histo *histo)

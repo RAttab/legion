@@ -15,7 +15,7 @@
 #define check_hset(val, ...)                            \
     do {                                                \
         struct hset *exp = make_hset(__VA_ARGS__);      \
-        if (hset_eq(val, exp)) { free(exp); break; }    \
+        if (hset_eq(val, exp)) { hset_free(exp); break; } \
                                                         \
         char val_str[256];                              \
         hset_str(val, val_str, sizeof(val_str));        \

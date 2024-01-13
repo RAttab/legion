@@ -17,7 +17,7 @@ struct ui_packer
 
 static void *ui_packer_alloc(void)
 {
-    struct ui_packer *ui = calloc(1, sizeof(*ui));
+    struct ui_packer *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_packer) {
         .item = ui_label_new(ui_str_c("item:  ")),
@@ -46,7 +46,7 @@ static void ui_packer_free(void *_ui)
     ui_label_free(&ui->state);
     ui_label_free(&ui->state_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_packer_update(void *_ui, struct chunk *chunk, im_id id)

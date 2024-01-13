@@ -111,7 +111,7 @@ struct ui_values ui_values_new(const struct ui_value *list, size_t len)
 {
     struct ui_values values = {
         .len = len,
-        .list = calloc(len, sizeof(*list)),
+        .list = mem_array_alloc_t(*list, len),
     };
     memcpy(values.list, list, len * sizeof(*list));
     return values;
@@ -119,7 +119,7 @@ struct ui_values ui_values_new(const struct ui_value *list, size_t len)
 
 void ui_values_free(struct ui_values *values)
 {
-    free(values->list);
+    mem_free(values->list);
 }
 
 void ui_values_set(struct ui_values *values, struct ui_label *label, uint64_t user)

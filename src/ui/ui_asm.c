@@ -541,7 +541,7 @@ static void ui_asm_event_copy(struct ui_asm *ui)
     ui_asm_select_clear(ui);
 
     size_t cap = (last.row - first.row) * ui_asm_line_cols + (last.col - first.col);
-    char *buffer = malloc(cap); char *it = buffer;
+    char *buffer = mem_alloc(cap); char *it = buffer;
 
     for (size_t row = first.row; row <= last.row; ++row) {
         char line[ui_asm_line_cols] = {0};
@@ -560,7 +560,7 @@ static void ui_asm_event_copy(struct ui_asm *ui)
     }
 
     ui_clipboard_copy(buffer, it - buffer);
-    free(buffer);
+    mem_free(buffer);
 }
 
 // Just about everything about this error here is wrong so it has to be a false

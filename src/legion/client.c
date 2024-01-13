@@ -35,7 +35,7 @@ static void client_free(int poll, struct server *server)
 
     proxy_pipe_close(server->pipe);
     close(server->socket);
-    free(server);
+    mem_free(server);
 }
 
 static struct server *client_connect(
@@ -46,7 +46,7 @@ static struct server *client_connect(
     int socket = socket_connect(node, service);
     if (socket == -1) return NULL;
 
-    struct server *server = calloc(1, sizeof(*server));
+    struct server *server = mem_alloc_t(server);
     server->socket = socket;
     server->pipe = proxy_pipe_new(NULL);
     server->in = proxy_pipe_in(server->pipe);

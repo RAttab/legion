@@ -51,7 +51,7 @@ void ux_energy_alloc(struct ux_view_state *state)
         [ux_energy_need] =     { 1, "need", ui_st.rgba.energy.need, true },
     };
 
-    struct ux_energy *ux = calloc(1, sizeof(*ux));
+    struct ux_energy *ux = mem_alloc_t(ux);
     struct dim cell = engine_cell();
     *ux = (struct ux_energy) {
         .star = coord_nil(),
@@ -86,7 +86,7 @@ static void ux_energy_free(void *state)
     struct ux_energy *ux = state;
     ui_panel_free(ux->panel);
     ui_histo_free(&ux->histo);
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_energy_show(struct coord star)

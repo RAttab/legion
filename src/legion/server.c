@@ -51,7 +51,7 @@ static void server_free(int poll, struct client *client)
     while (*prev != client) prev = &(*prev)->next;
     *prev = client->next;
 
-    free(client);
+    mem_free(client);
 }
 
 static void server_accept(int poll, int listen)
@@ -66,7 +66,7 @@ static void server_accept(int poll, int listen)
             fail_errno("unable to accept connection");
         }
 
-        struct client *client = calloc(1, sizeof(*client));
+        struct client *client = mem_alloc_t(client);
         *client = (struct client) {
             .socket = socket,
             .read = false,

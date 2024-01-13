@@ -28,7 +28,7 @@ void htable_clear(struct htable *ht)
 
 void htable_reset(struct htable *ht)
 {
-    free(ht->table);
+    mem_free(ht->table);
     *ht = (struct htable) {0};
 }
 
@@ -58,19 +58,19 @@ static void htable_resize(struct htable *ht, size_t cap)
     size_t new_cap = ht->cap ? ht->cap : htable_window;
     while (new_cap < cap) new_cap *= 2;
 
-    struct htable_bucket *new_table = calloc(new_cap, sizeof(*new_table));
+    struct htable_bucket *new_table = mem_array_alloc_t(*new_table, new_cap);
     for (size_t i = 0; i < ht->cap; ++i) {
         struct htable_bucket *bucket = &ht->table[i];
         if (!bucket->key) continue;
 
         if (!table_put(new_table, new_cap, bucket->key, bucket->value)) {
-            free(new_table);
+            mem_free(new_table);
             htable_resize(ht, new_cap * 2);
             return;
         }
     }
 
-    free(ht->table);
+    mem_free(ht->table);
     ht->cap = new_cap;
     ht->table = new_table;
 }
@@ -83,7 +83,7 @@ void htable_reserve(struct htable *ht, size_t items)
 struct htable htable_clone(const struct htable *src)
 {
     struct htable dst = { .len = src->len, .cap = src->cap };
-    dst.table = calloc(dst.cap, sizeof(*dst.table));
+    dst.table = mem_array_alloc_t(*dst.table, dst.cap);
     memcpy(dst.table, src->table, dst.cap * sizeof(*dst.table));
     return dst;
 }

@@ -81,9 +81,9 @@ static const char *man_text_put(struct man *, char);
 
 static struct man *man_new(size_t text_cap)
 {
-    text_cap = legion_max(text_cap, page_len);
+    text_cap = legion_max(text_cap, sys_page_len);
 
-    struct man *man = calloc(1, sizeof(*man));
+    struct man *man = mem_alloc_t(man);
     *man = (struct man) {
         .lines = vec32_append(NULL, 0),
         .sections = vec16_append(NULL, 0),
@@ -91,13 +91,13 @@ static struct man *man_new(size_t text_cap)
         .text = {
             .len = 0,
             .cap = text_cap,
-            .data = calloc(text_cap, sizeof(*man->text.data)),
+            .data = mem_array_alloc_t(*man->text.data, text_cap),
         },
 
         .markup = {
             .len = 0,
             .cap = man_markup_inc,
-            .list = calloc(man_markup_inc, sizeof(*man->markup.list)),
+            .list = mem_array_alloc_t(*man->markup.list, man_markup_inc),
         },
     };
 
@@ -118,10 +118,10 @@ void man_free(struct man *man)
     vec32_free(man->lines);
     vec16_free(man->sections);
 
-    free(man->text.data);
-    free(man->markup.list);
+    mem_free(man->text.data);
+    mem_free(man->markup.list);
 
-    free(man);
+    mem_free(man);
 }
 
 man_line man_lines(struct man *man)
@@ -221,8 +221,8 @@ static struct markup *man_markup(struct man *man, enum markup_type type)
     if (unlikely(man->markup.len == man->markup.cap)) {
         size_t old = man->markup.cap;
         man->markup.cap += man_markup_inc;
-        man->markup.list = realloc_zero(
-                man->markup.list, old, man->markup.cap, sizeof(*man->markup.list));
+        man->markup.list = mem_array_realloc_t(
+                man->markup.list, *man->markup.list, old, man->markup.cap);
     }
 
     man->markup.len++;
@@ -335,7 +335,7 @@ static struct toc *toc_path_it(
 
     if (unlikely(toc->len == toc->cap)) {
         size_t cap = toc->cap ? toc->cap * 2 : 4;
-        toc->nodes = realloc_zero(toc->nodes, toc->cap, cap, sizeof(toc->nodes[0]));
+        toc->nodes = mem_array_realloc_t(toc->nodes, toc->nodes[0], toc->cap, cap);
         toc->cap = cap;
     }
 
@@ -453,10 +453,8 @@ static bool man_populate_db(struct atoms *atoms)
     while (db_man_next(&it)) {
         if (mans.pages.len == mans.pages.cap) {
             size_t cap = mans.pages.cap ? mans.pages.cap * 2 : 8;
-            mans.pages.list = realloc_zero(
-                    mans.pages.list,
-                    mans.pages.cap, cap,
-                    sizeof(*mans.pages.list));
+            mans.pages.list = mem_array_realloc_t(
+                    mans.pages.list, *mans.pages.list, mans.pages.cap, cap);
             mans.pages.cap = cap;
         }
 

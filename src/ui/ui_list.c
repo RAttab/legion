@@ -63,7 +63,7 @@ void ui_list_free(struct ui_list *list)
     ui_str_free(&list->str);
     for (size_t i = 0; i < list->cap; ++i)
         ui_str_free(&list->entries[i].str);
-    free(list->entries);
+    mem_free(list->entries);
 }
 
 
@@ -96,7 +96,7 @@ struct ui_str *ui_list_add(struct ui_list *list, uint64_t user)
     if (list->len == list->cap) {
         size_t old = list->cap;
         list->cap = list->cap ? list->cap * 2 : 8;
-        list->entries = realloc_zero(list->entries, old, list->cap, sizeof(*list->entries));
+        list->entries = mem_array_realloc_t(list->entries, *list->entries, old, list->cap);
     }
 
     struct ui_list_entry *entry = list->entries + list->len;

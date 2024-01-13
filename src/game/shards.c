@@ -136,7 +136,7 @@ struct shard
 
 struct shard *shard_alloc(size_t index, struct world *world)
 {
-    struct shard *shard = calloc(1, sizeof(*shard));
+    struct shard *shard = mem_alloc_t(shard);
     *shard = (struct shard) {
         .world = world,
         .metrics = world_metrics(world)->shard + index,
@@ -149,8 +149,9 @@ void shard_free(struct shard *shard)
 {
     vec64_free(shard->chunks);
     save_mem_free(shard->out);
-    free(shard->probe.table);
-    free(shard);
+    mem_free(shard->probe.table);
+    mem_free(shard->scan.table);
+    mem_free(shard);
 }
 
 void shard_register(struct shard *shard, struct chunk *chunk)
@@ -313,10 +314,9 @@ static struct shard_probe *shard_probe_append(struct shard *shard)
 {
     if (shard->probe.len == shard->probe.cap) {
         size_t old = shard->probe.cap;
-        shard->probe.table = realloc_zero(
-                shard->probe.table,
-                old, shard->probe.cap = old ? old * 2 : 4,
-                sizeof(*shard->probe.table));
+        shard->probe.table = mem_array_realloc_t(
+                shard->probe.table, *shard->probe.table,
+                old, shard->probe.cap = old ? old * 2 : 4);
     }
 
     return shard->probe.table + shard->probe.len++;
@@ -354,10 +354,9 @@ static struct shard_scan *shard_scan_append(struct shard *shard)
 {
     if (shard->scan.len == shard->scan.cap) {
         size_t old = shard->scan.cap;
-        shard->scan.table = realloc_zero(
-                shard->scan.table,
-                old, shard->scan.cap = old ? old * 2 : 4,
-                sizeof(*shard->scan.table));
+        shard->scan.table = mem_array_realloc_t(
+                shard->scan.table, *shard->scan.table,
+                old, shard->scan.cap = old ? old * 2 : 4);
     }
 
     return shard->scan.table + shard->scan.len++;
@@ -503,7 +502,7 @@ struct shards
 
 struct shards *shards_alloc(struct world *world)
 {
-    struct shards *shards = calloc(1, sizeof(*shards));
+    struct shards *shards = mem_alloc_t(shards);
     shards->world = world;
     shards->metrics = world_metrics(world);
     shard_sync_init(&shards->sync);
@@ -522,6 +521,8 @@ void shards_free(struct shards *shards)
         if (shard) shard_thread_free(shard);
     }
     threads_free(shards->threads);
+
+    mem_free(shards);
 }
 
 struct shard *shards_get(struct shards *shards, struct coord coord)

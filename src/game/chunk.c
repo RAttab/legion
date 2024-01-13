@@ -81,7 +81,7 @@ static struct active *active_next(struct chunk *chunk, struct active *it)
 
 struct chunk *chunk_alloc_empty(void)
 {
-    struct chunk *chunk = calloc(1, sizeof(*chunk));
+    struct chunk *chunk = mem_alloc_t(chunk);
     *chunk = (struct chunk) {
         .log = log_new(chunk_log_cap),
         .requested = ring16_reserve(16),
@@ -124,7 +124,7 @@ void chunk_free(struct chunk *chunk)
     for (struct active *it = active_next(chunk, NULL);
          it; it = active_next(chunk, it))
         active_free(it);
-    free(chunk);
+    mem_free(chunk);
 }
 
 void chunk_shard(struct chunk *chunk, struct shard *shard)

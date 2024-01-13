@@ -77,7 +77,7 @@ struct dir_it
 
 struct dir_it *dir_it(const char *path)
 {
-    struct dir_it *it = calloc(1, sizeof(*it));
+    struct dir_it *it = mem_alloc_t(it);
 
     it->dir = opendir(path);
     if (!it->dir) failf_errno("can't open dir: %s", path);
@@ -95,7 +95,7 @@ struct dir_it *dir_it(const char *path)
 void dir_it_free(struct dir_it *it)
 {
     closedir(it->dir);
-    free(it);
+    mem_free(it);
 }
 
 bool dir_it_next(struct dir_it *it)

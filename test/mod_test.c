@@ -38,14 +38,14 @@ void test_compiler(void)
         struct mod *mod = compile("asd");
         assert(mod);
         assert(mod->errs_len == 1);
-        free(mod);
+        mod_free(mod);
     }
 
     {
         struct mod *mod = compile(fib);
         assert(mod);
         assert(mod->errs_len == 0);
-        free(mod);
+        mod_free(mod);
     }
 }
 

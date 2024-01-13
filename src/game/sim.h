@@ -16,8 +16,8 @@ struct sim;
 
 enum : size_t
 {
-    sim_in_len = 100 * s_page_len,
-    sim_out_len = 2000 * s_page_len,
+    sim_in_len = 100 * sys_page_len,
+    sim_out_len = 2000 * sys_page_len,
 };
 
 struct sim *sim_new(world_seed seed, const char *save);

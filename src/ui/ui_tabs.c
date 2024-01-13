@@ -54,7 +54,7 @@ void ui_tabs_free(struct ui_tabs *ui)
     }
 
     ui_str_free(&ui->str);
-    free(ui->list);
+    mem_free(ui->list);
 }
 
 
@@ -94,7 +94,7 @@ struct ui_str *ui_tabs_add_s(struct ui_tabs *ui, uint64_t user, struct rgba fg)
 
     if (ui->len == ui->cap) {
         size_t old = legion_xchg(&ui->cap, ui->cap ? ui->cap * 2 : 8);
-        ui->list = realloc_zero(ui->list, old, ui->cap, sizeof(*ui->list));
+        ui->list = mem_array_realloc_t(ui->list, *ui->list, old, ui->cap);
     }
 
     struct ui_tab *tab = ui->list + ui->len;

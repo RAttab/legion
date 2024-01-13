@@ -33,7 +33,7 @@ static_assert(sizeof(atomic_size_t) == 8);
 
 struct save_ring *save_ring_new(size_t cap)
 {
-    struct save_ring *ring = calloc(1, sizeof(*ring));
+    struct save_ring *ring = mem_alloc_t(ring);
 
     // On linux, duplicating a VMA via mmap can only be achieved using an
     // fd. memfd_create allows us to get an fd without touching the file-system.
@@ -48,7 +48,7 @@ struct save_ring *save_ring_new(size_t cap)
         goto fail_ftruncate;
     }
 
-    assert(cap && cap % s_page_len == 0);
+    assert(cap && cap % sys_page_len == 0);
     const int prot = PROT_READ | PROT_WRITE;
 
     // To ensure back-to-back VMAs without accidently overwritting any other
@@ -92,7 +92,7 @@ struct save_ring *save_ring_new(size_t cap)
   fail_ftruncate:
     close(fd);
   fail_memfd:
-    free(ring);
+    mem_free(ring);
     return NULL;
 }
 
@@ -103,7 +103,7 @@ void save_ring_free(struct save_ring *ring)
     munmap(ring->loop, ring->cap);
     save_free(&ring->read.save);
     save_free(&ring->write.save);
-    free(ring);
+    mem_free(ring);
 }
 
 void save_ring_close(struct save_ring *ring)

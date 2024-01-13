@@ -192,8 +192,8 @@ static void render_buffer_init(
 
 static void render_buffer_close(struct render_buffer *buffer)
 {
-    free(buffer->e);
-    free(buffer->v.raw);
+    mem_free(buffer->e);
+    mem_free(buffer->v.raw);
 
     glDeleteBuffers(1, &buffer->ebo);
     glDeleteBuffers(1, &buffer->vbo);
@@ -208,7 +208,7 @@ static void render_buffer_reserve_vertex(struct render_buffer *buffer, size_t le
     if (!buffer->vcap) buffer->vcap = 128;
     while (buffer->vcap < buffer->vlen + len) buffer->vcap *= 2;
 
-    buffer->v.raw = realloc_zero(buffer->v.raw, old, buffer->vcap, buffer->vertex_len);
+    buffer->v.raw = mem_array_realloc(buffer->v.raw, buffer->vertex_len, old, buffer->vcap);
 }
 
 static union vertex_ptr render_buffer_push_vertex(struct render_buffer *buffer)
@@ -240,7 +240,7 @@ static void render_buffer_reserve_index(struct render_buffer *buffer, size_t len
     if (!buffer->ecap) buffer->ecap = 128;
     while (buffer->ecap < buffer->elen + len) buffer->ecap *= 2;
 
-    buffer->e = realloc_zero(buffer->e, old, buffer->ecap, sizeof(*buffer->e));
+    buffer->e = mem_array_realloc_t(buffer->e, *buffer->e, old, buffer->ecap);
 }
 
 static void render_buffer_push_index(

@@ -108,7 +108,7 @@ inline void bits_init(struct bits *bits)
 
 inline void bits_free(struct bits *bits)
 {
-    if (!bits_inline(bits)) free(bits_array(bits));
+    if (!bits_inline(bits)) mem_free(bits_array(bits));
 }
 
 void bits_grow(struct bits *, size_t);

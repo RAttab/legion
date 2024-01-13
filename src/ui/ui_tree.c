@@ -65,7 +65,7 @@ void ui_tree_free(struct ui_tree *tree)
     for (size_t i = 0; i < tree->cap; ++i)
         ui_str_free(&tree->nodes[i].str);
 
-    free(tree->nodes);
+    mem_free(tree->nodes);
     hset_free(tree->open);
     hset_free(tree->path);
 }
@@ -133,7 +133,7 @@ struct ui_str *ui_tree_add(
     if (tree->len == tree->cap) {
         size_t old = tree->cap;
         tree->cap = tree->cap ? tree->cap * 2 : 8;
-        tree->nodes = realloc_zero(tree->nodes, old, tree->cap, sizeof(*tree->nodes));
+        tree->nodes = mem_array_realloc_t(tree->nodes, *tree->nodes, old, tree->cap);
     }
 
     struct ui_tree_node *node = tree->nodes + tree->len;

@@ -23,14 +23,14 @@ static uint8_t flag_faults =
 
 struct vm *vm_alloc(uint8_t stack, uint8_t speed)
 {
-    struct vm *vm = alloc_cache(vm_len(stack));
+    struct vm *vm = mem_align_alloc(vm_len(stack), sys_cache_line_len);
     vm_init(vm, stack, speed);
     return vm;
 }
 
 void vm_free(struct vm *vm)
 {
-    free(vm);
+    mem_free(vm);
 }
 
 void vm_init(struct vm *vm, uint8_t stack, uint8_t speed)

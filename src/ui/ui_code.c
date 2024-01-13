@@ -737,13 +737,13 @@ static void ui_code_event_copy(struct ui_code *ui, bool del)
     uint32_t last = legion_max(ui->select.first.pos, ui->select.last.pos);
     size_t len = last - first;
 
-    char *buffer = malloc(len);
+    char *buffer = mem_alloc(len);
 
     size_t written = code_write_range(ui->code, first, last, buffer, len);
     assert(written == len);
 
     ui_clipboard_copy(buffer, len);
-    free(buffer);
+    mem_free(buffer);
 
     ui_code_select_clear(ui);
 

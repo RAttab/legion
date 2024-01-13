@@ -123,7 +123,7 @@ void check(void)
             assert(wd_mods->items[i].ver == st_mods->items[i].ver);
             assert(symbol_eq(&wd_mods->items[i].str, &st_mods->items[i].str));
         }
-        free(wd_mods);
+        mem_free(wd_mods);
 
         {
             struct vec64 *chunks = world_chunk_list(world);

@@ -21,7 +21,7 @@ struct ui_memory
 static void *ui_memory_alloc(void)
 {
     size_t data_len = im_memory_len_max * sizeof(vm_word);
-    struct ui_memory *ui = calloc(1, sizeof(*ui) + data_len);
+    struct ui_memory *ui = mem_alloc(sizeof(*ui) + data_len);
 
     *ui = (struct ui_memory) {
         .size = ui_label_new(ui_str_c("size: ")),
@@ -48,7 +48,7 @@ static void ui_memory_free(void *_ui)
     ui_label_free(&ui->data_index);
     ui_label_free(&ui->data_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_memory_update(void *_ui, struct chunk *chunk, im_id id)

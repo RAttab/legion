@@ -62,7 +62,7 @@ static void save_file_grow(struct save *save, size_t len)
 
 struct save *save_file_create(const char *path, uint8_t version)
 {
-    struct save *save = calloc(1, sizeof(*save) + sizeof(struct save_file));
+    struct save *save = mem_struct_alloc_t(save, struct save_file, 1);
     struct save_file *file = save_file_ptr(save);
 
     file->mode = save_mode_write;
@@ -99,7 +99,7 @@ struct save *save_file_create(const char *path, uint8_t version)
 
 struct save *save_file_load(const char *path)
 {
-    struct save *save = calloc(1, sizeof(*save) + sizeof(struct save_file));
+    struct save *save = mem_struct_alloc_t(save, struct save_file, 1);
     struct save_file *file = save_file_ptr(save);
 
     file->mode = save_mode_read;
@@ -182,7 +182,7 @@ void save_file_close(struct save *save)
     munmap(save->base, save_cap(save));
     close(save_file_ptr(save)->fd);
     save_free(save);
-    free(save);
+    mem_free(save);
 }
 
 uint8_t save_file_version(struct save *save)

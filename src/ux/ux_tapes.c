@@ -45,7 +45,7 @@ void ux_tapes_alloc(struct ux_view_state *state)
     int tree_w = (item_str_len + 3) * cell.w;
     int tape_w = (item_str_len + 8 + 1) * cell.w;
 
-    struct ux_tapes *ux = calloc(1, sizeof(*ux));
+    struct ux_tapes *ux = mem_alloc_t(ux);
     *ux = (struct ux_tapes) {
         .tree_w = tree_w,
         .tape_w = tape_w,
@@ -117,7 +117,7 @@ static void ux_tapes_free(void *state)
     ui_label_free(&ux->work);
     ui_label_free(&ux->out);
 
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_tapes_show(enum item tape)

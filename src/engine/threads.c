@@ -114,8 +114,8 @@ struct threads *threads_alloc(enum threads_pool pool)
     default: { assert(false); }
     }
 
-    struct threads *threads = calloc(1,
-            sizeof(*threads) + (last - first) * sizeof(threads->threads[0]));
+    struct threads *threads = mem_struct_alloc_t(
+            threads, threads->threads[0], last - first);
     *threads = (struct threads) { .it = first, .first = first, .last = last };
     return threads;
 }
@@ -124,7 +124,7 @@ void threads_free(struct threads *threads)
 {
     for (threads_id id = threads->first; id < threads->it; id++)
         threads_join(threads, id);
-    free(threads);
+    mem_free(threads);
 }
 
 

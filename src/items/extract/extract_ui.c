@@ -20,7 +20,7 @@ struct ui_extract
 
 static void *ui_extract_alloc(void)
 {
-    struct ui_extract *ui = calloc(1, sizeof(*ui));
+    struct ui_extract *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_extract) {
         .loops = ui_label_new(ui_str_c("loops: ")),
@@ -46,7 +46,7 @@ static void ui_extract_free(void *_ui)
     ui_label_free(&ui->state);
     ui_label_free(&ui->state_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_extract_update(void *_ui, struct chunk *chunk, im_id id)

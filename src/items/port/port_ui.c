@@ -48,7 +48,7 @@ static void *ui_port_alloc(void)
         { im_port_unloading, "unloading", ui_st.rgba.out },
     };
 
-    struct ui_port *ui = calloc(1, sizeof(*ui));
+    struct ui_port *ui = mem_alloc_t(ui);
     *ui = (struct ui_port) {
         .status = ui_label_new(ui_str_c("status: ")),
         .status_val = ui_label_new(ui_str_v(10)),
@@ -112,7 +112,7 @@ static void ui_port_free(void *_ui)
     ui_label_free(&ui->item);
     ui_label_free(&ui->count);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_port_update(void *_ui, struct chunk *chunk, im_id id)

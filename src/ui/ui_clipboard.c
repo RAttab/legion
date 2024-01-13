@@ -18,12 +18,12 @@ void ui_clipboard_init(void)
 {
     ui_clipboard.len = 0;
     ui_clipboard.cap = 1024;
-    ui_clipboard.str = calloc(ui_clipboard.cap, sizeof(*ui_clipboard.str));
+    ui_clipboard.str = mem_array_alloc_t(*ui_clipboard.str, ui_clipboard.cap);
 }
 
 void ui_clipboard_free(void)
 {
-    free(ui_clipboard.str);
+    mem_free(ui_clipboard.str);
 }
 
 size_t ui_clipboard_len(void)
@@ -46,7 +46,7 @@ size_t ui_clipboard_paste(char *dst, size_t len)
 static void ui_clipboard_grow(size_t len)
 {
     if (likely(len <= ui_clipboard.cap)) return;
-    ui_clipboard.str = realloc(ui_clipboard.str, len);
+    ui_clipboard.str = mem_realloc(ui_clipboard.str, ui_clipboard.cap, len);
     ui_clipboard.cap = len;
 }
 

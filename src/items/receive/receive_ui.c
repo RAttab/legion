@@ -22,7 +22,7 @@ struct ui_receive
 
 static void *ui_receive_alloc(void)
 {
-    struct ui_receive *ui = calloc(1, sizeof(*ui));
+    struct ui_receive *ui = mem_alloc_t(ui);
     *ui = (struct ui_receive) {
         .target = ui_label_new(ui_str_c("target: ")),
         .target_val = ui_label_new(ui_str_v(symbol_cap)),
@@ -58,7 +58,7 @@ static void ui_receive_free(void *_ui)
     ui_label_free(&ui->packet);
     ui_label_free(&ui->packet_data);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_receive_update(void *_ui, struct chunk *chunk, im_id id)

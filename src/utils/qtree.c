@@ -33,9 +33,7 @@ static inline struct qtree_node *qtree_is_leaf(struct qtree_node *ptr)
 
 static struct qtree_node *qtree_leaf_alloc()
 {
-    struct qtree_node *node = aligned_alloc(64, sizeof(*node));
-    memset(node, 0, sizeof(*node));
-    return node;
+    return mem_align_alloc_t(node, s_cache_line);
 }
 
 static void qtree_node_free(struct qtree_node *node)
@@ -44,7 +42,7 @@ static void qtree_node_free(struct qtree_node *node)
         struct qtree_node *child = val[i];
         if (!qtree_is_leaf(child)) qtree_node_free(child);
     }
-    free(node);
+    mem_free(node);
 }
 
 static struct qtree_node *qtree_node_alloc(uint32_t x, uint32_t y, uint32_t pivot)
@@ -176,7 +174,7 @@ struct qtree
 
 struct qtree *qtree_new(void)
 {
-    struct qtree *qtree = calloc(1, sizeof(*qtree));
+    struct qtree *qtree = mem_alloc_t(qtree);
     qtree->node = qtree_as_leaf(qtree_leaf_alloc());
     return qtree;
 }
@@ -185,7 +183,7 @@ struct qtree *qtree_new(void)
 void qtree_free(struct qtree *qtree)
 {
     qtree_node_free(node);
-    free(qtree);
+    mem_free(qtree);
 }
 
 size_t qtree_len(struct qtree *qtree)

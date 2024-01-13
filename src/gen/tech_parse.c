@@ -191,7 +191,7 @@ static void tech_parse(struct tree *tree, const char *path)
 
             else if (hash == symbol_hash_c("specs")) {
                 constexpr size_t cap = 256;
-                info.specs.data = calloc(cap, sizeof(char));
+                info.specs.data = mem_array_alloc_t(char, cap);
                 info.specs.len = reader_until_close(in, info.specs.data, cap);
                 assert(info.specs.len < cap - 1);
                 continue;

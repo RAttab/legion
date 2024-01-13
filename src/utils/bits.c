@@ -22,12 +22,12 @@ void bits_grow(struct bits *bits, size_t len)
 
     if (!bits_inline(bits)) {
         bits->len = len;
-        bits->bits = (uintptr_t) realloc_zero(
-                bits_array(bits), old, new, sizeof(bits->bits));
+        bits->bits = (uintptr_t) mem_array_realloc_t(
+                bits_array(bits), bits->bits, old, new);
     }
     else {
         uint64_t copy = bits->bits;
-        bits->bits = (uintptr_t) calloc(new, sizeof(bits->bits));
+        bits->bits = (uintptr_t) mem_array_alloc_t(bits->bits, new);
 
         bits->len = len;
         bits_array(bits)[0] = copy;

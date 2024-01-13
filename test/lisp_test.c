@@ -234,7 +234,7 @@ bool check_mod(
         memset(title + len, '=', sizeof(title) - len - 1);
         dbgf("%s", title);
 
-        char buffer[s_page_len] = {0};
+        char buffer[sys_page_len] = {0};
         dbgf("\n<src>\n%s\n", mod->src);
 
         mod_dump(mod, buffer, sizeof(buffer));

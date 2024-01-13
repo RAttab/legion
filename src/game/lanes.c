@@ -51,41 +51,41 @@ static struct lane *lane_alloc(struct coord src, struct coord dst)
 {
     constexpr size_t cap_default = 1;
 
-    struct lane *lane = calloc(1, sizeof(*lane));
+    struct lane *lane = mem_alloc_t(lane);
     *lane = (struct lane) {
         .src = src,
         .dst = dst,
         .cap = cap_default,
-        .queue = calloc(cap_default, sizeof(struct lane_queue)),
+        .queue = mem_array_alloc_t(struct lane_queue, cap_default),
     };
     return lane;
 }
 
 static void lane_free(struct lane *lane)
 {
-    free(lane->queue);
-    free(lane);
+    mem_free(lane->queue);
+    mem_free(lane);
 }
 
 static struct lane *lane_load(struct save *save)
 {
     if (!save_read_magic(save, save_magic_lane)) return NULL;
 
-    struct lane *lane = calloc(1, sizeof(*lane));
+    struct lane *lane = mem_alloc_t(lane);
     save_read_into(save, &lane->src);
     save_read_into(save, &lane->dst);
     save_read_into(save, &lane->len);
     save_read_into(save, &lane->cap);
 
-    lane->queue = calloc(lane->cap, sizeof(*lane->queue));
+    lane->queue = mem_array_alloc_t(*lane->queue, lane->cap);
     save_read(save, lane->queue, lane->cap * sizeof(*lane->queue));
 
     if (!save_read_magic(save, save_magic_lane)) goto fail;
     return lane;
 
   fail:
-    free(lane->queue);
-    free(lane);
+    mem_free(lane->queue);
+    mem_free(lane);
     return NULL;
 }
 
@@ -104,8 +104,8 @@ static void lane_grow(struct lane *lane)
 {
     if (likely(lane->len != lane->cap)) return;
 
-    lane->cap *= 2;
-    lane->queue = reallocarray(lane->queue, lane->cap, sizeof(*lane->queue));
+    size_t old = lane->cap;
+    lane->queue = mem_array_realloc_t(lane->queue, *lane->queue, old, lane->cap *= 2);
 }
 
 static void lane_push(struct lane *lane, world_ts ts, heap_ix data)

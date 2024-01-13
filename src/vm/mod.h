@@ -14,7 +14,7 @@ struct atoms;
 // Mods can get quite big (multiple Kb) so packing these structure tight can
 // help quite a bit.
 
-enum : size_t { mod_err_cap = s_cache_line - 4 };
+enum : size_t { mod_err_cap = sys_cache_line_len - 4 };
 struct legion_packed mod_err
 {
     uint32_t pos:24;
@@ -22,7 +22,7 @@ struct legion_packed mod_err
     char str[mod_err_cap];
 };
 
-static_assert(sizeof(struct mod_err) == s_cache_line);
+static_assert(sizeof(struct mod_err) == sys_cache_line_len);
 
 
 struct legion_packed mod_index
@@ -62,7 +62,7 @@ struct legion_packed mod
     uint8_t code[];
 };
 
-static_assert(sizeof(struct mod) == s_cache_line);
+static_assert(sizeof(struct mod) == sys_cache_line_len);
 
 
 struct mod *mod_alloc(

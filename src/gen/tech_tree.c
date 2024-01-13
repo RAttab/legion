@@ -122,7 +122,7 @@ static void node_free(struct node *node)
     edges_free(node->base.needs);
     edges_free(node->base.in);
     edges_free(node->out);
-    free(node->specs.data);
+    mem_free(node->specs.data);
 }
 
 static void node_dump(const struct node *node, const char *title)

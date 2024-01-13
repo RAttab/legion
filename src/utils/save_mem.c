@@ -29,7 +29,7 @@ static void save_mem_grow(struct save *save, size_t len)
 
 struct save *save_mem_new(void)
 {
-    struct save *save = calloc(1, sizeof(*save));
+    struct save *save = mem_alloc_t(save);
 
     const size_t cap = save_chunks;
     const int prot = PROT_READ | PROT_WRITE;
@@ -47,7 +47,7 @@ struct save *save_mem_new(void)
     return save;
 
   fail_mmap:
-    free(save);
+    mem_free(save);
     return NULL;
 }
 
@@ -61,5 +61,5 @@ void save_mem_free(struct save *save)
     if (!save) return;
     munmap(save->base, save_cap(save));
     save_free(save);
-    free(save);
+    mem_free(save);
 }

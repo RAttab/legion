@@ -53,7 +53,7 @@ void ux_man_alloc(struct ux_view_state *state)
     size_t doc_width = (ux_man_cols + 1) * cell.w;
     size_t width = tree_width + doc_width + cell.w;
 
-    struct ux_man *ux = calloc(1, sizeof(*ux));
+    struct ux_man *ux = mem_alloc_t(ux);
     *ux = (struct ux_man) {
         .panel = ui_panel_title(make_dim(width, ui_layout_inf), ui_str_c("man")),
         .toc = ui_tree_new(make_dim(tree_width, ui_layout_inf), man_toc_max),
@@ -84,6 +84,7 @@ static void ux_man_free(void *state)
     ui_panel_free(ux->panel);
     ui_tree_free(&ux->toc);
     ui_doc_free(&ux->doc);
+    mem_free(ux);
 }
 
 void ux_man_show_slot(enum ux_slot slot, struct link link)

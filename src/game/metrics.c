@@ -16,8 +16,8 @@ static struct
 
 void metrics_open(const char *path)
 {
-    mfile_writer_open(&metrics.out, path, page_len * 100);
-    strbuf_alloc(&metrics.buf, page_len * 10);
+    mfile_writer_open(&metrics.out, path, sys_page_len * 100);
+    strbuf_alloc(&metrics.buf, sys_page_len * 10);
     metrics.dump = true;
 }
 
@@ -102,6 +102,8 @@ void metrics_dump(struct metrics *m)
 
     void dump_shard(const char *name, const struct metrics_shard *ms, uint64_t div)
     {
+        if (!div) return;
+
         double idle = ((double) ms->shard.idle.t) / sys_sec;
         mfile_writef(out, "    (%s (idle %s %s) (chunks %s %s)\n",
                 name,

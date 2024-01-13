@@ -107,6 +107,6 @@ bool db_run(const char *res, const char *src)
     }
 
     htable_reset(&state.atoms.name);
-    free(state.info);
+    vec_info_free(state.info);
     return true;
 }

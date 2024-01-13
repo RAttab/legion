@@ -25,7 +25,7 @@ struct ui_library
 
 static void *ui_library_alloc(void)
 {
-    struct ui_library *ui = calloc(1, sizeof(*ui));
+    struct ui_library *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_library) {
         .op = ui_label_new(ui_str_c("op:    ")),
@@ -64,7 +64,7 @@ static void ui_library_free(void *_ui)
     ui_label_free(&ui->value);
     ui_link_free(&ui->value_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_library_update(void *_ui, struct chunk *chunk, im_id id)

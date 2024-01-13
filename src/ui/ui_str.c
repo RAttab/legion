@@ -25,7 +25,7 @@ struct ui_str ui_str_v(size_t len)
     return (struct ui_str) {
         .len = 0,
         .cap = len,
-        .str = calloc(len, sizeof(char)),
+        .str = mem_array_alloc_t(char, len),
     };
 }
 
@@ -36,7 +36,7 @@ struct ui_str ui_str_clone(const struct ui_str *str)
 
 void ui_str_free(struct ui_str *str)
 {
-    if (str->cap) free((char *) str->str);
+    if (str->cap) mem_free((char *) str->str);
 }
 
 

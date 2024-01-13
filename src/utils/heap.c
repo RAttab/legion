@@ -61,7 +61,7 @@ static void heap_grow(struct heap *heap, size_t class)
 
     if (heap->len == heap->cap) {
         size_t old_cap = heap->cap;
-        heap->cap += s_page_len * 8;
+        heap->cap += sys_page_len * 8;
 
         if (old_cap)
             heap->data = mremap(heap->data, old_cap, heap->cap, MREMAP_MAYMOVE);
@@ -80,7 +80,7 @@ static void heap_grow(struct heap *heap, size_t class)
     size_t size = heap_class_len(heap, class);
 
     void *it = heap->data + heap->len;
-    heap->len += s_page_len;
+    heap->len += sys_page_len;
     const void *end = heap->data + heap->len;
 
     heap->free[class] = heap_index(heap, it);

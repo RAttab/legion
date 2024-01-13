@@ -27,8 +27,8 @@ void active_init(struct active *active, enum item type)
 
 void active_free(struct active *active)
 {
-    free(active->arena);
-    free(active->ports);
+    mem_free(active->arena);
+    mem_free(active->ports);
     bits_free(&active->free);
 
     bits_init(&active->free);
@@ -103,6 +103,7 @@ bool active_load(struct active *active, struct save *save, struct chunk *chunk)
 {
     if (!save_read_magic(save, save_magic_active)) return false;
 
+    size_t old = active->cap;
     save_read_into(save, &active->len);
     save_read_into(save, &active->cap);
     save_read_into(save, &active->create);
@@ -110,12 +111,12 @@ bool active_load(struct active *active, struct save *save, struct chunk *chunk)
         return save_read_magic(save, save_magic_active);
     save_read_into(save, &active->count);
 
-    active->arena = realloc(active->arena, active->cap * active->size);
+    active->arena = mem_array_realloc(active->arena, active->size, old, active->cap);
     save_read(save, active->arena, active->len * active->size);
     memset(active->arena + (active->len * active->size), 0,
             (active->cap - active->len) * active->size);
 
-    active->ports = realloc(active->ports, active->cap * sizeof(*active->ports));
+    active->ports = mem_array_realloc_t(active->ports, *active->ports, old, active->cap);
     save_read(save, active->ports, active->len * sizeof(*active->ports));
     memset(active->ports + active->len, 0,
             (active->cap - active->len) * sizeof(*active->ports));
@@ -186,23 +187,21 @@ bool active_copy(struct active *active, im_id id, void *dst, size_t len)
 }
 
 
-// \todo calloc and reallocarray won't cache align anything so gotta do it
-// manually.
 static void active_grow(struct active *active)
 {
     if (likely(active->len < active->cap)) return;
 
     if (!active->len) {
         active->cap = 1;
-        active->arena = calloc(active->cap, active->size);
-        active->ports = calloc(active->cap, sizeof(active->ports[0]));
+        active->arena = mem_array_alloc(active->size, active->cap);
+        active->ports = mem_array_alloc_t(active->ports[0], active->cap);
         bits_grow(&active->free, active->cap);
         return;
     }
 
     active->cap = u8_saturate_add(active->cap, active->cap);
-    active->arena = realloc_zero(active->arena, active->len, active->cap, active->size);
-    active->ports = realloc_zero(active->ports, active->len, active->cap, sizeof(active->ports[0]));
+    active->arena = mem_array_realloc(active->arena, active->size, active->len, active->cap);
+    active->ports = mem_array_realloc_t(active->ports, active->ports[0], active->len, active->cap);
     bits_grow(&active->free, active->cap);
 }
 

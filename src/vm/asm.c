@@ -16,14 +16,14 @@ struct assembly
 
 struct assembly *asm_alloc(void)
 {
-    return calloc(1, sizeof(struct assembly));
+    return mem_alloc(sizeof(struct assembly));
 }
 
 void asm_free(struct assembly *as)
 {
-    if (as->line.list) free(as->line.list);
-    if (as->jmp.list) free(as->jmp.list);
-    free(as);
+    if (as->line.list) mem_free(as->line.list);
+    if (as->jmp.list) mem_free(as->jmp.list);
+    mem_free(as);
 }
 
 void asm_reset(struct assembly *as)
@@ -199,11 +199,8 @@ static struct asm_line *asm_append_line(struct assembly *as)
         size_t old = legion_xchg(
                 &as->line.cap,
                 as->line.cap ? as->line.cap * 2 : 1024);
-
-        as->line.list = realloc_zero(
-                as->line.list,
-                old, as->line.cap,
-                sizeof(*as->line.list));
+        as->line.list = mem_array_realloc_t(
+                as->line.list, *as->line.list,old, as->line.cap);
     }
 
     return as->line.list + as->line.len++;
@@ -215,11 +212,8 @@ static struct asm_jmp *asm_append_jmp(struct assembly *as)
         size_t old = legion_xchg(
                 &as->jmp.cap,
                 as->jmp.cap ? as->jmp.cap * 2 : 1024);
-
-        as->jmp.list = realloc_zero(
-                as->jmp.list,
-                old, as->jmp.cap,
-                sizeof(*as->jmp.list));
+        as->jmp.list = mem_array_realloc_t(
+                as->jmp.list, *as->jmp.list, old, as->jmp.cap);
     }
 
     return as->jmp.list + as->jmp.len++;
@@ -298,7 +292,7 @@ void asm_parse(struct assembly *as, const struct mod *mod)
             0;
     }
 
-    struct asm_jmp **delta = calloc(as->jmp.len, sizeof(*delta));
+    struct asm_jmp **delta = mem_array_alloc_t(*delta, as->jmp.len);
     for (size_t i = 0; i < as->jmp.len; ++i) delta[i] = as->jmp.list + i;
     qsort(delta, as->jmp.len, sizeof(*delta), &cmp_delta);
 
@@ -322,7 +316,7 @@ void asm_parse(struct assembly *as, const struct mod *mod)
         }
     }
 
-    free(delta);
+    mem_free(delta);
 }
 
 // -----------------------------------------------------------------------------

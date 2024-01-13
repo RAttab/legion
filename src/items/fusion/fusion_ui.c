@@ -17,7 +17,7 @@ struct ui_fusion
 
 static void *ui_fusion_alloc(void)
 {
-    struct ui_fusion *ui = calloc(1, sizeof(*ui));
+    struct ui_fusion *ui = mem_alloc_t(ui);
     *ui = (struct ui_fusion) {
         .energy = ui_label_new(ui_str_c("energy: ")),
         .energy_val = ui_label_new(ui_str_v(str_scaled_len)),
@@ -45,7 +45,7 @@ static void ui_fusion_free(void *_ui)
     ui_label_free(&ui->input);
     ui_label_free(&ui->input_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_fusion_update(void *_ui, struct chunk *chunk, im_id id)

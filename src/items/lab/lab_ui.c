@@ -20,7 +20,7 @@ struct ui_lab
 
 static void *ui_lab_alloc(void)
 {
-    struct ui_lab *ui = calloc(1, sizeof(*ui));
+    struct ui_lab *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_lab) {
         .bits = ui_lab_bits_new(),
@@ -59,7 +59,7 @@ static void ui_lab_free(void *_ui)
 
     ui_label_free(&ui->total);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_lab_update(void *_ui, struct chunk *chunk, im_id id)

@@ -45,7 +45,7 @@ constexpr unit ux_map_thresh_sector_high = coord_scale_min << 0x10;
 
 void ux_map_alloc(struct ux_view_state *state)
 {
-    struct ux_map *ux = calloc(1, sizeof(*ux));
+    struct ux_map *ux = mem_alloc_t(ux);
     *ux = (struct ux_map) {
         .view = {
             .pos = proxy_home(),
@@ -76,7 +76,7 @@ void ux_map_alloc(struct ux_view_state *state)
 static void ux_map_free(void *state)
 {
     struct ux_map *ux = state;
-    (void) ux;
+    mem_free(ux);
 }
 
 void ux_map_show(struct coord coord)

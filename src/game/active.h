@@ -54,7 +54,7 @@ legion_packed struct active
     legion_pad(8);
 };
 
-static_assert(sizeof(struct active) == s_cache_line);
+static_assert(sizeof(struct active) == sys_cache_line_len);
 
 void active_init(struct active *, enum item type);
 void active_free(struct active *);

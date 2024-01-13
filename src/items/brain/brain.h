@@ -29,6 +29,6 @@ struct legion_packed im_brain
     struct vm vm;
 };
 
-static_assert(sizeof(struct im_brain) == s_cache_line + sizeof(struct vm));
+static_assert(sizeof(struct im_brain) == sys_cache_line_len + sizeof(struct vm));
 
 void im_brain_config(struct im_config *);

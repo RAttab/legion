@@ -27,7 +27,7 @@ struct legion_packed vecx_name
 };
 
 inline legion_always_inline
-void vecx_fn(free) (struct vecx_name *vec) { free(vec); }
+void vecx_fn(free) (struct vecx_name *vec) { mem_free(vec); }
 
 inline legion_always_inline
 size_t vecx_fn(len) (struct vecx_name *vec) { return vec ? vec->len : 0; }
@@ -38,7 +38,7 @@ size_t vecx_fn(cap) (struct vecx_name *vec) { return vec ? vec->cap : 0; }
 inline legion_always_inline
 struct vecx_name *vecx_fn(reserve) (size_t size)
 {
-    struct vecx_name *vec = calloc(1, sizeof(*vec) + size * sizeof(vec->vals[0]));
+    struct vecx_name *vec = mem_struct_alloc_t(vec, vec->vals[0], size);
     vec->cap = size;
     return vec;
 }
@@ -49,7 +49,7 @@ struct vecx_name *vecx_fn(grow) (struct vecx_name *vec, size_t size)
     if (!vec) return vecx_fn(reserve)(size);
     if (size <= vec->cap) return vec;
 
-    vec = realloc(vec, sizeof(*vec) + size * sizeof(vec->vals[0]));
+    vec = mem_struct_realloc_t(vec, vec->vals[0], vec->cap, size);
     vec->cap = size;
     return vec;
 }

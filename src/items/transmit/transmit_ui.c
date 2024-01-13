@@ -16,7 +16,7 @@ struct ui_transmit
 
 static void *ui_transmit_alloc(void)
 {
-    struct ui_transmit *ui = calloc(1, sizeof(*ui));
+    struct ui_transmit *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_transmit) {
         .target = ui_label_new(ui_str_c("target: ")),
@@ -39,7 +39,7 @@ static void ui_transmit_free(void *_ui)
     ui_label_free(&ui->channel);
     ui_label_free(&ui->channel_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_transmit_update(void *_ui, struct chunk *chunk, im_id id)

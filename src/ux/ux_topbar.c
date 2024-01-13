@@ -32,7 +32,7 @@ constexpr size_t topbar_coord_len = topbar_ticks_len+1 + coord_str_len+1 + coord
 
 void ux_topbar_alloc(struct ux_view_state *state)
 {
-    struct ux_topbar *ux = calloc(1, sizeof(*ux));
+    struct ux_topbar *ux = mem_alloc_t(ux);
     *ux = (struct ux_topbar) {
         .panel = ui_panel_menu(
                 make_dim(ui_layout_inf, ui_st.button.base.height)),
@@ -100,7 +100,7 @@ static void ux_topbar_free(void *state) {
     ui_button_free(&ux->man);
     ui_button_free(&ux->close);
 
-    free(ux);
+    mem_free(ux);
 }
 
 static void ux_topbar_update(void *state)

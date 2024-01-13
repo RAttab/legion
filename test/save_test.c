@@ -72,8 +72,8 @@ void check_file(const char *path)
             assert(old_mods->items[i].maj == new_mods->items[i].maj);
             assert(symbol_eq(&old_mods->items[i].str, &new_mods->items[i].str));
         }
-        free(old_mods);
-        free(new_mods);
+        mem_free(old_mods);
+        mem_free(new_mods);
 
         world_free(old);
         old = new;
@@ -86,7 +86,7 @@ void check_file(const char *path)
 void check_ring(void)
 {
     enum {
-        ring_cap = s_page_len,
+        ring_cap = sys_page_len,
         partial_len = ring_cap / 2 + 107,
     };
 

@@ -55,7 +55,7 @@ static void *ui_brain_alloc(void)
     enum : size_t { u8_len = 2, u16_len = 4, u32_len = 8, u64_len = 16 };
 
     size_t stack_len = vm_stack_len(im_brain_stack_max) * sizeof(vm_word);
-    struct ui_brain *ui = calloc(1, sizeof(*ui) + stack_len);
+    struct ui_brain *ui = mem_alloc(sizeof(*ui) + stack_len);
 
     *ui = (struct ui_brain) {
         .mod = ui_label_new(ui_str_c("mod: ")),
@@ -171,7 +171,7 @@ static void ui_brain_free(void *_ui)
     for (size_t i = 0; i < array_len(ui->stack.list); ++i)
         ui_button_free(&ui->stack.list[i].show);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_brain_update(void *_ui, struct chunk *chunk, im_id id)

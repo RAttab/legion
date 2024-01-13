@@ -29,7 +29,7 @@ struct ui_prober
 
 static void *ui_prober_alloc(void)
 {
-    struct ui_prober *ui = calloc(1, sizeof(*ui));
+    struct ui_prober *ui = mem_alloc_t(ui);
     *ui = (struct ui_prober) {
         .coord = ui_label_new(ui_str_c("coord: ")),
         .coord_val = ui_link_new(ui_str_v(symbol_cap)),
@@ -74,7 +74,7 @@ static void ui_prober_free(void *_ui)
     ui_label_free(&ui->result);
     ui_label_free(&ui->result_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 

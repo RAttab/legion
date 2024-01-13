@@ -14,12 +14,12 @@
 void strbuf_alloc(struct strbuf *buf, size_t cap)
 {
     buf->len = 0;
-    buf->str = calloc(buf->cap = cap, 1);
+    buf->str = mem_alloc(buf->cap = cap);
 }
 
 void strbuf_free(struct strbuf *buf)
 {
-    free(buf->str);
+    mem_free(buf->str);
 }
 
 struct strbuf *strbuf_reset(struct strbuf *buf)

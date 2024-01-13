@@ -104,7 +104,7 @@ static void textures_tga(struct texture_data *data)
     data->height = head->img.h;
 
     size_t len = head->img.w * head->img.h;
-    data->img = calloc(len, sizeof(*data->img));
+    data->img = mem_array_alloc_t(*data->img, len);
 
     uint32_t *out = data->img;
     uint32_t *const end = out + len;
@@ -146,7 +146,7 @@ static void textures_load(enum render_texture texture)
             GL_RGBA, data.width, data.height, 0,
             GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, data.img);
     glGenerateMipmap(GL_TEXTURE_2D);
-    free(data.img); data.img = nullptr;
+    mem_free(data.img); data.img = nullptr;
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

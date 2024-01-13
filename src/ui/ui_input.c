@@ -41,7 +41,7 @@ struct ui_input ui_input_new_s(const struct ui_input_style *s, size_t len)
     input.view.col = 0;
     input.view.len = len;
 
-    input.buf.c = calloc(ui_input_cap, sizeof(input.buf.c));
+    input.buf.c = mem_array_alloc_t(input.buf.c, ui_input_cap);
     input.buf.len = 0;
 
     input.carret = 0;
@@ -56,7 +56,7 @@ struct ui_input ui_input_new(size_t len)
 
 void ui_input_free(struct ui_input *input)
 {
-    free(input->buf.c);
+    mem_free(input->buf.c);
 }
 
 void ui_input_focus(struct ui_input *input)

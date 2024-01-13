@@ -43,7 +43,7 @@ static struct dim ux_item_dim(struct ux_item *ux)
 
 void ux_item_alloc(struct ux_view_state *state)
 {
-    struct ux_item *ux = calloc(1, sizeof(*ux));
+    struct ux_item *ux = mem_alloc_t(ux);
     *ux = (struct ux_item) {
         .id = 0,
         .star = {0},
@@ -97,7 +97,7 @@ void ux_item_free(void *state)
         if (config && config->ui.free) config->ui.free(ux->states[i]);
     }
 
-    free(ux);
+    mem_free(ux);
 }
 
 im_id ux_item_selected(void)

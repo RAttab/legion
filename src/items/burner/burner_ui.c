@@ -28,7 +28,7 @@ static void *ui_burner_alloc(void)
         {im_burner_work, "burning", ui_st.rgba.work},
     };
 
-    struct ui_burner *ui = calloc(1, sizeof(*ui));
+    struct ui_burner *ui = mem_alloc_t(ui);
     *ui = (struct ui_burner) {
         .item = ui_label_new(ui_str_c("item:  ")),
         .item_val = ui_label_new(ui_str_v(item_str_len)),
@@ -81,7 +81,7 @@ static void ui_burner_free(void *_ui)
     ui_label_free(&ui->work_sep);
     ui_label_free(&ui->work_cap);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_burner_update(void *_ui, struct chunk *chunk, im_id id)

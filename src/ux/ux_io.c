@@ -51,7 +51,7 @@ int16_t ux_io_width(void)
 
 struct ux_io *ux_io_alloc(void)
 {
-    struct ux_io *ux = calloc(1, sizeof(*ux));
+    struct ux_io *ux = mem_alloc_t(ux);
     *ux = (struct ux_io) {
         .open = io_nil,
         .required = ui_label_new_s(&ui_st.label.required, ui_str_c("*")),
@@ -95,7 +95,7 @@ void ux_io_free(struct ux_io *ux)
         }
     }
 
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_io_show(struct ux_io *ux, struct coord star, im_id id)

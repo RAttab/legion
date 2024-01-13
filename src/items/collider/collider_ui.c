@@ -32,7 +32,7 @@ struct ui_collider
 
 static void *ui_collider_alloc(void)
 {
-    struct ui_collider *ui = calloc(1, sizeof(*ui));
+    struct ui_collider *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_collider) {
         .size = ui_label_new(ui_str_c("size: ")),
@@ -94,7 +94,7 @@ static void ui_collider_free(void *_ui)
     ui_label_free(&ui->out_sep);
     ui_label_free(&ui->out_cap);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_collider_update(void *_ui, struct chunk *chunk, im_id id)

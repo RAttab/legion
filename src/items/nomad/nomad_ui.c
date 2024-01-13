@@ -36,7 +36,7 @@ static void *ui_nomad_alloc(void)
         { im_nomad_unload, "unload", ui_st.rgba.out },
     };
 
-    struct ui_nomad *ui = calloc(1, sizeof(*ui));
+    struct ui_nomad *ui = mem_alloc_t(ui);
     *ui = (struct ui_nomad) {
         .op = ui_label_new(ui_str_c("op:    ")),
         .op_val = ui_label_new(ui_str_v(8)),
@@ -95,7 +95,7 @@ static void ui_nomad_free(void *_ui)
     ui_label_free(&ui->cargo_count);
     ui_label_free(&ui->cargo_item);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_nomad_update(void *_ui, struct chunk *chunk, im_id id)

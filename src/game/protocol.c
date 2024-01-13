@@ -33,13 +33,14 @@ bool status_load(struct status *status, struct save *save)
 
 struct ack *ack_new(void)
 {
-    return calloc(1, sizeof(struct ack));
+    struct ack *ack = mem_alloc_t(ack);
+    return ack;
 }
 
 void ack_free(struct ack *ack)
 {
     htable_reset((struct htable *) &ack->chunk.provided);
-    free(ack);
+    mem_free(ack);
 }
 
 void ack_reset(struct ack *ack)
@@ -135,7 +136,7 @@ static struct ack *ack_load(struct save *save)
         cack->active[item - items_active_first] = hash;
     }
 
-    if (!save_read_magic(save, save_magic_ack)) { free(ack); return NULL; }
+    if (!save_read_magic(save, save_magic_ack)) { mem_free(ack); return NULL; }
     return ack;
 }
 
@@ -293,7 +294,7 @@ bool cmd_load(struct cmd *cmd, struct save *save)
         save_read_into(save, &cmd->data.mod_compile.maj);
         save_read_into(save, &cmd->data.mod_compile.len);
 
-        char *code = calloc(1, cmd->data.mod_compile.len);
+        char *code = mem_alloc(cmd->data.mod_compile.len);
         save_read(save, code, cmd->data.mod_compile.len);
         cmd->data.mod_compile.code = code;
         break;
@@ -321,7 +322,7 @@ bool cmd_load(struct cmd *cmd, struct save *save)
 
 struct state *state_alloc(void)
 {
-    struct state *state = calloc(1, sizeof(*state));
+    struct state *state = mem_alloc_t(state);
 
     *state = (struct state) {
         .speed = speed_slow,
@@ -338,7 +339,7 @@ struct state *state_alloc(void)
 void state_free(struct state *state)
 {
     atoms_free(state->atoms);
-    free(state->mods);
+    mem_free(state->mods);
     vec64_free(state->chunks);
     tech_free(&state->tech);
     log_free(state->log);
@@ -353,7 +354,7 @@ void state_free(struct state *state)
     }
     htable_reset(&state->lanes);
 
-    free(state);
+    mem_free(state);
 }
 
 static void state_save_io(struct world *world, user_id user, struct save *save)

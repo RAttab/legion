@@ -177,7 +177,7 @@ static void fonts_freetype(struct font *font)
     };
 
     const size_t glyph_len = glyph.w * glyph.h;
-    uint32_t *texels = calloc(glyph_len * fonts_map_len, sizeof(*texels));
+    uint32_t *texels = mem_array_alloc_t(*texels, glyph_len * fonts_map_len);
 
     // First glyph is blank to deal with all the non-printable characters.
     for (size_t i = 1; i < fonts_map_len; ++i) {
@@ -229,7 +229,7 @@ static void fonts_load(enum render_font type)
             GL_RGBA, font.glyph.w, font.glyph.h, fonts_map_len, 0,
             GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, font.texels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-    free(font.texels);
+    mem_free(font.texels);
 
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

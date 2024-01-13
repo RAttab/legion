@@ -48,7 +48,7 @@ struct sim
 
 struct sim *sim_new(world_seed seed, const char *save)
 {
-    struct sim *sim = calloc(1, sizeof(*sim));
+    struct sim *sim = mem_alloc_t(sim);
     sim->world = world_new(seed, &sim->metrics);
     world_populate(sim->world);
     users_init(&sim->users);
@@ -73,7 +73,7 @@ void sim_free(struct sim *sim)
 
     world_free(sim->world);
     users_free(&sim->users);
-    free(sim);
+    mem_free(sim);
 }
 
 
@@ -154,7 +154,7 @@ struct sim_pipe
 
 struct sim_pipe *sim_pipe_new(struct sim *sim, sys_ts publish_period)
 {
-    struct sim_pipe *pipe = calloc(1, sizeof(*pipe));
+    struct sim_pipe *pipe = mem_alloc_t(pipe);
     *pipe = (struct sim_pipe) {
         .in = save_ring_new(sim_in_len),
         .out = save_ring_new(sim_out_len),
@@ -189,7 +189,7 @@ static void sim_pipe_free(struct sim_pipe *pipe)
     save_ring_free(pipe->in);
     save_ring_free(pipe->out);
 
-    free(pipe);
+    mem_free(pipe);
 }
 
 // To avoid use-after-free problems we defer the close operation to the
@@ -592,7 +592,7 @@ static void sim_cmd_mod_compile(
             world_mods(sim->world),
             world_atoms(sim->world));
     compile->id = make_mod(cmd->data.mod_compile.maj, 0);
-    free((char *) cmd->data.mod_compile.code);
+    mem_free((char *) cmd->data.mod_compile.code);
 
     pipe->compile = compile;
     sim_publish_mod(pipe, pipe->compile);

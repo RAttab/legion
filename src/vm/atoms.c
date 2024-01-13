@@ -34,16 +34,15 @@ constexpr size_t atoms_default_cap = 1 << 10;
 
 struct atoms *atoms_new(void)
 {
-    struct atoms *atoms = calloc(1, sizeof(*atoms));
+    struct atoms *atoms = mem_alloc_t(atoms);
     atoms->id = atom_ns_user;
 
-    atoms->base = alloc_cache(atoms_default_cap * sizeof(*atoms->base));
+    atoms->base = mem_array_alloc_t(*atoms->base, atoms_default_cap);
     atoms->end = atoms->base + atoms_default_cap;
     atoms->it = atoms->base;
 
     htable_reserve(&atoms->istr, atoms_default_cap);
     htable_reserve(&atoms->iword, atoms_default_cap);
-
 
     struct symbol nil = make_symbol_len("nil", 3);
     atoms->inil = atoms_insert(atoms, &nil, 0);
@@ -57,8 +56,8 @@ void atoms_free(struct atoms *atoms)
 {
     htable_reset(&atoms->istr);
     htable_reset(&atoms->iword);
-    free(atoms->base);
-    free(atoms);
+    mem_free(atoms->base);
+    mem_free(atoms);
 }
 
 
@@ -104,10 +103,11 @@ struct atoms *atoms_load(struct save *save)
 
     size_t len = save_read_type(save, typeof(len));
     size_t cap = atoms->end - atoms->base;
+    size_t old = cap;
 
     if (len > cap) {
         while (cap < len) cap *= 2;
-        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
+        atoms->base = mem_array_realloc_t(atoms->base, *atoms->base, old, cap);
         atoms->end = atoms->base + cap;
     }
 
@@ -167,10 +167,11 @@ bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
     }
 
     size_t cap = atoms->end - atoms->base;
+    size_t old = cap;
     size_t total = start + delta;
     if (total > cap) {
         while (cap < total) cap *= 2;
-        atoms->base = realloc(atoms->base, cap * sizeof(*atoms->base));
+        atoms->base = mem_array_realloc_t(atoms->base, *atoms->base, old, cap);
         atoms->end = atoms->base + cap;
     }
 
@@ -198,7 +199,7 @@ static uint64_t atoms_insert(
         size_t old = atoms->end - atoms->base;
         size_t new = old * 2;
 
-        atoms->base = realloc(atoms->base, new * sizeof(*atoms->base));
+        atoms->base = mem_array_realloc_t(atoms->base, *atoms->base, old, new);
         atoms->it = atoms->base + old;
         atoms->end = atoms->base + new;
     }

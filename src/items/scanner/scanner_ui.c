@@ -22,7 +22,7 @@ struct ui_scanner
 
 static void *ui_scanner_alloc(void)
 {
-    struct ui_scanner *ui = calloc(1, sizeof(*ui));
+    struct ui_scanner *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_scanner) {
         .status = ui_label_new(ui_str_c("state:    ")),
@@ -62,7 +62,7 @@ static void ui_scanner_free(void *_ui)
     ui_label_free(&ui->result);
     ui_label_free(&ui->result_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 

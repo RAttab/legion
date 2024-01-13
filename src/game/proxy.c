@@ -135,7 +135,7 @@ bool proxy_pipe_ready(void)
 
 struct proxy_pipe *proxy_pipe_new(struct sim_pipe *sim)
 {
-    struct proxy_pipe *pipe = calloc(1, sizeof(*pipe));
+    struct proxy_pipe *pipe = mem_alloc_t(pipe);
     *pipe = (struct proxy_pipe) {
         .sim = sim,
         .in = sim ? sim_pipe_out(sim) : save_ring_new(sim_out_len),
@@ -181,7 +181,7 @@ static void proxy_pipe_free(struct proxy_pipe *pipe)
         save_ring_free(pipe->out);
     }
 
-    free(pipe);
+    mem_free(pipe);
 }
 
 static bool proxy_pipe_closed(struct proxy_pipe *pipe)

@@ -44,7 +44,7 @@ void ux_workers_alloc(struct ux_view_state *state)
         [ux_workers_idle] =  { 1, "idle", ui_st.rgba.worker.idle, true },
     };
 
-    struct ux_workers *ux = calloc(1, sizeof(*ux));
+    struct ux_workers *ux = mem_alloc_t(ux);
     *ux = (struct ux_workers) {
         .star = coord_nil(),
 
@@ -78,7 +78,7 @@ static void ux_workers_free(void *state)
     struct ux_workers *ux = state;
     ui_panel_free(ux->panel);
     ui_histo_free(&ux->histo);
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_workers_show(struct coord star)

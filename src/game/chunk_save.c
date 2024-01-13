@@ -150,7 +150,7 @@ struct chunk *chunk_load(struct save *save, struct shard *shard)
 {
     if (!save_read_magic(save, save_magic_chunk)) return NULL;
 
-    struct chunk *chunk = calloc(1, sizeof(*chunk));
+    struct chunk *chunk = mem_alloc_t(chunk);
     chunk->shard = shard;
 
     save_read_into(save, &chunk->name);

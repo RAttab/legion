@@ -19,14 +19,14 @@ struct log *log_new(size_t cap)
 {
     assert(u64_pop(cap) == 1); // power of two required for overflow
 
-    struct log *log = calloc(1, sizeof(*log) + cap * sizeof(log->items[0]));
+    struct log *log = mem_struct_alloc_t(log, log->items[0], cap);
     log->cap = cap;
     return log;
 }
 
 void log_free(struct log *log)
 {
-    free(log);
+    mem_free(log);
 }
 
 static void log_reset(struct log *log)

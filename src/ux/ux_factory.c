@@ -57,7 +57,7 @@ struct ux_factory
 
 void ux_factory_alloc(struct ux_view_state *state)
 {
-    struct ux_factory *ux = calloc(1, sizeof (*ux));
+    struct ux_factory *ux = mem_alloc_t(ux);
     *ux = (struct ux_factory) {
 
         .s = {
@@ -119,7 +119,7 @@ static void ux_factory_free(void *state)
     vec32_free(ux->state.workers.ops);
     htable_reset(&ux->state.index);
 
-    free(ux);
+    mem_free(ux);
 }
 
 // -----------------------------------------------------------------------------

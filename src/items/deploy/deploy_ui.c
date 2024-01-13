@@ -17,7 +17,7 @@ struct ui_deploy
 
 static void *ui_deploy_alloc(void)
 {
-    struct ui_deploy *ui = calloc(1, sizeof(*ui));
+    struct ui_deploy *ui = mem_alloc_t(ui);
     *ui = (struct ui_deploy) {
         .item = ui_label_new(ui_str_c("item:  ")),
         .item_val = ui_label_new(ui_str_v(item_str_len)),
@@ -45,7 +45,7 @@ static void ui_deploy_free(void *_ui)
     ui_label_free(&ui->state);
     ui_label_free(&ui->state_val);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_deploy_update(void *_ui, struct chunk *chunk, im_id id)

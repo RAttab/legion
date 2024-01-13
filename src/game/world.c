@@ -66,7 +66,7 @@ static struct world_user *world_user_next(
 
 struct world *world_new(world_seed seed, struct metrics *metrics)
 {
-    struct world *world = calloc(1, sizeof(*world));
+    struct world *world = mem_alloc_t(world);
 
     world->seed = seed;
     world->atoms = atoms_new();
@@ -103,7 +103,7 @@ void world_free(struct world *world)
         log_free(it->log);
     }
 
-    free(world);
+    mem_free(world);
 }
 
 

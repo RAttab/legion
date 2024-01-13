@@ -22,7 +22,7 @@ struct ux_stars
 
 void ux_stars_alloc(struct ux_view_state *state)
 {
-    struct ux_stars *ux = calloc(1, sizeof(*ux));
+    struct ux_stars *ux = mem_alloc_t(ux);
 
     struct dim cell = engine_cell();
     *ux = (struct ux_stars) {
@@ -51,7 +51,7 @@ static void ux_stars_free(void *state)
     struct ux_stars *ux = state;
     ui_panel_free(ux->panel);
     ui_tree_free(&ux->tree);
-    free(ux);
+    mem_free(ux);
 }
 
 static void ux_stars_update(void *state)

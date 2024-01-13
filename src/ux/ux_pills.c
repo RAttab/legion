@@ -53,7 +53,7 @@ void ux_pills_alloc(struct ux_view_state *state)
     struct dim cell = engine_cell();
     unit width = (symbol_cap + item_str_len + 1 + 3 + 2) * cell.w;
 
-    struct ux_pills *ux = calloc(1, sizeof(*ux));
+    struct ux_pills *ux = mem_alloc_t(ux);
     *ux = (struct ux_pills) {
         .star = coord_nil(),
         .len = 0,
@@ -68,8 +68,8 @@ void ux_pills_alloc(struct ux_view_state *state)
     ux->source_title.w.w = symbol_cap * cell.w;
     ux->cargo_title.w.w = ui_layout_inf;
 
-    ux->rows = calloc(pills_cap, sizeof(*ux->rows));
-    ux->data = calloc(pills_cap, sizeof(*ux->data));
+    ux->rows = mem_array_alloc_t(*ux->rows, pills_cap);
+    ux->data = mem_array_alloc_t(*ux->data, pills_cap);
 
     for (size_t i = 0; i < pills_cap; ++i) {
         ux->rows[i] = (struct ux_pills_row) {
@@ -110,9 +110,9 @@ static void ux_pills_free(void *state)
         ui_label_free(&row->cargo_count);
     }
 
-    free(ux->rows);
-    free(ux->data);
-    free(ux);
+    mem_free(ux->rows);
+    mem_free(ux->data);
+    mem_free(ux);
 }
 
 void ux_pills_show(struct coord star)

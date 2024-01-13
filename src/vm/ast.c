@@ -55,19 +55,20 @@ struct ast
 
 struct ast *ast_alloc(void)
 {
-    return calloc(1, sizeof(struct ast));
+    struct ast *ast = mem_alloc_t(ast);
+    return ast;
 }
 
 void ast_free(struct ast *ast)
 {
-    if (ast->nodes.list) free(ast->nodes.list);
-    if (ast->log.list) free(ast->log.list);
-    free(ast);
+    if (ast->nodes.list) mem_free(ast->nodes.list);
+    if (ast->log.list) mem_free(ast->log.list);
+    mem_free(ast);
 }
 
 ast_it ast_end(const struct ast *ast)
 {
-    // - 1 to get the eof node.
+    // -1 to get the eof node.
     return ast->nodes.list + ast->nodes.len - 1;
 }
 
@@ -149,10 +150,8 @@ static void ast_err_fn(void *ctx, const char *fmt, ...)
                 &ast->log.cap,
                 ast->log.cap ? ast->log.cap * 2 : 16);
 
-        ast->log.list = realloc_zero(
-                ast->log.list,
-                old, ast->log.cap,
-                sizeof(*ast->log.list));
+        ast->log.list = mem_array_realloc_t(
+                ast->log.list, *ast->log.list, old, ast->log.cap);
     }
 
     struct ast_log *log = ast->log.list + ast->log.len++;
@@ -173,8 +172,8 @@ static struct ast_node *ast_append_node(struct ast *ast)
     if (unlikely(ast->nodes.len == ast->nodes.cap)) {
         size_t old = legion_xchg(
                 &ast->nodes.cap, ast->nodes.cap ? ast->nodes.cap * 2 : 1024);
-        ast->nodes.list = realloc_zero(
-                ast->nodes.list, old, ast->nodes.cap, sizeof(*ast->nodes.list));
+        ast->nodes.list = mem_array_realloc_t(
+                ast->nodes.list, *ast->nodes.list, old, ast->nodes.cap);
     }
 
     return ast->nodes.list + ast->nodes.len++;

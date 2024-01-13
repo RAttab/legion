@@ -17,8 +17,8 @@ void pills_init(struct pills *pills)
 
 void pills_free(struct pills *pills)
 {
-    free(pills->coord);
-    free(pills->cargo);
+    mem_free(pills->coord);
+    mem_free(pills->cargo);
 }
 
 static void pills_grow(struct pills *pills, size_t len)
@@ -31,8 +31,8 @@ static void pills_grow(struct pills *pills, size_t len)
     if (2U * len > pills_cap) pills->cap = pills_cap;
     else while (pills->cap < len) pills->cap *= 2;
 
-    pills->coord = realloc_zero(pills->coord, old, pills->cap, sizeof(*pills->coord));
-    pills->cargo = realloc_zero(pills->cargo, old, pills->cap, sizeof(*pills->cargo));
+    pills->coord = mem_array_realloc_t(pills->coord, *pills->coord, old, pills->cap);
+    pills->cargo = mem_array_realloc_t(pills->cargo, *pills->cargo, old, pills->cap);
 
     bits_grow(&pills->free, pills->cap);
     for (size_t i = old; i < pills->cap; ++i)

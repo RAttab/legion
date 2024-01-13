@@ -150,7 +150,7 @@ void reader_expect(struct reader *reader, hash_val hash)
 // writer
 // -----------------------------------------------------------------------------
 
-constexpr size_t writer_chunks = s_page_len;
+constexpr size_t writer_chunks = sys_page_len;
 
 static void writer_out(struct writer *writer, char val);
 

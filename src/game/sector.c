@@ -35,9 +35,7 @@ void star_save(const struct star *star, struct save *save)
 
 struct sector *sector_new(size_t stars)
 {
-    struct sector *sector =
-        calloc(1, sizeof(*sector) + (stars * sizeof(sector->stars[0])));
-
+    struct sector *sector = mem_struct_alloc_t(sector, sector->stars[0], stars);
     sector->stars_len = stars;
     htable_reserve(&sector->index, stars);
 
@@ -47,7 +45,7 @@ struct sector *sector_new(size_t stars)
 void sector_free(struct sector *sector)
 {
     htable_reset(&sector->index);
-    free(sector);
+    mem_free(sector);
 }
 
 const struct star *sector_star_in(

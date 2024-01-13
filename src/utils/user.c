@@ -92,7 +92,7 @@ void users_free(struct users *users)
     for (const struct htable_bucket *it = htable_next(&users->ids, NULL);
          it; it = htable_next(&users->ids, it))
     {
-        free((struct user *) it->value);
+        mem_free((struct user *) it->value);
     }
 
     htable_reset(&users->ids);
@@ -125,7 +125,7 @@ struct user *users_create(struct users *users, const struct symbol *name)
     while (id < 64 && user_set_test(users->avail, id)) id++;
     if (id == 64) return NULL;
 
-    struct user *user = calloc(1, sizeof(*user));
+    struct user *user = mem_alloc_t(user);
     *user = (struct user) {
         .id = id,
         .name = *name,
@@ -211,7 +211,7 @@ void users_read(struct users *users, struct reader *in)
     htable_clear(&users->grant);
 
     while (!reader_peek_close(in)) {
-        struct user *user = calloc(1, sizeof(*user));
+        struct user *user = mem_alloc_t(user);
         reader_open(in);
         user->name = reader_symbol(in);
         user_read(user, in);

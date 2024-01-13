@@ -45,7 +45,7 @@ static void db_gen_man(struct db_state *state)
             "db_man_list:\n\n");
 
     constexpr size_t cap = 128;
-    struct db_man *man = calloc(1,sizeof(*man) + cap * sizeof(man->paths[0]));
+    struct db_man *man = mem_struct_alloc_t(man, man->paths[0], cap);
     *man = (struct db_man) { .len = 0, .cap = cap };
 
     db_man_path(state, state->path.man, man);
@@ -67,7 +67,7 @@ static void db_gen_man(struct db_state *state)
                 strlen(path) + 1, file_len_p(path), path, path);
     }
 
-    free(man);
+    mem_free(man);
 
     db_file_write(&state->files.man,
             "\t.global db_man_list_end\n"

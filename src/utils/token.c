@@ -316,7 +316,7 @@ static void token_ctx_err(void *_ctx, const char *fmt, ...)
 struct token_ctx *token_init_stderr(
         struct tokenizer *tok, const char *name, const char *src, size_t len)
 {
-    struct token_ctx *ctx = calloc(1, sizeof(*ctx));
+    struct token_ctx *ctx = mem_alloc_t(ctx);
     *ctx = (struct token_ctx) { .ok = true, .name = name, .tok = tok };
 
     token_init(tok, src, len, token_ctx_err, ctx);
@@ -325,7 +325,7 @@ struct token_ctx *token_init_stderr(
 
 void token_ctx_free(struct token_ctx *ctx)
 {
-    free(ctx);
+    mem_free(ctx);
 }
 
 bool token_ctx_ok(struct token_ctx *ctx)

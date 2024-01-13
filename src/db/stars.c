@@ -34,7 +34,7 @@ static void stars_names_populate(void)
 {
     {
 #define stars_prefix_begin(_len)                                \
-    stars_names.prefix = calloc(1,                              \
+    stars_names.prefix = mem_alloc(                             \
             sizeof(*stars_names.prefix) +                       \
             sizeof(stars_names.prefix->list[0]) * _len);        \
     stars_names.prefix->len = _len;                             \
@@ -57,7 +57,7 @@ static void stars_names_populate(void)
         size_t it = 0;
 
 #define stars_suffix_begin(_name, _len)                                 \
-    stars_names.suffix.list[it] = calloc(1,                             \
+    stars_names.suffix.list[it] = mem_alloc(                            \
             sizeof(*stars_names.suffix.list[it]) +                      \
             sizeof(stars_names.suffix.list[it]->list[0]) * _len);       \
     stars_names.suffix.list[it]->len = _len;                            \
@@ -104,7 +104,7 @@ static void stars_rolls_populate(void)
     size_t it = 0;
 
 #define stars_rolls_begin( _name, _weight, _hue, _len)          \
-    stars_rolls.list[it] = calloc(1,                            \
+    stars_rolls.list[it] = mem_alloc(                           \
             sizeof(*stars_rolls.list[it]) +                     \
             sizeof(stars_rolls.list[it]->ranges[0]) * _len);    \
     *stars_rolls.list[it] = (struct stars_rolls) {              \

@@ -19,7 +19,7 @@ struct ui_legion
 
 static void *ui_legion_alloc(void)
 {
-    struct ui_legion *ui = calloc(1, sizeof(*ui));
+    struct ui_legion *ui = mem_alloc_t(ui);
 
     *ui = (struct ui_legion) {
         .mod = ui_label_new(ui_str_c("mod: ")),
@@ -44,7 +44,7 @@ static void ui_legion_free(void *_ui)
     ui_label_free(&ui->index);
     ui_label_free(&ui->cargo);
 
-    free(ui);
+    mem_free(ui);
 }
 
 static void ui_legion_update(void *_ui, struct chunk *chunk, im_id id)

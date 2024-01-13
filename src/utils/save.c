@@ -13,7 +13,7 @@
 
 static const uint64_t save_magic_top = 0xFF4E4F4947454CFF;
 static const uint64_t save_magic_seal = 0xFF4C4547494F4EFF;
-static const size_t save_chunks = 10 * page_len;
+static const size_t save_chunks = 10 * sys_page_len;
 
 typedef void (*save_grow_fn) (struct save *, size_t len);
 
@@ -33,7 +33,7 @@ struct save
 
 static void save_free(struct save *save)
 {
-    free(save->prof);
+    mem_free(save->prof);
 }
 
 bool save_eof(struct save *save)
@@ -262,7 +262,7 @@ bool save_read_vec64(struct save *save, struct vec64 **ret)
 
 void save_prof(struct save *save)
 {
-    if (!save->prof) save->prof = calloc(1, sizeof(*save->prof));
+    if (!save->prof) save->prof = mem_alloc_t(save->prof);
     else {
         memset(save->prof->bytes, 0, sizeof(save->prof->bytes));
         save->prof->depth = 0;
@@ -274,7 +274,7 @@ void save_prof_dump(struct save *save)
     if (!save->prof) return;
     struct save_prof *prof = save->prof;
 
-    char buffer[s_page_len] = {0};
+    char buffer[sys_page_len] = {0};
     char *it = buffer;
     const char *end = it + sizeof(buffer);
 
@@ -325,6 +325,6 @@ void save_prof_dump(struct save *save)
     it += snprintf(it, end - it, "}\n");
     fprintf(stderr, "%s", buffer);
 
-    free(save->prof);
+    mem_free(save->prof);
     save->prof = NULL;
 }

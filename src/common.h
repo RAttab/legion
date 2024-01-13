@@ -190,11 +190,6 @@ inline void *mem_align_realloc(void *ptr, size_t old, size_t new, size_t align)
     return memcpy(mem_align_alloc(new, align), ptr, old);
 }
 
-#define alloc_cache(len) \
-    ({ mem_align_alloc(len, sys_cache_line_len); })
-#define realloc_zero(ptr, old, new, elem) \
-    ({ mem_array_realloc(ptr, elem, old, new); })
-
 
 // -----------------------------------------------------------------------------
 // log

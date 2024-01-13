@@ -53,7 +53,7 @@ void check_basics(void)
         {
             struct vec64 *atoms = atoms_list(proxy_atoms());
             assert(atoms->len > 0);
-            free(atoms);
+            vec64_free(atoms);
         }
 
         {

@@ -26,7 +26,7 @@ struct ux_status
 
 void ux_status_alloc(struct ux_view_state *state)
 {
-    struct ux_status *ux = calloc(1, sizeof(*ux));
+    struct ux_status *ux = mem_alloc_t(ux);
 
     struct dim cell = engine_cell();
     *ux = (struct ux_status) {
@@ -49,7 +49,7 @@ static void ux_status_free(void *state) {
     struct ux_status *ux = state;
     ui_panel_free(ux->panel);
     ui_label_free(&ux->status);
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_status_set(enum status_type type, const char *msg, size_t len)

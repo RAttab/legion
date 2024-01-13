@@ -74,7 +74,7 @@ void ux_log_alloc(struct ux_view_state *state)
     for (size_t i = 0; i < array_len(ux_log_line_col); ++i)
         w += cell.w * (ux_log_line_col[i] + 1);
 
-    struct ux_log *ux = calloc(1, sizeof(*ux));
+    struct ux_log *ux = mem_alloc_t(ux);
     *ux = (struct ux_log) {
         .cell = cell,
         .panel = ui_panel_title(make_dim(w, ui_layout_inf), ui_str_c("log")),
@@ -117,7 +117,7 @@ static void ux_log_free(void *state)
     for (size_t i = 0; i < array_len(ux->items); ++i)
         ux_log_line_free(ux->items + i);
 
-    free(ux);
+    mem_free(ux);
 }
 
 void ux_log_show(struct coord star)

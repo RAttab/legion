@@ -43,7 +43,7 @@ static struct ui_panel *ui_panel_new(struct dim dim)
 {
     struct ui_panel_style *s = &ui_st.panel;
 
-    struct ui_panel *panel = calloc(1, sizeof(*panel));
+    struct ui_panel *panel = mem_alloc_t(panel);
     *panel = (struct ui_panel) {
         .w = make_ui_widget(dim),
         .s = *s,
@@ -80,7 +80,7 @@ void ui_panel_free(struct ui_panel *panel)
         ui_label_free(&panel->title);
         ui_button_free(&panel->close);
     }
-    free(panel);
+    mem_free(panel);
 }
 
 void ui_panel_resize(struct ui_panel *panel, struct dim dim)

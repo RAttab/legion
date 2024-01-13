@@ -75,8 +75,10 @@ static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
     /* dbgf("err: %u:%u %s", err->pos, err->len, err->str); */
 
     if (unlikely(lisp->err.len == lisp->err.cap)) {
+        size_t old = lisp->err.cap;
         lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
-        lisp->err.list = realloc(lisp->err.list, lisp->err.cap * sizeof(*lisp->err.list));
+        lisp->err.list = mem_array_realloc_t(
+                lisp->err.list, *lisp->err.list, old, lisp->err.cap);
     }
     lisp->err.len++;
 
@@ -204,9 +206,11 @@ static void lisp_ensure(struct lisp *lisp, size_t len)
 
     size_t pos = lisp->out.it - lisp->out.base;
     size_t cap = (lisp->out.end - lisp->out.base);
-    cap = cap ? cap * 2 : page_len;
 
-    lisp->out.base = realloc(lisp->out.base, cap);
+    size_t old = cap;
+    cap = cap ? cap * 2 : sys_page_len;
+
+    lisp->out.base = mem_realloc(lisp->out.base, old, cap);
     lisp->out.end = lisp->out.base + cap;
     lisp->out.it = lisp->out.base + pos;
 }
@@ -275,9 +279,10 @@ static void lisp_index_at(struct lisp *lisp, const struct token *token)
         index = &lisp->index.list[prev];
     else {
         if (lisp->index.len == lisp->index.cap) {
+            size_t old = lisp->index.cap;
             lisp->index.cap = lisp->index.cap ? lisp->index.cap * 2 : 8;
-            lisp->index.list = realloc(
-                    lisp->index.list, lisp->index.cap * sizeof(*lisp->index.list));
+            lisp->index.list = mem_array_realloc_t(
+                    lisp->index.list, *lisp->index.list, old, lisp->index.cap);
         }
 
         index = &lisp->index.list[lisp->index.len];
@@ -370,7 +375,7 @@ static void lisp_pub_symbol(struct lisp *lisp, const struct symbol *symbol)
     struct htable_ret ret = htable_get(&lisp->pub.symb, key);
     if (ret.ok) return;
 
-    struct symbol *value = calloc(1, sizeof(*value));
+    struct symbol *value = mem_alloc_t(value);
     *value = *symbol;
 
     ret = htable_put(&lisp->pub.symb, key, (uintptr_t) value);
@@ -380,8 +385,10 @@ static void lisp_pub_symbol(struct lisp *lisp, const struct symbol *symbol)
 static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, vm_ip ip)
 {
     if (unlikely(lisp->pub.len == lisp->pub.cap)) {
+        size_t old = lisp->pub.cap;
         lisp->pub.cap = lisp->pub.cap ? lisp->pub.cap * 2 : 2;
-        lisp->pub.list = realloc(lisp->pub.list, lisp->pub.cap * sizeof(*lisp->pub.list));
+        lisp->pub.list = mem_array_realloc_t(
+                lisp->pub.list, *lisp->pub.list, old, lisp->pub.cap);
     }
 
     uint64_t key = symbol_hash(symbol);
@@ -409,7 +416,7 @@ static vm_ip lisp_jmp(struct lisp *lisp, const struct token *token)
     ret = htable_get(&lisp->symb.req, key);
 
     struct lisp_req *old = ret.ok ? (void *) ret.value : NULL;
-    struct lisp_req *new = calloc(1, sizeof(*new));
+    struct lisp_req *new = mem_alloc_t(new);
     *new = (struct lisp_req) {
         .next = old,
         .ip = lisp_ip(lisp),
@@ -450,7 +457,7 @@ static void lisp_label(struct lisp *lisp, const struct symbol *symbol)
         lisp_write_value_at(lisp, req->ip, jmp);
 
         struct lisp_req *next = req->next;
-        free(req);
+        mem_free(req);
         req = next;
     }
 
@@ -475,7 +482,7 @@ static void lisp_label_unknown(struct lisp *lisp)
                     "unknown function or label: %s (%lx)", symbol->c, it->value);
 
             struct lisp_req *next = req->next;
-            free(req);
+            mem_free(req);
             req = next;
         }
     }
@@ -693,10 +700,10 @@ struct mod *mod_compile(
             lisp.err.list, lisp.err.len,
             lisp.index.list, lisp.index.len);
 
-    free(lisp.out.base);
-    free(lisp.err.list);
-    free(lisp.index.list);
-    free(lisp.pub.list);
+    mem_free(lisp.out.base);
+    mem_free(lisp.err.list);
+    mem_free(lisp.index.list);
+    mem_free(lisp.pub.list);
     htable_reset(&lisp.consts);
     htable_reset(&lisp.symb.fn);
     htable_reset(&lisp.symb.req);
@@ -704,7 +711,7 @@ struct mod *mod_compile(
 
     for (const struct htable_bucket *it = htable_next(&lisp.pub.symb, NULL);
          it; it = htable_next(&lisp.pub.symb, it))
-        free((struct symbol *) it->value);
+        mem_free((struct symbol *) it->value);
     htable_reset(&lisp.pub.symb);
 
     return mod;
@@ -717,7 +724,7 @@ struct mod *mod_compile(
 
 struct lisp *lisp_new(struct mods_list *mods, struct atoms *atoms)
 {
-    struct lisp *lisp = calloc(1, sizeof(*lisp));
+    struct lisp *lisp = mem_alloc_t(lisp);
     lisp->mods_list = mods;
     lisp->atoms = atoms;
     return lisp;
@@ -725,7 +732,7 @@ struct lisp *lisp_new(struct mods_list *mods, struct atoms *atoms)
 
 void lisp_free(struct lisp *lisp)
 {
-    free(lisp);
+    mem_free(lisp);
 }
 
 void lisp_context(struct lisp *lisp, struct mods_list *mods, struct atoms *atoms)

@@ -68,7 +68,7 @@ void ui_doc_free(struct ui_doc *doc)
 {
     ui_scroll_free(&doc->scroll);
     if (doc->man) man_free(doc->man);
-    if (doc->copy.cap) free(doc->copy.buffer);
+    if (doc->copy.cap) mem_free(doc->copy.buffer);
 }
 
 
@@ -97,8 +97,10 @@ static void ui_doc_copy(struct ui_doc *doc)
 
         case markup_code: {
             while (doc->copy.len + it->len > doc->copy.cap) {
-                size_t old = legion_xchg(&doc->copy.cap, doc->copy.cap ? doc->copy.cap * 2 : 128);
-                doc->copy.buffer = realloc_zero(doc->copy.buffer, old, doc->copy.cap, 1);
+                size_t old = legion_xchg(&doc->copy.cap,
+                        doc->copy.cap ? doc->copy.cap * 2 : 128);
+                doc->copy.buffer = mem_array_realloc_t(
+                        doc->copy.buffer, char, old, doc->copy.cap);
             }
 
             memcpy(doc->copy.buffer + doc->copy.len, it->text, it->len);

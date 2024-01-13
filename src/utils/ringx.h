@@ -33,7 +33,7 @@ struct ringx_name
 
 
 inline legion_always_inline
-void ringx_fn(free) (struct ringx_name *ring) { free(ring); }
+void ringx_fn(free) (struct ringx_name *ring) { mem_free(ring); }
 
 inline legion_always_inline
 size_t ringx_fn(cap) (const struct ringx_name *ring)
@@ -64,7 +64,7 @@ struct ringx_name *ringx_fn(reserve) (size_t size)
     while (cap < size) cap *= 2;
     assert(cap <= ring_cap);
 
-    struct ringx_name *ring = calloc(1, sizeof(*ring) + cap * sizeof(ring->vals[0]));
+    struct ringx_name *ring = mem_struct_alloc_t(ring, ring->vals[0], cap);
     ring->cap = cap;
     return ring;
 }
