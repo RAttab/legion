@@ -13,6 +13,7 @@
 #include "utils/str.h"
 #include "utils/bits.h"
 
+#include <opus.h>
 #include <alsa/asoundlib.h>
 #include <stdatomic.h>
 #include <sys/sysinfo.h>
