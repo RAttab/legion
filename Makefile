@@ -9,13 +9,14 @@
 # -----------------------------------------------------------------------------
 
 PREFIX ?= build
-
 TEST ?= ring lisp chunk lanes tech save protocol items proxy man
+
+DEPS = opus alsa glfw3 opengl freetype2
 
 CFLAGS := $(CFLAGS) -ggdb -O3 -march=native -pipe -std=gnu2x -D_GNU_SOURCE -lm -pthread
 CFLAGS := $(CFLAGS) -Isrc -Isrc/engine
 CFLAGS := $(CFLAGS) -DLEGION_BUILD_PREFIX="$(PREFIX)"
-CFLAGS := $(CFLAGS) $(shell pkg-config --cflags freetype2)
+CFLAGS := $(CFLAGS) $(foreach dep,$(DEPS),$(shell pkg-config --cflags $(dep)))
 CFLAGS := $(CFLAGS) -Wall -Wextra
 CFLAGS := $(CFLAGS) -Wundef
 CFLAGS := $(CFLAGS) -Wcast-align
@@ -27,17 +28,14 @@ CFLAGS := $(CFLAGS) -Wno-format-truncation
 CFLAGS := $(CFLAGS) -Wno-implicit-fallthrough
 CFLAGS := $(CFLAGS) -Wno-address-of-packed-member
 
+LIBS := $(LIBS) $(foreach dep,$(DEPS),$(shell pkg-config --libs $(dep)))
+
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --quiet
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --leak-check=full
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --track-origins=yes
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --trace-children=yes
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --error-exitcode=1
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --suppressions=legion.supp
-
-LIBS := $(LIBS) $(shell pkg-config --libs alsa)
-LIBS := $(LIBS) $(shell pkg-config --libs glfw3)
-LIBS := $(LIBS) $(shell pkg-config --libs opengl)
-LIBS := $(LIBS) $(shell pkg-config --libs freetype2)
 
 ASM := src/db/res.S
 
@@ -121,9 +119,9 @@ gen: $(PREFIX)/gen gen-tech gen-db
 $(shell mkdir -p $(PREFIX)/pcm/)
 pcm: $(foreach pcm,$(PCMS),$(PREFIX)/pcm/$(pcm).pcm)
 
-$(PREFIX)/pcm/%.pcm: res/pcm/%.*
+$(PREFIX)/sound/%.opus: res/opus/%.*
 	@echo -e "\e[32m[pcm]\e[0m $@"
-	@ffmpeg -y -v error -i $< -acodec pcm_f32le -f f32le -ac 2 -ar 48000 $@
+	@ffmpeg -y -v error -i $< -acodec opus -f f32le -ac 2 -ar 48000 $@
 
 
 $(shell mkdir -p $(PREFIX)/shaders/)

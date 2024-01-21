@@ -17,9 +17,11 @@ enum render_sound : unsigned
     bgm_piano = sound_bgm_first,
     sound_bgm_last,
 
-    sound_sfx_first,
+    sound_sfx_first = sound_bgm_last,
     sfx_button = sound_sfx_first,
     sound_sfx_last,
+
+    sound_files_len = sound_sfx_last,
 };
 
 float sound_mix_master(void);
