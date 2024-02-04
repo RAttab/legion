@@ -200,11 +200,8 @@ bool asm_find(
 static struct asm_line *asm_append_line(struct assembly *as)
 {
     if (unlikely(as->line.len == as->line.cap)) {
-        size_t old = legion_xchg(
-                &as->line.cap,
-                as->line.cap ? as->line.cap * 2 : 1024);
-        as->line.list = mem_array_realloc_t(
-                as->line.list, *as->line.list,old, as->line.cap);
+        size_t old = mem_array_len_grow(&as->line.cap, 1024);
+        as->line.list = mem_array_realloc_t(as->line.list, old, as->line.cap);
     }
 
     return as->line.list + as->line.len++;
@@ -213,11 +210,8 @@ static struct asm_line *asm_append_line(struct assembly *as)
 static struct asm_jmp *asm_append_jmp(struct assembly *as)
 {
     if (unlikely(as->jmp.len == as->jmp.cap)) {
-        size_t old = legion_xchg(
-                &as->jmp.cap,
-                as->jmp.cap ? as->jmp.cap * 2 : 1024);
-        as->jmp.list = mem_array_realloc_t(
-                as->jmp.list, *as->jmp.list, old, as->jmp.cap);
+        size_t old = mem_array_len_grow(&as->jmp.cap, 1024);
+        as->jmp.list = mem_array_realloc_t(as->jmp.list, old, as->jmp.cap);
     }
 
     return as->jmp.list + as->jmp.len++;

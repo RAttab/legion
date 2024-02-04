@@ -587,7 +587,7 @@ bool mods_list_load_into(struct mods_list **ret, struct save *save)
 
     size_t len = save_read_type(save, typeof(list->len));
     if (!list || len > list->cap) {
-        list = mem_array_realloc_t(list, list->items[0], list->cap, len);
+        list = mem_array_realloc_t(list, list->cap, len);
         list->cap = len;
         *ret = list;
     }

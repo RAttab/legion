@@ -28,11 +28,10 @@ static void pills_grow(struct pills *pills, size_t len)
 
     size_t old = pills->cap;
     if (!pills->cap) pills->cap = 4;
-    if (2U * len > pills_cap) pills->cap = pills_cap;
-    else while (pills->cap < len) pills->cap *= 2;
+    while (pills->cap < legion_min(len, pills_cap)) pills->cap *= 2;
 
-    pills->coord = mem_array_realloc_t(pills->coord, *pills->coord, old, pills->cap);
-    pills->cargo = mem_array_realloc_t(pills->cargo, *pills->cargo, old, pills->cap);
+    pills->coord = mem_array_realloc_t(pills->coord, old, pills->cap);
+    pills->cargo = mem_array_realloc_t(pills->cargo, old, pills->cap);
 
     bits_grow(&pills->free, pills->cap);
     for (size_t i = old; i < pills->cap; ++i)

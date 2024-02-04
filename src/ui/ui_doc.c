@@ -97,10 +97,8 @@ static void ui_doc_copy(struct ui_doc *doc)
 
         case markup_code: {
             while (doc->copy.len + it->len > doc->copy.cap) {
-                size_t old = legion_xchg(&doc->copy.cap,
-                        doc->copy.cap ? doc->copy.cap * 2 : 128);
-                doc->copy.buffer = mem_array_realloc_t(
-                        doc->copy.buffer, char, old, doc->copy.cap);
+                size_t old = mem_array_len_grow(&doc->copy.cap, 128);
+                doc->copy.buffer = mem_array_realloc_t(doc->copy.buffer, old, doc->copy.cap);
             }
 
             memcpy(doc->copy.buffer + doc->copy.len, it->text, it->len);

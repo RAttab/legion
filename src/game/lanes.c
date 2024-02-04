@@ -105,7 +105,7 @@ static void lane_grow(struct lane *lane)
     if (likely(lane->len != lane->cap)) return;
 
     size_t old = lane->cap;
-    lane->queue = mem_array_realloc_t(lane->queue, *lane->queue, old, lane->cap *= 2);
+    lane->queue = mem_array_realloc_t(lane->queue, old, lane->cap *= 2);
 }
 
 static void lane_push(struct lane *lane, world_ts ts, heap_ix data)

@@ -131,9 +131,8 @@ struct ui_str *ui_tree_add(
     assert(parent == ui_tree_node_nil || parent < tree->len);
 
     if (tree->len == tree->cap) {
-        size_t old = tree->cap;
-        tree->cap = tree->cap ? tree->cap * 2 : 8;
-        tree->nodes = mem_array_realloc_t(tree->nodes, *tree->nodes, old, tree->cap);
+        size_t old = mem_array_len_grow(&tree->cap, 8);
+        tree->nodes = mem_array_realloc_t(tree->nodes, old, tree->cap);
     }
 
     struct ui_tree_node *node = tree->nodes + tree->len;

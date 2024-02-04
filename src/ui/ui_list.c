@@ -94,9 +94,8 @@ struct ui_str *ui_list_add(struct ui_list *list, uint64_t user)
     assert(user);
 
     if (list->len == list->cap) {
-        size_t old = list->cap;
-        list->cap = list->cap ? list->cap * 2 : 8;
-        list->entries = mem_array_realloc_t(list->entries, *list->entries, old, list->cap);
+        size_t old = mem_array_len_grow(&list->cap, 8);
+        list->entries = mem_array_realloc_t(list->entries, old, list->cap);
     }
 
     struct ui_list_entry *entry = list->entries + list->len;

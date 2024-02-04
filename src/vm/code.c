@@ -19,11 +19,10 @@ static void code_str_reserve(struct code_str *str, size_t len)
 {
     if (likely(len && len <= str->cap)) return;
 
-    size_t old = str->cap;
-    if (!old) str->cap = legion_max(len, 8U);
+    size_t old = str->cap ? str->cap : legion_max(len, 8U);
     while (str->cap < len) str->cap *= 2;
 
-    str->str = mem_array_realloc_t(str->str, char, old, str->cap);
+    str->str = mem_array_realloc_t(str->str, old, str->cap);
 }
 
 static void code_str_append(struct code_str *str, const char *src, size_t len)
@@ -403,10 +402,8 @@ static void code_hist_push(
     }
 
     if (code->hist.top == code->hist.cap) {
-        size_t old = legion_xchg(&code->hist.cap,
-                code->hist.cap ? code->hist.cap * 2 : 128);
-        code->hist.list = mem_array_realloc_t(
-                code->hist.list, *code->hist.list, old, code->hist.cap);
+        size_t old = mem_array_len_grow(&code->hist.cap, 128);
+        code->hist.list = mem_array_realloc_t(code->hist.list, old, code->hist.cap);
     }
 
     struct code_hist *it = code->hist.list + code->hist.it;

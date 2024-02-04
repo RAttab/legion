@@ -103,11 +103,11 @@ struct atoms *atoms_load(struct save *save)
 
     size_t len = save_read_type(save, typeof(len));
     size_t cap = atoms->end - atoms->base;
-    size_t old = cap;
 
     if (len > cap) {
+        size_t old = cap;
         while (cap < len) cap *= 2;
-        atoms->base = mem_array_realloc_t(atoms->base, *atoms->base, old, cap);
+        atoms->base = mem_array_realloc_t(atoms->base, old, cap);
         atoms->end = atoms->base + cap;
     }
 
@@ -167,11 +167,11 @@ bool atoms_load_delta(struct atoms *atoms, struct save *save, struct ack *ack)
     }
 
     size_t cap = atoms->end - atoms->base;
-    size_t old = cap;
     size_t total = start + delta;
     if (total > cap) {
+        size_t old = cap;
         while (cap < total) cap *= 2;
-        atoms->base = mem_array_realloc_t(atoms->base, *atoms->base, old, cap);
+        atoms->base = mem_array_realloc_t(atoms->base, old, cap);
         atoms->end = atoms->base + cap;
     }
 
@@ -199,7 +199,7 @@ static uint64_t atoms_insert(
         size_t old = atoms->end - atoms->base;
         size_t new = old * 2;
 
-        atoms->base = mem_array_realloc_t(atoms->base, *atoms->base, old, new);
+        atoms->base = mem_array_realloc_t(atoms->base, old, new);
         atoms->it = atoms->base + old;
         atoms->end = atoms->base + new;
     }

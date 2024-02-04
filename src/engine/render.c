@@ -240,7 +240,7 @@ static void render_buffer_reserve_index(struct render_buffer *buffer, size_t len
     if (!buffer->ecap) buffer->ecap = 128;
     while (buffer->ecap < buffer->elen + len) buffer->ecap *= 2;
 
-    buffer->e = mem_array_realloc_t(buffer->e, *buffer->e, old, buffer->ecap);
+    buffer->e = mem_array_realloc_t(buffer->e, old, buffer->ecap);
 }
 
 static void render_buffer_push_index(

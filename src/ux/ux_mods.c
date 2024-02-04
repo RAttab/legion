@@ -190,11 +190,9 @@ static struct ux_mods_tab *ux_mods_tabs_alloc(
 
     if (!tab) {
         if (ux->tabs.len == ux->tabs.cap) {
-            size_t old = legion_xchg(&ux->tabs.cap, ux->tabs.cap ? ux->tabs.cap * 2 : 8);
-            ux->tabs.list = mem_array_realloc_t(
-                    ux->tabs.list, *ux->tabs.list, old, ux->tabs.cap);
-            ux->tabs.order = mem_array_realloc_t(
-                    ux->tabs.order, *ux->tabs.order, old, ux->tabs.cap);
+            size_t old = mem_array_len_grow(&ux->tabs.cap, 8);
+            ux->tabs.list = mem_array_realloc_t(ux->tabs.list, old, ux->tabs.cap);
+            ux->tabs.order = mem_array_realloc_t(ux->tabs.order, old, ux->tabs.cap);
         }
 
         tab = ux->tabs.list + ux->tabs.len;

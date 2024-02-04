@@ -116,7 +116,7 @@ bool active_load(struct active *active, struct save *save, struct chunk *chunk)
     memset(active->arena + (active->len * active->size), 0,
             (active->cap - active->len) * active->size);
 
-    active->ports = mem_array_realloc_t(active->ports, *active->ports, old, active->cap);
+    active->ports = mem_array_realloc_t(active->ports, old, active->cap);
     save_read(save, active->ports, active->len * sizeof(*active->ports));
     memset(active->ports + active->len, 0,
             (active->cap - active->len) * sizeof(*active->ports));
@@ -201,7 +201,7 @@ static void active_grow(struct active *active)
 
     active->cap = u8_saturate_add(active->cap, active->cap);
     active->arena = mem_array_realloc(active->arena, active->size, active->len, active->cap);
-    active->ports = mem_array_realloc_t(active->ports, active->ports[0], active->len, active->cap);
+    active->ports = mem_array_realloc_t(active->ports, active->len, active->cap);
     bits_grow(&active->free, active->cap);
 }
 
