@@ -140,9 +140,17 @@ inline void *mem_realloc(void *ptr, size_t old, size_t new)
 
 
 #define mem_array_alloc_t(elem, count) \
-    ({ mem_array_alloc(sizeof(elem), count); })
-#define mem_array_realloc_t(ptr, elem, old, new) \
-    ({ mem_array_realloc(ptr, sizeof(elem), old, new); })
+    ({ mem_array_alloc(sizeof(elem), (count)); })
+#define mem_array_realloc_t(ptr, old, new) \
+    ({ mem_array_realloc(ptr, sizeof(*ptr), (old), (new)); })
+
+#define mem_array_len_grow(_ptr, init)                  \
+    ({                                                  \
+        typeof(_ptr) ptr = (_ptr);                      \
+        typeof(*ptr) old = *ptr;                        \
+        *ptr = old ? old * 2 : (init);                  \
+        old;                                            \
+    })
 
 inline void *mem_array_alloc(size_t elem, size_t count)
 {
@@ -158,9 +166,9 @@ inline void *mem_array_realloc(void *ptr, size_t elem, size_t old, size_t new)
 
 
 #define mem_struct_alloc_t(ptr, elem, count) \
-    ({ mem_struct_alloc(sizeof(*ptr), sizeof(elem), count); })
+    ({ mem_struct_alloc(sizeof(*ptr), sizeof(elem), (count)); })
 #define mem_struct_realloc_t(ptr, elem, old, new) \
-    ({ mem_struct_realloc(ptr, sizeof(*ptr), sizeof(elem), old, new); })
+    ({ mem_struct_realloc((ptr), sizeof(*ptr), sizeof(elem), (old), (new)); })
 
 inline void *mem_struct_alloc(size_t head, size_t elem, size_t count)
 {
@@ -178,7 +186,7 @@ inline void *mem_struct_realloc(
 
 
 #define mem_align_alloc_t(ptr, align) \
-    ({ mem_align_alloc(sizeof(*ptr), align); })
+    ({ mem_align_alloc(sizeof(*ptr), (align)); })
 
 inline void *mem_align_alloc(size_t len, size_t align)
 {

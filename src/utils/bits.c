@@ -22,8 +22,7 @@ void bits_grow(struct bits *bits, size_t len)
 
     if (!bits_inline(bits)) {
         bits->len = len;
-        bits->bits = (uintptr_t) mem_array_realloc_t(
-                bits_array(bits), bits->bits, old, new);
+        bits->bits = (uintptr_t) mem_array_realloc_t(bits_array(bits), old, new);
     }
     else {
         uint64_t copy = bits->bits;

@@ -75,10 +75,8 @@ static void lisp_err_ins(struct lisp *lisp, struct mod_err *err)
     /* dbgf("err: %u:%u %s", err->pos, err->len, err->str); */
 
     if (unlikely(lisp->err.len == lisp->err.cap)) {
-        size_t old = lisp->err.cap;
-        lisp->err.cap = lisp->err.cap ? lisp->err.cap * 2 : 8;
-        lisp->err.list = mem_array_realloc_t(
-                lisp->err.list, *lisp->err.list, old, lisp->err.cap);
+        size_t old = mem_array_len_grow(&lisp->err.cap, 8);
+        lisp->err.list = mem_array_realloc_t(lisp->err.list, old, lisp->err.cap);
     }
     lisp->err.len++;
 
@@ -279,10 +277,8 @@ static void lisp_index_at(struct lisp *lisp, const struct token *token)
         index = &lisp->index.list[prev];
     else {
         if (lisp->index.len == lisp->index.cap) {
-            size_t old = lisp->index.cap;
-            lisp->index.cap = lisp->index.cap ? lisp->index.cap * 2 : 8;
-            lisp->index.list = mem_array_realloc_t(
-                    lisp->index.list, *lisp->index.list, old, lisp->index.cap);
+            size_t old = mem_array_len_grow(&lisp->index.cap, 8);
+            lisp->index.list = mem_array_realloc_t(lisp->index.list, old, lisp->index.cap);
         }
 
         index = &lisp->index.list[lisp->index.len];
@@ -385,10 +381,8 @@ static void lisp_pub_symbol(struct lisp *lisp, const struct symbol *symbol)
 static void lisp_publish(struct lisp *lisp, const struct symbol *symbol, vm_ip ip)
 {
     if (unlikely(lisp->pub.len == lisp->pub.cap)) {
-        size_t old = lisp->pub.cap;
-        lisp->pub.cap = lisp->pub.cap ? lisp->pub.cap * 2 : 2;
-        lisp->pub.list = mem_array_realloc_t(
-                lisp->pub.list, *lisp->pub.list, old, lisp->pub.cap);
+        size_t old = mem_array_len_grow(&lisp->pub.cap, 2);
+        lisp->pub.list = mem_array_realloc_t(lisp->pub.list, old, lisp->pub.cap);
     }
 
     uint64_t key = symbol_hash(symbol);

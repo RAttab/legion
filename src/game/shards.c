@@ -313,10 +313,8 @@ void shard_probe_push(
 static struct shard_probe *shard_probe_append(struct shard *shard)
 {
     if (shard->probe.len == shard->probe.cap) {
-        size_t old = shard->probe.cap;
-        shard->probe.table = mem_array_realloc_t(
-                shard->probe.table, *shard->probe.table,
-                old, shard->probe.cap = old ? old * 2 : 4);
+        size_t old = mem_array_len_grow(&shard->probe.cap, 4);
+        shard->probe.table = mem_array_realloc_t(shard->probe.table, old, shard->probe.cap);
     }
 
     return shard->probe.table + shard->probe.len++;
@@ -353,10 +351,8 @@ void shard_scan_push(struct shard *shard, struct coord src, struct scan_it it)
 static struct shard_scan *shard_scan_append(struct shard *shard)
 {
     if (shard->scan.len == shard->scan.cap) {
-        size_t old = shard->scan.cap;
-        shard->scan.table = mem_array_realloc_t(
-                shard->scan.table, *shard->scan.table,
-                old, shard->scan.cap = old ? old * 2 : 4);
+        size_t old = mem_array_len_grow(&shard->scan.cap, 4);
+        shard->scan.table = mem_array_realloc_t(shard->scan.table, old, shard->scan.cap);
     }
 
     return shard->scan.table + shard->scan.len++;

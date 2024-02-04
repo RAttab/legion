@@ -221,8 +221,7 @@ static struct markup *man_markup(struct man *man, enum markup_type type)
     if (unlikely(man->markup.len == man->markup.cap)) {
         size_t old = man->markup.cap;
         man->markup.cap += man_markup_inc;
-        man->markup.list = mem_array_realloc_t(
-                man->markup.list, *man->markup.list, old, man->markup.cap);
+        man->markup.list = mem_array_realloc_t(man->markup.list, old, man->markup.cap);
     }
 
     man->markup.len++;
@@ -334,9 +333,8 @@ static struct toc *toc_path_it(
     }
 
     if (unlikely(toc->len == toc->cap)) {
-        size_t cap = toc->cap ? toc->cap * 2 : 4;
-        toc->nodes = mem_array_realloc_t(toc->nodes, toc->nodes[0], toc->cap, cap);
-        toc->cap = cap;
+        size_t old = mem_array_len_grow(&toc->cap, 4);
+        toc->nodes = mem_array_realloc_t(toc->nodes, old, toc->cap);
     }
 
     struct toc *node = toc->nodes + toc->len;
@@ -452,10 +450,8 @@ static bool man_populate_db(struct atoms *atoms)
 
     while (db_man_next(&it)) {
         if (mans.pages.len == mans.pages.cap) {
-            size_t cap = mans.pages.cap ? mans.pages.cap * 2 : 8;
-            mans.pages.list = mem_array_realloc_t(
-                    mans.pages.list, *mans.pages.list, mans.pages.cap, cap);
-            mans.pages.cap = cap;
+            size_t old = mem_array_len_grow(&mans.pages.cap, 8);
+            mans.pages.list = mem_array_realloc_t(mans.pages.list, old, mans.pages.cap);
         }
 
         size_t index = mans.pages.len;

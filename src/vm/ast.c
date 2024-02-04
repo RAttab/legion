@@ -146,12 +146,8 @@ static void ast_err_fn(void *ctx, const char *fmt, ...)
 
     // + 1 -> we need an eof sentinel node at the end of the log.
     if (unlikely(ast->log.len + 1 >= ast->log.cap)) {
-        size_t old = legion_xchg(
-                &ast->log.cap,
-                ast->log.cap ? ast->log.cap * 2 : 16);
-
-        ast->log.list = mem_array_realloc_t(
-                ast->log.list, *ast->log.list, old, ast->log.cap);
+        size_t old = mem_array_len_grow(&ast->log.cap, 16);
+        ast->log.list = mem_array_realloc_t(ast->log.list, old, ast->log.cap);
     }
 
     struct ast_log *log = ast->log.list + ast->log.len++;
@@ -170,10 +166,8 @@ static void ast_err_fn(void *ctx, const char *fmt, ...)
 static struct ast_node *ast_append_node(struct ast *ast)
 {
     if (unlikely(ast->nodes.len == ast->nodes.cap)) {
-        size_t old = legion_xchg(
-                &ast->nodes.cap, ast->nodes.cap ? ast->nodes.cap * 2 : 1024);
-        ast->nodes.list = mem_array_realloc_t(
-                ast->nodes.list, *ast->nodes.list, old, ast->nodes.cap);
+        size_t old = mem_array_len_grow(&ast->nodes.cap, 1024);
+        ast->nodes.list = mem_array_realloc_t(ast->nodes.list, old, ast->nodes.cap);
     }
 
     return ast->nodes.list + ast->nodes.len++;
