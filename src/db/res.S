@@ -50,5 +50,5 @@
         DB_RES db_shader_font_vert "./res" "/shaders/font.vert"
         DB_RES db_shader_font_frag "./res" "/shaders/font.frag"
 
-	DB_RES db_opus_bgm_piano LEGION_BUILD_PREFIX "/opus/bgm-piano.opus"
-	DB_RES db_opus_sfx_button LEGION_BUILD_PREFIX "/opus/sfx-button.opus"
+	DB_RES db_sound_bgm_piano LEGION_BUILD_PREFIX "/sounds/bgm-piano.opus"
+	DB_RES db_sound_sfx_button LEGION_BUILD_PREFIX "/sounds/sfx-button.opus"

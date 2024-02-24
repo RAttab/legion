@@ -28,7 +28,7 @@ CFLAGS := $(CFLAGS) -Wno-format-truncation
 CFLAGS := $(CFLAGS) -Wno-implicit-fallthrough
 CFLAGS := $(CFLAGS) -Wno-address-of-packed-member
 
-LIBS := $(LIBS) $(foreach dep,$(DEPS),$(shell pkg-config --libs $(dep)))
+LIBS := $(foreach dep,$(DEPS),$(shell pkg-config --libs $(dep)))
 
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --quiet
 VALGRIND_FLAGS := $(VALGRIND_FLAGS) --leak-check=full
@@ -42,8 +42,6 @@ ASM := src/db/res.S
 OBJECTS_GEN := gen common utils
 OBJECTS_LEGION := common utils db vm items game ui ux engine
 
-PCMS = bgm-piano sfx-button
-
 DB_OUTPUTS := $(wildcard src/db/gen/*.h) $(wildcard src/db/gen/*.S)
 DB_INPUTS := res/io.lisp src/db/gen/tech.lisp $(wildcard res/stars/*.lisp)
 DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/*.lm)
@@ -53,13 +51,16 @@ DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/guides/*.lm)
 DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/items/*.lm)
 DB_INPUTS := $(DB_INPUTS) $(wildcard res/man/lisp/*.lm)
 
+SOUNDS := $(SOUNDS) $(wildcard res/sounds/*.wav)
+SOUNDS := $(SOUNDS) $(wildcard res/sounds/*.opus)
+
 
 # -----------------------------------------------------------------------------
 # top
 # -----------------------------------------------------------------------------
 
 .PHONY: all
-all: gen legion test res
+all: gen res legion test
 
 .PHONY: clean
 clean:
@@ -116,16 +117,18 @@ gen: $(PREFIX)/gen gen-tech gen-db
 # res
 # -----------------------------------------------------------------------------
 
-$(shell mkdir -p $(PREFIX)/pcm/)
-pcm: $(foreach pcm,$(PCMS),$(PREFIX)/pcm/$(pcm).pcm)
+$(shell mkdir -p $(PREFIX)/sounds/)
+SOUNDS := $(foreach sound, $(SOUNDS), $(PREFIX)/sounds/$(basename $(notdir $(sound))).opus)
+sounds: $(OPUS)
 
-$(PREFIX)/sound/%.opus: res/opus/%.*
-	@echo -e "\e[32m[pcm]\e[0m $@"
-	@ffmpeg -y -v error -i $< -acodec opus -f f32le -ac 2 -ar 48000 $@
+$(PREFIX)/sounds/%.opus: res/sounds/%.*
+	@echo -e "\e[32m[sound]\e[0m $@"
+	@ffmpeg -y -v error -i $< -strict -2 -acodec opus -ac 2 -ar 48000 $@
 
 
 $(shell mkdir -p $(PREFIX)/shaders/)
-shaders: $(foreach shader,$(wildcard res/shaders/*),$(PREFIX)/shaders/$(notdir $(shader)).glsl)
+SHADERS := $(foreach shader,$(wildcard res/shaders/*),$(PREFIX)/shaders/$(notdir $(shader)).glsl)
+shaders: $(SHADERS)
 
 $(PREFIX)/shaders/%.glsl: res/shaders/%
 	@echo -e "\e[32m[shader]\e[0m $<"
@@ -134,10 +137,9 @@ $(PREFIX)/shaders/%.glsl: res/shaders/%
 
 
 src/db/res.S: src/db/gen/man.S
-src/db/res.S: $(wildcard res/shaders/*)
 src/db/res.S: $(wildcard res/img/*.bmp)
 src/db/res.S: $(wildcard res/font/*.otf)
-src/db/res.S: $(foreach pcm,$(PCMS),$(PREFIX)/pcm/$(pcm).pcm)
+src/db/res.S: $(SOUNDS) $(SHADERS)
 	@echo -e "\e[32m[res]\e[0m $@"
 	@touch $@
 

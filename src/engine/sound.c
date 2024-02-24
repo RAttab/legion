@@ -168,7 +168,7 @@ struct sound_track
 static void sound_track_init(struct sound_track *track)
 {
     int ret = 0;
-    track->opus = opus_decoder_create(sound_sample_channels, sound_sample_rate, &ret);
+    track->opus = opus_decoder_create(sound_sample_rate, sound_sample_channels, &ret);
     if (ret != OPUS_OK) fail_opus(ret, "opus_decoder_create");
 
     track->frame = mem_array_alloc_t(*track->frame, sound_frame_len);
