@@ -83,5 +83,6 @@ bool symbol_load(struct symbol *sym, struct save *save)
     if (!save_read_magic(save, save_magic_symbol)) return false;
     save_read_into(save, &sym->len);
     save_read(save, sym->c, sym->len);
+    sym->c[sym->len] = 0;
     return save_read_magic(save, save_magic_symbol);
 }
