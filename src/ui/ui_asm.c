@@ -138,7 +138,7 @@ void ui_asm_goto(struct ui_asm *ui, vm_ip ip)
 {
     if (!ui->mod || ip == vm_ip_nil) return;
 
-    uint32_t row = asm_row(ui->as, ip);;
+    uint32_t row = asm_row(ui->as, ip);
 
     ui->carret.row = row;
     ui->carret.col = 0;

@@ -170,6 +170,7 @@ vm_ip mod_pub(const struct mod *mod, uint64_t key)
 
 struct mod_index mod_index(const struct mod *mod, vm_ip ip)
 {
+    if (!mod->len) return (struct mod_index) {0};
     assert(ip < mod->len);
 
     for (size_t i = 0; i < mod->index_len; ++i) {

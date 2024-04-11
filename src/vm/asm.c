@@ -43,12 +43,16 @@ uint32_t asm_rows(const struct assembly *as)
 
 vm_ip asm_ip(const struct assembly *as, uint32_t row)
 {
+    if (!as->line.len) return 0;
+
     assert(row < as->line.len);
     return as->line.list[row].ip;
 }
 
 uint32_t asm_row(const struct assembly *as, vm_ip ip)
 {
+    if (!ip) return 0;
+
     struct asm_line *it = as->line.list;
     struct asm_line *end = it + as->line.len;
     while (it < end - 1 && ip >= (it + 1)->ip) ++it;
