@@ -118,7 +118,9 @@ gen: $(PREFIX)/gen gen-tech gen-db
 # -----------------------------------------------------------------------------
 
 $(shell mkdir -p $(PREFIX)/sounds/)
-SOUNDS := $(foreach sound, $(SOUNDS), $(PREFIX)/sounds/$(basename $(notdir $(sound))).opus)
+OPUS := $(foreach sound, $(SOUNDS), $(PREFIX)/sounds/$(basename $(notdir $(sound))).opus)
+
+.PHONY: sounds
 sounds: $(OPUS)
 
 $(PREFIX)/sounds/%.opus: res/sounds/%.*
@@ -139,7 +141,7 @@ $(PREFIX)/shaders/%.glsl: res/shaders/%
 src/db/res.S: src/db/gen/man.S
 src/db/res.S: $(wildcard res/img/*.bmp)
 src/db/res.S: $(wildcard res/font/*.otf)
-src/db/res.S: $(SOUNDS) $(SHADERS)
+src/db/res.S: $(OPUS) $(SHADERS)
 	@echo -e "\e[32m[res]\e[0m $@"
 	@touch $@
 
@@ -156,12 +158,15 @@ $(PREFIX)/legion: $(PREFIX)/obj/legion-main.o $(PREFIX)/obj/legion.o $(PREFIX)/l
 	@echo -e "\e[32m[build]\e[0m $@"
 	@$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
+.PHONY: legion
 legion: $(PREFIX)/legion
 
+.PHONY: run
 run: $(PREFIX)/legion
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion
 
+.PHONY: run-metrics
 run-metrics: $(PREFIX)/legion
 	@echo -e "\e[32m[run]\e[0m $<"
 	@$(PREFIX)/legion -m $(PREFIX)/metrics.lisp
