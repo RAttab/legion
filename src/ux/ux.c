@@ -375,8 +375,6 @@ void ux_hide(enum ux_view view)
         ux_update_sub();
         return;
     }
-
-    assert(false);
 }
 
 void ux_toggle(enum ux_view view)

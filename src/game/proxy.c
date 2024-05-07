@@ -694,7 +694,7 @@ bool proxy_steps_next_workers(world_ts *ts, struct workers *out)
     if (proxy.state->steps.type != cmd_steps_workers) return false;
 
     struct save *save = proxy.state->steps.data;
-    if (save_len(save) >= proxy.state->steps.len) return false;
+    if (!save || save_len(save) >= proxy.state->steps.len) return false;
 
     save_read_into(save, ts);
     return workers_load(out, save, false);
@@ -705,7 +705,7 @@ bool proxy_steps_next_energy(world_ts *ts, struct energy *out)
     if (proxy.state->steps.type != cmd_steps_energy) return false;
 
     struct save *save = proxy.state->steps.data;
-    if (save_len(save) >= proxy.state->steps.len) return false;
+    if (!save || save_len(save) >= proxy.state->steps.len) return false;
 
     save_read_into(save, ts);
     return energy_load(out, save);
