@@ -280,79 +280,6 @@ world_ts_delta lanes_travel(size_t speed, struct coord src, struct coord dst)
     return coord_dist(src, dst) / speed;
 }
 
-const struct hset *lanes_list(struct lanes *lanes, struct coord key)
-{
-    struct htable_ret ret = htable_get(&lanes->index, coord_to_u64(key));
-    return (void *) ret.value;
-}
-
-void lanes_list_save(
-        struct lanes *lanes,
-        struct save *save,
-        struct world *world,
-        user_set filter)
-{
-    save_write_magic(save, save_magic_lanes);
-
-    for (const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
-         it; it = htable_next(&lanes->lanes, it))
-    {
-        const struct lane *lane = (void *) it->value;
-
-        if (!world_user_access(world, filter, lane->src) &&
-                !world_user_access(world, filter, lane->dst))
-            continue;
-
-        save_write_value(save, coord_to_u64(lane->src));
-        save_write_value(save, coord_to_u64(lane->dst));
-    }
-
-    save_write_value(save, (uint64_t) 0);
-    save_write_magic(save, save_magic_lanes);
-}
-
-bool lanes_list_load_into(struct htable *lanes, struct save *save)
-{
-    // Clear the htable and the hset while avoiding unnecessary allocations.
-    for (const struct htable_bucket *it = htable_next(lanes, NULL);
-         it; it = htable_next(lanes, it))
-    {
-        struct hset *set = (void *) it->value;
-
-        if (set->len) hset_clear(set);
-        else {
-            struct htable_ret ret = htable_del(lanes, it->key);
-            assert(ret.ok);
-            hset_free(set);
-        }
-    }
-
-    if (!save_read_magic(save, save_magic_lanes)) return false;
-
-    uint64_t key = 0;
-    while ((key = save_read_type(save, typeof(key)))) {
-        uint64_t val = save_read_type(save, typeof(val));
-
-        void index(struct htable *lanes, uint64_t key, uint64_t val)
-        {
-            struct htable_ret ret = htable_get(lanes, key);
-
-            struct hset *set = NULL;
-            if (ret.ok) set = (void *) ret.value;
-            set = hset_put(set, val);
-
-            if (ret.ok) ret = htable_xchg(lanes, key, (uintptr_t) set);
-            else ret = htable_put(lanes, key, (uintptr_t) set);
-            assert(ret.ok);
-        }
-        index(lanes, key, val);
-        index(lanes, val, key);
-    }
-
-    if (!save_read_magic(save, save_magic_lanes)) assert(false);
-    return true;
-}
-
 void lanes_launch(struct lanes *lanes, struct lanes_packet packet)
 {
     uint64_t key = lanes_key(packet.src, packet.dst);
@@ -424,4 +351,97 @@ void lanes_step(struct lanes *lanes)
     }
 
     metric_inc(world_metrics(lanes->world), world.lanes, mn, mt);
+}
+
+// -----------------------------------------------------------------------------
+// lanes list
+// -----------------------------------------------------------------------------
+
+const struct hset *lanes_set(struct lanes *lanes, struct coord key)
+{
+    struct htable_ret ret = htable_get(&lanes->index, coord_to_u64(key));
+    return (void *) ret.value;
+}
+
+void lanes_list_free(struct lanes_list *list)
+{
+    mem_free(list);
+}
+
+void lanes_list_save(
+        const struct lanes *lanes,
+        struct save *save,
+        struct world *world,
+        user_set filter)
+{
+    save_write_magic(save, save_magic_lanes);
+
+    for (const struct htable_bucket *it = htable_next(&lanes->lanes, NULL);
+         it; it = htable_next(&lanes->lanes, it))
+    {
+        const struct lane *lane = (void *) it->value;
+
+        if (!world_user_access(world, filter, lane->src) &&
+                !world_user_access(world, filter, lane->dst))
+            continue;
+
+        save_write_value(save, coord_to_u64(lane->src));
+        save_write_value(save, coord_to_u64(lane->dst));
+    }
+
+    save_write_value(save, (uint64_t) 0);
+    save_write_magic(save, save_magic_lanes);
+}
+
+bool lanes_list_load(struct lanes_list **list_, struct save *save)
+{
+    struct lanes_list *list = *list_;
+
+    if (!list) {
+        const size_t cap = 16;
+        *list_ = list = mem_struct_alloc_t(list, *list->items, cap);
+        list->cap = cap;
+    }
+    list->len = 0;
+
+    if (!save_read_magic(save, save_magic_lanes)) return NULL;
+
+    uint64_t src = 0;
+    while ((src = save_read_type(save, typeof(src)))) {
+        uint64_t dst = save_read_type(save, typeof(dst));
+
+        if (list->len == list->cap) {
+            const size_t old = legion_xchg(&list->cap, list->cap * 2);
+            *list_ = list = mem_struct_realloc_t(list, *list->items, old, list->cap);
+        }
+
+        struct lanes_list_item *item = list->items + list->len++;
+        item->src = coord_from_u64(src);
+        item->dst = coord_from_u64(dst);
+    }
+
+    if (!save_read_magic(save, save_magic_lanes)) assert(false);
+    return list;
+}
+
+
+struct lanes_list_it lanes_list_begin(
+        const struct lanes_list *list, struct coord_rect rect)
+{
+    return (struct lanes_list_it) {
+        .rect = rect,
+        .it = list->items,
+        .end = list->items + list->len
+    };
+}
+
+const struct lanes_list_item *lanes_list_next(struct lanes_list_it *it)
+{
+    while (it->it < it->end) {
+        const struct lanes_list_item *item = it->it++;
+        struct coord_rect item_rect = make_coord_rect(item->src, item->dst);
+        if (coord_rect_intersect(it->rect, item_rect)) return item;
+    }
+
+    return NULL;
 }

@@ -405,15 +405,9 @@ const struct vec64 *proxy_chunks(void)
     return proxy.state->chunks;
 }
 
-const struct htable *proxy_lanes(void)
+const struct lanes_list *proxy_lanes_list(void)
 {
-    return &proxy.state->lanes;
-}
-
-const struct hset *proxy_lanes_for(struct coord star)
-{
-    struct htable_ret ret = htable_get(&proxy.state->lanes, coord_to_u64(star));
-    return ret.ok ? (void *) ret.value : NULL;
+    return proxy.state->lanes;
 }
 
 const struct log *proxy_logs(void)

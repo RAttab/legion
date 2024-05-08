@@ -48,7 +48,7 @@ void check_basics(void)
         assert(proxy_tech());
         assert(proxy_mods()->len > 0);
         assert(proxy_chunks()->len == 1);
-        assert(proxy_lanes()->len == 0);
+        assert(proxy_lanes_list()->len == 0);
 
         {
             struct vec64 *atoms = atoms_list(proxy_atoms());

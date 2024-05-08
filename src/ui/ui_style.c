@@ -57,9 +57,10 @@ void ui_style_default(void)
         s->rgba.worker.idle =  make_rgba(0x80, 0x00, 0x80, 0xFF); // Purple
 
         s->rgba.map.select = make_rgba(0x88, 0xFF, 0x88, 0x88);
-        s->rgba.map.lanes = rgba_gray(0xAA);
         s->rgba.map.sector = make_rgba(0x00, 0x33, 0x00, 0x88);
         s->rgba.map.area = make_rgba(0x00, 0x00, 0x33, 0x88);
+        s->rgba.map.lanes.src = rgba_gray_a(0x99, 0xAA);
+        s->rgba.map.lanes.dst = rgba_gray_a(0xCC, 0xFF);
 
         s->rgba.factory.fg = rgba_white();
         s->rgba.factory.bg = rgba_gray(0x11);

@@ -131,12 +131,12 @@ void check(void)
             vec64_free(chunks);
         }
 
-        for (const struct htable_bucket *it = htable_next(&state->lanes, NULL);
-             it; it = htable_next(&state->lanes, it))
-        {
-            const struct hset *wd_lanes = world_lanes_list(world, coord_from_u64(it->key));
-            const struct hset *st_lanes = (void *) it->value;
-            assert(hset_eq(wd_lanes, st_lanes));
+        const struct lanes_list *st_lanes = state->lanes;
+        for (size_t i = 0; i < st_lanes->len; ++i) {
+            const struct lanes_list_item *st_item = st_lanes->items + i;
+
+            const struct hset *wd_lanes = lanes_set(world_lanes(world), st_item->src);
+            assert(hset_test(wd_lanes, coord_to_u64(st_item->dst)));
         }
 
         for (const struct htable_bucket *it = htable_next(&state->names, NULL);

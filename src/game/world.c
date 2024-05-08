@@ -418,16 +418,6 @@ struct lanes *world_lanes(struct world *world)
     return &world->lanes;
 }
 
-const struct hset *world_lanes_list(struct world *world, struct coord key)
-{
-    return lanes_list(&world->lanes, key);
-}
-
-void world_lanes_list_save(struct world *world, struct save *save, user_set filter)
-{
-    lanes_list_save(&world->lanes, save, world, filter);
-}
-
 void world_lanes_arrive(
         struct world *world,
         user_id owner, enum item type,

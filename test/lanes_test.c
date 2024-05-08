@@ -73,6 +73,7 @@ void test_basics(void)
 {
     struct metrics metrics = {0};
     struct world *world = world_new(0, &metrics);
+    struct lanes *lanes = world_lanes(world);
     const struct sector *sector = world_sector(world, coord_center());
 
     const user_id user = 13;
@@ -83,17 +84,17 @@ void test_basics(void)
 
     for (size_t iteration = 0; iteration < 5; ++iteration) {
         launch(world, user, item, speed, src, dst);
-        check_hset(world_lanes_list(world, src), coord_to_u64(dst));
-        check_hset(world_lanes_list(world, dst), coord_to_u64(src));
+        check_hset(lanes_set(lanes, src), coord_to_u64(dst));
+        check_hset(lanes_set(lanes, dst), coord_to_u64(src));
 
         launch(world, user, item, speed, dst, src);
-        check_hset(world_lanes_list(world, src), coord_to_u64(dst));
-        check_hset(world_lanes_list(world, dst), coord_to_u64(src));
+        check_hset(lanes_set(lanes, src), coord_to_u64(dst));
+        check_hset(lanes_set(lanes, dst), coord_to_u64(src));
 
         wait(world, speed, src, dst);
 
-        check_hset_nil(world_lanes_list(world, src));
-        check_hset_nil(world_lanes_list(world, dst));
+        check_hset_nil(lanes_set(lanes, src));
+        check_hset_nil(lanes_set(lanes, dst));
 
         struct chunk *chunk_src = world_chunk(world, src);
         struct chunk *chunk_dst = world_chunk(world, dst);

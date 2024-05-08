@@ -90,8 +90,6 @@ struct chunk *world_chunk_next(struct world *, struct world_chunk_it *);
 // -----------------------------------------------------------------------------
 
 struct lanes *world_lanes(struct world *);
-const struct hset *world_lanes_list(struct world *, struct coord key);
-void world_lanes_list_save(struct world *, struct save *, user_set);
 
 void world_lanes_arrive(
         struct world *,

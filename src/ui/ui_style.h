@@ -26,7 +26,10 @@ extern struct ui_style
         struct { struct { struct rgba fg, bg; } idle, hover, pressed; } link;
         struct { struct rgba queue, work, clean, fail, idle; } worker;
 
-        struct { struct rgba select, lanes, sector, area; } map;
+        struct {
+            struct rgba select, sector, area;
+            struct { struct rgba src, dst; } lanes;
+        } map;
         struct { struct rgba fg, bg, hover, select, border, op; } factory;
 
         struct

@@ -200,7 +200,7 @@ struct state
     struct atoms *atoms;
     struct mods_list *mods;
     struct vec64 *chunks;
-    struct htable lanes;
+    struct lanes_list *lanes;
     struct htable names;
     struct tech tech;
     struct log *log;

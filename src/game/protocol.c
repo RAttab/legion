@@ -344,15 +344,9 @@ void state_free(struct state *state)
     tech_free(&state->tech);
     log_free(state->log);
     htable_reset(&state->names);
+    lanes_list_free(state->lanes);
 
     if (state->chunk.chunk) chunk_free(state->chunk.chunk);
-
-    for (const struct htable_bucket *it = htable_next(&state->lanes, NULL);
-         it; it = htable_next(&state->lanes, it))
-    {
-        hset_free((void *) it->value);
-    }
-    htable_reset(&state->lanes);
 
     mem_free(state);
 }
@@ -519,7 +513,7 @@ void state_save(struct save *save, const struct state_ctx *ctx)
     atoms_save_delta(world_atoms(ctx->world), save, ctx->ack);
     mods_list_save(world_mods(ctx->world), save, ctx->access);
     state_save_chunks(ctx->world, save, ctx);
-    world_lanes_list_save(ctx->world, save, ctx->access);
+    lanes_list_save(world_lanes(ctx->world), save, ctx->world, ctx->access);
     tech_save(world_tech(ctx->world, ctx->user), save);
     log_save_delta(world_log(ctx->world, ctx->user), save, ctx->ack->time);
     state_save_io(ctx->world, ctx->user, save);
@@ -549,7 +543,7 @@ bool state_load(struct state *state, struct save *save, struct ack *ack)
     if (!atoms_load_delta(state->atoms, save, ack)) return false;
     if (!mods_list_load_into(&state->mods, save)) return false;
     if (!state_load_chunks(state, save)) return false;
-    if (!lanes_list_load_into(&state->lanes, save)) return false;
+    if (!lanes_list_load(&state->lanes, save)) return false;
     if (!tech_load(&state->tech, save)) return false;
     if (!log_load_delta(state->log, save, ack->time)) return false;
     if (!state_load_io(state, save)) return false;

@@ -57,8 +57,7 @@ const struct tech *proxy_tech(void);
 struct atoms *proxy_atoms(void);
 const struct mods_list *proxy_mods(void);
 const struct vec64 *proxy_chunks(void);
-const struct htable *proxy_lanes(void);
-const struct hset *proxy_lanes_for(struct coord star);
+const struct lanes_list *proxy_lanes_list(void);
 const struct log *proxy_logs(void);
 
 

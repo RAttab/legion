@@ -18,7 +18,10 @@ struct ux_map
 {
     struct { struct coord pos; coord_scale scale; } view;
     struct { bool panning, panned; } pan;
-    struct { struct rgba select, lanes, sector, area; } s;
+    struct {
+        struct rgba select, sector, area;
+        struct { struct rgba src, dst; } lanes;
+    } s;
 };
 
 
@@ -54,9 +57,12 @@ void ux_map_alloc(struct ux_view_state *state)
 
         .s = {
             .select = ui_st.rgba.map.select,
-            .lanes = ui_st.rgba.map.lanes,
             .sector = ui_st.rgba.map.sector,
             .area = ui_st.rgba.map.area,
+            .lanes = {
+                .src = ui_st.rgba.map.lanes.src,
+                .dst = ui_st.rgba.map.lanes.dst,
+            },
         },
     };
 
@@ -258,17 +264,19 @@ static void ux_map_render_sectors(
 static void ux_map_render_lanes(
         struct ux_map *ux,
         const render_layer l,
-        struct rect render_area,
-        struct coord star)
+        struct coord_rect area)
 {
-    const struct hset *lanes = proxy_lanes_for(star);
-    if (!lanes || !lanes->len) return;
+    struct rect render_area = ux_map_to_rect(area);
+    const struct lanes_list *lanes = proxy_lanes_list();
 
-    struct line line = { .a = ux_map_to_pos(star) };
+    const struct lanes_list_item *item = nullptr;
+    struct lanes_list_it it = lanes_list_begin(lanes, area);
 
-    for (hset_it it = hset_next(lanes, NULL); it; it = hset_next(lanes, it)) {
-        line.b = ux_map_to_pos(coord_from_u64(*it));
-        render_line_a(l, ux->s.lanes, line, render_area);
+    while ((item = lanes_list_next(&it))) {
+        render_line_gradient_a(l,
+                ux->s.lanes.src, ux_map_to_pos(item->src),
+                ux->s.lanes.dst, ux_map_to_pos(item->dst),
+                render_area);
     }
 }
 
@@ -303,9 +311,6 @@ static void ux_map_render_stars(
 
         if (!proxy_active_star(star->coord)) continue;
 
-        ux_map_render_lanes(ux, l + 1, render_area, star->coord);
-
-
         const uint32_t w = rect.w / 4;
         struct triangle tri = {
             .a = { rect.x + rect.w/2 - w, rect.y + rect.h/2 - 1*rect.h/2 },
@@ -332,6 +337,8 @@ static void ux_map_render(void *state, struct ui_layout *)
     if (ux->view.scale < ux_map_thresh_stars)
         ux_map_render_stars(ux, layer + 1, area);
     else ux_map_render_areas(ux, layer + 0, area);
+
+    ux_map_render_lanes(ux, layer + 2, area);
 
     render_layer_pop();
 }
