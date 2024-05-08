@@ -155,8 +155,8 @@ inline bool coord_rect_intersect(
         const struct coord_rect lhs, struct coord_rect rhs)
 {
     return
-        (lhs.top.x >= rhs.bot.x && lhs.bot.x < rhs.top.x) ||
-        (lhs.top.y >= rhs.bot.y && lhs.bot.y < rhs.top.y);
+        lhs.top.x <= rhs.bot.x && rhs.top.x <= lhs.bot.x &&
+        lhs.top.y <= rhs.bot.y && rhs.top.y <= lhs.bot.y;
 }
 
 inline struct coord coord_rect_center(const struct coord_rect r)
