@@ -457,20 +457,37 @@ void render_line(
 void render_line_a(
         render_layer layer, struct rgba fg, struct line line, struct rect area)
 {
+    render_line_gradient_a(layer, fg, line.a, fg, line.b, area);
+}
+
+void render_line_gradient(
+        render_layer layer,
+        struct rgba a_fg, struct pos a,
+        struct rgba b_fg, struct pos b)
+{
+    render_line_gradient_a(layer, a_fg, a, b_fg, b, engine_area());
+}
+
+void render_line_gradient_a(
+        render_layer layer,
+        struct rgba a_fg, struct pos a,
+        struct rgba b_fg, struct pos b,
+        struct rect area)
+{
     struct render_buffer *buffer = render_buffer(layer, render_type_prim_line);
     render_buffer_reserve_vertex(buffer, 2);
     render_buffer_reserve_index(buffer, 2);
 
     union vertex_ptr va = render_buffer_push_vertex(buffer);
     *va.prim = (struct vertex_prim) {
-        .pos = render_project_pos(layer, line.a, area),
-        .fg = render_project_rgba(fg),
+        .pos = render_project_pos(layer, a, area),
+        .fg = render_project_rgba(a_fg),
     };
 
     union vertex_ptr vb = render_buffer_push_vertex(buffer);
     *vb.prim = (struct vertex_prim) {
-        .pos = render_project_pos(layer, line.b, area),
-        .fg = render_project_rgba(fg),
+        .pos = render_project_pos(layer, b, area),
+        .fg = render_project_rgba(b_fg),
     };
 
     render_buffer_push_index(buffer, va);

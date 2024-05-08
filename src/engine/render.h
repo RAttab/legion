@@ -34,6 +34,17 @@ void render_line(
 void render_line_a(
         render_layer, struct rgba, struct line, struct rect);
 
+
+void render_line_gradient(
+        render_layer,
+        struct rgba, struct pos,
+        struct rgba, struct pos);
+void render_line_gradient_a(
+        render_layer,
+        struct rgba, struct pos,
+        struct rgba, struct pos,
+        struct rect);
+
 struct triangle { struct pos a, b, c; };
 void render_triangle(
         render_layer, struct rgba, struct triangle);
