@@ -135,9 +135,12 @@ struct coord_rect
     struct coord top, bot;
 };
 
-inline struct coord_rect make_coord_rect(struct coord top, struct coord bot)
+inline struct coord_rect make_coord_rect(struct coord a, struct coord b)
 {
-    return (struct coord_rect) { .top = top, .bot = bot };
+    return (struct coord_rect) {
+        .top = { .x = legion_min(a.x, b.x), .y = legion_min(a.y, b.y) },
+        .bot = { .x = legion_max(a.x, b.x), .y = legion_max(a.y, b.y) },
+    };
 }
 
 inline bool coord_rect_contains(const struct coord_rect r, struct coord coord)
