@@ -12,14 +12,21 @@ struct chunk;
 // star
 // -----------------------------------------------------------------------------
 
-enum : size_t { star_elem_cap = UINT16_MAX };
+constexpr size_t star_elem_cap = UINT16_MAX;
+
+// Number of pixels per star at scale_base (not map_scale_default). Basically it
+// needs to be tweaked to a number that's big enough to see and click on but not
+// too big that there are overlaps between stars during gen.
+constexpr size_t star_size_cap = 1000;
+constexpr size_t star_size_dec = 600;
 
 struct legion_packed star
 {
     struct coord coord;
 
-    uint16_t hue;
-    legion_pad(6);
+    struct { uint16_t center, edge; } hue;
+    uint16_t size;
+    legion_pad(2);
 
     uint16_t energy;
     uint16_t elems[items_natural_len];

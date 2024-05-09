@@ -689,11 +689,72 @@ static void render_cursor(struct pos p)
 
 void render_star(
         render_layer layer,
-        struct rgba fg,
-        struct rect r,
+        struct rgba center,
+        struct rgba edge,
+        struct pos pos,
+        unit radius,
         struct rect area)
 {
-    render_tex_a(layer, render_type_tex_star, fg, r, area);
+    constexpr size_t arcs = 3;
+    constexpr size_t vn = arcs * 4;
+    constexpr float ar = 2 * f32_pi / vn;
+
+    // Render star is called a lot and our arcs value is constant so we can
+    // pre-compute this table to save on processing time.
+    static const float a[vn][2] = {
+        [ 0] = { cos( 0 * ar), sin( 0 * ar) },
+        [ 1] = { cos( 1 * ar), sin( 1 * ar) },
+        [ 2] = { cos( 2 * ar), sin( 2 * ar) },
+        [ 3] = { cos( 3 * ar), sin( 3 * ar) },
+        [ 4] = { cos( 4 * ar), sin( 4 * ar) },
+        [ 5] = { cos( 5 * ar), sin( 5 * ar) },
+        [ 6] = { cos( 6 * ar), sin( 6 * ar) },
+        [ 7] = { cos( 7 * ar), sin( 7 * ar) },
+        [ 8] = { cos( 8 * ar), sin( 8 * ar) },
+        [ 9] = { cos( 9 * ar), sin( 9 * ar) },
+        [10] = { cos(10 * ar), sin(10 * ar) },
+        [11] = { cos(11 * ar), sin(11 * ar) },
+    };
+
+    struct render_buffer *buffer = render_buffer(layer, render_type_tex_star);
+    render_buffer_reserve_vertex(buffer, 1 + vn);
+    render_buffer_reserve_index(buffer, 3 * vn);
+
+    constexpr float tr = 0.5f;
+    float t[2] = { tr, tr };
+
+    union vertex_ptr vx = render_buffer_push_vertex(buffer);
+    *vx.tex = (struct vertex_tex) {
+        .pos = render_project_pos(layer, pos, area),
+        .tex = { t[0], t[1] },
+        .fg = render_project_rgba(center),
+    };
+
+    const float e[4] = render_project_rgba(edge);
+
+    union vertex_ptr vp[vn + 1] = {0};
+    for (size_t i = 0; i < vn; ++i) {
+        struct pos p = {
+            .x = pos.x + (unit) (radius * a[i][0]),
+            .y = pos.y + (unit) (radius * a[i][1]),
+        };
+
+        union vertex_ptr *v = vp + i;
+        *v = render_buffer_push_vertex(buffer);
+
+        *v->tex = (struct vertex_tex) {
+            .pos = render_project_pos(layer, p, area),
+            .tex = { t[0] + tr * a[i][0], t[1] + tr * a[i][1] },
+            .fg = { e[0], e[1], e[2], e[3] },
+        };
+    }
+
+    vp[vn] = vp[0];
+    for (size_t i = 0; i < vn; ++i) {
+        render_buffer_push_index(buffer, vx);
+        render_buffer_push_index(buffer, vp[i]);
+        render_buffer_push_index(buffer, vp[i + 1]);
+    }
 }
 
 void render_font(

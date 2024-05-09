@@ -24,12 +24,6 @@ struct ux_map
     } s;
 };
 
-
-// Number of pixels per star at scale_base (not map_scale_default). Basically it
-// needs to be tweaked to a number that's big enough to see and click on but not
-// too big that there are overlaps between stars during gen.
-constexpr unit ux_map_star_size = 800;
-
 // Tweaked in relation to map_star_px so that our default view isn't useless.
 constexpr unit ux_map_scale_default = coord_scale_min << 5;
 
@@ -182,7 +176,7 @@ static void ux_map_event(void *state)
         ux->pan.panning = false;
         if (ux->pan.panned) { ux->pan.panned = false; continue; }
 
-        uint32_t d = ux_map_star_size / 2;
+        uint32_t d = star_size_cap / 2;
         struct coord cursor = ux_map_to_coord(ux, ev_mouse_pos());
         struct coord_rect rect = make_coord_rect(
                 make_coord(cursor.x - d, cursor.y - d),
@@ -289,25 +283,32 @@ static void ux_map_render_stars(
         ux_map_to_pos(ux_map_to_coord(ux, ev_mouse_pos()));
 
     struct coord_rect area_it = area;
-    area_it.top.x -= ux_map_star_size/2; area_it.top.y -= ux_map_star_size/2;
-    area_it.bot.x += ux_map_star_size/2; area_it.bot.y += ux_map_star_size/2;
+    area_it.top.x -= star_size_cap/2; area_it.top.y -= star_size_cap/2;
+    area_it.bot.x += star_size_cap/2; area_it.bot.y += star_size_cap/2;
     struct proxy_render_it it = proxy_render_it(area_it);
 
     const struct star *star = NULL;
     while ((star = proxy_render_next(&it))) {
+        const unit radius = star->size / 2;
+
         struct rect rect = {
-            .x = star->coord.x - ux_map_star_size / 2,
-            .y = star->coord.y - ux_map_star_size / 2,
-            .h = ux_map_star_size, .w = ux_map_star_size,
+            .x = star->coord.x - radius,
+            .y = star->coord.y - radius,
+            .h = star->size, .w = star->size,
         };
 
-        struct rgba rgba = hsv_to_rgb((struct hsv) {
-                    .h = ((double) star->hue) / 360,
-                    .s = 1.0 - (((double) star->energy) / UINT16_MAX),
-                    .v = rect_contains(rect, cursor) ? 0.8 : 0.5,
-                });
+        const float s = 1.0 - (((double) star->energy) / UINT16_MAX);
+        const float v = rect_contains(rect, cursor) ? 0.8 : 0.5;
+        struct rgba to_rgba(float hue)
+        {
+            return hsv_to_rgb((struct hsv) { .h = hue / 360, .s = s, .v = v });
+        }
 
-        render_star(l + 0, rgba, rect, render_area);
+        struct rgba center = to_rgba(star->hue.center);
+        struct rgba edge = to_rgba(star->hue.edge);
+
+        struct pos pos = { star->coord.x, star->coord.y };
+        render_star(l + 0, center, edge, pos, radius, render_area);
 
         if (!proxy_active_star(star->coord)) continue;
 

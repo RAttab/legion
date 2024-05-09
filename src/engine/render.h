@@ -83,5 +83,12 @@ void render_font_bg_a(
         struct pos, struct rect,
         const char *str, size_t len);
 
-void render_star(render_layer, struct rgba, struct rect, struct rect);
+void render_star(
+        render_layer layer,
+        struct rgba center,
+        struct rgba edge,
+        struct pos pos,
+        unit radius,
+        struct rect area);
+
 unit render_cursor_size(void);

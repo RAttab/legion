@@ -12,7 +12,9 @@ bool star_load(struct star *star, struct save *save)
 {
     if (!save_read_magic(save, save_magic_star)) return false;
     save_read_into(save, &star->coord);
-    save_read_into(save, &star->hue);
+    save_read_into(save, &star->hue.center);
+    save_read_into(save, &star->hue.edge);
+    save_read_into(save, &star->size);
     save_read_into(save, &star->energy);
     save_read_into(save, &star->elems);
     return save_read_magic(save, save_magic_star);
@@ -22,7 +24,9 @@ void star_save(const struct star *star, struct save *save)
 {
     save_write_magic(save, save_magic_star);
     save_write_value(save, star->coord);
-    save_write_value(save, star->hue);
+    save_write_value(save, star->hue.center);
+    save_write_value(save, star->hue.edge);
+    save_write_value(save, star->size);
     save_write_value(save, star->energy);
     save_write_from(save, &star->elems);
     save_write_magic(save, save_magic_star);
@@ -238,7 +242,11 @@ void star_gen(struct star *star, struct coord coord, world_seed seed)
         star_gen_range(rolls->ranges + i, star, &rng);
 
     int16_t hue = rolls->hue + (15 - rng_uni(&rng, 0, 30));
-    star->hue = hue < 0 ? 360 + hue : hue;
+    uint16_t adjust_hue(int16_t hue) { return abs(hue) % 360; }
+
+    star->hue.center = adjust_hue(hue);
+    star->hue.edge = adjust_hue(hue + rng_uni(&rng, 0, 360));
+    star->size = star_size_cap - rng_uni(&rng, 0, star_size_dec);
 }
 
 

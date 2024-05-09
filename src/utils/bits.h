@@ -28,6 +28,9 @@ inline size_t u64_ctz(uint64_t x) { return likely(x) ? __builtin_ctzl(x) : 64; }
 // math
 // -----------------------------------------------------------------------------
 
+constexpr double f64_pi = 3.1415926535897932384626433;
+constexpr float f32_pi = 3.1415926535897932384626433F;
+
 inline uint32_t u64_top(uint64_t x) { return x >> 32; }
 inline uint32_t u64_bot(uint64_t x) { return x << 32 >> 32; }
 
