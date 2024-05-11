@@ -34,7 +34,6 @@ void render_line(
 void render_line_a(
         render_layer, struct rgba, struct line, struct rect);
 
-
 void render_line_gradient(
         render_layer,
         struct rgba, struct pos,
@@ -60,6 +59,21 @@ void render_rect_fill(
         render_layer, struct rgba, struct rect);
 void render_rect_fill_a(
         render_layer, struct rgba, struct rect, struct rect);
+
+void render_circle_line(
+        render_layer, struct rgba, struct pos, unit radius, size_t arcs);
+void render_circle_line_a(
+        render_layer, struct rgba, struct pos, unit radius, size_t arcs, struct rect);
+
+void render_circle_fill(
+        render_layer,
+        struct rgba center, struct rgba edge,
+        struct pos, unit radius, size_t arcs);
+void render_circle_fill_a(
+        render_layer,
+        struct rgba center, struct rgba edge,
+        struct pos, unit radius, size_t arcs,
+        struct rect);
 
 void render_font(
         render_layer, enum render_font,

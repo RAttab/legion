@@ -627,6 +627,106 @@ void render_rect_fill_a(
     render_buffer_push_index(buffer, vd);
 }
 
+
+void render_circle_line(
+        render_layer layer,
+        struct rgba fg, struct pos pos,
+        unit radius, size_t arcs)
+{
+    render_circle_line_a(layer, fg, pos, radius, arcs, engine_area());
+}
+
+void render_circle_line_a(
+        render_layer layer,
+        struct rgba fg, struct pos pos,
+        unit radius, const size_t arcs,
+        struct rect area)
+{
+    const size_t vn = arcs * 4;
+    const float ar = 2 * f32_pi / vn;
+
+    struct render_buffer *buffer = render_buffer(layer, render_type_prim_line);
+    render_buffer_reserve_vertex(buffer, vn);
+    render_buffer_reserve_index(buffer, vn * 2);
+
+    const float c[4] = render_project_rgba(fg);
+
+    union vertex_ptr vp[vn + 1];
+    for (size_t i = 0; i < vn; ++i) {
+        struct pos p = {
+            .x = pos.x + (unit) (radius * cos(i * ar)),
+            .y = pos.y + (unit) (radius * sin(i * ar)),
+        };
+
+        union vertex_ptr *v = vp + i;
+        *v = render_buffer_push_vertex(buffer);
+
+        *v->prim = (struct vertex_prim) {
+            .pos = render_project_pos(layer, p, area),
+            .fg = { c[0], c[1], c[2], c[3] },
+        };
+    }
+
+    vp[vn] = vp[0];
+    for (size_t i = 0; i < vn; ++i) {
+        render_buffer_push_index(buffer, vp[i]);
+        render_buffer_push_index(buffer, vp[i + 1]);
+    }
+}
+
+void render_circle_fill(
+        render_layer layer,
+        struct rgba center, struct rgba edge,
+        struct pos pos, unit radius, size_t arcs)
+{
+    render_circle_fill_a(layer, center, edge, pos, radius, arcs, engine_area());
+}
+
+void render_circle_fill_a(
+        render_layer layer,
+        struct rgba center, struct rgba edge,
+        struct pos pos, unit radius, const size_t arcs,
+        struct rect area)
+{
+    const size_t vn = arcs * 4;
+    const float ar = 2 * f32_pi / vn;
+
+    struct render_buffer *buffer = render_buffer(layer, render_type_prim_tri);
+    render_buffer_reserve_vertex(buffer, 1 + vn);
+    render_buffer_reserve_index(buffer, vn * 3);
+
+    union vertex_ptr vx = render_buffer_push_vertex(buffer);
+    *vx.prim = (struct vertex_prim) {
+        .pos = render_project_pos(layer, pos, area),
+        .fg = render_project_rgba(center),
+    };
+
+    const float e[4] = render_project_rgba(edge);
+
+    union vertex_ptr vp[vn + 1];
+    for (size_t i = 0; i < vn; ++i) {
+        struct pos p = {
+            .x = pos.x + (unit) (radius * cos(i * ar)),
+            .y = pos.y + (unit) (radius * sin(i * ar)),
+        };
+
+        union vertex_ptr *v = vp + i;
+        *v = render_buffer_push_vertex(buffer);
+
+        *v->prim = (struct vertex_prim) {
+            .pos = render_project_pos(layer, p, area),
+            .fg = { e[0], e[1], e[2], e[3] },
+        };
+    }
+
+    vp[vn] = vp[0];
+    for (size_t i = 0; i < vn; ++i) {
+        render_buffer_push_index(buffer, vx);
+        render_buffer_push_index(buffer, vp[i]);
+        render_buffer_push_index(buffer, vp[i + 1]);
+    }
+}
+
 static void render_tex_a(
         render_layer layer,
         enum render_type type,
