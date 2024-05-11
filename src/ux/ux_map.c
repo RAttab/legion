@@ -19,8 +19,9 @@ struct ux_map
     struct { struct coord pos; coord_scale scale; } view;
     struct { bool panning, panned; } pan;
     struct {
-        struct rgba select, sector, area;
+        struct rgba sector, area;
         struct { struct rgba src, dst; } lanes;
+        struct { struct rgba center, edge; size_t arcs; } active;
     } s;
 };
 
@@ -50,12 +51,16 @@ void ux_map_alloc(struct ux_view_state *state)
         },
 
         .s = {
-            .select = ui_st.rgba.map.select,
             .sector = ui_st.rgba.map.sector,
             .area = ui_st.rgba.map.area,
             .lanes = {
                 .src = ui_st.rgba.map.lanes.src,
                 .dst = ui_st.rgba.map.lanes.dst,
+            },
+            .active = {
+                .center = ui_st.rgba.map.active.center,
+                .edge = ui_st.rgba.map.active.edge,
+                .arcs = ui_st.rgba.map.active.arcs,
             },
         },
     };
@@ -297,20 +302,14 @@ static void ux_map_render_stars(
         struct rgba edge = to_rgba(star->hue.edge);
 
         struct pos pos = { star->coord.x, star->coord.y };
-        render_star(l + 0, center, edge, pos, radius, render_area);
 
-        if (!proxy_active_star(star->coord)) continue;
+        if (proxy_active_star(star->coord)) {
+            render_circle_fill_a(l + 0,
+                    ux->s.active.center, ux->s.active.edge,
+                    pos, radius, ux->s.active.arcs, render_area);
+        }
 
-        const uint32_t w = rect.w / 4;
-        struct triangle tri = {
-            .a = { rect.x + rect.w/2 - w, rect.y + rect.h/2 - 1*rect.h/2 },
-            .b = { rect.x + rect.w/2 + 0, rect.y + rect.h/2 - 15*rect.h/32 },
-            .c = { rect.x + rect.w/2 + 0, rect.y + rect.h/2 - 1*rect.h/4 },
-        };
-        render_triangle_a(l + 1, ux->s.select, tri, render_area);
-
-        tri.a.x = rect.x + rect.w/2 + w;
-        render_triangle_a(l + 1, ux->s.select, tri, render_area);
+        render_star(l + 1, center, edge, pos, radius, render_area);
     }
 }
 

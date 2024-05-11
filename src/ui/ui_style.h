@@ -27,8 +27,9 @@ extern struct ui_style
         struct { struct rgba queue, work, clean, fail, idle; } worker;
 
         struct {
-            struct rgba select, sector, area;
+            struct rgba sector, area;
             struct { struct rgba src, dst; } lanes;
+            struct { struct rgba center, edge; size_t arcs; } active;
         } map;
         struct { struct rgba fg, bg, hover, select, border, op; } factory;
 
