@@ -1,4 +1,4 @@
-/* galaxy.h
+/* sector.h
    Rémi Attab (remi.attab@gmail.com), 12 Dec 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -47,6 +47,7 @@ inline uint16_t star_scan(const struct star *star, enum item item)
     return 0;
 }
 
+bool star_hover(const struct star *, struct coord coord);
 
 // -----------------------------------------------------------------------------
 // sector
@@ -67,7 +68,7 @@ struct sector *sector_gen(struct coord, world_seed);
 struct sector *sector_new(size_t stars);
 void sector_free(struct sector *);
 
-const struct star *sector_star_in(const struct sector *, struct coord_rect);
-const struct star *sector_star_at(const struct sector *, struct coord coord);
+const struct star *sector_star_at(const struct sector *, struct coord);
+const struct star *sector_star_find(const struct sector *, struct coord);
 
 ssize_t sector_scan(const struct sector *, struct coord, enum item);

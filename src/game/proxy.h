@@ -108,8 +108,8 @@ bool proxy_active_sector(struct coord);
 struct sector *proxy_sector(struct coord);
 
 vm_word proxy_star_name(struct coord);
-const struct star *proxy_star_in(struct coord_rect);
 const struct star *proxy_star_at(struct coord);
+const struct star *proxy_star_find(struct coord);
 
 
 // -----------------------------------------------------------------------------

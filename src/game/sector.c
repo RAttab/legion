@@ -1,4 +1,4 @@
-/* galaxy.c
+/* sector.c
    Rémi Attab (remi.attab@gmail.com), 12 Dec 2020
    FreeBSD-style copyright and disclaimer apply
 */
@@ -7,6 +7,8 @@
 // -----------------------------------------------------------------------------
 // star
 // -----------------------------------------------------------------------------
+
+constexpr size_t star_select_div = 2;
 
 bool star_load(struct star *star, struct save *save)
 {
@@ -32,6 +34,17 @@ void star_save(const struct star *star, struct save *save)
     save_write_magic(save, save_magic_star);
 }
 
+bool star_hover(const struct star *star, struct coord coord)
+{
+    size_t radius = star->size / (2 * star_select_div);
+    struct coord_rect rect = {
+        .top = {star->coord.x - radius, star->coord.y - radius },
+        .bot = {star->coord.x + radius, star->coord.y + radius },
+    };
+
+    return coord_rect_contains(rect, coord);
+}
+
 
 // -----------------------------------------------------------------------------
 // sector
@@ -52,21 +65,22 @@ void sector_free(struct sector *sector)
     mem_free(sector);
 }
 
-const struct star *sector_star_in(
-        const struct sector *sector, struct coord_rect rect)
-{
-    for (size_t i = 0; i < sector->stars_len; ++i) {
-        const struct star *star = &sector->stars[i];
-        if (coord_rect_contains(rect, star->coord)) return star;
-    }
-    return NULL;
-}
-
 const struct star *sector_star_at(
         const struct sector *sector, struct coord coord)
 {
     struct htable_ret ret = htable_get(&sector->index, coord_to_u64(coord));
     return ret.ok ? (struct star *) ret.value : NULL;
+}
+
+const struct star *sector_star_find(
+        const struct sector *sector, struct coord coord)
+{
+    for (size_t i = 0; i < sector->stars_len; ++i) {
+        const struct star *star = &sector->stars[i];
+        const size_t radius = star->size / (2 * star_select_div);
+        if (coord_dist_2(coord, star->coord) <= (radius * radius)) return star;
+    }
+    return NULL;
 }
 
 ssize_t sector_scan(

@@ -176,13 +176,8 @@ static void ux_map_event(void *state)
         ux->pan.panning = false;
         if (ux->pan.panned) { ux->pan.panned = false; continue; }
 
-        uint32_t d = star_size_cap / 2;
         struct coord cursor = ux_map_to_coord(ux, ev_mouse_pos());
-        struct coord_rect rect = make_coord_rect(
-                make_coord(cursor.x - d, cursor.y - d),
-                make_coord(cursor.x + d, cursor.y + d));
-
-        const struct star *star = proxy_star_in(rect);
+        const struct star *star = proxy_star_find(cursor);
         if (star) ux_star_show(star->coord);
     }
 }
@@ -279,8 +274,8 @@ static void ux_map_render_stars(
 {
     struct rect render_area = ux_map_to_rect(area);
 
-    struct pos cursor = ux_cursor_panel() ? make_pos(unit_min, unit_min) :
-        ux_map_to_pos(ux_map_to_coord(ux, ev_mouse_pos()));
+    struct coord cursor =
+        ux_cursor_panel() ? coord_nil() : ux_map_to_coord(ux, ev_mouse_pos());
 
     struct coord_rect area_it = area;
     area_it.top.x -= star_size_cap/2; area_it.top.y -= star_size_cap/2;
@@ -291,14 +286,8 @@ static void ux_map_render_stars(
     while ((star = proxy_render_next(&it))) {
         const unit radius = star->size / 2;
 
-        struct rect rect = {
-            .x = star->coord.x - radius,
-            .y = star->coord.y - radius,
-            .h = star->size, .w = star->size,
-        };
-
         const float s = 1.0 - (((double) star->energy) / UINT16_MAX);
-        const float v = rect_contains(rect, cursor) ? 0.8 : 0.5;
+        const float v = star_hover(star, cursor) ? 0.8 : 0.5;
         struct rgba to_rgba(float hue)
         {
             return hsv_to_rgb((struct hsv) { .h = hue / 360, .s = s, .v = v });

@@ -654,28 +654,33 @@ vm_word proxy_star_name(struct coord coord)
     return star_name(coord, proxy.state->seed, proxy.state->atoms);
 }
 
-const struct star *proxy_star_in(struct coord_rect rect)
+const struct star *proxy_star_at(struct coord coord)
 {
-    // Very likely that the center of the rectangle is the right place to look
-    // so make a first initial guess.
-    struct sector *sector = proxy_sector(coord_rect_center(rect));
-    const struct star *star = sector_star_in(sector, rect);
+    return sector_star_at(proxy_sector(coord), coord);
+}
+
+const struct star *proxy_star_find(struct coord coord)
+{
+    struct sector *sector = proxy_sector(coord);
+    const struct star *star = sector_star_find(sector, coord);
     if (star) return star;
 
-    // Alright so our guess didn't work out so time for an exhaustive search.
+    // If we're on the edge of a sector, we should also check our neighbours.
+
+    size_t radius = star_size_cap / 2;
+    struct coord_rect rect = {
+        .top = {coord.x - radius, coord.y - radius},
+        .bot = {coord.x + radius, coord.y + radius},
+    };
+
     struct coord it = coord_rect_next_sector(rect, coord_nil());
     for (; !coord_is_nil(it); it = coord_rect_next_sector(rect, it)) {
         sector = proxy_sector(coord_rect_center(rect));
-        star = sector_star_in(sector, rect);
+        star = sector_star_find(sector, coord);
         if (star) return star;
     }
 
     return NULL;
-}
-
-const struct star *proxy_star_at(struct coord coord)
-{
-    return sector_star_at(proxy_sector(coord), coord);
 }
 
 
